@@ -1,0 +1,6 @@
+version: release-standard.v0
+criteria:
+  - id: PRODUCT_PUBLIC_RESULT_OPENS
+    required: true
+    evidence: [deterministically_verified, browser_observed]
+

@@ -1,0 +1,6 @@
+version: release-standard.v0
+criteria:
+  - id: DATA_AI_CLAIM_HAS_EVAL
+    required: false
+    evidence: [source_verified, deterministically_verified, model_reviewed]
+

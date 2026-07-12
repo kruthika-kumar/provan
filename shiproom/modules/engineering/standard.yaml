@@ -1,0 +1,6 @@
+version: release-standard.v0
+criteria:
+  - id: ENGINEERING_TESTS_PASS
+    required: true
+    evidence: [deterministically_verified]
+

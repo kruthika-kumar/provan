@@ -1,0 +1,6 @@
+module_id: design
+name: Design / Accessibility
+version: 0.1.0
+allowed_tools: [browser, file]
+requires_independent_closure: true
+

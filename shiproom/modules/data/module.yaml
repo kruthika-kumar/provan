@@ -1,0 +1,6 @@
+module_id: data
+name: Data / AI
+version: 0.1.0
+allowed_tools: [terminal, file]
+requires_independent_closure: true
+

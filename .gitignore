@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+release-state/
+evidence/
+.env
+shiproom_buildathon_blueprint.md

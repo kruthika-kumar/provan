@@ -1,0 +1,6 @@
+version: release-standard.v0
+criteria:
+  - id: DESIGN_CRITICAL_JOURNEY_VISIBLE
+    required: false
+    evidence: [browser_observed, model_reviewed]
+

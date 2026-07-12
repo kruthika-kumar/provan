@@ -1,0 +1,6 @@
+module_id: product
+name: Product / UX
+version: 0.1.0
+allowed_tools: [browser, file]
+requires_independent_closure: true
+
