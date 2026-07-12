@@ -15,6 +15,7 @@ from .registry import discover, select
 from .report import render
 from .runs import LocalRunStore, materialize
 from .evidence import http_check
+from .telemetry import span
 from .remediation import assert_clean_worktree, current_branch, repository_root
 from .runner import run_module
 from .verdict import calculate
@@ -75,8 +76,10 @@ def main(argv: list[str] | None = None) -> int:
         store = LocalRunStore(Path(args.run_root))
         if args.action == "init":
             if not args.contract: raise SystemExit("external init requires --contract")
-            contract = validate_contract(json.loads(Path(args.contract).read_text(encoding="utf-8")))
-            data = compile_release(contract); output = Path(args.output or f"release-state/{data['release_id']}.json"); save(output, data)
+            with span("shiproom.contract.compile"):
+                contract = validate_contract(json.loads(Path(args.contract).read_text(encoding="utf-8")))
+                data = compile_release(contract)
+            output = Path(args.output or f"release-state/{data['release_id']}.json"); save(output, data)
             store.append(data["release_id"], "contract_accepted", operation="external.init", evidence_references=[data["repository"]["url"], data["deployment"]["url"]], metadata={"contract_schema": contract["schema_version"], "capabilities": data["capabilities"]})
             print(json.dumps({"release_id": data["release_id"], "release": str(output)}, indent=2))
         else:
@@ -89,7 +92,8 @@ def main(argv: list[str] | None = None) -> int:
                 data["repository"].update({"base_branch": args.branch, "commit_sha": args.commit_sha, "clean_before": True}); save(path, data)
                 store.append(data["release_id"], "deterministic_check", operation="git.metadata", status="passed", evidence_references=[data["repository"]["url"]], metadata={"branch": args.branch, "commit_sha": args.commit_sha, "clean": True}); print(json.dumps(data["repository"], indent=2))
             elif args.action == "packet":
-                packet = review_packet(data, registry); data["panel"]["eligible_modules"] = [m["module_id"] for m in packet["eligible_modules"]]; save(path, data)
+                with span("shiproom.panel.select", {"release_id": data["release_id"]}): packet = review_packet(data, registry)
+                data["panel"]["eligible_modules"] = [m["module_id"] for m in packet["eligible_modules"]]; save(path, data)
                 store.append(data["release_id"], "manager_planning", agent_id="release_manager", operation="external.packet", metadata={"eligible_modules": data["panel"]["eligible_modules"], "ineligible_modules": packet["ineligible_modules"]})
                 output = Path(args.output or f"review-packets/{data['release_id']}.json"); save(output, packet); print(output)
             elif args.action == "selection":
@@ -106,18 +110,23 @@ def main(argv: list[str] | None = None) -> int:
                 result_data = json.loads(Path(args.input).read_text(encoding="utf-8")); correction = ReviewerCorrection(store, data["release_id"])
                 prior = [e for e in store.events(data["release_id"]) if e.get("module_id") == args.module and e["event_type"] == "result_rejected"]
                 correction.attempts[args.module] = len(prior)
-                response = correction.submit(result_data, expected_module=args.module, delegation_id=args.delegation_id)
+                with span("shiproom.module.validate", {"release_id": data["release_id"], "module_id": args.module, "delegation_id": args.delegation_id}): response = correction.submit(result_data, expected_module=args.module, delegation_id=args.delegation_id)
+                if response["status"] == "revision_required":
+                    with span("shiproom.module.revise", {"release_id": data["release_id"], "module_id": args.module}): pass
                 if response["status"] == "accepted":
                     result = response["result"]; criteria = {c.get("criterion_id") for c in result["checks"]}; data["checks"] = [c for c in data["checks"] if c.get("criterion_id") not in criteria] + result["checks"]
                     ids = {f.get("id") for f in result["findings"]}; data["findings"] = [f for f in data["findings"] if f.get("id") not in ids] + result["findings"]; save(path, data)
                 print(json.dumps(response, indent=2));
                 if response["status"] == "failed": return 1
             elif args.action == "check-http":
-                require_capability(data, "inspect_public_surfaces"); criterion = args.criterion_id or "EXTERNAL_DEPLOYMENT_REACHABLE"; check = http_check(data["deployment"]["url"]); check.update({"criterion_id": criterion, "required": True})
+                require_capability(data, "inspect_public_surfaces"); criterion = args.criterion_id or "EXTERNAL_DEPLOYMENT_REACHABLE"
+                with span("shiproom.check.evaluate", {"release_id": data["release_id"], "criterion_id": criterion}): check = http_check(data["deployment"]["url"])
+                check.update({"criterion_id": criterion, "required": True})
                 data["checks"] = [c for c in data["checks"] if c.get("criterion_id") != criterion] + [check]; save(path, data)
                 store.append(data["release_id"], "deterministic_check", criterion_id=criterion, operation="http.get", status="passed" if check["passed"] else "failed", evidence_references=[check["target"]], metadata={"http_status": check.get("status"), "evidence_status": check["evidence_status"]}); print(json.dumps(check, indent=2))
             else:
-                data["verdict"] = calculate(data); data["state"] = data["verdict"]["status"]; save(path, data)
+                with span("shiproom.release.run", {"release_id": data["release_id"]}): data["verdict"] = calculate(data)
+                data["state"] = data["verdict"]["status"]; save(path, data)
                 verdict_event = store.append(data["release_id"], "verdict_calculated", operation="canonical.calculate", status=data["state"], metadata={"reason_codes": data["verdict"]["reason_codes"]})
                 store.append(data["release_id"], "run_completed", parent_event_id=verdict_event["event_id"], status="completed" if data["state"] in {"READY", "SHIP_WITH_CONDITIONS"} else "failed", metadata={"verdict": data["state"]}); print(json.dumps(data["verdict"], indent=2))
     elif args.command == "runs":
@@ -128,7 +137,9 @@ def main(argv: list[str] | None = None) -> int:
             data = load(Path(args.release_state)); events = store.events(args.release); record = materialize(data, events)
             if args.action == "show": print(json.dumps(record, indent=2))
             else:
-                output = Path(args.output or f"private-reports/{args.release}-{args.audience}.html"); render(data, output, events=events, audience=args.audience); store.append(args.release, "report_rendered", operation=f"runs.render.{args.audience}", status="completed", metadata={"audience": args.audience, "private": not data.get("capabilities", {}).get("publish_report", False)}); print(output)
+                output = Path(args.output or f"private-reports/{args.release}-{args.audience}.html")
+                with span("shiproom.release.publish", {"release_id": args.release, "audience": args.audience}): render(data, output, events=events, audience=args.audience)
+                store.append(args.release, "report_rendered", operation=f"runs.render.{args.audience}", status="completed", metadata={"audience": args.audience, "private": not data.get("capabilities", {}).get("publish_report", False)}); print(output)
     elif args.command == "hermes":
         path = Path(args.release); data = load(path)
         if args.action == "packet":
