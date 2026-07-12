@@ -10,8 +10,9 @@ from .models import EvidenceStatus
 
 
 def http_check(url: str, timeout: float = 10) -> dict:
+    request = urllib.request.Request(url, headers={"User-Agent": "Shiproom-Release-Assurance/0.1"})
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             status = response.status
     except urllib.error.HTTPError as exc:
         status = exc.code
@@ -36,4 +37,3 @@ def validate_module_result(data: dict) -> dict:
         raise ValueError(f"malformed module output; missing={sorted(missing)}")
     json.dumps(data)
     return data
-
