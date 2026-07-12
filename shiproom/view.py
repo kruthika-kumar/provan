@@ -13,7 +13,9 @@ def release_run_view(release: dict, events: list[dict] | None = None) -> dict:
     event_status = {event.get("module_id"): event["event_type"] for event in record["events"] if event.get("module_id")}
     cards = []
     skip_map = {item.get("module_id"): item.get("reason", "Not selected") for item in skipped if isinstance(item, dict)}
-    for module_id, module in modules.items():
+    module_order = [*selected, *(key for key in modules if key not in selected)]
+    for module_id in module_order:
+        module = modules[module_id]
         if module_id in skip_map or module_id not in selected:
             status, reason = "skipped", skip_map.get(module_id, "Not selected by the release manager")
         else:

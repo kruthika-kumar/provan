@@ -100,6 +100,8 @@ def test_visual_report_audiences_and_external_omissions(tmp_path):
         text = render(release, tmp_path / f"{audience}.html", audience=audience).read_text(encoding="utf-8")
         assert "Independent read-only Shiproom review" in text and "SKIPPED" in text and "No AI signal" in text
         assert "Controlled-demo before / after" not in text and "unavailable" in text
+        assert "module-summary" in text and "overflow-wrap:anywhere" in text
+        assert text.index("Product / UX") < text.index("Data / AI")
     assert "CEO view" not in (tmp_path / "product.html").read_text(encoding="utf-8")
 
 
