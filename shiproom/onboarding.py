@@ -40,7 +40,9 @@ def initialize(repo: Path, *, project_name: str, product_purpose: str, primary_u
     if not confirmed:
         return {"status": "PREVIEW", **preview}
     ensure_ignore(repo); contract_path.parent.mkdir(parents=True, exist_ok=True)
-    contract_path.write_text(json.dumps(contract, indent=2), encoding="utf-8")
+    serialized = json.dumps(contract, indent=2) + "\n"
+    if not contract_path.is_file() or contract_path.read_text(encoding="utf-8") != serialized:
+        contract_path.write_text(serialized, encoding="utf-8")
     write_local_facts(repo, locator, deployment_target())
     state = activation_status(repo, contract_path, receipt_path)
     if not receipt_path.is_file() or state["modified"] or not state["tracked"] or not state["activation_fresh"]: activate(repo, contract_path, receipt_path)
