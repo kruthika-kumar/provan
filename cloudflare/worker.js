@@ -1,3 +1,10 @@
+import { INDEX_HTML, REPORT_HTML, INDEX_ETAG, REPORT_ETAG } from "./generated_public.js";
+
+const staticHtml = (request, body, etag) => {
+  if (request.headers.get("If-None-Match") === etag) return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=0, must-revalidate" } });
+  return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, must-revalidate", ETag: etag } });
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -8,7 +15,7 @@ export default {
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     };
     if (url.pathname === "/") {
-      return asset("/index.html");
+      return staticHtml(request, INDEX_HTML, INDEX_ETAG);
     }
     if (url.pathname === "/health") {
       return Response.json({ status: "ok", service: "shiproom-demo" });
@@ -17,7 +24,7 @@ export default {
       return new Response("<h1>Demo launch card</h1>", { headers: { "content-type": "text/html; charset=utf-8" } });
     }
     if (url.pathname === "/reports/rel_35e58f680a1a" || url.pathname === "/release-report") {
-      return asset("/release-report.html");
+      return staticHtml(request, REPORT_HTML, REPORT_ETAG);
     }
     if (url.pathname.startsWith("/reports/")) return new Response("Report not found", { status: 404 });
     if (url.pathname === "/setup") return asset("/setup.html");

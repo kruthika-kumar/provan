@@ -40,7 +40,7 @@ def test_duration_badge_and_worker_routes():
     assert "SHIP WITH CONDITIONS" in verdict_badge()
     worker=(ROOT/"cloudflare"/"worker.js").read_text(encoding="utf-8")
     assert 'startsWith("/result/")' in worker and 'startsWith("/results/")' in worker
-    assert '"/index.html"' in worker and '"/completed_run.json"' in worker
+    assert "INDEX_HTML" in worker and '"/completed_run.json"' in worker
     assert '"/public_evidence_manifest.v1.json"' in worker
     assert '"/public_evidence_manifest.v2.json"' in worker and '"/release-report"' in worker and "must-revalidate" in worker
 
