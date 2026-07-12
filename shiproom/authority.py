@@ -196,7 +196,7 @@ class LocalExecutionContext:
         if parsed.scheme not in {"http","https"} or not parsed.hostname or parsed.username or parsed.password or parsed.path not in {"","/"}: raise ValueError("release deployment origin is invalid")
         if not isinstance(grant["allowed_paths"],list) or any(not isinstance(p,str) or not p.startswith("/") or ".." in Path(p).parts for p in grant["allowed_paths"]): raise ValueError("release deployment paths are invalid")
         if content_hash(grant)!=binding.get("deployment_grant_hash"): raise ValueError("release deployment authority is stale: deployment_grant_hash")
-        if release.get("deployment",{}).get("url")!=grant["origin"] or release.get("deployment",{}).get("generated_path") not in grant["allowed_paths"]: raise ValueError("release deployment display fields differ from immutable grant")
+        if release.get("deployment",{}).get("url")!=grant["origin"] or release.get("deployment",{}).get("generated_path") not in grant["allowed_paths"]: raise ValueError("release deployment display fields differ from release-bound hash-consistent grant")
         return cls(repo, release, binding, status, grant)
 
     def require(self, operation: str) -> None: require_operation(self.activation, operation)
@@ -215,10 +215,14 @@ class LocalExecutionContext:
         if b"\x00" in raw: text=None; classification="binary"
         return {"path":relative,"commit":commit,"blob_hash":blob_hash,"size_bytes":size,"classification":classification,"text":text}
 
-    def read_git_metadata(self, *args: str) -> str:
-        self.require("git.metadata.read"); allowed={"rev-parse", "status", "branch"}
-        if not args or args[0] not in allowed or any(a.startswith(("--output", "--exec-path", "--config-env")) for a in args): raise PermissionError("Git metadata operation is not allowlisted")
-        return _git(self.repository_root, *args).stdout
+    def current_commit(self) -> str:
+        self.require("git.metadata.read"); return _git(self.repository_root,"rev-parse","HEAD").stdout.strip()
+
+    def current_branch(self) -> str:
+        self.require("git.metadata.read"); return _git(self.repository_root,"branch","--show-current").stdout.strip()
+
+    def worktree_status(self) -> str:
+        self.require("git.metadata.read"); return _git(self.repository_root,"status","--porcelain","--untracked-files=all").stdout
 
     def read_configured_deployment(self, path: str, timeout: float = 10) -> DeploymentReadResult:
         self.require("deployment.read")

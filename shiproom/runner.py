@@ -35,9 +35,14 @@ def run_module(module_id: str, release: dict, context: LocalExecutionContext) ->
         else:
             batch=context.execute_approved_commands()
             for command, bounded in batch.command_results:
-                check={"criterion_id":command["criterion_id"],"type":"command","required":command["required_for_release"],"passed":bounded.status=="passed","evidence_status":"deterministically_verified","command_id":command["command_id"],"result":bounded.to_dict()}; checks.append(check)
-                if command["required_for_release"] and not check["passed"]:
+                recovery=batch.recovery_required or bounded.cleanup_status!="cleaned" or bounded.status in {"spawn_error","termination_failed"} or bounded.termination=="failed"
+                passed=bounded.status=="passed" and bounded.cleanup_status=="cleaned" and not batch.recovery_required
+                evidence="missing_evidence" if recovery else "deterministically_verified"
+                check={"criterion_id":command["criterion_id"],"type":"command","required":command["required_for_release"],"passed":passed,"evidence_status":evidence,"command_id":command["command_id"],"result":bounded.to_dict()}; checks.append(check)
+                if command["required_for_release"] and not passed and not recovery:
                     findings.append({"id":f"finding-{release['release_id']}-{command['command_id']}","criterion_id":command["criterion_id"],"title":f"Approved command failed: {command['purpose']}","severity":"blocker","blocking":True,"state":"TRIAGED","evidence":[{"status":"deterministically_verified","kind":"command_result","value":bounded.status,"reference":command["source"]["ref"]}]})
+                elif command["required_for_release"] and recovery:
+                    findings.append({"id":f"finding-{release['release_id']}-{command['command_id']}-evidence","criterion_id":command["criterion_id"],"title":f"Command evidence unavailable: {command['purpose']}","severity":"high","blocking":False,"state":"BLOCKED","evidence":[{"status":"missing_evidence","kind":"command_recovery","value":bounded.status,"reference":command["source"]["ref"]}]})
     else:
         checks.append({"criterion_id": f"{module_id.upper()}_V0", "type": "applicability", "passed": True,
                        "evidence_status": "not_applicable"})

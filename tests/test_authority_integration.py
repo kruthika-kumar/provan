@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from shiproom.authority import LocalExecutionContext, run_bounded_command
+from shiproom.authority import BoundedCommandResult, LocalExecutionContext, VerificationBatchResult, run_bounded_command
 from shiproom.cli import main
 from shiproom.onboarding import human_project_view, paths, project_authority_view
 from shiproom.project import activate, default_contract, deployment_target, file_hash, resolve_policy_path, validate_command
@@ -107,6 +107,23 @@ def test_verification_cleanup_failure_is_explicit(tmp_path: Path):
     with patch("shiproom.authority._git",side_effect=failing_git): batch=context.execute_approved_commands()
     assert batch.status=="recovery_required" and batch.command_results[0][1].cleanup_status=="recovery_required" and batch.command_results[0][1].recovery_worktree
     subprocess.run(["git","worktree","remove","--force",batch.command_results[0][1].recovery_worktree],cwd=repo,check=True,capture_output=True)
+
+
+def test_engineering_cli_zero_exit_with_cleanup_failure_is_missing_evidence(tmp_path: Path):
+    repo=project_repo(tmp_path); grant=command(repo); set_commands(repo,"verify",[grant]); output=tmp_path/"release.json"; init_release(repo,output); bounded=BoundedCommandResult("passed",0,5,"ok","",2,4096,"not_required",cleanup_status="recovery_required",recovery_worktree="validated-recovery")
+    with patch.object(LocalExecutionContext,"execute_approved_commands",return_value=VerificationBatchResult("recovery_required",[(grant,bounded)],True)): assert main(["review","--module","engineering","--release",str(output)])==0
+    release=json.loads(output.read_text()); check=release["checks"][0]; assert not check["passed"] and check["evidence_status"]=="missing_evidence" and release["verdict"]["status"]=="HOLD"
+
+
+def test_engineering_cli_spawn_error_is_missing_evidence(tmp_path: Path):
+    repo=project_repo(tmp_path); grant=command(repo); set_commands(repo,"verify",[grant]); output=tmp_path/"release.json"; init_release(repo,output); bounded=BoundedCommandResult("spawn_error",None,1,"","",0,4096,"not_started",cleanup_status="cleaned")
+    with patch.object(LocalExecutionContext,"execute_approved_commands",return_value=VerificationBatchResult("completed",[(grant,bounded)],False)): assert main(["review","--module","engineering","--release",str(output)])==0
+    release=json.loads(output.read_text()); assert release["checks"][0]["evidence_status"]=="missing_evidence" and release["verdict"]["status"]=="HOLD"
+
+
+def test_git_metadata_surface_is_exact_methods_only(tmp_path: Path):
+    repo=project_repo(tmp_path); output=tmp_path/"release.json"; context=LocalExecutionContext.from_release(init_release(repo,output)); assert not hasattr(context,"read_git_metadata")
+    assert context.current_commit()==git(repo,"rev-parse","HEAD") and context.current_branch()=="main" and context.worktree_status()==""
 
 
 def test_commit_pinned_blob_reader_ignores_new_head_and_rejects_sensitive_entries(tmp_path: Path):

@@ -182,3 +182,14 @@ def test_remediation_recovers_commit_and_reset_rejects_dirty_or_extra_head(tmp_p
     worktree=Path(task["worktree"]); (worktree/"dirty.txt").write_text("dirty"); assert run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False).returncode!=0; (worktree/"dirty.txt").unlink(); git(worktree,"commit","--allow-empty","-m","unexpected")
     assert run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False).returncode!=0
     git(repo,"worktree","remove","--force",str(worktree)); git(repo,"branch","-D",task["branch"])
+
+
+@pytest.mark.parametrize("failure",["invalid_artifact","dirty_active"])
+def test_reset_preflight_failure_preserves_remediation_branch_and_worktree(tmp_path,failure):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); release=json.loads(release_path.read_text()); task=release["remediation_tasks"][-1]; worktree=Path(task["worktree"])
+    if failure=="invalid_artifact": release["runtime_artifacts"]=[{"release_id":release["release_id"],"path":"../outside","kind":"report"}]; release_path.write_text(json.dumps(release,indent=2))
+    else: (repo/"pyproject.toml").write_text((repo/"pyproject.toml").read_text()+"\n# dirty\n")
+    result=run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False)
+    assert result.returncode!=0 and worktree.exists() and git(repo,"branch","--list",task["branch"])
+    if failure=="dirty_active": git(repo,"restore","pyproject.toml")
+    cleanup_isolated_worktree(repo,path=task["worktree"],base_commit=task["base_commit"],branch=task["branch"],expected_head=task["commit_sha"],require_clean=True)
