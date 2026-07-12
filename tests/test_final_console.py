@@ -43,6 +43,7 @@ def test_duration_badge_and_worker_routes():
     assert "INDEX_HTML" in worker and '"/completed_run.json"' in worker
     assert '"/public_evidence_manifest.v1.json"' in worker
     assert '"/public_evidence_manifest.v2.json"' in worker and '"/release-report"' in worker and "must-revalidate" in worker
+    assert "run_worker_first = true" in (ROOT/"cloudflare"/"wrangler.toml").read_text(encoding="utf-8")
 
 def test_manifest_is_allowlisted_and_matches_html_claims():
     release,receipt,verified=fixture(); run=completed_run(release,receipt,verified); manifest=public_evidence_manifest(run); page=render_console(run,verified["canonical_url"])
