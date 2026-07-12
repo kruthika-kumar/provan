@@ -32,6 +32,20 @@ Lead with promise, observed behavior, evidence class, blocker state, before/afte
 
 ## Executable protocol
 
+### Judged public boundary
+
+Run the judged session only from a fresh, clean clone of the public repository. Accept only the `public_release_view.v0` packet. Do not request or inspect the original event workspace, ignored/uncommitted files, environment variables, canonical release JSON, local Hermes state, or complete session exports.
+
+The input deliberately contains no selected modules. First return exact JSON with `selected_modules`, `skipped_modules`, `selection_reasons` keyed by every available module ID, and a `delegation_plan`. The plan must include `product_ux` reviewing the public promise/live journey and `engineering_qa` reviewing the public repository/PR. The manager then persists this decision through:
+
+```powershell
+shiproom hermes selection --release <private-canonical-release> --input <manager-selection.json>
+```
+
+In the judged TUI, the manager performs the selection and both substantive delegations. Deterministic commands may provide HTTP status, test/command results, file/schema checks, Git/GitHub metadata, and verdict transitions only. They do not replace reviewers. Validate delegated structures, combine them, and send closure/verdict inputs to Python; never close findings from model opinion.
+
+Use session name `shiproom-judged-release-rel_35e58f680a1a`. Show the native session live for inspection. Retain no full export. The local receipt contains only release ID, actual session ID, session name, timestamps, and `public_inputs_only: true`.
+
 Required inputs are an absolute Git repository path, live deployment URL, product promise, target user, critical journey, and non-goals. Use one named Hermes session and retain its native session ID. Never change models during the run.
 
 Terminal A starts the controlled patient and remains open:

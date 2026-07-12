@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .models import Release
+from .hermes import apply_manager_decision, validate_receipt
+from .public import public_release_view, write_public_view
 from .registry import discover, select
 from .report import render
 from .remediation import assert_clean_worktree, current_branch, repository_root
@@ -32,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     report = sub.add_parser("report"); report.add_argument("action", choices=["render"]); report.add_argument("--release", required=True); report.add_argument("--output", default="dist/release-report.html")
     decision = sub.add_parser("decision"); decision.add_argument("action", choices=["add", "record"]); decision.add_argument("--release", required=True); decision.add_argument("--id", default="decision_publish_promise"); decision.add_argument("--title", default="Beta publication promise"); decision.add_argument("--choice"); decision.add_argument("--resolution", choices=["resolved", "accepted_condition"])
     trace = sub.add_parser("trace"); trace.add_argument("action", choices=["record"]); trace.add_argument("--release", required=True); trace.add_argument("--live-url"); trace.add_argument("--hermes-session-id"); trace.add_argument("--github-repository"); trace.add_argument("--github-pr-number", type=int); trace.add_argument("--github-pr-id"); trace.add_argument("--github-comment-id"); trace.add_argument("--github-comment-url"); trace.add_argument("--cloudflare-deployment-id"); trace.add_argument("--report-url")
+    hermes = sub.add_parser("hermes"); hermes.add_argument("action", choices=["packet", "selection", "receipt", "verify-join"]); hermes.add_argument("--release", required=True); hermes.add_argument("--input"); hermes.add_argument("--receipt"); hermes.add_argument("--output")
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "modules":
@@ -62,6 +65,26 @@ def main(argv: list[str] | None = None) -> int:
             if not args.choice or not args.resolution: raise SystemExit("record requires --choice and --resolution")
             existing.update({"choice": args.choice, "resolution": args.resolution, "recorded_at": datetime.now(UTC).isoformat(), "evidence": [{"status": "owner_confirmed", "kind": "owner_choice", "value": args.choice}]})
         data["verdict"] = calculate(data); data["state"] = data["verdict"]["status"]; save(path, data); print(json.dumps({"release_id": data["release_id"], "decision_id": args.id, "verdict": data["verdict"]}, indent=2))
+    elif args.command == "hermes":
+        path = Path(args.release); data = load(path)
+        if args.action == "packet":
+            output = Path(args.output or "public-artifacts/public-release-view.json")
+            write_public_view(data, output, registry); print(output)
+        elif args.action == "selection":
+            if not args.input: raise SystemExit("selection requires --input")
+            decision_data = json.loads(Path(args.input).read_text(encoding="utf-8"))
+            apply_manager_decision(data, decision_data, set(registry)); save(path, data); print(json.dumps(data["panel"], indent=2))
+        elif args.action == "receipt":
+            if not args.receipt: raise SystemExit("receipt requires --receipt")
+            receipt_data = validate_receipt(json.loads(Path(args.receipt).read_text(encoding="utf-8")), data["release_id"])
+            output = Path(args.output or "hermes-receipts/receipt.json"); save(output, receipt_data)
+            data.setdefault("telemetry", {})["hermes_session_id"] = receipt_data["session_id"]; save(path, data); print(output)
+        else:
+            if not args.receipt: raise SystemExit("verify-join requires --receipt")
+            receipt_data = validate_receipt(json.loads(Path(args.receipt).read_text(encoding="utf-8")), data["release_id"])
+            view = public_release_view(data, registry); release_id = data["release_id"]
+            if receipt_data["release_id"] != release_id: raise SystemExit("receipt release_id mismatch")
+            print(json.dumps({"status": "JOINED", "release_id": release_id, "session_id": receipt_data["session_id"], "report_url": view["public_artifacts"]["report_url"], "github_comment_url": view["public_artifacts"]["github_comment_url"]}, indent=2))
     elif args.command == "trace":
         path = Path(args.release); data = load(path)
         if args.live_url: data["deployment"]["url"] = args.live_url
