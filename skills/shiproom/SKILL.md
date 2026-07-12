@@ -86,3 +86,9 @@ python scripts/reset_demo.py --repo . --release release-state/release.json
 Reset must restore the recorded base branch, delete only the recorded Shiproom remediation branch, clear generated artifacts, leave tracked source clean, and prove `/result/demo` returns 404.
 
 Fallbacks: if native delegation exceeds 90 seconds, run the same validated module commands from the manager session; if Cloudflare is unavailable, preserve the local proof but do not claim live closure; if GitHub publication fails, retain the canonical state but do not claim the GitHub artifact; voice, Convex, and Langfuse never block Core.
+
+Record native trace identifiers without editing JSON manually:
+
+```powershell
+shiproom trace record --release release-state/release.json --live-url <worker-url> --hermes-session-id <session-id> --github-repository kruthika-kumar/shiproom --github-pr-number <number> --github-pr-id <id> --github-comment-id <id> --github-comment-url <url> --cloudflare-deployment-id <id> --report-url <public-report-url>
+```
