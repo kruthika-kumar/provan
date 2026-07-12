@@ -17,7 +17,8 @@ def render(release: dict, output: Path) -> Path:
     release_id = esc(release.get("release_id", "missing"))
     verdict = esc(release.get("verdict", {}).get("status", "DRAFT"))
     promise = esc(release.get("product", {}).get("promise", ""))
-    selected = "Hermes manager selects modules during the judged session"
+    selection = release.get("manager_selection", {})
+    selected = ", ".join(selection.get("selected_modules", [])) or "Pending Hermes manager selection"
     findings = "".join(
         f"<article><h3>{esc(f.get('title',''))}</h3><p>{esc(f.get('criterion_id',''))} · {esc(f.get('state',''))}</p><pre>{esc(json.dumps(f.get('evidence', []), indent=2))}</pre></article>"
         for f in release.get("findings", [])
