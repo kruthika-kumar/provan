@@ -36,6 +36,10 @@ Lead with promise, observed behavior, evidence class, blocker state, before/afte
 
 For `mode=external`, accept only `review_packet.v1`. Respect its explicit capability booleans. Never run a tool or recommend an action that requires a false capability. The packet contains Python's eligible module set; select and delegate only within that set, while returning selected modules, skipped modules, a reason for every module, and a delegation plan.
 
+**Invocation gate:** if `/shiproom` is invoked without a complete packet or packet path in the same user message, do not inspect the working directory, search for project files, read manifests, browse, plan, delegate, or call any tool. Ask for the packet and wait. Skill activation alone is never authorization to explore the current repository.
+
+When `run_safe_commands=false`, do not invoke terminal tools in the reviewed repository. This explicitly prohibits dependency installation, package-manager commands, tests, builds, linters, formatters, scripts, and Git mutation. Public repository content may be read through approved public-surface inspection only. A clean-clone check performed by the release manager outside the reviewer session is evidence, not permission for the Hermes reviewer to run Git commands.
+
 The manager records actual operations through the Shiproom CLI. Product/UX reviews the public promise and bounded live journey. Engineering/QA reviews public repository content and documented workflow. Design and Data run only when selected. Read-only reviewers must not install dependencies, run project commands, write files, create diffs, or mutate Git/GitHub/deployments unless the corresponding capability is true.
 
 Each reviewer returns `module_result.v0` with a stable `result_id`, evidence references, checks, and findings. Submit it through:

@@ -29,6 +29,12 @@ def test_external_intake_and_fresh_ids():
     assert "generated_path" not in first["deployment"] and "path" not in first["repository"]
 
 
+def test_skill_waits_for_packet_and_forbids_commands_when_disabled():
+    skill = (Path(__file__).parents[1] / "skills" / "shiproom" / "SKILL.md").read_text(encoding="utf-8")
+    assert "do not inspect the working directory" in skill
+    assert "run_safe_commands=false" in skill and "dependency installation" in skill
+
+
 def test_external_contract_validation_and_capabilities():
     with pytest.raises(ValueError): compile_release(contract(repository_url="file:///private"))
     release = external_release(); require_capability(release, "inspect_public_surfaces")
