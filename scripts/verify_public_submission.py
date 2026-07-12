@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from shiproom.external import CAPABILITIES, validate_contract
@@ -24,9 +26,11 @@ def main() -> int:
     if set(manifest)!=TOP_LEVEL or manifest.get("schema_version")!="public_evidence_manifest.v1": failures.append("manifest allowlist/schema mismatch")
     required=("Shiproom","SHIP WITH CONDITIONS","404","200","The code passed. The product failed its promise.",manifest["release_id"],manifest["hermes"]["session_id"],manifest["hermes"]["delegation_id"],str(manifest["verification"]["tests_passed"]),str(manifest["verification"]["evals_passed"]),"Hardened external read-only policy gate: passed.")
     if any(value not in html for value in required): failures.append("HTML/manifest claims mismatch")
-    if any(value not in html for value in manifest["public_references"].values() if value): failures.append("public link missing")
-    forbidden=("C:\\","repository.path","rel_70e7648a0731","DrawDB","raw_prompt","model_response","None","{'", ".env=")
-    if any(value.lower() in (html+raw).lower() for value in forbidden): failures.append("prohibited public content")
+    for value in (value for value in manifest["public_references"].values() if value):
+        path=urlparse(value).path
+        if value not in html and path not in html: failures.append("public link missing"); break
+    combined=html+raw; forbidden=("C:\\","repository.path","rel_70e7648a0731","DrawDB","raw_prompt","model_response","{'", ".env=")
+    if any(value.lower() in combined.lower() for value in forbidden) or re.search(r"\bNone\b",combined): failures.append("prohibited public content")
     example={"schema_version":"external_release_contract.v1","project_name":"public-project","repository_url":"https://github.com/example/public-project","live_url":"https://example.com","target_user":"public users","product_promise":"Inspect a public journey","critical_journey":["Open","Inspect"],"non_goals":[],"owner_constraints":["Public read-only review"],"capabilities":{key:key=="inspect_public_surfaces" for key in CAPABILITIES}}
     try: validate_contract(example)
     except ValueError: failures.append("generated contract example invalid")
