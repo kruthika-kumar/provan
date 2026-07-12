@@ -44,7 +44,12 @@ def main(argv: list[str] | None = None) -> int:
         path = Path(args.release); data = load(path); targets = data["panel"]["selected_modules"] if args.all else [args.module]
         for module_id in targets:
             if module_id not in registry: raise SystemExit(f"unknown module: {module_id}")
-            result = run_module(module_id, data); data["checks"].extend(result["checks"]); data["findings"].extend(result["findings"])
+            result = run_module(module_id, data)
+            criterion_ids = {check.get("criterion_id") for check in result["checks"]}
+            finding_ids = {finding.get("id") for finding in result["findings"]}
+            data["checks"] = [check for check in data["checks"] if check.get("criterion_id") not in criterion_ids]
+            data["findings"] = [finding for finding in data["findings"] if finding.get("id") not in finding_ids]
+            data["checks"].extend(result["checks"]); data["findings"].extend(result["findings"])
         data["verdict"] = calculate(data); data["state"] = data["verdict"]["status"]; save(path, data); print(json.dumps({"release_id": data["release_id"], "verdict": data["verdict"], "checks": len(data["checks"]), "findings": len(data["findings"])}, indent=2))
     elif args.command == "decision":
         path = Path(args.release); data = load(path)
