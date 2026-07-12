@@ -4,16 +4,21 @@ import html
 import json
 from pathlib import Path
 
+from .public import public_release_view
+from .registry import discover
+
 
 def esc(value) -> str:
     return html.escape(str(value))
 
 
 def render(release: dict, output: Path) -> Path:
+    release = public_release_view(release, discover())
     release_id = esc(release.get("release_id", "missing"))
     verdict = esc(release.get("verdict", {}).get("status", "DRAFT"))
     promise = esc(release.get("product", {}).get("promise", ""))
-    selected = ", ".join(release.get("panel", {}).get("selected_modules", []))
+    selection = release.get("manager_selection", {})
+    selected = ", ".join(selection.get("selected_modules", [])) or "Pending Hermes manager selection"
     findings = "".join(
         f"<article><h3>{esc(f.get('title',''))}</h3><p>{esc(f.get('criterion_id',''))} · {esc(f.get('state',''))}</p><pre>{esc(json.dumps(f.get('evidence', []), indent=2))}</pre></article>"
         for f in release.get("findings", [])
@@ -26,13 +31,7 @@ def render(release: dict, output: Path) -> Path:
         f"<article><h3>{esc(c.get('criterion_id','Check'))}</h3><p>HTTP {esc(c.get('status'))} · passed={esc(c.get('passed'))}</p><p>{esc(c.get('target',''))}</p></article>"
         for c in release.get("checks", [])
     ) or "<p>No checks.</p>"
-    trace = esc(json.dumps({
-        "release_id": release.get("release_id"),
-        "hermes_session_id": release.get("telemetry", {}).get("hermes_session_id"),
-        "github": release.get("integrations", {}).get("github"),
-        "cloudflare": release.get("integrations", {}).get("cloudflare"),
-    }, indent=2))
-    payload = esc(json.dumps(release, indent=2))
+    trace = esc(json.dumps({"release_id": release.get("release_id"), "public_artifacts": release.get("public_artifacts"), "native_ids": release.get("native_ids")}, indent=2))
     page = f"""<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width'>
 <title>Shiproom · {verdict}</title><style>
 :root{{--ink:#13231d;--paper:#f5f2e9;--green:#175c44;--line:#cfcbbe}}*{{box-sizing:border-box}}
@@ -45,7 +44,7 @@ details{{margin-top:32px}}pre{{overflow:auto;background:#10221b;color:#eaf4ef;pa
 <section><h2>Product promise</h2><p>{promise}</p></section><section><h2>Selected panel</h2><p>{esc(selected)}</p></section>
 <section><h2>Evidence-backed findings</h2><div class='grid'>{findings}</div></section><section><h2>Owner decisions</h2><div class='grid'>{decisions}</div></section>
 <section><h2>Before / after checks</h2><div class='grid'>{checks}</div></section><section><h2>Traceability</h2><pre>{trace}</pre></section>
-<details><summary>Canonical release object</summary><pre>{payload}</pre></details></main></body></html>"""
+</main></body></html>"""
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(page, encoding="utf-8")
     return output

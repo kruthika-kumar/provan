@@ -21,13 +21,28 @@ Start the patient in **Terminal A** and leave it running:
 python -m demo_patient.server
 ```
 
-Start the named Hermes operator session in **Terminal B**:
+For the judged public run, first generate the single allowlisted projection from the private canonical state:
 
 ```powershell
-hermes -p buildathon --tui --continue "shiproom-judged-release" --skills shiproom
+shiproom hermes packet --release release-state/release.json --output public-artifacts/public-release-view.json
 ```
 
-Inside that Hermes session, invoke `/shiproom` with the repository, URL, promise, target user, and critical journey. The executable workflow is:
+Run `python scripts/disclosure_audit.py --repo .` only after committing. Review its fail-closed receipt, make the GitHub repository public explicitly, and clone it into a fresh temporary directory. Do not run judged Hermes from this original event workspace.
+
+In **Terminal B**, from the fresh public clone, start the named Hermes TUI session:
+
+```powershell
+hermes -p buildathon --tui --continue "shiproom-judged-release-rel_35e58f680a1a"
+```
+
+Invoke `/shiproom` and paste only `public-artifacts/public-release-view.json`. Hermes must dynamically select modules, explain every selected/skipped module, and delegate substantive Product/UX and Engineering/QA reviews. After the run, create a local receipt with only `release_id`, native `session_id`, session name, ISO start/end timestamps, and `public_inputs_only: true`, then ingest it:
+
+```powershell
+shiproom hermes receipt --release release-state/release.json --receipt <receipt.json>
+shiproom hermes verify-join --release release-state/release.json --receipt hermes-receipts/receipt.json
+```
+
+The original executable local workflow remains:
 
 ```powershell
 shiproom release init --repo . --live-url http://127.0.0.1:8787 --promise "Users can generate and open a public launch card."
@@ -44,6 +59,8 @@ python scripts/reset_demo.py --repo . --release release-state/release.json
 ```
 
 Hermes owns intake, dynamic delegation, and presentation through `skills/shiproom/SKILL.md`. Python owns schemas, evidence, transitions, verdicts, remediation policy, and report rendering.
+
+The public report, GitHub comment, Hermes packet, and joined checks must all be derived from `public_release_view`; canonical state remains private. The report never embeds the canonical object. If publication fails, use a manually sanitized packet as a documented fallback; this repository does not implement a second disclosure architecture.
 
 Core works with local state and text output. Convex, Langfuse, OpenTelemetry, and ElevenLabs are optional adapters and never determine the release verdict.
 

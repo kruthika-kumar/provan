@@ -9,7 +9,7 @@ export default {
     if (url.pathname === "/health") {
       return Response.json({ status: "ok", service: "shiproom-demo" });
     }
-    if (url.pathname.startsWith("/results/")) {
+    if (url.pathname.startsWith("/result/") || url.pathname.startsWith("/results/")) {
       return new Response("<h1>Demo launch card</h1>", { headers: { "content-type": "text/html; charset=utf-8" } });
     }
     if (url.pathname.startsWith("/reports/")) {
