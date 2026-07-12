@@ -26,4 +26,5 @@ context-bootstrap/
 *.mp3
 *.wav
 .env
+.shiproom/local/
 shiproom_buildathon_blueprint.md

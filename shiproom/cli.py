@@ -21,6 +21,8 @@ from .context import compile_project_context, context_event_metadata
 from .remediation import assert_clean_worktree, current_branch, git, repository_root
 from .runner import run_module
 from .verdict import calculate
+from .onboarding import discover as discover_project, human_report, initialize as initialize_project, paths as project_paths
+from .project import activate as activate_project, activation_status, local_locator, validate_contract
 
 
 def load(path: Path) -> dict:
@@ -35,6 +37,9 @@ def save(path: Path, data: dict) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="shiproom")
     sub = parser.add_subparsers(dest="command", required=True)
+    init = sub.add_parser("init"); init.add_argument("--repo", default="."); init.add_argument("--local-only", action="store_true"); init.add_argument("--non-interactive", action="store_true"); init.add_argument("--project-name"); init.add_argument("--product-purpose"); init.add_argument("--primary-user", action="append"); init.add_argument("--profile", choices=["inspect", "verify", "remediate"], default="inspect"); init.add_argument("--activate", action="store_true")
+    project = sub.add_parser("project"); project.add_argument("action", choices=["show", "activate"]); project.add_argument("--repo", default="."); project.add_argument("--contract"); project.add_argument("--json", action="store_true")
+    doctor = sub.add_parser("doctor"); doctor.add_argument("--repo", default="."); doctor.add_argument("--json", action="store_true"); doctor.add_argument("--probe", action="store_true")
     modules = sub.add_parser("modules"); modules.add_argument("action", choices=["list"])
     release = sub.add_parser("release"); release.add_argument("action", choices=["init"]); release.add_argument("--repo", required=True); release.add_argument("--live-url", required=True); release.add_argument("--promise", required=True); release.add_argument("--target-user", default="builders"); release.add_argument("--output", default="release-state/release.json")
     review = sub.add_parser("review"); group = review.add_mutually_exclusive_group(required=True); group.add_argument("--module"); group.add_argument("--all", action="store_true"); review.add_argument("--release", required=True)
@@ -46,7 +51,30 @@ def main(argv: list[str] | None = None) -> int:
     runs = sub.add_parser("runs"); runs.add_argument("action", choices=["list", "show", "render"]); runs.add_argument("--release"); runs.add_argument("--release-state"); runs.add_argument("--output"); runs.add_argument("--audience", choices=["all", "ceo", "product", "engineering"], default="all"); runs.add_argument("--run-root", default="run-history")
     args = parser.parse_args(argv)
     registry = discover()
-    if args.command == "modules":
+    if args.command == "init":
+        repo = repository_root(Path(args.repo)); shared, _ = project_paths(repo, args.local_only)
+        existing = shared.is_file()
+        if not existing:
+            if args.non_interactive and not all((args.project_name, args.product_purpose, args.primary_user, args.activate)): raise SystemExit("non-interactive init requires --project-name --product-purpose --primary-user and --activate")
+            name = args.project_name or input("Project name: ").strip(); purpose = args.product_purpose or input("One-sentence product purpose: ").strip(); users = args.primary_user or [input("Primary users: ").strip()]
+        else:
+            data = json.loads(shared.read_text(encoding="utf-8")); name=data["project_name"]; purpose=data["product_purpose"]; users=data["primary_users"]
+        confirmed = args.activate
+        if existing and not confirmed:
+            status = activation_status(repo, shared, project_paths(repo)[1])
+            confirmed = status["reusable"] and not status["invalid_command_grants"]
+        if not args.non_interactive and not confirmed:
+            preview = initialize_project(repo, project_name=name, product_purpose=purpose, primary_users=users, profile=args.profile, local_only=args.local_only, confirmed=False); print(json.dumps(preview, indent=2)); confirmed = input("Activate this project contract? [y/N]: ").strip().lower() == "y"
+        result = initialize_project(repo, project_name=name, product_purpose=purpose, primary_users=users, profile=args.profile, local_only=args.local_only, confirmed=confirmed); print(json.dumps(result, indent=2, default=str)); return 0 if result["status"] == "ACTIVE" else 1
+    elif args.command == "project":
+        repo = repository_root(Path(args.repo)); contract_path = Path(args.contract).resolve() if args.contract else next((p for p in project_paths(repo)[:1] + project_paths(repo, True)[:1] if p.is_file()), project_paths(repo)[0]); receipt = project_paths(repo)[1]
+        if not contract_path.is_file(): raise SystemExit("project contract not found")
+        if args.action == "activate": result = activate_project(repo, contract_path, receipt)
+        else: result = activation_status(repo, contract_path, receipt)
+        print(json.dumps(result, indent=2, default=str) if args.json or args.action == "activate" else human_report(discover_project(repo))); return 0
+    elif args.command == "doctor":
+        repo = repository_root(Path(args.repo)); result = discover_project(repo, probe=args.probe); print(json.dumps(result, indent=2, default=str) if args.json else human_report(result)); return 0
+    elif args.command == "modules":
         for module_id, module in registry.items(): print(f"{module_id}\t{module.config.get('name','')}")
     elif args.command == "release":
         repo = repository_root(Path(args.repo)); assert_clean_worktree(repo); base_branch = current_branch(repo)

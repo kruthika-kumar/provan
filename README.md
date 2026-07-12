@@ -64,4 +64,20 @@ The public report, GitHub comment, Hermes packet, and joined checks must all be 
 
 Core works with local state and text output. Convex, Langfuse, OpenTelemetry, and ElevenLabs are optional adapters and never determine the release verdict.
 
+## Private-project onboarding
+
+Private alpha onboarding is separate from the historical public external-release contract. From an already cloned private repository, preview and activate a minimal human-owned project contract:
+
+```powershell
+shiproom init --repo .
+shiproom project show
+shiproom doctor
+```
+
+The shared, commit-safe authority lives at `.shiproom/project-contract.json`; machine paths, activation receipts, deployment locators, cached context, and private reports live under ignored `.shiproom/local/`. Normal onboarding asks only for the project name, one-sentence purpose, primary users, and capability confirmation. Reports are private and memory is disabled by default.
+
+`inspect` permits bounded file, Git metadata/diff, and configured deployment reads. `verify` additionally permits only activated, hash-bound argv command grants with no shell. `remediate` additionally permits allowlisted changes in an isolated Shiproom Git worktree; it never patches the active checkout. Push, PR, merge, publication, and deployment remain separately disabled.
+
+`shiproom init`, `shiproom project show`, and `shiproom doctor` make no outbound network calls by default. Use `shiproom doctor --probe` for explicit bounded connectivity checks.
+
 See `docs/event-readiness.md` for the frozen runtime record, completed proofs, and live-service blockers. Deploy the patient/report after Cloudflare authentication with `npx wrangler deploy --config cloudflare/wrangler.toml`.

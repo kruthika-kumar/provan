@@ -1,0 +1,36 @@
+{
+  "schema_version": "project_contract.v1",
+  "status": "active",
+  "project_id": "shiproom",
+  "project_name": "Shiproom",
+  "product_purpose": "Provide evidence-gated release assurance while preserving human authority.",
+  "primary_users": [
+    "early-stage product teams"
+  ],
+  "project_principles": [
+    "human_authority_agent_execution",
+    "evidence_before_closure"
+  ],
+  "active_practices": [],
+  "protected_paths": [],
+  "excluded_paths": [
+    ".env",
+    ".env.*",
+    ".git",
+    ".git/**",
+    ".shiproom/local",
+    ".shiproom/local/**",
+    "**/credentials/**",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*.key"
+  ],
+  "measurement_refs": [],
+  "accepted_risks": [],
+  "report_visibility": "private",
+  "memory_policy": "disabled",
+  "default_capability_profile": "inspect",
+  "execution_policy": {
+    "approved_commands": []
+  }
+}
