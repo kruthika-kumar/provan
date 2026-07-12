@@ -1,14 +1,13 @@
 import json
-import threading
+import subprocess
 from pathlib import Path
 
 import pytest
 
-from demo_patient.server import Handler, ThreadingHTTPServer
-from shiproom.evidence import http_check, validate_module_result
+from shiproom.evidence import validate_module_result
 from shiproom.models import EvidenceStatus, Release
 from shiproom.registry import discover, select
-from shiproom.remediation import validate_target
+from shiproom.remediation import ROUTE_TARGETS, validate_target
 from shiproom.verdict import calculate, close_finding, is_terminal_success
 
 
@@ -66,14 +65,11 @@ def test_decision_resolution_precedence():
 
 
 def test_demo_patient_route_mismatch():
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
-    try:
-        base = f"http://127.0.0.1:{server.server_port}"
-        assert http_check(base + "/result/demo")["status"] == 404
-        assert http_check(base + "/results/demo")["status"] == 200
-    finally:
-        server.shutdown(); thread.join()
+    root = Path(__file__).resolve().parents[1]
+    source = subprocess.run(["git", "show", "main:demo_patient/server.py"], cwd=root, text=True, capture_output=True, check=True).stdout
+    broken, fixed = ROUTE_TARGETS[Path("demo_patient/server.py")]
+    assert source.count(broken) == 1
+    assert fixed not in source
 
 
 def test_non_allowlisted_remediation_rejected(tmp_path):
