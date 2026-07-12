@@ -130,9 +130,15 @@ def test_path_traversal_and_windows_escapes_are_rejected(repo: Path,value: str):
 
 def test_symlink_escape_is_rejected(repo: Path,tmp_path: Path):
     link=repo/"escape"
-    try: link.symlink_to(tmp_path,target_is_directory=True)
-    except OSError: pytest.skip("symlinks unavailable")
-    with pytest.raises(PermissionError): resolve_policy_path(repo,"escape/file.txt",[],[],operation="read")
+    try:
+        link.symlink_to(tmp_path,target_is_directory=True)
+        with pytest.raises(PermissionError): resolve_policy_path(repo,"escape/file.txt",[],[],operation="read")
+    except OSError:
+        lexical=(repo/"escape/file.txt").absolute(); original=Path.resolve
+        def simulated_resolve(path: Path, strict: bool = False):
+            return original(tmp_path/"file.txt", strict=False) if path.absolute()==lexical else original(path, strict=strict)
+        with patch.object(Path,"resolve",simulated_resolve), pytest.raises(PermissionError):
+            resolve_policy_path(repo,"escape/file.txt",[],[],operation="read")
 
 
 def test_remote_credentials_rejected_and_absent_remote_allowed(repo: Path):
@@ -153,6 +159,12 @@ def test_doctor_default_has_zero_network_calls(repo: Path):
     with patch("urllib.request.urlopen") as urlopen:
         result=discover(repo,probe=False)
     urlopen.assert_not_called(); assert result["network_probes"]==[] and result["contract"]["effective_profile"]=="inspect"
+
+
+def test_init_default_has_zero_network_calls(repo: Path):
+    with patch("urllib.request.urlopen") as urlopen:
+        init_project(repo)
+    urlopen.assert_not_called()
 
 
 def test_remediation_uses_isolated_worktree_even_when_active_tree_dirty(repo: Path):
