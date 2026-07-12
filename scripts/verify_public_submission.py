@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from shiproom.external import CAPABILITIES, validate_contract
 
@@ -12,7 +12,8 @@ TOP_LEVEL={"schema_version","generated_at","policy_version","eval_version","rele
 
 
 def fetch(url: str) -> tuple[int, str]:
-    with urlopen(url,timeout=20) as response: return response.status,response.read().decode("utf-8")
+    request=Request(url,headers={"User-Agent":"ShiproomPublicSmoke/1.0 (+https://github.com/kruthika-kumar/shiproom)"})
+    with urlopen(request,timeout=20) as response: return response.status,response.read().decode("utf-8")
 
 
 def main() -> int:
