@@ -35,6 +35,9 @@ def make_repo(tmp_path: Path) -> Path:
         shutil.copytree(ROOT / name, repo / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     for name in ("pyproject.toml", ".gitignore"):
         shutil.copy2(ROOT / name, repo / name)
+    for relative in ROUTE_TARGETS:
+        baseline = subprocess.run(["git", "show", f"main:{relative.as_posix()}"], cwd=ROOT, text=True, capture_output=True, check=True).stdout
+        (repo / relative).write_text(baseline, encoding="utf-8")
     git(repo, "init", "-b", "event-base")
     git(repo, "config", "user.email", "shiproom-test@example.invalid")
     git(repo, "config", "user.name", "Shiproom Test")
