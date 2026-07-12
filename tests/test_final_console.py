@@ -32,6 +32,7 @@ def test_form_contract_is_bounded_read_only_and_has_copy_download():
     for capability in ("run_safe_commands","publish_report","comment_upstream","create_local_diff","push_branch","open_pr","modify_deployment"):
         assert f'{capability}": false' in page
     assert "public HTTPS URLs" in page and "Download JSON" in page and "Copy JSON" in page
+    assert "};form.addEventListener('submit'" in page
 
 def test_duration_badge_and_worker_routes():
     assert human_duration("2026-07-12T10:00:00Z","2026-07-12T10:17:20Z")=="17m 20s"
