@@ -78,6 +78,9 @@ class Release:
     repository: dict[str, Any]
     deployment: dict[str, Any]
     product: dict[str, Any]
+    mode: str = "controlled"
+    capabilities: dict[str, bool] = field(default_factory=dict)
+    owner_constraints: list[str] = field(default_factory=list)
     schema_version: str = "release.v0"
     policies: dict[str, Any] = field(default_factory=lambda: {
         "max_immediate_owner_decisions": 2,

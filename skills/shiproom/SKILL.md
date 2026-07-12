@@ -32,6 +32,29 @@ Lead with promise, observed behavior, evidence class, blocker state, before/afte
 
 ## Executable protocol
 
+### External read-only protocol
+
+For `mode=external`, accept only `review_packet.v1`. Respect its explicit capability booleans. Never run a tool or recommend an action that requires a false capability. The packet contains Python's eligible module set; select and delegate only within that set, while returning selected modules, skipped modules, a reason for every module, and a delegation plan.
+
+The manager records actual operations through the Shiproom CLI. Product/UX reviews the public promise and bounded live journey. Engineering/QA reviews public repository content and documented workflow. Design and Data run only when selected. Read-only reviewers must not install dependencies, run project commands, write files, create diffs, or mutate Git/GitHub/deployments unless the corresponding capability is true.
+
+Each reviewer returns `module_result.v0` with a stable `result_id`, evidence references, checks, and findings. Submit it through:
+
+```powershell
+shiproom external result --release <release.json> --module <module> --delegation-id <id> --input <result.json>
+```
+
+If Python returns `revision_required`, send the exact rejection reasons once to the same reviewer and submit one revision. If the second result fails, stop that module and fail closed. Model or agent judgment must never be labelled deterministic. Reviewer output and run events never close findings or calculate verdicts; Python canonical state remains authoritative.
+
+For private external reviews, render only into ignored local storage:
+
+```powershell
+shiproom external finish --release <release.json>
+shiproom runs render --release <release_id> --release-state <release.json> --audience all
+```
+
+Do not publish when `publish_report=false`. Preserve the actual Hermes session ID and delegation IDs, but never export the complete transcript.
+
 ### Judged public boundary
 
 Run the judged session only from a fresh, clean clone of the public repository. Accept only the `public_release_view.v0` packet. Do not request or inspect the original event workspace, ignored/uncommitted files, environment variables, canonical release JSON, local Hermes state, or complete session exports.

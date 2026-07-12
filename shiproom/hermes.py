@@ -3,12 +3,15 @@ from __future__ import annotations
 from datetime import datetime
 
 
-def validate_manager_decision(value: dict, available_ids: set[str]) -> dict:
+def validate_manager_decision(value: dict, available_ids: set[str], ineligible_ids: set[str] | None = None) -> dict:
     required = {"selected_modules", "skipped_modules", "selection_reasons", "delegation_plan"}
     if set(value) != required:
         raise ValueError("manager decision must use the exact selection contract")
     selected = value["selected_modules"]
     skipped = value["skipped_modules"]
+    ineligible_ids = ineligible_ids or set()
+    if set(selected) & ineligible_ids:
+        raise ValueError("manager selected a module outside the eligible set")
     if not isinstance(selected, list) or not isinstance(skipped, list) or set(selected) | set(skipped) != available_ids or set(selected) & set(skipped):
         raise ValueError("manager decision must partition the available modules")
     if set(value["selection_reasons"]) != available_ids:
@@ -19,8 +22,8 @@ def validate_manager_decision(value: dict, available_ids: set[str]) -> dict:
     return value
 
 
-def apply_manager_decision(release: dict, decision: dict, available_ids: set[str]) -> dict:
-    decision = validate_manager_decision(decision, available_ids)
+def apply_manager_decision(release: dict, decision: dict, available_ids: set[str], ineligible_ids: set[str] | None = None) -> dict:
+    decision = validate_manager_decision(decision, available_ids, ineligible_ids)
     release["panel"] = {"selected_modules": decision["selected_modules"], "skipped_modules": [{"module_id": module, "reason": decision["selection_reasons"][module]} for module in decision["skipped_modules"]], "selection_reasons": decision["selection_reasons"], "delegation_plan": decision["delegation_plan"]}
     return release
 

@@ -28,6 +28,10 @@ def calculate(release: dict) -> dict:
     unresolved = [f for f in release.get("findings", []) if f.get("blocking") and f.get("state") not in {FindingState.CLOSED, FindingState.ACCEPTED_RISK}]
     if unresolved:
         return {"status": ReleaseState.HOLD, "reason_codes": ["VERIFIED_BLOCKER_UNRESOLVED"]}
+    required = [check for check in release.get("checks", []) if check.get("required")]
+    missing = [check for check in required if check.get("evidence_status") == EvidenceStatus.MISSING or not check.get("evidence_status")]
+    if missing:
+        return {"status": ReleaseState.HOLD, "reason_codes": ["INSUFFICIENT_EVIDENCE"]}
     pending = [
         d for d in release.get("owner_decisions", [])
         if not d.get("choice") or d.get("resolution") not in {DecisionResolution.RESOLVED, DecisionResolution.ACCEPTED_CONDITION}

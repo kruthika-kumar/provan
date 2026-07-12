@@ -16,6 +16,10 @@ session-exports/
 hermes-receipts/
 public-artifacts/
 disclosure-audit.json
+run-history/
+review-packets/
+private-reports/
+external-release-state/
 audio/
 *.mp3
 *.wav

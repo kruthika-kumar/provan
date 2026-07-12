@@ -7,10 +7,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .models import Release
+from .external import compile_release, eligible_modules, require_capability, review_packet, validate_contract
 from .hermes import apply_manager_decision, validate_receipt
 from .public import public_release_view, write_public_view
+from .review import ReviewerCorrection
 from .registry import discover, select
 from .report import render
+from .runs import LocalRunStore, materialize
+from .evidence import http_check
 from .remediation import assert_clean_worktree, current_branch, repository_root
 from .runner import run_module
 from .verdict import calculate
@@ -35,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     decision = sub.add_parser("decision"); decision.add_argument("action", choices=["add", "record"]); decision.add_argument("--release", required=True); decision.add_argument("--id", default="decision_publish_promise"); decision.add_argument("--title", default="Beta publication promise"); decision.add_argument("--choice"); decision.add_argument("--resolution", choices=["resolved", "accepted_condition"])
     trace = sub.add_parser("trace"); trace.add_argument("action", choices=["record"]); trace.add_argument("--release", required=True); trace.add_argument("--live-url"); trace.add_argument("--hermes-session-id"); trace.add_argument("--github-repository"); trace.add_argument("--github-pr-number", type=int); trace.add_argument("--github-pr-id"); trace.add_argument("--github-comment-id"); trace.add_argument("--github-comment-url"); trace.add_argument("--cloudflare-deployment-id"); trace.add_argument("--report-url")
     hermes = sub.add_parser("hermes"); hermes.add_argument("action", choices=["packet", "selection", "receipt", "verify-join"]); hermes.add_argument("--release", required=True); hermes.add_argument("--input"); hermes.add_argument("--receipt"); hermes.add_argument("--output")
+    external = sub.add_parser("external"); external.add_argument("action", choices=["init", "packet", "repository", "selection", "result", "check-http", "finish"]); external.add_argument("--contract"); external.add_argument("--release"); external.add_argument("--input"); external.add_argument("--output"); external.add_argument("--module"); external.add_argument("--delegation-id"); external.add_argument("--criterion-id"); external.add_argument("--branch"); external.add_argument("--commit-sha"); external.add_argument("--clean", action="store_true"); external.add_argument("--run-root", default="run-history")
+    runs = sub.add_parser("runs"); runs.add_argument("action", choices=["list", "show", "render"]); runs.add_argument("--release"); runs.add_argument("--release-state"); runs.add_argument("--output"); runs.add_argument("--audience", choices=["all", "ceo", "product", "engineering"], default="all"); runs.add_argument("--run-root", default="run-history")
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "modules":
@@ -65,6 +71,64 @@ def main(argv: list[str] | None = None) -> int:
             if not args.choice or not args.resolution: raise SystemExit("record requires --choice and --resolution")
             existing.update({"choice": args.choice, "resolution": args.resolution, "recorded_at": datetime.now(UTC).isoformat(), "evidence": [{"status": "owner_confirmed", "kind": "owner_choice", "value": args.choice}]})
         data["verdict"] = calculate(data); data["state"] = data["verdict"]["status"]; save(path, data); print(json.dumps({"release_id": data["release_id"], "decision_id": args.id, "verdict": data["verdict"]}, indent=2))
+    elif args.command == "external":
+        store = LocalRunStore(Path(args.run_root))
+        if args.action == "init":
+            if not args.contract: raise SystemExit("external init requires --contract")
+            contract = validate_contract(json.loads(Path(args.contract).read_text(encoding="utf-8")))
+            data = compile_release(contract); output = Path(args.output or f"release-state/{data['release_id']}.json"); save(output, data)
+            store.append(data["release_id"], "contract_accepted", operation="external.init", evidence_references=[data["repository"]["url"], data["deployment"]["url"]], metadata={"contract_schema": contract["schema_version"], "capabilities": data["capabilities"]})
+            print(json.dumps({"release_id": data["release_id"], "release": str(output)}, indent=2))
+        else:
+            if not args.release: raise SystemExit(f"external {args.action} requires --release")
+            path = Path(args.release); data = load(path)
+            if data.get("mode") != "external": raise SystemExit("external command requires mode=external")
+            if args.action == "repository":
+                require_capability(data, "inspect_public_surfaces")
+                if not args.branch or not args.commit_sha or not args.clean: raise SystemExit("external repository requires --branch --commit-sha --clean")
+                data["repository"].update({"base_branch": args.branch, "commit_sha": args.commit_sha, "clean_before": True}); save(path, data)
+                store.append(data["release_id"], "deterministic_check", operation="git.metadata", status="passed", evidence_references=[data["repository"]["url"]], metadata={"branch": args.branch, "commit_sha": args.commit_sha, "clean": True}); print(json.dumps(data["repository"], indent=2))
+            elif args.action == "packet":
+                packet = review_packet(data, registry); data["panel"]["eligible_modules"] = [m["module_id"] for m in packet["eligible_modules"]]; save(path, data)
+                store.append(data["release_id"], "manager_planning", agent_id="release_manager", operation="external.packet", metadata={"eligible_modules": data["panel"]["eligible_modules"], "ineligible_modules": packet["ineligible_modules"]})
+                output = Path(args.output or f"review-packets/{data['release_id']}.json"); save(output, packet); print(output)
+            elif args.action == "selection":
+                if not args.input: raise SystemExit("external selection requires --input")
+                decision_data = json.loads(Path(args.input).read_text(encoding="utf-8")); eligible, _ = eligible_modules(data, registry); all_ids = set(registry); ineligible = all_ids - set(eligible)
+                apply_manager_decision(data, decision_data, all_ids, ineligible); data["panel"]["eligible_modules"] = eligible; save(path, data)
+                planning = next((e for e in reversed(store.events(data["release_id"])) if e["event_type"] == "manager_planning"), None)
+                parent = planning["event_id"] if planning else None
+                for module_id in decision_data["selected_modules"]: store.append(data["release_id"], "module_selected", parent_event_id=parent, agent_id="release_manager", module_id=module_id, status="selected", metadata={"reason": decision_data["selection_reasons"][module_id], "module_version": registry[module_id].config.get("version")})
+                for module_id in decision_data["skipped_modules"]: store.append(data["release_id"], "module_skipped", parent_event_id=parent, agent_id="release_manager", module_id=module_id, status="skipped", metadata={"reason": decision_data["selection_reasons"][module_id]})
+                print(json.dumps(data["panel"], indent=2))
+            elif args.action == "result":
+                if not all((args.input, args.module, args.delegation_id)): raise SystemExit("external result requires --input --module --delegation-id")
+                result_data = json.loads(Path(args.input).read_text(encoding="utf-8")); correction = ReviewerCorrection(store, data["release_id"])
+                prior = [e for e in store.events(data["release_id"]) if e.get("module_id") == args.module and e["event_type"] == "result_rejected"]
+                correction.attempts[args.module] = len(prior)
+                response = correction.submit(result_data, expected_module=args.module, delegation_id=args.delegation_id)
+                if response["status"] == "accepted":
+                    result = response["result"]; criteria = {c.get("criterion_id") for c in result["checks"]}; data["checks"] = [c for c in data["checks"] if c.get("criterion_id") not in criteria] + result["checks"]
+                    ids = {f.get("id") for f in result["findings"]}; data["findings"] = [f for f in data["findings"] if f.get("id") not in ids] + result["findings"]; save(path, data)
+                print(json.dumps(response, indent=2));
+                if response["status"] == "failed": return 1
+            elif args.action == "check-http":
+                require_capability(data, "inspect_public_surfaces"); criterion = args.criterion_id or "EXTERNAL_DEPLOYMENT_REACHABLE"; check = http_check(data["deployment"]["url"]); check.update({"criterion_id": criterion, "required": True})
+                data["checks"] = [c for c in data["checks"] if c.get("criterion_id") != criterion] + [check]; save(path, data)
+                store.append(data["release_id"], "deterministic_check", criterion_id=criterion, operation="http.get", status="passed" if check["passed"] else "failed", evidence_references=[check["target"]], metadata={"http_status": check.get("status"), "evidence_status": check["evidence_status"]}); print(json.dumps(check, indent=2))
+            else:
+                data["verdict"] = calculate(data); data["state"] = data["verdict"]["status"]; save(path, data)
+                verdict_event = store.append(data["release_id"], "verdict_calculated", operation="canonical.calculate", status=data["state"], metadata={"reason_codes": data["verdict"]["reason_codes"]})
+                store.append(data["release_id"], "run_completed", parent_event_id=verdict_event["event_id"], status="completed" if data["state"] in {"READY", "SHIP_WITH_CONDITIONS"} else "failed", metadata={"verdict": data["state"]}); print(json.dumps(data["verdict"], indent=2))
+    elif args.command == "runs":
+        store = LocalRunStore(Path(args.run_root))
+        if args.action == "list": print("\n".join(store.releases()))
+        else:
+            if not args.release or not args.release_state: raise SystemExit("runs show/render require --release and --release-state")
+            data = load(Path(args.release_state)); events = store.events(args.release); record = materialize(data, events)
+            if args.action == "show": print(json.dumps(record, indent=2))
+            else:
+                output = Path(args.output or f"private-reports/{args.release}-{args.audience}.html"); render(data, output, events=events, audience=args.audience); store.append(args.release, "report_rendered", operation=f"runs.render.{args.audience}", status="completed", metadata={"audience": args.audience, "private": not data.get("capabilities", {}).get("publish_report", False)}); print(output)
     elif args.command == "hermes":
         path = Path(args.release); data = load(path)
         if args.action == "packet":
