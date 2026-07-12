@@ -16,6 +16,7 @@ from .report import render
 from .runs import LocalRunStore, materialize
 from .evidence import http_check
 from .telemetry import span
+from .policy import guard_external_operation
 from .remediation import assert_clean_worktree, current_branch, repository_root
 from .runner import run_module
 from .verdict import calculate
@@ -87,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
             path = Path(args.release); data = load(path)
             if data.get("mode") != "external": raise SystemExit("external command requires mode=external")
             if args.action == "repository":
-                require_capability(data, "inspect_public_surfaces")
+                guard_external_operation(data, store, "public.inspect")
                 if not args.branch or not args.commit_sha or not args.clean: raise SystemExit("external repository requires --branch --commit-sha --clean")
                 data["repository"].update({"base_branch": args.branch, "commit_sha": args.commit_sha, "clean_before": True}); save(path, data)
                 store.append(data["release_id"], "deterministic_check", operation="git.metadata", status="passed", evidence_references=[data["repository"]["url"]], metadata={"branch": args.branch, "commit_sha": args.commit_sha, "clean": True}); print(json.dumps(data["repository"], indent=2))
@@ -119,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(response, indent=2));
                 if response["status"] == "failed": return 1
             elif args.action == "check-http":
-                require_capability(data, "inspect_public_surfaces"); criterion = args.criterion_id or "EXTERNAL_DEPLOYMENT_REACHABLE"
+                guard_external_operation(data, store, "public.inspect"); criterion = args.criterion_id or "EXTERNAL_DEPLOYMENT_REACHABLE"
                 with span("shiproom.check.evaluate", {"release_id": data["release_id"], "criterion_id": criterion}): check = http_check(data["deployment"]["url"])
                 check.update({"criterion_id": criterion, "required": True})
                 data["checks"] = [c for c in data["checks"] if c.get("criterion_id") != criterion] + [check]; save(path, data)

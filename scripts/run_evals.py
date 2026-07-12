@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import sys
+import tempfile
+from pathlib import Path
 
 from shiproom.evidence import validate_module_result
 from shiproom.models import EvidenceStatus, Release
 from shiproom.registry import discover, select
 from shiproom.verdict import calculate, close_finding
+from shiproom.external import CAPABILITIES, compile_release
+from shiproom.policy import POLICY_VERSION, execute_external_operation
+from shiproom.runs import LocalRunStore
 
 
 def main() -> int:
@@ -34,6 +39,15 @@ def main() -> int:
     blocked_owner = dict(blocked); blocked_owner["owner_decisions"] = [{"choice": "Accept", "resolution": "accepted_condition"}]
     check("owner choice cannot erase blocker", calculate(blocked_owner)["status"] == "HOLD")
     check("report evidence linkage contract", all("evidence" in f for f in [verified]))
+    with tempfile.TemporaryDirectory() as raw:
+        root = Path(raw); fixture = root / "README.md"; fixture.write_text("redacted public fixture\n", encoding="utf-8")
+        contract = {"schema_version":"external_release_contract.v1","project_name":"Redacted public project","repository_url":"https://github.com/example/public-project","live_url":"https://example.com","target_user":"public users","product_promise":"Inspect a bounded public journey","critical_journey":["Open","Inspect"],"non_goals":[],"owner_constraints":["Read only"],"capabilities":{key:key=="inspect_public_surfaces" for key in CAPABILITIES}}
+        external = compile_release(contract); external["checks"] = [{"criterion_id":"PUBLIC_JOURNEY","required":True,"passed":False,"evidence_status":EvidenceStatus.MISSING,"policy_version":POLICY_VERSION}]
+        store = LocalRunStore(root / "history"); called = []
+        try: execute_external_operation(external, store, "test.run", lambda: called.append(True))
+        except PermissionError: pass
+        external_verdict = calculate(external)
+        check("redacted external read-only failure", not called and fixture.read_text(encoding="utf-8")=="redacted public fixture\n" and not external["findings"] and external_verdict=={"status":"HOLD","reason_codes":["INSUFFICIENT_EVIDENCE"]} and store.events(external["release_id"])[0]["event_type"]=="operation_rejected")
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 

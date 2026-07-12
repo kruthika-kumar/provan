@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from shiproom.console import completed_run, human_duration, render_console, verdict_badge, write_submission
+from shiproom.console import completed_run, human_duration, public_evidence_manifest, render_console, verdict_badge, write_submission
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -17,13 +17,14 @@ def test_completed_public_artifact_is_allowlisted_and_private_free(tmp_path):
     release,receipt,verified=fixture(); run=write_submission(release,receipt,verified,tmp_path)
     encoded=json.dumps(run); assert "repository.path" not in encoded and "C:\\private" not in encoded and "DrawDB" not in encoded
     assert run["before_after"]["before_http"]==404 and run["before_after"]["after_http"]==200
-    assert set(p.name for p in tmp_path.iterdir())=={"completed_run.json","index.html","setup.html","shiproom-verdict.svg"}
+    assert set(p.name for p in tmp_path.iterdir())=={"completed_run.json","public_evidence_manifest.v1.json","release-report.html","index.html","setup.html","shiproom-verdict.svg"}
 
 def test_console_contains_real_proof_agents_views_and_offline_content():
     release,receipt,verified=fixture(); page=render_console(completed_run(release,receipt,verified),verified["canonical_url"])
     for value in ("SHIP WITH CONDITIONS","The code passed. The product failed its promise.","Engineering remediation specialist","Independent verifier","Data / AI","CEO","Product","Engineering","Prepare a release review","external_release_contract.v1","deleg-1","40 tests","13 evals"):
         assert value in page
     assert "og:title" in page and "<script>" in page and "Public console online" in page
+    assert "Hardened external read-only policy gate: passed." in page and "Verified buildathon proof." in page
 
 def test_form_contract_is_bounded_read_only_and_has_copy_download():
     release,receipt,verified=fixture(); page=render_console(completed_run(release,receipt,verified),verified["canonical_url"])
@@ -38,3 +39,11 @@ def test_duration_badge_and_worker_routes():
     worker=(ROOT/"cloudflare"/"worker.js").read_text(encoding="utf-8")
     assert 'startsWith("/result/")' in worker and 'startsWith("/results/")' in worker
     assert '"/index.html"' in worker and '"/completed_run.json"' in worker
+    assert '"/public_evidence_manifest.v1.json"' in worker
+
+def test_manifest_is_allowlisted_and_matches_html_claims():
+    release,receipt,verified=fixture(); run=completed_run(release,receipt,verified); manifest=public_evidence_manifest(run); page=render_console(run,verified["canonical_url"])
+    assert set(manifest)=={"schema_version","generated_at","policy_version","eval_version","release_id","final_verdict","hermes","modules","http_evidence","owner_decision","public_references","verification","auto_merge","deployment"}
+    assert manifest["auto_merge"] is False and manifest["http_evidence"]["before"]==404 and manifest["http_evidence"]["after"]==200
+    assert manifest["modules"]["skipped_modules"][0]["reason"]=="No AI, analytics, retrieval, ranking or experimentation surface was detected."
+    for claim in (manifest["release_id"],manifest["hermes"]["session_id"],manifest["hermes"]["delegation_id"],str(manifest["verification"]["tests_passed"]),str(manifest["verification"]["evals_passed"])): assert claim in page

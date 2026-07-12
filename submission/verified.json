@@ -1,10 +1,15 @@
 {
   "delegation_id": "deleg_4ddb33af",
-  "tests_passed": 40,
-  "evals_passed": 13,
+  "tests_passed": 56,
+  "evals_passed": 14,
   "ci_url": "https://github.com/kruthika-kumar/shiproom/actions/runs/29188570146",
   "repository_url": "https://github.com/kruthika-kumar/shiproom",
   "pr_url": "https://github.com/kruthika-kumar/shiproom/pull/1",
   "evidence_comment_url": "https://github.com/kruthika-kumar/shiproom/pull/1#issuecomment-4950451480",
-  "canonical_url": "https://shiproom-demo.bookies-litany-00.workers.dev"
+  "canonical_url": "https://shiproom-demo.bookies-litany-00.workers.dev",
+  "policy_gate": "passed",
+  "policy_version": "external_read_only_policy.v1",
+  "eval_version": "external_read_only_failure.v1",
+  "rollback_baseline_version_id": "7fa11d71-bde2-4d28-be25-a510351c1e7e",
+  "pr2_url": "https://github.com/kruthika-kumar/shiproom/pull/2"
 }

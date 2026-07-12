@@ -14,7 +14,7 @@ export default {
       return env.ASSETS.fetch(new Request(new URL("/release-report.html", url), request));
     }
     if (url.pathname === "/setup") return env.ASSETS.fetch(new Request(new URL("/setup.html", url), request));
-    if (["/completed_run.json", "/shiproom-verdict.svg"].includes(url.pathname)) return env.ASSETS.fetch(request);
+    if (["/completed_run.json", "/public_evidence_manifest.v1.json", "/shiproom-verdict.svg"].includes(url.pathname)) return env.ASSETS.fetch(request);
     return new Response("Not found", { status: 404 });
   },
 };
