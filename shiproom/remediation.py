@@ -4,7 +4,6 @@ import re
 import subprocess
 from pathlib import Path
 
-from .evidence import http_check
 from .verdict import calculate, close_finding
 from .authority import LocalExecutionContext
 from .worktrees import prepare_isolated_worktree
@@ -81,44 +80,6 @@ def _assert_route_state(target: Path, broken: str, fixed: str, *, expect_broken:
     return source
 
 
-def prepare_remediation_branch(repo: Path, base_branch: str, branch: str, release_id: str) -> None:
-    validate_branch(branch, release_id)
-    assert_clean_worktree(repo)
-    if current_branch(repo) != base_branch:
-        git(repo, "switch", base_branch)
-    existing = git(repo, "branch", "--list", branch).stdout.strip()
-    if existing:
-        git(repo, "branch", "-D", branch)
-    git(repo, "switch", "-c", branch, base_branch)
-
-
-def patch_demo_route(repo: Path, release: dict) -> tuple[list[Path], str]:
-    repo = repository_root(repo)
-    release_id = release["release_id"]
-    base_branch = release.get("repository", {}).get("base_branch")
-    if not base_branch:
-        raise ValueError("release is missing repository.base_branch")
-    branch = remediation_branch(release_id)
-    prepare_remediation_branch(repo, base_branch, branch, release_id)
-    changed: list[Path] = []
-    for relative, (broken, fixed) in ROUTE_TARGETS.items():
-        target = validate_target(repo, repo / relative, "route_fix")
-        source = _assert_route_state(target, broken, fixed, expect_broken=True)
-        updated = source.replace(broken, fixed, 1)
-        if updated == source:
-            raise ValueError(f"route remediation was a no-op for {target}")
-        target.write_text(updated, encoding="utf-8")
-        _assert_route_state(target, broken, fixed, expect_broken=False)
-        changed.append(target)
-    diff = git(repo, "diff", "--", *(str(p.relative_to(repo)) for p in changed)).stdout
-    if not diff.strip():
-        raise ValueError("remediation produced no Git diff")
-    git(repo, "add", *(str(p.relative_to(repo)) for p in changed))
-    git(repo, "commit", "-m", f"fix: close public result route for {release_id}")
-    commit_sha = git(repo, "rev-parse", "HEAD").stdout.strip()
-    return changed, commit_sha
-
-
 def patch_demo_route_isolated(context: LocalExecutionContext, release: dict) -> tuple[list[Path], str, dict]:
     repo=context.repository_root; release_id=release["release_id"]; branch=remediation_branch(release_id); base=context.authority_binding["repository_commit"]
     worktree_record=prepare_isolated_worktree(repo,context.activation,f"remediate-{release_id}",base_commit=base,branch=branch); worktree=Path(worktree_record["worktree"]); authorized={p.as_posix() for p in ROUTE_TARGETS}
@@ -137,23 +98,26 @@ def patch_demo_route_isolated(context: LocalExecutionContext, release: dict) -> 
     return changed,commit_sha,worktree_record
 
 
-def verify_and_close(release: dict) -> dict:
-    failed = next((c for c in release.get("checks", []) if c.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and not c.get("passed")), None)
+def verify_and_close(release: dict, context: LocalExecutionContext) -> dict:
+    from .authority import PRODUCT_CRITERION, product_check_id
+    path=release["deployment"]["generated_path"]; expected_id=product_check_id(release["release_id"],context.authority_binding["deployment_grant_hash"],path)
+    failed = next((c for c in release.get("checks", []) if c.get("check_id")==expected_id and c.get("criterion_id") == PRODUCT_CRITERION and c.get("granted_path")==path and not c.get("passed")), None)
     finding = next((f for f in release.get("findings", []) if f.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and f.get("state") != "CLOSED"), None)
     if not failed:
         raise ValueError("original failed check is required")
     if not finding:
         closed = next((f for f in release.get("findings", []) if f.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and f.get("state") == "CLOSED"), None)
-        passed_rerun = next((c for c in release.get("checks", []) if c.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and c.get("passed") and "rerun_of" in c), None)
+        passed_rerun = next((c for c in release.get("checks", []) if c.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and c.get("passed") and c.get("rerun_of_check_id")==expected_id), None)
         if not closed or not passed_rerun:
             raise ValueError("closed finding requires a successful independent rerun")
         release["verdict"] = calculate(release); release["state"] = release["verdict"]["status"]
         return release
-    rerun = http_check(failed["target"])
+    runtime=context.read_configured_deployment(path); rerun=runtime.to_check(context.deployment_grant["origin"]+path)
+    rerun.update({"check_id":expected_id+"-rerun","granted_path":path,"deployment_grant_hash":context.authority_binding["deployment_grant_hash"]})
     rerun["criterion_id"] = failed["criterion_id"]
-    rerun["rerun_of"] = release["checks"].index(failed)
+    rerun["rerun_of_check_id"] = expected_id
     release["checks"].append(rerun)
-    if rerun["passed"]:
+    if runtime.outcome=="observed_success":
         evidence = {"status": rerun["evidence_status"], "kind": "http_status", "value": rerun["status"], "reference": rerun["target"]}
         closed = close_finding(finding, evidence)
         release["findings"][release["findings"].index(finding)] = closed

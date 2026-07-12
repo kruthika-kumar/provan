@@ -98,6 +98,7 @@ class Release:
     integrations: dict[str, Any] = field(default_factory=dict)
     project_context: dict[str, Any] = field(default_factory=dict)
     project_authority: dict[str, Any] = field(default_factory=dict)
+    runtime_artifacts: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

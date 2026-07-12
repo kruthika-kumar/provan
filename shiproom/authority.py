@@ -15,15 +15,20 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 from .onboarding import paths as project_paths
-from .project import AUTHORITY_POLICY_VERSION, ALLOWED_ENVIRONMENT, activation_status, content_hash, resolve_policy_path, validate_command
+from .project import AUTHORITY_POLICY_VERSION, ALLOWED_ENVIRONMENT, activation_status, content_hash, resolve_policy_path, validate_command, validate_policy_relative
 
 PROFILE_OPERATIONS = {
-    "inspect": {"file.read", "git.metadata.read", "git.diff.read", "deployment.read"},
-    "verify": {"file.read", "git.metadata.read", "git.diff.read", "deployment.read", "command.execute"},
-    "remediate": {"file.read", "git.metadata.read", "git.diff.read", "deployment.read", "command.execute", "source.write.isolated"},
+    "inspect": {"file.read", "git.metadata.read", "deployment.read"},
+    "verify": {"file.read", "git.metadata.read", "deployment.read", "command.execute"},
+    "remediate": {"file.read", "git.metadata.read", "deployment.read", "command.execute", "source.write.isolated"},
 }
 BINDING_SCHEMA = "release_project_authority_binding.v1"
 DEPLOYMENT_GRANT_SCHEMA = "release_deployment_read_grant.v1"
+PRODUCT_CRITERION="PRODUCT_PUBLIC_RESULT_OPENS"
+
+
+def product_check_id(release_id: str, grant_hash: str, path: str) -> str:
+    return "check_"+content_hash({"release_id":release_id,"criterion_id":PRODUCT_CRITERION,"deployment_grant_hash":grant_hash,"granted_path":path}).split(":",1)[1][:16]
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -37,8 +42,8 @@ def require_operation(status: dict, operation: str) -> None:
 
 def normalize_deployment_grant(url: str, allowed_paths: list[str]) -> dict:
     parsed = urlparse(url)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
-        raise ValueError("live URL must be credential-free HTTP(S)")
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password or parsed.fragment or parsed.query or parsed.path not in {"","/"} or ":" in parsed.hostname:
+        raise ValueError("live URL must be a credential-free IPv4/DNS HTTP(S) origin without path, query, fragment, or IPv6")
     host = parsed.hostname.lower(); port = parsed.port
     default_port = 80 if parsed.scheme == "http" else 443
     origin = f"{parsed.scheme}://{host}" + (f":{port}" if port and port != default_port else "")
@@ -58,8 +63,9 @@ def bind_release_authority(repo: Path, live_url: str, generated_path: str) -> tu
     if not status["activation_fresh"] or not status["activation_receipt_hash"]: raise ValueError("project activation receipt is missing or stale; reactivate before release init")
     source = str(contract_path.resolve().relative_to(repo.resolve())).replace("\\", "/") if shared == contract_path else "local-only"
     commit = _git(repo, "rev-parse", "HEAD").stdout.strip()
-    binding = {"schema_version": BINDING_SCHEMA, "project_id": status["contract"]["project_id"], "contract_hash": status["contract_hash"], "authority_policy_version": AUTHORITY_POLICY_VERSION, "declared_profile": status["declared_profile"], "effective_profile": status["effective_profile"], "activation_receipt_hash": status["activation_receipt_hash"], "contract_source": source, "bound_at": datetime.now(UTC).isoformat(), "repository_commit": commit}
-    return binding, normalize_deployment_grant(live_url, [generated_path])
+    grant=normalize_deployment_grant(live_url,[generated_path])
+    binding = {"schema_version": BINDING_SCHEMA, "project_id": status["contract"]["project_id"], "contract_hash": status["contract_hash"], "authority_policy_version": AUTHORITY_POLICY_VERSION, "declared_profile": status["declared_profile"], "effective_profile": status["effective_profile"], "activation_receipt_hash": status["activation_receipt_hash"], "contract_source": source, "bound_at": datetime.now(UTC).isoformat(), "repository_commit": commit, "deployment_grant_hash":content_hash(grant)}
+    return binding, grant
 
 
 @dataclass
@@ -73,6 +79,8 @@ class BoundedCommandResult:
     output_limit_bytes: int
     termination: str
     side_effect_paths: list[str] = field(default_factory=list)
+    cleanup_status: str = "not_started"
+    recovery_worktree: str | None = None
 
     def to_dict(self) -> dict: return asdict(self)
 
@@ -94,7 +102,10 @@ def run_bounded_command(command: dict, cwd: Path) -> BoundedCommandResult:
     env.update({k: v for k, v in command["allowed_environment"].items() if k in ALLOWED_ENVIRONMENT})
     flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
     started = time.monotonic()
-    process = subprocess.Popen(command["argv"], cwd=cwd, shell=False, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=flags, start_new_session=os.name != "nt")
+    try:
+        process = subprocess.Popen(command["argv"], cwd=cwd, shell=False, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=flags, start_new_session=os.name != "nt")
+    except (OSError,ValueError) as exc:
+        return BoundedCommandResult("spawn_error",None,int((time.monotonic()-started)*1000),"","",0,command["output_limit_bytes"],"not_started")
     chunks: queue.Queue[tuple[str, bytes | None]] = queue.Queue()
     def reader(name: str, stream) -> None:
         try:
@@ -134,6 +145,25 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 @dataclass
+class DeploymentReadResult:
+    outcome: str
+    path: str
+    status: int | None = None
+    error_type: str | None = None
+
+    def to_check(self, target: str) -> dict:
+        passed=self.outcome=="observed_success"; evidence="deterministically_verified" if self.outcome in {"observed_success","implementation_failure"} else "missing_evidence"
+        return {"type":"http","target":target,"passed":passed,"status":self.status,"evidence_status":evidence,"runtime_outcome":self.outcome,"error_type":self.error_type}
+
+
+@dataclass
+class VerificationBatchResult:
+    status: str
+    command_results: list[tuple[dict,BoundedCommandResult]]
+    recovery_required: bool = False
+
+
+@dataclass
 class LocalExecutionContext:
     repository_root: Path
     release: dict
@@ -153,7 +183,7 @@ class LocalExecutionContext:
         expected_source = ".shiproom/project-contract.json" if contract_path == shared else "local-only"
         if binding.get("contract_source") != expected_source: raise ValueError("release project authority source is invalid")
         if not contract_path.is_file() or not receipt.is_file(): raise ValueError("release authority source or activation receipt is missing")
-        status = activation_status(repo, contract_path, receipt)
+        status = activation_status(repo, contract_path, receipt,validate_command_sources=False)
         expected = {"project_id": status["contract"]["project_id"], "contract_hash": status["contract_hash"], "authority_policy_version": AUTHORITY_POLICY_VERSION, "declared_profile": status["declared_profile"], "effective_profile": status["effective_profile"], "activation_receipt_hash": status["activation_receipt_hash"]}
         mismatches = [key for key, value in expected.items() if binding.get(key) != value]
         if mismatches or not status["activation_fresh"]: raise ValueError("release project authority is stale: " + ", ".join(mismatches or ["activation_fresh"]))
@@ -165,35 +195,43 @@ class LocalExecutionContext:
         parsed=urlparse(grant["origin"])
         if parsed.scheme not in {"http","https"} or not parsed.hostname or parsed.username or parsed.password or parsed.path not in {"","/"}: raise ValueError("release deployment origin is invalid")
         if not isinstance(grant["allowed_paths"],list) or any(not isinstance(p,str) or not p.startswith("/") or ".." in Path(p).parts for p in grant["allowed_paths"]): raise ValueError("release deployment paths are invalid")
+        if content_hash(grant)!=binding.get("deployment_grant_hash"): raise ValueError("release deployment authority is stale: deployment_grant_hash")
+        if release.get("deployment",{}).get("url")!=grant["origin"] or release.get("deployment",{}).get("generated_path") not in grant["allowed_paths"]: raise ValueError("release deployment display fields differ from immutable grant")
         return cls(repo, release, binding, status, grant)
 
     def require(self, operation: str) -> None: require_operation(self.activation, operation)
 
-    def read_allowed_file(self, relative: str) -> str:
-        self.require("file.read"); path=resolve_policy_path(self.repository_root, relative, self.activation["contract"]["protected_paths"], self.activation["contract"]["excluded_paths"], operation="read"); return path.read_text(encoding="utf-8")
+    def read_release_blob(self, relative: str, byte_limit: int = 1_048_576) -> dict:
+        self.require("file.read"); relative=validate_policy_relative(relative,self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read")
+        commit=self.authority_binding["repository_commit"]; entry=_git(self.repository_root,"ls-tree",commit,"--",relative).stdout.strip().split(None,3)
+        if len(entry)<4: raise FileNotFoundError(relative)
+        mode,kind,blob_hash,_=entry
+        if kind!="blob" or mode not in {"100644","100755"}: raise PermissionError("release blob is a symlink, submodule, or unsupported tree entry")
+        size=int(_git(self.repository_root,"cat-file","-s",blob_hash).stdout.strip())
+        if size>byte_limit: raise ValueError("release blob exceeds byte limit")
+        raw=subprocess.run(["git","cat-file","blob",blob_hash],cwd=self.repository_root,capture_output=True,check=True).stdout
+        try: text=raw.decode("utf-8"); classification="text"
+        except UnicodeDecodeError: text=None; classification="binary"
+        if b"\x00" in raw: text=None; classification="binary"
+        return {"path":relative,"commit":commit,"blob_hash":blob_hash,"size_bytes":size,"classification":classification,"text":text}
 
     def read_git_metadata(self, *args: str) -> str:
-        self.require("git.metadata.read"); allowed={"rev-parse", "status", "branch", "show"}
+        self.require("git.metadata.read"); allowed={"rev-parse", "status", "branch"}
         if not args or args[0] not in allowed or any(a.startswith(("--output", "--exec-path", "--config-env")) for a in args): raise PermissionError("Git metadata operation is not allowlisted")
         return _git(self.repository_root, *args).stdout
 
-    def read_git_diff(self, *args: str) -> str:
-        self.require("git.diff.read")
-        if any(a.startswith(("--output", "--ext-diff", "--no-index")) for a in args): raise PermissionError("Git diff option is not allowlisted")
-        return _git(self.repository_root, "diff", "--no-ext-diff", *args).stdout
-
-    def read_configured_deployment(self, path: str, timeout: float = 10) -> dict:
+    def read_configured_deployment(self, path: str, timeout: float = 10) -> DeploymentReadResult:
         self.require("deployment.read")
-        if path not in self.deployment_grant["allowed_paths"]: raise PermissionError("deployment path is not granted")
+        if path not in self.deployment_grant["allowed_paths"]: return DeploymentReadResult("authority_policy_violation",path,error_type="ungranted_path")
         url=urljoin(self.deployment_grant["origin"]+"/", path.lstrip("/")); opener=urllib.request.build_opener(_NoRedirect)
         try:
             response=opener.open(urllib.request.Request(url, headers={"User-Agent":"Shiproom-Release-Assurance/0.1"}), timeout=timeout); status=response.status; final=response.geturl()
         except urllib.error.HTTPError as exc:
-            if 300<=exc.code<400: raise PermissionError("deployment redirects are not allowed by the release grant")
+            if 300<=exc.code<400: return DeploymentReadResult("authority_policy_violation",path,status=exc.code,error_type="redirect")
             status=exc.code; final=exc.geturl()
-        except Exception as exc: return {"type":"http","target":url,"passed":False,"status":None,"evidence_status":"missing_evidence","error":type(exc).__name__}
-        if urlparse(final).scheme+"://"+urlparse(final).netloc != self.deployment_grant["origin"] or urlparse(final).path not in self.deployment_grant["allowed_paths"]: raise PermissionError("deployment redirect escaped the release grant")
-        return {"type":"http","target":url,"passed":200<=status<300,"status":status,"evidence_status":"deterministically_verified"}
+        except Exception as exc: return DeploymentReadResult("evidence_gap",path,error_type=type(exc).__name__)
+        if urlparse(final).scheme+"://"+urlparse(final).netloc != self.deployment_grant["origin"] or urlparse(final).path not in self.deployment_grant["allowed_paths"]: return DeploymentReadResult("authority_policy_violation",path,status=status,error_type="redirect_escape")
+        return DeploymentReadResult("observed_success" if 200<=status<300 else "implementation_failure",path,status=status)
 
     def _verification_worktree(self) -> Path:
         self.require("command.execute"); root=(self.repository_root/".shiproom/local/worktrees").resolve(); root.mkdir(parents=True,exist_ok=True); target=(root/f"verify-{self.release['release_id']}-{uuid.uuid4().hex[:8]}").resolve()
@@ -202,17 +240,20 @@ class LocalExecutionContext:
         if _git(target,"rev-parse","HEAD").stdout.strip()!=self.authority_binding["repository_commit"]: raise PermissionError("verification worktree commit mismatch")
         return target
 
-    def execute_approved_commands(self) -> list[tuple[dict, BoundedCommandResult]]:
+    def execute_approved_commands(self) -> VerificationBatchResult:
         commands=self.activation["contract"]["execution_policy"]["approved_commands"]
-        if not commands: return []
-        worktree=self._verification_worktree(); results=[]
-        try:
-            before=_git(worktree,"status","--porcelain","--untracked-files=all").stdout
-            for command in commands:
-                validate_command(command,worktree); cwd=resolve_policy_path(worktree,command["cwd"],self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read"); result=run_bounded_command(command,cwd); result.side_effect_paths=[line[3:] for line in _git(worktree,"status","--porcelain","--untracked-files=all").stdout.splitlines()]; results.append((command,result))
-            return results
-        finally:
-            _git(self.repository_root,"worktree","remove","--force",str(worktree),check=False); _git(self.repository_root,"worktree","prune",check=False)
+        if not commands: return VerificationBatchResult("completed",[])
+        results=[]; recovery=False
+        for command in commands:
+            worktree=self._verification_worktree(); result=None
+            try:
+                validate_command(command,worktree,storage_scope="shared" if self.authority_binding["contract_source"]!="local-only" else "local_only"); cwd=resolve_policy_path(worktree,command["cwd"],self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read"); result=run_bounded_command(command,cwd); result.side_effect_paths=[line[3:] for line in _git(worktree,"status","--porcelain","--untracked-files=all").stdout.splitlines()]
+            finally:
+                cleanup=_git(self.repository_root,"worktree","remove","--force",str(worktree),check=False)
+                _git(self.repository_root,"worktree","prune",check=False)
+                if result is None: result=BoundedCommandResult("spawn_error",None,0,"","",0,command["output_limit_bytes"],"not_started")
+                result.cleanup_status="cleaned" if cleanup.returncode==0 else "recovery_required"; result.recovery_worktree=None if cleanup.returncode==0 else str(worktree); recovery|=cleanup.returncode!=0; results.append((command,result))
+        return VerificationBatchResult("recovery_required" if recovery else "completed",results,recovery)
 
     def write_isolated_file(self, worktree: Path, relative: str) -> Path:
         self.require("source.write.isolated"); local=(self.repository_root/".shiproom/local/worktrees").resolve(); resolved=worktree.resolve()

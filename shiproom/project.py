@@ -71,7 +71,8 @@ def default_contract(project_name: str, product_purpose: str, primary_users: lis
     return {"schema_version": PROJECT_SCHEMA, "status": "active", "project_id": slug, "project_name": project_name.strip(), "product_purpose": product_purpose.strip(), "primary_users": primary_users, "project_principles": [], "active_practices": [], "protected_paths": [], "excluded_paths": list(DEFAULT_EXCLUDED), "measurement_refs": [], "accepted_risks": [], "report_visibility": "private", "memory_policy": "disabled", "default_capability_profile": profile, "execution_policy": {"approved_commands": []}}
 
 
-def validate_command(command: dict, repo: Path | None = None) -> None:
+def validate_command(command: dict, repo: Path | None = None, *, storage_scope: str = "shared") -> None:
+    if storage_scope not in {"shared","local_only"}: raise ValueError("invalid contract storage scope")
     required = {"command_id", "criterion_id", "required_for_release", "argv", "cwd", "purpose", "source", "timeout_seconds", "output_limit_bytes", "allowed_environment"}
     if set(command) != required:
         raise ValueError(f"approved command fields must be exactly {sorted(required)}")
@@ -80,6 +81,11 @@ def validate_command(command: dict, repo: Path | None = None) -> None:
     argv = command["argv"]
     if not isinstance(argv, list) or not argv or any(not isinstance(v, str) or not v or SHELL_META.search(v) or v.startswith("@") for v in argv):
         raise ValueError("argv must be normalized tokens without shell syntax, expansion, or response files")
+    if storage_scope=="shared":
+        for index,token in enumerate(argv):
+            machine_path=bool(re.match(r"^[A-Za-z]:[\\/]",token) or token.startswith(("\\\\","//","~/","file://")))
+            posix_path=token.startswith("/") and (index==0 or "/" in token[1:] or not re.fullmatch(r"/[A-Za-z?][A-Za-z0-9_-]*",token))
+            if machine_path or posix_path: raise ValueError("shared approved command argv contains a machine-specific absolute path")
     command["cwd"] = _relative(command["cwd"], "approved command cwd")
     source = command["source"]
     if set(source) != {"ref", "hash"} or not str(source["hash"]).startswith("sha256:"):
@@ -98,7 +104,7 @@ def validate_command(command: dict, repo: Path | None = None) -> None:
             raise ValueError(f"approved command source hash is stale: {source['ref']}")
 
 
-def validate_contract(contract: dict, repo: Path | None = None) -> dict:
+def validate_contract(contract: dict, repo: Path | None = None, *, storage_scope: str = "shared") -> dict:
     required = {"schema_version", "status", "project_id", "project_name", "product_purpose", "primary_users", "project_principles", "active_practices", "protected_paths", "excluded_paths", "measurement_refs", "accepted_risks", "report_visibility", "memory_policy", "default_capability_profile", "execution_policy"}
     if set(contract) != required or contract.get("schema_version") != PROJECT_SCHEMA or contract.get("status") != "active":
         raise ValueError("invalid project_contract.v1 fields or status")
@@ -123,7 +129,7 @@ def validate_contract(contract: dict, repo: Path | None = None) -> dict:
     if set(policy) != {"approved_commands"} or not isinstance(policy["approved_commands"], list): raise ValueError("invalid execution_policy")
     criterion_ids = []
     for command in policy["approved_commands"]:
-        validate_command(command, repo); criterion_ids.append(command["criterion_id"])
+        validate_command(command, repo,storage_scope=storage_scope); criterion_ids.append(command["criterion_id"])
     if len(criterion_ids) != len(set(criterion_ids)): raise ValueError("approved command criterion_id values must be unique")
     return contract
 
@@ -140,12 +146,14 @@ def contract_git_state(repo: Path, contract_path: Path) -> dict:
     return {"tracked": tracked, "modified": bool(status), "status": status or "clean"}
 
 
-def activation_status(repo: Path, contract_path: Path, receipt_path: Path) -> dict:
-    contract = validate_contract(json.loads(contract_path.read_text(encoding="utf-8")))
+def activation_status(repo: Path, contract_path: Path, receipt_path: Path, *, validate_command_sources: bool = True) -> dict:
+    scope="local_only" if ".shiproom/local" in contract_path.as_posix().lower() else "shared"
+    contract = validate_contract(json.loads(contract_path.read_text(encoding="utf-8")),storage_scope=scope)
     invalid_commands = []
-    for command in contract["execution_policy"]["approved_commands"]:
-        try: validate_command(command, repo)
-        except ValueError: invalid_commands.append(command.get("command_id", "unknown"))
+    if validate_command_sources:
+        for command in contract["execution_policy"]["approved_commands"]:
+            try: validate_command(command, repo,storage_scope=scope)
+            except ValueError: invalid_commands.append(command.get("command_id", "unknown"))
     state = contract_git_state(repo, contract_path) if repo in contract_path.resolve().parents else {"tracked": False, "modified": True, "status": "local-only"}
     receipt = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.is_file() else None
     actual = content_hash(contract)
@@ -158,32 +166,40 @@ def activation_status(repo: Path, contract_path: Path, receipt_path: Path) -> di
 
 
 def activate(repo: Path, contract_path: Path, receipt_path: Path) -> dict:
-    validate_contract(json.loads(contract_path.read_text(encoding="utf-8")), repo)
+    scope="local_only" if ".shiproom/local" in contract_path.as_posix().lower() else "shared"
+    validate_contract(json.loads(contract_path.read_text(encoding="utf-8")), repo,storage_scope=scope)
     status = activation_status(repo, contract_path, receipt_path)
     receipt = {"schema_version": RECEIPT_SCHEMA, "contract_hash": status["contract_hash"], "contract_file_hash": file_hash(contract_path), "activated_at": datetime.now(UTC).isoformat(), "contract_tracked": status["tracked"], "contract_clean": not status["modified"], "capability_profile": status["contract"]["default_capability_profile"], "policy_version": AUTHORITY_POLICY_VERSION}
     receipt_path.parent.mkdir(parents=True, exist_ok=True); receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     return receipt
 
 
-def resolve_policy_path(repo: Path, relative: str, protected: list[str], excluded: list[str], *, operation: str) -> Path:
+def validate_policy_relative(relative: str, protected: list[str], excluded: list[str], *, operation: str) -> str:
     rel = _relative(relative, "path")
-    lexical = repo / rel
-    resolved_repo = repo.resolve(); resolved = lexical.resolve(strict=False)
-    if resolved != resolved_repo and resolved_repo not in resolved.parents: raise PermissionError("path escapes repository")
     normalized = str(PurePosixPath(rel)); parts = PurePosixPath(normalized).parts
-    basename = parts[-1] if parts else ""
-    sensitive = any(part == ".git" or part in {"credentials", "secrets"} for part in parts) or basename == ".env" or basename.startswith(".env.") or basename.endswith((".pem", ".key")) or normalized == ".shiproom/local" or normalized.startswith(".shiproom/local/")
+    lower_parts=tuple(p.lower() for p in parts); basename = lower_parts[-1] if lower_parts else ""; lower_normalized=normalized.lower()
+    sensitive = any(part == ".git" or part in {"credentials", "secrets"} for part in lower_parts) or basename == ".env" or basename.startswith(".env.") or basename.endswith((".pem", ".key")) or lower_normalized == ".shiproom/local" or lower_normalized.startswith(".shiproom/local/")
     def matches(patterns: list[str]) -> bool:
         for raw in patterns:
             pattern = raw.replace("\\", "/").rstrip("/")
+            candidate=normalized
+            if os.name=="nt": pattern=pattern.lower(); candidate=candidate.lower()
             if not pattern: continue
             if any(ch in pattern for ch in "*?["):
-                if fnmatch.fnmatch(normalized, pattern) or fnmatch.fnmatch(basename, pattern.removeprefix("**/")): return True
-            elif normalized == pattern or normalized.startswith(pattern + "/"):
+                if fnmatch.fnmatch(candidate, pattern) or fnmatch.fnmatch(candidate.rsplit("/",1)[-1], pattern.removeprefix("**/")): return True
+            elif candidate == pattern or candidate.startswith(pattern + "/"):
                 return True
         return False
     if sensitive or matches(excluded): raise PermissionError("path is excluded")
     if operation == "write" and matches(protected): raise PermissionError("path is protected from modification")
+    return normalized
+
+
+def resolve_policy_path(repo: Path, relative: str, protected: list[str], excluded: list[str], *, operation: str) -> Path:
+    rel=validate_policy_relative(relative,protected,excluded,operation=operation)
+    lexical = repo / rel
+    resolved_repo = repo.resolve(); resolved = lexical.resolve(strict=False)
+    if resolved != resolved_repo and resolved_repo not in resolved.parents: raise PermissionError("path escapes repository")
     return resolved
 
 

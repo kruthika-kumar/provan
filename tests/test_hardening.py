@@ -119,6 +119,7 @@ def test_complete_release_loop_and_reset(tmp_path):
     assert branch == remediation_branch(release_id)
     assert release["remediation_tasks"][-1]["auto_merge"] is False
     remediation_worktree=Path(release["remediation_tasks"][-1]["worktree"])
+    release["checks"][0]["target"]="https://mutated.example/not-authoritative"; release_path.write_text(json.dumps(release,indent=2))
     patient = start_patient(remediation_worktree, port)
     try:
         wait_http(f"{url}/result/demo", 200)
@@ -131,6 +132,7 @@ def test_complete_release_loop_and_reset(tmp_path):
         release = json.loads(release_path.read_text())
         assert release["verdict"]["status"] == "SHIP_WITH_CONDITIONS"
         assert [c.get("status") for c in release["checks"]] == [404, 200]
+        assert release["checks"][1]["rerun_of_check_id"]==release["checks"][0]["check_id"]
         public_url = "https://shiproom-demo.example.workers.dev"
         release["deployment"].update({"url": public_url, "report_url": f"{public_url}/reports/{release_id}"})
         release["integrations"] = {"github": {"repository": "kruthika-kumar/shiproom", "pr_number": 1, "comment_url": "https://github.com/kruthika-kumar/shiproom/pull/1"}, "cloudflare": {"report_url": release["deployment"]["report_url"]}}
@@ -163,6 +165,20 @@ def test_real_remediation_preserves_dirty_active_checkout(tmp_path):
 def test_unexpected_remediation_diff_fails_without_commit_and_cleanup_is_idempotent(tmp_path):
     repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; release=json.loads(release_path.read_text()); context=LocalExecutionContext.from_release(release); branch=remediation_branch(release["release_id"]); record=prepare_isolated_worktree(repo,context.activation,f"remediate-{release['release_id']}",base_commit=context.authority_binding["repository_commit"],branch=branch); worktree=Path(record["worktree"]); (worktree/"unexpected.txt").write_text("not authorized")
     result=run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path),check=False)
-    assert result.returncode!=0 and git(worktree,"rev-parse","HEAD")==record["base_commit"]
+    failed=json.loads(release_path.read_text())["remediation_tasks"][-1]
+    assert result.returncode!=0 and not worktree.exists() and failed["status"]=="FAILED_CLEANED"
     cleanup_isolated_worktree(repo,path=record["worktree"],base_commit=record["base_commit"],branch=branch); cleanup_isolated_worktree(repo,path=record["worktree"],base_commit=record["base_commit"],branch=branch)
     with pytest.raises(PermissionError): cleanup_isolated_worktree(repo,path=str(tmp_path/"outside"),base_commit=record["base_commit"],branch=branch)
+
+
+def test_remediation_recovers_after_worktree_creation(tmp_path):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; release=json.loads(release_path.read_text()); context=LocalExecutionContext.from_release(release); branch=remediation_branch(release["release_id"]); record=prepare_isolated_worktree(repo,context.activation,f"remediate-{release['release_id']}",base_commit=context.authority_binding["repository_commit"],branch=branch); release["remediation_tasks"]=[{"id":f"rem_route_fix_{release['release_id']}","class":"route_fix","branch":branch,"base_branch":"event-base","base_commit":record["base_commit"],"worktree":record["worktree"],"status":"PREPARING","auto_merge":False}]; release_path.write_text(json.dumps(release,indent=2))
+    run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); recovered=json.loads(release_path.read_text())["remediation_tasks"][-1]; assert recovered["status"]=="PATCHED" and recovered["commit_sha"]
+    cleanup_isolated_worktree(repo,path=recovered["worktree"],base_commit=recovered["base_commit"],branch=branch,expected_head=recovered["commit_sha"],require_clean=True)
+
+
+def test_remediation_recovers_commit_and_reset_rejects_dirty_or_extra_head(tmp_path):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); release=json.loads(release_path.read_text()); task=release["remediation_tasks"][-1]; commit=task.pop("commit_sha"); task["status"]="PATCHING"; release_path.write_text(json.dumps(release,indent=2)); run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); release=json.loads(release_path.read_text()); task=release["remediation_tasks"][-1]; assert task["status"]=="PATCHED" and task["commit_sha"]==commit
+    worktree=Path(task["worktree"]); (worktree/"dirty.txt").write_text("dirty"); assert run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False).returncode!=0; (worktree/"dirty.txt").unlink(); git(worktree,"commit","--allow-empty","-m","unexpected")
+    assert run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False).returncode!=0
+    git(repo,"worktree","remove","--force",str(worktree)); git(repo,"branch","-D",task["branch"])

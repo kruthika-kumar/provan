@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "release":
         repo = repository_root(Path(args.repo)); assert_clean_worktree(repo); base_branch = current_branch(repo)
         binding, deployment_grant = bind_release_authority(repo, args.live_url, "/result/demo")
-        data = Release(release_id=f"rel_{uuid.uuid4().hex[:12]}", repository={"url": args.repo, "path": str(repo), "base_branch": base_branch, "commit_sha": binding["repository_commit"]}, deployment={"url": args.live_url, "generated_path": "/result/demo", "read_grant": deployment_grant}, product={"name": "Launch Card", "target_user": args.target_user, "promise": args.promise, "critical_journey": ["Enter project", "Generate", "Open public URL"], "non_goals": []}, project_authority=binding).to_dict()
+        data = Release(release_id=f"rel_{uuid.uuid4().hex[:12]}", repository={"url": args.repo, "path": str(repo), "base_branch": base_branch, "commit_sha": binding["repository_commit"]}, deployment={"url": deployment_grant["origin"], "generated_path": "/result/demo", "read_grant": deployment_grant}, product={"name": "Launch Card", "target_user": args.target_user, "promise": args.promise, "critical_journey": ["Enter project", "Generate", "Open public URL"], "non_goals": []}, project_authority=binding).to_dict()
         data["project_context"] = compile_project_context(project_id=repo.name.lower().replace(" ", "-"), repository_url=args.repo, commit_sha=git(repo, "rev-parse", "HEAD").stdout.strip(), release_input=data["product"], repository_root=repo)
         selected, skipped = select(data, registry); data["panel"] = {"selected_modules": selected, "skipped_modules": skipped}; save(Path(args.output), data); print(args.output)
     elif args.command == "review":
@@ -211,7 +211,8 @@ def main(argv: list[str] | None = None) -> int:
             data["deployment"]["report_url"] = args.report_url
         save(path, data); print(json.dumps({"release_id": data["release_id"], "telemetry": data["telemetry"], "integrations": data["integrations"]}, indent=2))
     else:
-        data = load(Path(args.release)); output = render(data, Path(args.output)); print(output)
+        release_path=Path(args.release); data = load(release_path); output = render(data, Path(args.output)); repo=repository_root(Path(data["repository"]["path"])); relative=Path(output).resolve().relative_to(repo)
+        data.setdefault("runtime_artifacts",[]).append({"release_id":data["release_id"],"path":relative.as_posix(),"kind":"report"}); save(release_path,data); print(output)
     return 0
 
 

@@ -76,10 +76,12 @@ shiproom doctor
 
 The shared, commit-safe authority lives at `.shiproom/project-contract.json`; machine paths, activation receipts, deployment locators, cached context, and private reports live under ignored `.shiproom/local/`. Normal onboarding asks only for the project name, one-sentence purpose, primary users, and capability confirmation. Reports are private and memory is disabled by default.
 
-`inspect` permits bounded file, Git metadata/diff, and configured deployment reads. `verify` additionally permits only activated, hash-bound argv command grants with no shell. `remediate` additionally permits allowlisted changes in an isolated Shiproom Git worktree; it never patches the active checkout. Push, PR, merge, publication, and deployment remain separately disabled.
+`inspect` permits commit-pinned, exclusion-checked text blob reads, bounded Git metadata, and configured deployment reads. Diff/content reconnaissance is deferred. `verify` additionally permits only activated, hash-bound argv command grants with no shell. Each command receives its own disposable release-commit worktree. `remediate` additionally permits allowlisted changes in an isolated Shiproom Git worktree; it never patches the active checkout. Push, PR, merge, publication, and deployment remain separately disabled.
 
 `shiproom init`, `shiproom project show`, and `shiproom doctor` make no outbound network calls by default. Use `shiproom doctor --probe` for explicit bounded connectivity checks.
 
 Verify has no executable commands until normalized command grants have been explicitly added to the project contract and activated. Local review and remediation enforce the release-bound project authority; the historical public/external contract remains a separate workflow. Approved commands run in disposable Git worktrees with bounded output and timeouts, but this is not a complete OS, process, filesystem, or network sandbox.
+
+Controlled reset is a validated single-use operation. It removes only the exact clean, commit-matched remediation worktree and branch, the selected release-state file, and exact release-recorded artifacts under ignored runtime roots.
 
 See `docs/event-readiness.md` for the frozen runtime record, completed proofs, and live-service blockers. Deploy the patient/report after Cloudflare authentication with `npx wrangler deploy --config cloudflare/wrangler.toml`.

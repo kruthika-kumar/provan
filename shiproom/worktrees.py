@@ -52,12 +52,17 @@ def validate_worktree(repo: Path, path: str, *, base_commit: str, branch: str | 
     return candidate
 
 
-def cleanup_isolated_worktree(repo: Path, *, path: str | None, base_commit: str, branch: str | None) -> None:
+def cleanup_isolated_worktree(repo: Path, *, path: str | None, base_commit: str, branch: str | None, expected_head: str | None = None, require_clean: bool = False) -> None:
     repo=Path(git(repo,"rev-parse","--show-toplevel").stdout.strip()).resolve()
     if path:
         candidate=Path(path).resolve(); root=(repo/LOCAL_ROOT).resolve()
         if root not in candidate.parents: raise PermissionError("recorded worktree path is outside local storage")
-        if candidate.exists(): candidate=validate_worktree(repo,path,base_commit=base_commit,branch=branch,allow_descendant=True); git(repo,"worktree","remove","--force",str(candidate))
+        if candidate.exists():
+            candidate=validate_worktree(repo,path,base_commit=base_commit,branch=branch,allow_descendant=True); head=git(candidate,"rev-parse","HEAD").stdout.strip()
+            if expected_head and head!=expected_head: raise PermissionError("worktree HEAD differs from recorded remediation commit")
+            if require_clean and git(candidate,"status","--porcelain","--untracked-files=all").stdout.strip(): raise PermissionError("remediation worktree is dirty")
+            if branch and git(repo,"rev-parse",f"refs/heads/{branch}",check=False).stdout.strip()!=head: raise PermissionError("remediation branch HEAD differs from worktree")
+            git(repo,"worktree","remove","--force",str(candidate))
         elif str(candidate) in _registered(repo): raise PermissionError("missing worktree path remains registered")
     git(repo,"worktree","prune",check=False)
     if branch:
