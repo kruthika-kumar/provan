@@ -16,6 +16,8 @@ Collect repository/path, live URL, target user, promise, critical journey, non-g
 
 ## Delegation
 
+When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.
+
 Delegate Product/UX and Engineering/QA together as read-only children. Give each only the canonical release subset, applicable criterion IDs, absolute paths/URLs, allowed tools, and `module_result.v0` schema. Product uses at most 8 iterations; Engineering uses at most 10. Interrupt the reviewer batch after 90 seconds.
 
 Children must not edit files, format code, install dependencies, change branches, or mutate environment state. Validate their JSON before merging. Agent summaries and model opinions cannot close findings.

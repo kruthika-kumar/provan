@@ -17,7 +17,8 @@ from .runs import LocalRunStore, materialize
 from .evidence import http_check
 from .telemetry import span
 from .policy import guard_external_operation
-from .remediation import assert_clean_worktree, current_branch, repository_root
+from .context import compile_project_context, context_event_metadata
+from .remediation import assert_clean_worktree, current_branch, git, repository_root
 from .runner import run_module
 from .verdict import calculate
 
@@ -50,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "release":
         repo = repository_root(Path(args.repo)); assert_clean_worktree(repo); base_branch = current_branch(repo)
         data = Release(release_id=f"rel_{uuid.uuid4().hex[:12]}", repository={"url": args.repo, "path": str(repo), "base_branch": base_branch}, deployment={"url": args.live_url, "generated_path": "/result/demo"}, product={"name": "Launch Card", "target_user": args.target_user, "promise": args.promise, "critical_journey": ["Enter project", "Generate", "Open public URL"], "non_goals": []}).to_dict()
+        data["project_context"] = compile_project_context(project_id=repo.name.lower().replace(" ", "-"), repository_url=args.repo, commit_sha=git(repo, "rev-parse", "HEAD").stdout.strip(), release_input=data["product"], repository_root=repo)
         selected, skipped = select(data, registry); data["panel"] = {"selected_modules": selected, "skipped_modules": skipped}; save(Path(args.output), data); print(args.output)
     elif args.command == "review":
         path = Path(args.release); data = load(path); targets = data["panel"]["selected_modules"] if args.all else [args.module]
@@ -95,7 +97,8 @@ def main(argv: list[str] | None = None) -> int:
             elif args.action == "packet":
                 with span("shiproom.panel.select", {"release_id": data["release_id"]}): packet = review_packet(data, registry)
                 data["panel"]["eligible_modules"] = [m["module_id"] for m in packet["eligible_modules"]]; save(path, data)
-                store.append(data["release_id"], "manager_planning", agent_id="release_manager", operation="external.packet", metadata={"eligible_modules": data["panel"]["eligible_modules"], "ineligible_modules": packet["ineligible_modules"]})
+                context_meta=context_event_metadata(data["project_context"])
+                store.append(data["release_id"], "manager_planning", agent_id="manager", operation="external.packet", metadata={"eligible_modules": data["panel"]["eligible_modules"], "ineligible_modules": packet["ineligible_modules"], **context_meta})
                 output = Path(args.output or f"review-packets/{data['release_id']}.json"); save(output, packet); print(output)
             elif args.action == "selection":
                 if not args.input: raise SystemExit("external selection requires --input")
@@ -103,12 +106,14 @@ def main(argv: list[str] | None = None) -> int:
                 apply_manager_decision(data, decision_data, all_ids, ineligible); data["panel"]["eligible_modules"] = eligible; save(path, data)
                 planning = next((e for e in reversed(store.events(data["release_id"])) if e["event_type"] == "manager_planning"), None)
                 parent = planning["event_id"] if planning else None
-                for module_id in decision_data["selected_modules"]: store.append(data["release_id"], "module_selected", parent_event_id=parent, agent_id="release_manager", module_id=module_id, status="selected", metadata={"reason": decision_data["selection_reasons"][module_id], "module_version": registry[module_id].config.get("version")})
-                for module_id in decision_data["skipped_modules"]: store.append(data["release_id"], "module_skipped", parent_event_id=parent, agent_id="release_manager", module_id=module_id, status="skipped", metadata={"reason": decision_data["selection_reasons"][module_id]})
+                context_meta=context_event_metadata(data["project_context"])
+                for module_id in decision_data["selected_modules"]: store.append(data["release_id"], "module_selected", parent_event_id=parent, agent_id="manager", module_id=module_id, status="selected", metadata={"reason": decision_data["selection_reasons"][module_id], "module_version": registry[module_id].config.get("version"), **context_meta})
+                for module_id in decision_data["skipped_modules"]: store.append(data["release_id"], "module_skipped", parent_event_id=parent, agent_id="manager", module_id=module_id, status="skipped", metadata={"reason": decision_data["selection_reasons"][module_id], **context_meta})
                 print(json.dumps(data["panel"], indent=2))
             elif args.action == "result":
                 if not all((args.input, args.module, args.delegation_id)): raise SystemExit("external result requires --input --module --delegation-id")
-                result_data = json.loads(Path(args.input).read_text(encoding="utf-8")); correction = ReviewerCorrection(store, data["release_id"])
+                result_data = json.loads(Path(args.input).read_text(encoding="utf-8")); correction = ReviewerCorrection(store, data["release_id"]); context_meta=context_event_metadata(data["project_context"])
+                started=store.append(data["release_id"],"delegate_started",agent_id="specialist",module_id=args.module,delegation_id=args.delegation_id,status="running",metadata=context_meta)
                 prior = [e for e in store.events(data["release_id"]) if e.get("module_id") == args.module and e["event_type"] == "result_rejected"]
                 correction.attempts[args.module] = len(prior)
                 with span("shiproom.module.validate", {"release_id": data["release_id"], "module_id": args.module, "delegation_id": args.delegation_id}): response = correction.submit(result_data, expected_module=args.module, delegation_id=args.delegation_id)
@@ -117,6 +122,7 @@ def main(argv: list[str] | None = None) -> int:
                 if response["status"] == "accepted":
                     result = response["result"]; criteria = {c.get("criterion_id") for c in result["checks"]}; data["checks"] = [c for c in data["checks"] if c.get("criterion_id") not in criteria] + result["checks"]
                     ids = {f.get("id") for f in result["findings"]}; data["findings"] = [f for f in data["findings"] if f.get("id") not in ids] + result["findings"]; save(path, data)
+                    store.append(data["release_id"],"delegate_completed",parent_event_id=started["event_id"],agent_id="specialist",module_id=args.module,delegation_id=args.delegation_id,metadata=context_meta)
                 print(json.dumps(response, indent=2));
                 if response["status"] == "failed": return 1
             elif args.action == "check-http":
@@ -124,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
                 with span("shiproom.check.evaluate", {"release_id": data["release_id"], "criterion_id": criterion}): check = http_check(data["deployment"]["url"])
                 check.update({"criterion_id": criterion, "required": True})
                 data["checks"] = [c for c in data["checks"] if c.get("criterion_id") != criterion] + [check]; save(path, data)
-                store.append(data["release_id"], "deterministic_check", criterion_id=criterion, operation="http.get", status="passed" if check["passed"] else "failed", evidence_references=[check["target"]], metadata={"http_status": check.get("status"), "evidence_status": check["evidence_status"]}); print(json.dumps(check, indent=2))
+                store.append(data["release_id"], "deterministic_check", agent_id="verifier", criterion_id=criterion, operation="http.get", status="passed" if check["passed"] else "failed", evidence_references=[check["target"]], metadata={"http_status": check.get("status"), "evidence_status": check["evidence_status"], **context_event_metadata(data["project_context"])}); print(json.dumps(check, indent=2))
             else:
                 with span("shiproom.release.run", {"release_id": data["release_id"]}): data["verdict"] = calculate(data)
                 data["state"] = data["verdict"]["status"]; save(path, data)

@@ -21,6 +21,8 @@ review-packets/
 private-reports/
 external-release-state/
 audio/
+runtime-provenance/
+context-bootstrap/
 *.mp3
 *.wav
 .env

@@ -96,6 +96,7 @@ class Release:
     verdict: dict[str, Any] = field(default_factory=lambda: {"status": "DRAFT", "reason_codes": []})
     telemetry: dict[str, Any] = field(default_factory=dict)
     integrations: dict[str, Any] = field(default_factory=dict)
+    project_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

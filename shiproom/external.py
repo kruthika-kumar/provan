@@ -5,6 +5,7 @@ import re
 from urllib.parse import urlparse
 
 from .registry import Module
+from .context import compile_project_context, context_projection
 
 CAPABILITIES = {
     "inspect_public_surfaces", "run_safe_commands", "publish_report", "comment_upstream",
@@ -43,7 +44,7 @@ def require_capability(release: dict, capability: str) -> None:
 
 def compile_release(contract: dict) -> dict:
     contract = validate_contract(contract)
-    return {
+    release = {
         "release_id": f"rel_{uuid.uuid4().hex[:12]}", "schema_version": "release.v0", "mode": "external",
         "repository": {"url": contract["repository_url"], "pr_url": contract.get("pr_url"), "base_branch": None, "commit_sha": None},
         "deployment": {"url": contract["live_url"]},
@@ -54,6 +55,8 @@ def compile_release(contract: dict) -> dict:
         "checks": [], "findings": [], "remediation_tasks": [], "owner_decisions": [],
         "verdict": {"status": "DRAFT", "reason_codes": []}, "telemetry": {}, "integrations": {},
     }
+    release["project_context"] = compile_project_context(project_id=contract["project_name"].lower().replace(" ", "-"), repository_url=contract["repository_url"], commit_sha="not_recorded", release_input={"target_user": contract["target_user"], "product_promise": contract["product_promise"], "critical_journey": contract["critical_journey"]}, owner_constraints=contract["owner_constraints"])
+    return release
 
 
 def eligible_modules(release: dict, modules: dict[str, Module]) -> tuple[list[str], dict[str, str]]:
@@ -71,4 +74,4 @@ def review_packet(release: dict, modules: dict[str, Module]) -> dict:
     criteria = []
     for module_id in eligible:
         criteria.append({"criterion_id": f"{module_id.upper()}_EXTERNAL_REVIEW", "module_id": module_id, "required": True})
-    return {"schema_version": PACKET_SCHEMA, "release_id": release["release_id"], "release_signals": {"mode": "external", "project_name": release["product"]["name"], "target_user": release["product"]["target_user"], "promise": release["product"]["promise"], "critical_journey": release["product"]["critical_journey"], "non_goals": release["product"]["non_goals"]}, "eligible_modules": [{"module_id": key, "name": modules[key].config.get("name", key), "version": modules[key].config.get("version"), "eligibility_reason": eligibility_reasons[key]} for key in eligible], "ineligible_modules": [{"module_id": key, "reason": eligibility_reasons[key]} for key in modules if key not in eligible], "applicable_criteria": criteria, "capabilities": release["capabilities"], "public_evidence_references": {"repository_url": release["repository"]["url"], "pr_url": release["repository"].get("pr_url"), "live_url": release["deployment"]["url"]}}
+    return {"schema_version": PACKET_SCHEMA, "release_id": release["release_id"], "release_signals": {"mode": "external", "project_name": release["product"]["name"], "target_user": release["product"]["target_user"], "promise": release["product"]["promise"], "critical_journey": release["product"]["critical_journey"], "non_goals": release["product"]["non_goals"]}, "eligible_modules": [{"module_id": key, "name": modules[key].config.get("name", key), "version": modules[key].config.get("version"), "eligibility_reason": eligibility_reasons[key]} for key in eligible], "ineligible_modules": [{"module_id": key, "reason": eligibility_reasons[key]} for key in modules if key not in eligible], "applicable_criteria": criteria, "capabilities": release["capabilities"], "project_context": context_projection(release["project_context"]), "public_evidence_references": {"repository_url": release["repository"]["url"], "pr_url": release["repository"].get("pr_url"), "live_url": release["deployment"]["url"]}}

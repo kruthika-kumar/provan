@@ -9,8 +9,11 @@ from .external import CAPABILITIES
 from .policy import POLICY_VERSION
 from .public import public_release_view
 from .registry import discover
+from .context import AUTHORITY_POLICY_VERSION, CONTEXT_SCHEMA
+from .provenance import evidence_counts
 
 MANIFEST_SCHEMA = "public_evidence_manifest.v1"
+MANIFEST_V2_SCHEMA = "public_evidence_manifest.v2"
 EVAL_VERSION = "external_read_only_failure.v1"
 
 
@@ -23,7 +26,7 @@ def human_duration(start: str, end: str) -> str:
     return " ".join(part for part in (f"{hours}h" if hours else "", f"{minutes}m" if minutes else "", f"{seconds}s" if seconds or not hours else "") if part)
 
 
-def completed_run(release: dict, receipt: dict, verified: dict) -> dict:
+def completed_run(release: dict, receipt: dict, verified: dict, runtime: dict | None = None) -> dict:
     public = public_release_view(release, discover())
     modules = dict(public["manager_selection"])
     modules["skipped_modules"] = [{**item, "reason": "No AI, analytics, retrieval, ranking or experimentation surface was detected."} if item.get("module_id") == "data" else item for item in modules.get("skipped_modules", [])]
@@ -44,12 +47,22 @@ def completed_run(release: dict, receipt: dict, verified: dict) -> dict:
         "public_references": {**public["public_artifacts"], "repository_url": verified["repository_url"], "pr_url": verified["pr_url"], "evidence_comment_url": verified["evidence_comment_url"], "ci_url": verified["ci_url"]},
         "proof_counts": {"tests_passed": verified["tests_passed"], "evals_passed": verified["evals_passed"]},
         "submission_proof": {"ci_status": verified.get("ci_status", "passed"), "policy_gate": verified.get("policy_gate", "passed"), "policy_version": verified.get("policy_version", POLICY_VERSION), "eval_version": verified.get("eval_version", EVAL_VERSION), "deployed_commit": verified.get("deployed_commit"), "rollback_baseline_version_id": verified.get("rollback_baseline_version_id"), "generated_at": verified.get("generated_at"), "pr2_url": verified.get("pr2_url")},
+        "historical_release": {"project_context_used": False},
+        "hardened_capability_gates": {"context_handoff": verified.get("context_handoff", "not_recorded"), "context_isolation": verified.get("context_isolation", "not_recorded"), "source_authority_conflict": verified.get("source_authority_conflict", "not_recorded")},
+        "context_proof": {"context_contract_version": CONTEXT_SCHEMA, "source_authority_policy_version": AUTHORITY_POLICY_VERSION, "source_types": verified.get("context_source_types", ["release_input", "repository_context"])},
+        "runtime": runtime or {"schema_version": "runtime_provenance.v1", **{key: {"value": "not_recorded", "provenance": {"source_type": "hermes_session_record", "session_id": receipt["session_id"], "source_field": "not_recorded"}} for key in ("model_id", "reasoning_effort", "model_policy_version", "escalation_count")}},
+        "evidence_counts": evidence_counts(release),
     }
 
 
 def public_evidence_manifest(run: dict) -> dict:
     refs=run["public_references"]; proof=run["submission_proof"]
     return {"schema_version":MANIFEST_SCHEMA,"generated_at":proof.get("generated_at"),"policy_version":proof["policy_version"],"eval_version":proof["eval_version"],"release_id":run["release_id"],"final_verdict":run["verdict"]["status"],"hermes":{"session_id":run["hermes"]["session_id"],"delegation_id":run["hermes"]["delegation_id"]},"modules":{"selected_modules":run["modules"]["selected_modules"],"skipped_modules":run["modules"]["skipped_modules"]},"http_evidence":{"before":404,"after":200,"same_url":run["before_after"]["same_url"],"url":run["before_after"]["url"]},"owner_decision":run["owner_decision"],"public_references":{"repository_url":refs["repository_url"],"pr_url":refs["pr_url"],"pr2_url":proof.get("pr2_url"),"evidence_comment_url":refs["evidence_comment_url"],"public_report_url":refs["report_url"]},"verification":{"tests_passed":run["proof_counts"]["tests_passed"],"evals_passed":run["proof_counts"]["evals_passed"],"ci_status":proof["ci_status"],"ci_url":refs["ci_url"],"external_read_only_policy_gate":proof["policy_gate"]},"auto_merge":False,"deployment":{"deployed_commit":proof.get("deployed_commit"),"rollback_baseline_version_id":proof.get("rollback_baseline_version_id")}}
+
+
+def public_evidence_manifest_v2(run: dict) -> dict:
+    base = public_evidence_manifest(run)
+    return {**base, "schema_version": MANIFEST_V2_SCHEMA, "historical_release": run["historical_release"], "hardened_capability_gates": run["hardened_capability_gates"], "context": run["context_proof"], "runtime": run["runtime"], "evidence_counts": run["evidence_counts"]}
 
 
 def render_controlled_report(run: dict) -> str:
@@ -100,16 +113,26 @@ def verdict_badge() -> str:
     return """<svg xmlns="http://www.w3.org/2000/svg" width="420" height="64" role="img" aria-label="Shiproom: Ship with conditions"><rect width="420" height="64" rx="12" fill="#10241c"/><text x="24" y="40" fill="#f3f0e6" font-family="system-ui,sans-serif" font-size="22" font-weight="700">Shiproom · SHIP WITH CONDITIONS</text></svg>"""
 
 
+def render_context_section(run: dict) -> str:
+    runtime=run["runtime"]; gates=run["hardened_capability_gates"]; counts=run["evidence_counts"]; context=run["context_proof"]
+    def runtime_value(field): return esc(runtime[field]["value"])
+    return f"""<section id='context-provenance'><h2>Context and provenance</h2><p>The historical judged release did not use <code>project_context.v0</code>. The following hardened gates passed on isolated bootstrap fixtures.</p><div class='grid'><article class='card'><h3>Context contract</h3><p><code>{esc(context['context_contract_version'])}</code> · source types: {esc(', '.join(context['source_types']))}</p><p>Authority policy: <code>{esc(context['source_authority_policy_version'])}</code></p></article><article class='card'><h3>Bootstrap gates</h3><p>Handoff: <strong>{esc(gates['context_handoff'])}</strong><br>Isolation: <strong>{esc(gates['context_isolation'])}</strong><br>Source conflict: <strong>{esc(gates['source_authority_conflict'])}</strong></p></article><article class='card'><h3>Actual Hermes runtime</h3><p>Model: <strong>{runtime_value('model_id')}</strong><br>Reasoning effort: <strong>{runtime_value('reasoning_effort')}</strong><br>Model policy: {runtime_value('model_policy_version')}<br>Escalations: {runtime_value('escalation_count')}</p><p>Provenance: Hermes session <code title='{esc(runtime['model_id']['provenance']['session_id'])}'>…{esc(runtime['model_id']['provenance']['session_id'][-8:])}</code></p></article><article class='card'><h3>Evidence counts</h3><p>Deterministic checks: {counts['deterministic_check_count']}<br>Browser observed: {counts['browser_observed_count']}<br>Source-backed findings: {counts['source_backed_finding_count']}<br>Model-reviewed findings: {counts['model_reviewed_finding_count']}<br>Agent-reported: {counts['agent_reported_count']}<br>Missing evidence: {counts['missing_evidence_count']}</p></article></div><p><a href='/public_evidence_manifest.v2.json'>Open public evidence manifest v2</a></p></section>"""
+
+
 def setup_page() -> str:
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Shiproom setup</title></head><body style="max-width:760px;margin:50px auto;padding:20px;font:18px/1.6 system-ui"><h1>Run Shiproom locally through Hermes</h1><ol><li>Clone <a href="https://github.com/kruthika-kumar/shiproom">the Shiproom repository</a>.</li><li>Install the Shiproom skill in your isolated Hermes profile.</li><li>Open Hermes in the repository.</li><li>Invoke <code>/shiproom</code> with the generated <code>external_release_contract.v1</code>.</li></ol><p>Hermes execution stays local. The public console does not provide a remote runner.</p><p><a href="/">Return to Shiproom</a></p></body></html>"""
 
 
-def write_submission(release: dict, receipt: dict, verified: dict, output: Path) -> dict:
-    run = completed_run(release, receipt, verified); output.mkdir(parents=True, exist_ok=True)
+def write_submission(release: dict, receipt: dict, verified: dict, output: Path, runtime: dict | None = None) -> dict:
+    run = completed_run(release, receipt, verified, runtime); output.mkdir(parents=True, exist_ok=True)
     (output / "completed_run.json").write_text(json.dumps(run, indent=2), encoding="utf-8")
     (output / "public_evidence_manifest.v1.json").write_text(json.dumps(public_evidence_manifest(run), indent=2), encoding="utf-8")
-    (output / "index.html").write_text(render_console(run, verified["canonical_url"]), encoding="utf-8")
-    (output / "release-report.html").write_text(render_controlled_report(run), encoding="utf-8")
+    (output / "public_evidence_manifest.v2.json").write_text(json.dumps(public_evidence_manifest_v2(run), indent=2), encoding="utf-8")
+    page=render_console(run, verified["canonical_url"]).replace("</main>", render_context_section(run)+"</main>")
+    (output / "index.html").write_text(page, encoding="utf-8")
+    report_receipts=f"<article><h2>Joined proof</h2><p>Hermes session <code>{esc(run['hermes']['session_id'])}</code> · delegation <code>{esc(run['hermes']['delegation_id'])}</code></p><p>{run['proof_counts']['tests_passed']} tests · {run['proof_counts']['evals_passed']} evals · owner resolution <code>{esc(run['owner_decision']['resolution'])}</code></p></article>"
+    report=render_controlled_report(run).replace("</main>",report_receipts+"</main>")
+    (output / "release-report.html").write_text(report, encoding="utf-8")
     (output / "shiproom-verdict.svg").write_text(verdict_badge(), encoding="utf-8")
     (output / "setup.html").write_text(setup_page(), encoding="utf-8")
     return run

@@ -1,7 +1,7 @@
 {
   "delegation_id": "deleg_4ddb33af",
-  "tests_passed": 56,
-  "evals_passed": 14,
+  "tests_passed": 61,
+  "evals_passed": 17,
   "ci_url": "https://github.com/kruthika-kumar/shiproom/actions/runs/29188570146",
   "repository_url": "https://github.com/kruthika-kumar/shiproom",
   "pr_url": "https://github.com/kruthika-kumar/shiproom/pull/1",
@@ -10,6 +10,13 @@
   "policy_gate": "passed",
   "policy_version": "external_read_only_policy.v1",
   "eval_version": "external_read_only_failure.v1",
-  "rollback_baseline_version_id": "7fa11d71-bde2-4d28-be25-a510351c1e7e",
-  "pr2_url": "https://github.com/kruthika-kumar/shiproom/pull/2"
+  "rollback_baseline_version_id": "e6911ba7-194b-48fb-873c-07e0de878541",
+  "pr2_url": "https://github.com/kruthika-kumar/shiproom/pull/2",
+  "context_handoff": "passed",
+  "context_isolation": "passed",
+  "source_authority_conflict": "passed",
+  "context_source_types": [
+    "release_input",
+    "repository_context"
+  ]
 }
