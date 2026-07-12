@@ -66,8 +66,13 @@ def test_decision_resolution_precedence():
 
 def test_demo_patient_route_mismatch():
     root = Path(__file__).resolve().parents[1]
-    source = subprocess.run(["git", "show", "main:demo_patient/server.py"], cwd=root, text=True, capture_output=True, check=True).stdout
     broken, fixed = ROUTE_TARGETS[Path("demo_patient/server.py")]
+    source = ""
+    for ref in ("main", "origin/main", "HEAD^1", "HEAD"):
+        result = subprocess.run(["git", "show", f"{ref}:demo_patient/server.py"], cwd=root, text=True, capture_output=True)
+        if result.returncode == 0 and result.stdout.count(broken) == 1 and result.stdout.count(fixed) == 0:
+            source = result.stdout; break
+    assert source, "no broken controlled-patient base revision found"
     assert source.count(broken) == 1
     assert fixed not in source
 
