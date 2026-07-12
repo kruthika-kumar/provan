@@ -32,6 +32,15 @@ def test_public_projection_excludes_canonical_private_state(tmp_path):
     assert "Canonical release object" not in report and "C:\\Users" not in report and canonical["release_id"] in report
 
 
+def test_completed_manager_selection_is_projected_and_rendered(tmp_path):
+    canonical = release()
+    canonical["panel"] = {"selected_modules": ["product", "engineering", "design"], "skipped_modules": [{"module_id": "data", "reason": "no signal"}], "selection_reasons": {"product": "promise", "engineering": "repo", "design": "surface", "data": "no signal"}, "delegation_plan": [{"role": "product_ux"}, {"role": "engineering_qa"}]}
+    view = public_release_view(canonical, discover())
+    assert view["manager_selection"]["selected_modules"] == ["product", "engineering", "design"]
+    report = render(canonical, tmp_path / "report.html").read_text(encoding="utf-8")
+    assert "product, engineering, design" in report
+
+
 def test_public_projection_rejects_paths_unknown_fields_and_private_urls():
     view = public_release_view(release(), discover())
     view["product"]["promise"] = r"Read C:\Users\private\file"

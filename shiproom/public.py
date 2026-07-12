@@ -36,6 +36,12 @@ def public_release_view(release: dict, modules: dict[str, Module] | None = None)
         "release_signals": {"has_public_repository": bool(repo_url), "has_public_deployment": bool(release.get("deployment", {}).get("url"))},
         "available_modules": module_catalogue(modules) if modules is not None else [],
         "applicable_criteria": sorted({c.get("criterion_id") for c in release.get("checks", []) if c.get("criterion_id")}),
+        "manager_selection": {
+            "selected_modules": release.get("panel", {}).get("selected_modules", []),
+            "skipped_modules": release.get("panel", {}).get("skipped_modules", []),
+            "selection_reasons": release.get("panel", {}).get("selection_reasons", {}),
+            "delegation_plan": release.get("panel", {}).get("delegation_plan", []),
+        },
         "checks": release.get("checks", []),
         "findings": release.get("findings", []),
         "remediation": [{key: task.get(key) for key in ("id", "class", "branch", "commit_sha", "status", "auto_merge")} for task in release.get("remediation_tasks", [])],
@@ -55,7 +61,7 @@ def public_release_view(release: dict, modules: dict[str, Module] | None = None)
 
 
 def validate_public_release_view(view: dict) -> None:
-    allowed = {"schema_version", "release_id", "product", "release_signals", "available_modules", "applicable_criteria", "checks", "findings", "remediation", "owner_decisions", "verdict", "public_artifacts", "native_ids"}
+    allowed = {"schema_version", "release_id", "product", "release_signals", "available_modules", "applicable_criteria", "manager_selection", "checks", "findings", "remediation", "owner_decisions", "verdict", "public_artifacts", "native_ids"}
     if set(view) != allowed or view.get("schema_version") != PUBLIC_SCHEMA:
         raise ValueError("invalid public release view fields or schema")
     encoded = json.dumps(view)
