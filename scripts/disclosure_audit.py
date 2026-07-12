@@ -38,7 +38,7 @@ def main() -> int:
         public_root = Path(args.public_dir).resolve()
         if not public_root.is_dir(): findings.append({"rule": "public_dir_missing", "path": str(public_root)})
         else:
-            forbidden_public = {"repository.path": r"repository\.path", "canonical_dump": r"Canonical release object", "raw_prompt": r"raw[_ -]?prompt", "provider_response": r"(?:complete|raw)[_ -]?(?:model|provider)[_ -]?response", "private_drawdb": r"(?i)drawdb|rel_70e7648a0731|deleg_fa605658|20260712_151747_d9963a", "windows_path": r"[A-Za-z]:[\\/]", "file_url": r"file://"}
+            forbidden_public = {"repository.path": r"repository\.path", "canonical_dump": r"Canonical release object", "raw_prompt": r"raw[_ -]?prompt", "provider_response": r"(?:complete|raw)[_ -]?(?:model|provider)[_ -]?response", "private_drawdb": r"(?i)drawdb|rel_70e7648a0731|deleg_fa605658|20260712_151747_d9963a", "windows_path": r"(?<![A-Za-z])[A-Za-z]:[\\/]", "file_url": r"file://"}
             for target in public_root.rglob("*"):
                 if not target.is_file(): continue
                 public_files += 1
