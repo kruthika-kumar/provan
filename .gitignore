@@ -13,6 +13,9 @@ release-state/
 evidence/
 reports/
 session-exports/
+hermes-receipts/
+public-artifacts/
+disclosure-audit.json
 audio/
 *.mp3
 *.wav

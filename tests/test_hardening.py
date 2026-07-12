@@ -121,6 +121,12 @@ def test_complete_release_loop_and_reset(tmp_path):
         release = json.loads(release_path.read_text())
         assert release["verdict"]["status"] == "SHIP_WITH_CONDITIONS"
         assert [c.get("status") for c in release["checks"]] == [404, 200]
+        public_url = "https://shiproom-demo.example.workers.dev"
+        release["deployment"].update({"url": public_url, "report_url": f"{public_url}/reports/{release_id}"})
+        release["integrations"] = {"github": {"repository": "kruthika-kumar/shiproom", "pr_number": 1, "comment_url": "https://github.com/kruthika-kumar/shiproom/pull/1"}, "cloudflare": {"report_url": release["deployment"]["report_url"]}}
+        for check in release["checks"]: check["target"] = f"{public_url}/result/demo"
+        for item in release["findings"][0]["evidence"]: item["reference"] = f"{public_url}/result/demo"
+        release_path.write_text(json.dumps(release, indent=2), encoding="utf-8")
         run(repo, "-m", "shiproom.cli", "report", "render", "--release", str(release_path), "--output", "dist/release-report.html")
         report = (repo / "dist" / "release-report.html").read_text(encoding="utf-8")
         assert release_id in report and "404" in report and "200" in report and "Revise the beta promise" in report
