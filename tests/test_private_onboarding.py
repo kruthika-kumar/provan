@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from shiproom.authority import execute_approved_command, execute_operation
+from shiproom.authority import require_operation, run_bounded_command
 from shiproom.external import CAPABILITIES, validate_contract as validate_external
 from shiproom.onboarding import discover, initialize, paths
 from shiproom.project import (
@@ -15,7 +15,7 @@ from shiproom.project import (
     deployment_target, file_hash, local_locator, resolve_policy_path,
     validate_command, validate_contract,
 )
-from shiproom.worktrees import authorize_isolated_write, prepare_isolated_worktree
+from shiproom.worktrees import prepare_isolated_worktree
 
 
 def git(repo: Path, *args: str) -> str:
@@ -66,6 +66,11 @@ def test_activation_stale_falls_back_to_inspect(repo: Path):
     stale=activation_status(repo,contract,receipt); assert not stale["activation_fresh"] and stale["effective_profile"]=="inspect"
 
 
+def test_byte_level_contract_change_invalidates_receipt(repo: Path):
+    init_project(repo,"verify"); contract,receipt=paths(repo); contract.write_text(contract.read_text()+"\n",encoding="utf-8"); status=activation_status(repo,contract,receipt)
+    assert not status["hash_agreement"] and status["effective_profile"]=="inspect"
+
+
 def test_clean_tracked_contract_is_reusable_in_fresh_clone(repo: Path, tmp_path: Path):
     init_project(repo,"verify"); git(repo,"add",".gitignore",".shiproom/project-contract.json"); git(repo,"commit","-m","contract")
     clone=tmp_path/"clone"; subprocess.run(["git","clone",str(repo),str(clone)],check=True,capture_output=True)
@@ -74,22 +79,19 @@ def test_clean_tracked_contract_is_reusable_in_fresh_clone(repo: Path, tmp_path:
 
 
 def approved(repo: Path) -> dict:
-    command={"command_id":"unit","argv":["python","-m","pytest","-q"],"cwd":".","purpose":"Unit tests","source":{"ref":"pyproject.toml","hash":file_hash(repo/"pyproject.toml")},"timeout_seconds":120,"output_limit_bytes":4096,"allowed_environment":{"NO_COLOR":"1"}}
+    command={"command_id":"unit","criterion_id":"ENGINEERING_UNIT_TESTS","required_for_release":True,"argv":["python","-m","pytest","-q"],"cwd":".","purpose":"Unit tests","source":{"ref":"pyproject.toml","hash":file_hash(repo/"pyproject.toml")},"timeout_seconds":120,"output_limit_bytes":4096,"allowed_environment":{"NO_COLOR":"1"}}
     validate_command(command,repo); return command
 
 
 def test_detected_command_is_not_authority_and_denied_executor_is_not_called(repo: Path):
-    init_project(repo); status=activation_status(repo,*paths(repo)); executor=Mock()
-    with pytest.raises(PermissionError): execute_operation(status,"command.execute",executor)
-    executor.assert_not_called()
+    init_project(repo); status=activation_status(repo,*paths(repo))
+    with pytest.raises(PermissionError): require_operation(status,"command.execute")
 
 
-def test_approved_command_uses_argv_no_shell_and_minimal_environment(repo: Path):
-    init_project(repo,"verify"); contract,receipt=paths(repo); data=json.loads(contract.read_text()); data["execution_policy"]["approved_commands"]=[approved(repo)]; contract.write_text(json.dumps(data),encoding="utf-8")
-    from shiproom.project import activate
-    activate(repo,contract,receipt); status=activation_status(repo,contract,receipt); executor=Mock(return_value=subprocess.CompletedProcess([],0,"ok",""))
-    execute_approved_command(repo,status,"unit",executor)
-    _,kwargs=executor.call_args; assert kwargs["shell"] is False and kwargs["cwd"]==repo.resolve() and "NO_COLOR" in kwargs["env"] and "HOME" not in kwargs["env"]
+def test_approved_command_returns_typed_bounded_result(repo: Path):
+    command=approved(repo); command["argv"]=["python","-c","print('ok')"]
+    result=run_bounded_command(command,repo)
+    assert result.status=="passed" and result.exit_code==0 and result.bytes_captured<=result.output_limit_bytes
 
 
 def test_changed_command_source_hash_invalidates_grant(repo: Path):
@@ -171,7 +173,7 @@ def test_remediation_uses_isolated_worktree_even_when_active_tree_dirty(repo: Pa
     init_project(repo,"remediate"); contract,receipt=paths(repo); from shiproom.project import activate; activate(repo,contract,receipt); status=activation_status(repo,contract,receipt)
     (repo/"app.py").write_text("dirty\n",encoding="utf-8"); result=prepare_isolated_worktree(repo,status,"task1"); worktree=Path(result["worktree"])
     assert worktree!=repo and result["base_commit"]==git(repo,"rev-parse","HEAD") and (repo/"app.py").read_text()=="dirty\n"
-    target=authorize_isolated_write(repo,worktree,status,"app.py"); assert target.parent==worktree
+    assert (worktree/"app.py").is_file()
 
 
 def test_remediation_denial_never_calls_worktree_executor(repo: Path):

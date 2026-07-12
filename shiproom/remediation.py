@@ -6,6 +6,8 @@ from pathlib import Path
 
 from .evidence import http_check
 from .verdict import calculate, close_finding
+from .authority import LocalExecutionContext
+from .worktrees import prepare_isolated_worktree
 
 ALLOWED_CLASSES = {"route_fix", "regression_test", "broken_link", "basic_error_handling"}
 PROTECTED_PARTS = {".env", ".git", "credentials", "secrets"}
@@ -115,6 +117,24 @@ def patch_demo_route(repo: Path, release: dict) -> tuple[list[Path], str]:
     git(repo, "commit", "-m", f"fix: close public result route for {release_id}")
     commit_sha = git(repo, "rev-parse", "HEAD").stdout.strip()
     return changed, commit_sha
+
+
+def patch_demo_route_isolated(context: LocalExecutionContext, release: dict) -> tuple[list[Path], str, dict]:
+    repo=context.repository_root; release_id=release["release_id"]; branch=remediation_branch(release_id); base=context.authority_binding["repository_commit"]
+    worktree_record=prepare_isolated_worktree(repo,context.activation,f"remediate-{release_id}",base_commit=base,branch=branch); worktree=Path(worktree_record["worktree"]); authorized={p.as_posix() for p in ROUTE_TARGETS}
+    changed=[]
+    for relative,(broken,fixed) in ROUTE_TARGETS.items():
+        target=context.write_isolated_file(worktree,relative.as_posix()); source=_assert_route_state(target,broken,fixed,expect_broken=True); updated=source.replace(broken,fixed,1)
+        if updated==source: raise ValueError(f"route remediation was a no-op for {relative}")
+        target.write_text(updated,encoding="utf-8"); _assert_route_state(target,broken,fixed,expect_broken=False); changed.append(target)
+    actual={line.strip() for line in git(worktree,"diff","--name-only",base).stdout.splitlines() if line.strip()}
+    untracked={line[3:] for line in git(worktree,"status","--porcelain","--untracked-files=all").stdout.splitlines() if line.startswith("?? ")}
+    actual|=untracked
+    if not actual or not actual.issubset(authorized): raise PermissionError(f"remediation diff contains unauthorized paths: {sorted(actual-authorized)}")
+    git(worktree,"add","--",*sorted(actual)); staged={line.strip() for line in git(worktree,"diff","--cached","--name-only",base).stdout.splitlines() if line.strip()}
+    if staged!=actual: raise PermissionError("staged remediation paths differ from authorized diff")
+    git(worktree,"commit","-m",f"fix: close public result route for {release_id}"); commit_sha=git(worktree,"rev-parse","HEAD").stdout.strip()
+    return changed,commit_sha,worktree_record
 
 
 def verify_and_close(release: dict) -> dict:

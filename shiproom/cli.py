@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .models import Release
-from .external import compile_release, eligible_modules, require_capability, review_packet, validate_contract
+from .external import compile_release, eligible_modules, require_capability, review_packet, validate_contract as validate_external_contract
 from .hermes import apply_manager_decision, validate_receipt
 from .public import public_release_view, write_public_view
 from .review import ReviewerCorrection
@@ -21,8 +21,9 @@ from .context import compile_project_context, context_event_metadata
 from .remediation import assert_clean_worktree, current_branch, git, repository_root
 from .runner import run_module
 from .verdict import calculate
-from .onboarding import discover as discover_project, human_report, initialize as initialize_project, paths as project_paths
-from .project import activate as activate_project, activation_status, local_locator, validate_contract
+from .onboarding import discover as discover_project, human_report, human_project_view, initialize as initialize_project, paths as project_paths, project_authority_view
+from .project import activate as activate_project, activation_status, validate_contract as validate_project_contract
+from .authority import LocalExecutionContext, bind_release_authority
 
 
 def load(path: Path) -> dict:
@@ -69,23 +70,23 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "project":
         repo = repository_root(Path(args.repo)); contract_path = Path(args.contract).resolve() if args.contract else next((p for p in project_paths(repo)[:1] + project_paths(repo, True)[:1] if p.is_file()), project_paths(repo)[0]); receipt = project_paths(repo)[1]
         if not contract_path.is_file(): raise SystemExit("project contract not found")
-        if args.action == "activate": result = activate_project(repo, contract_path, receipt)
-        else: result = activation_status(repo, contract_path, receipt)
-        print(json.dumps(result, indent=2, default=str) if args.json or args.action == "activate" else human_report(discover_project(repo))); return 0
+        if args.action == "activate": result = activate_project(repo, contract_path, receipt); print(json.dumps(result,indent=2)); return 0
+        result=project_authority_view(repo,contract_path,receipt); print(json.dumps(result,indent=2,default=str) if args.json else human_project_view(result)); return 0
     elif args.command == "doctor":
         repo = repository_root(Path(args.repo)); result = discover_project(repo, probe=args.probe); print(json.dumps(result, indent=2, default=str) if args.json else human_report(result)); return 0
     elif args.command == "modules":
         for module_id, module in registry.items(): print(f"{module_id}\t{module.config.get('name','')}")
     elif args.command == "release":
         repo = repository_root(Path(args.repo)); assert_clean_worktree(repo); base_branch = current_branch(repo)
-        data = Release(release_id=f"rel_{uuid.uuid4().hex[:12]}", repository={"url": args.repo, "path": str(repo), "base_branch": base_branch}, deployment={"url": args.live_url, "generated_path": "/result/demo"}, product={"name": "Launch Card", "target_user": args.target_user, "promise": args.promise, "critical_journey": ["Enter project", "Generate", "Open public URL"], "non_goals": []}).to_dict()
+        binding, deployment_grant = bind_release_authority(repo, args.live_url, "/result/demo")
+        data = Release(release_id=f"rel_{uuid.uuid4().hex[:12]}", repository={"url": args.repo, "path": str(repo), "base_branch": base_branch, "commit_sha": binding["repository_commit"]}, deployment={"url": args.live_url, "generated_path": "/result/demo", "read_grant": deployment_grant}, product={"name": "Launch Card", "target_user": args.target_user, "promise": args.promise, "critical_journey": ["Enter project", "Generate", "Open public URL"], "non_goals": []}, project_authority=binding).to_dict()
         data["project_context"] = compile_project_context(project_id=repo.name.lower().replace(" ", "-"), repository_url=args.repo, commit_sha=git(repo, "rev-parse", "HEAD").stdout.strip(), release_input=data["product"], repository_root=repo)
         selected, skipped = select(data, registry); data["panel"] = {"selected_modules": selected, "skipped_modules": skipped}; save(Path(args.output), data); print(args.output)
     elif args.command == "review":
-        path = Path(args.release); data = load(path); targets = data["panel"]["selected_modules"] if args.all else [args.module]
+        path = Path(args.release); data = load(path); context = LocalExecutionContext.from_release(data); targets = data["panel"]["selected_modules"] if args.all else [args.module]
         for module_id in targets:
             if module_id not in registry: raise SystemExit(f"unknown module: {module_id}")
-            result = run_module(module_id, data)
+            result = run_module(module_id, data, context)
             criterion_ids = {check.get("criterion_id") for check in result["checks"]}
             finding_ids = {finding.get("id") for finding in result["findings"]}
             data["checks"] = [check for check in data["checks"] if check.get("criterion_id") not in criterion_ids]
@@ -108,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "init":
             if not args.contract: raise SystemExit("external init requires --contract")
             with span("shiproom.contract.compile"):
-                contract = validate_contract(json.loads(Path(args.contract).read_text(encoding="utf-8")))
+                contract = validate_external_contract(json.loads(Path(args.contract).read_text(encoding="utf-8")))
                 data = compile_release(contract)
             output = Path(args.output or f"release-state/{data['release_id']}.json"); save(output, data)
             store.append(data["release_id"], "contract_accepted", operation="external.init", evidence_references=[data["repository"]["url"], data["deployment"]["url"]], metadata={"contract_schema": contract["schema_version"], "capabilities": data["capabilities"]})

@@ -97,6 +97,7 @@ class Release:
     telemetry: dict[str, Any] = field(default_factory=dict)
     integrations: dict[str, Any] = field(default_factory=dict)
     project_context: dict[str, Any] = field(default_factory=dict)
+    project_authority: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

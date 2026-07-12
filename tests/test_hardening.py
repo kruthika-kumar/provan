@@ -14,6 +14,8 @@ from pathlib import Path
 import pytest
 
 from shiproom.remediation import BRANCH_PREFIX, ROUTE_TARGETS, _assert_route_state, remediation_branch
+from shiproom.authority import LocalExecutionContext
+from shiproom.worktrees import cleanup_isolated_worktree, prepare_isolated_worktree
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +37,7 @@ def make_repo(tmp_path: Path) -> Path:
         shutil.copytree(ROOT / name, repo / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     for name in ("pyproject.toml", ".gitignore"):
         shutil.copy2(ROOT / name, repo / name)
+    (repo/".shiproom").mkdir(); contract=json.loads((ROOT/".shiproom/project-contract.json").read_text(encoding="utf-8")); contract["default_capability_profile"]="remediate"; (repo/".shiproom/project-contract.json").write_text(json.dumps(contract,indent=2)+"\n",encoding="utf-8")
     for relative in ROUTE_TARGETS:
         broken, fixed = ROUTE_TARGETS[relative]; baseline = ""
         for ref in ("main", "origin/main", "HEAD^1", "HEAD"):
@@ -48,6 +51,7 @@ def make_repo(tmp_path: Path) -> Path:
     git(repo, "config", "user.name", "Shiproom Test")
     git(repo, "add", ".")
     git(repo, "commit", "-m", "test fixture")
+    run(repo,"-m","shiproom.cli","project","activate","--repo",str(repo))
     return repo
 
 
@@ -114,7 +118,8 @@ def test_complete_release_loop_and_reset(tmp_path):
     branch = release["remediation_tasks"][-1]["branch"]
     assert branch == remediation_branch(release_id)
     assert release["remediation_tasks"][-1]["auto_merge"] is False
-    patient = start_patient(repo, port)
+    remediation_worktree=Path(release["remediation_tasks"][-1]["worktree"])
+    patient = start_patient(remediation_worktree, port)
     try:
         wait_http(f"{url}/result/demo", 200)
         first_verify = run(repo, "scripts/verify_demo.py", "--release", str(release_path), check=False)
@@ -144,3 +149,20 @@ def test_complete_release_loop_and_reset(tmp_path):
     assert not (repo / "release-state").exists()
     assert not (repo / "dist").exists()
     assert git(repo, "status", "--porcelain", "--untracked-files=all") == ""
+
+
+def test_real_remediation_preserves_dirty_active_checkout(tmp_path):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"
+    (repo/"README.local").write_text("untracked dirty\n"); (repo/"pyproject.toml").write_text((repo/"pyproject.toml").read_text()+"\n# staged\n"); git(repo,"add","pyproject.toml")
+    branch=git(repo,"branch","--show-current"); head=git(repo,"rev-parse","HEAD"); status=git(repo,"status","--porcelain","--untracked-files=all"); cached=git(repo,"diff","--cached"); dirty=(repo/"README.local").read_bytes()
+    run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); release=json.loads(release_path.read_text()); task=release["remediation_tasks"][-1]
+    assert git(repo,"branch","--show-current")==branch and git(repo,"rev-parse","HEAD")==head and git(repo,"status","--porcelain","--untracked-files=all")==status and git(repo,"diff","--cached")==cached and (repo/"README.local").read_bytes()==dirty
+    cleanup_isolated_worktree(repo,path=task["worktree"],base_commit=task["base_commit"],branch=task["branch"])
+
+
+def test_unexpected_remediation_diff_fails_without_commit_and_cleanup_is_idempotent(tmp_path):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; release=json.loads(release_path.read_text()); context=LocalExecutionContext.from_release(release); branch=remediation_branch(release["release_id"]); record=prepare_isolated_worktree(repo,context.activation,f"remediate-{release['release_id']}",base_commit=context.authority_binding["repository_commit"],branch=branch); worktree=Path(record["worktree"]); (worktree/"unexpected.txt").write_text("not authorized")
+    result=run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path),check=False)
+    assert result.returncode!=0 and git(worktree,"rev-parse","HEAD")==record["base_commit"]
+    cleanup_isolated_worktree(repo,path=record["worktree"],base_commit=record["base_commit"],branch=branch); cleanup_isolated_worktree(repo,path=record["worktree"],base_commit=record["base_commit"],branch=branch)
+    with pytest.raises(PermissionError): cleanup_isolated_worktree(repo,path=str(tmp_path/"outside"),base_commit=record["base_commit"],branch=branch)

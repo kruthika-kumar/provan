@@ -7,7 +7,8 @@ import threading
 from pathlib import Path
 
 from shiproom.evidence import http_check
-from shiproom.remediation import BRANCH_PREFIX, ROUTE_TARGETS, _assert_route_state, current_branch, git, repository_root, validate_branch
+from shiproom.remediation import BRANCH_PREFIX, ROUTE_TARGETS, _assert_route_state, git, repository_root, validate_branch
+from shiproom.worktrees import cleanup_isolated_worktree
 
 
 RUNTIME_DIRS = ("release-state", "evidence", "dist", "reports", "session-exports", "audio")
@@ -29,10 +30,9 @@ def main() -> int:
     validate_branch(branch, release["release_id"])
     if not branch.startswith(BRANCH_PREFIX):
         raise ValueError("refusing to delete a non-Shiproom branch")
-    if current_branch(repo) != base:
-        git(repo, "switch", base)
-    if git(repo, "branch", "--list", branch).stdout.strip():
-        git(repo, "branch", "-D", branch)
+    expected_base=release.get("project_authority",{}).get("repository_commit")
+    if not expected_base: raise ValueError("reset requires release-bound base commit")
+    cleanup_isolated_worktree(repo,path=tasks[-1].get("worktree"),base_commit=expected_base,branch=branch)
     for relative, (broken, fixed) in ROUTE_TARGETS.items():
         _assert_route_state(repo / relative, broken, fixed, expect_broken=True)
     for name in RUNTIME_DIRS:
@@ -49,8 +49,6 @@ def main() -> int:
             raise ValueError(f"reset verification failed: {check}")
     finally:
         server.shutdown(); thread.join(timeout=5); server.server_close()
-    if current_branch(repo) != base:
-        raise ValueError("reset did not restore the recorded base branch")
     status = git(repo, "status", "--porcelain", "--untracked-files=all").stdout.strip()
     if status:
         raise ValueError(f"reset left tracked or unexpected changes:\n{status}")

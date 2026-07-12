@@ -72,10 +72,11 @@ def default_contract(project_name: str, product_purpose: str, primary_users: lis
 
 
 def validate_command(command: dict, repo: Path | None = None) -> None:
-    required = {"command_id", "argv", "cwd", "purpose", "source", "timeout_seconds", "output_limit_bytes", "allowed_environment"}
+    required = {"command_id", "criterion_id", "required_for_release", "argv", "cwd", "purpose", "source", "timeout_seconds", "output_limit_bytes", "allowed_environment"}
     if set(command) != required:
         raise ValueError(f"approved command fields must be exactly {sorted(required)}")
-    _text(command["command_id"], "command_id", maximum=80); _text(command["purpose"], "purpose")
+    _text(command["command_id"], "command_id", maximum=80); _text(command["criterion_id"], "criterion_id", maximum=120); _text(command["purpose"], "purpose")
+    if not isinstance(command["required_for_release"], bool): raise ValueError("required_for_release must be boolean")
     argv = command["argv"]
     if not isinstance(argv, list) or not argv or any(not isinstance(v, str) or not v or SHELL_META.search(v) or v.startswith("@") for v in argv):
         raise ValueError("argv must be normalized tokens without shell syntax, expansion, or response files")
@@ -120,7 +121,10 @@ def validate_contract(contract: dict, repo: Path | None = None) -> dict:
         for key, value in risk.items(): _text(value, f"accepted_risks.{key}")
     policy = contract["execution_policy"]
     if set(policy) != {"approved_commands"} or not isinstance(policy["approved_commands"], list): raise ValueError("invalid execution_policy")
-    for command in policy["approved_commands"]: validate_command(command, repo)
+    criterion_ids = []
+    for command in policy["approved_commands"]:
+        validate_command(command, repo); criterion_ids.append(command["criterion_id"])
+    if len(criterion_ids) != len(set(criterion_ids)): raise ValueError("approved command criterion_id values must be unique")
     return contract
 
 
@@ -146,16 +150,17 @@ def activation_status(repo: Path, contract_path: Path, receipt_path: Path) -> di
     receipt = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.is_file() else None
     actual = content_hash(contract)
     reusable = state["tracked"] and not state["modified"]
-    agreement = bool(receipt and receipt.get("schema_version") == RECEIPT_SCHEMA and receipt.get("contract_hash") == actual and receipt.get("policy_version") == AUTHORITY_POLICY_VERSION)
+    agreement = bool(receipt and receipt.get("schema_version") == RECEIPT_SCHEMA and receipt.get("contract_hash") == actual and receipt.get("contract_file_hash") == file_hash(contract_path) and receipt.get("policy_version") == AUTHORITY_POLICY_VERSION)
     fresh = (agreement or (not receipt and reusable)) and not invalid_commands
     declared = contract["default_capability_profile"]
-    return {"contract": contract, "contract_hash": actual, "receipt_hash": receipt.get("contract_hash") if receipt else None, "hash_agreement": agreement, "tracked": state["tracked"], "modified": state["modified"], "activation_fresh": fresh, "declared_profile": declared, "effective_profile": declared if fresh else "inspect", "reusable": reusable, "invalid_command_grants": invalid_commands}
+    command_freshness = [{"command_id": c["command_id"], "fresh": c["command_id"] not in invalid_commands} for c in contract["execution_policy"]["approved_commands"]]
+    return {"contract": contract, "contract_hash": actual, "receipt_hash": receipt.get("contract_hash") if receipt else None, "activation_receipt_hash": content_hash(receipt) if receipt else None, "hash_agreement": agreement, "tracked": state["tracked"], "modified": state["modified"], "activation_fresh": fresh, "declared_profile": declared, "effective_profile": declared if fresh else "inspect", "reusable": reusable, "invalid_command_grants": invalid_commands, "command_freshness": command_freshness}
 
 
 def activate(repo: Path, contract_path: Path, receipt_path: Path) -> dict:
     validate_contract(json.loads(contract_path.read_text(encoding="utf-8")), repo)
     status = activation_status(repo, contract_path, receipt_path)
-    receipt = {"schema_version": RECEIPT_SCHEMA, "contract_hash": status["contract_hash"], "activated_at": datetime.now(UTC).isoformat(), "contract_tracked": status["tracked"], "contract_clean": not status["modified"], "capability_profile": status["contract"]["default_capability_profile"], "policy_version": AUTHORITY_POLICY_VERSION}
+    receipt = {"schema_version": RECEIPT_SCHEMA, "contract_hash": status["contract_hash"], "contract_file_hash": file_hash(contract_path), "activated_at": datetime.now(UTC).isoformat(), "contract_tracked": status["tracked"], "contract_clean": not status["modified"], "capability_profile": status["contract"]["default_capability_profile"], "policy_version": AUTHORITY_POLICY_VERSION}
     receipt_path.parent.mkdir(parents=True, exist_ok=True); receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     return receipt
 
@@ -165,9 +170,19 @@ def resolve_policy_path(repo: Path, relative: str, protected: list[str], exclude
     lexical = repo / rel
     resolved_repo = repo.resolve(); resolved = lexical.resolve(strict=False)
     if resolved != resolved_repo and resolved_repo not in resolved.parents: raise PermissionError("path escapes repository")
-    normalized = str(PurePosixPath(rel))
-    def matches(patterns: list[str]) -> bool: return any(fnmatch.fnmatch(normalized, p) or fnmatch.fnmatch(normalized + "/", p.rstrip("/") + "/") for p in patterns)
-    if matches(DEFAULT_EXCLUDED + excluded): raise PermissionError("path is excluded")
+    normalized = str(PurePosixPath(rel)); parts = PurePosixPath(normalized).parts
+    basename = parts[-1] if parts else ""
+    sensitive = any(part == ".git" or part in {"credentials", "secrets"} for part in parts) or basename == ".env" or basename.startswith(".env.") or basename.endswith((".pem", ".key")) or normalized == ".shiproom/local" or normalized.startswith(".shiproom/local/")
+    def matches(patterns: list[str]) -> bool:
+        for raw in patterns:
+            pattern = raw.replace("\\", "/").rstrip("/")
+            if not pattern: continue
+            if any(ch in pattern for ch in "*?["):
+                if fnmatch.fnmatch(normalized, pattern) or fnmatch.fnmatch(basename, pattern.removeprefix("**/")): return True
+            elif normalized == pattern or normalized.startswith(pattern + "/"):
+                return True
+        return False
+    if sensitive or matches(excluded): raise PermissionError("path is excluded")
     if operation == "write" and matches(protected): raise PermissionError("path is protected from modification")
     return resolved
 
@@ -175,7 +190,7 @@ def resolve_policy_path(repo: Path, relative: str, protected: list[str], exclude
 def local_locator(repo: Path) -> dict:
     root = Path(_git(repo.resolve(), "rev-parse", "--show-toplevel").stdout.strip()).resolve()
     remote = _git(root, "config", "--get", "remote.origin.url", check=False).stdout.strip() or None
-    return {"schema_version": LOCATOR_SCHEMA, "repository_root": str(root), "remote_url": _remote(remote), "branch": _git(root, "branch", "--show-current").stdout.strip() or None, "head": _git(root, "rev-parse", "HEAD").stdout.strip(), "source_mappings": {}}
+    return {"schema_version": LOCATOR_SCHEMA, "observed_at": datetime.now(UTC).isoformat(), "repository_root": str(root), "remote_url": _remote(remote), "branch": _git(root, "branch", "--show-current").stdout.strip() or None, "head": _git(root, "rev-parse", "HEAD").stdout.strip(), "source_mappings": {}}
 
 
 def deployment_target(kind: str = "none", address: str | None = None) -> dict:
@@ -187,4 +202,4 @@ def deployment_target(kind: str = "none", address: str | None = None) -> dict:
         if parsed.scheme not in {"http", "https"} or not parsed.hostname: raise ValueError("deployment address must be HTTP(S)")
         is_local = parsed.hostname in {"localhost", "127.0.0.1", "::1"}
         if (kind == "localhost") != is_local: raise ValueError("deployment kind does not match address")
-    return {"schema_version": DEPLOYMENT_SCHEMA, "kind": kind, "address": address}
+    return {"schema_version": DEPLOYMENT_SCHEMA, "observed_at": datetime.now(UTC).isoformat(), "kind": kind, "address": address}
