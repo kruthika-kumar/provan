@@ -1,8 +1,8 @@
 import { INDEX_HTML, REPORT_HTML, INDEX_ETAG, REPORT_ETAG } from "./generated_public.js";
 
 const staticHtml = (request, body, etag) => {
-  if (request.headers.get("If-None-Match") === etag) return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=0, must-revalidate" } });
-  return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, must-revalidate", ETag: etag } });
+  if (request.headers.get("If-None-Match") === etag) return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=0, must-revalidate, no-transform" } });
+  return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, must-revalidate, no-transform", ETag: etag } });
 };
 
 export default {

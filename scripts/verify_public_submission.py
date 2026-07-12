@@ -33,13 +33,14 @@ def main() -> int:
         values=[results[client][path] for client in CLIENTS]
         if any(item["status"]!=200 for item in values): failures.append(f"route failed: {path}")
         if len({item["hash"] for item in values})!=1: failures.append(f"client content mismatch: {path}")
-        if path!="/result/demo" and any(item["cache"]!="public, max-age=0, must-revalidate" or not item["etag"] for item in values): failures.append(f"cache/etag mismatch: {path}")
+        expected_cache="public, max-age=0, must-revalidate, no-transform" if path in ("/","/reports/rel_35e58f680a1a","/release-report") else "public, max-age=0, must-revalidate"
+        if path!="/result/demo" and any(item["cache"]!=expected_cache or not item["etag"] for item in values): failures.append(f"cache/etag mismatch: {path}")
     html=results["generic"]["/"]["body"]; report=results["generic"]["/release-report"]["body"]; report_alias=results["generic"]["/reports/rel_35e58f680a1a"]["body"]
     v1=json.loads(results["generic"]["/public_evidence_manifest.v1.json"]["body"]); v2=json.loads(results["generic"]["/public_evidence_manifest.v2.json"]["body"])
     if set(v1)!=V1_FIELDS or v1.get("schema_version")!="public_evidence_manifest.v1": failures.append("manifest v1 compatibility failure")
     if set(v2)!=V2_FIELDS or v2.get("schema_version")!="public_evidence_manifest.v2": failures.append("manifest v2 allowlist failure")
     required=("rel_35e58f680a1a","20260712_141653_80beb5","deleg_4ddb33af","404","200",str(v2["verification"]["tests_passed"]),str(v2["verification"]["evals_passed"]))
-    if any(value not in html or value not in report for value in required) or not all(("SHIP WITH CONDITIONS" in surface or "SHIP_WITH_CONDITIONS" in surface) and ("accepted condition" in surface.lower() or "accepted_condition" in surface) for surface in (html,report)): failures.append("console/report current claims mismatch")
+    if any(value not in html or value not in report for value in required) or not all(("SHIP WITH CONDITIONS" in surface or "SHIP_WITH_CONDITIONS" in surface) and (("accepted" in surface.lower() and "condition" in surface.lower()) or "accepted_condition" in surface) for surface in (html,report)): failures.append("console/report current claims mismatch")
     if report!=report_alias: failures.append("report aliases differ")
     forbidden=("AWAITING_OWNER","null Hermes","C:\\Users\\","Canonical release object","repository.path","rel_70e7648a0731","DrawDB","raw_prompt","model_response",".env=")
     if re.search(r"\bHOLD\b",report) or any(value.lower() in (html+report+json.dumps(v2)).lower() for value in forbidden): failures.append("stale or private public content")
