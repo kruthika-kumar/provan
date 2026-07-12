@@ -6,11 +6,15 @@ export default {
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
+    if (url.pathname === "/health") {
+      return Response.json({ status: "ok", service: "shiproom-demo" });
+    }
     if (url.pathname.startsWith("/results/")) {
       return new Response("<h1>Demo launch card</h1>", { headers: { "content-type": "text/html; charset=utf-8" } });
     }
-    if (url.pathname === "/release-report.html") return env.ASSETS.fetch(request);
+    if (url.pathname.startsWith("/reports/")) {
+      return env.ASSETS.fetch(new Request(new URL("/release-report.html", url), request));
+    }
     return new Response("Not found", { status: 404 });
   },
 };
-

@@ -40,6 +40,11 @@ class FindingState(StrEnum):
     BLOCKED = "BLOCKED"
 
 
+class DecisionResolution(StrEnum):
+    RESOLVED = "resolved"
+    ACCEPTED_CONDITION = "accepted_condition"
+
+
 @dataclass
 class Evidence:
     status: str
@@ -87,6 +92,7 @@ class Release:
     owner_decisions: list[dict[str, Any]] = field(default_factory=list)
     verdict: dict[str, Any] = field(default_factory=lambda: {"status": "DRAFT", "reason_codes": []})
     telemetry: dict[str, Any] = field(default_factory=dict)
+    integrations: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -100,4 +106,3 @@ class Release:
         if data.get("schema_version", "release.v0") != "release.v0":
             raise ValueError("unsupported release schema")
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
-

@@ -9,6 +9,12 @@ description = "Evidence-gated release assurance operated by Hermes"
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6.0"]
 
+[project.optional-dependencies]
+dev = ["pytest>=9.0"]
+telemetry = ["opentelemetry-api>=1.30", "opentelemetry-sdk>=1.30", "opentelemetry-exporter-otlp>=1.30"]
+convex = ["convex>=0.7"]
+voice = ["elevenlabs>=2.0"]
+
 [project.scripts]
 shiproom = "shiproom.cli:main"
 

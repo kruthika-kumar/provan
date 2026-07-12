@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
 from urllib.parse import urlparse
 
 
@@ -15,8 +16,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    print("Launch Card listening on http://127.0.0.1:8787")
-    ThreadingHTTPServer(("127.0.0.1", 8787), Handler).serve_forever()
+    port = int(os.getenv("PORT", "8787"))
+    print(f"Launch Card listening on http://127.0.0.1:{port}")
+    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
 
 if __name__ == "__main__": main()

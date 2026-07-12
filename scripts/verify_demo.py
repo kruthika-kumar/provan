@@ -5,13 +5,20 @@ import json
 from pathlib import Path
 
 from shiproom.remediation import verify_and_close
+from shiproom.verdict import is_terminal_success
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--release", default="release-state/release.json"); args = parser.parse_args()
-    path = Path(args.release); release = verify_and_close(json.loads(path.read_text(encoding="utf-8"))); path.write_text(json.dumps(release, indent=2), encoding="utf-8")
-    print(json.dumps(release["verdict"], indent=2)); return 0 if release["verdict"]["status"] != "HOLD" else 1
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--release", default="release-state/release.json")
+    args = parser.parse_args()
+    path = Path(args.release).resolve()
+    release = verify_and_close(json.loads(path.read_text(encoding="utf-8")))
+    path.write_text(json.dumps(release, indent=2), encoding="utf-8")
+    print(json.dumps(release["verdict"], indent=2))
+    return 0 if is_terminal_success(release["verdict"]["status"]) else 1
 
 
-if __name__ == "__main__": raise SystemExit(main())
+if __name__ == "__main__":
+    raise SystemExit(main())
 

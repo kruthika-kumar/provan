@@ -1,7 +1,7 @@
 ---
 name: shiproom
 description: Operate an evidence-gated release room for a repository, live URL, product promise, and critical journey.
-version: 0.1.0
+version: 0.2.0
 platforms: [windows, linux, macos]
 metadata:
   hermes:
@@ -30,3 +30,59 @@ Interrupt the owner only for product intent, material risk, credentials, or irre
 
 Lead with promise, observed behavior, evidence class, blocker state, before/after proof, owner decisions, and final verdict. Explicitly disclose missing telemetry or integrations. The public HTML report is the principal judged visual.
 
+## Executable protocol
+
+Required inputs are an absolute Git repository path, live deployment URL, product promise, target user, critical journey, and non-goals. Use one named Hermes session and retain its native session ID. Never change models during the run.
+
+Terminal A starts the controlled patient and remains open:
+
+```powershell
+python -m demo_patient.server
+```
+
+Terminal B initializes the canonical release. Initialization requires a named clean Git branch and records it as `repository.base_branch`:
+
+```powershell
+shiproom release init --repo . --live-url http://127.0.0.1:8787 --promise "Users can generate and open a public launch card."
+shiproom review --all --release release-state/release.json
+```
+
+Expected review output contains the release ID, a failed `PRODUCT_PUBLIC_RESULT_OPENS` check with HTTP 404, a blocking finding, and verdict `HOLD`. Malformed module output fails closed.
+
+Create the material owner-decision card before verification:
+
+```powershell
+shiproom decision add --release release-state/release.json --id decision_publish_promise --title "Beta publication promise"
+```
+
+Apply only the allowlisted route repair. This creates and commits to `shiproom/fix-public-result-route-<release_id>`, records the branch and commit, preserves `auto_merge=false`, and never merges:
+
+```powershell
+python scripts/remediate_demo.py --repo . --release release-state/release.json
+```
+
+Restart or redeploy the patient from the remediation branch to the same canonical URL. An independent verifier then reruns the exact failed URL:
+
+```powershell
+python scripts/verify_demo.py --release release-state/release.json
+```
+
+HTTP 200 closes the blocker, but the unresolved owner decision leaves `AWAITING_OWNER`; verification therefore exits nonzero. Record the explicit accepted beta condition and verify again:
+
+```powershell
+shiproom decision record --release release-state/release.json --id decision_publish_promise --choice "Revise the beta promise" --resolution accepted_condition
+python scripts/verify_demo.py --release release-state/release.json
+shiproom report render --release release-state/release.json --output dist/release-report.html
+```
+
+Only `READY` and `SHIP_WITH_CONDITIONS` are successful terminal states. `HOLD`, `AWAITING_OWNER`, `DRAFT`, `CONTRACTED`, `REVIEWING`, `REMEDIATING`, and `VERIFYING` are non-terminal failures.
+
+After evidence publication, reset from any working directory:
+
+```powershell
+python scripts/reset_demo.py --repo . --release release-state/release.json
+```
+
+Reset must restore the recorded base branch, delete only the recorded Shiproom remediation branch, clear generated artifacts, leave tracked source clean, and prove `/result/demo` returns 404.
+
+Fallbacks: if native delegation exceeds 90 seconds, run the same validated module commands from the manager session; if Cloudflare is unavailable, preserve the local proof but do not claim live closure; if GitHub publication fails, retain the canonical state but do not claim the GitHub artifact; voice, Convex, and Langfuse never block Core.

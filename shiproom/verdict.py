@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from .models import Evidence, EvidenceStatus, FindingState, ReleaseState
+from .models import DecisionResolution, Evidence, EvidenceStatus, FindingState, ReleaseState
+
+TERMINAL_SUCCESS_STATES = {ReleaseState.READY, ReleaseState.SHIP_WITH_CONDITIONS}
+
+
+def is_terminal_success(status: str) -> bool:
+    return status in TERMINAL_SUCCESS_STATES
 
 
 def finding_can_close(finding: dict) -> bool:
@@ -22,10 +28,13 @@ def calculate(release: dict) -> dict:
     unresolved = [f for f in release.get("findings", []) if f.get("blocking") and f.get("state") not in {FindingState.CLOSED, FindingState.ACCEPTED_RISK}]
     if unresolved:
         return {"status": ReleaseState.HOLD, "reason_codes": ["VERIFIED_BLOCKER_UNRESOLVED"]}
-    pending = [d for d in release.get("owner_decisions", []) if not d.get("choice")]
+    pending = [
+        d for d in release.get("owner_decisions", [])
+        if not d.get("choice") or d.get("resolution") not in {DecisionResolution.RESOLVED, DecisionResolution.ACCEPTED_CONDITION}
+    ]
     if pending:
         return {"status": ReleaseState.AWAITING_OWNER, "reason_codes": ["OWNER_DECISION_REQUIRED"]}
     accepted = [f for f in release.get("findings", []) if f.get("state") == FindingState.ACCEPTED_RISK]
-    status = ReleaseState.SHIP_WITH_CONDITIONS if accepted or release.get("owner_decisions") else ReleaseState.READY
+    accepted_decisions = [d for d in release.get("owner_decisions", []) if d.get("resolution") == DecisionResolution.ACCEPTED_CONDITION]
+    status = ReleaseState.SHIP_WITH_CONDITIONS if accepted or accepted_decisions else ReleaseState.READY
     return {"status": status, "reason_codes": []}
-

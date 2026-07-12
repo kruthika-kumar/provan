@@ -29,12 +29,13 @@ def main() -> int:
     check("verified exact rerun closes", verified["state"] == "CLOSED")
     owner = dict(base); owner["owner_decisions"] = [{"title": "Promise", "choice": None}]
     check("owner decision requested", calculate(owner)["status"] == "AWAITING_OWNER")
-    owner["owner_decisions"][0]["choice"] = "Revise beta promise"
+    owner["owner_decisions"][0].update({"choice": "Revise beta promise", "resolution": "accepted_condition"})
     check("owner decision preserved", calculate(owner)["status"] == "SHIP_WITH_CONDITIONS")
+    blocked_owner = dict(blocked); blocked_owner["owner_decisions"] = [{"choice": "Accept", "resolution": "accepted_condition"}]
+    check("owner choice cannot erase blocker", calculate(blocked_owner)["status"] == "HOLD")
     check("report evidence linkage contract", all("evidence" in f for f in [verified]))
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 
 
 if __name__ == "__main__": sys.exit(main())
-

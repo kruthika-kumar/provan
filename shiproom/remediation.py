@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -8,6 +9,54 @@ from .verdict import calculate, close_finding
 
 ALLOWED_CLASSES = {"route_fix", "regression_test", "broken_link", "basic_error_handling"}
 PROTECTED_PARTS = {".env", ".git", "credentials", "secrets"}
+BRANCH_PREFIX = "shiproom/fix-public-result-route-"
+ROUTE_TARGETS = {
+    Path("demo_patient/server.py"): (
+        'elif path.startswith("/results/"):',
+        'elif path.startswith("/result/") or path.startswith("/results/"):',
+    ),
+    Path("cloudflare/worker.js"): (
+        'if (url.pathname.startsWith("/results/")) {',
+        'if (url.pathname.startsWith("/result/") || url.pathname.startsWith("/results/")) {',
+    ),
+}
+
+
+def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check)
+
+
+def repository_root(path: Path) -> Path:
+    result = git(path.resolve(), "rev-parse", "--show-toplevel")
+    root = Path(result.stdout.strip()).resolve()
+    if not root.is_dir():
+        raise ValueError("resolved Git repository root is missing")
+    return root
+
+
+def current_branch(repo: Path) -> str:
+    branch = git(repo, "branch", "--show-current").stdout.strip()
+    if not branch:
+        raise ValueError("a named base branch is required")
+    return branch
+
+
+def assert_clean_worktree(repo: Path) -> None:
+    status = git(repo, "status", "--porcelain", "--untracked-files=all").stdout.strip()
+    if status:
+        raise ValueError(f"tracked or unexpected source changes present:\n{status}")
+
+
+def remediation_branch(release_id: str) -> str:
+    if not re.fullmatch(r"rel_[A-Za-z0-9_-]+", release_id):
+        raise ValueError("invalid release_id for remediation branch")
+    return f"{BRANCH_PREFIX}{release_id}"
+
+
+def validate_branch(branch: str, release_id: str) -> None:
+    expected = remediation_branch(release_id)
+    if branch != expected or not branch.startswith(BRANCH_PREFIX):
+        raise ValueError("remediation branch does not match the release")
 
 
 def validate_target(repo: Path, target: Path, remediation_class: str) -> Path:
@@ -19,29 +68,67 @@ def validate_target(repo: Path, target: Path, remediation_class: str) -> Path:
     return target
 
 
-def ensure_branch(repo: Path, branch: str) -> None:
-    current = subprocess.run(["git", "branch", "--show-current"], cwd=repo, text=True, capture_output=True, check=True).stdout.strip()
-    if current != branch:
-        subprocess.run(["git", "switch", "-c", branch], cwd=repo, check=True)
-
-
-def patch_demo_route(repo: Path, branch: str) -> Path:
-    target = validate_target(repo, repo / "demo_patient" / "server.py", "route_fix")
-    ensure_branch(repo, branch)
+def _assert_route_state(target: Path, broken: str, fixed: str, *, expect_broken: bool) -> str:
     source = target.read_text(encoding="utf-8")
-    old = 'elif path.startswith("/results/"):'
-    new = 'elif path.startswith("/result/"):'
-    if old not in source:
-        raise ValueError("expected route defect is absent; refusing broad patch")
-    target.write_text(source.replace(old, new, 1), encoding="utf-8")
-    return target
+    broken_count, fixed_count = source.count(broken), source.count(fixed)
+    expected = (1, 0) if expect_broken else (0, 1)
+    if (broken_count, fixed_count) != expected:
+        raise ValueError(
+            f"unexpected route state in {target}: broken={broken_count}, fixed={fixed_count}, expected={expected}"
+        )
+    return source
+
+
+def prepare_remediation_branch(repo: Path, base_branch: str, branch: str, release_id: str) -> None:
+    validate_branch(branch, release_id)
+    assert_clean_worktree(repo)
+    if current_branch(repo) != base_branch:
+        git(repo, "switch", base_branch)
+    existing = git(repo, "branch", "--list", branch).stdout.strip()
+    if existing:
+        git(repo, "branch", "-D", branch)
+    git(repo, "switch", "-c", branch, base_branch)
+
+
+def patch_demo_route(repo: Path, release: dict) -> tuple[list[Path], str]:
+    repo = repository_root(repo)
+    release_id = release["release_id"]
+    base_branch = release.get("repository", {}).get("base_branch")
+    if not base_branch:
+        raise ValueError("release is missing repository.base_branch")
+    branch = remediation_branch(release_id)
+    prepare_remediation_branch(repo, base_branch, branch, release_id)
+    changed: list[Path] = []
+    for relative, (broken, fixed) in ROUTE_TARGETS.items():
+        target = validate_target(repo, repo / relative, "route_fix")
+        source = _assert_route_state(target, broken, fixed, expect_broken=True)
+        updated = source.replace(broken, fixed, 1)
+        if updated == source:
+            raise ValueError(f"route remediation was a no-op for {target}")
+        target.write_text(updated, encoding="utf-8")
+        _assert_route_state(target, broken, fixed, expect_broken=False)
+        changed.append(target)
+    diff = git(repo, "diff", "--", *(str(p.relative_to(repo)) for p in changed)).stdout
+    if not diff.strip():
+        raise ValueError("remediation produced no Git diff")
+    git(repo, "add", *(str(p.relative_to(repo)) for p in changed))
+    git(repo, "commit", "-m", f"fix: close public result route for {release_id}")
+    commit_sha = git(repo, "rev-parse", "HEAD").stdout.strip()
+    return changed, commit_sha
 
 
 def verify_and_close(release: dict) -> dict:
     failed = next((c for c in release.get("checks", []) if c.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and not c.get("passed")), None)
     finding = next((f for f in release.get("findings", []) if f.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and f.get("state") != "CLOSED"), None)
-    if not failed or not finding:
-        raise ValueError("original failed check and open finding are required")
+    if not failed:
+        raise ValueError("original failed check is required")
+    if not finding:
+        closed = next((f for f in release.get("findings", []) if f.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and f.get("state") == "CLOSED"), None)
+        passed_rerun = next((c for c in release.get("checks", []) if c.get("criterion_id") == "PRODUCT_PUBLIC_RESULT_OPENS" and c.get("passed") and "rerun_of" in c), None)
+        if not closed or not passed_rerun:
+            raise ValueError("closed finding requires a successful independent rerun")
+        release["verdict"] = calculate(release); release["state"] = release["verdict"]["status"]
+        return release
     rerun = http_check(failed["target"])
     rerun["criterion_id"] = failed["criterion_id"]
     rerun["rerun_of"] = release["checks"].index(failed)
@@ -52,4 +139,3 @@ def verify_and_close(release: dict) -> dict:
         release["findings"][release["findings"].index(finding)] = closed
     release["verdict"] = calculate(release); release["state"] = release["verdict"]["status"]
     return release
-

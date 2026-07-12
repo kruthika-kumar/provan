@@ -9,7 +9,7 @@ from shiproom.evidence import http_check, validate_module_result
 from shiproom.models import EvidenceStatus, Release
 from shiproom.registry import discover, select
 from shiproom.remediation import validate_target
-from shiproom.verdict import calculate, close_finding
+from shiproom.verdict import calculate, close_finding, is_terminal_success
 
 
 def test_registry_has_four_modules():
@@ -38,6 +38,31 @@ def test_verified_blocker_holds():
     release = Release("rel_x", {}, {}, {}).to_dict()
     release["findings"] = [{"blocking": True, "state": "TRIAGED"}]
     assert calculate(release)["status"] == "HOLD"
+
+
+@pytest.mark.parametrize("status", ["READY", "SHIP_WITH_CONDITIONS"])
+def test_only_explicit_terminal_successes(status):
+    assert is_terminal_success(status)
+
+
+@pytest.mark.parametrize("status", ["HOLD", "AWAITING_OWNER", "DRAFT", "CONTRACTED", "REVIEWING", "REMEDIATING", "VERIFYING"])
+def test_non_terminal_states_fail(status):
+    assert not is_terminal_success(status)
+
+
+def test_owner_choice_cannot_erase_open_blocker():
+    release = Release("rel_x", {}, {}, {}).to_dict()
+    release["findings"] = [{"blocking": True, "state": "TRIAGED"}]
+    release["owner_decisions"] = [{"choice": "accept", "resolution": "accepted_condition"}]
+    assert calculate(release)["status"] == "HOLD"
+
+
+def test_decision_resolution_precedence():
+    release = Release("rel_x", {}, {}, {}).to_dict()
+    release["owner_decisions"] = [{"choice": "revise", "resolution": "resolved"}]
+    assert calculate(release)["status"] == "READY"
+    release["owner_decisions"][0]["resolution"] = "accepted_condition"
+    assert calculate(release)["status"] == "SHIP_WITH_CONDITIONS"
 
 
 def test_demo_patient_route_mismatch():
