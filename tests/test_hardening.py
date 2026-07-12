@@ -193,3 +193,12 @@ def test_reset_preflight_failure_preserves_remediation_branch_and_worktree(tmp_p
     assert result.returncode!=0 and worktree.exists() and git(repo,"branch","--list",task["branch"])
     if failure=="dirty_active": git(repo,"restore","pyproject.toml")
     cleanup_isolated_worktree(repo,path=task["worktree"],base_commit=task["base_commit"],branch=task["branch"],expected_head=task["commit_sha"],require_clean=True)
+
+
+@pytest.mark.parametrize("artifact_case",["dist_root","reports_root","release_state","duplicate","overlap"])
+def test_reset_artifact_preflight_preserves_remediation_on_unsafe_records(tmp_path,artifact_case):
+    repo=make_repo(tmp_path); run(repo,"-m","shiproom.cli","release","init","--repo",str(repo),"--live-url","http://127.0.0.1:8787","--promise","Open result"); release_path=repo/"release-state/release.json"; run(repo,"scripts/remediate_demo.py","--repo",str(repo),"--release",str(release_path)); release=json.loads(release_path.read_text()); task=release["remediation_tasks"][-1]; rid=release["release_id"]
+    cases={"dist_root":[{"release_id":rid,"path":"dist","kind":"report"}],"reports_root":[{"release_id":rid,"path":"reports","kind":"release_directory"}],"release_state":[{"release_id":rid,"path":"release-state/release.json","kind":"file"}],"duplicate":[{"release_id":rid,"path":"reports/a.html","kind":"file"},{"release_id":rid,"path":"reports/a.html","kind":"file"}],"overlap":[{"release_id":rid,"path":f"reports/{rid}","kind":"release_directory"},{"release_id":rid,"path":f"reports/{rid}/a.html","kind":"file"}]}; release["runtime_artifacts"]=cases[artifact_case]; release_path.write_text(json.dumps(release,indent=2))
+    result=run(repo,"scripts/reset_demo.py","--repo",str(repo),"--release",str(release_path),check=False)
+    assert result.returncode!=0 and Path(task["worktree"]).exists() and git(repo,"branch","--list",task["branch"])
+    cleanup_isolated_worktree(repo,path=task["worktree"],base_commit=task["base_commit"],branch=task["branch"],expected_head=task["commit_sha"],require_clean=True)

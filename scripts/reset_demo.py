@@ -45,13 +45,20 @@ def main() -> int:
     if active_status: raise PermissionError("active checkout must be clean before controlled reset")
     for relative, (broken, fixed) in ROUTE_TARGETS.items():
         _assert_route_state(repo / relative, broken, fixed, expect_broken=True)
-    artifacts=[]
+    artifacts=[]; artifact_keys=set()
     for item in release.get("runtime_artifacts",[]):
         relative=Path(item.get("path",""))
-        if relative.is_absolute() or ".." in relative.parts or not relative.parts or relative.parts[0] not in ALLOWED_RUNTIME_ROOTS or item.get("release_id")!=release["release_id"]: raise PermissionError("recorded runtime artifact is not safely owned by this release")
+        if relative.is_absolute() or ".." in relative.parts or len(relative.parts)<2 or relative.parts[0] not in ALLOWED_RUNTIME_ROOTS or item.get("release_id")!=release["release_id"]: raise PermissionError("recorded runtime artifact is not safely owned by this release")
         artifact=(repo/relative).resolve()
-        if repo.resolve() not in artifact.parents: raise PermissionError("runtime artifact escaped repository")
-        artifacts.append(artifact)
+        if repo.resolve() not in artifact.parents or artifact==release_path: raise PermissionError("runtime artifact escaped repository or targets release state")
+        key=str(artifact).lower() if __import__('os').name=='nt' else str(artifact)
+        if key in artifact_keys: raise PermissionError("duplicate runtime artifact path")
+        for existing,_ in artifacts:
+            left=str(existing).lower() if __import__('os').name=='nt' else str(existing); right=key
+            if right.startswith(left+str(Path('/'))) or left.startswith(right+str(Path('/'))): raise PermissionError("overlapping runtime artifact paths")
+        is_directory=artifact.is_dir() or item.get("kind")=="release_directory"
+        if is_directory and (item.get("kind")!="release_directory" or relative.parts[-1]!=release["release_id"]): raise PermissionError("runtime directory is not explicitly scoped to this release")
+        artifact_keys.add(key); artifacts.append((artifact,is_directory))
     from demo_patient.server import Handler, ThreadingHTTPServer
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -64,8 +71,8 @@ def main() -> int:
         server.shutdown(); thread.join(timeout=5); server.server_close()
     # Destructive phase begins only after every validation and the local 404 probe pass.
     cleanup_isolated_worktree(repo,path=str(worktree),base_commit=expected_base,branch=branch,expected_head=task["commit_sha"],require_clean=True)
-    for artifact in artifacts:
-        if artifact.is_dir(): shutil.rmtree(artifact)
+    for artifact,is_directory in artifacts:
+        if is_directory and artifact.is_dir(): shutil.rmtree(artifact)
         elif artifact.exists(): artifact.unlink()
         parent=artifact.parent
         if parent!=repo and parent.name in ALLOWED_RUNTIME_ROOTS and parent.exists() and not any(parent.iterdir()): parent.rmdir()

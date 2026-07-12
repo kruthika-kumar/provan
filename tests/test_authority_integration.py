@@ -140,6 +140,13 @@ def test_commit_pinned_blob_reader_rejects_submodule_entry(tmp_path: Path):
     with pytest.raises(PermissionError): LocalExecutionContext.from_release(release).read_release_blob("submodule")
 
 
+@pytest.mark.parametrize("path",[":",":(top).env",":(literal).env",":!.env",":^.env",":(glob)**/.env"])
+def test_commit_pinned_blob_reader_rejects_git_pathspec_magic(tmp_path: Path,path: str):
+    repo=project_repo(tmp_path); (repo/".env").write_text("secret"); git(repo,"add","-f",".env"); git(repo,"commit","-m","secret fixture"); output=tmp_path/"release.json"; context=LocalExecutionContext.from_release(init_release(repo,output))
+    with pytest.raises((ValueError,PermissionError,FileNotFoundError)): context.read_release_blob(path)
+    with pytest.raises(PermissionError): context.read_release_blob(".env")
+
+
 def test_shared_and_local_only_argv_scope(tmp_path: Path):
     repo=project_repo(tmp_path); grant=command(repo); grant["argv"]=[str(Path("C:/Python/python.exe")),"verify_fixture.py"]
     with pytest.raises(ValueError,match="machine-specific"): validate_command(grant,storage_scope="shared")

@@ -202,10 +202,18 @@ class LocalExecutionContext:
     def require(self, operation: str) -> None: require_operation(self.activation, operation)
 
     def read_release_blob(self, relative: str, byte_limit: int = 1_048_576) -> dict:
-        self.require("file.read"); relative=validate_policy_relative(relative,self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read")
-        commit=self.authority_binding["repository_commit"]; entry=_git(self.repository_root,"ls-tree",commit,"--",relative).stdout.strip().split(None,3)
-        if len(entry)<4: raise FileNotFoundError(relative)
-        mode,kind,blob_hash,_=entry
+        self.require("file.read")
+        if not isinstance(relative,str) or "\x00" in relative or relative.startswith(":"): raise ValueError("release blob path contains unsupported Git pathspec input")
+        relative=validate_policy_relative(relative,self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read")
+        commit=self.authority_binding["repository_commit"]; output=_git(self.repository_root,"ls-tree","-z",commit,"--",f":(literal){relative}").stdout
+        records=[record for record in output.split("\x00") if record]
+        if len(records)!=1 or "\t" not in records[0]: raise FileNotFoundError(relative)
+        metadata,returned_path=records[0].split("\t",1)
+        if returned_path.replace("\\","/")!=relative: raise PermissionError("Git returned a different path than requested")
+        validate_policy_relative(returned_path,self.activation["contract"]["protected_paths"],self.activation["contract"]["excluded_paths"],operation="read")
+        fields=metadata.split()
+        if len(fields)!=3: raise PermissionError("Git returned malformed tree metadata")
+        mode,kind,blob_hash=fields
         if kind!="blob" or mode not in {"100644","100755"}: raise PermissionError("release blob is a symlink, submodule, or unsupported tree entry")
         size=int(_git(self.repository_root,"cat-file","-s",blob_hash).stdout.strip())
         if size>byte_limit: raise ValueError("release blob exceeds byte limit")
