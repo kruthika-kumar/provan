@@ -16,7 +16,9 @@ Collect repository/path, live URL, target user, promise, critical journey, non-g
 
 ## Private Product Intent protocol
 
-For private Product Intent, consume only a packet created by `shiproom intent prepare`. Do not inspect additional repository files or make implementation, engineering, test, instrumentation, remediation, finding, or verdict claims. Return only `intent-proposal.v1` JSON using exact packet source IDs, locators, and excerpt hashes; label unsupported interpretation `inferred_requires_owner`; declare only single-valued claim keys; preserve material conflicts and batched ambiguities. The specialist cannot write canonical release state. The owner copies its proposal into the release-local inbox, where Python validates and persists it.
+Mode decision: `private_alpha` never delegates remediation, modifies a reviewed repository, or enters a fix workflow; it ends at review artifacts and, in a later session, team-owned roadmap/closure-contract preparation. `historical_judged_demo` alone retains the controlled-patient remediation protocol below.
+
+For `private_alpha` Product Intent, consume only a packet created by `shiproom intent prepare`. Do not inspect additional repository files or make implementation, engineering, test, instrumentation, remediation, finding, or verdict claims. Return only `intent-proposal.v1` JSON using exact packet source IDs, locators, and excerpt hashes; label unsupported interpretation `inferred_requires_owner`; declare only single-valued claim keys; preserve material conflicts and batched ambiguities. The specialist cannot write canonical release state. The owner copies its proposal into the release-local inbox, where Python validates and persists it.
 
 ## Delegation
 
@@ -26,7 +28,7 @@ Delegate Product/UX and Engineering/QA together as read-only children. Give each
 
 Children must not edit files, format code, install dependencies, change branches, or mutate environment state. Validate their JSON before merging. Agent summaries and model opinions cannot close findings.
 
-After results return, delegate at most one remediation child with file and terminal access, 15 iterations, and a 120-second deadline. It may change only allowlisted files on a branch and must never merge. Delegate an independent read-only verifier with 6 iterations and a 45-second deadline to rerun the exact failed check.
+For `historical_judged_demo` only, after results return, delegate at most one remediation child with file and terminal access, 15 iterations, and a 120-second deadline. It may change only allowlisted files on a branch and must never merge. Delegate an independent read-only verifier with 6 iterations and a 45-second deadline to rerun the exact failed check.
 
 ## Human control
 

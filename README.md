@@ -76,7 +76,7 @@ shiproom doctor
 
 The shared, commit-safe authority lives at `.shiproom/project-contract.json`; machine paths, activation receipts, deployment locators, cached context, and private reports live under ignored `.shiproom/local/`. Normal onboarding asks only for the project name, one-sentence purpose, primary users, and capability confirmation. Reports are private and memory is disabled by default.
 
-`inspect` permits commit-pinned, exclusion-checked text blob reads, bounded Git metadata, and configured deployment reads. Diff/content reconnaissance is deferred. `verify` additionally permits only activated, hash-bound argv command grants with no shell. Each command receives its own disposable release-commit worktree. `remediate` additionally permits allowlisted changes in an isolated Shiproom Git worktree; it never patches the active checkout. Push, PR, merge, publication, and deployment remain separately disabled.
+For the revised private-alpha product, Shiproom operates in `private_alpha` mode: it reads release-bound authority and produces review artifacts, but never delegates remediation, modifies the reviewed repository, or runs a fix workflow. Future private-alpha output may describe a team-owned remediation roadmap and closure contract only. The legacy `remediate` capability profile and its isolated-worktree behavior remain historical controlled-demo compatibility, not a forward private-alpha capability.
 
 `shiproom init`, `shiproom project show`, and `shiproom doctor` make no outbound network calls by default. Use `shiproom doctor --probe` for explicit bounded connectivity checks.
 
@@ -86,7 +86,7 @@ Controlled reset is a validated single-use operation. It removes only the exact 
 
 ## Product Intent (private alpha)
 
-Product Intent is a private, source-backed preparation step for later review. It never changes the customer repository, runs project commands, probes a deployment, creates findings or verdicts, or invokes historical controlled-demo remediation.
+Product Intent is a `private_alpha` source-backed preparation step for later review. It never changes the customer repository, delegates remediation, runs project commands, probes a deployment, creates findings or verdicts. The separate `historical_judged_demo` workflow retains its controlled-demo remediation compatibility.
 
 ```powershell
 shiproom intent prepare --release release-state/release.json --source docs/release-brief.md --supporting-source README.md

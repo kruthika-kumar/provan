@@ -4,294 +4,258 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 
 from .authority import LocalExecutionContext
 from .project import canonical_json, content_hash
 
-SOURCE_PACKET_SCHEMA = "intent-source-packet.v1"
-PROPOSAL_SCHEMA = "intent-proposal.v1"
-INTENT_SCHEMA = "product-intent.v1"
-REQUIREMENTS_SCHEMA = "requirements.v1"
-CRITERIA_SCHEMA = "acceptance-criteria.v1"
-AMBIGUITIES_SCHEMA = "intent-ambiguities.v1"
-MANIFEST_SCHEMA = "product-intent-bundle-manifest.v1"
-COMPILER_VERSION = "product-intent.v1"
-SOURCE_LIMIT = 256 * 1024
-PROPOSAL_LIMIT = 256 * 1024
+SOURCE_PACKET_SCHEMA = "intent-source-packet.v1"; PROPOSAL_SCHEMA = "intent-proposal.v1"
+INTENT_SCHEMA = "product-intent.v1"; REQUIREMENTS_SCHEMA = "requirements.v1"; CRITERIA_SCHEMA = "acceptance-criteria.v1"; AMBIGUITIES_SCHEMA = "intent-ambiguities.v1"
+MANIFEST_SCHEMA = "product-intent-bundle-manifest.v1"; POINTER_SCHEMA = "product-intent-current-generation.v1"; COMPILER_VERSION = "product-intent.v1"
+SOURCE_LIMIT = PROPOSAL_LIMIT = 256 * 1024
 TIERS = ("release_owner_input", "current_release_source", "project_contract", "supporting_source")
-EVIDENCE_CATEGORIES = {"browser_or_http", "content_assertion", "command_result", "file_or_artifact", "source_inspection", "instrumentation", "owner_confirmation"}
+CLASSIFICATIONS = {"explicit", "inferred_requires_owner"}; STATUSES = {"active", "proposed", "blocked_by_ambiguity", "superseded"}
+CONFIRMATIONS = {"confirmed", "proposal_needed", "owner_confirmation_required"}; EVIDENCE = {"browser_or_http", "content_assertion", "command_result", "file_or_artifact", "source_inspection", "instrumentation", "owner_confirmation"}
+ARTIFACTS = ("product-intent.json", "requirements.json", "acceptance-criteria.json", "ambiguities.json")
 
 
-def _now() -> str:
-    return datetime.now(UTC).isoformat()
+def _id(prefix: str, value: object) -> str: return prefix + "_" + hashlib.sha256(canonical_json(value).encode()).hexdigest()[:16]
+def _hash_bytes(value: bytes) -> str: return "sha256:" + hashlib.sha256(value).hexdigest()
+def _normal_text(value: str) -> str: return value.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+def _mechanical(value: str) -> str: return re.sub(r"\s+", " ", _normal_text(value).strip())
+def _root(ctx: LocalExecutionContext) -> Path: return ctx.repository_root / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "product-intent"
+def _authority(ctx: LocalExecutionContext) -> dict: return {key: ctx.authority_binding[key] for key in ("project_id", "contract_hash", "contract_source", "authority_policy_version")}
+def _source_hash(text: str) -> str: return _hash_bytes(text.encode("utf-8"))
 
 
-def _id(prefix: str, value: object) -> str:
-    return prefix + "_" + hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()[:16]
-
-
-def _normalize_text(raw: str) -> str:
-    return raw.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
-
-
-def _normal(value: object) -> str:
-    if not isinstance(value, (str, int, float, bool)) or isinstance(value, bool) and not isinstance(value, bool):
-        raise ValueError("claim value must be a primitive")
-    return re.sub(r"[\s_-]+", " ", str(value).strip().casefold())
-
-
-def _root(context: LocalExecutionContext) -> Path:
-    return context.repository_root / ".shiproom" / "local" / "releases" / context.release["release_id"] / "product-intent"
-
-
-def _authority(context: LocalExecutionContext) -> dict:
-    return {"project_id": context.activation["contract"]["project_id"], "contract_hash": context.authority_binding["contract_hash"], "contract_source": context.authority_binding["contract_source"], "authority_policy_version": context.authority_binding["authority_policy_version"]}
-
-
-def _source_ref(source_id: str, locator: str, excerpt: str) -> dict:
-    return {"source_id": source_id, "locator": locator, "excerpt_hash": "sha256:" + hashlib.sha256(excerpt.encode("utf-8")).hexdigest()}
-
-
-def _headings(text: str) -> list[dict]:
-    entries = [{"locator": "document", "line": 1, "excerpt_hash": _source_ref("", "", text)["excerpt_hash"]}]
-    for number, line in enumerate(text.split("\n"), 1):
-        match = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
-        if match:
-            locator = f"line:{number}:" + match.group(2)
-            entries.append({"locator": locator, "line": number, "excerpt_hash": _source_ref("", "", line)["excerpt_hash"]})
-    return entries
-
-
-def _coverage(path: str, source_class: str, status: str, detail: str) -> dict:
-    return {"path": path, "source_class": source_class, "status": status, "detail": detail}
-
-
-def _read_markdown(context: LocalExecutionContext, path: str, source_class: str) -> tuple[dict | None, dict]:
-    if Path(path).suffix.lower() not in {".md", ".markdown"}:
-        return None, _coverage(path, source_class, "unsupported_type", "Only explicitly selected Markdown sources are supported")
-    try:
-        blob = context.read_release_blob(path, byte_limit=SOURCE_LIMIT)
-    except PermissionError:
-        return None, _coverage(path, source_class, "excluded_by_policy", "Source is excluded by project policy")
-    except FileNotFoundError:
-        return None, _coverage(path, source_class, "missing", "Source is absent from the release commit")
-    except ValueError as exc:
-        if "exceeds byte limit" in str(exc):
-            return None, _coverage(path, source_class, "rejected_oversized", "Supply a smaller release-specific source")
-        return None, _coverage(path, source_class, "unsupported_type", str(exc))
-    if blob["classification"] != "text" or blob["text"] is None:
-        return None, _coverage(path, source_class, "unsupported_type", "Source is binary or not UTF-8 text")
-    text = _normalize_text(blob["text"])
-    source_id = _id("src", {"path": blob["path"], "class": source_class, "blob": blob["blob_hash"]})
-    source = {"source_id": source_id, "path": blob["path"], "source_class": source_class, "authority_tier": "current_release_source" if source_class == "current_release" else "supporting_source", "git_blob_hash": blob["blob_hash"], "normalized_text_hash": "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest(), "text": text, "locators": _headings(text)}
-    return source, _coverage(path, source_class, "fully_included", "Complete normalized source included")
-
-
-def _structured_sources(context: LocalExecutionContext) -> list[dict]:
-    product = context.release["product"]
-    owner = {key: product.get(key) for key in ("name", "target_user", "promise", "critical_journey", "non_goals")}
-    owner["owner_constraints"] = context.release.get("owner_constraints", [])
-    contract = {key: context.activation["contract"].get(key) for key in ("project_name", "product_purpose", "primary_users", "project_principles")}
-    result = []
-    for source_id, tier, value in (("release_owner_input", "release_owner_input", owner), ("project_contract", "project_contract", contract)):
-        text = canonical_json(value)
-        result.append({"source_id": source_id, "path": None, "source_class": "structured", "authority_tier": tier, "content_hash": content_hash(value), "text": text, "locators": [{"locator": "structured", "line": None, "excerpt_hash": "sha256:" + hashlib.sha256(text.encode()).hexdigest()}]})
+def _locators(text: str) -> list[dict]:
+    lines = text.split("\n"); result = []
+    for i, line in enumerate(lines, 1):
+        result.append({"start_line": i, "end_line": i, "quote_hash": _source_hash(line)})
     return result
 
 
-def prepare(context: LocalExecutionContext, sources: list[str], supporting_sources: list[str]) -> dict:
-    context.require("file.read")
-    if len(set(sources + supporting_sources)) != len(sources + supporting_sources):
-        raise ValueError("a source path may be supplied only once")
-    records = _structured_sources(context); coverage = []
-    for path, kind in [(p, "current_release") for p in sources] + [(p, "supporting_source") for p in supporting_sources]:
-        source, item = _read_markdown(context, path, kind); coverage.append(item)
-        if source: records.append(source)
-    rejected = next((item for item in coverage if item["status"] in {"excluded_by_policy", "rejected_oversized"}), None)
-    if rejected:
-        if rejected["status"] == "rejected_oversized": raise ValueError(f"source {rejected['path']} is oversized; supply a smaller release-specific source")
-        raise PermissionError(f"source {rejected['path']} is excluded by project policy")
-    packet = {"schema_version": SOURCE_PACKET_SCHEMA, "release_id": context.release["release_id"], "release_commit": context.authority_binding["repository_commit"], "project_authority": _authority(context), "compiler_version": COMPILER_VERSION, "sources": records, "source_coverage": coverage, "coverage_boundary": "Only complete normalized text from explicitly selected Markdown sources under the per-file cap is included.", "generated_at": _now()}
-    packet["packet_hash"] = content_hash({k: v for k, v in packet.items() if k not in {"generated_at", "packet_hash"}})
-    validate_packet(packet)
-    root = _root(context); root.mkdir(parents=True, exist_ok=True); (root / "inbox").mkdir(exist_ok=True)
-    _write_json(root / "source-packet.json", packet)
-    return packet
+def _structured(ctx: LocalExecutionContext) -> list[dict]:
+    product = {k: ctx.release["product"].get(k) for k in ("name", "target_user", "promise", "critical_journey", "non_goals")}; product["owner_constraints"] = ctx.release.get("owner_constraints", [])
+    contract = {k: ctx.activation["contract"].get(k) for k in ("project_name", "product_purpose", "primary_users", "project_principles")}
+    out = []
+    for source_id, tier, value in (("release_owner_input", "release_owner_input", product), ("project_contract", "project_contract", contract)):
+        text = canonical_json(value); out.append({"source_id": source_id, "path": None, "source_class": "structured", "authority_tier": tier, "git_blob_hash": None, "normalized_text_hash": _source_hash(text), "text": text, "locators": _locators(text)})
+    return out
+
+
+def _read(ctx: LocalExecutionContext, path: str, source_class: str) -> dict:
+    if Path(path).suffix.lower() not in {".md", ".markdown"}: raise ValueError(f"unsupported_type: {path}")
+    try: blob = ctx.read_release_blob(path, byte_limit=SOURCE_LIMIT)
+    except PermissionError as exc: raise PermissionError(f"excluded_by_policy: {path}") from exc
+    except FileNotFoundError as exc: raise FileNotFoundError(f"missing: {path}") from exc
+    except ValueError as exc:
+        if "exceeds byte limit" in str(exc): raise ValueError(f"rejected_oversized: {path}; supply a smaller release-specific source") from exc
+        raise ValueError(f"unsupported_type: {path}") from exc
+    if blob["classification"] != "text" or blob["text"] is None: raise ValueError(f"unsupported_type: {path}")
+    text = _normal_text(blob["text"]); return {"source_id": _id("src", {"path": blob["path"], "class": source_class, "blob": blob["blob_hash"]}), "path": blob["path"], "source_class": source_class, "authority_tier": "current_release_source" if source_class == "current_release" else "supporting_source", "git_blob_hash": blob["blob_hash"], "normalized_text_hash": _source_hash(text), "text": text, "locators": _locators(text)}
+
+
+def _packet(ctx: LocalExecutionContext, requested: list[dict]) -> dict:
+    sources = _structured(ctx); coverage = []
+    for item in requested:
+        source = _read(ctx, item["path"], item["source_class"]); sources.append(source); coverage.append({"path": item["path"], "source_class": item["source_class"], "status": "fully_included"})
+    packet = {"schema_version": SOURCE_PACKET_SCHEMA, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": _authority(ctx), "compiler_version": COMPILER_VERSION, "requested_sources": requested, "sources": sources, "source_coverage": coverage, "coverage_boundary": "Complete normalized text for every explicitly selected Markdown source; no discovery or truncation."}
+    packet["packet_hash"] = content_hash(packet); return packet
 
 
 def validate_packet(packet: dict) -> None:
-    required = {"schema_version", "release_id", "release_commit", "project_authority", "compiler_version", "sources", "source_coverage", "coverage_boundary", "generated_at", "packet_hash"}
-    if set(packet) != required or packet["schema_version"] != SOURCE_PACKET_SCHEMA or not packet["sources"]:
-        raise ValueError("invalid intent-source-packet.v1")
-    if packet["packet_hash"] != content_hash({k: v for k, v in packet.items() if k not in {"generated_at", "packet_hash"}}): raise ValueError("source packet hash mismatch")
+    fields = {"schema_version", "release_id", "release_commit", "project_authority", "compiler_version", "requested_sources", "sources", "source_coverage", "coverage_boundary", "packet_hash"}
+    if set(packet) != fields or packet["schema_version"] != SOURCE_PACKET_SCHEMA or packet["packet_hash"] != content_hash({k: v for k, v in packet.items() if k != "packet_hash"}): raise ValueError("invalid source packet")
+    if not isinstance(packet["requested_sources"], list) or len(packet["requested_sources"]) != len(packet["source_coverage"]): raise ValueError("invalid source coverage")
+    expected = {(x["path"], x["source_class"]) for x in packet["requested_sources"]}
+    if any(set(x) != {"path", "source_class"} or x["source_class"] not in {"current_release", "supporting_source"} for x in packet["requested_sources"]) or len(expected) != len(packet["requested_sources"]): raise ValueError("invalid requested sources")
+    if any(x != {"path": x["path"], "source_class": x["source_class"], "status": "fully_included"} for x in packet["source_coverage"]): raise ValueError("partial source coverage is not allowed")
     ids = set()
     for source in packet["sources"]:
-        if source.get("source_id") in ids or source.get("authority_tier") not in TIERS or not isinstance(source.get("locators"), list): raise ValueError("invalid packet source")
+        required = {"source_id", "path", "source_class", "authority_tier", "git_blob_hash", "normalized_text_hash", "text", "locators"}
+        if set(source) != required or not isinstance(source["source_id"], str) or source["source_id"] in ids or source["authority_tier"] not in TIERS or not isinstance(source["text"], str) or source["normalized_text_hash"] != _source_hash(source["text"]): raise ValueError("invalid packet source")
+        if source["locators"] != _locators(source["text"]): raise ValueError("invalid packet locators")
         ids.add(source["source_id"])
 
 
-def _load_packet(context: LocalExecutionContext) -> dict:
-    path = _root(context) / "source-packet.json"
+def _atomic_file(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True); temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"); os.replace(temp, path)
+
+
+def prepare(ctx: LocalExecutionContext, sources: list[str], supporting_sources: list[str]) -> dict:
+    ctx.require("file.read"); requested = [{"path": x, "source_class": "current_release"} for x in sources] + [{"path": x, "source_class": "supporting_source"} for x in supporting_sources]
+    if not requested: raise ValueError("at least one explicitly selected source is required")
+    packet = _packet(ctx, requested); validate_packet(packet); root = _root(ctx); (root / "inbox").mkdir(parents=True, exist_ok=True); _atomic_file(root / "source-packet.json", packet); return packet
+
+
+def _load_packet(ctx: LocalExecutionContext) -> tuple[dict, bytes]:
+    path = _root(ctx) / "source-packet.json"
     if path.is_symlink() or not path.is_file(): raise ValueError("prepared source packet is missing")
-    packet = json.loads(path.read_text(encoding="utf-8")); validate_packet(packet)
-    if packet["release_id"] != context.release["release_id"] or packet["release_commit"] != context.authority_binding["repository_commit"] or packet["project_authority"]["contract_hash"] != context.authority_binding["contract_hash"]: raise ValueError("source packet is stale for this release authority")
-    return packet
+    raw = path.read_bytes(); packet = json.loads(raw.decode("utf-8")); validate_packet(packet)
+    expected = _packet(ctx, packet["requested_sources"])
+    if packet != expected: raise ValueError("active source packet differs from release-bound authority")
+    return packet, raw
 
 
-def _proposal_path(context: LocalExecutionContext, value: str) -> Path:
-    inbox = (_root(context) / "inbox").resolve(); raw = Path(value).absolute()
-    if raw.is_symlink(): raise ValueError("proposal must be a bounded regular JSON file in the release-local inbox")
-    candidate = raw.resolve()
-    if inbox not in candidate.parents or candidate == inbox: raise ValueError("proposal must be inside the release-local product-intent inbox")
-    if candidate.suffix.lower() != ".json" or candidate.is_symlink() or not candidate.is_file() or candidate.stat().st_size > PROPOSAL_LIMIT: raise ValueError("proposal must be a bounded regular JSON file in the release-local inbox")
-    return candidate
+def _proposal_path(ctx: LocalExecutionContext, value: str) -> Path:
+    inbox = (_root(ctx) / "inbox").resolve(); raw = Path(value).absolute()
+    if raw.is_symlink(): raise ValueError("proposal must be a regular inbox JSON file")
+    path = raw.resolve()
+    if inbox not in path.parents or path.suffix.lower() != ".json" or path.is_symlink() or not path.is_file() or path.stat().st_size > PROPOSAL_LIMIT: raise ValueError("proposal must be a bounded regular JSON file in the release-local inbox")
+    return path
 
 
-def _citation(ref: dict, sources: dict) -> None:
-    if set(ref) != {"source_id", "locator", "excerpt_hash"} or ref["source_id"] not in sources: raise ValueError("proposal cites an unknown source")
-    if not any(item["locator"] == ref["locator"] and item["excerpt_hash"] == ref["excerpt_hash"] for item in sources[ref["source_id"]]["locators"]): raise ValueError("proposal citation locator or excerpt hash is invalid")
+def _quote(ref: dict, sources: dict) -> None:
+    fields = {"source_id", "start_line", "end_line", "quote", "quote_hash"}
+    if set(ref) != fields or ref["source_id"] not in sources or not isinstance(ref["start_line"], int) or not isinstance(ref["end_line"], int) or not isinstance(ref["quote"], str) or ref["start_line"] < 1 or ref["end_line"] < ref["start_line"]: raise ValueError("invalid quote reference")
+    lines = sources[ref["source_id"]]["text"].split("\n"); actual = "\n".join(lines[ref["start_line"] - 1:ref["end_line"]])
+    if actual != ref["quote"] or ref["quote_hash"] != _source_hash(actual): raise ValueError("quote range or hash is invalid")
 
 
-def _citations(refs: object, sources: dict) -> list[dict]:
-    if not isinstance(refs, list) or not refs: raise ValueError("proposal records require source references")
-    for ref in refs: _citation(ref, sources)
+def _refs(refs: object, sources: dict) -> list[dict]:
+    if not isinstance(refs, list) or not refs: raise ValueError("source support is required")
+    for ref in refs: _quote(ref, sources)
     return refs
 
 
+def _supported(value: object, refs: list[dict]) -> bool:
+    return isinstance(value, str) and any(_mechanical(value) == _mechanical(ref["quote"]) for ref in refs)
+
+
 def _validate_proposal(proposal: dict, packet: dict) -> None:
-    required = {"schema_version", "release_id", "release_commit", "source_packet_hash", "claims", "requirements", "criteria", "ambiguities"}
-    if set(proposal) != required or proposal.get("schema_version") != PROPOSAL_SCHEMA: raise ValueError("invalid intent-proposal.v1")
-    if proposal["release_id"] != packet["release_id"] or proposal["release_commit"] != packet["release_commit"] or proposal["source_packet_hash"] != packet["packet_hash"]: raise ValueError("proposal is not bound to this release source packet")
-    sources = {s["source_id"]: s for s in packet["sources"]}; keys = set(); local_ids = set()
+    fields = {"schema_version", "release_id", "release_commit", "source_packet_hash", "claims", "requirements", "criteria", "ambiguities"}
+    if set(proposal) != fields or proposal.get("schema_version") != PROPOSAL_SCHEMA or proposal["release_id"] != packet["release_id"] or proposal["release_commit"] != packet["release_commit"] or proposal["source_packet_hash"] != packet["packet_hash"]: raise ValueError("invalid or unbound proposal")
+    sources = {x["source_id"]: x for x in packet["sources"]}; claim_ids = set(); requirement_ids = set(); ambiguity_ids = set(); criterion_ids = set()
     for claim in proposal["claims"]:
-        if set(claim) != {"claim_key", "value", "single_valued", "source_refs"} or not isinstance(claim["claim_key"], str) or not claim["single_valued"]: raise ValueError("claims must declare a single-valued schema-valid key")
-        _normal(claim["value"]); _citations(claim["source_refs"], sources); keys.add(claim["claim_key"])
+        if set(claim) != {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"} or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not isinstance(claim["local_id"], str) or claim["local_id"] in claim_ids: raise ValueError("invalid claim")
+        refs = _refs(claim["source_refs"], sources)
+        if claim["classification"] == "explicit" and not _supported(str(claim["value"]), refs): raise ValueError("explicit claim lacks exact quote support")
+        claim_ids.add(claim["local_id"])
     for item in proposal["requirements"]:
-        required_item = {"local_id", "statement", "classification", "status", "source_refs", "related_journey_ids", "materiality", "rationale", "owner_confirmation_required"}
-        if set(item) != required_item or item["local_id"] in local_ids or item["classification"] not in {"explicit", "inferred_requires_owner"} or item["status"] not in {"active", "proposed", "blocked_by_ambiguity", "superseded"} or not isinstance(item["owner_confirmation_required"], bool): raise ValueError("invalid proposal requirement")
-        _citations(item["source_refs"], sources); local_ids.add(item["local_id"])
-    for item in proposal["criteria"]:
-        required_item = {"parent_local_id", "actor", "preconditions", "action", "expected_outcomes", "failure_behavior", "required_evidence_categories", "source_refs", "classification", "confirmation_state", "blocker_eligible", "ambiguity_dependencies"}
-        if set(item) != required_item or item["parent_local_id"] not in local_ids or item["classification"] not in {"explicit", "inferred_requires_owner"} or not set(item["required_evidence_categories"]).issubset(EVIDENCE_CATEGORIES): raise ValueError("invalid proposal criterion")
-        _citations(item["source_refs"], sources)
-        if item["blocker_eligible"] and (item["classification"] != "explicit" or item["ambiguity_dependencies"]): raise ValueError("inferred or ambiguous criteria cannot be blocker eligible")
+        required = {"local_id", "statement", "classification", "status", "source_refs", "claim_local_ids", "related_journey_ids", "materiality", "rationale", "owner_confirmation_required", "ambiguity_local_ids"}
+        if set(item) != required or not isinstance(item["local_id"], str) or item["local_id"] in requirement_ids or not isinstance(item["statement"], str) or not item["statement"].strip() or item["classification"] not in CLASSIFICATIONS or item["status"] not in STATUSES or not isinstance(item["owner_confirmation_required"], bool) or not set(item["claim_local_ids"]).issubset(claim_ids): raise ValueError("invalid requirement")
+        refs = _refs(item["source_refs"], sources)
+        if item["classification"] == "explicit" and not _supported(item["statement"], refs): raise ValueError("explicit requirement lacks exact quote support")
+        if item["classification"] == "inferred_requires_owner" and not item["owner_confirmation_required"]: raise ValueError("inferred requirement requires owner confirmation")
+        requirement_ids.add(item["local_id"])
     for item in proposal["ambiguities"]:
-        if set(item) != {"title", "source_refs", "why_material", "options", "recommendation", "blocked_conclusions"} or len(item["options"]) > 3: raise ValueError("invalid proposal ambiguity")
-        _citations(item["source_refs"], sources)
+        required = {"local_id", "title", "source_refs", "why_material", "options", "recommendation", "blocked_conclusions", "affected_requirement_local_ids", "affected_criterion_local_ids"}
+        if set(item) != required or not isinstance(item["local_id"], str) or item["local_id"] in ambiguity_ids or not isinstance(item["options"], list) or len(item["options"]) > 3 or not set(item["affected_requirement_local_ids"]).issubset(requirement_ids): raise ValueError("invalid ambiguity")
+        _refs(item["source_refs"], sources); ambiguity_ids.add(item["local_id"])
+    if any(not set(x["requirement_local_ids"]).issubset(requirement_ids) for x in proposal["claims"]): raise ValueError("claim references unknown requirement")
+    if any(not set(x["ambiguity_local_ids"]).issubset(ambiguity_ids) for x in proposal["requirements"]): raise ValueError("requirement references unknown ambiguity")
+    for item in proposal["criteria"]:
+        required = {"local_id", "parent_requirement_local_id", "actor", "preconditions", "action", "expected_outcomes", "failure_behavior", "required_evidence_categories", "source_refs", "field_source_refs", "classification", "confirmation_state", "blocker_eligible", "ambiguity_local_ids"}
+        if set(item) != required or not isinstance(item["local_id"], str) or item["local_id"] in criterion_ids or item["parent_requirement_local_id"] not in requirement_ids or item["classification"] not in CLASSIFICATIONS or item["confirmation_state"] not in CONFIRMATIONS or not isinstance(item["blocker_eligible"], bool) or not isinstance(item["required_evidence_categories"], list) or not item["required_evidence_categories"] or not set(item["required_evidence_categories"]).issubset(EVIDENCE) or not set(item["ambiguity_local_ids"]).issubset(ambiguity_ids): raise ValueError("invalid criterion")
+        _refs(item["source_refs"], sources)
+        for field, refs in item["field_source_refs"].items():
+            if field not in {"actor", "action", "failure_behavior"} or not _supported(item[field], _refs(refs, sources)): raise ValueError("criterion field lacks exact quote support")
+        for field in ("actor", "action", "failure_behavior"):
+            if item[field] is not None and field not in item["field_source_refs"]: item["classification"] = "inferred_requires_owner"
+        if item["preconditions"] or item["expected_outcomes"]: item["classification"] = "inferred_requires_owner"
+        if item["classification"] == "inferred_requires_owner": item["confirmation_state"] = "owner_confirmation_required"; item["blocker_eligible"] = False
+        if item["blocker_eligible"] and (item["classification"] != "explicit" or item["ambiguity_local_ids"] or item["confirmation_state"] != "confirmed"): raise ValueError("criterion is not eligible to block")
+        criterion_ids.add(item["local_id"])
+    if any(not set(x["affected_criterion_local_ids"]).issubset(criterion_ids) for x in proposal["ambiguities"]): raise ValueError("ambiguity references unknown criterion")
+    if any(x["status"] == "blocked_by_ambiguity" and not x["ambiguity_local_ids"] for x in proposal["requirements"]): raise ValueError("blocked requirement lacks ambiguity")
 
 
-def _conflicts(proposal: dict, packet: dict) -> list[dict]:
-    sources = {s["source_id"]: s for s in packet["sources"]}; grouped: dict[str, list[dict]] = {}
-    for claim in proposal["claims"]: grouped.setdefault(claim["claim_key"], []).append(claim)
-    conflicts = []
-    for key, claims in grouped.items():
-        values = {_normal(c["value"]) for c in claims}
-        if len(values) < 2: continue
-        refs = [ref for claim in claims for ref in claim["source_refs"]]
-        if len({(ref["source_id"], ref["locator"], ref["excerpt_hash"]) for ref in refs}) < 2: continue
-        ranks = {ref["source_id"]: TIERS.index(sources[ref["source_id"]]["authority_tier"]) for ref in refs}
-        highest = min(ranks.values()); top_values = {_normal(claim["value"]) for claim in claims if any(ranks[r["source_id"]] == highest for r in claim["source_refs"])}
-        conflicts.append({"conflict_id": _id("conflict", {"key": key, "claims": claims}), "claim_key": key, "claims": claims, "working_value": None if len(top_values) > 1 else next(iter(top_values)), "highest_tier_conflict": len(top_values) > 1, "source_refs": refs})
-    return conflicts
+def _claims(proposal: dict, packet: dict) -> tuple[list[dict], dict[str, str]]:
+    sources = {x["source_id"]: x for x in packet["sources"]}; groups: dict[str, list[dict]] = {}
+    for claim in proposal["claims"]: groups.setdefault(claim["claim_key"], []).append(claim)
+    ledger = []; statuses = {}
+    for key, claims in groups.items():
+        cardinality = claims[0]["cardinality"]
+        if any(x["cardinality"] != cardinality for x in claims): raise ValueError("claim key cardinality is inconsistent")
+        ranked = [(min(TIERS.index(sources[r["source_id"]]["authority_tier"]) for r in c["source_refs"]), c) for c in claims]
+        top = min(rank for rank, _ in ranked); top_values = {canonical_json(c["value"]) for rank, c in ranked if rank == top}
+        for rank, claim in ranked:
+            status = "resolved" if cardinality == "multi" or (rank == top and len(top_values) == 1) else ("conflicted" if rank == top else "superseded")
+            if claim["classification"] == "inferred_requires_owner": status = "inferred_requires_owner"
+            statuses[claim["local_id"]] = status
+            ledger.append({"claim_id": _id("claim", {"packet": packet["packet_hash"], "claim": claim}), "local_id": claim["local_id"], "claim_key": key, "cardinality": cardinality, "value": claim["value"], "source_refs": claim["source_refs"], "authority_tier": TIERS[rank], "classification": claim["classification"], "resolution_status": status, "working_value": claim["value"] if status == "resolved" else None})
+    return ledger, statuses
 
 
-def _explicit(context: LocalExecutionContext, packet: dict) -> tuple[list[dict], list[dict], list[dict]]:
-    source = packet["sources"][0]; ref = _source_ref(source["source_id"], "structured", source["text"])
-    product = context.release["product"]; requirements = []; criteria = []; ambiguities = []
-    fields = [("promise", product.get("promise")), ("target_user", product.get("target_user"))]
-    fields += [("critical_journey", value) for value in product.get("critical_journey", [])] + [("non_goal", value) for value in product.get("non_goals", [])]
-    for field, value in fields:
-        if not value: continue
-        rid = _id("req", {"field": field, "value": value, "packet": packet["packet_hash"]})
-        requirements.append({"requirement_id": rid, "statement": str(value), "classification": "explicit", "status": "active", "source_refs": [ref], "source_authority": "release_owner_input", "related_journey_ids": [str(value)] if field == "critical_journey" else [], "materiality": "release_scope", "rationale": f"Exact release owner input: {field}", "owner_confirmation_required": False})
-        if field == "critical_journey":
-            criteria.append({"criterion_id": _id("criterion", {"requirement_id": rid, "action": value}), "requirement_id": rid, "actor": None, "preconditions": [], "action": str(value), "expected_outcomes": [], "failure_behavior": None, "required_evidence_categories": ["owner_confirmation"], "source_refs": [ref], "classification": "explicit", "confirmation_state": "proposal_needed", "blocker_eligible": False, "ambiguity_dependencies": ["acceptance_details_missing"]})
-    ambiguities.append({"ambiguity_id": _id("ambiguity", {"packet": packet["packet_hash"], "kind": "acceptance_details"}), "title": "Acceptance details are not supplied", "affected_requirement_ids": [r["requirement_id"] for r in requirements], "affected_criterion_ids": [c["criterion_id"] for c in criteria], "source_refs": [ref], "why_material": "Owner input defines scope but not detailed acceptance behavior.", "options": [], "recommendation": "Provide a structured Product Intent proposal.", "blocked_conclusions": ["Detailed acceptance outcomes and blocker eligibility"]})
-    return requirements, criteria, ambiguities
+def _validate_artifacts(artifacts: dict, packet: dict) -> None:
+    if set(artifacts) != set(ARTIFACTS): raise ValueError("exact artifact set is required")
+    req = artifacts["requirements.json"]; crit = artifacts["acceptance-criteria.json"]; amb = artifacts["ambiguities.json"]; intent = artifacts["product-intent.json"]
+    common = {"release_id", "release_commit", "project_authority", "compiler_version", "source_packet_hash"}
+    intent_fields = {"schema_version", *common, "project_name", "product_purpose", "target_users", "release_promise", "release_scope", "non_goals", "owner_constraints", "claims", "working_intent", "source_coverage", "coverage_boundary"}
+    if set(intent) != intent_fields or set(req) != {"schema_version", *common, "requirements"} or set(crit) != {"schema_version", *common, "criteria"} or set(amb) != {"schema_version", *common, "ambiguities"}: raise ValueError("artifact fields mismatch")
+    if intent.get("schema_version") != INTENT_SCHEMA or req.get("schema_version") != REQUIREMENTS_SCHEMA or crit.get("schema_version") != CRITERIA_SCHEMA or amb.get("schema_version") != AMBIGUITIES_SCHEMA: raise ValueError("artifact schema mismatch")
+    for value in artifacts.values():
+        if value.get("release_id") != packet["release_id"] or value.get("release_commit") != packet["release_commit"] or value.get("source_packet_hash") != packet["packet_hash"] or value.get("project_authority") != packet["project_authority"]: raise ValueError("artifact binding mismatch")
+    req_ids = {x["requirement_id"] for x in req["requirements"]}; amb_ids = {x["ambiguity_id"] for x in amb["ambiguities"]}
+    if not all(isinstance(value, list) for value in (req["requirements"], crit["criteria"], amb["ambiguities"], intent["claims"], intent["source_coverage"])) or not isinstance(intent["working_intent"], dict): raise ValueError("artifact field types are invalid")
+    for x in crit["criteria"]:
+        if x["requirement_id"] not in req_ids or not set(x["ambiguity_dependencies"]).issubset(amb_ids) or (x["classification"] == "inferred_requires_owner" and x["blocker_eligible"]): raise ValueError("invalid criterion artifact")
 
 
-def compile_bundle(context: LocalExecutionContext, proposal_file: str | None = None) -> dict:
-    context.require("file.read"); packet = _load_packet(context); proposal = None
+def compile_bundle(ctx: LocalExecutionContext, proposal_file: str | None = None) -> dict:
+    ctx.require("file.read"); packet, packet_bytes = _load_packet(ctx); proposal = None; proposal_bytes = None
     if proposal_file:
-        proposal = json.loads(_proposal_path(context, proposal_file).read_text(encoding="utf-8")); _validate_proposal(proposal, packet)
-        requirements = []; local = {}
-        for item in proposal["requirements"]:
-            rid = _id("req", {k: v for k, v in item.items() if k != "local_id"} | {"packet": packet["packet_hash"]}); local[item["local_id"]] = rid
-            requirements.append({"requirement_id": rid, **{k: v for k, v in item.items() if k != "local_id"}, "source_authority": min((next(s["authority_tier"] for s in packet["sources"] if s["source_id"] == r["source_id"]) for r in item["source_refs"]), key=TIERS.index)})
-        conflicts = _conflicts(proposal, packet); conflict_refs = {r["source_id"] for c in conflicts for r in c["source_refs"] if c["highest_tier_conflict"]}
-        for item in requirements:
-            if any(r["source_id"] in conflict_refs for r in item["source_refs"]): item["status"] = "blocked_by_ambiguity"
+        proposal_bytes = _proposal_path(ctx, proposal_file).read_bytes(); proposal = json.loads(proposal_bytes.decode("utf-8")); _validate_proposal(proposal, packet)
+    common = {"release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "source_packet_hash": packet["packet_hash"]}
+    if proposal:
+        ledger, claim_status = _claims(proposal, packet); local_req = {x["local_id"]: _id("req", {"packet": packet["packet_hash"], "item": x}) for x in proposal["requirements"]}; local_amb = {x["local_id"]: _id("ambiguity", {"packet": packet["packet_hash"], "item": x}) for x in proposal["ambiguities"]}
+        requirements = []
+        for x in proposal["requirements"]:
+            state = "superseded" if x["claim_local_ids"] and all(claim_status[c] == "superseded" for c in x["claim_local_ids"]) else ("blocked_by_ambiguity" if any(claim_status[c] == "conflicted" for c in x["claim_local_ids"]) else x["status"])
+            requirements.append({"requirement_id": local_req[x["local_id"]], **{k: v for k, v in x.items() if k != "local_id"}, "status": state, "ambiguity_dependencies": [local_amb[a] for a in x["ambiguity_local_ids"]]})
         criteria = []
-        for item in proposal["criteria"]:
-            parent = local[item["parent_local_id"]]; blocked = next(r for r in requirements if r["requirement_id"] == parent)["status"] == "blocked_by_ambiguity"
-            criteria.append({"criterion_id": _id("criterion", {k: v for k, v in item.items() if k != "parent_local_id"} | {"requirement_id": parent}), "requirement_id": parent, **{k: v for k, v in item.items() if k != "parent_local_id"}, "blocker_eligible": bool(item["blocker_eligible"] and not blocked)})
-        ambiguities = [{"ambiguity_id": _id("ambiguity", x), "affected_requirement_ids": [], "affected_criterion_ids": [], **x} for x in proposal["ambiguities"]]
-        for conflict in conflicts:
-            ambiguities.append({"ambiguity_id": _id("ambiguity", conflict), "title": f"Conflicting {conflict['claim_key']}", "affected_requirement_ids": [r["requirement_id"] for r in requirements if any(ref["source_id"] in {x["source_id"] for x in conflict["source_refs"]} for ref in r["source_refs"])], "affected_criterion_ids": [], "source_refs": conflict["source_refs"], "why_material": "Conflicting source-backed values remain visible.", "options": [], "recommendation": None, "blocked_conclusions": ["Working release intent"]})
+        for x in proposal["criteria"]:
+            parent = next(r for r in requirements if r["requirement_id"] == local_req[x["parent_requirement_local_id"]]); deps = [local_amb[a] for a in x["ambiguity_local_ids"]]
+            criteria.append({"criterion_id": _id("criterion", {"packet": packet["packet_hash"], "item": x}), "requirement_id": parent["requirement_id"], **{k: v for k, v in x.items() if k not in {"local_id", "parent_requirement_local_id"}}, "ambiguity_dependencies": deps, "blocker_eligible": bool(x["blocker_eligible"] and parent["status"] == "active" and not deps)})
+        ambiguities = [{"ambiguity_id": local_amb[x["local_id"]], **{k: v for k, v in x.items() if k != "local_id"}, "affected_requirement_ids": [local_req[v] for v in x["affected_requirement_local_ids"]], "affected_criterion_ids": [next(c["criterion_id"] for c in criteria if c["local_id"] == v) for v in x["affected_criterion_local_ids"]]} for x in proposal["ambiguities"]]
     else:
-        requirements, criteria, ambiguities = _explicit(context, packet); conflicts = []
-    product = context.release["product"]; intent = {"schema_version": INTENT_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "project_name": context.activation["contract"]["project_name"], "product_purpose": context.activation["contract"]["product_purpose"], "target_users": [product.get("target_user")] if product.get("target_user") else [], "release_promise": product.get("promise"), "release_scope": product.get("critical_journey", []), "non_goals": product.get("non_goals", []), "owner_constraints": context.release.get("owner_constraints", []), "source_conflicts": conflicts, "unresolved_material_ambiguities": [a["ambiguity_id"] for a in ambiguities], "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
-    common = {"release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "source_packet_hash": packet["packet_hash"], "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
+        owner = packet["sources"][0]; ref = {"source_id": owner["source_id"], "start_line": 1, "end_line": len(owner["text"].split("\n")), "quote": owner["text"], "quote_hash": _source_hash(owner["text"])}; promise = ctx.release["product"].get("promise"); journeys = ctx.release["product"].get("critical_journey", [])
+        requirements = ([{"requirement_id": _id("req", {"promise": promise, "packet": packet["packet_hash"]}), "statement": promise, "classification": "explicit", "status": "active", "source_refs": [ref], "claim_local_ids": [], "related_journey_ids": [], "materiality": "release_scope", "rationale": "release owner promise", "owner_confirmation_required": False, "ambiguity_local_ids": [], "ambiguity_dependencies": []}] if promise else [])
+        ambiguities = [{"ambiguity_id": _id("ambiguity", {"packet": packet["packet_hash"], "kind": "acceptance"}), "title": "Acceptance details are not supplied", "source_refs": [ref], "why_material": "Journey behavior has no detailed acceptance contract.", "options": [], "recommendation": "Provide a Product Intent proposal.", "blocked_conclusions": ["Blocker eligibility"], "affected_requirement_local_ids": [], "affected_criterion_local_ids": [], "affected_requirement_ids": [], "affected_criterion_ids": []}]
+        criteria = [{"criterion_id": _id("criterion", {"journey": x, "packet": packet["packet_hash"]}), "requirement_id": requirements[0]["requirement_id"] if requirements else "", "local_id": None, "actor": None, "preconditions": [], "action": x, "expected_outcomes": [], "failure_behavior": None, "required_evidence_categories": ["owner_confirmation"], "source_refs": [ref], "field_source_refs": {}, "classification": "inferred_requires_owner", "confirmation_state": "owner_confirmation_required", "blocker_eligible": False, "ambiguity_local_ids": ["acceptance"], "ambiguity_dependencies": [ambiguities[0]["ambiguity_id"]]} for x in journeys if requirements]
+        ledger = []
+    product = ctx.release["product"]; recognized = {"release.promise": "release_promise", "release.target_user": "target_user", "release.publication_mode": "publication_mode"}; working = {recognized[x["claim_key"]]: x["working_value"] for x in ledger if x["claim_key"] in recognized and x["resolution_status"] == "resolved" and x["working_value"] is not None}
+    intent = {"schema_version": INTENT_SCHEMA, **common, "project_name": ctx.activation["contract"]["project_name"], "product_purpose": ctx.activation["contract"]["product_purpose"], "target_users": [product.get("target_user")] if product.get("target_user") else [], "release_promise": product.get("promise"), "release_scope": product.get("critical_journey", []), "non_goals": product.get("non_goals", []), "owner_constraints": ctx.release.get("owner_constraints", []), "claims": ledger, "working_intent": working, "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
     artifacts = {"product-intent.json": intent, "requirements.json": {"schema_version": REQUIREMENTS_SCHEMA, **common, "requirements": requirements}, "acceptance-criteria.json": {"schema_version": CRITERIA_SCHEMA, **common, "criteria": criteria}, "ambiguities.json": {"schema_version": AMBIGUITIES_SCHEMA, **common, "ambiguities": ambiguities}}
-    _validate_bundle(artifacts, packet, proposal)
-    return _persist(context, packet, proposal, artifacts)
+    _validate_artifacts(artifacts, packet); return _persist(ctx, packet, packet_bytes, proposal, proposal_bytes, artifacts)
 
 
-def _validate_bundle(artifacts: dict, packet: dict, proposal: dict | None) -> None:
-    requirements = artifacts["requirements.json"]["requirements"]; ids = {r["requirement_id"] for r in requirements}
-    for criterion in artifacts["acceptance-criteria.json"]["criteria"]:
-        if criterion["requirement_id"] not in ids: raise ValueError("criterion parent requirement is missing")
-        if criterion["blocker_eligible"] and (criterion["classification"] != "explicit" or criterion["ambiguity_dependencies"]): raise ValueError("invalid blocker eligibility")
+def _persist(ctx: LocalExecutionContext, packet: dict, packet_bytes: bytes, proposal: dict | None, proposal_bytes: bytes | None, artifacts: dict) -> dict:
+    root = _root(ctx); generations = root / "generations"; generation = "gen_" + uuid.uuid4().hex; directory = generations / generation; directory.mkdir(parents=True)
+    hashes = {}
+    for name, value in artifacts.items(): path = directory / name; _atomic_file(path, value); hashes[name] = _hash_bytes(path.read_bytes())
+    (directory / "source-packet.json").write_bytes(packet_bytes); snapshot_hash = _hash_bytes(packet_bytes)
+    if proposal_bytes: (directory / "proposal.json").write_bytes(proposal_bytes)
+    manifest = {"schema_version": MANIFEST_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "source_packet_hash": packet["packet_hash"], "source_packet_snapshot_hash": snapshot_hash, "proposal_hash": content_hash(proposal) if proposal else "explicit-only", "proposal_snapshot_hash": _hash_bytes(proposal_bytes) if proposal_bytes else "explicit-only", "compiler_version": COMPILER_VERSION, "artifact_filenames": list(ARTIFACTS), "artifact_hashes": hashes}
+    manifest["bundle_hash"] = content_hash(manifest); _atomic_file(directory / "manifest.json", manifest)
+    pointer = {"schema_version": POINTER_SCHEMA, "generation": generation, "manifest_hash": _hash_bytes((directory / "manifest.json").read_bytes())}; _atomic_file(root / "current-generation.json", pointer); return manifest
 
 
-def _write_json(path: Path, value: dict) -> None:
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-
-def _persist(context: LocalExecutionContext, packet: dict, proposal: dict | None, artifacts: dict) -> dict:
-    root = _root(context); root.mkdir(parents=True, exist_ok=True); temporary = root / f".bundle-{uuid.uuid4().hex}"; temporary.mkdir()
-    try:
-        hashes = {}
-        for filename, value in artifacts.items(): _write_json(temporary / filename, value); hashes[filename] = "sha256:" + hashlib.sha256((temporary / filename).read_bytes()).hexdigest()
-        manifest = {"schema_version": MANIFEST_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "source_packet_hash": packet["packet_hash"], "proposal_hash": content_hash(proposal) if proposal else "explicit-only", "compiler_version": COMPILER_VERSION, "artifact_filenames": sorted(hashes), "artifact_hashes": hashes}
-        manifest["bundle_hash"] = content_hash(manifest)
-        _write_json(temporary / "manifest.json", manifest)
-        target = root / "bundle"; old = root / f".previous-{uuid.uuid4().hex}"
-        if target.exists(): os.replace(target, old)
-        try: os.replace(temporary, target)
-        except Exception:
-            if old.exists(): os.replace(old, target)
-            raise
-        if old.exists(): shutil.rmtree(old)
-        return manifest
-    except Exception:
-        if temporary.exists(): shutil.rmtree(temporary)
-        raise
-
-
-def load_bundle(context: LocalExecutionContext) -> tuple[dict, dict]:
-    root = _root(context) / "bundle"; manifest_path = root / "manifest.json"
-    if not root.is_dir() or manifest_path.is_symlink() or not manifest_path.is_file(): raise ValueError("complete Product Intent bundle is unavailable")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    required = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "proposal_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "bundle_hash"}
-    if set(manifest) != required or manifest["schema_version"] != MANIFEST_SCHEMA or manifest["bundle_hash"] != content_hash({k: v for k, v in manifest.items() if k != "bundle_hash"}): raise ValueError("Product Intent bundle manifest is invalid")
-    if manifest["release_id"] != context.release["release_id"] or manifest["release_commit"] != context.authority_binding["repository_commit"] or manifest["project_authority"]["contract_hash"] != context.authority_binding["contract_hash"]: raise ValueError("Product Intent bundle is stale")
+def load_bundle(ctx: LocalExecutionContext) -> tuple[dict, dict]:
+    packet, _ = _load_packet(ctx); pointer_path = _root(ctx) / "current-generation.json"
+    if pointer_path.is_symlink() or not pointer_path.is_file(): raise ValueError("complete Product Intent generation is unavailable")
+    pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    if set(pointer) != {"schema_version", "generation", "manifest_hash"} or pointer["schema_version"] != POINTER_SCHEMA or not re.fullmatch(r"gen_[0-9a-f]{32}", pointer["generation"]): raise ValueError("invalid Product Intent generation pointer")
+    directory = _root(ctx) / "generations" / pointer["generation"]; manifest_path = directory / "manifest.json"
+    if not manifest_path.is_file() or _hash_bytes(manifest_path.read_bytes()) != pointer["manifest_hash"]: raise ValueError("invalid Product Intent generation")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")); fields = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "source_packet_snapshot_hash", "proposal_hash", "proposal_snapshot_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "bundle_hash"}
+    if set(manifest) != fields or manifest["schema_version"] != MANIFEST_SCHEMA or manifest["bundle_hash"] != content_hash({k: v for k, v in manifest.items() if k != "bundle_hash"}) or manifest["source_packet_hash"] != packet["packet_hash"] or manifest["artifact_filenames"] != list(ARTIFACTS): raise ValueError("stale or invalid Product Intent bundle")
+    snapshot = directory / "source-packet.json"
+    if not snapshot.is_file() or _hash_bytes(snapshot.read_bytes()) != manifest["source_packet_snapshot_hash"] or snapshot.read_bytes() != (_root(ctx) / "source-packet.json").read_bytes(): raise ValueError("bundle source packet snapshot is stale")
     artifacts = {}
-    for filename in manifest["artifact_filenames"]:
-        path = root / filename
-        if path.is_symlink() or not path.is_file() or "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() != manifest["artifact_hashes"].get(filename): raise ValueError("Product Intent bundle artifact is invalid")
-        artifacts[filename] = json.loads(path.read_text(encoding="utf-8"))
-    _validate_bundle(artifacts, _load_packet(context), None)
-    return manifest, artifacts
+    for name in ARTIFACTS:
+        path = directory / name
+        if not path.is_file() or _hash_bytes(path.read_bytes()) != manifest["artifact_hashes"].get(name): raise ValueError("invalid Product Intent artifact")
+        artifacts[name] = json.loads(path.read_text(encoding="utf-8"))
+    _validate_artifacts(artifacts, packet); return manifest, artifacts
 
 
-def show(context: LocalExecutionContext) -> str:
-    _, artifacts = load_bundle(context); intent = artifacts["product-intent.json"]; reqs = artifacts["requirements.json"]["requirements"]; criteria = artifacts["acceptance-criteria.json"]["criteria"]; ambiguities = artifacts["ambiguities.json"]["ambiguities"]
-    lines = [f"Product Intent: {intent['project_name']}", f"Promise: {intent['release_promise'] or 'not supplied'}", "Requirements:"]
-    lines += [f"- {r['requirement_id']} [{r['classification']}/{r['status']}] {r['statement']}" for r in reqs] or ["- none"]
-    lines += ["Criteria:"] + [f"- {c['criterion_id']} [{c['classification']}] blocker_eligible={c['blocker_eligible']}" for c in criteria] + ["Material ambiguities:"] + [f"- {a['title']}" for a in ambiguities]
+def show(ctx: LocalExecutionContext) -> str:
+    _, artifacts = load_bundle(ctx); intent = artifacts["product-intent.json"]; requirements = artifacts["requirements.json"]["requirements"]; criteria = artifacts["acceptance-criteria.json"]["criteria"]; ambiguities = artifacts["ambiguities.json"]["ambiguities"]
+    lines = [f"Product Intent: {intent['project_name']}", f"Working promise: {intent['release_promise'] or 'not supplied'}", "Claims:"]
+    lines += [f"- {x['claim_key']}={x['working_value']!r} [{x['resolution_status']}; {x['authority_tier']}]" for x in intent["claims"]] or ["- none"]
+    lines += ["Requirements:"] + [f"- {x['requirement_id']} [{x['classification']}/{x['status']}] {x['statement']}" for x in requirements] + ["Criteria:"] + [f"- {x['criterion_id']} [{x['classification']}] blocker_eligible={x['blocker_eligible']}" for x in criteria] + ["Material ambiguities:"] + [f"- {x['title']}" for x in ambiguities] + ["Source coverage:"] + [f"- {x['path']} [{x['source_class']}] {x['status']}" for x in intent["source_coverage"]] + [f"Coverage boundary: {intent['coverage_boundary']}"]
     return "\n".join(lines)
