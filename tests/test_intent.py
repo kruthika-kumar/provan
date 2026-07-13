@@ -21,7 +21,7 @@ def context_for(tmp_path: Path) -> LocalExecutionContext:
     repo = tmp_path / "repo"; repo.mkdir(); git(repo, "init", "-b", "main"); git(repo, "config", "user.email", "test@example.com"); git(repo, "config", "user.name", "Test")
     (repo / ".gitignore").write_text(".shiproom/local/\n"); (repo / "docs").mkdir()
     (repo / "docs" / "brief.md").write_bytes("\ufeff# Rélease\r\n\r\nUsers can publish cards.\r\napproval_required\r\n".encode("utf-8")); (repo / "docs" / "other.md").write_text("disabled\n", encoding="utf-8")
-    (repo / "docs" / "equiv.md").write_text("APPROVAL REQUIRED\nApproval-Required\n", encoding="utf-8"); (repo / "binary.md").write_bytes(b"\x00\xff"); git(repo, "add", "."); git(repo, "commit", "-m", "source")
+    (repo / "docs" / "equiv.md").write_text("APPROVAL REQUIRED\nApproval-Required\n", encoding="utf-8"); (repo / "docs" / "pairs.md").write_text("Zulu outcome\nAlpha outcome\nZulu precondition\nAlpha precondition\n", encoding="utf-8"); (repo / "binary.md").write_bytes(b"\x00\xff"); git(repo, "add", "."); git(repo, "commit", "-m", "source")
     initialize(repo, project_name="Private", product_purpose="Private releases", primary_users=["operators"], profile="inspect", local_only=False, confirmed=True)
     binding, grant = bind_release_authority(repo, "https://example.test", "/result/demo")
     release = Release(release_id="rel_intent", repository={"path": str(repo), "commit_sha": binding["repository_commit"]}, deployment={"url": grant["origin"], "generated_path": "/result/demo", "read_grant": grant}, product={"name": "Private", "target_user": "operators", "promise": "Publish cards", "critical_journey": ["Publish card"], "non_goals": ["Sharing"]}, project_authority=binding).to_dict()
@@ -175,3 +175,36 @@ def test_explicit_typed_claims_seed_namespace_and_semantic_hash(tmp_path: Path):
     path = inbox(ctx, "typed.json"); path.write_text(json.dumps(typed), encoding="utf-8"); manifest = compile_bundle(ctx, str(path)); assert manifest["semantic_bundle_hash"].startswith("sha256:")
     invalid = {**typed, "claims": [{**typed["claims"][0], "local_id": "SeEd_bad"}]}; inbox(ctx, "seed.json").write_text(json.dumps(invalid), encoding="utf-8")
     with pytest.raises(ValueError, match="invalid claim"): compile_bundle(ctx, str(inbox(ctx, "seed.json")))
+
+
+def test_distinct_criterion_outcomes_and_preconditions_keep_paired_citations(tmp_path: Path):
+    ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md", "docs/pairs.md"], []); data = proposal(packet)
+    source = next(x for x in packet["sources"] if x["path"] == "docs/pairs.md")
+    def cite(line, quote):
+        import hashlib
+        return {"source_id": source["source_id"], "start_line": line, "end_line": line, "quote": quote, "quote_hash": "sha256:" + hashlib.sha256(quote.encode()).hexdigest()}
+    data["criteria"][0].update({"preconditions": ["Zulu precondition", "Alpha precondition"], "expected_outcomes": ["Zulu outcome", "Alpha outcome"], "field_source_refs": {"preconditions": [[cite(3, "Zulu precondition")], [cite(4, "Alpha precondition")]], "expected_outcomes": [[cite(1, "Zulu outcome")], [cite(2, "Alpha outcome")]]}})
+    path = inbox(ctx, "paired-lines.json"); path.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx); criterion = artifacts["acceptance-criteria.json"]["criteria"][0]
+    for field in ("preconditions", "expected_outcomes"):
+        assert [(value, refs[0]["quote"]) for value, refs in zip(criterion[field], criterion["field_source_refs"][field])] == [(value, value) for value in criterion[field]]
+
+
+def test_formatted_claims_compile_canonically_and_typed_mismatches_reject(tmp_path: Path):
+    ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md", "docs/equiv.md"], []); data = proposal(packet)
+    equiv = next(x for x in packet["sources"] if x["path"] == "docs/equiv.md")
+    def cite(line, quote):
+        import hashlib
+        return {"source_id": equiv["source_id"], "start_line": line, "end_line": line, "quote": quote, "quote_hash": "sha256:" + hashlib.sha256(quote.encode()).hexdigest()}
+    for local_id, line, value in (("upper", 1, "APPROVAL REQUIRED"), ("title", 2, "Approval-Required")):
+        data["claims"].append({"local_id": local_id, "claim_key": "release.publication_mode", "cardinality": "single", "value": value, "classification": "explicit", "source_refs": [cite(line, value)], "requirement_local_ids": ["publish"]}); data["requirements"][0]["claim_local_ids"].append(local_id)
+    one = inbox(ctx, "format-one.json"); two = inbox(ctx, "format-two.json"); one.write_text(json.dumps(data), encoding="utf-8"); two.write_text(json.dumps({**data, "claims": list(reversed(data["claims"]))}), encoding="utf-8")
+    first = compile_bundle(ctx, str(one)); root = ctx.repository_root / ".shiproom/local/releases/rel_intent/product-intent"; pointer = json.loads((root / "current-generation.json").read_text()); normalized_one = (root / "generations" / pointer["generation"] / "normalized-proposal.json").read_bytes(); _, artifacts_one = load_bundle(ctx)
+    second = compile_bundle(ctx, str(two)); pointer = json.loads((root / "current-generation.json").read_text()); normalized_two = (root / "generations" / pointer["generation"] / "normalized-proposal.json").read_bytes(); _, artifacts_two = load_bundle(ctx)
+    assert first["semantic_bundle_hash"] == second["semantic_bundle_hash"] and normalized_one == normalized_two and artifacts_one == artifacts_two
+    ledger = [x for x in artifacts_two["product-intent.json"]["claims"] if x["claim_key"] == "release.publication_mode"]
+    assert len(ledger) == 1 and ledger[0]["resolution_status"] == "resolved"
+    ctx.release["product"]["promise"] = True; structured_packet = prepare(ctx, [] , []); structured = next(x for x in structured_packet["sources"] if x["source_id"] == "release_owner_input")
+    for bad_value in (1, 1.0, "1"):
+        typed = {"schema_version": "intent-proposal.v1", "release_id": structured_packet["release_id"], "release_commit": structured_packet["release_commit"], "source_packet_hash": structured_packet["packet_hash"], "claims": [{"local_id": "typed", "claim_key": "release.promise", "cardinality": "single", "value": bad_value, "classification": "explicit", "source_refs": [{"source_id": structured["source_id"], "field_path": "/promise", "value_hash": "sha256:" + __import__("hashlib").sha256(b"true").hexdigest()}]}], "requirements": [], "criteria": [], "ambiguities": []}
+        inbox(ctx, f"typed-{type(bad_value).__name__}.json").write_text(json.dumps(typed), encoding="utf-8")
+        with pytest.raises(ValueError, match="authority support"): compile_bundle(ctx, str(inbox(ctx, f"typed-{type(bad_value).__name__}.json")))

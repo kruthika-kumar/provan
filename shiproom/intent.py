@@ -177,6 +177,16 @@ def _ref_supports(value: object, ref: dict, sources: dict) -> bool:
     return False
 
 
+def _claim_ref_supports(value: object, ref: dict, sources: dict) -> bool:
+    """Claim authority may normalize strings, unlike direct prose support."""
+    if "quote" in ref:
+        return isinstance(value, str) and _token(value) == _token(ref["quote"])
+    if "field_path" in ref:
+        structured = _pointer_get(json.loads(sources[ref["source_id"]]["text"]), ref["field_path"])
+        return type(value) is type(structured) and value == structured
+    return False
+
+
 def _supported(value: object, refs: list[dict], sources: dict) -> bool: return isinstance(value, str) and any(_ref_supports(value, ref, sources) for ref in refs)
 def _field_supported(value: object, refs: object, sources: dict) -> bool:
     if isinstance(value, list): return isinstance(refs, list) and len(value) == len(refs) and all(isinstance(item, str) and all(_ref_supports(item, ref, sources) for ref in _refs(item_refs, sources)) for item, item_refs in zip(value, refs))
@@ -202,8 +212,8 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
         allowed = {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"}
         if not set(claim).issubset(allowed) or set(claim) - {"requirement_local_ids"} != allowed - {"requirement_local_ids"} or not isinstance(claim.get("local_id"), str) or claim["local_id"] in claim_ids or claim["local_id"].casefold().startswith("seed_") or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not _primitive(claim["value"]) or (claim["claim_key"] in CLAIM_REGISTRY and claim["cardinality"] != CLAIM_REGISTRY[claim["claim_key"]]): raise ValueError("invalid claim")
         refs = _refs(claim["source_refs"], sources)
-        if claim["classification"] == "explicit" and not isinstance(claim["value"], str) and (any("quote" in r for r in refs) or not all(_ref_supports(claim["value"], ref, sources) for ref in refs)): raise ValueError("explicit non-string claims require exactly matching structured authority")
-        if claim["classification"] == "explicit" and isinstance(claim["value"], str) and not all(_ref_supports(claim["value"], ref, sources) for ref in refs): raise ValueError("explicit claim lacks exact support")
+        if claim["classification"] == "explicit" and not isinstance(claim["value"], str) and any("quote" in r for r in refs): raise ValueError("explicit non-string claims require exactly matching structured authority")
+        if claim["classification"] == "explicit" and not all(_claim_ref_supports(claim["value"], ref, sources) for ref in refs): raise ValueError("explicit claim lacks authority support")
         claim_ids.add(claim["local_id"])
     for item in proposal["requirements"]:
         required = {"local_id", "statement", "classification", "status", "source_refs", "claim_local_ids", "related_journey_ids", "materiality", "rationale", "owner_confirmation_required", "ambiguity_local_ids"}
@@ -247,7 +257,9 @@ def _normalize_proposal(proposal: dict, packet: dict) -> dict:
             equivalents.setdefault(marker, claim["value"])
             if canonical_json(claim["value"]) < canonical_json(equivalents[marker]): equivalents[marker] = claim["value"]
     for claim in value["claims"]:
-        if claim["classification"] == "explicit": claim["value"] = equivalents[(claim["claim_key"], claim["cardinality"], _token(claim["value"]))]
+        if claim["classification"] == "explicit":
+            claim["value"] = equivalents[(claim["claim_key"], claim["cardinality"], _token(claim["value"]))]
+            if not all(_claim_ref_supports(claim["value"], ref, sources) for ref in claim["source_refs"]): raise ValueError("canonical claim lacks authority support")
     for ambiguity in value["ambiguities"]:
         ambiguity.pop("affected_requirement_local_ids"); ambiguity.pop("affected_criterion_local_ids"); ambiguity["source_refs"] = _refs(ambiguity["source_refs"], sources)
     for requirement in value["requirements"]:
@@ -318,7 +330,7 @@ def _finalize_artifacts(ctx: LocalExecutionContext, packet: dict, proposal: dict
             requirements.append({"requirement_id": local_req[x["local_id"]], "statement": x["statement"], "classification": x["classification"], "status": state, "source_refs": x["source_refs"], "claim_ids": sorted(q["claim_id"] for q in ledger if x["local_id"] in q["linked_requirement_local_ids"]), "related_journey_ids": _sort(x["related_journey_ids"]), "materiality": x["materiality"], "rationale": x["rationale"], "owner_confirmation_required": x["owner_confirmation_required"], "ambiguity_dependencies": sorted({local_amb[a] for a in x["ambiguity_local_ids"]})})
         criteria = []
         for x in proposal["criteria"]:
-            criteria.append({"criterion_id": local_criterion[x["local_id"]], "requirement_id": local_req[x["parent_requirement_local_id"]], "actor": x["actor"], "preconditions": _sort(x["preconditions"]), "action": x["action"], "expected_outcomes": _sort(x["expected_outcomes"]), "failure_behavior": x["failure_behavior"], "required_evidence_categories": sorted(set(x["required_evidence_categories"])), "source_refs": x["source_refs"], "field_source_refs": x["field_source_refs"], "classification": x["classification"], "confirmation_state": x["confirmation_state"], "blocker_eligible": False, "candidate_blocker_after_confirmation": False, "ambiguity_dependencies": sorted({local_amb[a] for a in x["ambiguity_local_ids"]})})
+            criteria.append({"criterion_id": local_criterion[x["local_id"]], "requirement_id": local_req[x["parent_requirement_local_id"]], "actor": x["actor"], "preconditions": x["preconditions"], "action": x["action"], "expected_outcomes": x["expected_outcomes"], "failure_behavior": x["failure_behavior"], "required_evidence_categories": sorted(set(x["required_evidence_categories"])), "source_refs": x["source_refs"], "field_source_refs": x["field_source_refs"], "classification": x["classification"], "confirmation_state": x["confirmation_state"], "blocker_eligible": False, "candidate_blocker_after_confirmation": False, "ambiguity_dependencies": sorted({local_amb[a] for a in x["ambiguity_local_ids"]})})
         ambiguities = [{"ambiguity_id": local_amb[x["local_id"]], "title": x["title"], "source_refs": x["source_refs"], "why_material": x["why_material"], "options": _sort(x["options"]), "recommendation": x["recommendation"], "blocked_conclusions": _sort(x["blocked_conclusions"]), "affected_requirement_ids": sorted(local_req[v] for v in proposal["requirements"] and [r["local_id"] for r in proposal["requirements"] if x["local_id"] in r["ambiguity_local_ids"]]), "affected_criterion_ids": sorted(local_criterion[v] for v in [c["local_id"] for c in proposal["criteria"] if x["local_id"] in c["ambiguity_local_ids"]])} for x in proposal["ambiguities"]]
     else:
         owner = next(x for x in packet["sources"] if x["source_id"] == "release_owner_input"); promise = ctx.release["product"].get("promise"); ref = {"source_id": owner["source_id"], "field_path": "/promise", "value_hash": _hash_bytes(canonical_json(promise).encode("utf-8"))}
@@ -365,7 +377,9 @@ def _validate_artifacts(artifacts: dict, packet: dict) -> None:
     claim_fields = {"claim_id", "claim_key", "cardinality", "value", "source_refs", "authority_tier", "classification", "resolution_status", "working_value"}
     for x in intent["claims"]:
         if set(x) != claim_fields or x["claim_id"] in claim_ids or x["cardinality"] not in {"single", "multi"} or x["authority_tier"] not in TIERS or x["classification"] not in CLASSIFICATIONS or x["resolution_status"] not in {"resolved", "conflicted", "superseded", "inferred_requires_owner"} or not _primitive(x["value"]): raise ValueError("invalid claim artifact")
-        _refs(x["source_refs"], sources); claim_ids.add(x["claim_id"])
+        refs = _refs(x["source_refs"], sources)
+        if x["classification"] == "explicit" and not all(_claim_ref_supports(x["value"], ref, sources) for ref in refs): raise ValueError("final claim authority support is invalid")
+        claim_ids.add(x["claim_id"])
     req_fields = {"requirement_id", "statement", "classification", "status", "source_refs", "claim_ids", "related_journey_ids", "materiality", "rationale", "owner_confirmation_required", "ambiguity_dependencies"}
     for x in req["requirements"]:
         if set(x) != req_fields or x["requirement_id"] in req_ids or x["classification"] not in CLASSIFICATIONS or x["status"] not in STATUSES or len(x["claim_ids"]) != len(set(x["claim_ids"])) or len(x["ambiguity_dependencies"]) != len(set(x["ambiguity_dependencies"])): raise ValueError("invalid requirement artifact")
