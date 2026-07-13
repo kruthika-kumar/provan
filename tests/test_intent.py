@@ -21,7 +21,7 @@ def context_for(tmp_path: Path) -> LocalExecutionContext:
     repo = tmp_path / "repo"; repo.mkdir(); git(repo, "init", "-b", "main"); git(repo, "config", "user.email", "test@example.com"); git(repo, "config", "user.name", "Test")
     (repo / ".gitignore").write_text(".shiproom/local/\n"); (repo / "docs").mkdir()
     (repo / "docs" / "brief.md").write_bytes("\ufeff# Rélease\r\n\r\nUsers can publish cards.\r\napproval_required\r\n".encode("utf-8")); (repo / "docs" / "other.md").write_text("disabled\n", encoding="utf-8")
-    (repo / "binary.md").write_bytes(b"\x00\xff"); git(repo, "add", "."); git(repo, "commit", "-m", "source")
+    (repo / "docs" / "equiv.md").write_text("APPROVAL REQUIRED\nApproval-Required\n", encoding="utf-8"); (repo / "binary.md").write_bytes(b"\x00\xff"); git(repo, "add", "."); git(repo, "commit", "-m", "source")
     initialize(repo, project_name="Private", product_purpose="Private releases", primary_users=["operators"], profile="inspect", local_only=False, confirmed=True)
     binding, grant = bind_release_authority(repo, "https://example.test", "/result/demo")
     release = Release(release_id="rel_intent", repository={"path": str(repo), "commit_sha": binding["repository_commit"]}, deployment={"url": grant["origin"], "generated_path": "/result/demo", "read_grant": grant}, product={"name": "Private", "target_user": "operators", "promise": "Publish cards", "critical_journey": ["Publish card"], "non_goals": ["Sharing"]}, project_authority=binding).to_dict()
@@ -152,3 +152,26 @@ def test_unlinked_conflict_and_rederived_normalized_snapshot(tmp_path: Path):
     root = ctx.repository_root / ".shiproom/local/releases/rel_intent/product-intent"; pointer = json.loads((root / "current-generation.json").read_text()); normalized = root / "generations" / pointer["generation"] / "normalized-proposal.json"
     tampered = json.loads(normalized.read_text()); tampered["claims"][0]["classification"] = "inferred_requires_owner"; normalized.write_text(json.dumps(tampered), encoding="utf-8")
     with pytest.raises(ValueError, match="normalized proposal"): load_bundle(ctx)
+
+
+def test_list_evidence_pairs_owner_constraints_and_final_id_hygiene(tmp_path: Path):
+    ctx = context_for(tmp_path); ctx.release["owner_constraints"] = ["No public rollout"]
+    packet = prepare(ctx, ["docs/brief.md"], []); data = proposal(packet); citation = ref(packet)
+    data["criteria"][0].update({"preconditions": ["Users can publish cards.\n", "Users can publish cards."], "expected_outcomes": ["Users can publish cards."], "field_source_refs": {"preconditions": [[citation], [citation]], "expected_outcomes": [[citation]]}})
+    path = inbox(ctx, "pairs.json"); path.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx)
+    criterion = artifacts["acceptance-criteria.json"]["criteria"][0]
+    assert criterion["preconditions"] == ["Users can publish cards."] and len(criterion["field_source_refs"]["preconditions"]) == 1
+    assert artifacts["product-intent.json"]["owner_constraints"] == ["No public rollout"] and "No public rollout" in show(ctx)
+    def keys(value):
+        if isinstance(value, dict): return list(value) + [key for child in value.values() for key in keys(child)]
+        return [key for child in value for key in keys(child)] if isinstance(value, list) else []
+    assert not [key for key in keys(artifacts) if key == "local_id" or key.endswith("_local_id") or key.endswith("_local_ids")]
+
+
+def test_explicit_typed_claims_seed_namespace_and_semantic_hash(tmp_path: Path):
+    ctx = context_for(tmp_path); ctx.release["product"]["promise"] = True; packet = prepare(ctx, [], [])
+    structured = next(x for x in packet["sources"] if x["source_id"] == "release_owner_input")
+    typed = {"schema_version": "intent-proposal.v1", "release_id": packet["release_id"], "release_commit": packet["release_commit"], "source_packet_hash": packet["packet_hash"], "claims": [{"local_id": "typed", "claim_key": "release.promise", "cardinality": "single", "value": True, "classification": "explicit", "source_refs": [{"source_id": structured["source_id"], "field_path": "/promise", "value_hash": "sha256:" + __import__("hashlib").sha256(b"true").hexdigest()}]}], "requirements": [], "criteria": [], "ambiguities": []}
+    path = inbox(ctx, "typed.json"); path.write_text(json.dumps(typed), encoding="utf-8"); manifest = compile_bundle(ctx, str(path)); assert manifest["semantic_bundle_hash"].startswith("sha256:")
+    invalid = {**typed, "claims": [{**typed["claims"][0], "local_id": "SeEd_bad"}]}; inbox(ctx, "seed.json").write_text(json.dumps(invalid), encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid claim"): compile_bundle(ctx, str(inbox(ctx, "seed.json")))

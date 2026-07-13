@@ -173,14 +173,25 @@ def _ref_supports(value: object, ref: dict, sources: dict) -> bool:
     if isinstance(value, str) and "quote" in ref: return _mechanical(value) == _mechanical(ref["quote"])
     if "field_path" in ref:
         structured = _pointer_get(json.loads(sources[ref["source_id"]]["text"]), ref["field_path"])
-        return value == structured
+        return type(value) is type(structured) and value == structured
     return False
 
 
 def _supported(value: object, refs: list[dict], sources: dict) -> bool: return isinstance(value, str) and any(_ref_supports(value, ref, sources) for ref in refs)
 def _field_supported(value: object, refs: object, sources: dict) -> bool:
-    if isinstance(value, list): return isinstance(refs, list) and len(value) == len(refs) and all(_supported(item, _refs(item_refs, sources), sources) for item, item_refs in zip(value, refs))
-    return _supported(value, _refs(refs, sources), sources)
+    if isinstance(value, list): return isinstance(refs, list) and len(value) == len(refs) and all(isinstance(item, str) and all(_ref_supports(item, ref, sources) for ref in _refs(item_refs, sources)) for item, item_refs in zip(value, refs))
+    return isinstance(value, str) and all(_ref_supports(value, ref, sources) for ref in _refs(refs, sources))
+
+
+def _canonical_field_pairs(values: list[str], ref_groups: object, sources: dict) -> tuple[list[str], list[list[dict]]]:
+    if not isinstance(ref_groups, list) or len(values) != len(ref_groups): raise ValueError("criterion list evidence is invalid")
+    grouped: dict[str, list[dict]] = {}
+    for value, refs in zip(values, ref_groups):
+        normalized = _mechanical(value); checked = _refs(refs, sources)
+        if not normalized or not all(_ref_supports(value, ref, sources) for ref in checked): raise ValueError("criterion field lacks exact quote support")
+        grouped.setdefault(normalized, []).extend(checked)
+    pairs = sorted(({"value": value, "source_refs": _refs(refs, sources)} for value, refs in grouped.items()), key=canonical_json)
+    return [pair["value"] for pair in pairs], [pair["source_refs"] for pair in pairs]
 
 
 def _validate_proposal(proposal: dict, packet: dict) -> None:
@@ -189,9 +200,9 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
     sources = {x["source_id"]: x for x in packet["sources"]}; claim_ids = set(); requirement_ids = set(); ambiguity_ids = set(); criterion_ids = set()
     for claim in proposal["claims"]:
         allowed = {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"}
-        if not set(claim).issubset(allowed) or set(claim) - {"requirement_local_ids"} != allowed - {"requirement_local_ids"} or not isinstance(claim.get("local_id"), str) or claim["local_id"] in claim_ids or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not _primitive(claim["value"]) or (claim["claim_key"] in CLAIM_REGISTRY and claim["cardinality"] != CLAIM_REGISTRY[claim["claim_key"]]): raise ValueError("invalid claim")
+        if not set(claim).issubset(allowed) or set(claim) - {"requirement_local_ids"} != allowed - {"requirement_local_ids"} or not isinstance(claim.get("local_id"), str) or claim["local_id"] in claim_ids or claim["local_id"].casefold().startswith("seed_") or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not _primitive(claim["value"]) or (claim["claim_key"] in CLAIM_REGISTRY and claim["cardinality"] != CLAIM_REGISTRY[claim["claim_key"]]): raise ValueError("invalid claim")
         refs = _refs(claim["source_refs"], sources)
-        if claim["classification"] == "explicit" and not isinstance(claim["value"], str) and any("quote" in r for r in refs): raise ValueError("Markdown explicit claims must use strings")
+        if claim["classification"] == "explicit" and not isinstance(claim["value"], str) and (any("quote" in r for r in refs) or not all(_ref_supports(claim["value"], ref, sources) for ref in refs)): raise ValueError("explicit non-string claims require exactly matching structured authority")
         if claim["classification"] == "explicit" and isinstance(claim["value"], str) and not all(_ref_supports(claim["value"], ref, sources) for ref in refs): raise ValueError("explicit claim lacks exact support")
         claim_ids.add(claim["local_id"])
     for item in proposal["requirements"]:
@@ -228,8 +239,15 @@ def _normalize_proposal(proposal: dict, packet: dict) -> dict:
     value = json.loads(canonical_json(proposal)); sources = {x["source_id"]: x for x in packet["sources"]}
     for claim in value["claims"]:
         claim.pop("requirement_local_ids", None)
-        if claim["classification"] == "explicit" and not isinstance(claim["value"], str): claim["classification"] = "inferred_requires_owner"
         claim["source_refs"] = _refs(claim["source_refs"], sources)
+    equivalents: dict[tuple[str, str, str], object] = {}
+    for claim in value["claims"]:
+        if claim["classification"] == "explicit":
+            marker = (claim["claim_key"], claim["cardinality"], _token(claim["value"]))
+            equivalents.setdefault(marker, claim["value"])
+            if canonical_json(claim["value"]) < canonical_json(equivalents[marker]): equivalents[marker] = claim["value"]
+    for claim in value["claims"]:
+        if claim["classification"] == "explicit": claim["value"] = equivalents[(claim["claim_key"], claim["cardinality"], _token(claim["value"]))]
     for ambiguity in value["ambiguities"]:
         ambiguity.pop("affected_requirement_local_ids"); ambiguity.pop("affected_criterion_local_ids"); ambiguity["source_refs"] = _refs(ambiguity["source_refs"], sources)
     for requirement in value["requirements"]:
@@ -239,7 +257,12 @@ def _normalize_proposal(proposal: dict, packet: dict) -> dict:
         explicit = criterion["classification"] == "explicit" and all(not field_value or field_name in criterion["field_source_refs"] and _field_supported(field_value, criterion["field_source_refs"][field_name], sources) for field_name, field_value in populated.items())
         criterion["classification"] = "explicit" if explicit else "inferred_requires_owner"; criterion["confirmation_state"] = "proposal_needed" if explicit else "owner_confirmation_required"; criterion["blocker_eligible"] = False; criterion["candidate_blocker_after_confirmation"] = bool(explicit and criterion["expected_outcomes"] and not criterion["ambiguity_local_ids"])
         criterion["ambiguity_local_ids"] = sorted(set(criterion["ambiguity_local_ids"])); criterion["source_refs"] = _refs(criterion["source_refs"], sources)
-        criterion["field_source_refs"] = {k: (_sort([_refs(v, sources) for v in criterion["field_source_refs"][k]]) if isinstance(criterion[k], list) else _refs(criterion["field_source_refs"][k], sources)) for k in sorted(criterion["field_source_refs"])}
+        normalized_fields = {}
+        for field in sorted(criterion["field_source_refs"]):
+            if field in {"preconditions", "expected_outcomes"}:
+                criterion[field], normalized_fields[field] = _canonical_field_pairs(criterion[field], criterion["field_source_refs"][field], sources)
+            else: normalized_fields[field] = _refs(criterion["field_source_refs"][field], sources)
+        criterion["field_source_refs"] = normalized_fields
     for key in ("claims", "requirements", "criteria", "ambiguities"): value[key].sort(key=lambda x: canonical_json(x))
     return value
 
@@ -322,7 +345,8 @@ def _finalize_artifacts(ctx: LocalExecutionContext, packet: dict, proposal: dict
         if CLAIM_REGISTRY[key] == "single" and values: working[field] = _sort(values)[0]
         elif CLAIM_REGISTRY[key] == "multi": working[field] = _sort(values)
     product = ctx.release["product"]
-    intent = {"schema_version": INTENT_SCHEMA, **common, "project_name": ctx.activation["contract"]["project_name"], "product_purpose": ctx.activation["contract"]["product_purpose"], "target_users": [product.get("target_user")] if product.get("target_user") else [], "release_promise": product.get("promise"), "release_scope": product.get("critical_journey", []), "non_goals": product.get("non_goals", []), "owner_constraints": product.get("owner_constraints", []), "claims": sorted(ledger, key=lambda x: x["claim_id"]), "working_intent": working, "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
+    public_ledger = [{k: v for k, v in claim.items() if k != "linked_requirement_local_ids"} for claim in ledger]
+    intent = {"schema_version": INTENT_SCHEMA, **common, "project_name": ctx.activation["contract"]["project_name"], "product_purpose": ctx.activation["contract"]["product_purpose"], "target_users": [product.get("target_user")] if product.get("target_user") else [], "release_promise": product.get("promise"), "release_scope": product.get("critical_journey", []), "non_goals": product.get("non_goals", []), "owner_constraints": ctx.release.get("owner_constraints", []), "claims": sorted(public_ledger, key=lambda x: x["claim_id"]), "working_intent": working, "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
     return {"product-intent.json": intent, "requirements.json": {"schema_version": REQUIREMENTS_SCHEMA, **common, "requirements": sorted(requirements, key=lambda x: x["requirement_id"])}, "acceptance-criteria.json": {"schema_version": CRITERIA_SCHEMA, **common, "criteria": sorted(criteria, key=lambda x: x["criterion_id"])}, "ambiguities.json": {"schema_version": AMBIGUITIES_SCHEMA, **common, "ambiguities": sorted(ambiguities, key=lambda x: x["ambiguity_id"])}}
 
 
@@ -333,8 +357,12 @@ def _validate_artifacts(artifacts: dict, packet: dict) -> None:
     if [intent["schema_version"], req["schema_version"], crit["schema_version"], amb["schema_version"]] != [INTENT_SCHEMA, REQUIREMENTS_SCHEMA, CRITERIA_SCHEMA, AMBIGUITIES_SCHEMA]: raise ValueError("artifact schema mismatch")
     for value in artifacts.values():
         if any(value.get(k) != ({"release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "source_packet_hash": packet["packet_hash"]})[k] for k in common): raise ValueError("artifact binding mismatch")
+    def no_local_keys(value: object) -> bool:
+        if isinstance(value, dict): return all(not (key == "local_id" or key.endswith("_local_id") or key.endswith("_local_ids")) and no_local_keys(item) for key, item in value.items())
+        return not isinstance(value, list) or all(no_local_keys(item) for item in value)
+    if not no_local_keys(artifacts): raise ValueError("final artifacts retain proposal-local identifiers")
     sources = {x["source_id"]: x for x in packet["sources"]}; claim_ids = set(); req_ids = set(); criterion_ids = set(); ambiguity_ids = set()
-    claim_fields = {"claim_id", "claim_key", "cardinality", "value", "source_refs", "authority_tier", "classification", "resolution_status", "working_value", "linked_requirement_local_ids"}
+    claim_fields = {"claim_id", "claim_key", "cardinality", "value", "source_refs", "authority_tier", "classification", "resolution_status", "working_value"}
     for x in intent["claims"]:
         if set(x) != claim_fields or x["claim_id"] in claim_ids or x["cardinality"] not in {"single", "multi"} or x["authority_tier"] not in TIERS or x["classification"] not in CLASSIFICATIONS or x["resolution_status"] not in {"resolved", "conflicted", "superseded", "inferred_requires_owner"} or not _primitive(x["value"]): raise ValueError("invalid claim artifact")
         _refs(x["source_refs"], sources); claim_ids.add(x["claim_id"])
@@ -347,6 +375,9 @@ def _validate_artifacts(artifacts: dict, packet: dict) -> None:
     criterion_fields = {"criterion_id", "requirement_id", "actor", "preconditions", "action", "expected_outcomes", "failure_behavior", "required_evidence_categories", "source_refs", "field_source_refs", "classification", "confirmation_state", "blocker_eligible", "candidate_blocker_after_confirmation", "ambiguity_dependencies"}
     for x in crit["criteria"]:
         if set(x) != criterion_fields or x["criterion_id"] in criterion_ids or x["classification"] not in CLASSIFICATIONS or x["confirmation_state"] not in CONFIRMATIONS or x["blocker_eligible"] is not False or not isinstance(x["candidate_blocker_after_confirmation"], bool) or len(x["ambiguity_dependencies"]) != len(set(x["ambiguity_dependencies"])): raise ValueError("invalid criterion artifact")
+        for field in ("preconditions", "expected_outcomes"):
+            refs = x["field_source_refs"].get(field)
+            if x[field] and not _field_supported(x[field], refs, sources): raise ValueError("criterion list evidence alignment is invalid")
         criterion_ids.add(x["criterion_id"])
     for x in amb["ambiguities"]:
         fields = {"ambiguity_id", "title", "source_refs", "why_material", "options", "recommendation", "blocked_conclusions", "affected_requirement_ids", "affected_criterion_ids"}
@@ -379,6 +410,7 @@ def _persist(ctx: LocalExecutionContext, packet: dict, packet_bytes: bytes, subm
     if submitted_bytes: (directory / "submitted-proposal.json").write_bytes(submitted_bytes); _atomic_file(directory / "normalized-proposal.json", normalized)
     normalized_bytes = (directory / "normalized-proposal.json").read_bytes() if normalized else None
     manifest = {"schema_version": MANIFEST_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "source_packet_hash": packet["packet_hash"], "source_packet_snapshot_hash": _hash_bytes(packet_bytes), "submitted_proposal_hash": content_hash(submitted) if submitted else "explicit-only", "submitted_proposal_snapshot_hash": _hash_bytes(submitted_bytes) if submitted_bytes else "explicit-only", "normalized_proposal_hash": content_hash(normalized) if normalized else "explicit-only", "normalized_proposal_snapshot_hash": _hash_bytes(normalized_bytes) if normalized_bytes else "explicit-only", "compiler_version": COMPILER_VERSION, "artifact_filenames": list(ARTIFACTS), "artifact_hashes": hashes}
+    manifest["semantic_bundle_hash"] = content_hash({"source_packet_hash": manifest["source_packet_hash"], "normalized_proposal_hash": manifest["normalized_proposal_hash"], "compiler_version": COMPILER_VERSION, "schemas": [SOURCE_PACKET_SCHEMA, PROPOSAL_SCHEMA, INTENT_SCHEMA, REQUIREMENTS_SCHEMA, CRITERIA_SCHEMA, AMBIGUITIES_SCHEMA], "artifact_hashes": {name: hashes[name] for name in sorted(hashes)}})
     manifest["bundle_hash"] = content_hash(manifest); _atomic_file(directory / "manifest.json", manifest); _atomic_file(root / "current-generation.json", {"schema_version": POINTER_SCHEMA, "generation": directory.name, "manifest_hash": _hash_bytes((directory / "manifest.json").read_bytes())}); return manifest
 
 
@@ -389,10 +421,12 @@ def load_bundle(ctx: LocalExecutionContext) -> tuple[dict, dict]:
     if set(pointer) != {"schema_version", "generation", "manifest_hash"} or pointer["schema_version"] != POINTER_SCHEMA or not re.fullmatch(r"gen_[0-9a-f]{32}", pointer["generation"]): raise ValueError("invalid Product Intent generation pointer")
     directory = _root(ctx) / "generations" / pointer["generation"]; manifest_path = directory / "manifest.json"
     if not manifest_path.is_file() or _hash_bytes(manifest_path.read_bytes()) != pointer["manifest_hash"]: raise ValueError("invalid Product Intent generation")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")); fields = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "source_packet_snapshot_hash", "submitted_proposal_hash", "submitted_proposal_snapshot_hash", "normalized_proposal_hash", "normalized_proposal_snapshot_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "bundle_hash"}
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")); fields = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "source_packet_snapshot_hash", "submitted_proposal_hash", "submitted_proposal_snapshot_hash", "normalized_proposal_hash", "normalized_proposal_snapshot_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "semantic_bundle_hash", "bundle_hash"}
     if set(manifest) != fields or manifest["schema_version"] != MANIFEST_SCHEMA or manifest["bundle_hash"] != content_hash({k: v for k, v in manifest.items() if k != "bundle_hash"}) or manifest["source_packet_hash"] != packet["packet_hash"] or manifest["artifact_filenames"] != list(ARTIFACTS) or manifest["release_id"] != ctx.release["release_id"] or manifest["release_commit"] != ctx.authority_binding["repository_commit"] or manifest["project_authority"] != _authority(ctx) or manifest["compiler_version"] != COMPILER_VERSION: raise ValueError("stale or invalid Product Intent bundle")
     snapshot = directory / "source-packet.json"
     if not snapshot.is_file() or _hash_bytes(snapshot.read_bytes()) != manifest["source_packet_snapshot_hash"] or snapshot.read_bytes() != active_bytes: raise ValueError("bundle source packet snapshot is stale")
+    expected_semantic = content_hash({"source_packet_hash": manifest["source_packet_hash"], "normalized_proposal_hash": manifest["normalized_proposal_hash"], "compiler_version": COMPILER_VERSION, "schemas": [SOURCE_PACKET_SCHEMA, PROPOSAL_SCHEMA, INTENT_SCHEMA, REQUIREMENTS_SCHEMA, CRITERIA_SCHEMA, AMBIGUITIES_SCHEMA], "artifact_hashes": {name: manifest["artifact_hashes"][name] for name in sorted(manifest["artifact_hashes"])}})
+    if manifest["semantic_bundle_hash"] != expected_semantic: raise ValueError("semantic Product Intent bundle is invalid")
     if manifest["submitted_proposal_hash"] != "explicit-only":
         submitted_path, normalized_path = directory / "submitted-proposal.json", directory / "normalized-proposal.json"
         if not submitted_path.is_file() or not normalized_path.is_file() or _hash_bytes(submitted_path.read_bytes()) != manifest["submitted_proposal_snapshot_hash"]: raise ValueError("proposal snapshot is invalid")
@@ -410,5 +444,5 @@ def show(ctx: LocalExecutionContext) -> str:
     _, artifacts = load_bundle(ctx); intent = artifacts["product-intent.json"]; requirements = artifacts["requirements.json"]["requirements"]; criteria = artifacts["acceptance-criteria.json"]["criteria"]; ambiguities = artifacts["ambiguities.json"]["ambiguities"]
     lines = [f"Product Intent: {intent['project_name']}", f"Working promise: {intent['working_intent'].get('release_promise', 'not supplied')}", "Claims:"]
     lines += [f"- {x['claim_key']}={x['working_value']!r} [{x['resolution_status']}; {x['authority_tier']}]" for x in intent["claims"]] or ["- none"]
-    lines += ["Requirements:"] + [f"- {x['requirement_id']} [{x['classification']}/{x['status']}] {x['statement']}" for x in requirements] + ["Criteria:"] + [f"- {x['criterion_id']} [{x['classification']}] blocker_eligible={x['blocker_eligible']}" for x in criteria] + ["Material ambiguities:"] + [f"- {x['title']}" for x in ambiguities] + ["Source coverage:"] + [f"- {x['path']} [{x['source_class']}] {x['status']}" for x in intent["source_coverage"]] + [f"Coverage boundary: {intent['coverage_boundary']}"]
+    lines += ["Owner constraints:"] + [f"- {x}" for x in intent["owner_constraints"]] + ["Requirements:"] + [f"- {x['requirement_id']} [{x['classification']}/{x['status']}] {x['statement']}" for x in requirements] + ["Criteria:"] + [f"- {x['criterion_id']} [{x['classification']}] blocker_eligible={x['blocker_eligible']}" for x in criteria] + ["Material ambiguities:"] + [f"- {x['title']}" for x in ambiguities] + ["Source coverage:"] + [f"- {x['path']} [{x['source_class']}] {x['status']}" for x in intent["source_coverage"]] + [f"Coverage boundary: {intent['coverage_boundary']}"]
     return "\n".join(lines)
