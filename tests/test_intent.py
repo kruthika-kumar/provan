@@ -8,7 +8,7 @@ import pytest
 
 from shiproom.authority import LocalExecutionContext, bind_release_authority
 from shiproom.cli import main
-from shiproom.intent import compile_bundle, load_bundle, prepare, show
+from shiproom.intent import _token, compile_bundle, load_bundle, prepare, show
 from shiproom.models import Release
 from shiproom.onboarding import initialize
 
@@ -73,7 +73,7 @@ def test_quote_support_separates_explicit_requirement_from_inferred_criterion(tm
 
 def test_claim_resolution_conflict_and_unrelated_requirement(tmp_path: Path):
     ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md", "docs/other.md"], []); data = proposal(packet)
-    other = ref(packet, "docs/other.md"); data["claims"].append({"local_id": "claim_other", "claim_key": "release.publication_mode", "cardinality": "single", "value": "disabled", "classification": "explicit", "source_refs": [other], "requirement_local_ids": ["publish"]})
+    other = ref(packet, "docs/other.md"); data["claims"].append({"local_id": "claim_other", "claim_key": "release.publication_mode", "cardinality": "single", "value": "disabled", "classification": "explicit", "source_refs": [other], "requirement_local_ids": ["publish"]}); data["requirements"][0]["claim_local_ids"].append("claim_other")
     data["requirements"].append({"local_id": "unrelated", "statement": "Users can publish cards.", "classification": "explicit", "status": "active", "source_refs": [ref(packet)], "claim_local_ids": [], "related_journey_ids": [], "materiality": "release_scope", "rationale": "brief", "owner_confirmation_required": False, "ambiguity_local_ids": []})
     file = inbox(ctx, "conflict.json"); file.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(file)); _, artifacts = load_bundle(ctx)
     claims = artifacts["product-intent.json"]["claims"]; assert any(x["resolution_status"] == "conflicted" and x["working_value"] is None for x in claims)
@@ -116,3 +116,39 @@ def test_structured_only_and_ambiguity_maps_to_final_criterion(tmp_path: Path):
     file = inbox(ctx, "ambiguity.json"); file.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(file)); _, artifacts = load_bundle(ctx)
     ambiguity = artifacts["ambiguities.json"]["ambiguities"][0]; criterion = artifacts["acceptance-criteria.json"]["criteria"][0]
     assert ambiguity["affected_requirement_ids"] and criterion["criterion_id"] in ambiguity["affected_criterion_ids"] and not criterion["blocker_eligible"]
+
+
+def test_canonical_equivalent_claims_and_final_ids(tmp_path: Path):
+    ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md"], []); data = proposal(packet)
+    assert _token("Approval-Required") == _token(" approval_required ") and _token(1) != _token("1")
+    data["claims"].append({**data["claims"][0], "local_id": "claim_equivalent", "requirement_local_ids": ["publish"]})
+    data["requirements"][0]["claim_local_ids"].append("claim_equivalent")
+    first = inbox(ctx, "canonical-one.json"); second = inbox(ctx, "canonical-two.json")
+    first.write_text(json.dumps(data), encoding="utf-8"); reordered = {**data, "claims": list(reversed(data["claims"]))}; second.write_text(json.dumps(reordered), encoding="utf-8")
+    compile_bundle(ctx, str(first)); _, one = load_bundle(ctx); compile_bundle(ctx, str(second)); _, two = load_bundle(ctx)
+    assert one == two
+    claim = [x for x in two["product-intent.json"]["claims"] if x["claim_key"] == "release.publication_mode"]
+    assert len(claim) == 1 and claim[0]["resolution_status"] == "resolved"
+    assert all("local_id" not in x for x in two["requirements.json"]["requirements"])
+
+
+def test_duplicate_paths_structured_refs_and_relationship_mismatch(tmp_path: Path):
+    ctx = context_for(tmp_path)
+    with pytest.raises(ValueError, match="duplicate requested"): prepare(ctx, ["docs/brief.md"], ["docs/./brief.md"])
+    packet = prepare(ctx, ["docs/brief.md"], []); data = proposal(packet); data["claims"][0]["requirement_local_ids"] = []
+    file = inbox(ctx, "mismatch.json"); file.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ValueError, match="reverse relationship mismatch"): compile_bundle(ctx, str(file))
+    prepare(ctx, [], []); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    assert set(artifacts["requirements.json"]["requirements"][0]["source_refs"][0]) == {"source_id", "field_path", "value_hash"}
+
+
+def test_unlinked_conflict_and_rederived_normalized_snapshot(tmp_path: Path):
+    ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md", "docs/other.md"], []); data = proposal(packet)
+    data["claims"][0]["requirement_local_ids"] = []; data["requirements"][0]["claim_local_ids"] = []
+    data["claims"].append({"local_id": "other", "claim_key": "release.publication_mode", "cardinality": "single", "value": "disabled", "classification": "explicit", "source_refs": [ref(packet, "docs/other.md")], "requirement_local_ids": []})
+    file = inbox(ctx, "unlinked.json"); file.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(file)); _, artifacts = load_bundle(ctx)
+    conflict = next(x for x in artifacts["ambiguities.json"]["ambiguities"] if x.get("claim_key") == "release.publication_mode")
+    assert conflict["affected_requirement_ids"] == [] and conflict["affected_criterion_ids"] == []
+    root = ctx.repository_root / ".shiproom/local/releases/rel_intent/product-intent"; pointer = json.loads((root / "current-generation.json").read_text()); normalized = root / "generations" / pointer["generation"] / "normalized-proposal.json"
+    tampered = json.loads(normalized.read_text()); tampered["claims"][0]["classification"] = "inferred_requires_owner"; normalized.write_text(json.dumps(tampered), encoding="utf-8")
+    with pytest.raises(ValueError, match="normalized proposal"): load_bundle(ctx)
