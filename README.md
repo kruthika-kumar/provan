@@ -84,4 +84,17 @@ Verify has no executable commands until normalized command grants have been expl
 
 Controlled reset is a validated single-use operation. It removes only the exact clean, commit-matched remediation worktree and branch, the selected release-state file, and exact release-recorded artifacts under ignored runtime roots.
 
+## Product Intent (private alpha)
+
+Product Intent is a private, source-backed preparation step for later review. It never changes the customer repository, runs project commands, probes a deployment, creates findings or verdicts, or invokes historical controlled-demo remediation.
+
+```powershell
+shiproom intent prepare --release release-state/release.json --source docs/release-brief.md --supporting-source README.md
+# Copy a specialist-produced intent-proposal.v1 into .shiproom/local/releases/<release_id>/product-intent/inbox/
+shiproom intent compile --release release-state/release.json --proposal .shiproom/local/releases/<release_id>/product-intent/inbox/proposal.json
+shiproom intent show --release release-state/release.json
+```
+
+Packets include complete normalized text only for selected Markdown files below the conservative cap; excluded and oversized inputs fail closed. Source reads are commit-pinned and retain Git blob and normalized-content hashes. Packets, proposals, compiled artifacts, and their atomic manifest stay under ignored local release state. Current release input outranks supporting project context, but conflicts remain visible as batched material ambiguities. Explicit records are directly source-backed; inferred records require owner confirmation and cannot be blocker-eligible.
+
 See `docs/event-readiness.md` for the frozen runtime record, completed proofs, and live-service blockers. Deploy the patient/report after Cloudflare authentication with `npx wrangler deploy --config cloudflare/wrangler.toml`.

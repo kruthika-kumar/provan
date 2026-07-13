@@ -24,6 +24,7 @@ from .verdict import calculate
 from .onboarding import discover as discover_project, human_report, human_project_view, initialize as initialize_project, paths as project_paths, project_authority_view
 from .project import activate as activate_project, activation_status, validate_contract as validate_project_contract
 from .authority import LocalExecutionContext, bind_release_authority
+from .intent import compile_bundle as compile_intent, prepare as prepare_intent, show as show_intent
 
 
 def load(path: Path) -> dict:
@@ -50,9 +51,20 @@ def main(argv: list[str] | None = None) -> int:
     hermes = sub.add_parser("hermes"); hermes.add_argument("action", choices=["packet", "selection", "receipt", "verify-join"]); hermes.add_argument("--release", required=True); hermes.add_argument("--input"); hermes.add_argument("--receipt"); hermes.add_argument("--output")
     external = sub.add_parser("external"); external.add_argument("action", choices=["init", "packet", "repository", "selection", "result", "check-http", "finish"]); external.add_argument("--contract"); external.add_argument("--release"); external.add_argument("--input"); external.add_argument("--output"); external.add_argument("--module"); external.add_argument("--delegation-id"); external.add_argument("--criterion-id"); external.add_argument("--branch"); external.add_argument("--commit-sha"); external.add_argument("--clean", action="store_true"); external.add_argument("--run-root", default="run-history")
     runs = sub.add_parser("runs"); runs.add_argument("action", choices=["list", "show", "render"]); runs.add_argument("--release"); runs.add_argument("--release-state"); runs.add_argument("--output"); runs.add_argument("--audience", choices=["all", "ceo", "product", "engineering"], default="all"); runs.add_argument("--run-root", default="run-history")
+    intent = sub.add_parser("intent"); intent.add_argument("action", choices=["prepare", "compile", "show"]); intent.add_argument("--release", required=True); intent.add_argument("--source", action="append", default=[]); intent.add_argument("--supporting-source", action="append", default=[]); intent.add_argument("--proposal")
     args = parser.parse_args(argv)
     registry = discover()
-    if args.command == "init":
+    if args.command == "intent":
+        data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
+        if args.action == "prepare":
+            result = prepare_intent(context, args.source, args.supporting_source); print(json.dumps({"release_id": result["release_id"], "packet_hash": result["packet_hash"], "source_coverage": result["source_coverage"]}, indent=2))
+        elif args.action == "compile":
+            if args.source or args.supporting_source: raise SystemExit("intent compile does not accept source selection; run intent prepare first")
+            result = compile_intent(context, args.proposal); print(json.dumps(result, indent=2))
+        else:
+            if args.source or args.supporting_source or args.proposal: raise SystemExit("intent show accepts only --release")
+            print(show_intent(context))
+    elif args.command == "init":
         repo = repository_root(Path(args.repo)); shared, _ = project_paths(repo, args.local_only)
         existing = shared.is_file()
         if not existing:

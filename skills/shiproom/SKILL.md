@@ -14,6 +14,10 @@ Use this skill when the user asks whether a product release is ready, requests r
 
 Collect repository/path, live URL, target user, promise, critical journey, non-goals, and owner constraints. The Python package is authoritative for schemas, evidence validation, transitions, verdicts, remediation policy, and reports.
 
+## Private Product Intent protocol
+
+For private Product Intent, consume only a packet created by `shiproom intent prepare`. Do not inspect additional repository files or make implementation, engineering, test, instrumentation, remediation, finding, or verdict claims. Return only `intent-proposal.v1` JSON using exact packet source IDs, locators, and excerpt hashes; label unsupported interpretation `inferred_requires_owner`; declare only single-valued claim keys; preserve material conflicts and batched ambiguities. The specialist cannot write canonical release state. The owner copies its proposal into the release-local inbox, where Python validates and persists it.
+
 ## Delegation
 
 When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.
