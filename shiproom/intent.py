@@ -112,8 +112,10 @@ def _proposal_path(ctx: LocalExecutionContext, value: str) -> Path:
 def _quote(ref: dict, sources: dict) -> None:
     fields = {"source_id", "start_line", "end_line", "quote", "quote_hash"}
     if set(ref) != fields or ref["source_id"] not in sources or not isinstance(ref["start_line"], int) or not isinstance(ref["end_line"], int) or not isinstance(ref["quote"], str) or ref["start_line"] < 1 or ref["end_line"] < ref["start_line"]: raise ValueError("invalid quote reference")
-    lines = sources[ref["source_id"]]["text"].split("\n"); actual = "\n".join(lines[ref["start_line"] - 1:ref["end_line"]])
-    if actual != ref["quote"] or ref["quote_hash"] != _source_hash(actual): raise ValueError("quote range or hash is invalid")
+    lines = sources[ref["source_id"]]["text"].split("\n")
+    if ref["end_line"] > len(lines): raise ValueError("quote range is invalid")
+    actual = "\n".join(lines[ref["start_line"] - 1:ref["end_line"]])
+    if actual.count(ref["quote"]) != 1 or ref["quote_hash"] != _source_hash(ref["quote"]): raise ValueError("quote range or hash is invalid")
 
 
 def _refs(refs: object, sources: dict) -> list[dict]:
@@ -126,6 +128,12 @@ def _supported(value: object, refs: list[dict]) -> bool:
     return isinstance(value, str) and any(_mechanical(value) == _mechanical(ref["quote"]) for ref in refs)
 
 
+def _field_supported(value: object, refs: object, sources: dict) -> bool:
+    if isinstance(value, list):
+        return isinstance(refs, list) and len(value) == len(refs) and all(_supported(item, _refs(item_refs, sources)) for item, item_refs in zip(value, refs))
+    return _supported(value, _refs(refs, sources))
+
+
 def _validate_proposal(proposal: dict, packet: dict) -> None:
     fields = {"schema_version", "release_id", "release_commit", "source_packet_hash", "claims", "requirements", "criteria", "ambiguities"}
     if set(proposal) != fields or proposal.get("schema_version") != PROPOSAL_SCHEMA or proposal["release_id"] != packet["release_id"] or proposal["release_commit"] != packet["release_commit"] or proposal["source_packet_hash"] != packet["packet_hash"]: raise ValueError("invalid or unbound proposal")
@@ -133,7 +141,7 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
     for claim in proposal["claims"]:
         if set(claim) != {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"} or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not isinstance(claim["local_id"], str) or claim["local_id"] in claim_ids or (claim["claim_key"] in CLAIM_REGISTRY and claim["cardinality"] != CLAIM_REGISTRY[claim["claim_key"]]): raise ValueError("invalid claim")
         refs = _refs(claim["source_refs"], sources)
-        if claim["classification"] == "explicit" and not _supported(str(claim["value"]), refs): raise ValueError("explicit claim lacks exact quote support")
+        if claim["classification"] == "explicit" and isinstance(claim["value"], str) and not all(_supported(claim["value"], [ref]) for ref in refs): raise ValueError("explicit claim lacks exact quote support")
         claim_ids.add(claim["local_id"])
     for item in proposal["requirements"]:
         required = {"local_id", "statement", "classification", "status", "source_refs", "claim_local_ids", "related_journey_ids", "materiality", "rationale", "owner_confirmation_required", "ambiguity_local_ids"}
@@ -152,15 +160,26 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
         required = {"local_id", "parent_requirement_local_id", "actor", "preconditions", "action", "expected_outcomes", "failure_behavior", "required_evidence_categories", "source_refs", "field_source_refs", "classification", "confirmation_state", "blocker_eligible", "ambiguity_local_ids"}
         if set(item) != required or not isinstance(item["local_id"], str) or item["local_id"] in criterion_ids or item["parent_requirement_local_id"] not in requirement_ids or item["classification"] not in CLASSIFICATIONS or item["confirmation_state"] not in CONFIRMATIONS or not isinstance(item["blocker_eligible"], bool) or not isinstance(item["required_evidence_categories"], list) or not item["required_evidence_categories"] or not set(item["required_evidence_categories"]).issubset(EVIDENCE) or not set(item["ambiguity_local_ids"]).issubset(ambiguity_ids): raise ValueError("invalid criterion")
         _refs(item["source_refs"], sources)
+        if not set(item["field_source_refs"]).issubset({"actor", "preconditions", "action", "expected_outcomes", "failure_behavior"}): raise ValueError("unknown criterion field support")
         for field, refs in item["field_source_refs"].items():
-            if field not in {"actor", "action", "failure_behavior"} or not _supported(item[field], _refs(refs, sources)): raise ValueError("criterion field lacks exact quote support")
-        for field in ("actor", "action", "failure_behavior"):
-            if item[field] is not None and field not in item["field_source_refs"]: item["classification"] = "inferred_requires_owner"
-        if item["preconditions"] or item["expected_outcomes"]: item["classification"] = "inferred_requires_owner"
-        item["confirmation_state"] = "owner_confirmation_required" if item["classification"] == "inferred_requires_owner" else "proposal_needed"; item["blocker_eligible"] = False
+            if not _field_supported(item[field], refs, sources): raise ValueError("criterion field lacks exact quote support")
         criterion_ids.add(item["local_id"])
     if any(not set(x["affected_criterion_local_ids"]).issubset(criterion_ids) for x in proposal["ambiguities"]): raise ValueError("ambiguity references unknown criterion")
     if any(x["status"] == "blocked_by_ambiguity" and not x["ambiguity_local_ids"] for x in proposal["requirements"]): raise ValueError("blocked requirement lacks ambiguity")
+
+
+def _normalize_proposal(proposal: dict, packet: dict) -> dict:
+    value = json.loads(canonical_json(proposal)); sources = {x["source_id"]: x for x in packet["sources"]}
+    for claim in value["claims"]:
+        if claim["classification"] == "explicit" and not isinstance(claim["value"], str): claim["classification"] = "inferred_requires_owner"
+    for criterion in value["criteria"]:
+        populated = {"actor": criterion["actor"], "preconditions": criterion["preconditions"], "action": criterion["action"], "expected_outcomes": criterion["expected_outcomes"], "failure_behavior": criterion["failure_behavior"]}
+        explicit = criterion["classification"] == "explicit" and all(not field_value or field_name in criterion["field_source_refs"] and _field_supported(field_value, criterion["field_source_refs"][field_name], sources) for field_name, field_value in populated.items())
+        criterion["classification"] = "explicit" if explicit else "inferred_requires_owner"
+        criterion["confirmation_state"] = "proposal_needed" if explicit else "owner_confirmation_required"
+        criterion["candidate_blocker_after_confirmation"] = bool(explicit and criterion["expected_outcomes"] and not criterion["ambiguity_local_ids"])
+        criterion["blocker_eligible"] = False
+    return value
 
 
 def _seed_claims(ctx: LocalExecutionContext, packet: dict) -> list[dict]:
@@ -211,10 +230,11 @@ def compile_bundle(ctx: LocalExecutionContext, proposal_file: str | None = None)
     ctx.require("file.read"); packet, packet_bytes = _load_packet(ctx); proposal = None; proposal_bytes = None
     if proposal_file:
         proposal_bytes = _proposal_path(ctx, proposal_file).read_bytes(); proposal = json.loads(proposal_bytes.decode("utf-8")); _validate_proposal(proposal, packet)
+    normalized_proposal = _normalize_proposal(proposal, packet) if proposal else None
     common = {"release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "source_packet_hash": packet["packet_hash"]}
-    ledger, claim_status = _claims(ctx, proposal, packet)
+    ledger, claim_status = _claims(ctx, normalized_proposal, packet)
     if proposal:
-        normalized_proposal = json.loads(canonical_json(proposal)); local_req = {x["local_id"]: _id("req", {"packet": packet["packet_hash"], "item": x}) for x in proposal["requirements"]}; local_criterion = {x["local_id"]: _id("criterion", {"packet": packet["packet_hash"], "item": x}) for x in proposal["criteria"]}; local_amb = {x["local_id"]: _id("ambiguity", {"packet": packet["packet_hash"], "item": x}) for x in proposal["ambiguities"]}
+        proposal = normalized_proposal; local_req = {x["local_id"]: _id("req", {"packet": packet["packet_hash"], "item": x}) for x in proposal["requirements"]}; local_criterion = {x["local_id"]: _id("criterion", {"packet": packet["packet_hash"], "item": x}) for x in proposal["criteria"]}; local_amb = {x["local_id"]: _id("ambiguity", {"packet": packet["packet_hash"], "item": x}) for x in proposal["ambiguities"]}
         requirements = []
         for x in proposal["requirements"]:
             state = "superseded" if x["claim_local_ids"] and all(claim_status[c] == "superseded" for c in x["claim_local_ids"]) else ("blocked_by_ambiguity" if any(claim_status[c] == "conflicted" for c in x["claim_local_ids"]) else x["status"])
@@ -224,21 +244,23 @@ def compile_bundle(ctx: LocalExecutionContext, proposal_file: str | None = None)
             parent = next(r for r in requirements if r["requirement_id"] == local_req[x["parent_requirement_local_id"]]); deps = [local_amb[a] for a in x["ambiguity_local_ids"]]
             criteria.append({"criterion_id": local_criterion[x["local_id"]], "requirement_id": parent["requirement_id"], **{k: v for k, v in x.items() if k not in {"local_id", "parent_requirement_local_id"}}, "ambiguity_dependencies": deps, "blocker_eligible": False, "candidate_blocker_after_confirmation": bool(x["classification"] == "explicit" and x["expected_outcomes"] and not deps)})
         ambiguities = [{"ambiguity_id": local_amb[x["local_id"]], **{k: v for k, v in x.items() if k != "local_id"}, "affected_requirement_ids": [local_req[v] for v in x["affected_requirement_local_ids"]], "affected_criterion_ids": [local_criterion[v] for v in x["affected_criterion_local_ids"]]} for x in proposal["ambiguities"]]
-        for claim in [x for x in ledger if x["resolution_status"] == "conflicted"]:
-            linked = [r for r in requirements if claim["local_id"] in r["claim_local_ids"]]
+        for key in sorted({x["claim_key"] for x in ledger if x["resolution_status"] == "conflicted"}):
+            top_claims = [x for x in ledger if x["claim_key"] == key and x["resolution_status"] == "conflicted"]
+            linked = [r for r in requirements if any(x["local_id"] in r["claim_local_ids"] for x in top_claims)]
             if linked:
-                aid = _id("ambiguity", {"claim": claim["claim_key"], "values": [x["value"] for x in ledger if x["claim_key"] == claim["claim_key"]]})
+                aid = _id("ambiguity", {"claim": key, "values": [x["value"] for x in top_claims]})
                 for record in linked: record["status"] = "blocked_by_ambiguity"; record["ambiguity_dependencies"].append(aid)
                 affected = [x["criterion_id"] for x in criteria if x["requirement_id"] in {r["requirement_id"] for r in linked}]
                 for record in criteria:
                     if record["criterion_id"] in affected: record["ambiguity_dependencies"].append(aid); record["blocker_eligible"] = False
-                ambiguities.append({"ambiguity_id": aid, "title": f"Conflicting {claim['claim_key']}", "claim_key": claim["claim_key"], "competing_values": [x["value"] for x in ledger if x["claim_key"] == claim["claim_key"]], "source_refs": [x["source_refs"] for x in ledger if x["claim_key"] == claim["claim_key"]], "why_material": "Same-highest-authority values conflict.", "options": [], "recommendation": None, "blocked_conclusions": ["Working value"], "affected_requirement_ids": [r["requirement_id"] for r in linked], "affected_criterion_ids": affected})
+                refs = [ref for item in top_claims for ref in item["source_refs"]]
+                unique_refs = list({canonical_json(ref): ref for ref in refs}.values())
+                ambiguities.append({"ambiguity_id": aid, "title": f"Conflicting {key}", "claim_key": key, "competing_values": [x["value"] for x in top_claims], "source_refs": unique_refs, "why_material": "Same-highest-authority values conflict.", "options": [], "recommendation": None, "blocked_conclusions": ["Working value"], "affected_requirement_ids": [r["requirement_id"] for r in linked], "affected_criterion_ids": affected})
     else:
         owner = packet["sources"][0]; ref = {"source_id": owner["source_id"], "start_line": 1, "end_line": len(owner["text"].split("\n")), "quote": owner["text"], "quote_hash": _source_hash(owner["text"])}; promise = ctx.release["product"].get("promise"); journeys = ctx.release["product"].get("critical_journey", [])
         requirements = ([{"requirement_id": _id("req", {"promise": promise, "packet": packet["packet_hash"]}), "statement": promise, "classification": "explicit", "status": "active", "source_refs": [ref], "claim_local_ids": [], "related_journey_ids": [], "materiality": "release_scope", "rationale": "release owner promise", "owner_confirmation_required": False, "ambiguity_local_ids": [], "ambiguity_dependencies": []}] if promise else [])
         ambiguities = [{"ambiguity_id": _id("ambiguity", {"packet": packet["packet_hash"], "kind": "acceptance"}), "title": "Acceptance details are not supplied", "source_refs": [ref], "why_material": "Journey behavior has no detailed acceptance contract.", "options": [], "recommendation": "Provide a Product Intent proposal.", "blocked_conclusions": ["Blocker eligibility"], "affected_requirement_local_ids": [], "affected_criterion_local_ids": [], "affected_requirement_ids": [], "affected_criterion_ids": []}]
         criteria = [{"criterion_id": _id("criterion", {"journey": x, "packet": packet["packet_hash"]}), "requirement_id": requirements[0]["requirement_id"] if requirements else "", "local_id": None, "actor": None, "preconditions": [], "action": x, "expected_outcomes": [], "failure_behavior": None, "required_evidence_categories": ["owner_confirmation"], "source_refs": [ref], "field_source_refs": {}, "classification": "inferred_requires_owner", "confirmation_state": "owner_confirmation_required", "blocker_eligible": False, "ambiguity_local_ids": ["acceptance"], "ambiguity_dependencies": [ambiguities[0]["ambiguity_id"]]} for x in journeys if requirements]
-        normalized_proposal = None
     product = ctx.release["product"]; working = {}
     for key, field in CLAIM_PROJECTION.items():
         values = [x["working_value"] for x in ledger if x["claim_key"] == key and x["resolution_status"] == "resolved" and x["working_value"] is not None]
