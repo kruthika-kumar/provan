@@ -100,8 +100,19 @@ def test_cli_and_inbox_boundary(tmp_path: Path, capsys):
 
 def test_multi_claim_and_private_alpha_mode_gate(tmp_path: Path):
     ctx = context_for(tmp_path); packet = prepare(ctx, ["docs/brief.md", "docs/other.md"], []); data = proposal(packet)
-    data["claims"][0]["cardinality"] = "multi"; data["claims"].append({"local_id": "claim_other", "claim_key": "release.publication_mode", "cardinality": "multi", "value": "disabled", "classification": "explicit", "source_refs": [ref(packet, "docs/other.md")], "requirement_local_ids": []})
+    data["claims"].append({"local_id": "claim_other", "claim_key": "release.non_goals", "cardinality": "multi", "value": "disabled", "classification": "explicit", "source_refs": [ref(packet, "docs/other.md")], "requirement_local_ids": []})
     file = inbox(ctx, "multi.json"); file.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(file)); _, artifacts = load_bundle(ctx)
-    assert {x["working_value"] for x in artifacts["product-intent.json"]["claims"]} == {"approval_required", "disabled"}
+    assert artifacts["product-intent.json"]["working_intent"]["non_goals"] == ["Sharing", "disabled"]
     skill = (Path(__file__).parents[1] / "skills/shiproom/SKILL.md").read_text(encoding="utf-8")
     assert "`private_alpha` never delegates remediation" in skill and "For `historical_judged_demo` only" in skill
+
+
+def test_structured_only_and_ambiguity_maps_to_final_criterion(tmp_path: Path):
+    ctx = context_for(tmp_path); prepare(ctx, [], []); compile_bundle(ctx); _, explicit = load_bundle(ctx)
+    assert explicit["product-intent.json"]["working_intent"]["release_promise"] == "Publish cards"
+    packet = prepare(ctx, ["docs/brief.md"], []); data = proposal(packet); citation = ref(packet)
+    data["ambiguities"] = [{"local_id": "amb_publish", "title": "Need confirmation", "source_refs": [citation], "why_material": "Acceptance is incomplete", "options": [], "recommendation": None, "blocked_conclusions": ["Blocker"], "affected_requirement_local_ids": ["publish"], "affected_criterion_local_ids": ["criterion_publish"]}]
+    data["requirements"][0]["ambiguity_local_ids"] = ["amb_publish"]; data["criteria"][0]["ambiguity_local_ids"] = ["amb_publish"]
+    file = inbox(ctx, "ambiguity.json"); file.write_text(json.dumps(data), encoding="utf-8"); compile_bundle(ctx, str(file)); _, artifacts = load_bundle(ctx)
+    ambiguity = artifacts["ambiguities.json"]["ambiguities"][0]; criterion = artifacts["acceptance-criteria.json"]["criteria"][0]
+    assert ambiguity["affected_requirement_ids"] and criterion["criterion_id"] in ambiguity["affected_criterion_ids"] and not criterion["blocker_eligible"]

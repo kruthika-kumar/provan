@@ -18,7 +18,15 @@ Collect repository/path, live URL, target user, promise, critical journey, non-g
 
 Mode decision: `private_alpha` never delegates remediation, modifies a reviewed repository, or enters a fix workflow; it ends at review artifacts and, in a later session, team-owned roadmap/closure-contract preparation. `historical_judged_demo` alone retains the controlled-patient remediation protocol below.
 
-For `private_alpha` Product Intent, consume only a packet created by `shiproom intent prepare`. Do not inspect additional repository files or make implementation, engineering, test, instrumentation, remediation, finding, or verdict claims. Return only `intent-proposal.v1` JSON using exact packet source IDs, locators, and excerpt hashes; label unsupported interpretation `inferred_requires_owner`; declare only single-valued claim keys; preserve material conflicts and batched ambiguities. The specialist cannot write canonical release state. The owner copies its proposal into the release-local inbox, where Python validates and persists it.
+For `private_alpha` Product Intent, consume only a packet created by `shiproom intent prepare`. Do not inspect additional repository files or make implementation, engineering, test, instrumentation, remediation, finding, or verdict claims. The specialist cannot write canonical release state. The owner copies its proposal into the release-local inbox, where Python validates and persists it.
+
+Return `intent-proposal.v1` using quote-range references only: `source_id`, `start_line`, `end_line`, `quote`, and `quote_hash`. Claims use `single` or `multi` cardinality. Canonical submitted relationships are `requirement.claim_local_ids`, `requirement.ambiguity_local_ids`, and `criterion.ambiguity_local_ids`; field-level criterion support belongs in `field_source_refs`. Never claim confirmation or blocker eligibility: Python treats every proposal criterion as non-blocking and awaiting later human confirmation.
+
+Minimal shape (replace packet-derived placeholders with exact values):
+
+```json
+{"schema_version":"intent-proposal.v1","release_id":"<release_id>","release_commit":"<release_commit>","source_packet_hash":"<packet_hash>","claims":[{"local_id":"claim_mode","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[{"source_id":"src_...","start_line":8,"end_line":8,"quote":"approval_required","quote_hash":"sha256:..."}],"requirement_local_ids":["req_publish"]}],"requirements":[{"local_id":"req_publish","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[{"source_id":"src_...","start_line":4,"end_line":4,"quote":"Users can publish cards.","quote_hash":"sha256:..."}],"claim_local_ids":["claim_mode"],"related_journey_ids":[],"materiality":"release_scope","rationale":"Exact release brief text","owner_confirmation_required":false,"ambiguity_local_ids":[]}],"criteria":[],"ambiguities":[]}
+```
 
 ## Delegation
 

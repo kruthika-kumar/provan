@@ -18,6 +18,8 @@ TIERS = ("release_owner_input", "current_release_source", "project_contract", "s
 CLASSIFICATIONS = {"explicit", "inferred_requires_owner"}; STATUSES = {"active", "proposed", "blocked_by_ambiguity", "superseded"}
 CONFIRMATIONS = {"confirmed", "proposal_needed", "owner_confirmation_required"}; EVIDENCE = {"browser_or_http", "content_assertion", "command_result", "file_or_artifact", "source_inspection", "instrumentation", "owner_confirmation"}
 ARTIFACTS = ("product-intent.json", "requirements.json", "acceptance-criteria.json", "ambiguities.json")
+CLAIM_REGISTRY = {"release.promise": "single", "release.publication_mode": "single", "release.target_user": "single", "release.critical_journey": "multi", "release.non_goals": "multi", "project.product_purpose": "single", "project.primary_users": "multi"}
+CLAIM_PROJECTION = {"release.promise": "release_promise", "release.publication_mode": "publication_mode", "release.target_user": "target_user", "release.critical_journey": "critical_journey", "release.non_goals": "non_goals", "project.product_purpose": "product_purpose", "project.primary_users": "primary_users"}
 
 
 def _id(prefix: str, value: object) -> str: return prefix + "_" + hashlib.sha256(canonical_json(value).encode()).hexdigest()[:16]
@@ -87,7 +89,6 @@ def _atomic_file(path: Path, value: dict) -> None:
 
 def prepare(ctx: LocalExecutionContext, sources: list[str], supporting_sources: list[str]) -> dict:
     ctx.require("file.read"); requested = [{"path": x, "source_class": "current_release"} for x in sources] + [{"path": x, "source_class": "supporting_source"} for x in supporting_sources]
-    if not requested: raise ValueError("at least one explicitly selected source is required")
     packet = _packet(ctx, requested); validate_packet(packet); root = _root(ctx); (root / "inbox").mkdir(parents=True, exist_ok=True); _atomic_file(root / "source-packet.json", packet); return packet
 
 
@@ -130,7 +131,7 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
     if set(proposal) != fields or proposal.get("schema_version") != PROPOSAL_SCHEMA or proposal["release_id"] != packet["release_id"] or proposal["release_commit"] != packet["release_commit"] or proposal["source_packet_hash"] != packet["packet_hash"]: raise ValueError("invalid or unbound proposal")
     sources = {x["source_id"]: x for x in packet["sources"]}; claim_ids = set(); requirement_ids = set(); ambiguity_ids = set(); criterion_ids = set()
     for claim in proposal["claims"]:
-        if set(claim) != {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"} or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not isinstance(claim["local_id"], str) or claim["local_id"] in claim_ids: raise ValueError("invalid claim")
+        if set(claim) != {"local_id", "claim_key", "cardinality", "value", "classification", "source_refs", "requirement_local_ids"} or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", claim["claim_key"]) or claim["cardinality"] not in {"single", "multi"} or claim["classification"] not in CLASSIFICATIONS or not isinstance(claim["local_id"], str) or claim["local_id"] in claim_ids or (claim["claim_key"] in CLAIM_REGISTRY and claim["cardinality"] != CLAIM_REGISTRY[claim["claim_key"]]): raise ValueError("invalid claim")
         refs = _refs(claim["source_refs"], sources)
         if claim["classification"] == "explicit" and not _supported(str(claim["value"]), refs): raise ValueError("explicit claim lacks exact quote support")
         claim_ids.add(claim["local_id"])
@@ -156,25 +157,36 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
         for field in ("actor", "action", "failure_behavior"):
             if item[field] is not None and field not in item["field_source_refs"]: item["classification"] = "inferred_requires_owner"
         if item["preconditions"] or item["expected_outcomes"]: item["classification"] = "inferred_requires_owner"
-        if item["classification"] == "inferred_requires_owner": item["confirmation_state"] = "owner_confirmation_required"; item["blocker_eligible"] = False
-        if item["blocker_eligible"] and (item["classification"] != "explicit" or item["ambiguity_local_ids"] or item["confirmation_state"] != "confirmed"): raise ValueError("criterion is not eligible to block")
+        item["confirmation_state"] = "owner_confirmation_required" if item["classification"] == "inferred_requires_owner" else "proposal_needed"; item["blocker_eligible"] = False
         criterion_ids.add(item["local_id"])
     if any(not set(x["affected_criterion_local_ids"]).issubset(criterion_ids) for x in proposal["ambiguities"]): raise ValueError("ambiguity references unknown criterion")
     if any(x["status"] == "blocked_by_ambiguity" and not x["ambiguity_local_ids"] for x in proposal["requirements"]): raise ValueError("blocked requirement lacks ambiguity")
 
 
-def _claims(proposal: dict, packet: dict) -> tuple[list[dict], dict[str, str]]:
+def _seed_claims(ctx: LocalExecutionContext, packet: dict) -> list[dict]:
+    product, contract = ctx.release["product"], ctx.activation["contract"]
+    values = {"release.promise": product.get("promise"), "release.target_user": product.get("target_user"), "release.critical_journey": product.get("critical_journey", []), "release.non_goals": product.get("non_goals", []), "project.product_purpose": contract.get("product_purpose"), "project.primary_users": contract.get("primary_users", [])}
+    result = []
+    for key, value in values.items():
+        items = value if CLAIM_REGISTRY[key] == "multi" else [value]
+        source_id = "release_owner_input" if key.startswith("release.") else "project_contract"
+        for index, item in enumerate(items):
+            if item is not None: result.append({"local_id": f"seed_{key}_{index}", "claim_key": key, "cardinality": CLAIM_REGISTRY[key], "value": item, "classification": "explicit", "source_refs": [{"source_id": source_id}], "requirement_local_ids": []})
+    return result
+
+
+def _claims(ctx: LocalExecutionContext, proposal: dict | None, packet: dict) -> tuple[list[dict], dict[str, str]]:
     sources = {x["source_id"]: x for x in packet["sources"]}; groups: dict[str, list[dict]] = {}
-    for claim in proposal["claims"]: groups.setdefault(claim["claim_key"], []).append(claim)
+    for claim in _seed_claims(ctx, packet) + (proposal["claims"] if proposal else []): groups.setdefault(claim["claim_key"], []).append(claim)
     ledger = []; statuses = {}
     for key, claims in groups.items():
         cardinality = claims[0]["cardinality"]
         if any(x["cardinality"] != cardinality for x in claims): raise ValueError("claim key cardinality is inconsistent")
         ranked = [(min(TIERS.index(sources[r["source_id"]]["authority_tier"]) for r in c["source_refs"]), c) for c in claims]
-        top = min(rank for rank, _ in ranked); top_values = {canonical_json(c["value"]) for rank, c in ranked if rank == top}
+        explicit = [(rank, c) for rank, c in ranked if c["classification"] == "explicit"]
+        top = min((rank for rank, _ in explicit), default=99); top_values = {canonical_json(c["value"]) for rank, c in explicit if rank == top}
         for rank, claim in ranked:
-            status = "resolved" if cardinality == "multi" or (rank == top and len(top_values) == 1) else ("conflicted" if rank == top else "superseded")
-            if claim["classification"] == "inferred_requires_owner": status = "inferred_requires_owner"
+            status = "inferred_requires_owner" if claim["classification"] == "inferred_requires_owner" else ("resolved" if cardinality == "multi" or (rank == top and len(top_values) == 1) else ("conflicted" if rank == top else "superseded"))
             statuses[claim["local_id"]] = status
             ledger.append({"claim_id": _id("claim", {"packet": packet["packet_hash"], "claim": claim}), "local_id": claim["local_id"], "claim_key": key, "cardinality": cardinality, "value": claim["value"], "source_refs": claim["source_refs"], "authority_tier": TIERS[rank], "classification": claim["classification"], "resolution_status": status, "working_value": claim["value"] if status == "resolved" else None})
     return ledger, statuses
@@ -200,8 +212,9 @@ def compile_bundle(ctx: LocalExecutionContext, proposal_file: str | None = None)
     if proposal_file:
         proposal_bytes = _proposal_path(ctx, proposal_file).read_bytes(); proposal = json.loads(proposal_bytes.decode("utf-8")); _validate_proposal(proposal, packet)
     common = {"release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "compiler_version": COMPILER_VERSION, "source_packet_hash": packet["packet_hash"]}
+    ledger, claim_status = _claims(ctx, proposal, packet)
     if proposal:
-        ledger, claim_status = _claims(proposal, packet); local_req = {x["local_id"]: _id("req", {"packet": packet["packet_hash"], "item": x}) for x in proposal["requirements"]}; local_amb = {x["local_id"]: _id("ambiguity", {"packet": packet["packet_hash"], "item": x}) for x in proposal["ambiguities"]}
+        normalized_proposal = json.loads(canonical_json(proposal)); local_req = {x["local_id"]: _id("req", {"packet": packet["packet_hash"], "item": x}) for x in proposal["requirements"]}; local_criterion = {x["local_id"]: _id("criterion", {"packet": packet["packet_hash"], "item": x}) for x in proposal["criteria"]}; local_amb = {x["local_id"]: _id("ambiguity", {"packet": packet["packet_hash"], "item": x}) for x in proposal["ambiguities"]}
         requirements = []
         for x in proposal["requirements"]:
             state = "superseded" if x["claim_local_ids"] and all(claim_status[c] == "superseded" for c in x["claim_local_ids"]) else ("blocked_by_ambiguity" if any(claim_status[c] == "conflicted" for c in x["claim_local_ids"]) else x["status"])
@@ -209,27 +222,41 @@ def compile_bundle(ctx: LocalExecutionContext, proposal_file: str | None = None)
         criteria = []
         for x in proposal["criteria"]:
             parent = next(r for r in requirements if r["requirement_id"] == local_req[x["parent_requirement_local_id"]]); deps = [local_amb[a] for a in x["ambiguity_local_ids"]]
-            criteria.append({"criterion_id": _id("criterion", {"packet": packet["packet_hash"], "item": x}), "requirement_id": parent["requirement_id"], **{k: v for k, v in x.items() if k not in {"local_id", "parent_requirement_local_id"}}, "ambiguity_dependencies": deps, "blocker_eligible": bool(x["blocker_eligible"] and parent["status"] == "active" and not deps)})
-        ambiguities = [{"ambiguity_id": local_amb[x["local_id"]], **{k: v for k, v in x.items() if k != "local_id"}, "affected_requirement_ids": [local_req[v] for v in x["affected_requirement_local_ids"]], "affected_criterion_ids": [next(c["criterion_id"] for c in criteria if c["local_id"] == v) for v in x["affected_criterion_local_ids"]]} for x in proposal["ambiguities"]]
+            criteria.append({"criterion_id": local_criterion[x["local_id"]], "requirement_id": parent["requirement_id"], **{k: v for k, v in x.items() if k not in {"local_id", "parent_requirement_local_id"}}, "ambiguity_dependencies": deps, "blocker_eligible": False, "candidate_blocker_after_confirmation": bool(x["classification"] == "explicit" and x["expected_outcomes"] and not deps)})
+        ambiguities = [{"ambiguity_id": local_amb[x["local_id"]], **{k: v for k, v in x.items() if k != "local_id"}, "affected_requirement_ids": [local_req[v] for v in x["affected_requirement_local_ids"]], "affected_criterion_ids": [local_criterion[v] for v in x["affected_criterion_local_ids"]]} for x in proposal["ambiguities"]]
+        for claim in [x for x in ledger if x["resolution_status"] == "conflicted"]:
+            linked = [r for r in requirements if claim["local_id"] in r["claim_local_ids"]]
+            if linked:
+                aid = _id("ambiguity", {"claim": claim["claim_key"], "values": [x["value"] for x in ledger if x["claim_key"] == claim["claim_key"]]})
+                for record in linked: record["status"] = "blocked_by_ambiguity"; record["ambiguity_dependencies"].append(aid)
+                affected = [x["criterion_id"] for x in criteria if x["requirement_id"] in {r["requirement_id"] for r in linked}]
+                for record in criteria:
+                    if record["criterion_id"] in affected: record["ambiguity_dependencies"].append(aid); record["blocker_eligible"] = False
+                ambiguities.append({"ambiguity_id": aid, "title": f"Conflicting {claim['claim_key']}", "claim_key": claim["claim_key"], "competing_values": [x["value"] for x in ledger if x["claim_key"] == claim["claim_key"]], "source_refs": [x["source_refs"] for x in ledger if x["claim_key"] == claim["claim_key"]], "why_material": "Same-highest-authority values conflict.", "options": [], "recommendation": None, "blocked_conclusions": ["Working value"], "affected_requirement_ids": [r["requirement_id"] for r in linked], "affected_criterion_ids": affected})
     else:
         owner = packet["sources"][0]; ref = {"source_id": owner["source_id"], "start_line": 1, "end_line": len(owner["text"].split("\n")), "quote": owner["text"], "quote_hash": _source_hash(owner["text"])}; promise = ctx.release["product"].get("promise"); journeys = ctx.release["product"].get("critical_journey", [])
         requirements = ([{"requirement_id": _id("req", {"promise": promise, "packet": packet["packet_hash"]}), "statement": promise, "classification": "explicit", "status": "active", "source_refs": [ref], "claim_local_ids": [], "related_journey_ids": [], "materiality": "release_scope", "rationale": "release owner promise", "owner_confirmation_required": False, "ambiguity_local_ids": [], "ambiguity_dependencies": []}] if promise else [])
         ambiguities = [{"ambiguity_id": _id("ambiguity", {"packet": packet["packet_hash"], "kind": "acceptance"}), "title": "Acceptance details are not supplied", "source_refs": [ref], "why_material": "Journey behavior has no detailed acceptance contract.", "options": [], "recommendation": "Provide a Product Intent proposal.", "blocked_conclusions": ["Blocker eligibility"], "affected_requirement_local_ids": [], "affected_criterion_local_ids": [], "affected_requirement_ids": [], "affected_criterion_ids": []}]
         criteria = [{"criterion_id": _id("criterion", {"journey": x, "packet": packet["packet_hash"]}), "requirement_id": requirements[0]["requirement_id"] if requirements else "", "local_id": None, "actor": None, "preconditions": [], "action": x, "expected_outcomes": [], "failure_behavior": None, "required_evidence_categories": ["owner_confirmation"], "source_refs": [ref], "field_source_refs": {}, "classification": "inferred_requires_owner", "confirmation_state": "owner_confirmation_required", "blocker_eligible": False, "ambiguity_local_ids": ["acceptance"], "ambiguity_dependencies": [ambiguities[0]["ambiguity_id"]]} for x in journeys if requirements]
-        ledger = []
-    product = ctx.release["product"]; recognized = {"release.promise": "release_promise", "release.target_user": "target_user", "release.publication_mode": "publication_mode"}; working = {recognized[x["claim_key"]]: x["working_value"] for x in ledger if x["claim_key"] in recognized and x["resolution_status"] == "resolved" and x["working_value"] is not None}
+        normalized_proposal = None
+    product = ctx.release["product"]; working = {}
+    for key, field in CLAIM_PROJECTION.items():
+        values = [x["working_value"] for x in ledger if x["claim_key"] == key and x["resolution_status"] == "resolved" and x["working_value"] is not None]
+        if CLAIM_REGISTRY[key] == "single" and values: working[field] = values[0]
+        if CLAIM_REGISTRY[key] == "multi": working[field] = [json.loads(v) for v in sorted({canonical_json(v) for v in values})]
     intent = {"schema_version": INTENT_SCHEMA, **common, "project_name": ctx.activation["contract"]["project_name"], "product_purpose": ctx.activation["contract"]["product_purpose"], "target_users": [product.get("target_user")] if product.get("target_user") else [], "release_promise": product.get("promise"), "release_scope": product.get("critical_journey", []), "non_goals": product.get("non_goals", []), "owner_constraints": ctx.release.get("owner_constraints", []), "claims": ledger, "working_intent": working, "source_coverage": packet["source_coverage"], "coverage_boundary": packet["coverage_boundary"]}
     artifacts = {"product-intent.json": intent, "requirements.json": {"schema_version": REQUIREMENTS_SCHEMA, **common, "requirements": requirements}, "acceptance-criteria.json": {"schema_version": CRITERIA_SCHEMA, **common, "criteria": criteria}, "ambiguities.json": {"schema_version": AMBIGUITIES_SCHEMA, **common, "ambiguities": ambiguities}}
-    _validate_artifacts(artifacts, packet); return _persist(ctx, packet, packet_bytes, proposal, proposal_bytes, artifacts)
+    _validate_artifacts(artifacts, packet); return _persist(ctx, packet, packet_bytes, proposal, proposal_bytes, normalized_proposal, artifacts)
 
 
-def _persist(ctx: LocalExecutionContext, packet: dict, packet_bytes: bytes, proposal: dict | None, proposal_bytes: bytes | None, artifacts: dict) -> dict:
+def _persist(ctx: LocalExecutionContext, packet: dict, packet_bytes: bytes, proposal: dict | None, proposal_bytes: bytes | None, normalized_proposal: dict | None, artifacts: dict) -> dict:
     root = _root(ctx); generations = root / "generations"; generation = "gen_" + uuid.uuid4().hex; directory = generations / generation; directory.mkdir(parents=True)
     hashes = {}
     for name, value in artifacts.items(): path = directory / name; _atomic_file(path, value); hashes[name] = _hash_bytes(path.read_bytes())
     (directory / "source-packet.json").write_bytes(packet_bytes); snapshot_hash = _hash_bytes(packet_bytes)
-    if proposal_bytes: (directory / "proposal.json").write_bytes(proposal_bytes)
-    manifest = {"schema_version": MANIFEST_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "source_packet_hash": packet["packet_hash"], "source_packet_snapshot_hash": snapshot_hash, "proposal_hash": content_hash(proposal) if proposal else "explicit-only", "proposal_snapshot_hash": _hash_bytes(proposal_bytes) if proposal_bytes else "explicit-only", "compiler_version": COMPILER_VERSION, "artifact_filenames": list(ARTIFACTS), "artifact_hashes": hashes}
+    if proposal_bytes: (directory / "submitted-proposal.json").write_bytes(proposal_bytes); _atomic_file(directory / "normalized-proposal.json", normalized_proposal)
+    normalized_bytes = (directory / "normalized-proposal.json").read_bytes() if normalized_proposal else None
+    manifest = {"schema_version": MANIFEST_SCHEMA, "release_id": packet["release_id"], "release_commit": packet["release_commit"], "project_authority": packet["project_authority"], "source_packet_hash": packet["packet_hash"], "source_packet_snapshot_hash": snapshot_hash, "submitted_proposal_hash": content_hash(json.loads(proposal_bytes.decode("utf-8"))) if proposal_bytes else "explicit-only", "submitted_proposal_snapshot_hash": _hash_bytes(proposal_bytes) if proposal_bytes else "explicit-only", "normalized_proposal_hash": _hash_bytes(normalized_bytes) if normalized_bytes else "explicit-only", "normalized_proposal_snapshot_hash": _hash_bytes(normalized_bytes) if normalized_bytes else "explicit-only", "compiler_version": COMPILER_VERSION, "artifact_filenames": list(ARTIFACTS), "artifact_hashes": hashes}
     manifest["bundle_hash"] = content_hash(manifest); _atomic_file(directory / "manifest.json", manifest)
     pointer = {"schema_version": POINTER_SCHEMA, "generation": generation, "manifest_hash": _hash_bytes((directory / "manifest.json").read_bytes())}; _atomic_file(root / "current-generation.json", pointer); return manifest
 
@@ -241,10 +268,13 @@ def load_bundle(ctx: LocalExecutionContext) -> tuple[dict, dict]:
     if set(pointer) != {"schema_version", "generation", "manifest_hash"} or pointer["schema_version"] != POINTER_SCHEMA or not re.fullmatch(r"gen_[0-9a-f]{32}", pointer["generation"]): raise ValueError("invalid Product Intent generation pointer")
     directory = _root(ctx) / "generations" / pointer["generation"]; manifest_path = directory / "manifest.json"
     if not manifest_path.is_file() or _hash_bytes(manifest_path.read_bytes()) != pointer["manifest_hash"]: raise ValueError("invalid Product Intent generation")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")); fields = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "source_packet_snapshot_hash", "proposal_hash", "proposal_snapshot_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "bundle_hash"}
-    if set(manifest) != fields or manifest["schema_version"] != MANIFEST_SCHEMA or manifest["bundle_hash"] != content_hash({k: v for k, v in manifest.items() if k != "bundle_hash"}) or manifest["source_packet_hash"] != packet["packet_hash"] or manifest["artifact_filenames"] != list(ARTIFACTS): raise ValueError("stale or invalid Product Intent bundle")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")); fields = {"schema_version", "release_id", "release_commit", "project_authority", "source_packet_hash", "source_packet_snapshot_hash", "submitted_proposal_hash", "submitted_proposal_snapshot_hash", "normalized_proposal_hash", "normalized_proposal_snapshot_hash", "compiler_version", "artifact_filenames", "artifact_hashes", "bundle_hash"}
+    if set(manifest) != fields or manifest["schema_version"] != MANIFEST_SCHEMA or manifest["bundle_hash"] != content_hash({k: v for k, v in manifest.items() if k != "bundle_hash"}) or manifest["source_packet_hash"] != packet["packet_hash"] or manifest["artifact_filenames"] != list(ARTIFACTS) or manifest["release_id"] != ctx.release["release_id"] or manifest["release_commit"] != ctx.authority_binding["repository_commit"] or manifest["project_authority"] != _authority(ctx) or manifest["compiler_version"] != COMPILER_VERSION: raise ValueError("stale or invalid Product Intent bundle")
     snapshot = directory / "source-packet.json"
     if not snapshot.is_file() or _hash_bytes(snapshot.read_bytes()) != manifest["source_packet_snapshot_hash"] or snapshot.read_bytes() != (_root(ctx) / "source-packet.json").read_bytes(): raise ValueError("bundle source packet snapshot is stale")
+    if manifest["submitted_proposal_hash"] != "explicit-only":
+        submitted, normalized = directory / "submitted-proposal.json", directory / "normalized-proposal.json"
+        if not submitted.is_file() or not normalized.is_file() or _hash_bytes(submitted.read_bytes()) != manifest["submitted_proposal_snapshot_hash"] or content_hash(json.loads(submitted.read_text(encoding="utf-8"))) != manifest["submitted_proposal_hash"] or _hash_bytes(normalized.read_bytes()) != manifest["normalized_proposal_snapshot_hash"] or _hash_bytes(normalized.read_bytes()) != manifest["normalized_proposal_hash"]: raise ValueError("proposal snapshot is invalid")
     artifacts = {}
     for name in ARTIFACTS:
         path = directory / name
@@ -255,7 +285,7 @@ def load_bundle(ctx: LocalExecutionContext) -> tuple[dict, dict]:
 
 def show(ctx: LocalExecutionContext) -> str:
     _, artifacts = load_bundle(ctx); intent = artifacts["product-intent.json"]; requirements = artifacts["requirements.json"]["requirements"]; criteria = artifacts["acceptance-criteria.json"]["criteria"]; ambiguities = artifacts["ambiguities.json"]["ambiguities"]
-    lines = [f"Product Intent: {intent['project_name']}", f"Working promise: {intent['release_promise'] or 'not supplied'}", "Claims:"]
+    lines = [f"Product Intent: {intent['project_name']}", f"Working promise: {intent['working_intent'].get('release_promise', 'not supplied')}", "Claims:"]
     lines += [f"- {x['claim_key']}={x['working_value']!r} [{x['resolution_status']}; {x['authority_tier']}]" for x in intent["claims"]] or ["- none"]
     lines += ["Requirements:"] + [f"- {x['requirement_id']} [{x['classification']}/{x['status']}] {x['statement']}" for x in requirements] + ["Criteria:"] + [f"- {x['criterion_id']} [{x['classification']}] blocker_eligible={x['blocker_eligible']}" for x in criteria] + ["Material ambiguities:"] + [f"- {x['title']}" for x in ambiguities] + ["Source coverage:"] + [f"- {x['path']} [{x['source_class']}] {x['status']}" for x in intent["source_coverage"]] + [f"Coverage boundary: {intent['coverage_boundary']}"]
     return "\n".join(lines)
