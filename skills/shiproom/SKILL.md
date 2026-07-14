@@ -28,6 +28,10 @@ Minimal shape (replace packet-derived placeholders with exact values):
 {"schema_version":"intent-proposal.v1","release_id":"<release_id>","release_commit":"<release_commit>","source_packet_hash":"<packet_hash>","claims":[{"local_id":"claim_mode","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[{"source_id":"src_...","start_line":8,"end_line":8,"quote":"approval_required","quote_hash":"sha256:..."}],"requirement_local_ids":["req_publish"]}],"requirements":[{"local_id":"req_publish","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[{"source_id":"src_...","start_line":4,"end_line":4,"quote":"Users can publish cards.","quote_hash":"sha256:..."}],"claim_local_ids":["claim_mode"],"related_journey_ids":[],"materiality":"release_scope","rationale":"Exact release brief text","owner_confirmation_required":false,"ambiguity_local_ids":[]}],"criteria":[],"ambiguities":[]}
 ```
 
+## Private Requirement-to-Evidence Graph protocol
+
+For `private_alpha`, create a mapping packet first with `shiproom graph mapping prepare --release <release.json> --path <explicit-path>`. Consume only validated Product Intent IDs and that packet's explicitly selected commit-pinned sources. Return only `evidence-mapping-proposal.v1` candidate mappings with exact paths/blob hashes and optional quoted ranges. A relevant-looking file is never proof that a criterion is implemented, tested, instrumented, runtime-proven, or closed. Never fabricate runtime evidence, create owner confirmation, create/close findings, enter remediation, or inspect paths outside the packet. Return unsupported areas as `not_inspected`.
+
 ## Delegation
 
 When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.

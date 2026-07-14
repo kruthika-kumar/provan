@@ -98,3 +98,14 @@ shiproom intent show --release release-state/release.json
 Packets include complete normalized text only for selected Markdown files below the conservative cap; excluded and oversized inputs fail closed. Source reads are commit-pinned and retain Git blob and normalized-content hashes. Packets, proposals, compiled artifacts, and their atomic manifest stay under ignored local release state. Current release input outranks supporting project context, but conflicts remain visible as batched material ambiguities. Explicit records are directly source-backed; inferred records require owner confirmation and cannot be blocker-eligible.
 
 See `docs/event-readiness.md` for the frozen runtime record, completed proofs, and live-service blockers. Deploy the patient/report after Cloudflare authentication with `npx wrangler deploy --config cloudflare/wrangler.toml`.
+# Requirement-to-Evidence Graph (private alpha)
+
+Prepare Product Intent first, then optionally prepare an explicit mapping-source packet and compile the read-only graph:
+
+```powershell
+shiproom graph mapping prepare --release <release.json> --path <repository-relative-file>
+shiproom graph compile --release <release.json> [--proposal <release-local-inbox-proposal.json>]
+shiproom graph show --release <release.json> [--criterion <criterion_id>]
+```
+
+Candidate code, test, and instrumentation mappings are traceability candidates only; they are not implementation, test, runtime, or closure proof. Graph artifacts are private ignored release-local state.

@@ -25,6 +25,7 @@ from .onboarding import discover as discover_project, human_report, human_projec
 from .project import activate as activate_project, activation_status, validate_contract as validate_project_contract
 from .authority import LocalExecutionContext, bind_release_authority
 from .intent import compile_bundle as compile_intent, prepare as prepare_intent, show as show_intent
+from .graph import compile_bundle as compile_graph, mapping_prepare, show as show_graph
 
 
 def load(path: Path) -> dict:
@@ -52,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     external = sub.add_parser("external"); external.add_argument("action", choices=["init", "packet", "repository", "selection", "result", "check-http", "finish"]); external.add_argument("--contract"); external.add_argument("--release"); external.add_argument("--input"); external.add_argument("--output"); external.add_argument("--module"); external.add_argument("--delegation-id"); external.add_argument("--criterion-id"); external.add_argument("--branch"); external.add_argument("--commit-sha"); external.add_argument("--clean", action="store_true"); external.add_argument("--run-root", default="run-history")
     runs = sub.add_parser("runs"); runs.add_argument("action", choices=["list", "show", "render"]); runs.add_argument("--release"); runs.add_argument("--release-state"); runs.add_argument("--output"); runs.add_argument("--audience", choices=["all", "ceo", "product", "engineering"], default="all"); runs.add_argument("--run-root", default="run-history")
     intent = sub.add_parser("intent"); intent.add_argument("action", choices=["prepare", "compile", "show"]); intent.add_argument("--release", required=True); intent.add_argument("--source", action="append", default=[]); intent.add_argument("--supporting-source", action="append", default=[]); intent.add_argument("--proposal")
+    graph = sub.add_parser("graph"); graph.add_argument("action", choices=["compile", "show", "mapping"]); graph.add_argument("--release", required=True); graph.add_argument("--proposal"); graph.add_argument("--criterion"); graph.add_argument("--path", action="append", default=[]); graph.add_argument("mapping_action", nargs="?", choices=["prepare"])
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "intent":
@@ -64,6 +66,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if args.source or args.supporting_source or args.proposal: raise SystemExit("intent show accepts only --release")
             print(show_intent(context))
+    elif args.command == "graph":
+        data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
+        if args.action == "mapping":
+            if args.mapping_action != "prepare" or not args.path or args.proposal or args.criterion: raise SystemExit("graph mapping prepare requires --release and one or more --path values")
+            result = mapping_prepare(context, args.path); print(json.dumps({"release_id": result["release_id"], "packet_hash": result["packet_hash"], "selected_sources": [x["path"] for x in result["selected_sources"]]}, indent=2))
+        elif args.action == "compile":
+            if args.path or args.criterion or args.mapping_action: raise SystemExit("graph compile accepts only --release and optional --proposal")
+            print(json.dumps(compile_graph(context, args.proposal), indent=2))
+        else:
+            if args.path or args.proposal or args.mapping_action: raise SystemExit("graph show accepts only --release and optional --criterion")
+            print(show_graph(context, args.criterion))
     elif args.command == "init":
         repo = repository_root(Path(args.repo)); shared, _ = project_paths(repo, args.local_only)
         existing = shared.is_file()

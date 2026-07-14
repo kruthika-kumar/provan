@@ -12,6 +12,7 @@ from shiproom.external import CAPABILITIES, compile_release
 from shiproom.policy import POLICY_VERSION, execute_external_operation
 from shiproom.runs import LocalRunStore
 from shiproom.context import compile_project_context, context_event_metadata, verify_context_handoff, verify_context_isolation
+from shiproom.graph import CLASSIFICATIONS, RELATIONSHIPS, SLOT_TYPES
 
 
 def main() -> int:
@@ -66,6 +67,11 @@ def main() -> int:
         stale=dict(metadata); stale["project_context_id"]="ctx_stale"
         boundary = boundary and not verify_context_handoff(a_ctx,[{"agent_id":agent,"metadata":stale} for agent in ("manager","specialist","verifier")])
         check("CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE",boundary)
+    check("graph candidate cannot become deterministic proof", "deterministically_established" not in RELATIONSHIPS["may_be_implemented_by"][2])
+    check("graph has four criterion evidence slots", set(SLOT_TYPES)=={"implementation","test","instrumentation","runtime"})
+    check("graph controlled runtime relationship supports canonical evidence", "deterministically_established" in RELATIONSHIPS["has_runtime_evidence"][2])
+    check("graph stale bindings fail closed contract", "model_mapped_candidate" in CLASSIFICATIONS and "not_inspected" in CLASSIFICATIONS)
+    check("graph malformed dangling input fails closed matrix", "supported_by_evidence" in RELATIONSHIPS and "missing" not in RELATIONSHIPS["supported_by_evidence"][2])
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 

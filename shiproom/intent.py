@@ -454,6 +454,13 @@ def load_bundle(ctx: LocalExecutionContext) -> tuple[dict, dict]:
     _validate_artifacts(artifacts, packet); return manifest, artifacts
 
 
+def load_graph_input(ctx: LocalExecutionContext) -> tuple[dict, dict, dict]:
+    """Read-only validated Product Intent input for the evidence graph."""
+    packet, _ = _load_packet(ctx)
+    manifest, artifacts = load_bundle(ctx)
+    return manifest, artifacts, packet
+
+
 def show(ctx: LocalExecutionContext) -> str:
     _, artifacts = load_bundle(ctx); intent = artifacts["product-intent.json"]; requirements = artifacts["requirements.json"]["requirements"]; criteria = artifacts["acceptance-criteria.json"]["criteria"]; ambiguities = artifacts["ambiguities.json"]["ambiguities"]
     lines = [f"Product Intent: {intent['project_name']}", f"Working promise: {intent['working_intent'].get('release_promise', 'not supplied')}", "Claims:"]
