@@ -617,7 +617,7 @@ ROLE_GRAPH_NODE_TYPES = {
 
 def _graph_context(inputs: dict, role: str, requirement_ids: list[str], criterion_ids: list[str], journey_ids: list[str]) -> dict:
     graph = inputs["graph_artifacts"]["requirement-evidence-graph.json"]
-    nodes = {item["node_id"]: item for item in graph["nodes"]}; selected = set(requirement_ids) | set(criterion_ids) | set(journey_ids)
+    nodes = {item["node_id"]: item for item in graph["nodes"]}; edge_map = {item["edge_id"]: item for item in graph["edges"]}; selected = set(requirement_ids) | set(criterion_ids) | set(journey_ids)
     # Two fixed hops admit criterion facts and their typed decision/closure context
     # without turning context preparation into repository or graph discovery.
     frontier = set(selected)
@@ -631,12 +631,38 @@ def _graph_context(inputs: dict, role: str, requirement_ids: list[str], criterio
         frontier = discovered - selected; selected.update(discovered)
     selected = {item for item in selected if item in nodes and nodes[item]["node_type"] in ROLE_GRAPH_NODE_TYPES[role]}
     edges = [item for item in graph["edges"] if item["source_node_id"] in selected and item["target_node_id"] in selected]
-    gaps = [item for item in inputs["graph_artifacts"]["evidence-gaps.json"]["gaps"] if item["criterion_id"] in criterion_ids]
+    edge_ids = {item["edge_id"] for item in edges}; gaps = []
+    for gap in inputs["graph_artifacts"]["evidence-gaps.json"]["gaps"]:
+        if gap["criterion_id"] not in criterion_ids:
+            continue
+        basis_edges = [edge_map.get(item) for item in gap["basis_edge_ids"]]
+        basis_nodes = set(gap["basis_node_ids"])
+        if any(item is None for item in basis_edges):
+            continue
+        basis_nodes.update(item["source_node_id"] for item in basis_edges); basis_nodes.update(item["target_node_id"] for item in basis_edges)
+        if any(item not in nodes or nodes[item]["node_type"] not in ROLE_GRAPH_NODE_TYPES[role] for item in basis_nodes):
+            continue
+        selected.update(basis_nodes); gaps.append(gap)
+        for item in basis_edges:
+            if item["edge_id"] not in edge_ids:
+                edges.append(item); edge_ids.add(item["edge_id"])
     context = {"schema_version": "assessment-base-graph-context.v1", "nodes": sorted((nodes[item] for item in selected), key=lambda item: item["node_id"]), "edges": sorted(edges, key=lambda item: item["edge_id"]), "gaps": sorted(gaps, key=lambda item: item["gap_id"])}
+    _validate_graph_context(context, set(criterion_ids))
     record_count = len(context["nodes"]) + len(context["edges"]) + len(context["gaps"])
     if record_count > ROLE_STRUCTURAL_RECORD_LIMIT or len(canonical_json(context).encode("utf-8")) > ROLE_STRUCTURAL_BYTES_LIMIT:
         raise AssessmentPreparationError("assessment_structural_context_budget_exceeded", role)
     return context
+
+
+def _validate_graph_context(context: dict, assigned_criterion_ids: set[str]) -> None:
+    node_ids = {item["node_id"] for item in context["nodes"]}; edge_ids = {item["edge_id"] for item in context["edges"]}
+    if len(node_ids) != len(context["nodes"]) or len(edge_ids) != len(context["edges"]):
+        raise ValueError("assessment graph context contains duplicate records")
+    if any(item["source_node_id"] not in node_ids or item["target_node_id"] not in node_ids for item in context["edges"]):
+        raise ValueError("assessment graph context edge is not referentially closed")
+    for gap in context["gaps"]:
+        if gap["criterion_id"] not in assigned_criterion_ids or not set(gap["basis_node_ids"]).issubset(node_ids) or not set(gap["basis_edge_ids"]).issubset(edge_ids):
+            raise ValueError("assessment graph context gap is not referentially closed")
 
 
 def _work_order_hash(value: dict) -> str:

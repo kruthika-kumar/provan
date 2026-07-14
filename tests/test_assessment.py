@@ -15,6 +15,7 @@ from shiproom.assessment import (
     _python_imports,
     _javascript_imports,
     _test_matches,
+    _validate_work_order,
     load_discovery_registry,
     _work_order_hash,
     default_capabilities,
@@ -318,3 +319,20 @@ def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extra
         schema = json.loads((root / schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
         invalid = dict(value); invalid["unexpected"] = True
         with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
+
+
+@pytest.mark.parametrize("role", ["product_assessment", "test_adequacy", "targeted_test_planning"])
+def test_role_graph_context_gap_basis_is_referentially_closed(tmp_path: Path, role: str):
+    ctx = assessment_context(tmp_path); prepare_assessment(ctx); role_context = load_preparation(ctx)["contexts"][role]; context = role_context["base_graph_context"]
+    node_ids = {item["node_id"] for item in context["nodes"]}; edge_ids = {item["edge_id"] for item in context["edges"]}
+    assert context["gaps"]
+    assert all(item["source_node_id"] in node_ids and item["target_node_id"] in node_ids for item in context["edges"])
+    assert all(gap["criterion_id"] in {item["criterion_id"] for item in role_context["assigned_criteria"]} and set(gap["basis_node_ids"]) <= node_ids and set(gap["basis_edge_ids"]) <= edge_ids for gap in context["gaps"])
+
+
+def test_explicit_release_browser_target_authority_is_rejected_by_python_and_schema(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema"); ctx, capability_path = browser_assessment_context(tmp_path); prepare_assessment(ctx, capabilities_path=str(capability_path)); work = load_preparation(ctx)["work_orders"]["browser_journey"]
+    invalid = json.loads(json.dumps(work)); invalid["permissions"]["browser"]["allowed_targets"][0]["authority"] = "explicit_release_browser_target"; invalid["work_order_hash"] = _work_order_hash(invalid)
+    with pytest.raises(ValueError, match="browser target"): _validate_work_order(invalid)
+    schema = json.loads((Path(__file__).parents[1] / "schemas/work-order.v1.json").read_text(encoding="utf-8"))
+    with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
