@@ -109,3 +109,5 @@ shiproom graph show --release <release.json> [--criterion <criterion_id>]
 ```
 
 Candidate code, test, and instrumentation mappings are traceability candidates only; they are not implementation, test, runtime, or closure proof. Graph artifacts are private ignored release-local state.
+
+Mapping proposals live only in the graph inbox and bind to the active mapping packet. Valid targets are a packet-pinned repository reference, a packet-projected runtime or finding ID, or an allowlisted journey ID. Candidate mappings remain `model_mapped_candidate`; unsupported check types are recorded as import limitations, while absent inspection is `not_inspected` rather than missing evidence.

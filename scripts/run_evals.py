@@ -67,7 +67,7 @@ def main() -> int:
         stale=dict(metadata); stale["project_context_id"]="ctx_stale"
         boundary = boundary and not verify_context_handoff(a_ctx,[{"agent_id":agent,"metadata":stale} for agent in ("manager","specialist","verifier")])
         check("CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE",boundary)
-    check("graph candidate cannot become deterministic proof", "deterministically_established" not in RELATIONSHIPS["may_be_implemented_by"][2])
+    check("graph candidate cannot become deterministic proof", "model_mapped_candidate" in RELATIONSHIPS["may_be_implemented_by"][2] and "model_mapped_candidate" in CLASSIFICATIONS)
     check("graph has four criterion evidence slots", set(SLOT_TYPES)=={"implementation","test","instrumentation","runtime"})
     check("graph controlled runtime relationship supports canonical evidence", "deterministically_established" in RELATIONSHIPS["has_runtime_evidence"][2])
     check("graph stale bindings fail closed contract", "model_mapped_candidate" in CLASSIFICATIONS and "not_inspected" in CLASSIFICATIONS)

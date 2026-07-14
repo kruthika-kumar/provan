@@ -32,6 +32,8 @@ Minimal shape (replace packet-derived placeholders with exact values):
 
 For `private_alpha`, create a mapping packet first with `shiproom graph mapping prepare --release <release.json> --path <explicit-path>`. Consume only validated Product Intent IDs and that packet's explicitly selected commit-pinned sources. Return only `evidence-mapping-proposal.v1` candidate mappings with exact paths/blob hashes and optional quoted ranges. A relevant-looking file is never proof that a criterion is implemented, tested, instrumented, runtime-proven, or closed. Never fabricate runtime evidence, create owner confirmation, create/close findings, enter remediation, or inspect paths outside the packet. Return unsupported areas as `not_inspected`.
 
+For graph mappings, use one exact target shape: repository candidates include `reference` (`path`, `returned_git_path`, `git_blob_hash`, optional exact quote range); runtime and finding candidates include their packet-projected `canonical_id`; journey candidates include an allowlisted `journey_id`. All candidate relationships remain `model_mapped_candidate`. A missing mapping or unsupported check kind is `not_inspected`, not a claim that evidence is missing.
+
 ## Delegation
 
 When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.

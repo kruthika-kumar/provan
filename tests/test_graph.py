@@ -38,7 +38,7 @@ def test_mapping_packet_candidate_is_not_proof_and_stale_packet_fails(tmp_path: 
 
 
 def test_graph_rerun_ids_are_index_resolved_before_sorting(tmp_path: Path):
-    ctx = _intent_context(tmp_path); ctx.release["checks"] = [{"criterion_id": "HISTORICAL", "status": 404, "passed": False, "evidence_status": "deterministically_verified"}, {"criterion_id": "HISTORICAL", "status": 200, "passed": True, "evidence_status": "deterministically_verified", "rerun_of": 0}]
+    ctx = _intent_context(tmp_path); ctx.release["checks"] = [{"type":"http","target":"/result/demo","criterion_id": "HISTORICAL", "status": 404, "passed": False, "evidence_status": "deterministically_verified"}, {"type":"http","target":"/result/demo","criterion_id": "HISTORICAL", "status": 200, "passed": True, "evidence_status": "deterministically_verified", "rerun_of": 0}]
     ctx.release["findings"] = [{"id": "finding_hist", "criterion_id": "HISTORICAL", "blocking": True, "state": "CLOSED", "evidence": []}]
     compile_bundle(ctx); _, artifacts = load_bundle(ctx); nodes = artifacts["requirement-evidence-graph.json"]["nodes"]
     assert any(n["node_type"] == "closure_evidence" and n["original_check_id"] != n["rerun_check_id"] for n in nodes)
@@ -74,7 +74,7 @@ def test_multiple_candidate_references_replace_single_slot_placeholder(tmp_path:
 
 
 def test_historical_product_criterion_to_intent_criterion_is_candidate_only(tmp_path: Path):
-    ctx = _intent_context(tmp_path); ctx.release["checks"] = [{"check_id": "check_404", "criterion_id": "PRODUCT_PUBLIC_RESULT_OPENS", "status": 404, "passed": False}]
+    ctx = _intent_context(tmp_path); ctx.release["checks"] = [{"check_id": "check_404", "type":"http", "target":"/result/demo", "criterion_id": "PRODUCT_PUBLIC_RESULT_OPENS", "status": 404, "passed": False, "evidence_status":"deterministically_verified"}]
     packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
     data = _mapping_proposal(packet, [_mapping(packet, criterion, "historical", "runtime_evidence", canonical_id="check_404")])
     path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/historical.json"; path.write_text(json.dumps(data), encoding="utf-8")
@@ -101,7 +101,7 @@ def test_source_conflict_gap_carries_product_intent_ambiguity_ids_and_omission_i
     compile_bundle(ctx); _, artifacts = load_bundle(ctx); gaps = artifacts["evidence-gaps.json"]["gaps"]
     conflict = next(gap for gap in gaps if gap["gap_type"] == "source_conflict")
     assert conflict["product_intent_ambiguity_ids"]
-    assert not any(gap["gap_type"] in {"implementation_gap", "test_evidence_gap", "instrumentation_gap"} for gap in gaps)
+    assert any(gap["gap_type"] == "implementation_gap" and gap["state"] == "unknown" for gap in gaps)
 
 
 def test_mapping_packet_safe_projections_and_remediation_compatibility_fields(tmp_path: Path):
@@ -121,3 +121,31 @@ def test_graph_mapping_prepare_compile_show_cli_smoke(tmp_path: Path, capsys):
     assert main(["graph", "compile", "--release", str(release)]) == 0; capsys.readouterr()
     assert main(["graph", "show", "--release", str(release)]) == 0
     assert "Requirement:" in capsys.readouterr().out
+
+
+def test_unknown_check_is_import_limitation_and_unrelated_404_never_opens_gap(tmp_path: Path):
+    ctx = _intent_context(tmp_path); ctx.release["checks"] = [
+        {"check_id": "unknown", "type": "model_review", "criterion_id": "other", "passed": False},
+        {"check_id": "other404", "type": "http", "target": "/other", "criterion_id": "other", "status": 404, "passed": False, "evidence_status": "deterministically_verified"},
+    ]
+    compile_bundle(ctx); _, artifacts = load_bundle(ctx); graph = artifacts["requirement-evidence-graph.json"]
+    assert graph["import_limitations"] == [{"kind": "unsupported_check", "check_id": "unknown", "check_type": "model_review", "criterion_id": "other"}]
+    assert all(gap["gap_type"] != "runtime_evidence_gap" or gap["state"] == "unknown" for gap in artifacts["evidence-gaps.json"]["gaps"])
+
+
+def test_candidate_404_is_unknown_but_exact_deterministic_404_is_open(tmp_path: Path):
+    ctx = _intent_context(tmp_path); criterion = load_bundle(ctx)[1]["criterion-evidence-summary.json"]["criteria"][0]["criterion_id"] if False else None
+    packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    ctx.release["checks"] = [{"check_id": "historic", "type": "http", "target": "/result", "criterion_id": "HISTORIC", "status": 404, "passed": False, "evidence_status": "deterministically_verified"}]
+    packet = mapping_prepare(ctx, ["docs/brief.md"]); data = _mapping_proposal(packet, [_mapping(packet, criterion, "candidate", "runtime_evidence", canonical_id="historic")])
+    path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/candidate404.json"; path.write_text(json.dumps(data), encoding="utf-8")
+    compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx)
+    runtime = next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"] == "runtime_evidence_gap"); assert runtime["state"] == "unknown" and runtime["candidate_linked_failure"]
+    ctx.release["checks"][0]["criterion_id"] = criterion; mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    assert next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"] == "runtime_evidence_gap")["state"] == "open"
+
+
+def test_load_rederives_and_rejects_semantic_artifact_tamper(tmp_path: Path):
+    ctx = _intent_context(tmp_path); compile_bundle(ctx); root = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer = json.loads((root / "current-generation.json").read_text()); graph = root / "generations" / pointer["generation"] / "requirement-evidence-graph.json"
+    value = json.loads(graph.read_text()); value["coverage_boundary"] = "tampered"; graph.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(ValueError): load_bundle(ctx)
