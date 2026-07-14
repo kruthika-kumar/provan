@@ -20,13 +20,13 @@ from .project import canonical_json, content_hash, validate_command, validate_po
 
 
 ROLE_SCHEMA = "shiproom.assessment-role.v1"
-WORK_ORDER_SCHEMA = "shiproom.work-order.v1"
+WORK_ORDER_SCHEMA = "shiproom.work-order.v2"
 CAPABILITIES_SCHEMA = "shiproom.assessment-capabilities.v1"
-SOURCE_PACKET_SCHEMA = "assessment-source-packet.v1"
+SOURCE_PACKET_SCHEMA = "assessment-source-packet.v2"
 ROLE_CONTEXT_SCHEMA = "assessment-role-context.v1"
-WORK_ORDERS_SCHEMA = "assessment-work-orders.v1"
+WORK_ORDERS_SCHEMA = "assessment-work-orders.v2"
 POINTER_SCHEMA = "active-assessment-preparation.v1"
-PREPARATION_COMPILER_VERSION = "assessment-preparation.v2"
+PREPARATION_COMPILER_VERSION = "assessment-preparation.v3"
 DISCOVERY_VERSION = "assessment-source-discovery.v1"
 DISCOVERY_SELECTION_ORDER = ("graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match")
 DISCOVERY_LANGUAGES = ("python", "javascript", "typescript")
@@ -36,10 +36,10 @@ CORE_ROLES = ("product_assessment", "engineering_assessment", "test_adequacy", "
 ALL_ROLES = (*CORE_ROLES, "browser_journey")
 ROLE_REQUIRED = {role: role in CORE_ROLES for role in ALL_ROLES}
 ROLE_OUTPUT_SCHEMAS = {
-    "product_assessment": "schemas/product-assessment-result.v1.json",
-    "engineering_assessment": "schemas/engineering-assessment-result.v1.json",
-    "test_adequacy": "schemas/test-adequacy-result.v1.json",
-    "targeted_test_planning": "schemas/targeted-test-result.v1.json",
+    "product_assessment": "schemas/product-assessment-result.v2.json",
+    "engineering_assessment": "schemas/engineering-assessment-result.v2.json",
+    "test_adequacy": "schemas/test-adequacy-result.v2.json",
+    "targeted_test_planning": "schemas/targeted-test-result.v2.json",
     "browser_journey": "schemas/browser-journey-result.v1.json",
 }
 SOURCE_FILE_LIMIT = 256 * 1024
@@ -55,21 +55,22 @@ LIMITATION_LIMIT = 100
 RATIONALE_LIMIT = 4096
 DETAIL_LIMIT = 16384
 RESULT_SCHEMAS = {
-    "product_assessment": "product-assessment-result.v1",
-    "engineering_assessment": "engineering-assessment-result.v1",
-    "test_adequacy": "test-adequacy-result.v1",
-    "targeted_test_planning": "targeted-test-result.v1",
+    "product_assessment": "product-assessment-result.v2",
+    "engineering_assessment": "engineering-assessment-result.v2",
+    "test_adequacy": "test-adequacy-result.v2",
+    "targeted_test_planning": "targeted-test-result.v2",
     "browser_journey": "browser-journey-result.v1",
 }
-RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v1"
-ASSESSMENT_COMPILER_VERSION = "portable-assessment.v1"
-ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v1"
+RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
+ASSESSMENT_COMPILER_VERSION = "portable-assessment.v2"
+ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v2"
 ASSESSMENT_POINTER_SCHEMA = "current-portable-assessment.v1"
-OVERLAY_SCHEMA = "assessment-graph-overlay.v1"
-EFFECTIVE_VIEW_SCHEMA = "effective-assessment-view.v1"
+OVERLAY_SCHEMA = "assessment-graph-overlay.v2"
+EFFECTIVE_VIEW_SCHEMA = "effective-assessment-view.v2"
 ASSESSMENT_ARTIFACTS = ("product-assessment.json", "engineering-assessment.json", "test-adequacy.json", "targeted-test-plan.json", "browser-journey.json", "assessment-work-orders.json", "assessment-graph-overlay.json", "effective-assessment-view.json", "assessment-compiler-receipts.json")
 OVERLAY_BASE_NODE_TYPES = {"source", "implementation_reference", "test_reference", "instrumentation_reference", "runtime_evidence", "finding", "closure_evidence"}
 _BEFORE_ASSESSMENT_POINTER_REPLACE = None
+_BEFORE_ASSESSMENT_GENERATION_VERIFY = None
 DISPOSITIONS = {"assessed", "not_inspected", "not_applicable", "blocked_by_input_ambiguity"}
 UNCERTAINTIES = {"none", "bounded", "material", "not_assessed"}
 EVIDENCE_CLASSES = {"model_reviewed", "not_inspected"}
@@ -127,6 +128,21 @@ def _load_json_bytes(raw: bytes) -> dict:
     if not isinstance(value, dict):
         raise ValueError("JSON document must be an object")
     return value
+
+
+def _installed_schema_bytes(filename: str) -> bytes:
+    path = Path(__file__).resolve().parent.parent / "schemas" / filename
+    if not path.is_file(): raise ValueError(f"portable assessment schema unavailable: {filename}")
+    return path.read_bytes()
+
+
+def _contract_snapshots() -> dict[str, dict]:
+    names = {"work-order.v2.json", "assessment-completion-receipt.v2.json", "browser-journey-result.v1.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
+    result = {}
+    for name in sorted(names):
+        raw = _installed_schema_bytes(name); value = _load_json_bytes(raw)
+        result[name] = {"bytes": raw, "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "schema_version": value.get("$id", name).removesuffix(".json")}
+    return result
 
 
 def _text(value: object, field: str, maximum: int = 4096) -> str:
@@ -743,14 +759,16 @@ def _validate_work_order(value: dict) -> None:
     if permissions["browser"]["allowed_targets"] and value["role_id"] != "browser_journey":
         raise ValueError("non-browser work order cannot receive browser targets")
     output = value["required_output"]
-    if not isinstance(output, dict) or set(output) != {"schema_path", "output_path", "completion_receipt_path", "evidence_directory"}:
+    output_fields = {"schema_path", "schema_version", "schema_semantic_hash", "schema_snapshot_hash", "output_path", "completion_receipt_schema_path", "completion_receipt_schema_version", "completion_receipt_schema_semantic_hash", "completion_receipt_schema_snapshot_hash", "completion_receipt_path", "evidence_directory"}
+    if not isinstance(output, dict) or set(output) != output_fields:
         raise ValueError("invalid work-order output")
-    for field in output:
-        _text(output[field], f"required_output.{field}", 500)
+    for field in output: _text(output[field], f"required_output.{field}", 500)
+    for field in ("schema_semantic_hash", "schema_snapshot_hash", "completion_receipt_schema_semantic_hash", "completion_receipt_schema_snapshot_hash"):
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", output[field]): raise ValueError("invalid work-order contract hash")
     _string_list(value["forbidden_claims"], "forbidden_claims", nonempty=True)
 
 
-def _build_preparation(ctx: LocalExecutionContext, preparation_id: str, capabilities_bundle: dict, roles: dict[str, dict], discovery: dict, base_commit: str | None, owner: dict[str, list[str]]) -> dict:
+def _build_preparation(ctx: LocalExecutionContext, preparation_id: str, capabilities_bundle: dict, roles: dict[str, dict], discovery: dict, contracts: dict[str, dict], base_commit: str | None, owner: dict[str, list[str]]) -> dict:
     """Purely derive every semantic preparation artifact from trusted inputs."""
     inputs = load_assessment_input(ctx); approved_commands = ctx.activation["contract"]["execution_policy"]["approved_commands"]
     capabilities = capabilities_bundle["value"]; available = set(_release_paths(ctx)); population = _population(inputs); change = _change_impact(ctx, base_commit)
@@ -763,10 +781,11 @@ def _build_preparation(ctx: LocalExecutionContext, preparation_id: str, capabili
         role_sources[role] = sources; role_coverages[role] = coverage; role_limitations[role] = sorted(limitations, key=canonical_json)
     mapping_hash = inputs["mapping_packet_snapshot"]["packet_hash"] if inputs["mapping_packet_snapshot"] else None
     authority = {key: ctx.authority_binding[key] for key in ("project_id", "contract_hash", "contract_source", "authority_policy_version")}
-    semantic_basis = {"release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities": capabilities, "roles": {role: roles[role]["semantic_hash"] for role in ALL_ROLES}, "discovery_registry_hash": discovery["semantic_hash"], "population": population, "owner_paths": owner, "change_impact": change, "role_sources": role_sources, "role_coverages": role_coverages, "role_limitations": role_limitations, "browser": browser}
+    contract_hashes = {name: {"semantic_hash": item["semantic_hash"], "snapshot_hash": item["snapshot_hash"], "schema_version": item["schema_version"]} for name, item in contracts.items()}
+    semantic_basis = {"release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities": capabilities, "roles": {role: roles[role]["semantic_hash"] for role in ALL_ROLES}, "discovery_registry_hash": discovery["semantic_hash"], "contract_schemas": contract_hashes, "population": population, "owner_paths": owner, "change_impact": change, "role_sources": role_sources, "role_coverages": role_coverages, "role_limitations": role_limitations, "browser": browser}
     semantic_hash = content_hash(semantic_basis)
     preparation_inputs = {"base_commit": base_commit, "owner_paths": owner}
-    source_packet = {"schema_version": SOURCE_PACKET_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "preparation_inputs": preparation_inputs, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities_hash": content_hash(capabilities), "role_definition_hashes": semantic_basis["roles"], "discovery_registry_hash": discovery["semantic_hash"], "population": population, "change_impact": change, "role_sources": {role: {"coverage": role_coverages[role], "limitations": role_limitations[role], "sources": role_sources[role]} for role in ALL_ROLES}, "browser_work_order": browser, "coverage_boundary": "Validated Product Intent and Session 3 graph plus bounded role-specific commit-pinned context only.", "packet_hash": ""}
+    source_packet = {"schema_version": SOURCE_PACKET_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "preparation_inputs": preparation_inputs, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities_hash": content_hash(capabilities), "role_definition_hashes": semantic_basis["roles"], "discovery_registry_hash": discovery["semantic_hash"], "contract_schema_hashes": contract_hashes, "population": population, "change_impact": change, "role_sources": {role: {"coverage": role_coverages[role], "limitations": role_limitations[role], "sources": role_sources[role]} for role in ALL_ROLES}, "browser_work_order": browser, "coverage_boundary": "Validated Product Intent and Session 3 graph plus bounded role-specific commit-pinned context only.", "packet_hash": ""}
     source_packet["packet_hash"] = content_hash({key: value for key, value in source_packet.items() if key != "packet_hash"})
     contexts = {}; work_orders = {}; work_order_bytes = {}
     for role in ALL_ROLES:
@@ -785,29 +804,33 @@ def _build_preparation(ctx: LocalExecutionContext, preparation_id: str, capabili
         allowed_command_ids = capabilities["permissions"]["shell"]["allowed_command_ids"] if role in {"engineering_assessment", "test_adequacy"} else []
         allowed_commands = [command for command in approved_commands if command["command_id"] in allowed_command_ids]
         flattened_targets = {canonical_json(item): item for record in browser_targets for item in record["targets"]}
-        work_order = {"schema_version": WORK_ORDER_SCHEMA, "work_order_id": work_order_id, "work_order_hash": "", "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "role_id": role, "role_version": roles[role]["value"]["role_version"], "role_definition_hash": roles[role]["semantic_hash"], "role_definition_snapshot_hash": roles[role]["snapshot_hash"], "objective": roles[role]["value"]["mandate"], "inputs": {"packet_path": f"{relative_root}/preparations/{preparation_id}/role-context/{role}.json", "packet_hash": context["packet_hash"], "criterion_ids": criterion_ids, "requirement_ids": requirement_ids, "journey_ids": journey_ids, "allowed_paths": sorted(item["path"] for item in role_sources[role]), "base_graph_generation": inputs["graph_generation"], "base_graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "product_intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "change_impact_status": change["status"]}, "capability_requirements": {"file_read": "required", "shell": "optional" if allowed_commands else "unavailable", "browser": "required" if role == "browser_journey" else "unavailable", "network": "unavailable"}, "permissions": {"repository": "read_only", "shell": {"allowed_commands": allowed_commands}, "browser": {"allowed_targets": [flattened_targets[key] for key in sorted(flattened_targets)]}}, "required_output": {"schema_path": roles[role]["value"]["required_output_schema"], "output_path": inbox + "/result.json", "completion_receipt_path": inbox + "/completion-receipt.json", "evidence_directory": inbox + "/evidence"}, "forbidden_claims": roles[role]["value"]["forbidden_claims"]}
+        result_name = Path(roles[role]["value"]["required_output_schema"]).name; result_contract = contracts[result_name]; receipt_contract = contracts["assessment-completion-receipt.v2.json"]
+        work_order = {"schema_version": WORK_ORDER_SCHEMA, "work_order_id": work_order_id, "work_order_hash": "", "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "role_id": role, "role_version": roles[role]["value"]["role_version"], "role_definition_hash": roles[role]["semantic_hash"], "role_definition_snapshot_hash": roles[role]["snapshot_hash"], "objective": roles[role]["value"]["mandate"], "inputs": {"packet_path": f"{relative_root}/preparations/{preparation_id}/role-context/{role}.json", "packet_hash": context["packet_hash"], "criterion_ids": criterion_ids, "requirement_ids": requirement_ids, "journey_ids": journey_ids, "allowed_paths": sorted(item["path"] for item in role_sources[role]), "base_graph_generation": inputs["graph_generation"], "base_graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "product_intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "change_impact_status": change["status"]}, "capability_requirements": {"file_read": "required", "shell": "optional" if allowed_commands else "unavailable", "browser": "required" if role == "browser_journey" else "unavailable", "network": "unavailable"}, "permissions": {"repository": "read_only", "shell": {"allowed_commands": allowed_commands}, "browser": {"allowed_targets": [flattened_targets[key] for key in sorted(flattened_targets)]}}, "required_output": {"schema_path": "contract-schemas/" + result_name, "schema_version": result_contract["schema_version"], "schema_semantic_hash": result_contract["semantic_hash"], "schema_snapshot_hash": result_contract["snapshot_hash"], "output_path": inbox + "/result.json", "completion_receipt_schema_path": "contract-schemas/assessment-completion-receipt.v2.json", "completion_receipt_schema_version": receipt_contract["schema_version"], "completion_receipt_schema_semantic_hash": receipt_contract["semantic_hash"], "completion_receipt_schema_snapshot_hash": receipt_contract["snapshot_hash"], "completion_receipt_path": inbox + "/completion-receipt.json", "evidence_directory": inbox + "/evidence"}, "forbidden_claims": roles[role]["value"]["forbidden_claims"]}
         work_order["work_order_hash"] = _work_order_hash(work_order); _validate_work_order(work_order); work_orders[role] = work_order; work_order_bytes[role] = _render(work_order)
     entries = []
     for role in ALL_ROLES:
         work_order = work_orders.get(role); issued = work_order is not None
         entries.append({"role_id": role, "required": ROLE_REQUIRED[role], "issued": issued, "reason_code": None if issued else browser["reason_code"], "work_order_id": work_order["work_order_id"] if issued else None, "work_order_hash": work_order["work_order_hash"] if issued else None, "work_order_snapshot_hash": _sha(work_order_bytes[role]) if issued else None, "work_order_path": f"work-orders/{work_order['work_order_id']}.json" if issued else None, "result_path": work_order["required_output"]["output_path"] if issued else None, "completion_receipt_path": work_order["required_output"]["completion_receipt_path"] if issued else None})
     manifest = {"schema_version": WORK_ORDERS_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "preparation_inputs": preparation_inputs, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "source_packet_hash": source_packet["packet_hash"], "capabilities_hash": content_hash(capabilities), "capabilities_snapshot_filename": capabilities_bundle["snapshot_filename"], "capabilities_snapshot_hash": _sha(capabilities_bundle["snapshot_bytes"]), "discovery_registry": {"semantic_hash": discovery["semantic_hash"], "snapshot_hash": discovery["snapshot_hash"]}, "role_definitions": {role: {"semantic_hash": roles[role]["semantic_hash"], "snapshot_hash": roles[role]["snapshot_hash"]} for role in ALL_ROLES}, "work_orders": entries, "manifest_hash": ""}
+    manifest["contract_schemas"] = contract_hashes
     manifest["manifest_hash"] = content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"})
     pointer = {"schema_version": POINTER_SCHEMA, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "manifest_snapshot_hash": _sha(_render(manifest))}
-    return {"inputs": inputs, "source_packet": source_packet, "contexts": contexts, "work_orders": work_orders, "work_order_bytes": work_order_bytes, "manifest": manifest, "pointer": pointer}
+    return {"inputs": inputs, "source_packet": source_packet, "contexts": contexts, "work_orders": work_orders, "work_order_bytes": work_order_bytes, "manifest": manifest, "pointer": pointer, "contracts": contracts, "preparation_inputs": preparation_inputs}
 
 
 def prepare(ctx: LocalExecutionContext, *, capabilities_path: str | None = None, base_commit: str | None = None, owner_paths: list[str] | None = None) -> dict:
     ctx.require("file.read"); approved = ctx.activation["contract"]["execution_policy"]["approved_commands"]
     capabilities, submitted = _load_capabilities(ctx, capabilities_path, approved); snapshot = submitted if submitted is not None else _render(capabilities)
     capabilities_bundle = {"value": capabilities, "snapshot_bytes": snapshot, "snapshot_filename": "submitted-capabilities.json" if submitted is not None else "capabilities.json"}
-    roles = load_role_definitions(); discovery = load_discovery_registry(); preparation_id = "prep_" + uuid.uuid4().hex
-    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, base_commit, _owner_paths(owner_paths))
+    roles = load_role_definitions(); discovery = load_discovery_registry(); contracts = _contract_snapshots(); preparation_id = "prep_" + uuid.uuid4().hex
+    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, contracts, base_commit, _owner_paths(owner_paths))
     root = _root(ctx); directory = root / "preparations" / preparation_id
     if directory.exists(): raise ValueError("assessment preparation collision")
-    directory.mkdir(parents=True); _atomic(directory / "assessment-source-packet.json", expected["source_packet"]); _atomic(directory / "assessment-work-orders.json", expected["manifest"]); _atomic(directory / "capabilities.json", capabilities)
+    directory.mkdir(parents=True); _atomic(directory / "assessment-source-packet.json", expected["source_packet"]); _atomic(directory / "assessment-work-orders.json", expected["manifest"]); _atomic(directory / "preparation-inputs.json", expected["preparation_inputs"]); _atomic(directory / "capabilities.json", capabilities)
     if submitted is not None: (directory / "submitted-capabilities.json").write_bytes(submitted)
     (directory / "source-discovery.v1.json").write_bytes(discovery["snapshot_bytes"])
+    for name, contract in contracts.items():
+        path = directory / "contract-schemas" / name; path.parent.mkdir(exist_ok=True); path.write_bytes(contract["bytes"])
     for role in ALL_ROLES:
         role_root = directory / "role-definitions"; role_root.mkdir(exist_ok=True); role_root.joinpath(role + ".json").write_bytes(roles[role]["snapshot_bytes"])
         _atomic(directory / "role-context" / f"{role}.json", expected["contexts"][role])
@@ -817,20 +840,22 @@ def prepare(ctx: LocalExecutionContext, *, capabilities_path: str | None = None,
     return {"preparation_id": preparation_id, "preparation_semantic_hash": expected["manifest"]["preparation_semantic_hash"], "source_packet_hash": expected["source_packet"]["packet_hash"], "work_orders": expected["manifest"]["work_orders"]}
 
 
-def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
+def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = None, *, _directory: Path | None = None) -> dict:
     root = _root(ctx); pointer = None
-    if preparation_id is None:
+    if _directory is None and preparation_id is None:
         pointer_path = root / "active-preparation.json"
         if pointer_path.is_symlink() or not pointer_path.is_file(): raise ValueError("active assessment preparation unavailable")
         pointer = _load_json_bytes(pointer_path.read_bytes()); preparation_id = pointer.get("preparation_id")
     if not isinstance(preparation_id, str) or not re.fullmatch(r"prep_[0-9a-f]{32}", preparation_id): raise ValueError("invalid assessment preparation ID")
-    directory = root / "preparations" / preparation_id
-    if directory.is_symlink() or not directory.is_dir() or directory.resolve().parent != (root / "preparations").resolve(): raise ValueError("invalid assessment preparation directory")
+    directory = _directory if _directory is not None else root / "preparations" / preparation_id
+    if directory.is_symlink() or not directory.is_dir() or (_directory is None and directory.resolve().parent != (root / "preparations").resolve()): raise ValueError("invalid assessment preparation directory")
     manifest_path = directory / "assessment-work-orders.json"
     if manifest_path.is_symlink() or not manifest_path.is_file(): raise ValueError("incomplete assessment preparation")
     stored_manifest = _load_json_bytes(manifest_path.read_bytes())
     if stored_manifest.get("compiler_version") != PREPARATION_COMPILER_VERSION: raise ValueError("stale_assessment_preparation_compiler_version")
-    preparation_inputs = stored_manifest.get("preparation_inputs")
+    input_path = directory / "preparation-inputs.json"
+    if input_path.is_symlink() or not input_path.is_file(): raise ValueError("assessment preparation inputs unavailable")
+    preparation_inputs = _load_json_bytes(input_path.read_bytes())
     if not isinstance(preparation_inputs, dict) or set(preparation_inputs) != {"base_commit", "owner_paths"}: raise ValueError("invalid assessment preparation inputs")
     owner = _owner_paths([f"{role}:{path}" for role, paths in preparation_inputs["owner_paths"].items() for path in paths])
     capabilities_path = directory / "capabilities.json"
@@ -847,7 +872,15 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = No
     discovery_path = directory / "source-discovery.v1.json"
     if discovery_path.is_symlink() or not discovery_path.is_file(): raise ValueError("assessment discovery snapshot unavailable")
     discovery = _discovery_snapshot(discovery_path.read_bytes())
-    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, preparation_inputs["base_commit"], owner)
+    contract_root = directory / "contract-schemas"
+    if contract_root.is_symlink() or not contract_root.is_dir(): raise ValueError("assessment contract snapshots unavailable")
+    contracts = {}
+    for path in contract_root.iterdir():
+        if path.is_symlink() or not path.is_file(): raise ValueError("invalid assessment contract snapshot")
+        raw = path.read_bytes(); value = _load_json_bytes(raw); contracts[path.name] = {"bytes": raw, "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "schema_version": value.get("$id", path.name).removesuffix(".json")}
+    expected_names = {"work-order.v2.json", "assessment-completion-receipt.v2.json", "browser-journey-result.v1.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
+    if set(contracts) != expected_names: raise ValueError("assessment contract snapshot set invalid")
+    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, contracts, preparation_inputs["base_commit"], owner)
     if stored_manifest != expected["manifest"] or manifest_path.read_bytes() != _render(expected["manifest"]): raise ValueError("assessment preparation semantic rederivation failed: manifest")
     source_path = directory / "assessment-source-packet.json"
     if source_path.is_symlink() or not source_path.is_file() or source_path.read_bytes() != _render(expected["source_packet"]): raise ValueError("assessment preparation semantic rederivation failed: source packet")
@@ -862,7 +895,7 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = No
         path = work_root / f"{work['work_order_id']}.json"
         if path.is_symlink() or path.read_bytes() != expected["work_order_bytes"][role]: raise ValueError("assessment preparation semantic rederivation failed: work order")
     if pointer is not None and pointer != expected["pointer"]: raise ValueError("assessment preparation pointer semantic binding is stale")
-    return {"directory": directory, "manifest": expected["manifest"], "source_packet": expected["source_packet"], "capabilities": capabilities, "graph_input": expected["inputs"], "contexts": expected["contexts"], "work_orders": expected["work_orders"]}
+    return {"directory": directory, "manifest": expected["manifest"], "source_packet": expected["source_packet"], "capabilities": capabilities, "graph_input": expected["inputs"], "contexts": expected["contexts"], "work_orders": expected["work_orders"], "contracts": contracts}
 
 
 def _enum(value: object, allowed: set[str], field: str) -> str:
@@ -887,8 +920,38 @@ def _bounded_node_refs(value: object, field: str, context: dict, allowed_types: 
     return result
 
 
+def _source_refs(value: object, context: dict) -> list[dict]:
+    if not isinstance(value, list) or len(value) > 100: raise ValueError("invalid packet source reference list")
+    sources = {item["path"]: item for item in context["sources"]}; canonical = []
+    full = {"path", "returned_git_path", "git_blob_hash", "normalized_text_hash"}; quoted = full | {"start_line", "end_line", "quote", "quote_hash"}
+    for ref in value:
+        if not isinstance(ref, dict) or frozenset(ref) not in {frozenset(full), frozenset(quoted)}: raise ValueError("invalid packet source reference")
+        source = sources.get(ref.get("path"))
+        if source is None or any(ref[field] != source[field] for field in full): raise ValueError("packet source reference escapes role context")
+        if set(ref) == quoted:
+            if type(ref["start_line"]) is not int or type(ref["end_line"]) is not int or ref["start_line"] < 1 or ref["end_line"] < ref["start_line"] or not isinstance(ref["quote"], str): raise ValueError("invalid packet source quote range")
+            lines = source["text"].split("\n")
+            if ref["end_line"] > len(lines): raise ValueError("packet source quote range is invalid")
+            bounded = "\n".join(lines[ref["start_line"] - 1:ref["end_line"]])
+            if bounded.count(ref["quote"]) != 1 or ref["quote_hash"] != _sha(ref["quote"].encode("utf-8")): raise ValueError("packet source quote binding mismatch")
+        canonical.append(json.loads(canonical_json(ref)))
+    tokens = [canonical_json(item) for item in canonical]
+    if len(tokens) != len(set(tokens)): raise ValueError("duplicate packet source reference")
+    return [json.loads(item) for item in sorted(tokens)]
+
+
+def _normalize_basis(record: dict, context: dict, *, require: bool) -> None:
+    nodes = {item["node_id"] for item in context["base_graph_context"]["nodes"]}; edges = {item["edge_id"] for item in context["base_graph_context"]["edges"]}; gaps = {item["gap_id"] for item in context["base_graph_context"]["gaps"]}
+    for field, allowed in (("basis_node_ids", nodes), ("basis_edge_ids", edges), ("basis_gap_ids", gaps)):
+        values = _bounded_strings(record[field], field)
+        if not set(values).issubset(allowed): raise ValueError(f"assessment {field} escapes prepared context")
+        record[field] = sorted(values)
+    record["basis_source_refs"] = _source_refs(record["basis_source_refs"], context)
+    if require and not any(record[field] for field in ("basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs")): raise ValueError("assessed record requires prepared basis")
+
+
 def _common_result_record(record: dict, identifier_field: str, assigned: dict[str, dict], context: dict, seen: set[str]) -> dict:
-    fields = {"local_id", identifier_field, "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    fields = {"local_id", identifier_field, "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}
     if not isinstance(record, dict) or not fields.issubset(record): raise ValueError("invalid assessment result record")
     local_id = _text(record["local_id"], "local_id", 120)
     if local_id in seen: raise ValueError("duplicate assessment local ID")
@@ -896,17 +959,16 @@ def _common_result_record(record: dict, identifier_field: str, assigned: dict[st
     if record_id not in assigned or record["scope_status"] != assigned[record_id]["scope_status"]: raise ValueError("assessment result changes assigned scope")
     disposition = _enum(record["disposition"], DISPOSITIONS, "disposition"); evidence_class = _enum(record["evidence_class"], EVIDENCE_CLASSES, "evidence_class")
     if (disposition == "assessed") != (evidence_class == "model_reviewed"): raise ValueError("assessment evidence class contradicts disposition")
+    if (record["scope_status"] == "blocked_by_ambiguity") != (disposition == "blocked_by_input_ambiguity"): raise ValueError("blocked assessment scope/disposition mismatch")
     if disposition == "not_applicable" and identifier_field == "criterion_id" and not assigned[record_id].get("repository_not_applicable_allowed", False): raise ValueError("criterion is not canonically not-applicable")
-    _enum(record["uncertainty"], UNCERTAINTIES, "uncertainty"); _text(record["rationale"], "rationale", RATIONALE_LIMIT)
-    nodes = {item["node_id"] for item in context["base_graph_context"]["nodes"]}; edges = {item["edge_id"] for item in context["base_graph_context"]["edges"]}; gaps = {item["gap_id"] for item in context["base_graph_context"]["gaps"]}
-    for field, allowed in (("basis_node_ids", nodes), ("basis_edge_ids", edges), ("basis_gap_ids", gaps)):
-        values = _bounded_strings(record[field], field)
-        if not set(values).issubset(allowed): raise ValueError(f"assessment {field} escapes prepared context")
+    uncertainty = _enum(record["uncertainty"], UNCERTAINTIES, "uncertainty")
+    if (disposition == "assessed") == (uncertainty == "not_assessed"): raise ValueError("assessment disposition/uncertainty mismatch")
+    _text(record["rationale"], "rationale", RATIONALE_LIMIT); _normalize_basis(record, context, require=disposition == "assessed")
     return record
 
 
 def _validate_gap(record: dict, role: str, assigned_criteria: set[str], role_definition: dict, context: dict, seen: set[str]) -> dict:
-    fields = {"local_id", "criterion_id", "gap_kind", "aspect_code", "actionability", "recommended_release_effect", "summary", "uncertainty", "evidence_class", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    fields = {"local_id", "criterion_id", "gap_kind", "aspect_code", "actionability", "recommended_release_effect", "summary", "uncertainty", "evidence_class", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}
     if not isinstance(record, dict) or set(record) != fields: raise ValueError("invalid assessment gap record")
     local_id = _text(record["local_id"], "gap.local_id", 120)
     if local_id in seen: raise ValueError("duplicate assessment local ID")
@@ -914,13 +976,13 @@ def _validate_gap(record: dict, role: str, assigned_criteria: set[str], role_def
     if record["criterion_id"] not in assigned_criteria: raise ValueError("assessment gap criterion is unassigned")
     taxonomy = {item["gap_kind"]: set(item["aspect_codes"]) for item in role_definition["gap_taxonomy"]}
     if record["gap_kind"] not in taxonomy or record["aspect_code"] not in taxonomy[record["gap_kind"]]: raise ValueError("assessment gap taxonomy violation")
-    _enum(record["actionability"], ACTIONABILITY, "gap actionability"); _enum(record["recommended_release_effect"], RELEASE_EFFECTS, "recommended release effect"); _enum(record["uncertainty"], UNCERTAINTIES, "gap uncertainty")
+    _enum(record["actionability"], ACTIONABILITY, "gap actionability"); _enum(record["recommended_release_effect"], RELEASE_EFFECTS, "recommended release effect"); uncertainty = _enum(record["uncertainty"], UNCERTAINTIES, "gap uncertainty")
+    if uncertainty == "not_assessed": raise ValueError("assessment gap must be assessed")
+    criterion = next(item for item in context["assigned_criteria"] if item["criterion_id"] == record["criterion_id"])
+    if record["recommended_release_effect"] == "blocker_candidate" and criterion["scope_status"] != "confirmed": raise ValueError("blocker candidate requires confirmed criterion")
     if record["evidence_class"] != "model_reviewed": raise ValueError("assessment gaps must remain model_reviewed")
     _text(record["summary"], "gap summary", RATIONALE_LIMIT)
-    nodes = {item["node_id"] for item in context["base_graph_context"]["nodes"]}; edges = {item["edge_id"] for item in context["base_graph_context"]["edges"]}; gaps = {item["gap_id"] for item in context["base_graph_context"]["gaps"]}
-    for field, allowed in (("basis_node_ids", nodes), ("basis_edge_ids", edges), ("basis_gap_ids", gaps)):
-        values = _bounded_strings(record[field], field)
-        if not set(values).issubset(allowed): raise ValueError(f"assessment gap {field} escapes prepared context")
+    _normalize_basis(record, context, require=True)
     record = json.loads(canonical_json(record)); record["gap_key"] = f"{role}|{record['criterion_id']}|{record['gap_kind']}|{record['aspect_code']}"; return record
 
 
@@ -929,16 +991,20 @@ def _validate_product_payload(payload: dict, context: dict, role_definition: dic
     seen = set(); req = {item["requirement_id"]: item for item in context["assigned_requirements"]}; crit = {item["criterion_id"]: item for item in context["assigned_criteria"]}; journeys = {item["journey_id"]: item for item in context["assigned_journeys"]}
     required_extra = {"intended_user_outcome", "partial_or_missing"}; journey_extra = {"journey_completeness", "declared_vs_evidence_assessed_scope"}; criterion_extra = {"implementation_status", "honest_success_state", "honest_failure_state", "evidence_required_after_launch"}
     for record in payload["requirements"]:
-        if set(record) != {"local_id", "requirement_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | required_extra: raise ValueError("invalid Product requirement assessment")
+        if set(record) != {"local_id", "requirement_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"} | required_extra: raise ValueError("invalid Product requirement assessment")
         _common_result_record(record, "requirement_id", req, context, seen); _text(record["intended_user_outcome"], "intended_user_outcome", DETAIL_LIMIT); _text(record["partial_or_missing"], "partial_or_missing", DETAIL_LIMIT)
+        if record["disposition"] != "assessed" and {record["intended_user_outcome"], record["partial_or_missing"]} != {"not_inspected"}: raise ValueError("non-assessed Product requirement must use not_inspected")
     for record in payload["journeys"]:
-        if set(record) != {"local_id", "journey_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | journey_extra: raise ValueError("invalid Product journey assessment")
+        if set(record) != {"local_id", "journey_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"} | journey_extra: raise ValueError("invalid Product journey assessment")
         _common_result_record(record, "journey_id", journeys, context, seen); _text(record["journey_completeness"], "journey_completeness", DETAIL_LIMIT); _text(record["declared_vs_evidence_assessed_scope"], "declared_vs_evidence_assessed_scope", DETAIL_LIMIT)
+        if record["disposition"] != "assessed" and {record["journey_completeness"], record["declared_vs_evidence_assessed_scope"]} != {"not_inspected"}: raise ValueError("non-assessed Product journey must use not_inspected")
     for record in payload["criteria"]:
-        if set(record) != {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | criterion_extra: raise ValueError("invalid Product criterion assessment")
+        if set(record) != {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"} | criterion_extra: raise ValueError("invalid Product criterion assessment")
         _common_result_record(record, "criterion_id", crit, context, seen); _text(record["implementation_status"], "implementation_status", DETAIL_LIMIT); _text(record["honest_success_state"], "honest_success_state", DETAIL_LIMIT); _text(record["honest_failure_state"], "honest_failure_state", DETAIL_LIMIT); _bounded_strings(record["evidence_required_after_launch"], "evidence_required_after_launch")
+        if record["disposition"] != "assessed" and (any(record[field] != "not_inspected" for field in ("implementation_status", "honest_success_state", "honest_failure_state")) or record["evidence_required_after_launch"]): raise ValueError("non-assessed Product criterion must use not_inspected")
     if {item["requirement_id"] for item in payload["requirements"]} != set(req) or {item["journey_id"] for item in payload["journeys"]} != set(journeys) or {item["criterion_id"] for item in payload["criteria"]} != set(crit): raise ValueError("Product assessment is incomplete")
-    gaps = [_validate_gap(item, "product_assessment", set(crit), role_definition, context, seen) for item in payload["gaps"]]
+    assessed = {item["criterion_id"] for item in payload["criteria"] if item["disposition"] == "assessed"}; gaps = [_validate_gap(item, "product_assessment", assessed, role_definition, context, seen) for item in payload["gaps"]]
+    if len({item["gap_key"] for item in gaps}) != len(gaps): raise ValueError("duplicate assessment gap key")
     decisions = []
     for item in payload["decision_candidates"]:
         if not isinstance(item, dict) or set(item) != {"local_id", "criterion_id", "question", "rationale"} or item["criterion_id"] not in crit: raise ValueError("invalid decision candidate")
@@ -952,44 +1018,51 @@ def _validate_engineering_payload(payload: dict, context: dict, role_definition:
     if not isinstance(payload, dict) or set(payload) != {"criteria", "gaps"}: raise ValueError("invalid Engineering assessment payload")
     assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set()
     extras = {"probable_component_node_ids", "existing_test_node_ids", "test_layer", "assertion_adequacy", "boundary_adequacy", "overall_adequacy", "mocks_or_bypasses", "negative_cases", "recovery_cases", "state_transition_cases", "runtime_evidence_node_ids", "dependency_isolation", "rollback_concern", "migration_concern", "remaining_gap", "required_closure_evidence"}
-    common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}
     for record in payload["criteria"]:
         if not isinstance(record, dict) or set(record) != common | extras: raise ValueError("invalid Engineering criterion row")
         _common_result_record(record, "criterion_id", assigned, context, seen); _enum(record["test_layer"], TEST_LAYERS, "test layer")
         for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy"): _enum(record[field], ADEQUACY, field)
-        _bounded_node_refs(record["probable_component_node_ids"], "probable_component_node_ids", context, {"implementation_reference"})
-        _bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"})
-        _bounded_node_refs(record["runtime_evidence_node_ids"], "runtime_evidence_node_ids", context, {"runtime_evidence"})
+        record["probable_component_node_ids"] = sorted(_bounded_node_refs(record["probable_component_node_ids"], "probable_component_node_ids", context, {"implementation_reference"}))
+        record["existing_test_node_ids"] = sorted(_bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"}))
+        record["runtime_evidence_node_ids"] = sorted(_bounded_node_refs(record["runtime_evidence_node_ids"], "runtime_evidence_node_ids", context, {"runtime_evidence"}))
         for field in ("mocks_or_bypasses", "negative_cases", "recovery_cases", "state_transition_cases", "required_closure_evidence"): _bounded_strings(record[field], field)
         for field in ("dependency_isolation", "rollback_concern", "migration_concern", "remaining_gap"): _text(record[field], field, DETAIL_LIMIT)
+        if record["disposition"] != "assessed" and (record["test_layer"] != "unknown" or any(record[field] != "not_inspected" for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy", "dependency_isolation", "rollback_concern", "migration_concern", "remaining_gap")) or any(record[field] for field in ("probable_component_node_ids", "existing_test_node_ids", "runtime_evidence_node_ids", "mocks_or_bypasses", "negative_cases", "recovery_cases", "state_transition_cases", "required_closure_evidence"))): raise ValueError("non-assessed Engineering row must use unknown/not_inspected")
     if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("Engineering assessment is incomplete")
-    return {"criteria": payload["criteria"], "gaps": [_validate_gap(item, "engineering_assessment", set(assigned), role_definition, context, seen) for item in payload["gaps"]]}
+    assessed = {item["criterion_id"] for item in payload["criteria"] if item["disposition"] == "assessed"}; gaps = [_validate_gap(item, "engineering_assessment", assessed, role_definition, context, seen) for item in payload["gaps"]]
+    if len({item["gap_key"] for item in gaps}) != len(gaps): raise ValueError("duplicate assessment gap key")
+    return {"criteria": payload["criteria"], "gaps": gaps}
 
 
 def _validate_test_payload(payload: dict, context: dict, role_definition: dict) -> dict:
     if not isinstance(payload, dict) or set(payload) != {"criteria", "gaps"}: raise ValueError("invalid test-adequacy payload")
-    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}; extras = {"existing_test_node_ids", "test_layer", "assertion_adequacy", "boundary_adequacy", "overall_adequacy", "negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"}
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}; extras = {"existing_test_node_ids", "test_layer", "assertion_adequacy", "boundary_adequacy", "overall_adequacy", "negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"}
     for record in payload["criteria"]:
         if not isinstance(record, dict) or set(record) != common | extras: raise ValueError("invalid test-adequacy criterion")
         _common_result_record(record, "criterion_id", assigned, context, seen); _enum(record["test_layer"], TEST_LAYERS, "test layer")
         for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy"): _enum(record[field], ADEQUACY, field)
-        _bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"})
+        record["existing_test_node_ids"] = sorted(_bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"}))
         for field in ("negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"): _bounded_strings(record[field], field)
+        if record["disposition"] != "assessed" and (record["test_layer"] != "unknown" or any(record[field] != "not_inspected" for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy")) or any(record[field] for field in ("existing_test_node_ids", "negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"))): raise ValueError("non-assessed test row must use unknown/not_inspected")
     if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("test-adequacy assessment is incomplete")
-    return {"criteria": payload["criteria"], "gaps": [_validate_gap(item, "test_adequacy", set(assigned), role_definition, context, seen) for item in payload["gaps"]]}
+    assessed = {item["criterion_id"] for item in payload["criteria"] if item["disposition"] == "assessed"}; gaps = [_validate_gap(item, "test_adequacy", assessed, role_definition, context, seen) for item in payload["gaps"]]
+    if len({item["gap_key"] for item in gaps}) != len(gaps): raise ValueError("duplicate assessment gap key")
+    return {"criteria": payload["criteria"], "gaps": gaps}
 
 
 def _validate_targeted_payload(payload: dict, context: dict, role_definition: dict) -> dict:
     if not isinstance(payload, dict) or set(payload) != {"criteria", "specifications"}: raise ValueError("invalid targeted-test payload")
-    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}
     for record in payload["criteria"]:
         if not isinstance(record, dict) or set(record) != common | {"recommendation_summary"}: raise ValueError("invalid targeted-test disposition")
         _common_result_record(record, "criterion_id", assigned, context, seen); _text(record["recommendation_summary"], "recommendation_summary", DETAIL_LIMIT)
+        if record["disposition"] != "assessed" and record["recommendation_summary"] != "not_inspected": raise ValueError("non-assessed targeted-test criterion must use not_inspected")
     if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("targeted-test planning is incomplete")
     if not isinstance(payload["specifications"], list) or len(payload["specifications"]) > TARGETED_SPEC_LIMIT: raise ValueError("too many targeted test specifications")
-    fields = {"local_id", "criterion_id", "risk_addressed", "test_layer", "setup", "action", "assertions", "negative_cases", "recovery_cases", "required_fixtures", "external_boundaries", "recommended_priority", "aspect_code", "addresses_gap_key", "uncertainty", "rationale"}; specs = []
+    fields = {"local_id", "criterion_id", "risk_addressed", "test_layer", "setup", "action", "assertions", "negative_cases", "recovery_cases", "required_fixtures", "external_boundaries", "recommended_priority", "aspect_code", "addresses_gap_key", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}; specs = []; assessed = {item["criterion_id"] for item in payload["criteria"] if item["disposition"] == "assessed"}
     for item in payload["specifications"]:
-        if not isinstance(item, dict) or set(item) != fields or item["criterion_id"] not in assigned: raise ValueError("invalid targeted test specification")
+        if not isinstance(item, dict) or set(item) != fields or item["criterion_id"] not in assessed: raise ValueError("invalid targeted test specification")
         local_id = _text(item["local_id"], "test specification local_id", 120)
         if local_id in seen: raise ValueError("duplicate assessment local ID")
         seen.add(local_id); _enum(item["test_layer"], TEST_LAYERS, "test layer"); _enum(item["recommended_priority"], TEST_PRIORITIES, "recommended priority"); _enum(item["uncertainty"], UNCERTAINTIES, "test uncertainty")
@@ -997,6 +1070,7 @@ def _validate_targeted_payload(payload: dict, context: dict, role_definition: di
         if item["addresses_gap_key"] is not None and (not isinstance(item["addresses_gap_key"], str) or len(item["addresses_gap_key"]) > 400): raise ValueError("invalid addressed gap key")
         for field in ("risk_addressed", "setup", "action", "rationale"): _text(item[field], field, DETAIL_LIMIT if field != "rationale" else RATIONALE_LIMIT)
         for field in ("assertions", "negative_cases", "recovery_cases", "required_fixtures", "external_boundaries"): _bounded_strings(item[field], field)
+        _normalize_basis(item, context, require=False)
         specs.append(item)
     return {"criteria": payload["criteria"], "specifications": specs}
 
@@ -1030,7 +1104,7 @@ def _validate_role_result(raw: bytes, receipt_raw: bytes, role: str, preparation
     count = sum(len(item) for item in payload.values() if isinstance(item, list))
     if count > RESULT_RECORD_LIMIT: raise ValueError("assessment result exceeds record limit")
     receipt = _validate_completion_receipt(_load_json_bytes(receipt_raw), work, raw)
-    normalized = {"schema_version": role.replace("_", "-") + ".v1", "role_id": role, "role_version": work["role_version"], "preparation_id": work["preparation_id"], "work_order_id": work["work_order_id"], "base_graph_generation": work["inputs"]["base_graph_generation"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "executor_provenance": receipt["executor"], "assumptions": assumptions, "limitations": limitations, "payload": json.loads(canonical_json(payload))}
+    normalized = {"schema_version": role.replace("_", "-") + ".v2", "role_id": role, "role_version": work["role_version"], "preparation_id": work["preparation_id"], "work_order_id": work["work_order_id"], "base_graph_generation": work["inputs"]["base_graph_generation"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "executor_provenance": receipt["executor"], "assumptions": sorted(assumptions), "limitations": sorted(limitations), "payload": json.loads(canonical_json(payload))}
     return value, receipt, normalized
 
 
@@ -1047,7 +1121,12 @@ def _compile_core_results(ctx: LocalExecutionContext, preparation: dict, snapsho
         evidence = inbox / "evidence"
         if evidence.is_symlink() or (evidence.exists() and any(evidence.iterdir())): raise ValueError("core assessment roles cannot submit canonical evidence files")
         raw, receipt_raw = result_path.read_bytes(), receipt_path.read_bytes(); submitted, receipt, normalized = _validate_role_result(raw, receipt_raw, role, preparation, roles[role])
-        raw_results[role] = submitted; receipts[role] = receipt; artifacts[role] = normalized; raw_bytes[role] = raw; receipt_bytes[role] = receipt_raw; snapshot_hashes[role] = {"result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw), "normalized_result_hash": content_hash(normalized)}
+        semantic_result = {key: value for key, value in normalized.items() if key != "executor_provenance"}
+        raw_results[role] = submitted; receipts[role] = receipt; artifacts[role] = normalized; raw_bytes[role] = raw; receipt_bytes[role] = receipt_raw; snapshot_hashes[role] = {"result_semantic_hash": content_hash(semantic_result), "result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw)}
+    gap_keys = {gap["gap_key"] for role in ("product_assessment", "engineering_assessment", "test_adequacy") for gap in artifacts[role]["payload"]["gaps"]}
+    for spec in artifacts["targeted_test_planning"]["payload"]["specifications"]:
+        has_basis = any(spec[field] for field in ("basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"))
+        if spec["addresses_gap_key"] not in gap_keys and not has_basis: raise ValueError("targeted test specification requires matched gap or prepared basis")
     return {"preparation": preparation, "artifacts": artifacts, "submitted_results": raw_results, "completion_receipts": receipts, "submitted_result_bytes": raw_bytes, "completion_receipt_bytes": receipt_bytes, "snapshot_hashes": snapshot_hashes}
 
 
@@ -1071,7 +1150,7 @@ def _base_index(preparation: dict) -> tuple[dict, set[str], dict]:
 def _build_overlay(core: dict) -> tuple[dict, dict]:
     preparation = core["preparation"]; nodes, criterion_ids, base_gaps = _base_index(preparation)
     overlay_nodes: list[dict] = []; edges: list[dict] = []; gap_nodes: dict[str, str] = {}
-    record_ids: set[str] = set()
+    record_ids: set[str] = set(); criterion_conclusions = {}; pending_gap_edges = []
     def add_edge(relationship: str, source: str, target: str, evidence_class: str) -> None:
         edge = {"edge_id": _assessment_id("assessment_edge", {"relationship": relationship, "source": source, "target": target}), "relationship": relationship, "source_node_id": source, "target_node_id": target, "assessment_evidence_class": evidence_class}
         if edge["edge_id"] not in {item["edge_id"] for item in edges}: edges.append(edge)
@@ -1080,27 +1159,32 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
         collections = (("requirements", "requirement_id", "assesses_requirement"), ("journeys", "journey_id", "concerns_journey"), ("criteria", "criterion_id", "assesses_criterion"))
         for collection, identifier, relationship in collections:
             for record in payload.get(collection, []):
-                substantive = {key: value for key, value in record.items() if key not in {"local_id", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}}
+                substantive = {key: value for key, value in record.items() if key not in {"local_id", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}}
                 node_id = _assessment_id("assessment_conclusion", {"role_id": role, "assessed_id": record[identifier], "kind": collection, "substantive": substantive, "work_order_id": work_order_id})
                 if node_id in record_ids: raise ValueError("duplicate semantic assessment conclusion")
-                record_ids.add(node_id); overlay_nodes.append({"node_id": node_id, "node_type": "assessment_conclusion", "role_id": role, "assessed_record_id": record[identifier], "conclusion_kind": collection, "evidence_class": record["evidence_class"], "substantive_conclusion": substantive, "work_order_id": work_order_id, "executor_provenance": artifact["executor_provenance"]})
+                hashes = core["snapshot_hashes"][role]
+                record_ids.add(node_id); overlay_nodes.append({"node_id": node_id, "node_type": "assessment_conclusion", "role_id": role, "assessed_record_id": record[identifier], "conclusion_kind": collection, "evidence_class": record["evidence_class"], "uncertainty": record["uncertainty"], "substantive_conclusion": substantive, "basis_node_ids": record["basis_node_ids"], "basis_edge_ids": record["basis_edge_ids"], "basis_gap_ids": record["basis_gap_ids"], "basis_source_refs": record["basis_source_refs"], "work_order_id": work_order_id, **hashes, "executor_provenance": artifact["executor_provenance"]})
+                if identifier == "criterion_id": criterion_conclusions[(role, record[identifier])] = node_id
                 add_edge(relationship, node_id, record[identifier], record["evidence_class"])
                 for basis in record["basis_node_ids"]:
-                    if nodes[basis]["node_type"] not in OVERLAY_BASE_NODE_TYPES: raise ValueError("assessment basis node type is not allowed")
-                    add_edge("supported_by_base_node", node_id, basis, record["evidence_class"])
+                    if nodes[basis]["node_type"] in OVERLAY_BASE_NODE_TYPES: add_edge("supported_by_base_node", node_id, basis, record["evidence_class"])
         for gap in payload.get("gaps", []):
             node_id = _assessment_id("assessment_gap", gap["gap_key"]); gap_nodes[gap["gap_key"]] = node_id
-            overlay_nodes.append({"node_id": node_id, "node_type": "assessment_gap", "role_id": role, "criterion_id": gap["criterion_id"], "gap_key": gap["gap_key"], "gap_kind": gap["gap_kind"], "aspect_code": gap["aspect_code"], "actionability": gap["actionability"], "recommended_release_effect": gap["recommended_release_effect"], "evidence_class": "model_reviewed", "summary": gap["summary"], "work_order_id": work_order_id, "executor_provenance": artifact["executor_provenance"]})
+            hashes = core["snapshot_hashes"][role]
+            overlay_nodes.append({"node_id": node_id, "node_type": "assessment_gap", "role_id": role, "criterion_id": gap["criterion_id"], "gap_key": gap["gap_key"], "gap_kind": gap["gap_kind"], "aspect_code": gap["aspect_code"], "actionability": gap["actionability"], "recommended_release_effect": gap["recommended_release_effect"], "evidence_class": "model_reviewed", "uncertainty": gap["uncertainty"], "summary": gap["summary"], "basis_node_ids": gap["basis_node_ids"], "basis_edge_ids": gap["basis_edge_ids"], "basis_gap_ids": gap["basis_gap_ids"], "basis_source_refs": gap["basis_source_refs"], "work_order_id": work_order_id, **hashes, "executor_provenance": artifact["executor_provenance"]}); pending_gap_edges.append((role, gap["criterion_id"], node_id))
             add_edge("concerns_criterion", node_id, gap["criterion_id"], "model_reviewed")
             for basis in gap["basis_node_ids"]:
-                if nodes[basis]["node_type"] not in OVERLAY_BASE_NODE_TYPES: raise ValueError("assessment gap basis node type is not allowed")
-                add_edge("supported_by_base_node", node_id, basis, "model_reviewed")
+                if nodes[basis]["node_type"] in OVERLAY_BASE_NODE_TYPES: add_edge("supported_by_base_node", node_id, basis, "model_reviewed")
     targeted = core["artifacts"]["targeted_test_planning"]
     for spec in targeted["payload"]["specifications"]:
-        node_id = _assessment_id("targeted_test_specification", {key: spec[key] for key in ("criterion_id", "test_layer", "setup", "action", "assertions", "risk_addressed", "aspect_code")})
-        overlay_nodes.append({"node_id": node_id, "node_type": "targeted_test_specification", "criterion_id": spec["criterion_id"], "risk_addressed": spec["risk_addressed"], "test_layer": spec["test_layer"], "setup": spec["setup"], "action": spec["action"], "assertions": spec["assertions"], "recommended_priority": spec["recommended_priority"], "aspect_code": spec["aspect_code"], "evidence_class": "model_reviewed", "work_order_id": targeted["work_order_id"], "executor_provenance": targeted["executor_provenance"]})
+        node_id = _assessment_id("targeted_test_specification", {key: value for key, value in spec.items() if key not in {"local_id", "basis_node_ids", "basis_edge_ids", "basis_gap_ids", "basis_source_refs"}})
+        overlay_nodes.append({"node_id": node_id, "node_type": "targeted_test_specification", "criterion_id": spec["criterion_id"], "specification": spec, "evidence_class": "model_reviewed", "uncertainty": spec["uncertainty"], "basis_node_ids": spec["basis_node_ids"], "basis_edge_ids": spec["basis_edge_ids"], "basis_gap_ids": spec["basis_gap_ids"], "basis_source_refs": spec["basis_source_refs"], "work_order_id": targeted["work_order_id"], **core["snapshot_hashes"]["targeted_test_planning"], "executor_provenance": targeted["executor_provenance"]})
         add_edge("proposes_test_for", node_id, spec["criterion_id"], "model_reviewed")
         if spec["addresses_gap_key"] in gap_nodes: add_edge("addresses_assessment_gap", node_id, gap_nodes[spec["addresses_gap_key"]], "model_reviewed")
+    for role, criterion_id, gap_id in pending_gap_edges:
+        conclusion = criterion_conclusions.get((role, criterion_id))
+        if conclusion is None: raise ValueError("assessment gap lacks same-role criterion conclusion")
+        add_edge("identifies_assessment_gap", conclusion, gap_id, "model_reviewed")
     overlay = {"schema_version": OVERLAY_SCHEMA, "release_id": preparation["manifest"]["release_id"], "release_commit": preparation["manifest"]["release_commit"], "preparation_id": preparation["manifest"]["preparation_id"], "base_graph_generation": preparation["manifest"]["graph_generation"], "base_graph_semantic_hash": preparation["manifest"]["graph_semantic_hash"], "nodes": sorted(overlay_nodes, key=lambda item: item["node_id"]), "edges": sorted(edges, key=lambda item: item["edge_id"])}
     by_criterion = {}
     for criterion_id in sorted(criterion_ids):
@@ -1109,6 +1193,8 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
         for node in overlay_nodes:
             if node["node_type"] == "assessment_conclusion" and node["assessed_record_id"] == criterion_id:
                 assessment[node["role_id"]] = node["substantive_conclusion"]; authority[node["role_id"]] = node["evidence_class"]
+        browser = preparation["source_packet"]["browser_work_order"]
+        assessment["browser_journey"] = {"status": "not_inspected" if browser["issued"] else "not_issued", "reason_code": browser["reason_code"]}; authority["browser_journey"] = "not_inspected"
         by_criterion[criterion_id] = {"criterion_id": criterion_id, "base_evidence_state": {"implementation": gap_state.get("implementation_gap", "unknown"), "test": gap_state.get("test_evidence_gap", "unknown"), "instrumentation": gap_state.get("instrumentation_gap", "unknown"), "runtime": gap_state.get("runtime_evidence_gap", "unknown")}, "assessment": assessment, "assessment_authority": authority, "assessment_gap_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "assessment_gap" and node["criterion_id"] == criterion_id), "targeted_test_specification_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "targeted_test_specification" and node["criterion_id"] == criterion_id)}
     effective = {"schema_version": EFFECTIVE_VIEW_SCHEMA, "release_id": preparation["manifest"]["release_id"], "base_graph_generation": preparation["manifest"]["graph_generation"], "authority": {"base_graph": "authoritative_evidence_graph", "assessment_overlay": "authoritative_assessment_record", "effective_view": "derived_only"}, "criteria": [by_criterion[key] for key in sorted(by_criterion)]}
     return overlay, effective
@@ -1117,7 +1203,7 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
 def _build_assessment_artifacts(core: dict) -> dict:
     overlay, effective = _build_overlay(core); prep = core["preparation"]; browser_entry = next(item for item in prep["manifest"]["work_orders"] if item["role_id"] == "browser_journey")
     browser = {"schema_version": "browser-journey.v1", "status": "not_inspected" if browser_entry["issued"] else "not_issued", "reason_code": browser_entry["reason_code"], "work_order_id": browser_entry["work_order_id"], "observations": [], "judgments": []}
-    receipts = {"schema_version": "assessment-compiler-receipts.v1", "preparation_id": prep["manifest"]["preparation_id"], "validations": [{"role_id": role, "work_order_id": prep["work_orders"][role]["work_order_id"], **core["snapshot_hashes"][role], "status": "accepted"} for role in CORE_ROLES]}
+    receipts = {"schema_version": "assessment-compiler-receipts.v2", "preparation_id": prep["manifest"]["preparation_id"], "validations": [{"role_id": role, "work_order_id": prep["work_orders"][role]["work_order_id"], **core["snapshot_hashes"][role], "status": "accepted"} for role in CORE_ROLES]}
     return {"product-assessment.json": core["artifacts"]["product_assessment"], "engineering-assessment.json": core["artifacts"]["engineering_assessment"], "test-adequacy.json": core["artifacts"]["test_adequacy"], "targeted-test-plan.json": core["artifacts"]["targeted_test_planning"], "browser-journey.json": browser, "assessment-work-orders.json": prep["manifest"], "assessment-graph-overlay.json": overlay, "effective-assessment-view.json": effective, "assessment-compiler-receipts.json": receipts}
 
 
@@ -1126,25 +1212,26 @@ def _validate_assessment_artifacts(core: dict, artifacts: dict) -> None:
     overlay = artifacts["assessment-graph-overlay.json"]; expected_top = {"schema_version","release_id","release_commit","preparation_id","base_graph_generation","base_graph_semantic_hash","nodes","edges"}
     if not isinstance(overlay, dict) or set(overlay) != expected_top or overlay.get("schema_version") != OVERLAY_SCHEMA: raise ValueError("assessment overlay schema is invalid")
     variant_fields = {
-        "assessment_conclusion": {"node_id","node_type","role_id","assessed_record_id","conclusion_kind","evidence_class","substantive_conclusion","work_order_id","executor_provenance"},
-        "assessment_gap": {"node_id","node_type","role_id","criterion_id","gap_key","gap_kind","aspect_code","actionability","recommended_release_effect","evidence_class","summary","work_order_id","executor_provenance"},
-        "targeted_test_specification": {"node_id","node_type","criterion_id","risk_addressed","test_layer","setup","action","assertions","recommended_priority","aspect_code","evidence_class","work_order_id","executor_provenance"},
+        "assessment_conclusion": {"node_id","node_type","role_id","assessed_record_id","conclusion_kind","evidence_class","uncertainty","substantive_conclusion","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
+        "assessment_gap": {"node_id","node_type","role_id","criterion_id","gap_key","gap_kind","aspect_code","actionability","recommended_release_effect","evidence_class","uncertainty","summary","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
+        "targeted_test_specification": {"node_id","node_type","criterion_id","specification","evidence_class","uncertainty","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
         "browser_observation": {"node_id","node_type","criterion_id","evidence_class","observation","work_order_id","executor_provenance"},
     }
     overlay_nodes = {}
     for node in overlay["nodes"]:
         if not isinstance(node, dict) or node.get("node_type") not in variant_fields or set(node) != variant_fields[node["node_type"]] or node.get("evidence_class") not in {"model_reviewed","browser_observed","not_inspected"} or node["node_id"] in overlay_nodes: raise ValueError("assessment overlay node schema is invalid")
         overlay_nodes[node["node_id"]] = node
-    base_nodes, _, _ = _base_index(core["preparation"]); relationship_targets = {"assesses_requirement":{"requirement"},"assesses_criterion":{"acceptance_criterion"},"concerns_criterion":{"acceptance_criterion"},"concerns_journey":{"critical_journey"},"supported_by_base_node":OVERLAY_BASE_NODE_TYPES,"identifies_assessment_gap":{"assessment_gap"},"proposes_test_for":{"acceptance_criterion"},"addresses_assessment_gap":{"assessment_gap"},"supported_by_browser_observation":{"browser_observation"}}
+    base_nodes, _, _ = _base_index(core["preparation"]); relationship_targets = {"assesses_requirement":{"requirement"},"assesses_criterion":{"acceptance_criterion"},"concerns_criterion":{"acceptance_criterion"},"concerns_journey":{"critical_journey"},"supported_by_base_node":OVERLAY_BASE_NODE_TYPES,"identifies_assessment_gap":{"assessment_gap"},"proposes_test_for":{"acceptance_criterion"},"addresses_assessment_gap":{"assessment_gap"},"supported_by_browser_observation":{"browser_observation"}}; relationship_sources = {"assesses_requirement":{"assessment_conclusion"},"assesses_criterion":{"assessment_conclusion"},"concerns_criterion":{"assessment_gap","browser_observation"},"concerns_journey":{"assessment_conclusion","assessment_gap","browser_observation"},"supported_by_base_node":{"assessment_conclusion","assessment_gap"},"identifies_assessment_gap":{"assessment_conclusion"},"proposes_test_for":{"targeted_test_specification"},"addresses_assessment_gap":{"targeted_test_specification"},"supported_by_browser_observation":{"assessment_conclusion"}}
     seen_edges = set()
     for edge in overlay["edges"]:
-        if not isinstance(edge, dict) or set(edge) != {"edge_id","relationship","source_node_id","target_node_id","assessment_evidence_class"} or edge["edge_id"] in seen_edges or edge["source_node_id"] not in overlay_nodes or edge["assessment_evidence_class"] not in {"model_reviewed","browser_observed","not_inspected"} or edge["relationship"] not in relationship_targets: raise ValueError("assessment overlay edge schema is invalid")
+        if not isinstance(edge, dict) or set(edge) != {"edge_id","relationship","source_node_id","target_node_id","assessment_evidence_class"} or edge["edge_id"] in seen_edges or edge["source_node_id"] not in overlay_nodes or edge["assessment_evidence_class"] not in {"model_reviewed","browser_observed","not_inspected"} or edge["relationship"] not in relationship_targets or overlay_nodes[edge["source_node_id"]]["node_type"] not in relationship_sources[edge["relationship"]] or edge["assessment_evidence_class"] != overlay_nodes[edge["source_node_id"]]["evidence_class"]: raise ValueError("assessment overlay edge schema is invalid")
         seen_edges.add(edge["edge_id"]); target = overlay_nodes.get(edge["target_node_id"]) or base_nodes.get(edge["target_node_id"])
         if target is None or target["node_type"] not in relationship_targets[edge["relationship"]]: raise ValueError("assessment overlay relationship target is invalid")
+        if edge["relationship"] == "identifies_assessment_gap" and (overlay_nodes[edge["source_node_id"]]["role_id"] != target["role_id"] or overlay_nodes[edge["source_node_id"]]["assessed_record_id"] != target["criterion_id"]): raise ValueError("assessment gap relationship role mismatch")
     effective = artifacts["effective-assessment-view.json"]
     if not isinstance(effective, dict) or set(effective) != {"schema_version","release_id","base_graph_generation","authority","criteria"} or effective.get("schema_version") != EFFECTIVE_VIEW_SCHEMA or effective.get("authority") != {"base_graph":"authoritative_evidence_graph","assessment_overlay":"authoritative_assessment_record","effective_view":"derived_only"}: raise ValueError("effective assessment view schema is invalid")
     for criterion in effective["criteria"]:
-        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}) or not set(criterion["assessment_authority"].values()).issubset({"model_reviewed","not_inspected"}): raise ValueError("effective assessment criterion schema is invalid")
+        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or set(criterion["assessment"]) != set(ALL_ROLES) or set(criterion["assessment_authority"]) != set(ALL_ROLES) or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}) or not set(criterion["assessment_authority"].values()).issubset({"model_reviewed","not_inspected"}): raise ValueError("effective assessment criterion schema is invalid")
     expected = _build_assessment_artifacts(core)
     if artifacts != expected: raise ValueError("assessment semantic artifacts are stale")
 
@@ -1165,30 +1252,35 @@ def compile_assessment(ctx: LocalExecutionContext, preparation_id: str | None = 
         relative = source.relative_to(core["preparation"]["directory"]).as_posix(); target = preparation_snapshot / Path(relative); target.parent.mkdir(parents=True, exist_ok=True); raw = source.read_bytes(); target.write_bytes(raw); preparation_hashes[relative] = _sha(raw)
     manifest = {"schema_version": ASSESSMENT_MANIFEST_SCHEMA, "compiler_version": ASSESSMENT_COMPILER_VERSION, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": core["preparation"]["source_packet"]["project_authority"], "preparation_id": core["preparation"]["manifest"]["preparation_id"], "preparation_semantic_hash": core["preparation"]["manifest"]["preparation_semantic_hash"], "base_graph_generation": core["preparation"]["manifest"]["graph_generation"], "base_graph_semantic_hash": core["preparation"]["manifest"]["graph_semantic_hash"], "artifact_filenames": list(ASSESSMENT_ARTIFACTS), "artifact_hashes": hashes, "preparation_snapshot_hashes": preparation_hashes, "result_snapshot_hashes": core["snapshot_hashes"]}
     manifest["semantic_bundle_hash"] = content_hash({"compiler_version": ASSESSMENT_COMPILER_VERSION, "preparation_semantic_hash": manifest["preparation_semantic_hash"], "base_graph_semantic_hash": manifest["base_graph_semantic_hash"], "artifact_hashes": {key: hashes[key] for key in sorted(hashes)}}); manifest["bundle_hash"] = content_hash(manifest); _atomic(directory / "manifest.json", manifest)
+    if _BEFORE_ASSESSMENT_GENERATION_VERIFY: _BEFORE_ASSESSMENT_GENERATION_VERIFY(directory)
+    loaded, _ = load_assessment(ctx, _directory=directory)
+    if loaded != manifest: raise ValueError("new assessment generation verification mismatch")
     if _BEFORE_ASSESSMENT_POINTER_REPLACE: _BEFORE_ASSESSMENT_POINTER_REPLACE(directory)
     _atomic(root / "current-assessment.json", {"schema_version": ASSESSMENT_POINTER_SCHEMA, "generation": directory.name, "manifest_hash": _sha((directory / "manifest.json").read_bytes())})
     return manifest
 
 
-def load_assessment(ctx: LocalExecutionContext) -> tuple[dict, dict]:
+def load_assessment(ctx: LocalExecutionContext, *, _directory: Path | None = None) -> tuple[dict, dict]:
     root = _root(ctx); pointer_path = root / "current-assessment.json"
-    if pointer_path.is_symlink() or not pointer_path.is_file(): raise ValueError("complete assessment generation is unavailable")
-    pointer = _load_json_bytes(pointer_path.read_bytes())
-    if set(pointer) != {"schema_version", "generation", "manifest_hash"} or pointer["schema_version"] != ASSESSMENT_POINTER_SCHEMA or not re.fullmatch(r"gen_[0-9a-f]{32}", str(pointer["generation"])): raise ValueError("invalid assessment pointer")
-    raw_directory = root / "generations" / pointer["generation"]
+    if _directory is None:
+        if pointer_path.is_symlink() or not pointer_path.is_file(): raise ValueError("complete assessment generation is unavailable")
+        pointer = _load_json_bytes(pointer_path.read_bytes())
+        if set(pointer) != {"schema_version", "generation", "manifest_hash"} or pointer["schema_version"] != ASSESSMENT_POINTER_SCHEMA or not re.fullmatch(r"gen_[0-9a-f]{32}", str(pointer["generation"])): raise ValueError("invalid assessment pointer")
+        raw_directory = root / "generations" / pointer["generation"]
+    else:
+        pointer = None; raw_directory = _directory
     if raw_directory.is_symlink() or not raw_directory.is_dir() or raw_directory.resolve().parent != (root / "generations").resolve(): raise ValueError("invalid assessment generation")
     directory = raw_directory.resolve(); manifest_path = directory / "manifest.json"
-    if manifest_path.is_symlink() or not manifest_path.is_file() or _sha(manifest_path.read_bytes()) != pointer["manifest_hash"]: raise ValueError("invalid assessment manifest binding")
+    if manifest_path.is_symlink() or not manifest_path.is_file() or (pointer is not None and _sha(manifest_path.read_bytes()) != pointer["manifest_hash"]): raise ValueError("invalid assessment manifest binding")
     manifest = _load_json_bytes(manifest_path.read_bytes()); required = {"schema_version","compiler_version","release_id","release_commit","project_authority","preparation_id","preparation_semantic_hash","base_graph_generation","base_graph_semantic_hash","artifact_filenames","artifact_hashes","preparation_snapshot_hashes","result_snapshot_hashes","semantic_bundle_hash","bundle_hash"}
     if set(manifest) != required or manifest["schema_version"] != ASSESSMENT_MANIFEST_SCHEMA or manifest["compiler_version"] != ASSESSMENT_COMPILER_VERSION or manifest["bundle_hash"] != content_hash({key: value for key, value in manifest.items() if key != "bundle_hash"}): raise ValueError("assessment manifest invalid or stale")
-    preparation = load_preparation(ctx, manifest["preparation_id"])
+    snapshot_root = directory / "preparation-snapshot"
+    preparation = load_preparation(ctx, manifest["preparation_id"], _directory=snapshot_root)
     if manifest["release_id"] != ctx.release["release_id"] or manifest["release_commit"] != ctx.authority_binding["repository_commit"] or manifest["project_authority"] != preparation["source_packet"]["project_authority"] or manifest["preparation_semantic_hash"] != preparation["manifest"]["preparation_semantic_hash"] or manifest["base_graph_generation"] != preparation["manifest"]["graph_generation"] or manifest["base_graph_semantic_hash"] != preparation["manifest"]["graph_semantic_hash"]: raise ValueError("assessment authority is stale")
-    expected_preparation_files = {path.relative_to(preparation["directory"]).as_posix(): path for path in preparation["directory"].rglob("*") if path.is_file()}
-    snapshot_root = directory / "preparation-snapshot"; stored_preparation_files = {path.relative_to(snapshot_root).as_posix(): path for path in snapshot_root.rglob("*") if path.is_file()} if snapshot_root.is_dir() and not snapshot_root.is_symlink() else {}
-    if set(expected_preparation_files) != set(stored_preparation_files) or set(manifest["preparation_snapshot_hashes"]) != set(expected_preparation_files): raise ValueError("assessment preparation snapshot set is invalid")
-    for relative, source in expected_preparation_files.items():
-        stored = stored_preparation_files[relative]
-        if source.is_symlink() or stored.is_symlink() or stored.read_bytes() != source.read_bytes() or _sha(stored.read_bytes()) != manifest["preparation_snapshot_hashes"][relative]: raise ValueError("assessment preparation snapshot is stale")
+    stored_preparation_files = {path.relative_to(snapshot_root).as_posix(): path for path in snapshot_root.rglob("*") if path.is_file()} if snapshot_root.is_dir() and not snapshot_root.is_symlink() else {}
+    if set(manifest["preparation_snapshot_hashes"]) != set(stored_preparation_files): raise ValueError("assessment preparation snapshot set is invalid")
+    for relative, stored in stored_preparation_files.items():
+        if stored.is_symlink() or _sha(stored.read_bytes()) != manifest["preparation_snapshot_hashes"][relative]: raise ValueError("assessment preparation snapshot is stale")
     core = _compile_core_results(ctx, preparation, directory / "result-snapshots")
     if core["snapshot_hashes"] != manifest["result_snapshot_hashes"]: raise ValueError("assessment result snapshots are stale")
     artifacts = {}

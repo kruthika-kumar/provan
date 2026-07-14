@@ -310,11 +310,11 @@ def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extra
     root = Path(__file__).parents[1] / "schemas"
     contracts = [
         ("assessment-capabilities.v1.json", loaded["capabilities"]),
-        ("assessment-source-packet.v1.json", loaded["source_packet"]),
-        ("assessment-work-orders.v1.json", loaded["manifest"]),
+            ("assessment-source-packet.v2.json", loaded["source_packet"]),
+            ("assessment-work-orders.v2.json", loaded["manifest"]),
     ]
     contracts.extend(("assessment-role.v1.json", item["value"]) for item in load_role_definitions().values())
-    contracts.extend(("work-order.v1.json", item) for item in loaded["work_orders"].values())
+    contracts.extend(("work-order.v2.json", item) for item in loaded["work_orders"].values())
     for schema_name, value in contracts:
         schema = json.loads((root / schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
         invalid = dict(value); invalid["unexpected"] = True
@@ -334,5 +334,5 @@ def test_explicit_release_browser_target_authority_is_rejected_by_python_and_sch
     jsonschema = pytest.importorskip("jsonschema"); ctx, capability_path = browser_assessment_context(tmp_path); prepare_assessment(ctx, capabilities_path=str(capability_path)); work = load_preparation(ctx)["work_orders"]["browser_journey"]
     invalid = json.loads(json.dumps(work)); invalid["permissions"]["browser"]["allowed_targets"][0]["authority"] = "explicit_release_browser_target"; invalid["work_order_hash"] = _work_order_hash(invalid)
     with pytest.raises(ValueError, match="browser target"): _validate_work_order(invalid)
-    schema = json.loads((Path(__file__).parents[1] / "schemas/work-order.v1.json").read_text(encoding="utf-8"))
+    schema = json.loads((Path(__file__).parents[1] / "schemas/work-order.v2.json").read_text(encoding="utf-8"))
     with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)

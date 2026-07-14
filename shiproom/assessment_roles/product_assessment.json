@@ -1,7 +1,7 @@
 {
   "schema_version": "shiproom.assessment-role.v1",
   "role_id": "product_assessment",
-  "role_version": "1.0.0",
+  "role_version": "2.0.0",
   "mandate": "Assess intended outcomes, journeys, scope, ambiguity, and evidence needs without changing release truth.",
   "assessment_method": ["Read the complete prepared Product Intent and graph context.", "Return one disposition for every assigned requirement, journey, and criterion.", "Separate declared scope from evidence-assessed scope.", "Identify only taxonomy-approved product gaps and decision candidates."],
   "assigned_record_types": ["requirement", "critical_journey", "acceptance_criterion"],
@@ -18,7 +18,7 @@
   ],
   "aspect_codes": ["general", "primary_journey", "public_route", "failure_state", "scope_boundary", "source_conflict"],
   "forbidden_claims": ["assessment judgment is deterministic evidence", "assessment gaps are release findings", "an unconfirmed criterion is a release blocker", "new browser observations were consumed by Product assessment", "the reviewer may mutate release state"],
-  "required_output_schema": "schemas/product-assessment-result.v1.json",
+  "required_output_schema": "schemas/product-assessment-result.v2.json",
   "completion_rules": ["Return exactly one disposition for each assigned ID.", "Cite only prepared base references.", "Keep every conclusion model_reviewed or not_inspected.", "Use decision_candidate rather than owner_decision."],
   "reasoning_examples": {"adequate": ["The declared public-sharing outcome is explicit, while runtime coverage remains unknown in the immutable graph."], "inadequate": ["The feature probably works because a route file exists."]}
 }

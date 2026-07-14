@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-order.v2.json",
+  "type": "object",
+  "required": ["schema_version", "work_order_id", "work_order_hash", "preparation_id", "preparation_semantic_hash", "release_id", "release_commit", "role_id", "role_version", "role_definition_hash", "role_definition_snapshot_hash", "objective", "inputs", "capability_requirements", "permissions", "required_output", "forbidden_claims"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "shiproom.work-order.v2"},
+    "work_order_id": {"type": "string", "pattern": "^wo_[a-z_]+_[0-9a-f]{16}$"},
+    "work_order_hash": {"$ref": "#/$defs/hash"},
+    "preparation_id": {"type": "string", "pattern": "^prep_[0-9a-f]{32}$"},
+    "preparation_semantic_hash": {"$ref": "#/$defs/hash"},
+    "release_id": {"type": "string", "minLength": 1},
+    "release_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "role_id": {"enum": ["product_assessment", "engineering_assessment", "test_adequacy", "targeted_test_planning", "browser_journey"]},
+    "role_version": {"const": "2.0.0"},
+    "role_definition_hash": {"$ref": "#/$defs/hash"},
+    "role_definition_snapshot_hash": {"$ref": "#/$defs/hash"},
+    "objective": {"type": "string", "minLength": 1},
+    "inputs": {"$ref": "#/$defs/inputs"},
+    "capability_requirements": {"$ref": "#/$defs/capabilityRequirements"},
+    "permissions": {"$ref": "#/$defs/permissions"},
+    "required_output": {"$ref": "#/$defs/requiredOutput"},
+    "forbidden_claims": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "strings": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "inputs": {
+      "type": "object",
+      "required": ["packet_path", "packet_hash", "criterion_ids", "requirement_ids", "journey_ids", "allowed_paths", "base_graph_generation", "base_graph_semantic_hash", "product_intent_semantic_hash", "mapping_packet_hash", "change_impact_status"],
+      "additionalProperties": false,
+      "properties": {
+        "packet_path": {"type": "string", "minLength": 1}, "packet_hash": {"$ref": "#/$defs/hash"},
+        "criterion_ids": {"$ref": "#/$defs/strings"}, "requirement_ids": {"$ref": "#/$defs/strings"}, "journey_ids": {"$ref": "#/$defs/strings"}, "allowed_paths": {"$ref": "#/$defs/strings"},
+        "base_graph_generation": {"type": "string", "pattern": "^gen_[0-9a-f]{32}$"}, "base_graph_semantic_hash": {"$ref": "#/$defs/hash"}, "product_intent_semantic_hash": {"$ref": "#/$defs/hash"}, "mapping_packet_hash": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "change_impact_status": {"enum": ["unavailable", "available"]}
+      }
+    },
+    "capabilityRequirements": {
+      "type": "object", "required": ["file_read", "shell", "browser", "network"], "additionalProperties": false,
+      "properties": {"file_read": {"enum": ["required", "optional", "unavailable"]}, "shell": {"enum": ["required", "optional", "unavailable"]}, "browser": {"enum": ["required", "optional", "unavailable"]}, "network": {"enum": ["required", "optional", "unavailable"]}}
+    },
+    "command": {
+      "type": "object", "required": ["command_id", "criterion_id", "required_for_release", "argv", "cwd", "purpose", "source", "timeout_seconds", "output_limit_bytes", "allowed_environment"], "additionalProperties": false,
+      "properties": {"command_id": {"type": "string", "minLength": 1, "maxLength": 80}, "criterion_id": {"type": "string", "minLength": 1, "maxLength": 120}, "required_for_release": {"type": "boolean"}, "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "cwd": {"type": "string"}, "purpose": {"type": "string", "minLength": 1}, "source": {"type": "object", "required": ["ref", "hash"], "additionalProperties": false, "properties": {"ref": {"type": "string"}, "hash": {"$ref": "#/$defs/hash"}}}, "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 900}, "output_limit_bytes": {"type": "integer", "minimum": 1024, "maximum": 10485760}, "allowed_environment": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
+    },
+    "browserTarget": {
+      "type": "object", "required": ["url", "origin", "path_pattern", "authority"], "additionalProperties": false,
+      "properties": {"url": {"type": "string", "minLength": 1}, "origin": {"type": "string", "minLength": 1}, "path_pattern": {"type": "string", "minLength": 1}, "authority": {"enum": ["deployment_grant", "canonical_runtime_target"]}}
+    },
+    "permissions": {
+      "type": "object", "required": ["repository", "shell", "browser"], "additionalProperties": false,
+      "properties": {"repository": {"const": "read_only"}, "shell": {"type": "object", "required": ["allowed_commands"], "additionalProperties": false, "properties": {"allowed_commands": {"type": "array", "items": {"$ref": "#/$defs/command"}}}}, "browser": {"type": "object", "required": ["allowed_targets"], "additionalProperties": false, "properties": {"allowed_targets": {"type": "array", "items": {"$ref": "#/$defs/browserTarget"}}}}
+      }
+    },
+    "requiredOutput": {
+      "type": "object", "required": ["schema_path", "schema_version", "schema_semantic_hash", "schema_snapshot_hash", "output_path", "completion_receipt_schema_path", "completion_receipt_schema_version", "completion_receipt_schema_semantic_hash", "completion_receipt_schema_snapshot_hash", "completion_receipt_path", "evidence_directory"], "additionalProperties": false,
+      "properties": {"schema_path": {"type": "string", "pattern": "^contract-schemas/[a-z-]+-result\\.v[12]\\.json$"}, "schema_version": {"type": "string"}, "schema_semantic_hash": {"$ref": "#/$defs/hash"}, "schema_snapshot_hash": {"$ref": "#/$defs/hash"}, "output_path": {"type": "string"}, "completion_receipt_schema_path": {"const": "contract-schemas/assessment-completion-receipt.v2.json"}, "completion_receipt_schema_version": {"const": "assessment-completion-receipt.v2"}, "completion_receipt_schema_semantic_hash": {"$ref": "#/$defs/hash"}, "completion_receipt_schema_snapshot_hash": {"$ref": "#/$defs/hash"}, "completion_receipt_path": {"type": "string"}, "evidence_directory": {"type": "string"}}
+    }
+  }
+}

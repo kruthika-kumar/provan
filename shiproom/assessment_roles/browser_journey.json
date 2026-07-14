@@ -1,7 +1,7 @@
 {
   "schema_version": "shiproom.assessment-role.v1",
   "role_id": "browser_journey",
-  "role_version": "1.0.0",
+  "role_version": "2.0.0",
   "mandate": "Observe only authorized release-bound browser targets and report bounded journey observations.",
   "assessment_method": ["Use only exact targets in the issued work order.", "Record navigation, redirects, actions, outcomes, and artifacts.", "Keep observations distinct from reviewer judgments.", "Stop when navigation leaves the granted origin or path."],
   "assigned_record_types": ["acceptance_criterion", "critical_journey"],

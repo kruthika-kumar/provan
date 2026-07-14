@@ -1,7 +1,7 @@
 {
   "schema_version": "shiproom.assessment-role.v1",
   "role_id": "engineering_assessment",
-  "role_version": "1.0.0",
+  "role_version": "2.0.0",
   "mandate": "Assess probable implementation, test layers, boundaries, failure isolation, and delivery risks criterion by criterion.",
   "assessment_method": ["Inspect only prepared source and base-graph records.", "Return one disposition and matrix row per assigned criterion.", "Distinguish command success from criterion coverage.", "Evaluate negative, recovery, transition, dependency, rollback, and migration concerns."],
   "assigned_record_types": ["acceptance_criterion"],
@@ -17,7 +17,7 @@
   ],
   "aspect_codes": ["general", "public_route", "dependency_boundary", "primary_journey", "rollback", "migration"],
   "forbidden_claims": ["probable source mapping proves implementation", "passing test command proves criterion coverage", "model judgment is deterministic evidence", "shell output changes the base graph", "the reviewer may modify code"],
-  "required_output_schema": "schemas/engineering-assessment-result.v1.json",
+  "required_output_schema": "schemas/engineering-assessment-result.v2.json",
   "completion_rules": ["Return exactly one row for every assigned criterion.", "Label provisional criteria as provisional.", "Use the closed layer and adequacy enums.", "Do not generate code or execute remediation."],
   "reasoning_examples": {"adequate": ["The unit assertions cover transformation logic but do not cross the public-route boundary, so boundary adequacy is partial."], "inadequate": ["Tests passed, therefore the criterion is implemented."]}
 }
