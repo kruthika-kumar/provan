@@ -177,7 +177,7 @@ def test_packet_journey_mapping_creates_the_candidate_journey_edge(tmp_path: Pat
     path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/journey.json"; path.write_text(json.dumps(_mapping_proposal(packet, [mapping])), encoding="utf-8")
     compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx)
     summary = artifacts["criterion-evidence-summary.json"]["criteria"][0]
-    assert len(summary["direct_journeys"]) == 1 and summary["direct_journeys"][0]["relationship_classification"] == "model_mapped_candidate"
+    assert len(summary["direct_journeys"]) == 1 and summary["direct_journeys"][0]["direct_classification"] == "model_mapped_candidate"
 
 
 def test_candidate_finding_keeps_downstream_decision_and_remediation_candidate(tmp_path: Path):
@@ -190,3 +190,40 @@ def test_candidate_finding_keeps_downstream_decision_and_remediation_candidate(t
     assert summary["owner_decisions"][0]["effective_classification"] == "model_mapped_candidate"
     assert summary["remediation"][0]["effective_classification"] == "model_mapped_candidate"
     assert not any(g["gap_type"] == "owner_decision_required" for g in artifacts["evidence-gaps.json"]["gaps"])
+
+
+def test_direct_deterministic_http_200_closes_runtime_gap(tmp_path: Path):
+    ctx = _intent_context(tmp_path); packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    ctx.release["checks"] = [{"check_id":"direct-200","evidence_kind":"http","target":"/result","criterion_id":criterion,"status":200,"passed":True,"evidence_status":"deterministically_verified"}]
+    mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    gap = next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"] == "runtime_evidence_gap")
+    runtime = artifacts["criterion-evidence-summary.json"]["criteria"][0]["runtime"][0]
+    assert gap["state"] == "closed" and runtime["detail"]["routed_kind"] == "runtime_http"
+
+
+@pytest.mark.parametrize("kind", ["http", "test", "instrumentation"])
+def test_deterministic_missing_variants_compile_and_reload(tmp_path: Path, kind: str):
+    ctx = _intent_context(tmp_path); packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    ctx.release["checks"] = [{"check_id":"missing-"+kind,"type":kind,"criterion_id":criterion,"evidence_status":"missing_evidence","error_type":"not collected"}]
+    mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    assert any(n.get("slot_status") == "deterministic_missing" and n.get("routed_kind") for n in artifacts["requirement-evidence-graph.json"]["nodes"])
+
+
+def test_successful_predecessor_has_no_closure_and_route_conflict_is_limited(tmp_path: Path):
+    ctx = _intent_context(tmp_path); packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    ctx.release["checks"] = [
+        {"check_id":"already-good","type":"http","target":"/result","criterion_id":criterion,"status":200,"passed":True,"evidence_status":"deterministically_verified"},
+        {"check_id":"rerun-good","type":"http","target":"/result","criterion_id":criterion,"status":200,"passed":True,"evidence_status":"deterministically_verified","rerun_of":0},
+        {"check_id":"conflict","type":"test","evidence_kind":"http","criterion_id":criterion,"passed":True,"evidence_status":"deterministically_verified"},
+    ]
+    ctx.release["findings"] = [{"id":"closed","criterion_id":criterion,"state":"CLOSED","blocking":False,"evidence":[]}]
+    mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx); graph = artifacts["requirement-evidence-graph.json"]
+    assert not any(e["relationship"] in {"closes","fails_to_close"} for e in graph["edges"])
+    assert {x["kind"] for x in graph["import_limitations"]} == {"conflicting_check_route"}
+
+
+def test_summary_paths_are_explicit_and_walkable(tmp_path: Path):
+    ctx = _intent_context(tmp_path); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    item = artifacts["criterion-evidence-summary.json"]["criteria"][0]["implementation"][0]
+    assert set(item) == {"node_id","node_type","node_provenance","direct_relationships","criterion_path","direct_classification","effective_classification","detail"}
+    assert item["criterion_path"] == item["direct_relationships"] and item["criterion_path"][0]["traversal"] == "reverse"

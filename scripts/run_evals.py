@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import hashlib, json, subprocess, sys
 import tempfile
 from pathlib import Path
 
@@ -12,7 +12,49 @@ from shiproom.external import CAPABILITIES, compile_release
 from shiproom.policy import POLICY_VERSION, execute_external_operation
 from shiproom.runs import LocalRunStore
 from shiproom.context import compile_project_context, context_event_metadata, verify_context_handoff, verify_context_isolation
-from shiproom.graph import CLASSIFICATIONS, RELATIONSHIPS, SLOT_TYPES
+from shiproom.authority import LocalExecutionContext, bind_release_authority
+from shiproom.graph import ARTIFACTS as GRAPH_ARTIFACTS, compile_bundle as graph_compile, load_bundle as graph_load, mapping_prepare
+from shiproom.intent import compile_bundle as intent_compile, prepare as intent_prepare
+from shiproom.onboarding import initialize
+from shiproom.project import canonical_json, content_hash
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=root, capture_output=True, check=True)
+
+
+def _graph_context(root: Path) -> LocalExecutionContext:
+    repo=root/"repo"; repo.mkdir(); _git(repo,"init","-b","main"); _git(repo,"config","user.email","eval@example.com"); _git(repo,"config","user.name","Eval")
+    (repo/".gitignore").write_text(".shiproom/local/\n",encoding="utf-8"); (repo/"docs").mkdir(); (repo/"docs/brief.md").write_text("# Brief\nUsers can publish cards.\napproval_required\n",encoding="utf-8"); _git(repo,"add","."); _git(repo,"commit","-m","fixture")
+    initialize(repo,project_name="Eval",product_purpose="Evaluate graph",primary_users=["operators"],profile="inspect",local_only=False,confirmed=True); binding,grant=bind_release_authority(repo,"https://example.test","/result")
+    release=Release("rel_graph_eval",{"path":str(repo),"commit_sha":binding["repository_commit"]},{"url":grant["origin"],"generated_path":"/result","read_grant":grant},{"name":"Eval","target_user":"operators","promise":"Publish cards","critical_journey":["Publish card"],"non_goals":[]},project_authority=binding).to_dict(); ctx=LocalExecutionContext.from_release(release)
+    packet=intent_prepare(ctx,["docs/brief.md"],[]); src=next(x for x in packet["sources"] if x["path"]=="docs/brief.md")
+    def citation(line,quote):return {"source_id":src["source_id"],"start_line":line,"end_line":line,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}
+    req=citation(2,"Users can publish cards."); claim=citation(3,"approval_required")
+    proposal={"schema_version":"intent-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"source_packet_hash":packet["packet_hash"],"claims":[{"local_id":"claim","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[claim],"requirement_local_ids":["req"]}],"requirements":[{"local_id":"req","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[req],"claim_local_ids":["claim"],"related_journey_ids":["Publish card"],"materiality":"release_scope","rationale":"fixture","owner_confirmation_required":False,"ambiguity_local_ids":[]}],"criteria":[{"local_id":"criterion","parent_requirement_local_id":"req","actor":None,"preconditions":[],"action":"publish","expected_outcomes":[],"failure_behavior":None,"required_evidence_categories":["owner_confirmation"],"source_refs":[req],"field_source_refs":{},"classification":"explicit","confirmation_state":"confirmed","blocker_eligible":True,"ambiguity_local_ids":[]}],"ambiguities":[]}
+    inbox=repo/".shiproom/local/releases/rel_graph_eval/product-intent/inbox/proposal.json"; inbox.parent.mkdir(parents=True,exist_ok=True); inbox.write_text(json.dumps(proposal),encoding="utf-8"); intent_compile(ctx,str(inbox)); return ctx
+
+
+def _graph_behavioral_evals(check) -> None:
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); packet=mapping_prepare(ctx,["docs/brief.md"]); criterion=packet["criterion_ids"][0]; src=packet["selected_sources"][0]; quote="Users can publish cards."
+        proposal={"schema_version":"evidence-mapping-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"product_intent_semantic_bundle_hash":packet["product_intent_semantic_bundle_hash"],"release_projection_hash":packet["release_projection_hash"],"mapping_packet_hash":packet["packet_hash"],"mappings":[{"mapping_id":"candidate","criterion_id":criterion,"target_type":"implementation_reference","rationale":"packet candidate","reference":{"path":src["path"],"returned_git_path":src["returned_git_path"],"git_blob_hash":src["git_blob_hash"],"start_line":2,"end_line":2,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}}]}
+        path=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/requirement-evidence-graph/inbox/map.json"; path.write_text(json.dumps(proposal),encoding="utf-8"); graph_compile(ctx,str(path)); _,art=graph_load(ctx); summary=art["criterion-evidence-summary.json"]["criteria"][0]
+        check("GRAPH_CANDIDATE_IS_NOT_PROOF",summary["implementation"][0]["effective_classification"]=="model_mapped_candidate")
+        check("GRAPH_FOUR_SLOT_COMPLETENESS",all(summary[k] for k in ("implementation","tests","instrumentation","runtime")))
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); packet=mapping_prepare(ctx,["docs/brief.md"]); cid=packet["criterion_ids"][0]; ctx.release["checks"]=[{"check_id":"bad","type":"http","target":"/result","criterion_id":cid,"status":404,"passed":False,"evidence_status":"deterministically_verified"},{"check_id":"good","type":"http","target":"/result","criterion_id":cid,"status":200,"passed":True,"evidence_status":"deterministically_verified","rerun_of":0}]; ctx.release["findings"]=[{"id":"finding","criterion_id":cid,"state":"CLOSED","blocking":True,"evidence":[]}]; mapping_prepare(ctx,["docs/brief.md"]); graph_compile(ctx); _,art=graph_load(ctx)
+        check("GRAPH_CONTROLLED_PATIENT_LINEAGE",next(g for g in art["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap")["state"]=="closed")
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); graph_compile(ctx); intent_prepare(ctx,[],[])
+        try: graph_load(ctx); stale=False
+        except ValueError: stale=True
+        check("GRAPH_STALE_PRODUCT_INTENT_REJECTED",stale)
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); graph_compile(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/requirement-evidence-graph"; pointer=json.loads((root/"current-generation.json").read_text()); gen=root/"generations"/pointer["generation"]; artifact=gen/GRAPH_ARTIFACTS[0]; value=json.loads(artifact.read_text()); value["coverage_boundary"]="tampered"; artifact.write_text(json.dumps(value,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); manifest_path=gen/"manifest.json"; manifest=json.loads(manifest_path.read_text()); manifest["artifact_hashes"][GRAPH_ARTIFACTS[0]]="sha256:"+hashlib.sha256(artifact.read_bytes()).hexdigest(); manifest["semantic_bundle_hash"]=content_hash({"intent":manifest["product_intent_semantic_bundle_hash"],"packet":manifest["mapping_packet_hash"],"projection":manifest["release_projection_hash"],"compiler":manifest["compiler_version"],"artifacts":{k:manifest["artifact_hashes"][k] for k in sorted(GRAPH_ARTIFACTS)}}); manifest["bundle_hash"]=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"}); manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); (root/"current-generation.json").write_text(json.dumps(pointer,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        try: graph_load(ctx); tamper=False
+        except ValueError: tamper=True
+        check("GRAPH_SEMANTIC_TAMPER_REJECTED",tamper)
 
 
 def main() -> int:
@@ -67,11 +109,7 @@ def main() -> int:
         stale=dict(metadata); stale["project_context_id"]="ctx_stale"
         boundary = boundary and not verify_context_handoff(a_ctx,[{"agent_id":agent,"metadata":stale} for agent in ("manager","specialist","verifier")])
         check("CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE",boundary)
-    check("graph candidate cannot become deterministic proof", "model_mapped_candidate" in RELATIONSHIPS["may_be_implemented_by"][2] and "model_mapped_candidate" in CLASSIFICATIONS)
-    check("graph has four criterion evidence slots", set(SLOT_TYPES)=={"implementation","test","instrumentation","runtime"})
-    check("graph controlled runtime relationship supports canonical evidence", "deterministically_established" in RELATIONSHIPS["has_runtime_evidence"][2])
-    check("graph stale bindings fail closed contract", "model_mapped_candidate" in CLASSIFICATIONS and "not_inspected" in CLASSIFICATIONS)
-    check("graph malformed dangling input fails closed matrix", "supported_by_evidence" in RELATIONSHIPS and "missing" not in RELATIONSHIPS["supported_by_evidence"][2])
+    _graph_behavioral_evals(check)
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 

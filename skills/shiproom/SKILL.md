@@ -59,6 +59,11 @@ closed: it remains `unknown` until the final criterion has its own exact
 deterministic lineage. `missing` is reserved for canonical missing evidence;
 an omitted or unsupported mapping is `not_inspected`.
 
+Graph summaries retain traversable direct and criterion paths. Treat their
+`effective_classification` as the criterion-scoped authority: a canonical fact
+reached through any candidate step remains candidate context for that
+criterion, including decisions, remediation records, and closure evidence.
+
 ## Delegation
 
 When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.

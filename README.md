@@ -137,3 +137,8 @@ criterion link is merely a candidate: candidate-linked failures leave the new
 criterion `unknown`, and can never open or close its deterministic gap. Only
 an exact indexed rerun lineage and a canonically closed finding can close a
 deterministic runtime failure.
+
+Criterion summaries expose `direct_relationships` and an ordered
+`criterion_path`; every step includes `edge_id` plus `forward` or `reverse`
+traversal. This keeps owner decisions, remediation, and closure auditable even
+when their canonical edges point away from the criterion path.
