@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-import hashlib, json
+import hashlib, json, re
 from pathlib import Path
 
 import pytest
+import shiproom.graph as graph_module
 
-from shiproom.graph import compile_bundle, load_bundle, mapping_prepare, show
+from shiproom.graph import _validate_proposal, compile_bundle, load_bundle, mapping_prepare, show
 from shiproom.intent import compile_bundle as compile_intent, prepare
 from shiproom.cli import main
 from test_intent import context_for, inbox, proposal, ref
 from shiproom.project import content_hash
+from scripts.graph_acceptance_fixture import run_controlled_patient
 
 
 def _rewrite_manifest_and_pointer(root: Path, pointer: dict, manifest_path: Path, manifest: dict) -> None:
@@ -170,11 +172,11 @@ def test_exact_runtime_rerun_resolves_only_its_failed_final_criterion_lineage(tm
     assert runtime["state"] == "closed"
 
 
-def test_fully_rehashed_v6_generation_fails_v7_compiler_gate(tmp_path: Path):
+def test_fully_rehashed_v7_generation_fails_distinct_v8_compiler_gate(tmp_path: Path):
     ctx = _intent_context(tmp_path); compile_bundle(ctx)
     root = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer = json.loads((root / "current-generation.json").read_text())
-    manifest_path = root / "generations" / pointer["generation"] / "manifest.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "requirement-evidence-graph.v6"; manifest["semantic_bundle_hash"]=content_hash({"intent":manifest["product_intent_semantic_bundle_hash"],"packet":manifest["mapping_packet_hash"],"projection":manifest["release_projection_hash"],"compiler":manifest["compiler_version"],"artifacts":{k:manifest["artifact_hashes"][k] for k in sorted(manifest["artifact_hashes"])}}); _rewrite_manifest_and_pointer(root,pointer,manifest_path,manifest)
-    with pytest.raises(ValueError, match="stale"): load_bundle(ctx)
+    manifest_path = root / "generations" / pointer["generation"] / "manifest.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "requirement-evidence-graph.v7"; manifest["semantic_bundle_hash"]=content_hash({"intent":manifest["product_intent_semantic_bundle_hash"],"packet":manifest["mapping_packet_hash"],"projection":manifest["release_projection_hash"],"compiler":manifest["compiler_version"],"artifacts":{k:manifest["artifact_hashes"][k] for k in sorted(manifest["artifact_hashes"])}}); _rewrite_manifest_and_pointer(root,pointer,manifest_path,manifest)
+    with pytest.raises(ValueError, match="^stale_graph_compiler_version$"): load_bundle(ctx)
 
 
 def test_packet_journey_mapping_creates_the_candidate_journey_edge(tmp_path: Path):
@@ -213,6 +215,9 @@ def test_deterministic_missing_variants_compile_and_reload(tmp_path: Path, kind:
     ctx.release["checks"] = [{"check_id":"missing-"+kind,"type":kind,"criterion_id":criterion,"evidence_status":"missing_evidence","error_type":"not collected"}]
     mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
     assert any(n.get("slot_status") == "deterministic_missing" and n.get("routed_kind") for n in artifacts["requirement-evidence-graph.json"]["nodes"])
+    if kind == "http":
+        assert next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap")["state"] == "open"
+        assert artifacts["criterion-evidence-summary.json"]["criteria"][0]["closure"]["closure_state"] == "not_inspected"
 
 
 def test_successful_predecessor_has_no_closure_and_route_conflict_is_limited(tmp_path: Path):
@@ -268,3 +273,54 @@ def test_failed_graph_compile_preserves_current_pointer(tmp_path: Path):
     ctx=_intent_context(tmp_path); packet=mapping_prepare(ctx,["docs/brief.md"]); compile_bundle(ctx); pointer=ctx.repository_root/".shiproom/local/releases/rel_intent/requirement-evidence-graph/current-generation.json"; before=pointer.read_bytes(); bad=_mapping_proposal(packet,[]); bad["mapping_packet_hash"]="sha256:wrong"; path=ctx.repository_root/".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/bad-binding.json"; path.write_text(json.dumps(bad),encoding="utf-8")
     with pytest.raises(ValueError):compile_bundle(ctx,str(path))
     assert pointer.read_bytes()==before
+
+
+def test_late_persistence_failure_preserves_current_pointer_and_readable_generation(tmp_path: Path, monkeypatch):
+    ctx=_intent_context(tmp_path); compile_bundle(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer=root/"current-generation.json"; before=pointer.read_bytes(); generations_before=set((root/"generations").iterdir())
+    def fail_after_generation(_directory):raise RuntimeError("late persistence seam")
+    monkeypatch.setattr(graph_module,"_BEFORE_POINTER_REPLACE",fail_after_generation)
+    with pytest.raises(RuntimeError,match="late persistence seam"):compile_bundle(ctx)
+    assert pointer.read_bytes()==before and len(set((root/"generations").iterdir())-generations_before)==1
+    monkeypatch.setattr(graph_module,"_BEFORE_POINTER_REPLACE",None); load_bundle(ctx)
+
+
+def test_failed_rerun_is_attempt_and_later_success_resolves_root(tmp_path: Path):
+    ctx=_intent_context(tmp_path); packet=mapping_prepare(ctx,["docs/brief.md"]); cid=packet["criterion_ids"][0]; ctx.release["checks"]=[
+        {"check_id":"root","type":"http","target":"/result","criterion_id":cid,"status":404,"passed":False,"evidence_status":"deterministically_verified"},
+        {"check_id":"failed-attempt","type":"http","target":"/result","criterion_id":cid,"status":500,"passed":False,"evidence_status":"deterministically_verified","rerun_of":0},
+        {"check_id":"successful-attempt","type":"http","target":"/result","criterion_id":cid,"status":200,"passed":True,"evidence_status":"deterministically_verified","rerun_of":1},
+    ]; ctx.release["findings"]=[{"id":"finding","criterion_id":cid,"state":"CLOSED","blocking":True,"evidence":[{"reference":"successful-attempt"}]}]
+    mapping_prepare(ctx,["docs/brief.md"]); compile_bundle(ctx); _,artifacts=load_bundle(ctx); summary=artifacts["criterion-evidence-summary.json"]["criteria"][0]; lineage=summary["runtime_lineage"]
+    assert lineage["roots"]==[{"root_check_id":"root","attempt_check_ids":["root","failed-attempt","successful-attempt"],"state":"resolved"}]
+    assert next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap")["state"]=="closed"
+
+
+def test_real_controlled_patient_pre_post_candidate_crosswalk_and_show(tmp_path: Path):
+    result=run_controlled_patient(tmp_path); cid=result["criterion_id"]
+    for phase in ("pre","post"):
+        artifacts=result[phase]; summary=next(x for x in artifacts["criterion-evidence-summary.json"]["criteria"] if x["criterion_id"]==cid); criterion=next(x for x in artifacts["requirement-evidence-graph.json"]["nodes"] if x["node_id"]==cid); runtime=next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["criterion_id"]==cid and g["gap_type"]=="runtime_evidence_gap")
+        assert criterion["action"]=="Open the returned public URL." and criterion["expected_outcomes"]==["The returned public URL opens successfully."]
+        assert summary["implementation"][0]["detail"]["path"]=="demo_patient/server.py"
+        assert summary["tests"][0]["detail"]["slot_status"]=="candidate_present" and summary["instrumentation"][0]["detail"]["slot_status"]=="candidate_present"
+        assert runtime["state"]=="unknown" and summary["closure"]["closure_state"]=="not_inspected"
+    assert {x["detail"].get("check_id") for x in result["pre"]["criterion-evidence-summary.json"]["criteria"][0]["runtime"]}=={"hist-404"}
+    post=result["post"]["criterion-evidence-summary.json"]["criteria"][0]; assert {x["detail"].get("check_id") for x in post["runtime"]}=={"hist-404","hist-200"}
+    assert post["closure"]["closure_items"] and all(x["effective_classification"]=="model_mapped_candidate" for x in post["closure"]["closure_items"])
+    rendered=result["post_show"]
+    for expected in ("demo_patient/server.py","hist-404","hist-200","hist-finding","runtime_http","status=404","status=200","model_mapped_candidate","Closure: not_inspected","Gaps:"):
+        assert expected in rendered
+
+
+def test_exact_skill_mapping_examples_validate_with_active_packet_values(tmp_path: Path):
+    ctx=_intent_context(tmp_path); ctx.release["checks"]=[{"check_id":"documented-check","type":"http","target":"/result","criterion_id":"HIST","status":200,"passed":True,"evidence_status":"deterministically_verified"}]; ctx.release["findings"]=[{"id":"documented-finding","criterion_id":"HIST","state":"TRIAGED","blocking":False,"evidence":[]}]
+    packet=mapping_prepare(ctx,["docs/brief.md"]); source=packet["selected_sources"][0]; criterion=packet["criterion_ids"][0]; journey=packet["critical_journeys"][0]["journey_id"]; runtime=packet["canonical_runtime_evidence"][0]["runtime_evidence_id"]
+    skill=(Path(__file__).parents[1]/"skills/shiproom/SKILL.md").read_text(encoding="utf-8"); examples=[json.loads(x) for x in re.findall(r"```json\s*(\{.*?\})\s*```",skill,re.S) if '"target_type"' in x]
+    assert {x["target_type"] for x in examples}=={"implementation_reference","runtime_evidence","finding","critical_journey"}
+    for example in examples:
+        example["criterion_id"]=criterion
+        if example["target_type"]=="implementation_reference":
+            quote=source["text"].split("\n")[0]; example["reference"]={"path":source["path"],"returned_git_path":source["returned_git_path"],"git_blob_hash":source["git_blob_hash"],"start_line":1,"end_line":1,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}
+        elif example["target_type"]=="runtime_evidence":example["canonical_id"]=runtime
+        elif example["target_type"]=="finding":example["canonical_id"]="documented-finding"
+        else:example["journey_id"]=journey
+        _validate_proposal(_mapping_proposal(packet,[example]),packet)

@@ -17,6 +17,10 @@ from shiproom.graph import ARTIFACTS as GRAPH_ARTIFACTS, compile_bundle as graph
 from shiproom.intent import compile_bundle as intent_compile, prepare as intent_prepare
 from shiproom.onboarding import initialize
 from shiproom.project import canonical_json, content_hash
+try:
+    from scripts.graph_acceptance_fixture import run_controlled_patient
+except ModuleNotFoundError:  # direct ``python scripts/run_evals.py`` execution
+    from graph_acceptance_fixture import run_controlled_patient
 
 
 def _git(root: Path, *args: str) -> None:
@@ -40,16 +44,21 @@ def _graph_behavioral_evals(check) -> None:
         ctx=_graph_context(Path(raw)); packet=mapping_prepare(ctx,["docs/brief.md"]); criterion=packet["criterion_ids"][0]; src=packet["selected_sources"][0]; quote="Users can publish cards."
         proposal={"schema_version":"evidence-mapping-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"product_intent_semantic_bundle_hash":packet["product_intent_semantic_bundle_hash"],"release_projection_hash":packet["release_projection_hash"],"mapping_packet_hash":packet["packet_hash"],"mappings":[{"mapping_id":"candidate","criterion_id":criterion,"target_type":"implementation_reference","rationale":"packet candidate","reference":{"path":src["path"],"returned_git_path":src["returned_git_path"],"git_blob_hash":src["git_blob_hash"],"start_line":2,"end_line":2,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}}]}
         path=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/requirement-evidence-graph/inbox/map.json"; path.write_text(json.dumps(proposal),encoding="utf-8"); graph_compile(ctx,str(path)); _,art=graph_load(ctx); summary=art["criterion-evidence-summary.json"]["criteria"][0]
-        check("GRAPH_CANDIDATE_IS_NOT_PROOF",summary["implementation"][0]["effective_classification"]=="model_mapped_candidate")
-        check("GRAPH_FOUR_SLOT_COMPLETENESS",all(summary[k] for k in ("implementation","tests","instrumentation","runtime")))
+        graph=art["requirement-evidence-graph.json"]; implementation_gap=next(g for g in art["evidence-gaps.json"]["gaps"] if g["gap_type"]=="implementation_gap")
+        candidate_edges=[e for e in graph["edges"] if e["relationship"]=="may_be_implemented_by" and e["establishment_classification"]=="model_mapped_candidate"]
+        deterministic_edges=[e for e in graph["edges"] if e["relationship"]=="may_be_implemented_by" and e["establishment_classification"]=="deterministically_established"]
+        check("GRAPH_CANDIDATE_IS_NOT_PROOF",bool(candidate_edges) and not deterministic_edges and implementation_gap["state"]=="unknown" and summary["closure"]["closure_state"]!="closed")
+        expected={"implementation":"implementation_reference","tests":"test_reference","instrumentation":"instrumentation_reference","runtime":"runtime_evidence"}; allowed={"not_inspected","candidate_present","actual","deterministic_missing"}
+        complete=True
+        for candidate_summary in art["criterion-evidence-summary.json"]["criteria"]:
+            for key,node_type in expected.items():
+                records=candidate_summary[key]; statuses={item["detail"].get("slot_status") for item in records}
+                complete=complete and bool(records) and all(item["node_type"]==node_type and item["detail"].get("slot_status") in allowed for item in records) and not ("not_inspected" in statuses and len(statuses)>1)
+        check("GRAPH_FOUR_SLOT_COMPLETENESS",complete)
     with tempfile.TemporaryDirectory() as raw:
-        ctx=_graph_context(Path(raw)); base=mapping_prepare(ctx,["demo_patient/server.py"]); cid=base["criterion_ids"][0]; ctx.release["checks"]=[{"check_id":"hist-404","type":"http","target":"/result/demo","criterion_id":"PRODUCT_PUBLIC_RESULT_OPENS","status":404,"passed":False,"evidence_status":"deterministically_verified"}]; ctx.release["findings"]=[{"id":"hist-finding","criterion_id":"PRODUCT_PUBLIC_RESULT_OPENS","state":"TRIAGED","blocking":True,"evidence":[{"reference":"hist-404"}]}]
-        def mapped(packet):
-            src=packet["selected_sources"][0]; quote='elif path.startswith("/results/"):'; line=next(i for i,text in enumerate(src["text"].split("\n"),1) if quote in text); bindings={"schema_version":"evidence-mapping-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"product_intent_semantic_bundle_hash":packet["product_intent_semantic_bundle_hash"],"release_projection_hash":packet["release_projection_hash"],"mapping_packet_hash":packet["packet_hash"]}; ref={"path":src["path"],"returned_git_path":src["returned_git_path"],"git_blob_hash":src["git_blob_hash"],"start_line":line,"end_line":line,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}; bindings["mappings"]=[{"mapping_id":"route","criterion_id":cid,"target_type":"implementation_reference","rationale":"packet route candidate","reference":ref},{"mapping_id":"runtime","criterion_id":cid,"target_type":"runtime_evidence","rationale":"historical candidate","canonical_id":"hist-404"},{"mapping_id":"finding","criterion_id":cid,"target_type":"finding","rationale":"historical finding candidate","canonical_id":"hist-finding"}]; return bindings
-        packet=mapping_prepare(ctx,["demo_patient/server.py"]); path=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/requirement-evidence-graph/inbox/patient.json"; path.write_text(json.dumps(mapped(packet)),encoding="utf-8"); graph_compile(ctx,str(path)); _,pre=graph_load(ctx); pre_summary=pre["criterion-evidence-summary.json"]["criteria"][0]; pre_gap=next(g for g in pre["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap"); pre_rendered=graph_show(ctx,cid)
-        ctx.release["checks"].append({"check_id":"hist-200","type":"http","target":"/result/demo","criterion_id":"PRODUCT_PUBLIC_RESULT_OPENS","status":200,"passed":True,"evidence_status":"deterministically_verified","rerun_of":0}); ctx.release["findings"][0]["state"]="CLOSED"; packet=mapping_prepare(ctx,["demo_patient/server.py"]); post_proposal=mapped(packet); post_proposal["mappings"][1]["canonical_id"]="hist-200"; path.write_text(json.dumps(post_proposal),encoding="utf-8"); graph_compile(ctx,str(path)); _,post=graph_load(ctx); post_summary=post["criterion-evidence-summary.json"]["criteria"][0]; post_gap=next(g for g in post["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap"); rendered=graph_show(ctx,cid)
-        print("GRAPH_CONTROLLED_PATIENT_PRE_SHOW\n"+pre_rendered); print("GRAPH_CONTROLLED_PATIENT_POST_SHOW\n"+rendered)
-        check("GRAPH_CONTROLLED_PATIENT_LINEAGE",pre_gap["state"]=="unknown" and pre_summary["closure"]["closure_state"]=="not_inspected" and post_gap["state"]=="unknown" and post_summary["closure"]["closure_state"]=="not_inspected" and post_summary["closure"]["closure_items"][0]["effective_classification"]=="model_mapped_candidate" and "Closure: not_inspected" in rendered)
+        patient=run_controlled_patient(Path(raw)); pre_summary=patient["pre"]["criterion-evidence-summary.json"]["criteria"][0]; post_summary=patient["post"]["criterion-evidence-summary.json"]["criteria"][0]; pre_gap=next(g for g in patient["pre"]["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap"); post_gap=next(g for g in patient["post"]["evidence-gaps.json"]["gaps"] if g["gap_type"]=="runtime_evidence_gap")
+        print("GRAPH_CONTROLLED_PATIENT_PRE_SHOW\n"+patient["pre_show"]); print("GRAPH_CONTROLLED_PATIENT_POST_SHOW\n"+patient["post_show"])
+        check("GRAPH_CONTROLLED_PATIENT_LINEAGE",pre_gap["state"]=="unknown" and pre_summary["closure"]["closure_state"]=="not_inspected" and post_gap["state"]=="unknown" and post_summary["closure"]["closure_state"]=="not_inspected" and {x["detail"].get("check_id") for x in post_summary["runtime"]}=={"hist-404","hist-200"} and post_summary["closure"]["closure_items"][0]["effective_classification"]=="model_mapped_candidate" and "demo_patient/server.py" in patient["post_show"] and "hist-finding" in patient["post_show"])
     with tempfile.TemporaryDirectory() as raw:
         ctx=_graph_context(Path(raw)); graph_compile(ctx); intent_prepare(ctx,[],[])
         try: graph_load(ctx); stale=False
