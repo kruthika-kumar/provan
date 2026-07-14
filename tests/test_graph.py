@@ -149,3 +149,23 @@ def test_load_rederives_and_rejects_semantic_artifact_tamper(tmp_path: Path):
     ctx = _intent_context(tmp_path); compile_bundle(ctx); root = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer = json.loads((root / "current-generation.json").read_text()); graph = root / "generations" / pointer["generation"] / "requirement-evidence-graph.json"
     value = json.loads(graph.read_text()); value["coverage_boundary"] = "tampered"; graph.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(ValueError): load_bundle(ctx)
+
+
+def test_exact_runtime_rerun_resolves_only_its_failed_final_criterion_lineage(tmp_path: Path):
+    ctx = _intent_context(tmp_path); packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    ctx.release["checks"] = [
+        {"check_id": "failed-final", "type": "http", "target": "/result/demo", "criterion_id": criterion, "status": 404, "passed": False, "evidence_status": "deterministically_verified"},
+        {"check_id": "unrelated-success", "type": "http", "target": "/elsewhere", "criterion_id": criterion, "status": 200, "passed": True, "evidence_status": "deterministically_verified"},
+        {"check_id": "rerun-final", "type": "http", "target": "/result/demo", "criterion_id": criterion, "status": 200, "passed": True, "evidence_status": "deterministically_verified", "rerun_of": 0},
+    ]
+    ctx.release["findings"] = [{"id": "closed-final", "criterion_id": criterion, "blocking": True, "state": "CLOSED", "evidence": []}]
+    mapping_prepare(ctx, ["docs/brief.md"]); compile_bundle(ctx); _, artifacts = load_bundle(ctx)
+    runtime = next(g for g in artifacts["evidence-gaps.json"]["gaps"] if g["gap_type"] == "runtime_evidence_gap")
+    assert runtime["state"] == "closed"
+
+
+def test_v3_generation_is_stale_and_effective_candidate_strength_is_visible(tmp_path: Path):
+    ctx = _intent_context(tmp_path); compile_bundle(ctx)
+    root = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer = json.loads((root / "current-generation.json").read_text())
+    manifest = root / "generations" / pointer["generation"] / "manifest.json"; value = json.loads(manifest.read_text()); value["compiler_version"] = "requirement-evidence-graph.v3"; manifest.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(ValueError): load_bundle(ctx)

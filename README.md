@@ -111,3 +111,29 @@ shiproom graph show --release <release.json> [--criterion <criterion_id>]
 Candidate code, test, and instrumentation mappings are traceability candidates only; they are not implementation, test, runtime, or closure proof. Graph artifacts are private ignored release-local state.
 
 Mapping proposals live only in the graph inbox and bind to the active mapping packet. Valid targets are a packet-pinned repository reference, a packet-projected runtime or finding ID, or an allowlisted journey ID. Candidate mappings remain `model_mapped_candidate`; unsupported check types are recorded as import limitations, while absent inspection is `not_inspected` rather than missing evidence.
+
+Each mapping entry uses exactly one target form (with the surrounding proposal's
+release, commit, Product Intent, projection, and packet bindings copied from
+the active packet):
+
+```json
+{"mapping_id":"route_candidate","criterion_id":"<packet criterion_id>","target_type":"implementation_reference","rationale":"Exact selected source.","reference":{"path":"demo_patient/server.py","returned_git_path":"demo_patient/server.py","git_blob_hash":"<packet blob hash>","start_line":1,"end_line":1,"quote":"<exact text>","quote_hash":"sha256:<exact quote hash>"}}
+```
+
+```json
+{"mapping_id":"runtime_candidate","criterion_id":"<packet criterion_id>","target_type":"runtime_evidence","rationale":"Packet-projected canonical fact.","canonical_id":"<packet runtime_evidence_id or check_id>"}
+```
+
+```json
+{"mapping_id":"finding_candidate","criterion_id":"<packet criterion_id>","target_type":"finding","rationale":"Packet-projected canonical finding.","canonical_id":"<packet finding id>"}
+```
+
+```json
+{"mapping_id":"journey_candidate","criterion_id":"<packet criterion_id>","target_type":"critical_journey","rationale":"Allowlisted journey context.","journey_id":"<packet journey_id>"}
+```
+
+Canonical evidence remains true about the historical release even when its
+criterion link is merely a candidate: candidate-linked failures leave the new
+criterion `unknown`, and can never open or close its deterministic gap. Only
+an exact indexed rerun lineage and a canonically closed finding can close a
+deterministic runtime failure.

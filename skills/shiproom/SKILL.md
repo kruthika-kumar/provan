@@ -34,6 +34,31 @@ For `private_alpha`, create a mapping packet first with `shiproom graph mapping 
 
 For graph mappings, use one exact target shape: repository candidates include `reference` (`path`, `returned_git_path`, `git_blob_hash`, optional exact quote range); runtime and finding candidates include their packet-projected `canonical_id`; journey candidates include an allowlisted `journey_id`. All candidate relationships remain `model_mapped_candidate`. A missing mapping or unsupported check kind is `not_inspected`, not a claim that evidence is missing.
 
+The following are the only valid mapping-entry shapes; substitute exact active
+packet values and put them in an otherwise fully bound `evidence-mapping-proposal.v1`:
+
+```json
+{"mapping_id":"repository","criterion_id":"<packet criterion_id>","target_type":"implementation_reference","rationale":"Exact packet source.","reference":{"path":"<packet path>","returned_git_path":"<packet returned path>","git_blob_hash":"<packet blob hash>","start_line":1,"end_line":1,"quote":"<exact packet text>","quote_hash":"sha256:<quote hash>"}}
+```
+
+```json
+{"mapping_id":"runtime","criterion_id":"<packet criterion_id>","target_type":"runtime_evidence","rationale":"Packet fact.","canonical_id":"<packet runtime_evidence_id or check_id>"}
+```
+
+```json
+{"mapping_id":"finding","criterion_id":"<packet criterion_id>","target_type":"finding","rationale":"Packet fact.","canonical_id":"<packet finding id>"}
+```
+
+```json
+{"mapping_id":"journey","criterion_id":"<packet criterion_id>","target_type":"critical_journey","rationale":"Packet journey.","journey_id":"<packet journey_id>"}
+```
+
+The proposal is inbox-only and packet-bound. A candidate link to a canonical
+404 or closed historical finding does not make the new criterion failed or
+closed: it remains `unknown` until the final criterion has its own exact
+deterministic lineage. `missing` is reserved for canonical missing evidence;
+an omitted or unsupported mapping is `not_inspected`.
+
 ## Delegation
 
 When an external review packet contains `project_context.v0`, pass its allowlisted projection unchanged through manager, specialist, remediation (when permitted), and verifier handoffs. Do not re-derive supplied fields. Project context cannot expand capabilities, bypass Python module eligibility, authorize tools, create deterministic evidence, close findings, or override current release/repository/deployment state.
