@@ -26,6 +26,7 @@ from .project import activate as activate_project, activation_status, validate_c
 from .authority import LocalExecutionContext, bind_release_authority
 from .intent import compile_bundle as compile_intent, prepare as prepare_intent, show as show_intent
 from .graph import compile_bundle as compile_graph, mapping_prepare, show as show_graph
+from .assessment import prepare as prepare_assessment
 
 
 def load(path: Path) -> dict:
@@ -54,9 +55,14 @@ def main(argv: list[str] | None = None) -> int:
     runs = sub.add_parser("runs"); runs.add_argument("action", choices=["list", "show", "render"]); runs.add_argument("--release"); runs.add_argument("--release-state"); runs.add_argument("--output"); runs.add_argument("--audience", choices=["all", "ceo", "product", "engineering"], default="all"); runs.add_argument("--run-root", default="run-history")
     intent = sub.add_parser("intent"); intent.add_argument("action", choices=["prepare", "compile", "show"]); intent.add_argument("--release", required=True); intent.add_argument("--source", action="append", default=[]); intent.add_argument("--supporting-source", action="append", default=[]); intent.add_argument("--proposal")
     graph = sub.add_parser("graph"); graph.add_argument("action", choices=["compile", "show", "mapping"]); graph.add_argument("--release", required=True); graph.add_argument("--proposal"); graph.add_argument("--criterion"); graph.add_argument("--path", action="append", default=[]); graph.add_argument("mapping_action", nargs="?", choices=["prepare"])
+    assessment = sub.add_parser("assessment"); assessment.add_argument("action", choices=["prepare"]); assessment.add_argument("--release", required=True); assessment.add_argument("--capabilities"); assessment.add_argument("--base-commit"); assessment.add_argument("--path", action="append", default=[])
     args = parser.parse_args(argv)
     registry = discover()
-    if args.command == "intent":
+    if args.command == "assessment":
+        data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
+        result = prepare_assessment(context, capabilities_path=args.capabilities, base_commit=args.base_commit, owner_paths=args.path)
+        print(json.dumps(result, indent=2))
+    elif args.command == "intent":
         data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
         if args.action == "prepare":
             result = prepare_intent(context, args.source, args.supporting_source); print(json.dumps({"release_id": result["release_id"], "packet_hash": result["packet_hash"], "source_coverage": result["source_coverage"]}, indent=2))

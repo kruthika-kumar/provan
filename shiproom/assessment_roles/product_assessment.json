@@ -1,0 +1,24 @@
+{
+  "schema_version": "shiproom.assessment-role.v1",
+  "role_id": "product_assessment",
+  "role_version": "1.0.0",
+  "mandate": "Assess intended outcomes, journeys, scope, ambiguity, and evidence needs without changing release truth.",
+  "assessment_method": ["Read the complete prepared Product Intent and graph context.", "Return one disposition for every assigned requirement, journey, and criterion.", "Separate declared scope from evidence-assessed scope.", "Identify only taxonomy-approved product gaps and decision candidates."],
+  "assigned_record_types": ["requirement", "critical_journey", "acceptance_criterion"],
+  "required_coverage": ["every non-superseded requirement", "every declared journey", "every non-superseded criterion"],
+  "evidence_hierarchy": ["validated Product Intent", "immutable base graph", "prepared repository context", "pre-existing base runtime facts"],
+  "allowed_basis_references": ["base requirement ID", "base criterion ID", "base journey ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID"],
+  "gap_taxonomy": [
+    {"gap_kind": "specification_gap", "aspect_codes": ["general", "primary_journey"]},
+    {"gap_kind": "implementation_gap", "aspect_codes": ["general", "public_route"]},
+    {"gap_kind": "evidence_gap", "aspect_codes": ["general", "primary_journey"]},
+    {"gap_kind": "quality_gap", "aspect_codes": ["general", "failure_state"]},
+    {"gap_kind": "scope_decision", "aspect_codes": ["scope_boundary"]},
+    {"gap_kind": "source_conflict", "aspect_codes": ["source_conflict"]}
+  ],
+  "aspect_codes": ["general", "primary_journey", "public_route", "failure_state", "scope_boundary", "source_conflict"],
+  "forbidden_claims": ["assessment judgment is deterministic evidence", "assessment gaps are release findings", "an unconfirmed criterion is a release blocker", "new browser observations were consumed by Product assessment", "the reviewer may mutate release state"],
+  "required_output_schema": "schemas/product-assessment-result.v1.json",
+  "completion_rules": ["Return exactly one disposition for each assigned ID.", "Cite only prepared base references.", "Keep every conclusion model_reviewed or not_inspected.", "Use decision_candidate rather than owner_decision."],
+  "reasoning_examples": {"adequate": ["The declared public-sharing outcome is explicit, while runtime coverage remains unknown in the immutable graph."], "inadequate": ["The feature probably works because a route file exists."]}
+}

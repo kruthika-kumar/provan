@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"assessment-work-orders.v1.json","type":"object","required":["schema_version","preparation_id","preparation_semantic_hash","work_orders","manifest_hash"]}

@@ -22,5 +22,9 @@ shiproom = "shiproom.cli:main"
 include = ["shiproom*", "demo_patient*"]
 exclude = ["skills*", "tests*"]
 
+[tool.setuptools.package-data]
+"shiproom.assessment_roles" = ["*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

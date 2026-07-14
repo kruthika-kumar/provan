@@ -457,6 +457,24 @@ def load_bundle(ctx):
  expected=dict(zip(ARTIFACTS,_compile(ctx,packet,normalized)))
  if artifacts!=expected:raise ValueError("graph artifacts stale")
  _,intent_artifacts,_=load_graph_input(ctx); projection,_=_projection(ctx); _validate_artifacts(artifacts,[x["criterion_id"] for x in intent_artifacts["acceptance-criteria.json"]["criteria"]],{x["ambiguity_id"] for x in intent_artifacts["ambiguities.json"]["ambiguities"]},{x.get("id") or _id("finding",x) for x in projection["findings"]}); return manifest,artifacts
+
+def load_assessment_input(ctx):
+ """Return the complete validated, generation-bound input for assessment.
+
+ Assessment deliberately consumes the mapping snapshot stored with the active
+ graph generation.  It never reinterprets the separately named active packet.
+ """
+ manifest,artifacts=load_bundle(ctx); root=_root(ctx); pointer_path=root/"current-generation.json"
+ pointer=json.loads(pointer_path.read_text(encoding="utf-8")); directory=root/"generations"/pointer["generation"]; manifest_path=directory/"manifest.json"
+ if _hash(manifest_path.read_bytes())!=pointer["manifest_hash"] or json.loads(manifest_path.read_text(encoding="utf-8"))!=manifest:raise ValueError("graph generation changed during assessment input load")
+ mapping=None
+ if manifest["mapping_packet_state"]=="present":
+  path=directory/"mapping-source-packet.json"
+  if path.is_symlink() or not path.is_file():raise ValueError("graph mapping snapshot unavailable")
+  mapping=json.loads(path.read_text(encoding="utf-8"))
+ intent_manifest,intent_artifacts,intent_packet=load_graph_input(ctx)
+ return {"graph_generation":pointer["generation"],"graph_manifest":manifest,"graph_artifacts":artifacts,"mapping_packet_snapshot":mapping,"intent_manifest":intent_manifest,"intent_artifacts":intent_artifacts,"intent_source_packet":intent_packet}
+
 def show(ctx,criterion_id=None):
  _,artifacts=load_bundle(ctx); summaries=artifacts[ARTIFACTS[1]]["criteria"]; summaries=[x for x in summaries if not criterion_id or x["criterion_id"]==criterion_id]
  if criterion_id and not summaries:raise ValueError("criterion unavailable")

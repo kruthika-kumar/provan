@@ -1,0 +1,10 @@
+{
+  "schema_version": "assessment-source-discovery.v1",
+  "selection_order": ["graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match"],
+  "supported_languages": ["python", "javascript", "typescript"],
+  "rule_ids": ["graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match"],
+  "configuration_allowlist": ["pyproject.toml", "pytest.ini", "setup.cfg", "tox.ini", "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "uv.lock", "poetry.lock"],
+  "javascript_extensions": [".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"],
+  "limits": {"per_file_bytes": 262144, "files_per_role": 64, "source_text_bytes_per_role": 2097152},
+  "unsupported": ["dynamic imports", "package execution", "installed package traversal", "node_modules", "path aliases", "namespace package inference", "recursive import discovery"]
+}

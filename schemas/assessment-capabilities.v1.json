@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assessment-capabilities.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "substrate", "capabilities", "permissions"],
+  "properties": {
+    "schema_version": {"const": "shiproom.assessment-capabilities.v1"},
+    "substrate": {"type": "object", "additionalProperties": false, "required": ["id", "execution_mode"], "properties": {"id": {"type": "string", "minLength": 1, "maxLength": 120}, "execution_mode": {"enum": ["manual_external", "agent_harness"]}}},
+    "capabilities": {"type": "object", "additionalProperties": false, "required": ["file_read", "browser", "shell", "network"], "properties": {"file_read": {"$ref": "#/$defs/capability"}, "browser": {"$ref": "#/$defs/capability"}, "shell": {"$ref": "#/$defs/capability"}, "network": {"$ref": "#/$defs/capability"}}},
+    "permissions": {"type": "object", "additionalProperties": false, "required": ["file_read", "browser", "shell", "network"], "properties": {"file_read": {"type": "object", "additionalProperties": false, "required": ["granted", "scope"], "properties": {"granted": {"type": "boolean"}, "scope": {"const": "prepared_packet_only"}}}, "browser": {"$ref": "#/$defs/grant"}, "network": {"$ref": "#/$defs/grant"}, "shell": {"type": "object", "additionalProperties": false, "required": ["granted", "allowed_command_ids"], "properties": {"granted": {"type": "boolean"}, "allowed_command_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}}}}}
+  },
+  "$defs": {"capability": {"type": "object", "additionalProperties": false, "required": ["available"], "properties": {"available": {"type": "boolean"}}}, "grant": {"type": "object", "additionalProperties": false, "required": ["granted"], "properties": {"granted": {"type": "boolean"}}}}
+}
