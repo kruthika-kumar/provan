@@ -9,6 +9,7 @@ import posixpath
 import re
 import subprocess
 import uuid
+from datetime import datetime
 from importlib import resources
 from pathlib import Path, PurePosixPath
 from urllib.parse import urljoin, urlparse
@@ -46,6 +47,29 @@ ROLE_FILE_LIMIT = 64
 ROLE_TEXT_LIMIT = 2 * 1024 * 1024
 ROLE_STRUCTURAL_RECORD_LIMIT = 2048
 ROLE_STRUCTURAL_BYTES_LIMIT = 2 * 1024 * 1024
+RESULT_BYTES_LIMIT = 1024 * 1024
+RESULT_RECORD_LIMIT = 500
+TARGETED_SPEC_LIMIT = 200
+ASSUMPTION_LIMIT = 100
+LIMITATION_LIMIT = 100
+RATIONALE_LIMIT = 4096
+DETAIL_LIMIT = 16384
+RESULT_SCHEMAS = {
+    "product_assessment": "product-assessment-result.v1",
+    "engineering_assessment": "engineering-assessment-result.v1",
+    "test_adequacy": "test-adequacy-result.v1",
+    "targeted_test_planning": "targeted-test-result.v1",
+    "browser_journey": "browser-journey-result.v1",
+}
+RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v1"
+DISPOSITIONS = {"assessed", "not_inspected", "not_applicable", "blocked_by_input_ambiguity"}
+UNCERTAINTIES = {"none", "bounded", "material", "not_assessed"}
+EVIDENCE_CLASSES = {"model_reviewed", "not_inspected"}
+TEST_LAYERS = {"unit", "component", "integration", "contract", "end_to_end", "browser", "manual", "unknown"}
+ADEQUACY = {"adequate", "partial", "inadequate", "not_inspected"}
+TEST_PRIORITIES = {"release_blocking_candidate", "high", "medium", "low"}
+ACTIONABILITY = {"actionable", "product_decision_required", "architecture_decision_required", "insufficient_evidence", "not_actionable"}
+RELEASE_EFFECTS = {"blocker_candidate", "condition_candidate", "recommendation", "none"}
 CAPABILITIES_LIMIT = 64 * 1024
 SUPPORTED_CODE = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"}
 JS_EXTENSIONS = (".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts")
@@ -831,3 +855,188 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = No
         if path.is_symlink() or path.read_bytes() != expected["work_order_bytes"][role]: raise ValueError("assessment preparation semantic rederivation failed: work order")
     if pointer is not None and pointer != expected["pointer"]: raise ValueError("assessment preparation pointer semantic binding is stale")
     return {"directory": directory, "manifest": expected["manifest"], "source_packet": expected["source_packet"], "capabilities": capabilities, "graph_input": expected["inputs"], "contexts": expected["contexts"], "work_orders": expected["work_orders"]}
+
+
+def _enum(value: object, allowed: set[str], field: str) -> str:
+    if not isinstance(value, str) or value not in allowed: raise ValueError(f"invalid {field}")
+    return value
+
+
+def _bounded_strings(value: object, field: str, maximum: int = 100) -> list[str]:
+    result = _string_list(value, field)
+    if len(result) > maximum or any(len(item) > DETAIL_LIMIT for item in result): raise ValueError(f"{field} exceeds result bounds")
+    return result
+
+
+def _node_ids_of_types(context: dict, allowed_types: set[str]) -> set[str]:
+    return {item["node_id"] for item in context["base_graph_context"]["nodes"] if item["node_type"] in allowed_types}
+
+
+def _bounded_node_refs(value: object, field: str, context: dict, allowed_types: set[str]) -> list[str]:
+    result = _bounded_strings(value, field)
+    if not set(result).issubset(_node_ids_of_types(context, allowed_types)):
+        raise ValueError(f"{field} contains an invalid base graph node reference")
+    return result
+
+
+def _common_result_record(record: dict, identifier_field: str, assigned: dict[str, dict], context: dict, seen: set[str]) -> dict:
+    fields = {"local_id", identifier_field, "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    if not isinstance(record, dict) or not fields.issubset(record): raise ValueError("invalid assessment result record")
+    local_id = _text(record["local_id"], "local_id", 120)
+    if local_id in seen: raise ValueError("duplicate assessment local ID")
+    seen.add(local_id); record_id = _text(record[identifier_field], identifier_field, 160)
+    if record_id not in assigned or record["scope_status"] != assigned[record_id]["scope_status"]: raise ValueError("assessment result changes assigned scope")
+    disposition = _enum(record["disposition"], DISPOSITIONS, "disposition"); evidence_class = _enum(record["evidence_class"], EVIDENCE_CLASSES, "evidence_class")
+    if (disposition == "assessed") != (evidence_class == "model_reviewed"): raise ValueError("assessment evidence class contradicts disposition")
+    if disposition == "not_applicable" and identifier_field == "criterion_id" and not assigned[record_id].get("repository_not_applicable_allowed", False): raise ValueError("criterion is not canonically not-applicable")
+    _enum(record["uncertainty"], UNCERTAINTIES, "uncertainty"); _text(record["rationale"], "rationale", RATIONALE_LIMIT)
+    nodes = {item["node_id"] for item in context["base_graph_context"]["nodes"]}; edges = {item["edge_id"] for item in context["base_graph_context"]["edges"]}; gaps = {item["gap_id"] for item in context["base_graph_context"]["gaps"]}
+    for field, allowed in (("basis_node_ids", nodes), ("basis_edge_ids", edges), ("basis_gap_ids", gaps)):
+        values = _bounded_strings(record[field], field)
+        if not set(values).issubset(allowed): raise ValueError(f"assessment {field} escapes prepared context")
+    return record
+
+
+def _validate_gap(record: dict, role: str, assigned_criteria: set[str], role_definition: dict, context: dict, seen: set[str]) -> dict:
+    fields = {"local_id", "criterion_id", "gap_kind", "aspect_code", "actionability", "recommended_release_effect", "summary", "uncertainty", "evidence_class", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    if not isinstance(record, dict) or set(record) != fields: raise ValueError("invalid assessment gap record")
+    local_id = _text(record["local_id"], "gap.local_id", 120)
+    if local_id in seen: raise ValueError("duplicate assessment local ID")
+    seen.add(local_id)
+    if record["criterion_id"] not in assigned_criteria: raise ValueError("assessment gap criterion is unassigned")
+    taxonomy = {item["gap_kind"]: set(item["aspect_codes"]) for item in role_definition["gap_taxonomy"]}
+    if record["gap_kind"] not in taxonomy or record["aspect_code"] not in taxonomy[record["gap_kind"]]: raise ValueError("assessment gap taxonomy violation")
+    _enum(record["actionability"], ACTIONABILITY, "gap actionability"); _enum(record["recommended_release_effect"], RELEASE_EFFECTS, "recommended release effect"); _enum(record["uncertainty"], UNCERTAINTIES, "gap uncertainty")
+    if record["evidence_class"] != "model_reviewed": raise ValueError("assessment gaps must remain model_reviewed")
+    _text(record["summary"], "gap summary", RATIONALE_LIMIT)
+    nodes = {item["node_id"] for item in context["base_graph_context"]["nodes"]}; edges = {item["edge_id"] for item in context["base_graph_context"]["edges"]}; gaps = {item["gap_id"] for item in context["base_graph_context"]["gaps"]}
+    for field, allowed in (("basis_node_ids", nodes), ("basis_edge_ids", edges), ("basis_gap_ids", gaps)):
+        values = _bounded_strings(record[field], field)
+        if not set(values).issubset(allowed): raise ValueError(f"assessment gap {field} escapes prepared context")
+    record = json.loads(canonical_json(record)); record["gap_key"] = f"{role}|{record['criterion_id']}|{record['gap_kind']}|{record['aspect_code']}"; return record
+
+
+def _validate_product_payload(payload: dict, context: dict, role_definition: dict) -> dict:
+    if not isinstance(payload, dict) or set(payload) != {"requirements", "journeys", "criteria", "gaps", "decision_candidates"}: raise ValueError("invalid Product assessment payload")
+    seen = set(); req = {item["requirement_id"]: item for item in context["assigned_requirements"]}; crit = {item["criterion_id"]: item for item in context["assigned_criteria"]}; journeys = {item["journey_id"]: item for item in context["assigned_journeys"]}
+    required_extra = {"intended_user_outcome", "partial_or_missing"}; journey_extra = {"journey_completeness", "declared_vs_evidence_assessed_scope"}; criterion_extra = {"implementation_status", "honest_success_state", "honest_failure_state", "evidence_required_after_launch"}
+    for record in payload["requirements"]:
+        if set(record) != {"local_id", "requirement_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | required_extra: raise ValueError("invalid Product requirement assessment")
+        _common_result_record(record, "requirement_id", req, context, seen); _text(record["intended_user_outcome"], "intended_user_outcome", DETAIL_LIMIT); _text(record["partial_or_missing"], "partial_or_missing", DETAIL_LIMIT)
+    for record in payload["journeys"]:
+        if set(record) != {"local_id", "journey_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | journey_extra: raise ValueError("invalid Product journey assessment")
+        _common_result_record(record, "journey_id", journeys, context, seen); _text(record["journey_completeness"], "journey_completeness", DETAIL_LIMIT); _text(record["declared_vs_evidence_assessed_scope"], "declared_vs_evidence_assessed_scope", DETAIL_LIMIT)
+    for record in payload["criteria"]:
+        if set(record) != {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"} | criterion_extra: raise ValueError("invalid Product criterion assessment")
+        _common_result_record(record, "criterion_id", crit, context, seen); _text(record["implementation_status"], "implementation_status", DETAIL_LIMIT); _text(record["honest_success_state"], "honest_success_state", DETAIL_LIMIT); _text(record["honest_failure_state"], "honest_failure_state", DETAIL_LIMIT); _bounded_strings(record["evidence_required_after_launch"], "evidence_required_after_launch")
+    if {item["requirement_id"] for item in payload["requirements"]} != set(req) or {item["journey_id"] for item in payload["journeys"]} != set(journeys) or {item["criterion_id"] for item in payload["criteria"]} != set(crit): raise ValueError("Product assessment is incomplete")
+    gaps = [_validate_gap(item, "product_assessment", set(crit), role_definition, context, seen) for item in payload["gaps"]]
+    decisions = []
+    for item in payload["decision_candidates"]:
+        if not isinstance(item, dict) or set(item) != {"local_id", "criterion_id", "question", "rationale"} or item["criterion_id"] not in crit: raise ValueError("invalid decision candidate")
+        local_id = _text(item["local_id"], "decision_candidate.local_id", 120)
+        if local_id in seen: raise ValueError("duplicate assessment local ID")
+        seen.add(local_id); _text(item["question"], "decision question", DETAIL_LIMIT); _text(item["rationale"], "decision rationale", RATIONALE_LIMIT); decisions.append(item)
+    return {"requirements": payload["requirements"], "journeys": payload["journeys"], "criteria": payload["criteria"], "gaps": gaps, "decision_candidates": decisions}
+
+
+def _validate_engineering_payload(payload: dict, context: dict, role_definition: dict) -> dict:
+    if not isinstance(payload, dict) or set(payload) != {"criteria", "gaps"}: raise ValueError("invalid Engineering assessment payload")
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set()
+    extras = {"probable_component_node_ids", "existing_test_node_ids", "test_layer", "assertion_adequacy", "boundary_adequacy", "overall_adequacy", "mocks_or_bypasses", "negative_cases", "recovery_cases", "state_transition_cases", "runtime_evidence_node_ids", "dependency_isolation", "rollback_concern", "migration_concern", "remaining_gap", "required_closure_evidence"}
+    common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    for record in payload["criteria"]:
+        if not isinstance(record, dict) or set(record) != common | extras: raise ValueError("invalid Engineering criterion row")
+        _common_result_record(record, "criterion_id", assigned, context, seen); _enum(record["test_layer"], TEST_LAYERS, "test layer")
+        for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy"): _enum(record[field], ADEQUACY, field)
+        _bounded_node_refs(record["probable_component_node_ids"], "probable_component_node_ids", context, {"implementation_reference"})
+        _bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"})
+        _bounded_node_refs(record["runtime_evidence_node_ids"], "runtime_evidence_node_ids", context, {"runtime_evidence"})
+        for field in ("mocks_or_bypasses", "negative_cases", "recovery_cases", "state_transition_cases", "required_closure_evidence"): _bounded_strings(record[field], field)
+        for field in ("dependency_isolation", "rollback_concern", "migration_concern", "remaining_gap"): _text(record[field], field, DETAIL_LIMIT)
+    if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("Engineering assessment is incomplete")
+    return {"criteria": payload["criteria"], "gaps": [_validate_gap(item, "engineering_assessment", set(assigned), role_definition, context, seen) for item in payload["gaps"]]}
+
+
+def _validate_test_payload(payload: dict, context: dict, role_definition: dict) -> dict:
+    if not isinstance(payload, dict) or set(payload) != {"criteria", "gaps"}: raise ValueError("invalid test-adequacy payload")
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}; extras = {"existing_test_node_ids", "test_layer", "assertion_adequacy", "boundary_adequacy", "overall_adequacy", "negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"}
+    for record in payload["criteria"]:
+        if not isinstance(record, dict) or set(record) != common | extras: raise ValueError("invalid test-adequacy criterion")
+        _common_result_record(record, "criterion_id", assigned, context, seen); _enum(record["test_layer"], TEST_LAYERS, "test layer")
+        for field in ("assertion_adequacy", "boundary_adequacy", "overall_adequacy"): _enum(record[field], ADEQUACY, field)
+        _bounded_node_refs(record["existing_test_node_ids"], "existing_test_node_ids", context, {"test_reference"})
+        for field in ("negative_cases", "recovery_cases", "state_transition_cases", "mock_boundaries"): _bounded_strings(record[field], field)
+    if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("test-adequacy assessment is incomplete")
+    return {"criteria": payload["criteria"], "gaps": [_validate_gap(item, "test_adequacy", set(assigned), role_definition, context, seen) for item in payload["gaps"]]}
+
+
+def _validate_targeted_payload(payload: dict, context: dict, role_definition: dict) -> dict:
+    if not isinstance(payload, dict) or set(payload) != {"criteria", "specifications"}: raise ValueError("invalid targeted-test payload")
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; seen = set(); common = {"local_id", "criterion_id", "disposition", "scope_status", "evidence_class", "uncertainty", "rationale", "basis_node_ids", "basis_edge_ids", "basis_gap_ids"}
+    for record in payload["criteria"]:
+        if not isinstance(record, dict) or set(record) != common | {"recommendation_summary"}: raise ValueError("invalid targeted-test disposition")
+        _common_result_record(record, "criterion_id", assigned, context, seen); _text(record["recommendation_summary"], "recommendation_summary", DETAIL_LIMIT)
+    if {item["criterion_id"] for item in payload["criteria"]} != set(assigned): raise ValueError("targeted-test planning is incomplete")
+    if not isinstance(payload["specifications"], list) or len(payload["specifications"]) > TARGETED_SPEC_LIMIT: raise ValueError("too many targeted test specifications")
+    fields = {"local_id", "criterion_id", "risk_addressed", "test_layer", "setup", "action", "assertions", "negative_cases", "recovery_cases", "required_fixtures", "external_boundaries", "recommended_priority", "aspect_code", "addresses_gap_key", "uncertainty", "rationale"}; specs = []
+    for item in payload["specifications"]:
+        if not isinstance(item, dict) or set(item) != fields or item["criterion_id"] not in assigned: raise ValueError("invalid targeted test specification")
+        local_id = _text(item["local_id"], "test specification local_id", 120)
+        if local_id in seen: raise ValueError("duplicate assessment local ID")
+        seen.add(local_id); _enum(item["test_layer"], TEST_LAYERS, "test layer"); _enum(item["recommended_priority"], TEST_PRIORITIES, "recommended priority"); _enum(item["uncertainty"], UNCERTAINTIES, "test uncertainty")
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", item["aspect_code"]) or item["aspect_code"] not in set(role_definition["aspect_codes"]): raise ValueError("invalid test aspect code")
+        if item["addresses_gap_key"] is not None and (not isinstance(item["addresses_gap_key"], str) or len(item["addresses_gap_key"]) > 400): raise ValueError("invalid addressed gap key")
+        for field in ("risk_addressed", "setup", "action", "rationale"): _text(item[field], field, DETAIL_LIMIT if field != "rationale" else RATIONALE_LIMIT)
+        for field in ("assertions", "negative_cases", "recovery_cases", "required_fixtures", "external_boundaries"): _bounded_strings(item[field], field)
+        specs.append(item)
+    return {"criteria": payload["criteria"], "specifications": specs}
+
+
+def _validate_completion_receipt(value: dict, work: dict, result_bytes: bytes) -> dict:
+    if not isinstance(value, dict) or set(value) != {"schema_version", "executor", "work_order_id", "work_order_hash", "result_snapshot_hash", "started_at", "completed_at"} or value.get("schema_version") != RECEIPT_SCHEMA: raise ValueError("invalid assessment completion receipt")
+    executor = value["executor"]
+    if not isinstance(executor, dict) or executor.get("executor_type") not in {"human", "agent_harness"}: raise ValueError("invalid assessment executor")
+    fields = {"executor_type", "reviewer_label"} if executor["executor_type"] == "human" else {"executor_type", "harness_id", "adapter_version", "run_id", "model_id"}
+    if set(executor) != fields: raise ValueError("invalid assessment executor fields")
+    for field, item in executor.items():
+        if field != "executor_type" and item is not None: _text(item, f"executor.{field}", 200)
+    if value["work_order_id"] != work["work_order_id"] or value["work_order_hash"] != work["work_order_hash"] or value["result_snapshot_hash"] != _sha(result_bytes): raise ValueError("assessment completion receipt binding mismatch")
+    try: started = datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")); completed = datetime.fromisoformat(value["completed_at"].replace("Z", "+00:00"))
+    except (AttributeError, ValueError) as exc: raise ValueError("invalid assessment receipt timestamp") from exc
+    if started.tzinfo is None or completed.tzinfo is None or completed < started: raise ValueError("invalid assessment receipt time range")
+    return value
+
+
+def _validate_role_result(raw: bytes, receipt_raw: bytes, role: str, preparation: dict, role_definition: dict) -> tuple[dict, dict, dict]:
+    if len(raw) > RESULT_BYTES_LIMIT: raise ValueError("assessment result exceeds size limit")
+    value = _load_json_bytes(raw); work = preparation["work_orders"][role]; context = preparation["contexts"][role]
+    fields = {"schema_version", "role_id", "role_version", "preparation_id", "preparation_semantic_hash", "work_order_id", "work_order_hash", "base_graph_generation", "base_graph_semantic_hash", "payload", "assumptions", "limitations"}
+    if set(value) != fields or value.get("schema_version") != RESULT_SCHEMAS[role] or value.get("role_id") != role or value.get("role_version") != work["role_version"] or value.get("preparation_id") != work["preparation_id"] or value.get("preparation_semantic_hash") != work["preparation_semantic_hash"] or value.get("work_order_id") != work["work_order_id"] or value.get("work_order_hash") != work["work_order_hash"] or value.get("base_graph_generation") != work["inputs"]["base_graph_generation"] or value.get("base_graph_semantic_hash") != work["inputs"]["base_graph_semantic_hash"]: raise ValueError("assessment result binding mismatch")
+    assumptions = _bounded_strings(value["assumptions"], "assumptions", ASSUMPTION_LIMIT); limitations = _bounded_strings(value["limitations"], "limitations", LIMITATION_LIMIT)
+    if role == "product_assessment": payload = _validate_product_payload(value["payload"], context, role_definition)
+    elif role == "engineering_assessment": payload = _validate_engineering_payload(value["payload"], context, role_definition)
+    elif role == "test_adequacy": payload = _validate_test_payload(value["payload"], context, role_definition)
+    elif role == "targeted_test_planning": payload = _validate_targeted_payload(value["payload"], context, role_definition)
+    else: raise ValueError("browser results are compiled in Phase 4D")
+    count = sum(len(item) for item in payload.values() if isinstance(item, list))
+    if count > RESULT_RECORD_LIMIT: raise ValueError("assessment result exceeds record limit")
+    receipt = _validate_completion_receipt(_load_json_bytes(receipt_raw), work, raw)
+    normalized = {"schema_version": role.replace("_", "-") + ".v1", "role_id": role, "role_version": work["role_version"], "preparation_id": work["preparation_id"], "work_order_id": work["work_order_id"], "base_graph_generation": work["inputs"]["base_graph_generation"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "executor_provenance": receipt["executor"], "assumptions": assumptions, "limitations": limitations, "payload": json.loads(canonical_json(payload))}
+    return value, receipt, normalized
+
+
+def compile_core_results(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
+    preparation = load_preparation(ctx, preparation_id); roles = {}
+    role_root = preparation["directory"] / "role-definitions"
+    for role in CORE_ROLES: roles[role] = _role_snapshot((role_root / f"{role}.json").read_bytes(), role)["value"]
+    raw_results = {}; receipts = {}; artifacts = {}; snapshot_hashes = {}
+    for role in CORE_ROLES:
+        work = preparation["work_orders"][role]; inbox = _root(ctx) / "inbox" / preparation["manifest"]["preparation_id"] / work["work_order_id"]
+        result_path, receipt_path = inbox / "result.json", inbox / "completion-receipt.json"
+        if any(path.is_symlink() or not path.is_file() for path in (result_path, receipt_path)): raise ValueError(f"missing required assessment result: {role}")
+        evidence = inbox / "evidence"
+        if evidence.is_symlink() or (evidence.exists() and any(evidence.iterdir())): raise ValueError("core assessment roles cannot submit canonical evidence files")
+        raw, receipt_raw = result_path.read_bytes(), receipt_path.read_bytes(); submitted, receipt, normalized = _validate_role_result(raw, receipt_raw, role, preparation, roles[role])
+        raw_results[role] = submitted; receipts[role] = receipt; artifacts[role] = normalized; snapshot_hashes[role] = {"result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw), "normalized_result_hash": content_hash(normalized)}
+    return {"preparation": preparation, "artifacts": artifacts, "submitted_results": raw_results, "completion_receipts": receipts, "snapshot_hashes": snapshot_hashes}
