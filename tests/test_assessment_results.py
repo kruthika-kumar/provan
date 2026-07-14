@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from shiproom.assessment import CORE_ROLES, compile_core_results, load_preparation, prepare as prepare_assessment
+import shiproom.assessment as assessment_module
+from shiproom.assessment import CORE_ROLES, compile_assessment, compile_core_results, load_assessment, load_preparation, prepare as prepare_assessment, show_assessment
 from test_assessment import assessment_context, write_json
 
 
@@ -86,3 +87,41 @@ def test_receipt_is_non_self_referential_and_manual_and_harness_variants_work(tm
 def test_role_inclusive_gap_key_and_exact_targeted_link_key_are_preserved(tmp_path: Path):
     ctx = prepared_results(tmp_path); compiled = compile_core_results(ctx); gap = compiled["artifacts"]["test_adequacy"]["payload"]["gaps"][0]; spec = compiled["artifacts"]["targeted_test_planning"]["payload"]["specifications"][0]
     assert gap["gap_key"].startswith("test_adequacy|") and spec["addresses_gap_key"] == gap["gap_key"]
+
+
+def test_complete_assessment_generation_preserves_base_authority_dimensions(tmp_path: Path):
+    ctx = prepared_results(tmp_path); graph_pointer = (ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/current-generation.json").read_bytes(); release = json.dumps(ctx.release, sort_keys=True)
+    manifest = compile_assessment(ctx); loaded, artifacts = load_assessment(ctx)
+    assert loaded == manifest and artifacts["effective-assessment-view.json"]["authority"] == {"base_graph":"authoritative_evidence_graph","assessment_overlay":"authoritative_assessment_record","effective_view":"derived_only"}
+    assert (ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/current-generation.json").read_bytes() == graph_pointer
+    assert json.dumps(ctx.release, sort_keys=True) == release
+    assert "Base evidence:" in show_assessment(ctx)
+
+
+def test_overlay_gap_linking_is_exact_and_unmatched_spec_remains_criterion_only(tmp_path: Path):
+    ctx = prepared_results(tmp_path); compile_assessment(ctx); _, artifacts = load_assessment(ctx); overlay = artifacts["assessment-graph-overlay.json"]
+    assert any(edge["relationship"] == "addresses_assessment_gap" for edge in overlay["edges"])
+    preparation = load_preparation(ctx); role = "targeted_test_planning"; work = preparation["work_orders"][role]; path = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/inbox" / work["preparation_id"] / work["work_order_id"] / "result.json"; result=json.loads(path.read_text()); result["payload"]["specifications"][0]["addresses_gap_key"]="test_adequacy|missing|boundary_coverage_gap|public_route"; write_json(path,result); receipt_path=path.parent/"completion-receipt.json"; receipt=json.loads(receipt_path.read_text()); receipt["result_snapshot_hash"]="sha256:"+hashlib.sha256(path.read_bytes()).hexdigest(); write_json(receipt_path,receipt)
+    compile_assessment(ctx); _, artifacts = load_assessment(ctx); overlay=artifacts["assessment-graph-overlay.json"]
+    assert any(edge["relationship"] == "proposes_test_for" for edge in overlay["edges"]) and not any(edge["relationship"] == "addresses_assessment_gap" for edge in overlay["edges"])
+
+
+def test_assessment_load_rederives_semantics_and_rejects_artifact_tamper(tmp_path: Path):
+    ctx = prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer=json.loads((root/"current-assessment.json").read_text()); directory=root/"generations"/pointer["generation"]; path=directory/"effective-assessment-view.json"; artifact=json.loads(path.read_text()); artifact["criteria"][0]["base_evidence_state"]["test"]="open"; write_json(path,artifact)
+    manifest_path=directory/"manifest.json"; manifest=json.loads(manifest_path.read_text()); manifest["artifact_hashes"][path.name]="sha256:"+hashlib.sha256(path.read_bytes()).hexdigest(); manifest["semantic_bundle_hash"]=assessment_module.content_hash({"compiler_version":assessment_module.ASSESSMENT_COMPILER_VERSION,"preparation_semantic_hash":manifest["preparation_semantic_hash"],"base_graph_semantic_hash":manifest["base_graph_semantic_hash"],"artifact_hashes":{key:manifest["artifact_hashes"][key] for key in sorted(manifest["artifact_hashes"])}}); manifest["bundle_hash"]=assessment_module.content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"}); write_json(manifest_path,manifest); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); write_json(root/"current-assessment.json",pointer)
+    with pytest.raises(ValueError, match="semantic artifacts are stale"): load_assessment(ctx)
+
+
+def test_late_pointer_failure_preserves_prior_assessment(tmp_path: Path, monkeypatch):
+    ctx=prepared_results(tmp_path); compile_assessment(ctx); pointer_path=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment/current-assessment.json"; before=pointer_path.read_bytes()
+    def fail(_directory): raise RuntimeError("late persistence failure")
+    monkeypatch.setattr(assessment_module,"_BEFORE_ASSESSMENT_POINTER_REPLACE",fail)
+    with pytest.raises(RuntimeError,match="late persistence"): compile_assessment(ctx)
+    assert pointer_path.read_bytes()==before
+    monkeypatch.setattr(assessment_module,"_BEFORE_ASSESSMENT_POINTER_REPLACE",None); load_assessment(ctx)
+
+
+def test_semantic_assessment_ids_ignore_harness_run_provenance(tmp_path: Path):
+    ctx=assessment_context(tmp_path); prepare_assessment(ctx); issue_results(ctx,harness_role="engineering_assessment"); compile_assessment(ctx); _,first=load_assessment(ctx); first_ids={node["node_id"] for node in first["assessment-graph-overlay.json"]["nodes"] if node.get("role_id")=="engineering_assessment"}
+    preparation=load_preparation(ctx); work=preparation["work_orders"]["engineering_assessment"]; receipt_path=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"completion-receipt.json"; receipt=json.loads(receipt_path.read_text()); receipt["executor"]["run_id"]="another-run"; write_json(receipt_path,receipt); compile_assessment(ctx); _,second=load_assessment(ctx); second_ids={node["node_id"] for node in second["assessment-graph-overlay.json"]["nodes"] if node.get("role_id")=="engineering_assessment"}
+    assert first_ids==second_ids

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assessment-graph-overlay.v1.json",
+  "type": "object",
+  "required": ["schema_version", "release_id", "release_commit", "preparation_id", "base_graph_generation", "base_graph_semantic_hash", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "assessment-graph-overlay.v1"},
+    "release_id": {"type": "string"},
+    "release_commit": {"pattern": "^[0-9a-f]{40}$"},
+    "preparation_id": {"pattern": "^prep_[0-9a-f]{32}$"},
+    "base_graph_generation": {"pattern": "^gen_[0-9a-f]{32}$"},
+    "base_graph_semantic_hash": {"pattern": "^sha256:[0-9a-f]{64}$"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "node_type", "evidence_class"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "node_type": {"enum": ["assessment_conclusion", "assessment_gap", "browser_observation", "targeted_test_specification"]},
+          "evidence_class": {"enum": ["model_reviewed", "browser_observed", "not_inspected"]}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["edge_id", "relationship", "source_node_id", "target_node_id", "assessment_evidence_class"],
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {"type": "string"},
+          "relationship": {"enum": ["assesses_requirement", "assesses_criterion", "concerns_criterion", "concerns_journey", "supported_by_base_node", "supported_by_browser_observation", "identifies_assessment_gap", "proposes_test_for", "addresses_assessment_gap"]},
+          "source_node_id": {"type": "string"},
+          "target_node_id": {"type": "string"},
+          "assessment_evidence_class": {"enum": ["model_reviewed", "browser_observed", "not_inspected"]}
+        }
+      }
+    }
+  }
+}

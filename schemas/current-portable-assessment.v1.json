@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"current-portable-assessment.v1.json","type":"object","required":["schema_version","generation","manifest_hash"],"additionalProperties":false,"properties":{"schema_version":{"const":"current-portable-assessment.v1"},"generation":{"pattern":"^gen_[0-9a-f]{32}$"},"manifest_hash":{"pattern":"^sha256:[0-9a-f]{64}$"}}}
