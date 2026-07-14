@@ -10,7 +10,7 @@ from .project import canonical_json, content_hash
 
 GRAPH_SCHEMA="requirement-evidence-graph.v1"; SUMMARY_SCHEMA="criterion-evidence-summary.v1"; GAPS_SCHEMA="evidence-gaps.v1"
 PACKET_SCHEMA="evidence-mapping-source-packet.v1"; PROPOSAL_SCHEMA="evidence-mapping-proposal.v1"; MANIFEST_SCHEMA="requirement-evidence-graph-manifest.v1"; POINTER_SCHEMA="requirement-evidence-graph-current-generation.v1"
-COMPILER_VERSION="requirement-evidence-graph.v6"; LIMIT=256*1024
+COMPILER_VERSION="requirement-evidence-graph.v7"; LIMIT=256*1024
 ARTIFACTS=("requirement-evidence-graph.json","criterion-evidence-summary.json","evidence-gaps.json")
 NODE_TYPES={"source","requirement","acceptance_criterion","critical_journey","implementation_reference","test_reference","instrumentation_reference","runtime_evidence","finding","owner_decision","remediation_plan","closure_evidence"}
 CLASSIFICATIONS={"deterministically_established","source_backed","model_mapped_candidate","owner_confirmed","missing","not_inspected"}
@@ -279,7 +279,7 @@ def _compile(ctx,packet,normalized):
   closure=add(_node("closure_evidence",{"rerun":rerun["check_id"],"finding":fid},provenance="canonical_release_state",slot_status="actual",original_check_id=original["check_id"],rerun_check_id=rerun["check_id"],closure_state="closed" if success and closed else "failed"))
   _record(nodes,edges,closure,findings[fid],"closes" if success and closed else "fails_to_close","deterministically_established","Compatible canonical rerun lineage.","release_projection")
   if slot=="runtime" and success and closed:resolved_lineages[original["check_id"]]=closure
- gaps=[]; summaries=[]
+ gaps=[]; summaries=[]; runtime_lineage={}
  for c in criteria:
   cid=c["criterion_id"]; req=req_by_id[c["requirement_id"]]; cnode=crit_nodes[cid]; gapids=[]
   for slot in SLOT_TYPES:
@@ -293,6 +293,7 @@ def _compile(ctx,packet,normalized):
     # Direct deterministic failures are independent; an unrelated success is
     # deliberately irrelevant. Candidate links do not enter either set.
     state="open" if missing or unresolved else "closed" if success else "unknown"
+    runtime_lineage[cid]={"missing_check_ids":sorted(n["check_id"] for _,n in missing),"failed_check_ids":sorted(n["check_id"] for _,n in failed),"resolved_check_ids":sorted(n["check_id"] for _,n in failed if n["check_id"] in resolved_lineages),"unresolved_check_ids":sorted(n["check_id"] for _,n in unresolved),"success_check_ids":sorted(n["check_id"] for _,n in success)}
    elif deterministic:
     failed=[(e,n) for e,n in deterministic if n.get("slot_status")=="deterministic_missing" or (n.get("passed") is False and n.get("evidence_status")=="deterministically_verified")]
     state="open" if failed else "closed" if any(n.get("passed") is True and n.get("evidence_status")=="deterministically_verified" for _,n in deterministic) else "unknown"
@@ -305,8 +306,6 @@ def _compile(ctx,packet,normalized):
   amb=[a["ambiguity_id"] for a in ambiguities if cid in a.get("affected_criterion_ids",[]) or c["requirement_id"] in a.get("affected_requirement_ids",[])]
   if amb:gaps.append(_gap(cid,"source_conflict","open",[cnode],[],"Resolved Product Intent ambiguity.",ambiguity_ids=amb)); gapids.append(gaps[-1]["gap_id"])
   linked_find=[e for e in edges if e["relationship"]=="concerns_criterion" and e["target_node_id"]==cnode]; find_path={e["source_node_id"]:e for e in linked_find}; linked_dec=[e for e in edges if e["relationship"]=="requires_owner_decision" and e["source_node_id"] in find_path]; linked_res=[e for e in edges if e["relationship"]=="resolved_or_conditioned_by" and e["target_node_id"] in find_path]; linked_rem=[e for e in edges if e["relationship"]=="addressed_by" and e["source_node_id"] in find_path]
-  deterministic_dec=[e for e in linked_dec if find_path[e["source_node_id"]]["establishment_classification"]=="deterministically_established"]
-  if any(nodes[e["target_node_id"]].get("choice") is None for e in deterministic_dec):gaps.append(_gap(cid,"owner_decision_required","open",[cnode]+[e["target_node_id"] for e in deterministic_dec],[e["edge_id"] for e in deterministic_dec],"Recorded owner decision.")); gapids.append(gaps[-1]["gap_id"])
   def items(es,direction="target",path_edges=None):
    output=[]
    for e in es:
@@ -316,8 +315,10 @@ def _compile(ctx,packet,normalized):
    return output
   closure=[e for e in edges if e["relationship"] in {"closes","fails_to_close"} and e["target_node_id"] in find_path]
   resolved_nodes={e["source_node_id"] for e in linked_res}; unresolved_dec=[e for e in linked_dec if e["target_node_id"] not in resolved_nodes]
+  deterministic_unresolved=[e for e in unresolved_dec if find_path[e["source_node_id"]]["establishment_classification"]=="deterministically_established"]
+  if deterministic_unresolved:gaps.append(_gap(cid,"owner_decision_required","open",[cnode]+[e["target_node_id"] for e in deterministic_unresolved],[e["edge_id"] for e in deterministic_unresolved],"Recorded owner decision.")); gapids.append(gaps[-1]["gap_id"])
   paths={e["edge_id"]:[find_path[e["source_node_id"]]] for e in linked_dec+linked_rem}; paths.update({e["edge_id"]:[find_path[e["target_node_id"]]] for e in closure+linked_res})
-  closure_items=items(closure,"source",paths); closure_state="closed" if any(x["detail"].get("closure_state")=="closed" for x in closure_items) else "failed" if closure_items else "not_inspected"; closure_contract={"kind":"indexed_rerun_compatibility","predecessor_check_ids":sorted({x["detail"]["original_check_id"] for x in closure_items})} if closure_items else None
+  closure_items=items(closure,"source",paths); deterministic_closure=[x for x in closure_items if x["effective_classification"] in {"deterministically_established","owner_confirmed"}]; lineage=runtime_lineage.get(cid,{"missing_check_ids":[],"unresolved_check_ids":[]}); closure_state="failed" if lineage["missing_check_ids"] or lineage["unresolved_check_ids"] or any(x["detail"].get("closure_state")=="failed" for x in deterministic_closure) else "closed" if any(x["detail"].get("closure_state")=="closed" for x in deterministic_closure) else "not_inspected"; closure_contract={"kind":"indexed_rerun_compatibility","predecessor_check_ids":sorted({x["detail"]["original_check_id"] for x in deterministic_closure})} if deterministic_closure else None
   summaries.append({"criterion_id":cid,"criterion_node_id":cnode,"owning_requirement":{"node_id":req_nodes[c["requirement_id"]],"statement":req["statement"]},"requirement_id":c["requirement_id"],"requirement_statement":req["statement"],"source_support":items([e for e in edges if e["relationship"]=="supports_acceptance_criterion" and e["target_node_id"]==cnode],"source"),"inherited_journeys":_sort(req.get("related_journey_ids",[])),"critical_journey_context":_sort(req.get("related_journey_ids",[])),"direct_journeys":items(direct_journeys[cid]),"implementation":items(slot_edges[cid]["implementation"]),"tests":items(slot_edges[cid]["test"]),"instrumentation":items(slot_edges[cid]["instrumentation"]),"runtime":items(slot_edges[cid]["runtime"]),"missing_slots":sorted(s for s in SLOT_TYPES if any(x["detail"].get("slot_status")=="deterministic_missing" for x in items(slot_edges[cid][s]))),"not_inspected_slots":sorted(s for s in SLOT_TYPES if any(x["detail"].get("slot_status")=="not_inspected" for x in items(slot_edges[cid][s]))),"model_judgments":[g["gap_id"] for g in gaps if g["criterion_id"]==cid and g["gap_type"]=="quality_judgment"],"findings":items(linked_find,"source"),"blockers":items([e for e in linked_find if nodes[e["source_node_id"]].get("blocking")],"source"),"owner_decisions":items(linked_res,"source",paths)+items(unresolved_dec,"target",paths),"remediation":items(linked_rem,path_edges=paths),"closure":{"closure_state":closure_state,"closure_items":closure_items,"closure_contract":closure_contract},"gaps":sorted(gapids),"evidence_needed_to_close":_sort([g["evidence_needed"] for g in gaps if g["criterion_id"]==cid])})
  common={"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"project_authority":_authority(ctx),"product_intent_semantic_bundle_hash":im["semantic_bundle_hash"],"product_intent_source_packet_hash":im["source_packet_hash"],"release_projection_hash":ph,"compiler_version":COMPILER_VERSION}
  graph={"schema_version":GRAPH_SCHEMA,**common,"mapping_packet_state":"present" if packet else "absent","mapping_packet_hash":packet["packet_hash"] if packet else None,"coverage_boundary":"Validated Product Intent, canonical release projection, and optional explicit mapping packet only.","import_limitations":sorted(limitations,key=canonical_json),"nodes":sorted(nodes.values(),key=lambda x:x["node_id"]),"edges":sorted({e["edge_id"]:e for e in edges}.values(),key=lambda x:x["edge_id"])}
@@ -344,6 +345,8 @@ def _validate_artifacts(artifacts, criterion_ids=None):
   return False
  nodes={x.get("node_id"):x for x in g["nodes"]}
  if len(nodes)!=len(g["nodes"]) or any(not valid_node(n) for n in nodes.values()):raise ValueError("graph node schema is invalid")
+ limitation_fields={"unsupported_check":{"kind","check_id","check_type","criterion_id"},"conflicting_check_route":{"kind","check_id","type","evidence_kind"},"ambiguous_evidence_reference":{"kind","finding_id","reference"},"ambiguous_closure_finding":{"kind","check_id","criterion_id","finding_ids"},"contradictory_closure_state":{"kind","check_id","finding_id"}}
+ if any(not isinstance(x,dict) or x.get("kind") not in limitation_fields or set(x)!=limitation_fields[x["kind"]] for x in g["import_limitations"]):raise ValueError("import limitation schema invalid")
  seen=set(); edge_map={}
  for e in g["edges"]:
   required=SCHEMA_REGISTRY["edge"]
@@ -354,10 +357,11 @@ def _validate_artifacts(artifacts, criterion_ids=None):
  summary_fields={"criterion_id","criterion_node_id","owning_requirement","requirement_id","requirement_statement","source_support","inherited_journeys","critical_journey_context","direct_journeys","implementation","tests","instrumentation","runtime","missing_slots","not_inspected_slots","model_judgments","findings","blockers","owner_decisions","remediation","closure","gaps","evidence_needed_to_close"}
  for summary in s["criteria"]:
   if set(summary)!=summary_fields or summary["criterion_node_id"] not in nodes or set(summary["closure"])!={"closure_state","closure_items","closure_contract"} or summary["closure"]["closure_state"] not in {"closed","failed","not_inspected","missing"}:raise ValueError("criterion summary schema invalid")
-  for key in ("source_support","direct_journeys","implementation","tests","instrumentation","runtime","findings","blockers","owner_decisions","remediation","closure_items"):
+  expected_types={"source_support":{"source"},"direct_journeys":{"critical_journey"},"implementation":{"implementation_reference"},"tests":{"test_reference"},"instrumentation":{"instrumentation_reference"},"runtime":{"runtime_evidence"},"findings":{"finding"},"blockers":{"finding"},"owner_decisions":{"owner_decision"},"remediation":{"remediation_plan"},"closure_items":{"closure_evidence"}}
+  for key in expected_types:
    values=summary["closure"]["closure_items"] if key=="closure_items" else summary[key]
    for item in values:
-    if set(item)!=SCHEMA_REGISTRY["relationship_summary_item"] or item["node_id"] not in nodes or not item["criterion_path"] or any(set(step)!={"edge_id","traversal"} or step["edge_id"] not in seen or step["traversal"] not in {"forward","reverse"} for step in item["criterion_path"]):raise ValueError("relationship summary schema invalid")
+    if set(item)!=SCHEMA_REGISTRY["relationship_summary_item"] or item["node_id"] not in nodes or item["node_type"] not in expected_types[key] or nodes[item["node_id"]]["node_type"]!=item["node_type"] or not item["direct_relationships"] or item["criterion_path"][:len(item["direct_relationships"])]!=item["direct_relationships"] or not item["criterion_path"] or any(set(step)!={"edge_id","traversal"} or step["edge_id"] not in seen or step["traversal"] not in {"forward","reverse"} for step in item["criterion_path"]):raise ValueError("relationship summary schema invalid")
     current=item["node_id"]
     for step in item["criterion_path"]:
      edge=edge_map[step["edge_id"]]
@@ -365,13 +369,19 @@ def _validate_artifacts(artifacts, criterion_ids=None):
      elif step["traversal"]=="reverse" and edge["target_node_id"]==current:current=edge["source_node_id"]
      else:raise ValueError("criterion path is disconnected")
     if current!=summary["criterion_node_id"]:raise ValueError("criterion path does not terminate at criterion")
+    path_edges=[edge_map[x["edge_id"]] for x in item["criterion_path"]]; expected=path_edges[0]["establishment_classification"] if path_edges[0]["relationship"].startswith("supports_") else _effective_classification(path_edges)
+    if item["direct_classification"]!=edge_map[item["direct_relationships"][0]["edge_id"]]["establishment_classification"] or item["effective_classification"]!=expected:raise ValueError("relationship classification is stale")
  summary_ids=[x.get("criterion_id") for x in s["criteria"]]
  if len(summary_ids)!=len(set(summary_ids)) or (criterion_ids is not None and set(summary_ids)!=set(criterion_ids)):raise ValueError("criterion summary set invalid")
  allowed_gaps={"implementation_gap","test_evidence_gap","instrumentation_gap","runtime_evidence_gap","specification_gap","source_conflict","quality_judgment","owner_decision_required"}
  for gap in ga["gaps"]:
   required={"gap_id","criterion_id","gap_type","state","basis_node_ids","basis_edge_ids","evidence_needed","linked_canonical_finding_ids","product_intent_ambiguity_ids"}
   optional={"candidate_linked_failure"} if gap.get("gap_type") in {"implementation_gap","test_evidence_gap","instrumentation_gap","runtime_evidence_gap"} else ({"assessment"} if gap.get("gap_type")=="quality_judgment" else set())
-  if set(gap)-required-optional or not required<=set(gap) or gap["gap_type"] not in allowed_gaps or gap["state"] not in {"open","unknown","closed"} or any(x not in nodes for x in gap["basis_node_ids"]) or any(x not in seen for x in gap["basis_edge_ids"]):raise ValueError("gap schema invalid")
+  if set(gap)-required-optional or not required<=set(gap) or gap["criterion_id"] not in summary_ids or gap["gap_type"] not in allowed_gaps or gap["state"] not in {"open","unknown","closed"} or any(x not in nodes for x in gap["basis_node_ids"]) or any(x not in seen for x in gap["basis_edge_ids"]) or any(x not in nodes or nodes[x]["node_type"]!="finding" for x in gap["linked_canonical_finding_ids"]):raise ValueError("gap schema invalid")
+ runtime_gaps={x["criterion_id"]:x for x in ga["gaps"] if x["gap_type"]=="runtime_evidence_gap"}
+ for summary in s["criteria"]:
+  closure=summary["closure"]; deterministic=[x for x in closure["closure_items"] if x["effective_classification"] in {"deterministically_established","owner_confirmed"}]; runtime=runtime_gaps[summary["criterion_id"]]; expected="failed" if runtime["state"]=="open" or any(x["detail"].get("closure_state")=="failed" for x in deterministic) else "closed" if any(x["detail"].get("closure_state")=="closed" for x in deterministic) else "not_inspected"
+  if closure["closure_state"]!=expected or (closure["closure_contract"] is None)!=(not deterministic):raise ValueError("criterion closure is stale")
 def _persist(ctx,packet,packet_bytes,submitted,submitted_bytes,normalized,artifacts):
  root=_root(ctx); directory=root/"generations"/("gen_"+uuid.uuid4().hex); directory.mkdir(parents=True); hashes={}
  for name,obj in artifacts.items():_atomic(directory/name,obj); hashes[name]=_hash((directory/name).read_bytes())
