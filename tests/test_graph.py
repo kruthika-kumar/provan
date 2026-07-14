@@ -169,3 +169,24 @@ def test_v3_generation_is_stale_and_effective_candidate_strength_is_visible(tmp_
     root = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph"; pointer = json.loads((root / "current-generation.json").read_text())
     manifest = root / "generations" / pointer["generation"] / "manifest.json"; value = json.loads(manifest.read_text()); value["compiler_version"] = "requirement-evidence-graph.v3"; manifest.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(ValueError): load_bundle(ctx)
+
+
+def test_packet_journey_mapping_creates_the_candidate_journey_edge(tmp_path: Path):
+    ctx = _intent_context(tmp_path); packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    mapping = {"mapping_id":"journey","criterion_id":criterion,"target_type":"critical_journey","rationale":"Exact packet journey.","journey_id":packet["critical_journeys"][0]["journey_id"]}
+    path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/journey.json"; path.write_text(json.dumps(_mapping_proposal(packet, [mapping])), encoding="utf-8")
+    compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx)
+    summary = artifacts["criterion-evidence-summary.json"]["criteria"][0]
+    assert len(summary["direct_journeys"]) == 1 and summary["direct_journeys"][0]["relationship_classification"] == "model_mapped_candidate"
+
+
+def test_candidate_finding_keeps_downstream_decision_and_remediation_candidate(tmp_path: Path):
+    ctx = _intent_context(tmp_path); ctx.release["findings"] = [{"id":"hist","criterion_id":"HIST","blocking":True,"state":"TRIAGED","evidence":[]}]
+    ctx.release["owner_decisions"] = [{"id":"dec","title":"Decision","choice":None,"resolution":None,"evidence":[{"reference":"hist"}]}]
+    ctx.release["remediation_tasks"] = [{"id":"task","class":"compatibility","base_branch":"main","branch":"x","status":"open","auto_merge":False,"evidence":[{"reference":"hist"}]}]
+    packet = mapping_prepare(ctx, ["docs/brief.md"]); criterion = packet["criterion_ids"][0]
+    path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/finding.json"; path.write_text(json.dumps(_mapping_proposal(packet, [_mapping(packet, criterion, "finding", "finding", canonical_id="hist")])), encoding="utf-8")
+    compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx); summary = artifacts["criterion-evidence-summary.json"]["criteria"][0]
+    assert summary["owner_decisions"][0]["effective_classification"] == "model_mapped_candidate"
+    assert summary["remediation"][0]["effective_classification"] == "model_mapped_candidate"
+    assert not any(g["gap_type"] == "owner_decision_required" for g in artifacts["evidence-gaps.json"]["gaps"])
