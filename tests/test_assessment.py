@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from shiproom.assessment import (
     _test_matches,
     load_discovery_registry,
     _work_order_hash,
+    default_capabilities,
     load_preparation,
     load_role_definitions,
     prepare as prepare_assessment,
@@ -24,6 +26,7 @@ from shiproom.cli import main
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input, mapping_prepare
 from shiproom.intent import compile_bundle as compile_intent, prepare as prepare_intent
 from test_intent import context_for, inbox, proposal
+from shiproom.project import content_hash
 
 
 def git(repo: Path, *args: str) -> str:
@@ -31,6 +34,7 @@ def git(repo: Path, *args: str) -> str:
 
 
 def assessment_context(tmp_path: Path, *, mapped: bool = False):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     ctx = context_for(tmp_path)
     packet = prepare_intent(ctx, ["docs/brief.md"], [])
     proposal_path = inbox(ctx)
@@ -41,6 +45,46 @@ def assessment_context(tmp_path: Path, *, mapped: bool = False):
         mapping_prepare(ctx, ["docs/brief.md"])
     compile_graph(ctx)
     return ctx
+
+
+def browser_assessment_context(tmp_path: Path):
+    tmp_path.mkdir(parents=True, exist_ok=True); ctx = context_for(tmp_path); packet = prepare_intent(ctx, ["docs/brief.md"], []); data = proposal(packet); data["criteria"][0]["required_evidence_categories"] = ["browser_or_http"]
+    path = inbox(ctx); path.parent.mkdir(parents=True, exist_ok=True); path.write_text(json.dumps(data), encoding="utf-8"); compile_intent(ctx, str(path)); compile_graph(ctx)
+    inputs = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/inputs"; inputs.mkdir(parents=True)
+    capabilities = default_capabilities(); capabilities["capabilities"]["browser"]["available"] = True; capabilities["permissions"]["browser"]["granted"] = True
+    capability_path = inputs / "browser.json"; write_json(capability_path, capabilities)
+    return ctx, capability_path
+
+
+def write_json(path: Path, value: dict) -> None:
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def sha(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def rehash_preparation(ctx, preparation_id: str) -> Path:
+    root = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment"
+    directory = root / "preparations" / preparation_id
+    source_path = directory / "assessment-source-packet.json"; source = json.loads(source_path.read_text())
+    source["packet_hash"] = content_hash({key: value for key, value in source.items() if key != "packet_hash"}); write_json(source_path, source)
+    contexts = {}
+    for path in (directory / "role-context").glob("*.json"):
+        value = json.loads(path.read_text()); value["packet_hash"] = content_hash({key: item for key, item in value.items() if key != "packet_hash"}); write_json(path, value); contexts[value["role_id"]] = value
+    works = {}
+    for path in (directory / "work-orders").glob("*.json"):
+        value = json.loads(path.read_text()); role = value["role_id"]
+        if role in contexts: value["inputs"]["packet_hash"] = contexts[role]["packet_hash"]
+        value["work_order_hash"] = _work_order_hash(value); write_json(path, value); works[value["work_order_id"]] = (value, path)
+    manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text())
+    manifest["source_packet_hash"] = source["packet_hash"]
+    for entry in manifest["work_orders"]:
+        if entry["work_order_id"] in works:
+            work, path = works[entry["work_order_id"]]; entry["work_order_hash"] = work["work_order_hash"]; entry["work_order_snapshot_hash"] = sha(path)
+    manifest["manifest_hash"] = content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"}); write_json(manifest_path, manifest)
+    pointer_path = root / "active-preparation.json"; pointer = json.loads(pointer_path.read_text()); pointer["preparation_semantic_hash"] = manifest["preparation_semantic_hash"]; pointer["manifest_snapshot_hash"] = sha(manifest_path); write_json(pointer_path, pointer)
+    return directory
 
 
 def test_graph_public_assessment_accessor_returns_complete_validated_chain(tmp_path: Path):
@@ -179,3 +223,98 @@ def test_role_definitions_are_hashable_portable_method_contracts():
     discovery = load_discovery_registry()
     assert discovery["value"]["schema_version"] == "assessment-source-discovery.v1"
     assert "recursive import discovery" in discovery["value"]["unsupported"]
+
+
+@pytest.mark.parametrize("tamper", ["graph_fact", "allowed_path", "shell_command", "browser_target", "assigned_id", "role"])
+def test_fully_rehashed_role_and_work_order_semantic_tampering_is_rejected(tmp_path: Path, tamper: str):
+    ctx = assessment_context(tmp_path); result = prepare_assessment(ctx); directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]
+    product_context = directory / "role-context/product_assessment.json"; context = json.loads(product_context.read_text())
+    product_entry = next(item for item in result["work_orders"] if item["role_id"] == "product_assessment"); work_path = directory / product_entry["work_order_path"]; work = json.loads(work_path.read_text())
+    if tamper == "graph_fact": context["base_graph_context"]["nodes"][0]["provenance"] = "canonical_release_state"
+    elif tamper == "allowed_path": work["inputs"]["allowed_paths"].append("docs/other.md")
+    elif tamper == "shell_command": work["permissions"]["shell"]["allowed_commands"] = [{"command_id":"invented","criterion_id":"invented","required_for_release":False,"argv":["python","-V"],"cwd":".","purpose":"Invented command","source":{"ref":"docs/brief.md","hash":"sha256:"+"1"*64},"timeout_seconds":10,"output_limit_bytes":1024,"allowed_environment":{}}]
+    elif tamper == "browser_target": work["permissions"]["browser"]["allowed_targets"] = [{"url":"https://example.test/admin","origin":"https://example.test","path_pattern":"/admin","authority":"deployment_grant"}]
+    elif tamper == "assigned_id": work["inputs"]["criterion_ids"] = ["criterion_fabricated"]
+    else: work["role_id"] = "engineering_assessment"
+    write_json(product_context, context); write_json(work_path, work); rehash_preparation(ctx, result["preparation_id"])
+    with pytest.raises(ValueError): load_preparation(ctx)
+
+
+def test_fully_rehashed_change_impact_and_manifest_role_tampering_is_rejected(tmp_path: Path):
+    ctx = assessment_context(tmp_path); result = prepare_assessment(ctx); directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]
+    source_path = directory / "assessment-source-packet.json"; source = json.loads(source_path.read_text()); source["change_impact"] = {"status":"unavailable","authority":"none","reason_code":"tampered"}; write_json(source_path, source)
+    for path in (directory / "role-context").glob("*.json"):
+        value = json.loads(path.read_text()); value["change_impact"] = source["change_impact"]; write_json(path, value)
+    rehash_preparation(ctx, result["preparation_id"])
+    with pytest.raises(ValueError): load_preparation(ctx)
+
+    ctx = assessment_context(tmp_path / "roles"); result = prepare_assessment(ctx); directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]
+    manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["work_orders"][1]["role_id"] = manifest["work_orders"][0]["role_id"]; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
+    with pytest.raises(ValueError): load_preparation(ctx)
+
+
+def test_manifest_role_set_removal_and_swap_are_rejected(tmp_path: Path):
+    for mode in ("remove", "swap"):
+        ctx = assessment_context(tmp_path / mode); result = prepare_assessment(ctx); directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]
+        path = directory / "assessment-work-orders.json"; manifest = json.loads(path.read_text())
+        if mode == "remove": manifest["work_orders"].pop()
+        else: manifest["work_orders"][0], manifest["work_orders"][1] = manifest["work_orders"][1], manifest["work_orders"][0]
+        write_json(path, manifest); rehash_preparation(ctx, result["preparation_id"])
+        with pytest.raises(ValueError): load_preparation(ctx)
+
+
+def test_role_contexts_are_bounded_specific_and_do_not_embed_complete_artifacts(tmp_path: Path):
+    ctx = assessment_context(tmp_path); result = prepare_assessment(ctx, owner_paths=["product_assessment:docs/brief.md"]); loaded = load_preparation(ctx)
+    product = loaded["contexts"]["product_assessment"]; engineering = loaded["contexts"]["engineering_assessment"]; browser = loaded["contexts"]["browser_journey"]
+    for context in loaded["contexts"].values():
+        assert "intent_artifacts" not in context and "base_graph_artifacts" not in context and "mapping_packet_snapshot" not in context
+        assert len(json.dumps({"intent":context["intent_context"],"graph":context["base_graph_context"]}).encode()) <= 2 * 1024 * 1024
+    assert product["intent_context"]["product_intent"] is not None and engineering["intent_context"]["product_intent"] is None
+    assert [item["path"] for item in product["sources"]] == ["docs/brief.md"]
+    assert browser["sources"] == [] and browser["assigned_criteria"] == []
+
+
+def test_browser_assignment_is_criterion_targeted_and_repository_free_by_default(tmp_path: Path):
+    ctx, capability_path = browser_assessment_context(tmp_path)
+    result = prepare_assessment(ctx, capabilities_path=str(capability_path)); loaded = load_preparation(ctx); browser = loaded["contexts"]["browser_journey"]
+    assert len(browser["assigned_criteria"]) == 1 and browser["assigned_criteria"][0]["required_evidence_categories"] == ["browser_or_http"]
+    assert browser["assigned_journeys"] and browser["browser_criterion_targets"][0]["criterion_id"] == browser["assigned_criteria"][0]["criterion_id"]
+    assert browser["sources"] == []
+    work = loaded["work_orders"]["browser_journey"]
+    assert work["inputs"]["criterion_ids"] == [browser["assigned_criteria"][0]["criterion_id"]] and work["permissions"]["browser"]["allowed_targets"]
+
+
+def test_fully_rehashed_browser_target_widening_is_rejected(tmp_path: Path):
+    ctx, capability_path = browser_assessment_context(tmp_path); result = prepare_assessment(ctx, capabilities_path=str(capability_path)); directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]
+    entry = next(item for item in result["work_orders"] if item["role_id"] == "browser_journey"); path = directory / entry["work_order_path"]; work = json.loads(path.read_text()); work["permissions"]["browser"]["allowed_targets"].append({"url":"https://example.test/admin","origin":"https://example.test","path_pattern":"/admin","authority":"deployment_grant"}); write_json(path, work); rehash_preparation(ctx, result["preparation_id"])
+    with pytest.raises(ValueError): load_preparation(ctx)
+
+
+def test_pointer_semantic_hash_binding_is_directly_validated(tmp_path: Path):
+    ctx = assessment_context(tmp_path); prepare_assessment(ctx); path = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/active-preparation.json"; pointer = json.loads(path.read_text()); pointer["preparation_semantic_hash"] = "sha256:" + "f" * 64; write_json(path, pointer)
+    with pytest.raises(ValueError, match="pointer semantic binding"): load_preparation(ctx)
+
+
+def test_loader_uses_snapshotted_roles_and_has_explicit_compiler_gate(tmp_path: Path, monkeypatch):
+    ctx = assessment_context(tmp_path); result = prepare_assessment(ctx)
+    monkeypatch.setattr(assessment_module, "load_role_definitions", lambda: (_ for _ in ()).throw(AssertionError("installed roles must not be loaded")))
+    assert load_preparation(ctx, result["preparation_id"])["manifest"]["preparation_id"] == result["preparation_id"]
+    directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]; manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "assessment-preparation.v1"; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
+    with pytest.raises(ValueError, match="stale_assessment_preparation_compiler_version"): load_preparation(ctx)
+
+
+def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extras(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema")
+    ctx = assessment_context(tmp_path); prepare_assessment(ctx); loaded = load_preparation(ctx)
+    root = Path(__file__).parents[1] / "schemas"
+    contracts = [
+        ("assessment-capabilities.v1.json", loaded["capabilities"]),
+        ("assessment-source-packet.v1.json", loaded["source_packet"]),
+        ("assessment-work-orders.v1.json", loaded["manifest"]),
+    ]
+    contracts.extend(("assessment-role.v1.json", item["value"]) for item in load_role_definitions().values())
+    contracts.extend(("work-order.v1.json", item) for item in loaded["work_orders"].values())
+    for schema_name, value in contracts:
+        schema = json.loads((root / schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
+        invalid = dict(value); invalid["unexpected"] = True
+        with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)

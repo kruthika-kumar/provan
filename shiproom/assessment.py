@@ -15,7 +15,7 @@ from urllib.parse import urljoin, urlparse
 
 from .authority import LocalExecutionContext
 from .graph import load_assessment_input
-from .project import canonical_json, content_hash, validate_policy_relative
+from .project import canonical_json, content_hash, validate_command, validate_policy_relative
 
 
 ROLE_SCHEMA = "shiproom.assessment-role.v1"
@@ -25,8 +25,11 @@ SOURCE_PACKET_SCHEMA = "assessment-source-packet.v1"
 ROLE_CONTEXT_SCHEMA = "assessment-role-context.v1"
 WORK_ORDERS_SCHEMA = "assessment-work-orders.v1"
 POINTER_SCHEMA = "active-assessment-preparation.v1"
-PREPARATION_COMPILER_VERSION = "assessment-preparation.v1"
+PREPARATION_COMPILER_VERSION = "assessment-preparation.v2"
 DISCOVERY_VERSION = "assessment-source-discovery.v1"
+DISCOVERY_SELECTION_ORDER = ("graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match")
+DISCOVERY_LANGUAGES = ("python", "javascript", "typescript")
+DISCOVERY_UNSUPPORTED = ("dynamic imports", "package execution", "installed package traversal", "node_modules", "path aliases", "namespace package inference", "recursive import discovery")
 
 CORE_ROLES = ("product_assessment", "engineering_assessment", "test_adequacy", "targeted_test_planning")
 ALL_ROLES = (*CORE_ROLES, "browser_journey")
@@ -41,6 +44,8 @@ ROLE_OUTPUT_SCHEMAS = {
 SOURCE_FILE_LIMIT = 256 * 1024
 ROLE_FILE_LIMIT = 64
 ROLE_TEXT_LIMIT = 2 * 1024 * 1024
+ROLE_STRUCTURAL_RECORD_LIMIT = 2048
+ROLE_STRUCTURAL_BYTES_LIMIT = 2 * 1024 * 1024
 CAPABILITIES_LIMIT = 64 * 1024
 SUPPORTED_CODE = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"}
 JS_EXTENSIONS = (".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts")
@@ -137,18 +142,28 @@ def load_role_definitions() -> dict[str, dict]:
     return result
 
 
-def load_discovery_registry() -> dict:
-    raw = resources.files("shiproom.assessment_roles").joinpath("source-discovery.v1.json").read_bytes()
+def _role_snapshot(raw: bytes, role_id: str) -> dict:
+    value = _validate_role(_load_json_bytes(raw), role_id)
+    return {"value": value, "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "snapshot_bytes": raw}
+
+
+def _discovery_snapshot(raw: bytes) -> dict:
     value = _load_json_bytes(raw)
     fields = {"schema_version", "selection_order", "supported_languages", "rule_ids", "configuration_allowlist", "javascript_extensions", "limits", "unsupported"}
     if set(value) != fields or value.get("schema_version") != DISCOVERY_VERSION:
         raise ValueError("invalid assessment source-discovery registry")
     for field in ("selection_order", "supported_languages", "rule_ids", "configuration_allowlist", "javascript_extensions", "unsupported"):
         _string_list(value[field], f"discovery.{field}", nonempty=True)
+    if tuple(value["selection_order"]) != DISCOVERY_SELECTION_ORDER or set(value["rule_ids"]) != set(DISCOVERY_SELECTION_ORDER) or tuple(value["supported_languages"]) != DISCOVERY_LANGUAGES or tuple(value["configuration_allowlist"]) != CONFIG_FILES or tuple(value["javascript_extensions"]) != JS_EXTENSIONS or tuple(value["unsupported"]) != DISCOVERY_UNSUPPORTED:
+        raise ValueError("assessment discovery snapshot is incompatible with this preparation compiler")
     limits = value["limits"]
     if not isinstance(limits, dict) or set(limits) != {"per_file_bytes", "files_per_role", "source_text_bytes_per_role"} or limits != {"per_file_bytes": SOURCE_FILE_LIMIT, "files_per_role": ROLE_FILE_LIMIT, "source_text_bytes_per_role": ROLE_TEXT_LIMIT}:
         raise ValueError("invalid assessment discovery limits")
     return {"value": value, "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "snapshot_bytes": raw}
+
+
+def load_discovery_registry() -> dict:
+    return _discovery_snapshot(resources.files("shiproom.assessment_roles").joinpath("source-discovery.v1.json").read_bytes())
 
 
 def default_capabilities() -> dict:
@@ -356,14 +371,21 @@ def _ci_candidates(ctx: LocalExecutionContext, available: set[str], commands: li
     return result
 
 
-def _mapped_paths(graph_artifacts: dict, mapping_packet: dict | None) -> set[str]:
-    result = set()
+ROLE_REPOSITORY_NODE_TYPES = {
+    "product_assessment": {"implementation_reference", "instrumentation_reference"},
+    "engineering_assessment": {"implementation_reference", "test_reference", "instrumentation_reference"},
+    "test_adequacy": {"implementation_reference", "test_reference"},
+    "targeted_test_planning": {"implementation_reference", "test_reference"},
+    "browser_journey": set(),
+}
+
+
+def _mapped_paths(graph_artifacts: dict, role: str) -> set[str]:
+    result = set(); allowed_types = ROLE_REPOSITORY_NODE_TYPES[role]
     graph = graph_artifacts["requirement-evidence-graph.json"]
     for node in graph["nodes"]:
-        if node.get("node_type") in {"implementation_reference", "test_reference", "instrumentation_reference"} and isinstance(node.get("path"), str):
+        if node.get("node_type") in allowed_types and isinstance(node.get("path"), str):
             result.add(_normal_path(node["path"]))
-    for source in (mapping_packet or {}).get("selected_sources", []):
-        result.add(_normal_path(source["path"]))
     return result
 
 
@@ -481,7 +503,17 @@ def _scope(requirement: dict, criterion: dict | None = None) -> str:
 def _population(inputs: dict) -> dict:
     intent = inputs["intent_artifacts"]; requirements = [item for item in intent["requirements.json"]["requirements"] if item["status"] != "superseded"]; req = {item["requirement_id"]: item for item in requirements}; criteria = [item for item in intent["acceptance-criteria.json"]["criteria"] if item["requirement_id"] in req]
     requirement_records = [{"requirement_id": item["requirement_id"], "scope_status": _scope(item)} for item in requirements]
-    criterion_records = [{"criterion_id": item["criterion_id"], "requirement_id": item["requirement_id"], "scope_status": _scope(req[item["requirement_id"]], item), "repository_not_applicable_allowed": item["required_evidence_categories"] == ["owner_confirmation"]} for item in criteria]
+    summaries = {item["criterion_id"]: item for item in inputs["graph_artifacts"]["criterion-evidence-summary.json"]["criteria"]}
+    criterion_records = []
+    for item in criteria:
+        summary = summaries[item["criterion_id"]]
+        meaningful = any(
+            record["detail"].get("slot_status") != "not_inspected"
+            for field in ("implementation", "tests", "instrumentation", "runtime")
+            for record in summary[field]
+        )
+        categories = item["required_evidence_categories"]
+        criterion_records.append({"criterion_id": item["criterion_id"], "requirement_id": item["requirement_id"], "scope_status": _scope(req[item["requirement_id"]], item), "required_evidence_categories": categories, "has_meaningful_repository_or_evidence_reference": meaningful, "repository_not_applicable_allowed": categories == ["owner_confirmation"] and not meaningful})
     graph = inputs["graph_artifacts"]["requirement-evidence-graph.json"]
     journeys = [
         {"journey_id": item["node_id"], "journey_text": item["journey_text"], "scope_status": "confirmed"}
@@ -491,37 +523,120 @@ def _population(inputs: dict) -> dict:
     return {"requirements": sorted(requirement_records, key=lambda item: item["requirement_id"]), "criteria": sorted(criterion_records, key=lambda item: item["criterion_id"]), "journeys": sorted(journeys, key=lambda item: item["journey_id"])}
 
 
-def _browser_targets(ctx: LocalExecutionContext, inputs: dict, criteria: list[dict]) -> tuple[bool, list[dict], list[str]]:
-    relevant_ids = {item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories", [])}
-    if not relevant_ids:
-        return False, [], []
-    origin = ctx.deployment_grant["origin"].rstrip("/"); allowed = ctx.deployment_grant["allowed_paths"]; targets = [{"url": origin + path, "origin": origin, "path_pattern": path, "authority": "deployment_grant"} for path in allowed]
-    outside = []
-    graph = inputs["graph_artifacts"]["requirement-evidence-graph.json"]
-    for node in graph["nodes"]:
-        if node.get("node_type") != "runtime_evidence" or not node.get("target"):
-            continue
-        raw = node["target"]; url = raw if isinstance(raw, str) and raw.startswith(("http://", "https://")) else urljoin(origin + "/", str(raw).lstrip("/")); parsed = urlparse(url)
-        path = parsed.path or "/"; same = f"{parsed.scheme}://{parsed.netloc}" == origin
-        if same and any(path == pattern or fnmatch.fnmatchcase(path, pattern) for pattern in allowed):
-            targets.append({"url": url, "origin": origin, "path_pattern": path, "authority": "canonical_runtime_target"})
-        else:
-            outside.append(url)
-    unique = {canonical_json(item): item for item in targets}
-    return True, [unique[key] for key in sorted(unique)], sorted(set(outside))
+def _authorized_browser_target(origin: str, allowed: list[str], raw: str, authority: str) -> dict | None:
+    url = raw if raw.startswith(("http://", "https://")) else urljoin(origin + "/", raw.lstrip("/")); parsed = urlparse(url)
+    normalized_origin = f"{parsed.scheme}://{parsed.netloc}"
+    path = parsed.path or "/"
+    if normalized_origin != origin or not any(path == pattern or fnmatch.fnmatchcase(path, pattern) for pattern in allowed):
+        return None
+    return {"url": url, "origin": origin, "path_pattern": path, "authority": authority}
 
 
-def _browser_issue(ctx: LocalExecutionContext, inputs: dict, capabilities: dict) -> tuple[bool, str | None, list[dict], list[str]]:
-    criteria = inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]; relevant, targets, outside = _browser_targets(ctx, inputs, criteria)
+def _browser_scope(ctx: LocalExecutionContext, inputs: dict, population: dict) -> dict:
+    relevant = [item for item in population["criteria"] if "browser_or_http" in item["required_evidence_categories"]]
     if not relevant:
-        return False, "not_browser_relevant", [], []
+        return {"issued": False, "reason_code": "not_browser_relevant", "assigned_criterion_ids": [], "assigned_journey_ids": [], "criterion_targets": [], "scope_limited_criterion_ids": []}
+    origin = ctx.deployment_grant["origin"].rstrip("/"); allowed = ctx.deployment_grant["allowed_paths"]
+    summaries = {item["criterion_id"]: item for item in inputs["graph_artifacts"]["criterion-evidence-summary.json"]["criteria"]}
+    generated = ctx.release.get("deployment", {}).get("generated_path")
+    criterion_targets = []; limited = []
+    for criterion in relevant:
+        candidates = []
+        summary = summaries[criterion["criterion_id"]]
+        for record in summary["runtime"]:
+            target = record["detail"].get("target")
+            if isinstance(target, str) and target:
+                authorized = _authorized_browser_target(origin, allowed, target, "canonical_runtime_target")
+                if authorized:
+                    candidates.append(authorized)
+        if not candidates and isinstance(generated, str) and generated:
+            authorized = _authorized_browser_target(origin, allowed, generated, "deployment_grant")
+            if authorized:
+                candidates.append(authorized)
+        unique = {canonical_json(item): item for item in candidates}
+        if not unique:
+            limited.append(criterion["criterion_id"]); continue
+        criterion_targets.append({"criterion_id": criterion["criterion_id"], "targets": [unique[key] for key in sorted(unique)]})
+    assigned = [item["criterion_id"] for item in criterion_targets]
+    requirements = {item["requirement_id"]: item for item in inputs["intent_artifacts"]["requirements.json"]["requirements"]}
+    journey_by_text = {item["journey_text"]: item["journey_id"] for item in population["journeys"]}
+    journeys = sorted({journey_by_text[text] for item in relevant if item["criterion_id"] in assigned for text in requirements[item["requirement_id"]].get("related_journey_ids", []) if text in journey_by_text})
+    return {"issued": bool(assigned), "reason_code": None if assigned else "no_authorized_browser_target", "assigned_criterion_ids": assigned, "assigned_journey_ids": journeys, "criterion_targets": criterion_targets, "scope_limited_criterion_ids": sorted(limited)}
+
+
+def _browser_issue(scope: dict, capabilities: dict) -> dict:
+    if scope["reason_code"] == "not_browser_relevant":
+        return scope
     if not capabilities["capabilities"]["browser"]["available"]:
-        return False, "browser_capability_unavailable", [], []
+        return {**scope, "issued": False, "reason_code": "browser_capability_unavailable"}
     if not capabilities["permissions"]["browser"]["granted"]:
-        return False, "browser_permission_not_granted", [], []
-    if not targets:
-        return False, "browser_scope_insufficient" if outside else "no_authorized_browser_target", [], outside
-    return True, None, targets, outside
+        return {**scope, "issued": False, "reason_code": "browser_permission_not_granted"}
+    if not scope["assigned_criterion_ids"]:
+        return {**scope, "issued": False, "reason_code": "no_authorized_browser_target"}
+    return {**scope, "issued": True, "reason_code": "browser_scope_insufficient" if scope["scope_limited_criterion_ids"] else None}
+
+
+def _role_assignments(role: str, population: dict, browser: dict) -> tuple[list[str], list[str], list[str]]:
+    criteria = [item["criterion_id"] for item in population["criteria"]]
+    requirements = [item["requirement_id"] for item in population["requirements"]]
+    journeys = [item["journey_id"] for item in population["journeys"]]
+    if role == "product_assessment":
+        return requirements, criteria, journeys
+    if role == "browser_journey":
+        assigned_criteria = browser["assigned_criterion_ids"] if browser["issued"] else []
+        requirement_by_criterion = {item["criterion_id"]: item["requirement_id"] for item in population["criteria"]}
+        return sorted({requirement_by_criterion[item] for item in assigned_criteria}), assigned_criteria, browser["assigned_journey_ids"] if browser["issued"] else []
+    return [], criteria, []
+
+
+def _intent_context(inputs: dict, role: str, requirement_ids: list[str], criterion_ids: list[str], journey_ids: list[str]) -> dict:
+    artifacts = inputs["intent_artifacts"]
+    requirements = [item for item in artifacts["requirements.json"]["requirements"] if item["requirement_id"] in requirement_ids or item["requirement_id"] in {criterion["requirement_id"] for criterion in artifacts["acceptance-criteria.json"]["criteria"] if criterion["criterion_id"] in criterion_ids}]
+    criteria = [item for item in artifacts["acceptance-criteria.json"]["criteria"] if item["criterion_id"] in criterion_ids]
+    ambiguity_ids = {item for record in requirements + criteria for item in record.get("ambiguity_dependencies", [])}
+    ambiguities = [item for item in artifacts["ambiguities.json"]["ambiguities"] if item["ambiguity_id"] in ambiguity_ids]
+    journeys_by_id = {item["node_id"]: item["journey_text"] for item in inputs["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"] if item["node_type"] == "critical_journey"}
+    return {
+        "schema_version": "assessment-intent-context.v1",
+        "product_intent": artifacts["product-intent.json"] if role == "product_assessment" else None,
+        "requirements": sorted(requirements, key=lambda item: item["requirement_id"]),
+        "criteria": sorted(criteria, key=lambda item: item["criterion_id"]),
+        "ambiguities": sorted(ambiguities, key=lambda item: item["ambiguity_id"]),
+        "journeys": [{"journey_id": item, "journey_text": journeys_by_id[item]} for item in sorted(journey_ids)],
+    }
+
+
+ROLE_GRAPH_NODE_TYPES = {
+    "product_assessment": {"source", "requirement", "acceptance_criterion", "critical_journey", "implementation_reference", "instrumentation_reference", "runtime_evidence", "finding", "owner_decision", "closure_evidence"},
+    "engineering_assessment": {"requirement", "acceptance_criterion", "implementation_reference", "test_reference", "instrumentation_reference", "runtime_evidence", "finding", "closure_evidence"},
+    "test_adequacy": {"requirement", "acceptance_criterion", "implementation_reference", "test_reference", "runtime_evidence"},
+    "targeted_test_planning": {"requirement", "acceptance_criterion", "implementation_reference", "test_reference"},
+    "browser_journey": {"requirement", "acceptance_criterion", "critical_journey", "runtime_evidence", "finding", "closure_evidence"},
+}
+
+
+def _graph_context(inputs: dict, role: str, requirement_ids: list[str], criterion_ids: list[str], journey_ids: list[str]) -> dict:
+    graph = inputs["graph_artifacts"]["requirement-evidence-graph.json"]
+    nodes = {item["node_id"]: item for item in graph["nodes"]}; selected = set(requirement_ids) | set(criterion_ids) | set(journey_ids)
+    # Two fixed hops admit criterion facts and their typed decision/closure context
+    # without turning context preparation into repository or graph discovery.
+    frontier = set(selected)
+    for _ in range(2):
+        discovered = set()
+        for edge in graph["edges"]:
+            if edge["source_node_id"] in frontier and nodes[edge["target_node_id"]]["node_type"] in ROLE_GRAPH_NODE_TYPES[role]:
+                discovered.add(edge["target_node_id"])
+            if edge["target_node_id"] in frontier and nodes[edge["source_node_id"]]["node_type"] in ROLE_GRAPH_NODE_TYPES[role]:
+                discovered.add(edge["source_node_id"])
+        frontier = discovered - selected; selected.update(discovered)
+    selected = {item for item in selected if item in nodes and nodes[item]["node_type"] in ROLE_GRAPH_NODE_TYPES[role]}
+    edges = [item for item in graph["edges"] if item["source_node_id"] in selected and item["target_node_id"] in selected]
+    gaps = [item for item in inputs["graph_artifacts"]["evidence-gaps.json"]["gaps"] if item["criterion_id"] in criterion_ids]
+    context = {"schema_version": "assessment-base-graph-context.v1", "nodes": sorted((nodes[item] for item in selected), key=lambda item: item["node_id"]), "edges": sorted(edges, key=lambda item: item["edge_id"]), "gaps": sorted(gaps, key=lambda item: item["gap_id"])}
+    record_count = len(context["nodes"]) + len(context["edges"]) + len(context["gaps"])
+    if record_count > ROLE_STRUCTURAL_RECORD_LIMIT or len(canonical_json(context).encode("utf-8")) > ROLE_STRUCTURAL_BYTES_LIMIT:
+        raise AssessmentPreparationError("assessment_structural_context_budget_exceeded", role)
+    return context
 
 
 def _work_order_hash(value: dict) -> str:
@@ -536,6 +651,8 @@ def _validate_work_order(value: dict) -> None:
         _text(value[field], field)
     if not re.fullmatch(r"wo_[a-z_]+_[0-9a-f]{16}", value["work_order_id"]) or not re.fullmatch(r"prep_[0-9a-f]{32}", value["preparation_id"]) or not re.fullmatch(r"[0-9a-f]{40}", value["release_commit"]):
         raise ValueError("invalid work-order identity")
+    if not value["work_order_id"].startswith("wo_" + value["role_id"] + "_"):
+        raise ValueError("work-order role identity mismatch")
     for field in ("work_order_hash", "preparation_semantic_hash", "role_definition_hash", "role_definition_snapshot_hash"):
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", value[field]):
             raise ValueError(f"invalid {field}")
@@ -556,8 +673,17 @@ def _validate_work_order(value: dict) -> None:
         raise ValueError("invalid work-order permissions")
     if not isinstance(permissions["shell"], dict) or set(permissions["shell"]) != {"allowed_commands"} or not isinstance(permissions["shell"]["allowed_commands"], list) or any(not isinstance(item, dict) for item in permissions["shell"]["allowed_commands"]):
         raise ValueError("invalid work-order shell permission")
+    for command in permissions["shell"]["allowed_commands"]:
+        validate_command(command)
+    if permissions["shell"]["allowed_commands"] and value["role_id"] not in {"engineering_assessment", "test_adequacy"}:
+        raise ValueError("work-order role cannot receive shell commands")
     if not isinstance(permissions["browser"], dict) or set(permissions["browser"]) != {"allowed_targets"} or not isinstance(permissions["browser"]["allowed_targets"], list) or any(not isinstance(item, dict) or set(item) != {"url", "origin", "path_pattern", "authority"} for item in permissions["browser"]["allowed_targets"]):
         raise ValueError("invalid work-order browser permission")
+    for target in permissions["browser"]["allowed_targets"]:
+        if target["authority"] not in {"deployment_grant", "canonical_runtime_target"} or any(not isinstance(target[field], str) or not target[field] for field in ("url", "origin", "path_pattern")):
+            raise ValueError("invalid work-order browser target")
+    if permissions["browser"]["allowed_targets"] and value["role_id"] != "browser_journey":
+        raise ValueError("non-browser work order cannot receive browser targets")
     output = value["required_output"]
     if not isinstance(output, dict) or set(output) != {"schema_path", "output_path", "completion_receipt_path", "evidence_directory"}:
         raise ValueError("invalid work-order output")
@@ -566,153 +692,116 @@ def _validate_work_order(value: dict) -> None:
     _string_list(value["forbidden_claims"], "forbidden_claims", nonempty=True)
 
 
-def prepare(ctx: LocalExecutionContext, *, capabilities_path: str | None = None, base_commit: str | None = None, owner_paths: list[str] | None = None) -> dict:
-    ctx.require("file.read")
-    inputs = load_assessment_input(ctx); roles = load_role_definitions(); discovery = load_discovery_registry(); approved_commands = ctx.activation["contract"]["execution_policy"]["approved_commands"]
-    capabilities, capability_raw = _load_capabilities(ctx, capabilities_path, approved_commands); owner = _owner_paths(owner_paths); available = set(_release_paths(ctx)); mapped = _mapped_paths(inputs["graph_artifacts"], inputs["mapping_packet_snapshot"]); population = _population(inputs); change = _change_impact(ctx, base_commit)
-    browser_issued, browser_reason, browser_targets, browser_outside = _browser_issue(ctx, inputs, capabilities)
-
+def _build_preparation(ctx: LocalExecutionContext, preparation_id: str, capabilities_bundle: dict, roles: dict[str, dict], discovery: dict, base_commit: str | None, owner: dict[str, list[str]]) -> dict:
+    """Purely derive every semantic preparation artifact from trusted inputs."""
+    inputs = load_assessment_input(ctx); approved_commands = ctx.activation["contract"]["execution_policy"]["approved_commands"]
+    capabilities = capabilities_bundle["value"]; available = set(_release_paths(ctx)); population = _population(inputs); change = _change_impact(ctx, base_commit)
+    browser = _browser_issue(_browser_scope(ctx, inputs, population), capabilities)
     role_sources = {}; role_coverages = {}; role_limitations = {}
     for role in ALL_ROLES:
-        sources, coverage, limitations = _role_sources(ctx, role, available, mapped, owner[role], approved_commands)
-        if role == "browser_journey" and browser_outside:
-            limitations.append({"kind": "browser_scope_insufficient", "unauthorized_targets": browser_outside, "rule_id": "release_browser_target_authority"})
+        sources, coverage, limitations = _role_sources(ctx, role, available, _mapped_paths(inputs["graph_artifacts"], role), owner[role], approved_commands)
+        if role == "browser_journey" and browser["scope_limited_criterion_ids"]:
+            limitations.append({"kind": "browser_scope_insufficient", "criterion_ids": browser["scope_limited_criterion_ids"], "rule_id": "release_browser_target_authority"})
         role_sources[role] = sources; role_coverages[role] = coverage; role_limitations[role] = sorted(limitations, key=canonical_json)
-
     mapping_hash = inputs["mapping_packet_snapshot"]["packet_hash"] if inputs["mapping_packet_snapshot"] else None
-    semantic_basis = {"release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": {key: ctx.authority_binding[key] for key in ("project_id", "contract_hash", "contract_source", "authority_policy_version")}, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities": capabilities, "roles": {role: roles[role]["semantic_hash"] for role in ALL_ROLES}, "discovery_registry_hash": discovery["semantic_hash"], "population": population, "owner_paths": owner, "change_impact": change, "role_sources": role_sources, "role_coverages": role_coverages, "role_limitations": role_limitations, "browser": {"issued": browser_issued, "reason_code": browser_reason, "targets": browser_targets}}
-    semantic_hash = content_hash(semantic_basis); preparation_id = "prep_" + uuid.uuid4().hex; root = _root(ctx); directory = root / "preparations" / preparation_id
-    if directory.exists():
-        raise ValueError("assessment preparation collision")
-
-    source_packet = {"schema_version": SOURCE_PACKET_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": semantic_basis["project_authority"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities_hash": content_hash(capabilities), "role_definition_hashes": semantic_basis["roles"], "discovery_registry_hash": discovery["semantic_hash"], "population": population, "change_impact": change, "role_sources": {role: {"coverage": role_coverages[role], "limitations": role_limitations[role], "sources": role_sources[role]} for role in ALL_ROLES}, "browser_work_order": {"issued": browser_issued, "reason_code": browser_reason, "allowed_targets": browser_targets}, "coverage_boundary": "Validated Product Intent and Session 3 graph plus bounded commit-pinned assessment-local context only.", "packet_hash": ""}
+    authority = {key: ctx.authority_binding[key] for key in ("project_id", "contract_hash", "contract_source", "authority_policy_version")}
+    semantic_basis = {"release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities": capabilities, "roles": {role: roles[role]["semantic_hash"] for role in ALL_ROLES}, "discovery_registry_hash": discovery["semantic_hash"], "population": population, "owner_paths": owner, "change_impact": change, "role_sources": role_sources, "role_coverages": role_coverages, "role_limitations": role_limitations, "browser": browser}
+    semantic_hash = content_hash(semantic_basis)
+    preparation_inputs = {"base_commit": base_commit, "owner_paths": owner}
+    source_packet = {"schema_version": SOURCE_PACKET_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "preparation_inputs": preparation_inputs, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": authority, "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "capabilities_hash": content_hash(capabilities), "role_definition_hashes": semantic_basis["roles"], "discovery_registry_hash": discovery["semantic_hash"], "population": population, "change_impact": change, "role_sources": {role: {"coverage": role_coverages[role], "limitations": role_limitations[role], "sources": role_sources[role]} for role in ALL_ROLES}, "browser_work_order": browser, "coverage_boundary": "Validated Product Intent and Session 3 graph plus bounded role-specific commit-pinned context only.", "packet_hash": ""}
     source_packet["packet_hash"] = content_hash({key: value for key, value in source_packet.items() if key != "packet_hash"})
-
     contexts = {}; work_orders = {}; work_order_bytes = {}
-    requirement_ids = [item["requirement_id"] for item in population["requirements"]]; criterion_ids = [item["criterion_id"] for item in population["criteria"]]; journey_ids = [item["journey_id"] for item in population["journeys"]]
     for role in ALL_ROLES:
-        assigned_requirements = requirement_ids if role == "product_assessment" else []
-        assigned_journeys = journey_ids if role in {"product_assessment", "browser_journey"} else []
-        context = {"schema_version": ROLE_CONTEXT_SCHEMA, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "role_id": role, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "assigned_requirements": [item for item in population["requirements"] if item["requirement_id"] in assigned_requirements], "assigned_criteria": population["criteria"], "assigned_journeys": [item for item in population["journeys"] if item["journey_id"] in assigned_journeys], "intent_artifacts": inputs["intent_artifacts"], "base_graph_artifacts": inputs["graph_artifacts"], "mapping_packet_snapshot": inputs["mapping_packet_snapshot"], "change_impact": change, "sources": role_sources[role], "source_coverage": role_coverages[role], "limitations": role_limitations[role], "browser_targets": browser_targets if role == "browser_journey" else []}
-        context["packet_hash"] = content_hash(context); contexts[role] = context
-        issued = role != "browser_journey" or browser_issued
+        requirement_ids, criterion_ids, journey_ids = _role_assignments(role, population, browser)
+        browser_targets = browser["criterion_targets"] if role == "browser_journey" else []
+        context = {"schema_version": ROLE_CONTEXT_SCHEMA, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "role_id": role, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "assigned_requirements": [item for item in population["requirements"] if item["requirement_id"] in requirement_ids], "assigned_criteria": [item for item in population["criteria"] if item["criterion_id"] in criterion_ids], "assigned_journeys": [item for item in population["journeys"] if item["journey_id"] in journey_ids], "intent_context": _intent_context(inputs, role, requirement_ids, criterion_ids, journey_ids), "base_graph_context": _graph_context(inputs, role, requirement_ids, criterion_ids, journey_ids), "change_impact": change, "sources": role_sources[role], "source_coverage": role_coverages[role], "limitations": role_limitations[role], "browser_criterion_targets": browser_targets, "packet_hash": ""}
+        structural = {key: context[key] for key in ("assigned_requirements", "assigned_criteria", "assigned_journeys", "intent_context", "base_graph_context", "change_impact", "limitations", "browser_criterion_targets")}
+        if len(canonical_json(structural).encode("utf-8")) > ROLE_STRUCTURAL_BYTES_LIMIT:
+            raise AssessmentPreparationError("assessment_structural_context_budget_exceeded", role)
+        context["packet_hash"] = content_hash({key: value for key, value in context.items() if key != "packet_hash"}); contexts[role] = context
+        issued = role != "browser_journey" or browser["issued"]
         if not issued:
             continue
-        work_order_id = "wo_" + role + "_" + hashlib.sha256(canonical_json({"preparation": semantic_hash, "role": role, "version": roles[role]["value"]["role_version"], "requirements": assigned_requirements, "criteria": criterion_ids, "journeys": assigned_journeys}).encode()).hexdigest()[:16]
-        relative_root = f".shiproom/local/releases/{ctx.release['release_id']}/assessment"
-        packet_path = f"{relative_root}/preparations/{preparation_id}/role-context/{role}.json"; inbox = f"{relative_root}/inbox/{preparation_id}/{work_order_id}"
+        work_order_id = "wo_" + role + "_" + hashlib.sha256(canonical_json({"preparation": semantic_hash, "role": role, "version": roles[role]["value"]["role_version"], "requirements": requirement_ids, "criteria": criterion_ids, "journeys": journey_ids}).encode()).hexdigest()[:16]
+        relative_root = f".shiproom/local/releases/{ctx.release['release_id']}/assessment"; inbox = f"{relative_root}/inbox/{preparation_id}/{work_order_id}"
         allowed_command_ids = capabilities["permissions"]["shell"]["allowed_command_ids"] if role in {"engineering_assessment", "test_adequacy"} else []
         allowed_commands = [command for command in approved_commands if command["command_id"] in allowed_command_ids]
-        work_order = {"schema_version": WORK_ORDER_SCHEMA, "work_order_id": work_order_id, "work_order_hash": "", "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "role_id": role, "role_version": roles[role]["value"]["role_version"], "role_definition_hash": roles[role]["semantic_hash"], "role_definition_snapshot_hash": roles[role]["snapshot_hash"], "objective": roles[role]["value"]["mandate"], "inputs": {"packet_path": packet_path, "packet_hash": context["packet_hash"], "criterion_ids": criterion_ids, "requirement_ids": assigned_requirements, "journey_ids": assigned_journeys, "allowed_paths": sorted(item["path"] for item in role_sources[role]), "base_graph_generation": inputs["graph_generation"], "base_graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "product_intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "change_impact_status": change["status"]}, "capability_requirements": {"file_read": "required", "shell": "optional" if allowed_commands else "unavailable", "browser": "required" if role == "browser_journey" else "unavailable", "network": "unavailable"}, "permissions": {"repository": "read_only", "shell": {"allowed_commands": allowed_commands}, "browser": {"allowed_targets": browser_targets if role == "browser_journey" else []}}, "required_output": {"schema_path": roles[role]["value"]["required_output_schema"], "output_path": inbox + "/result.json", "completion_receipt_path": inbox + "/completion-receipt.json", "evidence_directory": inbox + "/evidence"}, "forbidden_claims": roles[role]["value"]["forbidden_claims"]}
-        work_order["work_order_hash"] = _work_order_hash(work_order); _validate_work_order(work_order); raw = _render(work_order); work_orders[role] = work_order; work_order_bytes[role] = raw
-
-    manifest_entries = []
+        flattened_targets = {canonical_json(item): item for record in browser_targets for item in record["targets"]}
+        work_order = {"schema_version": WORK_ORDER_SCHEMA, "work_order_id": work_order_id, "work_order_hash": "", "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "role_id": role, "role_version": roles[role]["value"]["role_version"], "role_definition_hash": roles[role]["semantic_hash"], "role_definition_snapshot_hash": roles[role]["snapshot_hash"], "objective": roles[role]["value"]["mandate"], "inputs": {"packet_path": f"{relative_root}/preparations/{preparation_id}/role-context/{role}.json", "packet_hash": context["packet_hash"], "criterion_ids": criterion_ids, "requirement_ids": requirement_ids, "journey_ids": journey_ids, "allowed_paths": sorted(item["path"] for item in role_sources[role]), "base_graph_generation": inputs["graph_generation"], "base_graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "product_intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "change_impact_status": change["status"]}, "capability_requirements": {"file_read": "required", "shell": "optional" if allowed_commands else "unavailable", "browser": "required" if role == "browser_journey" else "unavailable", "network": "unavailable"}, "permissions": {"repository": "read_only", "shell": {"allowed_commands": allowed_commands}, "browser": {"allowed_targets": [flattened_targets[key] for key in sorted(flattened_targets)]}}, "required_output": {"schema_path": roles[role]["value"]["required_output_schema"], "output_path": inbox + "/result.json", "completion_receipt_path": inbox + "/completion-receipt.json", "evidence_directory": inbox + "/evidence"}, "forbidden_claims": roles[role]["value"]["forbidden_claims"]}
+        work_order["work_order_hash"] = _work_order_hash(work_order); _validate_work_order(work_order); work_orders[role] = work_order; work_order_bytes[role] = _render(work_order)
+    entries = []
     for role in ALL_ROLES:
-        issued = role in work_orders; work_order = work_orders.get(role)
-        manifest_entries.append({"role_id": role, "required": ROLE_REQUIRED[role], "issued": issued, "reason_code": None if issued else browser_reason, "work_order_id": work_order["work_order_id"] if work_order else None, "work_order_hash": work_order["work_order_hash"] if work_order else None, "work_order_snapshot_hash": _sha(work_order_bytes[role]) if work_order else None, "work_order_path": f"work-orders/{work_order['work_order_id']}.json" if work_order else None, "result_path": work_order["required_output"]["output_path"] if work_order else None, "completion_receipt_path": work_order["required_output"]["completion_receipt_path"] if work_order else None})
-    capability_snapshot = capability_raw if capability_raw is not None else _render(capabilities)
-    capability_snapshot_name = "submitted-capabilities.json" if capability_raw is not None else "capabilities.json"
-    manifest = {"schema_version": WORK_ORDERS_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "source_packet_hash": source_packet["packet_hash"], "capabilities_hash": content_hash(capabilities), "capabilities_snapshot_filename": capability_snapshot_name, "capabilities_snapshot_hash": _sha(capability_snapshot), "discovery_registry": {"semantic_hash": discovery["semantic_hash"], "snapshot_hash": discovery["snapshot_hash"]}, "role_definitions": {role: {"semantic_hash": roles[role]["semantic_hash"], "snapshot_hash": roles[role]["snapshot_hash"]} for role in ALL_ROLES}, "work_orders": manifest_entries, "manifest_hash": ""}
+        work_order = work_orders.get(role); issued = work_order is not None
+        entries.append({"role_id": role, "required": ROLE_REQUIRED[role], "issued": issued, "reason_code": None if issued else browser["reason_code"], "work_order_id": work_order["work_order_id"] if issued else None, "work_order_hash": work_order["work_order_hash"] if issued else None, "work_order_snapshot_hash": _sha(work_order_bytes[role]) if issued else None, "work_order_path": f"work-orders/{work_order['work_order_id']}.json" if issued else None, "result_path": work_order["required_output"]["output_path"] if issued else None, "completion_receipt_path": work_order["required_output"]["completion_receipt_path"] if issued else None})
+    manifest = {"schema_version": WORK_ORDERS_SCHEMA, "compiler_version": PREPARATION_COMPILER_VERSION, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "preparation_inputs": preparation_inputs, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "graph_generation": inputs["graph_generation"], "graph_semantic_hash": inputs["graph_manifest"]["semantic_bundle_hash"], "intent_semantic_hash": inputs["intent_manifest"]["semantic_bundle_hash"], "mapping_packet_hash": mapping_hash, "source_packet_hash": source_packet["packet_hash"], "capabilities_hash": content_hash(capabilities), "capabilities_snapshot_filename": capabilities_bundle["snapshot_filename"], "capabilities_snapshot_hash": _sha(capabilities_bundle["snapshot_bytes"]), "discovery_registry": {"semantic_hash": discovery["semantic_hash"], "snapshot_hash": discovery["snapshot_hash"]}, "role_definitions": {role: {"semantic_hash": roles[role]["semantic_hash"], "snapshot_hash": roles[role]["snapshot_hash"]} for role in ALL_ROLES}, "work_orders": entries, "manifest_hash": ""}
     manifest["manifest_hash"] = content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"})
+    pointer = {"schema_version": POINTER_SCHEMA, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "manifest_snapshot_hash": _sha(_render(manifest))}
+    return {"inputs": inputs, "source_packet": source_packet, "contexts": contexts, "work_orders": work_orders, "work_order_bytes": work_order_bytes, "manifest": manifest, "pointer": pointer}
 
-    directory.mkdir(parents=True)
-    _atomic(directory / "assessment-source-packet.json", source_packet); _atomic(directory / "assessment-work-orders.json", manifest); _atomic(directory / "capabilities.json", capabilities); (directory / "source-discovery.v1.json").write_bytes(discovery["snapshot_bytes"])
-    if capability_raw is not None:
-        (directory / "submitted-capabilities.json").write_bytes(capability_raw)
+
+def prepare(ctx: LocalExecutionContext, *, capabilities_path: str | None = None, base_commit: str | None = None, owner_paths: list[str] | None = None) -> dict:
+    ctx.require("file.read"); approved = ctx.activation["contract"]["execution_policy"]["approved_commands"]
+    capabilities, submitted = _load_capabilities(ctx, capabilities_path, approved); snapshot = submitted if submitted is not None else _render(capabilities)
+    capabilities_bundle = {"value": capabilities, "snapshot_bytes": snapshot, "snapshot_filename": "submitted-capabilities.json" if submitted is not None else "capabilities.json"}
+    roles = load_role_definitions(); discovery = load_discovery_registry(); preparation_id = "prep_" + uuid.uuid4().hex
+    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, base_commit, _owner_paths(owner_paths))
+    root = _root(ctx); directory = root / "preparations" / preparation_id
+    if directory.exists(): raise ValueError("assessment preparation collision")
+    directory.mkdir(parents=True); _atomic(directory / "assessment-source-packet.json", expected["source_packet"]); _atomic(directory / "assessment-work-orders.json", expected["manifest"]); _atomic(directory / "capabilities.json", capabilities)
+    if submitted is not None: (directory / "submitted-capabilities.json").write_bytes(submitted)
+    (directory / "source-discovery.v1.json").write_bytes(discovery["snapshot_bytes"])
     for role in ALL_ROLES:
-        (directory / "role-definitions").mkdir(exist_ok=True); (directory / "role-definitions" / f"{role}.json").write_bytes(roles[role]["snapshot_bytes"])
-        _atomic(directory / "role-context" / f"{role}.json", contexts[role])
-        if role in work_orders:
-            path = directory / "work-orders" / f"{work_orders[role]['work_order_id']}.json"; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(work_order_bytes[role])
-            inbox_path = root / "inbox" / preparation_id / work_orders[role]["work_order_id"]; (inbox_path / "evidence").mkdir(parents=True, exist_ok=True)
-    pointer = {"schema_version": POINTER_SCHEMA, "preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "manifest_snapshot_hash": _sha((directory / "assessment-work-orders.json").read_bytes())}
-    _atomic(root / "active-preparation.json", pointer)
-    return {"preparation_id": preparation_id, "preparation_semantic_hash": semantic_hash, "source_packet_hash": source_packet["packet_hash"], "work_orders": manifest_entries}
+        role_root = directory / "role-definitions"; role_root.mkdir(exist_ok=True); role_root.joinpath(role + ".json").write_bytes(roles[role]["snapshot_bytes"])
+        _atomic(directory / "role-context" / f"{role}.json", expected["contexts"][role])
+        if role in expected["work_orders"]:
+            work = expected["work_orders"][role]; path = directory / "work-orders" / f"{work['work_order_id']}.json"; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(expected["work_order_bytes"][role]); (root / "inbox" / preparation_id / work["work_order_id"] / "evidence").mkdir(parents=True, exist_ok=True)
+    _atomic(root / "active-preparation.json", expected["pointer"])
+    return {"preparation_id": preparation_id, "preparation_semantic_hash": expected["manifest"]["preparation_semantic_hash"], "source_packet_hash": expected["source_packet"]["packet_hash"], "work_orders": expected["manifest"]["work_orders"]}
 
 
 def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
-    inputs = load_assessment_input(ctx); root = _root(ctx)
+    root = _root(ctx); pointer = None
     if preparation_id is None:
         pointer_path = root / "active-preparation.json"
-        if pointer_path.is_symlink() or not pointer_path.is_file():
-            raise ValueError("active assessment preparation unavailable")
-        pointer = _load_json_bytes(pointer_path.read_bytes())
-        if set(pointer) != {"schema_version", "preparation_id", "preparation_semantic_hash", "manifest_snapshot_hash"} or pointer.get("schema_version") != POINTER_SCHEMA:
-            raise ValueError("invalid assessment preparation pointer")
-        preparation_id = pointer["preparation_id"]
-    else:
-        pointer = None
-    if not isinstance(preparation_id, str) or not re.fullmatch(r"prep_[0-9a-f]{32}", preparation_id):
-        raise ValueError("invalid assessment preparation ID")
+        if pointer_path.is_symlink() or not pointer_path.is_file(): raise ValueError("active assessment preparation unavailable")
+        pointer = _load_json_bytes(pointer_path.read_bytes()); preparation_id = pointer.get("preparation_id")
+    if not isinstance(preparation_id, str) or not re.fullmatch(r"prep_[0-9a-f]{32}", preparation_id): raise ValueError("invalid assessment preparation ID")
     directory = root / "preparations" / preparation_id
-    if directory.is_symlink() or not directory.is_dir() or directory.resolve().parent != (root / "preparations").resolve():
-        raise ValueError("invalid assessment preparation directory")
-    manifest_path = directory / "assessment-work-orders.json"; source_path = directory / "assessment-source-packet.json"
-    if any(path.is_symlink() or not path.is_file() for path in (manifest_path, source_path)):
-        raise ValueError("incomplete assessment preparation")
-    manifest = _load_json_bytes(manifest_path.read_bytes()); packet = _load_json_bytes(source_path.read_bytes())
-    if pointer and pointer["manifest_snapshot_hash"] != _sha(manifest_path.read_bytes()):
-        raise ValueError("assessment preparation pointer is stale")
-    manifest_fields = {"schema_version", "compiler_version", "preparation_id", "preparation_semantic_hash", "release_id", "release_commit", "graph_generation", "graph_semantic_hash", "intent_semantic_hash", "mapping_packet_hash", "source_packet_hash", "capabilities_hash", "capabilities_snapshot_filename", "capabilities_snapshot_hash", "discovery_registry", "role_definitions", "work_orders", "manifest_hash"}
-    if set(manifest) != manifest_fields or manifest.get("schema_version") != WORK_ORDERS_SCHEMA or manifest.get("compiler_version") != PREPARATION_COMPILER_VERSION or manifest.get("manifest_hash") != content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"}):
-        raise ValueError("invalid assessment work-order manifest")
-    if manifest["preparation_id"] != preparation_id or manifest["release_id"] != ctx.release["release_id"] or manifest["release_commit"] != ctx.authority_binding["repository_commit"] or manifest["graph_generation"] != inputs["graph_generation"] or manifest["graph_semantic_hash"] != inputs["graph_manifest"]["semantic_bundle_hash"] or manifest["intent_semantic_hash"] != inputs["intent_manifest"]["semantic_bundle_hash"]:
-        raise ValueError("assessment preparation authority is stale")
-    packet_fields = {"schema_version", "compiler_version", "preparation_id", "preparation_semantic_hash", "release_id", "release_commit", "project_authority", "graph_generation", "graph_semantic_hash", "intent_semantic_hash", "mapping_packet_hash", "capabilities_hash", "role_definition_hashes", "discovery_registry_hash", "population", "change_impact", "role_sources", "browser_work_order", "coverage_boundary", "packet_hash"}
-    if set(packet) != packet_fields or packet.get("schema_version") != SOURCE_PACKET_SCHEMA or packet.get("packet_hash") != content_hash({key: value for key, value in packet.items() if key != "packet_hash"}) or manifest["source_packet_hash"] != packet["packet_hash"]:
-        raise ValueError("invalid assessment source packet")
-    if packet["preparation_id"] != preparation_id or packet["preparation_semantic_hash"] != manifest["preparation_semantic_hash"] or packet["release_id"] != manifest["release_id"] or packet["release_commit"] != manifest["release_commit"] or packet["graph_generation"] != manifest["graph_generation"] or packet["graph_semantic_hash"] != manifest["graph_semantic_hash"] or packet["intent_semantic_hash"] != manifest["intent_semantic_hash"] or packet["mapping_packet_hash"] != manifest["mapping_packet_hash"]:
-        raise ValueError("assessment source packet binding is stale")
-    if packet["population"] != _population(inputs):
-        raise ValueError("assessment population is stale")
+    if directory.is_symlink() or not directory.is_dir() or directory.resolve().parent != (root / "preparations").resolve(): raise ValueError("invalid assessment preparation directory")
+    manifest_path = directory / "assessment-work-orders.json"
+    if manifest_path.is_symlink() or not manifest_path.is_file(): raise ValueError("incomplete assessment preparation")
+    stored_manifest = _load_json_bytes(manifest_path.read_bytes())
+    if stored_manifest.get("compiler_version") != PREPARATION_COMPILER_VERSION: raise ValueError("stale_assessment_preparation_compiler_version")
+    preparation_inputs = stored_manifest.get("preparation_inputs")
+    if not isinstance(preparation_inputs, dict) or set(preparation_inputs) != {"base_commit", "owner_paths"}: raise ValueError("invalid assessment preparation inputs")
+    owner = _owner_paths([f"{role}:{path}" for role, paths in preparation_inputs["owner_paths"].items() for path in paths])
+    capabilities_path = directory / "capabilities.json"
+    if capabilities_path.is_symlink() or not capabilities_path.is_file(): raise ValueError("assessment capabilities unavailable")
+    capabilities = validate_capabilities(_load_json_bytes(capabilities_path.read_bytes()), ctx.activation["contract"]["execution_policy"]["approved_commands"])
+    snapshot_name = stored_manifest.get("capabilities_snapshot_filename")
+    if snapshot_name not in {"capabilities.json", "submitted-capabilities.json"}: raise ValueError("invalid assessment capability snapshot")
+    snapshot_path = directory / snapshot_name
+    if snapshot_path.is_symlink() or not snapshot_path.is_file(): raise ValueError("assessment capability snapshot unavailable")
+    capabilities_bundle = {"value": capabilities, "snapshot_bytes": snapshot_path.read_bytes(), "snapshot_filename": snapshot_name}
+    role_root = directory / "role-definitions"
+    if role_root.is_symlink() or not role_root.is_dir() or {path.name for path in role_root.iterdir()} != {role + ".json" for role in ALL_ROLES}: raise ValueError("invalid assessment role snapshot set")
+    roles = {role: _role_snapshot((role_root / f"{role}.json").read_bytes(), role) for role in ALL_ROLES}
+    discovery_path = directory / "source-discovery.v1.json"
+    if discovery_path.is_symlink() or not discovery_path.is_file(): raise ValueError("assessment discovery snapshot unavailable")
+    discovery = _discovery_snapshot(discovery_path.read_bytes())
+    expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, preparation_inputs["base_commit"], owner)
+    if stored_manifest != expected["manifest"] or manifest_path.read_bytes() != _render(expected["manifest"]): raise ValueError("assessment preparation semantic rederivation failed: manifest")
+    source_path = directory / "assessment-source-packet.json"
+    if source_path.is_symlink() or not source_path.is_file() or source_path.read_bytes() != _render(expected["source_packet"]): raise ValueError("assessment preparation semantic rederivation failed: source packet")
+    context_root = directory / "role-context"; expected_contexts = {role + ".json" for role in ALL_ROLES}
+    if context_root.is_symlink() or not context_root.is_dir() or {path.name for path in context_root.iterdir()} != expected_contexts: raise ValueError("invalid assessment role context set")
     for role in ALL_ROLES:
-        role_packet = packet["role_sources"].get(role) if isinstance(packet.get("role_sources"), dict) else None
-        if not isinstance(role_packet, dict) or set(role_packet) != {"coverage", "limitations", "sources"} or not isinstance(role_packet["sources"], list):
-            raise ValueError("invalid assessment role source packet")
-        seen_paths = set()
-        for source in role_packet["sources"]:
-            source_fields = {"path", "returned_git_path", "git_blob_hash", "normalized_text_hash", "size_bytes", "text", "mandatory", "selection_rule_ids", "selection_reason", "provenance"}
-            if not isinstance(source, dict) or set(source) != source_fields or source["path"] in seen_paths or not isinstance(source["mandatory"], bool) or not isinstance(source["size_bytes"], int):
-                raise ValueError("invalid assessment source record")
-            seen_paths.add(source["path"])
-            expected = _source(ctx, source["path"], source["mandatory"], source["selection_rule_ids"], source["selection_reason"], source["provenance"])
-            if source != expected:
-                raise ValueError("assessment source record is stale")
-    capabilities_path = directory / "capabilities.json"; capabilities = _load_json_bytes(capabilities_path.read_bytes()); approved = ctx.activation["contract"]["execution_policy"]["approved_commands"]; validate_capabilities(capabilities, approved)
-    if content_hash(capabilities) != manifest["capabilities_hash"]:
-        raise ValueError("assessment capabilities snapshot is stale")
-    snapshot_path = directory / manifest["capabilities_snapshot_filename"]
-    if manifest["capabilities_snapshot_filename"] not in {"capabilities.json", "submitted-capabilities.json"} or snapshot_path.is_symlink() or not snapshot_path.is_file() or _sha(snapshot_path.read_bytes()) != manifest["capabilities_snapshot_hash"]:
-        raise ValueError("assessment capability declaration snapshot is stale")
-    roles = load_role_definitions(); contexts = {}
-    discovery = load_discovery_registry(); discovery_path = directory / "source-discovery.v1.json"
-    if discovery_path.is_symlink() or not discovery_path.is_file() or _sha(discovery_path.read_bytes()) != manifest["discovery_registry"]["snapshot_hash"] or discovery["semantic_hash"] != manifest["discovery_registry"]["semantic_hash"] or packet["discovery_registry_hash"] != discovery["semantic_hash"]:
-        raise ValueError("assessment source-discovery registry is stale")
-    for role in ALL_ROLES:
-        role_path = directory / "role-definitions" / f"{role}.json"
-        if role_path.is_symlink() or not role_path.is_file() or _sha(role_path.read_bytes()) != manifest["role_definitions"][role]["snapshot_hash"] or roles[role]["semantic_hash"] != manifest["role_definitions"][role]["semantic_hash"]:
-            raise ValueError("assessment role definition is stale")
-        context_path = directory / "role-context" / f"{role}.json"
-        if context_path.is_symlink() or not context_path.is_file():
-            raise ValueError("assessment role context is unavailable")
-        context = _load_json_bytes(context_path.read_bytes())
-        context_fields = {"schema_version", "preparation_id", "preparation_semantic_hash", "role_id", "release_id", "release_commit", "graph_generation", "graph_semantic_hash", "intent_semantic_hash", "assigned_requirements", "assigned_criteria", "assigned_journeys", "intent_artifacts", "base_graph_artifacts", "mapping_packet_snapshot", "change_impact", "sources", "source_coverage", "limitations", "browser_targets", "packet_hash"}
-        if set(context) != context_fields or context.get("schema_version") != ROLE_CONTEXT_SCHEMA or context.get("role_id") != role or context.get("packet_hash") != content_hash({key: value for key, value in context.items() if key != "packet_hash"}) or context.get("preparation_id") != preparation_id or context.get("preparation_semantic_hash") != manifest["preparation_semantic_hash"]:
-            raise ValueError("invalid assessment role context")
-        contexts[role] = context
-    for entry in manifest["work_orders"]:
-        if set(entry) != {"role_id", "required", "issued", "reason_code", "work_order_id", "work_order_hash", "work_order_snapshot_hash", "work_order_path", "result_path", "completion_receipt_path"} or entry["role_id"] not in ALL_ROLES:
-            raise ValueError("invalid assessment work-order entry")
-        if not entry["issued"]:
-            if entry["required"] or entry["role_id"] != "browser_journey":
-                raise ValueError("required assessment role was not issued")
-            continue
-        work_path = directory / entry["work_order_path"]
-        if work_path.is_symlink() or not work_path.is_file() or _sha(work_path.read_bytes()) != entry["work_order_snapshot_hash"]:
-            raise ValueError("assessment work-order snapshot is invalid")
-        work = _load_json_bytes(work_path.read_bytes()); _validate_work_order(work)
-        if work["work_order_id"] != entry["work_order_id"] or work["work_order_hash"] != entry["work_order_hash"]:
-            raise ValueError("assessment work-order manifest mismatch")
-        if work["inputs"]["packet_hash"] != contexts[entry["role_id"]]["packet_hash"] or work["preparation_semantic_hash"] != manifest["preparation_semantic_hash"] or work["role_definition_hash"] != manifest["role_definitions"][entry["role_id"]]["semantic_hash"]:
-            raise ValueError("assessment work-order authority is stale")
-    return {"directory": directory, "manifest": manifest, "source_packet": packet, "capabilities": capabilities, "graph_input": inputs}
+        path = context_root / f"{role}.json"
+        if path.is_symlink() or path.read_bytes() != _render(expected["contexts"][role]): raise ValueError("assessment preparation semantic rederivation failed: role context")
+    work_root = directory / "work-orders"; expected_work_names = {f"{item['work_order_id']}.json" for item in expected["work_orders"].values()}
+    if work_root.is_symlink() or not work_root.is_dir() or {path.name for path in work_root.iterdir()} != expected_work_names: raise ValueError("invalid assessment work-order set")
+    for role, work in expected["work_orders"].items():
+        path = work_root / f"{work['work_order_id']}.json"
+        if path.is_symlink() or path.read_bytes() != expected["work_order_bytes"][role]: raise ValueError("assessment preparation semantic rederivation failed: work order")
+    if pointer is not None and pointer != expected["pointer"]: raise ValueError("assessment preparation pointer semantic binding is stale")
+    return {"directory": directory, "manifest": expected["manifest"], "source_packet": expected["source_packet"], "capabilities": capabilities, "graph_input": expected["inputs"], "contexts": expected["contexts"], "work_orders": expected["work_orders"]}

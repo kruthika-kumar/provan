@@ -1,1 +1,35 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"assessment-work-orders.v1.json","type":"object","required":["schema_version","preparation_id","preparation_semantic_hash","work_orders","manifest_hash"]}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assessment-work-orders.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "compiler_version", "preparation_id", "preparation_semantic_hash", "preparation_inputs", "release_id", "release_commit", "graph_generation", "graph_semantic_hash", "intent_semantic_hash", "mapping_packet_hash", "source_packet_hash", "capabilities_hash", "capabilities_snapshot_filename", "capabilities_snapshot_hash", "discovery_registry", "role_definitions", "work_orders", "manifest_hash"],
+  "properties": {
+    "schema_version": {"const": "assessment-work-orders.v1"},
+    "compiler_version": {"const": "assessment-preparation.v2"},
+    "preparation_id": {"$ref": "#/$defs/preparationId"},
+    "preparation_semantic_hash": {"$ref": "#/$defs/hash"},
+    "preparation_inputs": {"type": "object", "additionalProperties": false, "required": ["base_commit", "owner_paths"], "properties": {"base_commit": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{40}$"}, {"type": "null"}]}, "owner_paths": {"type": "object", "additionalProperties": false, "required": ["product_assessment", "engineering_assessment", "test_adequacy", "targeted_test_planning", "browser_journey"], "properties": {"product_assessment": {"$ref": "#/$defs/strings"}, "engineering_assessment": {"$ref": "#/$defs/strings"}, "test_adequacy": {"$ref": "#/$defs/strings"}, "targeted_test_planning": {"$ref": "#/$defs/strings"}, "browser_journey": {"$ref": "#/$defs/strings"}}}}},
+    "release_id": {"type": "string"},
+    "release_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "graph_generation": {"type": "string", "pattern": "^gen_[0-9a-f]{32}$"},
+    "graph_semantic_hash": {"$ref": "#/$defs/hash"},
+    "intent_semantic_hash": {"$ref": "#/$defs/hash"},
+    "mapping_packet_hash": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
+    "source_packet_hash": {"$ref": "#/$defs/hash"},
+    "capabilities_hash": {"$ref": "#/$defs/hash"},
+    "capabilities_snapshot_filename": {"enum": ["capabilities.json", "submitted-capabilities.json"]},
+    "capabilities_snapshot_hash": {"$ref": "#/$defs/hash"},
+    "discovery_registry": {"$ref": "#/$defs/hashPair"},
+    "role_definitions": {"type": "object", "additionalProperties": false, "required": ["product_assessment", "engineering_assessment", "test_adequacy", "targeted_test_planning", "browser_journey"], "properties": {"product_assessment": {"$ref": "#/$defs/hashPair"}, "engineering_assessment": {"$ref": "#/$defs/hashPair"}, "test_adequacy": {"$ref": "#/$defs/hashPair"}, "targeted_test_planning": {"$ref": "#/$defs/hashPair"}, "browser_journey": {"$ref": "#/$defs/hashPair"}}},
+    "work_orders": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"$ref": "#/$defs/entry"}},
+    "manifest_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "strings": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "preparationId": {"type": "string", "pattern": "^prep_[0-9a-f]{32}$"},
+    "hashPair": {"type": "object", "additionalProperties": false, "required": ["semantic_hash", "snapshot_hash"], "properties": {"semantic_hash": {"$ref": "#/$defs/hash"}, "snapshot_hash": {"$ref": "#/$defs/hash"}}},
+    "entry": {"type": "object", "additionalProperties": false, "required": ["role_id", "required", "issued", "reason_code", "work_order_id", "work_order_hash", "work_order_snapshot_hash", "work_order_path", "result_path", "completion_receipt_path"], "properties": {"role_id": {"enum": ["product_assessment", "engineering_assessment", "test_adequacy", "targeted_test_planning", "browser_journey"]}, "required": {"type": "boolean"}, "issued": {"type": "boolean"}, "reason_code": {"enum": [null, "not_browser_relevant", "browser_capability_unavailable", "browser_permission_not_granted", "no_authorized_browser_target", "browser_scope_insufficient"]}, "work_order_id": {"type": ["string", "null"]}, "work_order_hash": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "work_order_snapshot_hash": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "work_order_path": {"type": ["string", "null"]}, "result_path": {"type": ["string", "null"]}, "completion_receipt_path": {"type": ["string", "null"]}}}
+  }
+}
