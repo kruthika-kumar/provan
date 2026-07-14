@@ -21,7 +21,7 @@ def test_graph_compile_without_mapping_packet_emits_not_inspected_slots(tmp_path
     ctx = _intent_context(tmp_path); manifest = compile_bundle(ctx); _, artifacts = load_bundle(ctx)
     assert manifest["mapping_packet_state"] == "absent"
     summary = artifacts["criterion-evidence-summary.json"]["criteria"][0]
-    assert {key for key in ("implementation", "tests", "instrumentation", "runtime")} and all(values[0]["slot_status"] == "not_inspected" for values in (summary["implementation"], summary["tests"], summary["instrumentation"], summary["runtime"]))
+    assert {key for key in ("implementation", "tests", "instrumentation", "runtime")} and all(values[0]["detail"]["slot_status"] == "not_inspected" for values in (summary["implementation"], summary["tests"], summary["instrumentation"], summary["runtime"]))
     assert "Implementation: not_inspected" in show(ctx)
 
 
@@ -70,7 +70,7 @@ def test_multiple_candidate_references_replace_single_slot_placeholder(tmp_path:
     path = ctx.repository_root / ".shiproom/local/releases/rel_intent/requirement-evidence-graph/inbox/multiple.json"; path.write_text(json.dumps(data), encoding="utf-8")
     compile_bundle(ctx, str(path)); _, artifacts = load_bundle(ctx)
     implementation = artifacts["criterion-evidence-summary.json"]["criteria"][0]["implementation"]
-    assert len(implementation) == 2 and {item["slot_status"] for item in implementation} == {"candidate_present"}
+    assert len(implementation) == 2 and {item["detail"]["slot_status"] for item in implementation} == {"candidate_present"}
 
 
 def test_historical_product_criterion_to_intent_criterion_is_candidate_only(tmp_path: Path):

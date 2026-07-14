@@ -10,7 +10,7 @@ from .project import canonical_json, content_hash
 
 GRAPH_SCHEMA="requirement-evidence-graph.v1"; SUMMARY_SCHEMA="criterion-evidence-summary.v1"; GAPS_SCHEMA="evidence-gaps.v1"
 PACKET_SCHEMA="evidence-mapping-source-packet.v1"; PROPOSAL_SCHEMA="evidence-mapping-proposal.v1"; MANIFEST_SCHEMA="requirement-evidence-graph-manifest.v1"; POINTER_SCHEMA="requirement-evidence-graph-current-generation.v1"
-COMPILER_VERSION="requirement-evidence-graph.v2"; LIMIT=256*1024
+COMPILER_VERSION="requirement-evidence-graph.v3"; LIMIT=256*1024
 ARTIFACTS=("requirement-evidence-graph.json","criterion-evidence-summary.json","evidence-gaps.json")
 NODE_TYPES={"source","requirement","acceptance_criterion","critical_journey","implementation_reference","test_reference","instrumentation_reference","runtime_evidence","finding","owner_decision","remediation_plan","closure_evidence"}
 CLASSIFICATIONS={"deterministically_established","source_backed","model_mapped_candidate","owner_confirmed","missing","not_inspected"}
@@ -113,15 +113,17 @@ def _normalize_proposal(p,packet):
  out["mappings"]=sorted(out["mappings"],key=canonical_json); return out
 
 def _route(check):
- kind=ROUTES.get(check.get("type")); return kind
+ kind=ROUTES.get(check.get("type")); evidence=ROUTES.get(check.get("evidence_kind"))
+ return None if kind and evidence and kind!=evidence else kind or evidence
 def _successful(check,slot):
  if not check.get("passed") or check.get("evidence_status")!="deterministically_verified":return False
- if slot=="runtime" and check.get("type")=="http":return isinstance(check.get("status"),int) and 200<=check["status"]<400
+ if slot=="runtime" and check.get("type")=="http":return check.get("status")==200
  return True
 def _compatible(original,rerun,slot):
  if original.get("type")!=rerun.get("type") or original.get("criterion_id")!=rerun.get("criterion_id"):return False
- if slot=="runtime":return _normal(str(original.get("target") or original.get("granted_path") or ""))==_normal(str(rerun.get("target") or rerun.get("granted_path") or ""))
- return original.get("command_id")==rerun.get("command_id") or original.get("target")==rerun.get("target")
+ if slot=="runtime":
+  left=_normal(str(original.get("target") or original.get("granted_path") or "")); right=_normal(str(rerun.get("target") or rerun.get("granted_path") or "")); return bool(left and right and left==right)
+ left=original.get("command_id") or original.get("test_id") or original.get("event_id") or original.get("assertion_id"); right=rerun.get("command_id") or rerun.get("test_id") or rerun.get("event_id") or rerun.get("assertion_id"); return bool(left and right and left==right)
 def _record(nodes,edges,src,tgt,relationship,classification,rationale,origin,refs=None):
  edge=_edge(nodes,src,tgt,relationship,classification,rationale,origin,refs); edges.append(edge); return edge
 def _relationship_for_slot(slot):return {"implementation":"may_be_implemented_by","test":"may_be_verified_by","instrumentation":"may_be_observed_by","runtime":"has_runtime_evidence"}[slot]
@@ -150,7 +152,7 @@ def _compile(ctx,packet,normalized):
   cid=add(_node("acceptance_criterion",c["criterion_id"],provenance="product_intent",criterion_id=c["criterion_id"],requirement_id=c["requirement_id"],classification=c["classification"],confirmation_state=c["confirmation_state"],action=c.get("action"),expected_outcomes=c.get("expected_outcomes",[]))); crit_nodes[c["criterion_id"]]=cid; _record(nodes,edges,req_nodes[c["requirement_id"]],cid,"decomposes_into","deterministically_established","Product Intent ownership.","product_intent")
   for ref in c.get("source_refs",[]):
    if ref.get("source_id") in sources:_record(nodes,edges,sources[ref["source_id"]],cid,"supports_acceptance_criterion","source_backed","Product Intent citation.","product_intent",[ref])
- canonical={}; check_slot={}
+ canonical={}; check_slot={}; runtime_packet_nodes={}
  for check in projection["checks"]:
   slot=_route(check)
   if not slot:
@@ -160,6 +162,8 @@ def _compile(ctx,packet,normalized):
   else:
    kind=SLOT_TYPES[slot]; nid=add(_node(kind,{"canonical":check["check_id"],"slot":slot},provenance="canonical_release_state",slot_status="actual",evidence_slot=slot,check_id=check["check_id"],check_type=check.get("type"),target=check.get("target"),granted_path=check.get("granted_path"),status=check.get("status"),passed=check.get("passed"),evidence_status=check.get("evidence_status")))
   canonical[check["check_id"]]=nid; check_slot[check["check_id"]]=slot
+ for runtime in (packet or {}).get("canonical_runtime_evidence",[]):
+  if runtime["check_id"] in canonical:runtime_packet_nodes[runtime["runtime_evidence_id"]]=canonical[runtime["check_id"]]
  findings={}; decisions={}; tasks={}
  for f in projection["findings"]:
   fid=f.get("id") or _id("finding",f); findings[fid]=add(_node("finding",{"projection":ph,"id":fid},provenance="canonical_release_state",canonical_finding_id=fid,criterion_id=f.get("criterion_id"),title=f.get("title"),severity=f.get("severity"),blocking=bool(f.get("blocking")),state=f.get("state"),evidence=_sort(f.get("evidence",[]))))
@@ -180,8 +184,11 @@ def _compile(ctx,packet,normalized):
   for ev in d.get("evidence",[]):
    ref=ev.get("reference") if isinstance(ev,dict) else None
    if ref in findings:
-    _record(nodes,edges,findings[ref],decisions[did],"requires_owner_decision","deterministically_established","Exact decision evidence reference.","release_projection");
+    _record(nodes,edges,findings[ref],decisions[did],"requires_owner_decision","deterministically_established","Exact decision evidence reference.","release_projection")
     if d.get("choice") and d.get("resolution"):_record(nodes,edges,decisions[did],findings[ref],"resolved_or_conditioned_by","owner_confirmed","Recorded decision.","release_projection")
+ for task in projection["remediation_tasks"]:
+  tid=task.get("id") or _id("remediation",task); refs=set(task.get("finding_ids",[]))|({task["finding_id"]} if isinstance(task.get("finding_id"),str) else set())|{x.get("reference") for x in task.get("evidence",[]) if isinstance(x,dict)}
+  for fid in refs & set(findings):_record(nodes,edges,findings[fid],tasks[tid],"addressed_by","deterministically_established","Exact remediation finding reference.","release_projection")
  mappings=(normalized or {"mappings":[]})["mappings"]; bycrit={c:[] for c in crit_nodes}
  for m in mappings:bycrit[m["criterion_id"]].append(m)
  slot_edges={c:{s:[] for s in SLOT_TYPES} for c in crit_nodes}; direct_journeys={c:[] for c in crit_nodes}
@@ -195,12 +202,16 @@ def _compile(ctx,packet,normalized):
    if typ in {"implementation_reference","test_reference","instrumentation_reference"}:
     slot=next(s for s,k in SLOT_TYPES.items() if k==typ); ref=m["reference"]; nid=add(_node(typ,{"packet":packet["packet_hash"],"mapping":m},provenance="mapping_proposal",slot_status="candidate_present",evidence_slot=slot,path=ref["path"],returned_git_path=ref["returned_git_path"],git_blob_hash=ref["git_blob_hash"],label=ref.get("label"),quality_assessment=m.get("quality_assessment"),rationale=m["rationale"])); slot_edges[cid][slot].append(_record(nodes,edges,crit_nodes[cid],nid,_relationship_for_slot(slot),"model_mapped_candidate",m["rationale"],"mapping_proposal",[ref]))
    elif typ=="runtime_evidence":
-    nid=canonical.get(m["canonical_id"])
-    if nid:slot_edges[cid]["runtime"].append(_record(nodes,edges,crit_nodes[cid],nid,"has_runtime_evidence","model_mapped_candidate",m["rationale"],"mapping_proposal"))
-   elif typ=="finding" and m["canonical_id"] in findings:_record(nodes,edges,findings[m["canonical_id"]],crit_nodes[cid],"concerns_criterion","model_mapped_candidate",m["rationale"],"mapping_proposal")
+    nid=runtime_packet_nodes.get(m["canonical_id"]) or canonical.get(m["canonical_id"])
+    if not nid:raise ValueError("validated runtime mapping has no graph node")
+    slot_edges[cid]["runtime"].append(_record(nodes,edges,crit_nodes[cid],nid,"has_runtime_evidence","model_mapped_candidate",m["rationale"],"mapping_proposal"))
+   elif typ=="finding":
+    if m["canonical_id"] not in findings:raise ValueError("validated finding mapping has no graph node")
+    _record(nodes,edges,findings[m["canonical_id"]],crit_nodes[cid],"concerns_criterion","model_mapped_candidate",m["rationale"],"mapping_proposal")
    elif typ=="critical_journey":
     target=next((n for n in journeys.values() if n==m["journey_id"]),None)
-    if target:direct_journeys[cid].append(_record(nodes,edges,crit_nodes[cid],target,"maps_to_critical_journey","model_mapped_candidate",m["rationale"],"mapping_proposal"))
+    if not target:raise ValueError("validated journey mapping has no graph node")
+    direct_journeys[cid].append(_record(nodes,edges,crit_nodes[cid],target,"maps_to_critical_journey","model_mapped_candidate",m["rationale"],"mapping_proposal"))
   for slot,kind in SLOT_TYPES.items():
    if not slot_edges[cid][slot]:
     nid=add(_node(kind,{"criterion":cid,"slot":slot,"projection":ph},provenance="graph_compiler",slot_status="not_inspected",evidence_slot=slot,reason="No qualified canonical evidence or mapping.")); slot_edges[cid][slot].append(_record(nodes,edges,crit_nodes[cid],nid,_relationship_for_slot(slot),"not_inspected","No qualified evidence.","graph_compiler"))
@@ -235,9 +246,14 @@ def _compile(ctx,packet,normalized):
   if amb:gaps.append(_gap(cid,"source_conflict","open",[cnode],[],"Resolved Product Intent ambiguity.",ambiguity_ids=amb)); gapids.append(gaps[-1]["gap_id"])
   linked_find=[e for e in edges if e["relationship"]=="concerns_criterion" and e["target_node_id"]==cnode]; linked_dec=[e for e in edges if e["relationship"]=="requires_owner_decision" and e["source_node_id"] in {x["source_node_id"] for x in linked_find}]
   if any(nodes[e["target_node_id"]].get("choice") is None for e in linked_dec):gaps.append(_gap(cid,"owner_decision_required","open",[cnode]+[e["target_node_id"] for e in linked_dec],[e["edge_id"] for e in linked_dec],"Recorded owner decision.")); gapids.append(gaps[-1]["gap_id"])
-  def items(es):return [{"node_id":e["target_node_id"],"relationship_edge_id":e["edge_id"],"relationship_classification":e["establishment_classification"],"node_provenance":nodes[e["target_node_id"]]["provenance"],"node":nodes[e["target_node_id"]],**{k:v for k,v in nodes[e["target_node_id"]].items() if k not in {"node_id","node_type","provenance"}}} for e in es]
+  def items(es,direction="target"):
+   output=[]
+   for e in es:
+    nid=e["target_node_id"] if direction=="target" else e["source_node_id"]; node=nodes[nid]
+    output.append({"node_id":nid,"relationship_edge_id":e["edge_id"],"relationship_classification":e["establishment_classification"],"node_provenance":node["provenance"],"node_type":node["node_type"],"detail":{k:v for k,v in node.items() if k not in {"node_id","node_type","provenance"}}})
+   return output
   closure=[e for e in edges if e["relationship"] in {"closes","fails_to_close"} and any(x["source_node_id"]==e["target_node_id"] for x in linked_find)]
-  summaries.append({"criterion_id":cid,"criterion_node_id":cnode,"owning_requirement":{"node_id":req_nodes[c["requirement_id"]],"statement":req["statement"]},"requirement_id":c["requirement_id"],"requirement_statement":req["statement"],"source_support":items([e for e in edges if e["relationship"]=="supports_acceptance_criterion" and e["target_node_id"]==cnode]),"inherited_journeys":_sort(req.get("related_journey_ids",[])),"critical_journey_context":_sort(req.get("related_journey_ids",[])),"direct_journeys":items(direct_journeys[cid]),"implementation":items(slot_edges[cid]["implementation"]),"tests":items(slot_edges[cid]["test"]),"instrumentation":items(slot_edges[cid]["instrumentation"]),"runtime":items(slot_edges[cid]["runtime"]),"missing_slots":sorted(s for s in SLOT_TYPES if any(x["node"].get("slot_status")=="deterministic_missing" for x in items(slot_edges[cid][s]))),"not_inspected_slots":sorted(s for s in SLOT_TYPES if any(x["node"].get("slot_status")=="not_inspected" for x in items(slot_edges[cid][s]))),"model_judgments":[g["gap_id"] for g in gaps if g["criterion_id"]==cid and g["gap_type"]=="quality_judgment"],"findings":items(linked_find),"blockers":items([e for e in linked_find if nodes[e["source_node_id"]].get("blocking")]),"owner_decisions":items(linked_dec),"remediation":[],"closure":items(closure),"closure_evidence_required":"not_inspected" if not closure else "actual","gaps":sorted(gapids),"evidence_needed_to_close":_sort([g["evidence_needed"] for g in gaps if g["criterion_id"]==cid])})
+  summaries.append({"criterion_id":cid,"criterion_node_id":cnode,"owning_requirement":{"node_id":req_nodes[c["requirement_id"]],"statement":req["statement"]},"requirement_id":c["requirement_id"],"requirement_statement":req["statement"],"source_support":items([e for e in edges if e["relationship"]=="supports_acceptance_criterion" and e["target_node_id"]==cnode],"source"),"inherited_journeys":_sort(req.get("related_journey_ids",[])),"critical_journey_context":_sort(req.get("related_journey_ids",[])),"direct_journeys":items(direct_journeys[cid]),"implementation":items(slot_edges[cid]["implementation"]),"tests":items(slot_edges[cid]["test"]),"instrumentation":items(slot_edges[cid]["instrumentation"]),"runtime":items(slot_edges[cid]["runtime"]),"missing_slots":sorted(s for s in SLOT_TYPES if any(x["detail"].get("slot_status")=="deterministic_missing" for x in items(slot_edges[cid][s]))),"not_inspected_slots":sorted(s for s in SLOT_TYPES if any(x["detail"].get("slot_status")=="not_inspected" for x in items(slot_edges[cid][s]))),"model_judgments":[g["gap_id"] for g in gaps if g["criterion_id"]==cid and g["gap_type"]=="quality_judgment"],"findings":items(linked_find,"source"),"blockers":items([e for e in linked_find if nodes[e["source_node_id"]].get("blocking")],"source"),"owner_decisions":items(linked_dec),"remediation":[],"closure":items(closure,"source"),"closure_evidence_required":"not_inspected" if not closure else "actual","gaps":sorted(gapids),"evidence_needed_to_close":_sort([g["evidence_needed"] for g in gaps if g["criterion_id"]==cid])})
  common={"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"project_authority":_authority(ctx),"product_intent_semantic_bundle_hash":im["semantic_bundle_hash"],"product_intent_source_packet_hash":im["source_packet_hash"],"release_projection_hash":ph,"compiler_version":COMPILER_VERSION}
  graph={"schema_version":GRAPH_SCHEMA,**common,"mapping_packet_state":"present" if packet else "absent","mapping_packet_hash":packet["packet_hash"] if packet else None,"coverage_boundary":"Validated Product Intent, canonical release projection, and optional explicit mapping packet only.","import_limitations":sorted(limitations,key=canonical_json),"nodes":sorted(nodes.values(),key=lambda x:x["node_id"]),"edges":sorted({e["edge_id"]:e for e in edges}.values(),key=lambda x:x["edge_id"])}
  return graph,{"schema_version":SUMMARY_SCHEMA,**common,"criteria":sorted(summaries,key=lambda x:x["criterion_id"])},{"schema_version":GAPS_SCHEMA,**common,"gaps":sorted(gaps,key=lambda x:x["gap_id"])}
@@ -279,14 +295,17 @@ def load_bundle(ctx):
  if pointer.is_symlink() or not pointer.is_file():raise ValueError("complete graph generation unavailable")
  p=json.loads(pointer.read_text()); gen=p.get("generation")
  if set(p)!={"schema_version","generation","manifest_hash"} or p.get("schema_version")!=POINTER_SCHEMA or not isinstance(gen,str) or not re.fullmatch(r"gen_[0-9a-f]{32}",gen):raise ValueError("graph pointer invalid")
- base=(root/"generations").resolve(); directory=(base/gen).resolve()
- if directory.parent!=base or directory.is_symlink() or not directory.is_dir():raise ValueError("graph generation invalid")
+ raw_directory=root/"generations"/gen
+ if raw_directory.is_symlink() or not raw_directory.is_dir():raise ValueError("graph generation invalid")
+ base=(root/"generations").resolve(); directory=raw_directory.resolve()
+ if directory.parent!=base:raise ValueError("graph generation invalid")
  manifest_path=directory/"manifest.json"
  if manifest_path.is_symlink() or not manifest_path.is_file() or _hash(manifest_path.read_bytes())!=p["manifest_hash"]:raise ValueError("graph generation invalid")
  manifest=json.loads(manifest_path.read_text()); required={"schema_version","release_id","release_commit","project_authority","product_intent_semantic_bundle_hash","product_intent_source_packet_hash","release_projection_hash","mapping_packet_state","mapping_packet_hash","mapping_packet_snapshot_hash","submitted_proposal_hash","submitted_proposal_snapshot_hash","normalized_proposal_hash","normalized_proposal_snapshot_hash","compiler_version","artifact_filenames","artifact_hashes","semantic_bundle_hash","bundle_hash"}
- if set(manifest)!=required or manifest.get("schema_version")!=MANIFEST_SCHEMA or manifest.get("compiler_version")!=COMPILER_VERSION or manifest.get("artifact_filenames")!=list(ARTIFACTS) or set(manifest.get("artifact_hashes",{}))!=set(ARTIFACTS) or manifest.get("bundle_hash")!=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"}):raise ValueError("graph manifest invalid or stale")
+ im,_,_,_,ph=_binding(ctx)
+ if set(manifest)!=required or manifest.get("schema_version")!=MANIFEST_SCHEMA or manifest.get("compiler_version")!=COMPILER_VERSION or manifest.get("release_id")!=ctx.release["release_id"] or manifest.get("release_commit")!=ctx.authority_binding["repository_commit"] or manifest.get("project_authority")!=_authority(ctx) or manifest.get("product_intent_semantic_bundle_hash")!=im["semantic_bundle_hash"] or manifest.get("product_intent_source_packet_hash")!=im["source_packet_hash"] or manifest.get("release_projection_hash")!=ph or manifest.get("artifact_filenames")!=list(ARTIFACTS) or set(manifest.get("artifact_hashes",{}))!=set(ARTIFACTS) or manifest.get("bundle_hash")!=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"}):raise ValueError("graph manifest invalid or stale")
  packet,pb=_load_mapping_packet(ctx); submitted=normalized=None
- if bool(packet)!=(manifest["mapping_packet_state"]=="present") or (packet and (manifest["mapping_packet_hash"]!=packet["packet_hash"] or (directory/"mapping-source-packet.json").is_symlink() or (directory/"mapping-source-packet.json").read_bytes()!=pb)):raise ValueError("graph mapping packet stale")
+ if bool(packet)!=(manifest["mapping_packet_state"]=="present") or (packet and (manifest["mapping_packet_hash"]!=packet["packet_hash"] or manifest["mapping_packet_snapshot_hash"]!=_hash(pb) or (directory/"mapping-source-packet.json").is_symlink() or (directory/"mapping-source-packet.json").read_bytes()!=pb)):raise ValueError("graph mapping packet stale")
  if manifest["submitted_proposal_hash"]:
   sp,np=directory/"submitted-mapping-proposal.json",directory/"normalized-mapping-proposal.json"
   if not packet or any(x.is_symlink() or not x.is_file() for x in (sp,np)):raise ValueError("proposal snapshots invalid")
@@ -297,6 +316,8 @@ def load_bundle(ctx):
   path=directory/name
   if path.is_symlink() or not path.is_file() or _hash(path.read_bytes())!=manifest["artifact_hashes"][name]:raise ValueError("graph artifact invalid")
   artifacts[name]=json.loads(path.read_text())
+ semantic=content_hash({"intent":manifest["product_intent_semantic_bundle_hash"],"packet":manifest["mapping_packet_hash"],"projection":ph,"compiler":COMPILER_VERSION,"artifacts":{k:manifest["artifact_hashes"][k] for k in sorted(ARTIFACTS)}})
+ if manifest["semantic_bundle_hash"]!=semantic:raise ValueError("graph semantic bundle stale")
  expected=dict(zip(ARTIFACTS,_compile(ctx,packet,normalized)))
  if artifacts!=expected:raise ValueError("graph artifacts stale")
  _validate_artifacts(artifacts,[x["criterion_id"] for x in load_graph_input(ctx)[1]["acceptance-criteria.json"]["criteria"]]); return manifest,artifacts
@@ -307,6 +328,6 @@ def show(ctx,criterion_id=None):
  for s in summaries:
   lines += [f"Requirement: {s['owning_requirement']['statement']}",f"Criterion: {s['criterion_id']}","Journey context: "+(", ".join(s["inherited_journeys"]) or "not inspected")]
   for label,key in (("Implementation","implementation"),("Test evidence","tests"),("Instrumentation","instrumentation"),("Runtime","runtime")):
-   lines.append(label+": "+", ".join(f"{x['node'].get('slot_status')} [{x['relationship_classification']}] {x['node'].get('path') or x['node'].get('target') or ''}" for x in s[key]))
-  lines.append("Findings: "+", ".join(x["node"].get("canonical_finding_id","") for x in s["findings"]) or "Findings: none"); lines.append("Closure: "+", ".join(x["node"].get("closure_state","") for x in s["closure"]) or "Closure: not_inspected"); lines.append("Gaps: "+", ".join(f"{gaps[x]['gap_type']}={gaps[x]['state']} ({gaps[x]['evidence_needed']})" for x in s["gaps"]))
+   lines.append(label+": "+", ".join(f"{x['detail'].get('slot_status')} [{x['relationship_classification']}] {x['detail'].get('path') or x['detail'].get('target') or ''}" for x in s[key]))
+  lines.append("Sources: "+", ".join(x["detail"].get("authority_tier","") for x in s["source_support"])); lines.append("Findings: "+", ".join(f"{x['detail'].get('canonical_finding_id','')} blocker={x['detail'].get('blocking')}" for x in s["findings"]) or "Findings: none"); lines.append("Decisions: "+", ".join(str(x["detail"].get("resolution") or "unresolved") for x in s["owner_decisions"]) or "Decisions: none"); lines.append("Closure: "+", ".join(x["detail"].get("closure_state","") for x in s["closure"]) or "Closure: not_inspected"); lines.append("Gaps: "+", ".join(f"{gaps[x]['gap_type']}={gaps[x]['state']} ({gaps[x]['evidence_needed']})" for x in s["gaps"]))
  return "\n".join(lines)
