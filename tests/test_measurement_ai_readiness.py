@@ -13,6 +13,10 @@ from shiproom.measurement_ai.preparation import prepare, load_preparation
 from shiproom.measurement_ai.persistence import compile_generation, load_generation
 from shiproom.measurement_ai.rendering import show
 from shiproom.measurement_ai.contracts import sha256_bytes
+from shiproom.measurement_ai.qualification import grade_qualification_result
+from shiproom.measurement_ai.results import normalize_result
+import shiproom.measurement_ai.persistence as measurement_persistence
+from scripts.measurement_ai_acceptance_fixture import snapshot_measurement_ai_read_only, assert_measurement_ai_read_only
 from test_assessment import assessment_context
 from test_intent import context_for, inbox, proposal
 from shiproom.intent import prepare as prepare_intent, compile_bundle as compile_intent
@@ -132,3 +136,31 @@ def test_measurement_result_compiles_without_upgrading_prepared_authority(tmp_pa
     checks={item["check_id"]:item for item in artifacts["measurement-ai-readiness.json"]["checks"]}
     assert checks["DATA_OUTCOME_EVENT_DEFINED"]["status"]=="owner_confirmation_required"
     assert checks["DATA_OUTCOME_EVENT_DEFINED"]["check_authority"]=="compiler_derived_from_model_reviewed_assessment"
+
+
+def test_qualification_is_mechanically_graded_and_hash_bound():
+    pack=load_guidance_pack(); cases=[]
+    for case in pack["qualification_suite"]["cases"]:
+        expected=case["expected_constraints"]
+        cases.append({"case_id":case["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exceptions_considered":expected["required_exceptions"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claims":[],"authority_labels":expected["required_authority_labels"]})
+    value={"schema_version":"measurement-reviewer-qualification-result.v1","provider_id":"configured","model_id":"qualified","role_prompt_version":"1","guidance_pack_hash":pack["pack_hash"],"recommendation_policy_hash":pack["snapshots"]["recommendation-policy.v1.json"]["semantic_hash"],"result_schema_version":"measurement-result.v1","qualification_suite_version":pack["qualification_suite"]["suite_version"],"qualification_suite_hash":pack["snapshots"]["qualification-suite.v1.json"]["semantic_hash"],"case_results":cases}
+    receipt=grade_qualification_result(value,pack); assert "ratio_denominator_review" in receipt["qualified_capabilities"]
+    value["guidance_pack_hash"]="sha256:"+"0"*64
+    with pytest.raises(ValueError,match="binding mismatch"): grade_qualification_result(value,pack)
+
+
+def test_forged_reviewer_authority_and_contract_only_guidance_are_rejected(tmp_path):
+    ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); prep=load_preparation(ctx,info["preparation_id"]); work=prep["work_orders"]["measurement"]
+    record=assessed_record(cid); record["conclusion_evidence_class"]="deterministically_established"; place_result(ctx,info["preparation_id"],"measurement",record); inbox=domain_root(ctx)/"inbox"/info["preparation_id"]/work["work_order_id"]
+    with pytest.raises(ValueError,match="authority upgrade"): normalize_result((inbox/"result.json").read_bytes(),(inbox/"completion-receipt.json").read_bytes(),work,prep["contexts"]["measurement"],load_guidance_pack())
+
+
+def test_late_generation_failure_preserves_previous_pointer(tmp_path,monkeypatch):
+    ctx=conventional_context(tmp_path); first=prepare(ctx); compile_generation(ctx,first["preparation_id"]); pointer=domain_root(ctx)/"current-generation.json"; before=pointer.read_bytes(); second=prepare(ctx)
+    monkeypatch.setattr(measurement_persistence,"AFTER_GENERATION_VERIFY",lambda directory: (_ for _ in ()).throw(RuntimeError("late failure")))
+    with pytest.raises(RuntimeError,match="late failure"): compile_generation(ctx,second["preparation_id"])
+    assert pointer.read_bytes()==before; monkeypatch.setattr(measurement_persistence,"AFTER_GENERATION_VERIFY",None); load_generation(ctx)
+
+
+def test_measurement_ai_operations_preserve_complete_upstream_artifact_sets(tmp_path):
+    ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)

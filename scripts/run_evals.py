@@ -18,6 +18,13 @@ from shiproom.intent import compile_bundle as intent_compile, load_bundle as int
 from shiproom.onboarding import initialize
 from shiproom.project import canonical_json, content_hash
 from shiproom.assessment import compile_assessment, default_capabilities, load_assessment, load_preparation, prepare as assessment_prepare
+from shiproom.measurement_ai.authority import default_applicability as measurement_applicability, domain_root as measurement_root
+from shiproom.measurement_ai.preparation import prepare as measurement_prepare, load_preparation as load_measurement_preparation
+from shiproom.measurement_ai.persistence import compile_generation as measurement_compile, load_generation as load_measurement
+from shiproom.measurement_ai.results import normalize_result
+from shiproom.measurement_ai.guidance import load_guidance_pack
+from shiproom.measurement_ai.contracts import sha256_bytes
+from shiproom.graph import load_assessment_input as graph_assessment_input
 try:
     from scripts.graph_acceptance_fixture import run_controlled_patient
 except ModuleNotFoundError:  # direct ``python scripts/run_evals.py`` execution
@@ -104,6 +111,40 @@ def _assessment_behavioral_evals(check) -> None:
         check("ASSESSMENT_OVERLAY_NEVER_REFINES_BASE",observed_effective["base_evidence_state"]==base_before and before["graph_pointer"]==snapshot_read_only_state(ctx)["graph_pointer"] and json.dumps(ctx.release,sort_keys=True,separators=(",",":"))==before["release"])
 
 
+def _measurement_result(ctx,prep,role,records,warnings=None,executor=None):
+    work=prep["work_orders"][role]; directory=measurement_root(ctx)/"inbox"/work["preparation_id"]/work["work_order_id"]
+    value={"schema_version":"measurement-result.v1" if role=="measurement" else "ai-evaluation-result.v1","role_id":role,"role_version":"1.0.0","preparation_id":work["preparation_id"],"work_order_id":work["work_order_id"],"base_graph_semantic_hash":work["inputs"]["graph_semantic_hash"],"resolved_review_mode":work["resolved_review_mode"],"records":records,"warnings":warnings or [],"proposals":[],"assumptions":[],"limitations":[]}
+    raw=(json.dumps(value,sort_keys=True)+"\n").encode(); directory.mkdir(parents=True,exist_ok=True); (directory/"result.json").write_bytes(raw)
+    receipt={"schema_version":"shiproom.assessment-completion-receipt.v2","executor":executor or {"executor_type":"human","reviewer_label":"portable reviewer"},"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}; (directory/"completion-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
+    return raw,receipt
+
+
+def _measurement_record(cid,role):
+    return {"local_id":"record_"+role,"criterion_id":cid,"disposition":"assessed","uncertainty":"bounded","direct_bases":[{"reference_type":"criterion","reference_id":cid,"classification":"source_verified"}],"criterion_basis_paths":[],"conclusion_evidence_class":"model_reviewed","semantic_review_authority":"model_reviewed_with_curated_guidance" if role=="measurement" else "model_reviewed","summary":"Bounded portable assessment.","gaps":[],"contract_updates":{},"signal_assessments":[],"metric_dimensions":[],"ai_maturity":({"case_candidate":"candidate","fixed_input":"not_established","oracle_or_rubric":"not_established","pass_condition":"not_established","criterion_linkage":"established"} if role=="ai_evaluation" else {}),"claims":[]}
+
+
+def _measurement_ai_behavioral_evals(check) -> None:
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); graph_compile(ctx); inputs=graph_assessment_input(ctx); cid=inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"][0]["criterion_id"]; journey=next(node["node_id"] for node in inputs["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"] if node["node_type"]=="critical_journey")
+        root=measurement_root(ctx)/"inputs"; root.mkdir(parents=True); app=measurement_applicability(); app["measurement"]["criterion_ids"]=[cid]; app["ai"]["criterion_ids"]=[cid]; app["measurement"]["contracts"]=[{"local_id":"launch_metric","journey_id":journey,"criterion_ids":[cid],"fields":{"decision_question":{"value":"Did onboarding improve?","state":"owner_confirmed"},"decision_use_case":{"value":"comparative_noncausal_review","state":"owner_confirmed"},"intended_outcome":{"value":"Customers onboard","state":"owner_confirmed"},"unit":{"value":"customers","state":"owner_confirmed"},"eligible_population":{"value":"invited customers","state":"owner_confirmed"},"success_condition":{"value":"customer onboarded","state":"owner_confirmed"},"failure_condition":{"value":"customer abandons","state":"owner_confirmed"}},"metric_roles":["outcome"],"required_signals":[{"name":"customer_onboarded","required_properties":["customer_id"]}]}]; app_path=root/"applicability.json"; app_path.write_text(json.dumps(app),encoding="utf-8")
+        prepared_info=measurement_prepare(ctx,review_mode="guided_review",review_capabilities={"executor_type":"human"},applicability_path=str(app_path)); prep=load_measurement_preparation(ctx,prepared_info["preparation_id"]); mrecord=_measurement_record(cid,"measurement"); arecord=_measurement_record(cid,"ai_evaluation")
+        warning={"local_id":"count_warning","criterion_id":cid,"recommendation_class":"research_backed_warning","summary":"Opportunity volume may change; the count is not categorically wrong.","project_basis_ids":[cid],"basis_source_refs":[],"guidance_rule_ids":["MEAS_COUNT_002"],"exceptions_considered":["absolute_volume_decision","fixed_opportunity","business_outcome_with_diagnostics","no_incremental_claim"],"missing_context":"exposure variation","effect":"non_blocking_warning","semantic_review_authority":"model_reviewed_with_curated_guidance"}
+        _measurement_result(ctx,prep,"measurement",[mrecord],[warning]); _measurement_result(ctx,prep,"ai_evaluation",[arecord]); measurement_compile(ctx,prepared_info["preparation_id"]); _,art=load_measurement(ctx); checks={item["check_id"]:item for item in art["measurement-ai-readiness.json"]["checks"]}
+        check("MEASUREMENT_OUTCOME_EVENT_DECLARED_UNVERIFIED",checks["DATA_OUTCOME_EVENT_DEFINED"]["status"]=="ready" and not checks["DATA_OUTCOME_EVENT_DEFINED"]["coverage_boundary"]["runtime_verified"])
+        signal=art["instrumentation-coverage.json"]["signals"][0]
+        check("MEASUREMENT_EVENT_PROPERTY_COMPLETENESS",signal["name"]=="customer_onboarded" and signal["required_properties"]==["customer_id"] and art["instrumentation-coverage.json"]["event_candidates"]==[])
+        compiled_warning=art["launch-measurement-plan.json"]["warnings"][0]
+        check("MEASUREMENT_VAGUE_INTENT_AND_CONDITIONAL_COUNT_WARNING",compiled_warning["effect"]=="non_blocking_warning" and "not categorically wrong" in compiled_warning["summary"] and checks["DATA_PRIMARY_METRIC_DECISION_USEFUL"]["status"]!="gap")
+        check("AI_QUALIFIED_FIXED_EVAL_REQUIRED",checks["AI_FIXED_EVAL_OR_REPRO_CASE_EXISTS"]["status"]=="gap" and checks["AI_FIXED_EVAL_OR_REPRO_CASE_EXISTS"]["reason_codes"]==["qualified_fixed_eval_absent"])
+        work=prep["work_orders"]["measurement"]; raw_result=(measurement_root(ctx)/"inbox"/prepared_info["preparation_id"]/work["work_order_id"]/"result.json").read_bytes(); base_receipt={"schema_version":"shiproom.assessment-completion-receipt.v2","work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw_result),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}; hashes=[]
+        for executor in ({"executor_type":"human","reviewer_label":"human"},{"executor_type":"agent_harness","harness_id":"hermes","adapter_version":"1","run_id":"h","model_id":"configured"},{"executor_type":"agent_harness","harness_id":"codex","adapter_version":"1","run_id":"c","model_id":"configured"}):
+            receipt={**base_receipt,"executor":executor}; result=normalize_result(raw_result,json.dumps(receipt).encode(),work,prep["contexts"]["measurement"],load_guidance_pack()); hashes.append(result["result_semantic_hash"])
+        check("MEASUREMENT_AI_HARNESS_NEUTRAL_PORTABILITY",len(set(hashes))==1 and len({sha256_bytes(json.dumps({**base_receipt,"executor":e}).encode()) for e in ({"executor_type":"human","reviewer_label":"human"},{"executor_type":"agent_harness","harness_id":"hermes","adapter_version":"1","run_id":"h","model_id":"configured"},{"executor_type":"agent_harness","harness_id":"codex","adapter_version":"1","run_id":"c","model_id":"configured"})})==3)
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw)); graph_compile(ctx); prep=measurement_prepare(ctx); measurement_compile(ctx,prep["preparation_id"]); _,art=load_measurement(ctx)
+        check("MEASUREMENT_AI_CONVENTIONAL_PRODUCT_SKIP",prep["work_orders"]==[] and prep["skip_reason"]=="no_applicable_measurement_or_ai_surface" and all(item["status"]=="not_applicable" for item in art["measurement-ai-readiness.json"]["checks"]))
+
+
 def main() -> int:
     cases = []
     def check(name, condition): cases.append((name, bool(condition)))
@@ -158,6 +199,9 @@ def main() -> int:
         check("CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE",boundary)
     _graph_behavioral_evals(check)
     _assessment_behavioral_evals(check)
+    _measurement_ai_behavioral_evals(check)
+    if len(cases) != 35:
+        raise AssertionError(f"expected exactly 35 evals, got {len(cases)}")
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 

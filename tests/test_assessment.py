@@ -400,6 +400,7 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     imported=subprocess.run([str(python),"-c","import shiproom; print(shiproom.__file__)"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout.strip()
     assert str(project).lower() not in imported.lower() and "site-packages" in imported.lower()
     subprocess.run([str(command),"assessment","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    subprocess.run([str(command),"measurement-ai","prepare","--release",str(release_path),"--review-mode","contract_only"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
 
 
 def test_browser_placeholders_are_criterion_specific():

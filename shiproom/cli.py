@@ -30,6 +30,7 @@ from .assessment import compile_assessment, prepare as prepare_assessment, show_
 from .measurement_ai.preparation import prepare as prepare_measurement_ai
 from .measurement_ai.persistence import compile_generation as compile_measurement_ai
 from .measurement_ai.rendering import show as show_measurement_ai
+from .measurement_ai.qualification import prepare_qualification, compile_qualification
 
 
 def load(path: Path) -> dict:
@@ -59,12 +60,16 @@ def main(argv: list[str] | None = None) -> int:
     intent = sub.add_parser("intent"); intent.add_argument("action", choices=["prepare", "compile", "show"]); intent.add_argument("--release", required=True); intent.add_argument("--source", action="append", default=[]); intent.add_argument("--supporting-source", action="append", default=[]); intent.add_argument("--proposal")
     graph = sub.add_parser("graph"); graph.add_argument("action", choices=["compile", "show", "mapping"]); graph.add_argument("--release", required=True); graph.add_argument("--proposal"); graph.add_argument("--criterion"); graph.add_argument("--path", action="append", default=[]); graph.add_argument("--effective", action="store_true"); graph.add_argument("mapping_action", nargs="?", choices=["prepare"])
     assessment = sub.add_parser("assessment"); assessment.add_argument("action", choices=["prepare", "compile", "show"]); assessment.add_argument("--release", required=True); assessment.add_argument("--capabilities"); assessment.add_argument("--base-commit"); assessment.add_argument("--path", action="append", default=[]); assessment.add_argument("--preparation"); assessment.add_argument("--criterion")
-    measurement_ai = sub.add_parser("measurement-ai"); measurement_ai.add_argument("action", choices=["prepare", "compile", "show"]); measurement_ai.add_argument("--release", required=True); measurement_ai.add_argument("--review-mode", choices=["contract_only","guided_review","expert_escalated_review"], default="contract_only"); measurement_ai.add_argument("--capabilities"); measurement_ai.add_argument("--applicability"); measurement_ai.add_argument("--review-capabilities"); measurement_ai.add_argument("--permission"); measurement_ai.add_argument("--path", action="append", default=[]); measurement_ai.add_argument("--preparation"); measurement_ai.add_argument("--journey")
+    measurement_ai = sub.add_parser("measurement-ai"); measurement_ai.add_argument("action", choices=["prepare", "compile", "show", "qualification"]); measurement_ai.add_argument("qualification_action", nargs="?", choices=["prepare","compile"]); measurement_ai.add_argument("--release", required=True); measurement_ai.add_argument("--review-mode", choices=["contract_only","guided_review","expert_escalated_review"], default="contract_only"); measurement_ai.add_argument("--capabilities"); measurement_ai.add_argument("--applicability"); measurement_ai.add_argument("--review-capabilities"); measurement_ai.add_argument("--permission"); measurement_ai.add_argument("--path", action="append", default=[]); measurement_ai.add_argument("--preparation"); measurement_ai.add_argument("--journey"); measurement_ai.add_argument("--result")
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "measurement-ai":
         data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)
-        if args.action == "prepare":
+        if args.action == "qualification":
+            if args.qualification_action=="prepare": print(json.dumps(prepare_qualification(context.repository_root),indent=2))
+            elif args.qualification_action=="compile" and args.result: print(json.dumps(compile_qualification(context.repository_root,Path(args.result)),indent=2))
+            else: raise SystemExit("measurement-ai qualification requires prepare, or compile --result")
+        elif args.action == "prepare":
             def optional_json(path): return json.loads(Path(path).read_text(encoding="utf-8")) if path else None
             result=prepare_measurement_ai(context,review_mode=args.review_mode,capabilities_path=args.capabilities,applicability_path=args.applicability,review_capabilities=optional_json(args.review_capabilities),permission=optional_json(args.permission),owner_paths=args.path)
             print(json.dumps(result,indent=2))

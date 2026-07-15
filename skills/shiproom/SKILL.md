@@ -74,6 +74,16 @@ For an issued `shiproom.work-order.v3` browser work order, return `browser-journ
 
 The authoritative base graph and canonical assessment overlay remain separate. Treat `effective-assessment-view.v3` as a derived presentation only. Preserve its separate `observation_authority`, `judgment_authority`, `observation_ids`, and `judgment_ids`; never report model-reviewed judgment as browser-observed.
 
+## Private Measurement & AI Readiness protocol
+
+Consume exactly one `shiproom.work-order.v4` role packet for `measurement` or `ai_evaluation`. Never request additional files, execute commands/models/SQL/evals, inspect a data platform, mutate state, or submit top-level readiness status or forged owner/source/runtime authority. Return the exact v1 result schema named by the work order plus a separate completion receipt.
+
+Keep factual basis and reviewer authority separate. A source or runtime fact reached through a candidate criterion path remains candidate context; guided or dual review changes only reviewer authority. Measurement fields from owners or canonical sources cannot be overwritten by a model proposal.
+
+In `contract_only`, report structural completeness, provenance/conflicts, bounded instrumentation mapping, and owner questions only. For guided semantic advice, cite an exact snapshotted guidance rule and an exact project basis, consider its exceptions, respect its effect ceiling, and abstain when context is insufficient. Never impose a ratio, denominator, window, cohort, attribution rule, or guardrail. Guidance is a review method, not evidence that the project is defective.
+
+Keep product outcomes and AI behavior separate. An eval filename is not a qualified fixed case; preserve fixed input, oracle/rubric, pass condition, criterion linkage, versions, execution results, deterministic validation, and production traces as separate states. Treat tracing libraries as candidates only. Manual human completion is first-class; model participants require bound qualification for guided/expert capabilities, and no model switch occurs without explicit permission.
+
 ## Historical judged-demo delegation
 
 The remaining delegation and remediation instructions apply only to `historical_judged_demo`. They are not reachable from the private assessment protocol above.

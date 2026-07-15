@@ -27,6 +27,25 @@ Work orders are commit-, Product Intent-, graph-, role-, and schema-bound. Manua
 
 The production private-alpha path never invokes a model, browser, network, project command, or remediation workflow from domain logic. It writes only ignored release-local preparation and assessment generations.
 
+## Measurement & AI Readiness
+
+After Product Intent and the Requirement-to-Evidence Graph are current, prepare a bounded, read-only Measurement & AI review:
+
+```powershell
+shiproom measurement-ai prepare --release release-state/release.json --review-mode contract_only
+# Complete only the issued measurement-result.v1 / ai-evaluation-result.v1 work orders.
+shiproom measurement-ai compile --release release-state/release.json
+shiproom measurement-ai show --release release-state/release.json
+```
+
+The capability answers whether the release can measure its promised outcome, distinguish success from failure, and evaluate AI behavior separately and honestly. It has exactly two portable roles: `measurement` and `ai_evaluation`. `contract_only` performs deterministic structure/provenance checks. `guided_review` applies only the immutable 13-rule Measurement Guidance Pack; model participants require a capability-specific qualification receipt, while guided humans use the same rules and effect ceilings without Shiproom certifying their expertise. `expert_escalated_review` additionally requires permission and a skeptical verifier. Shiproom never switches models silently.
+
+Guidance constrains reviewer reasoning; it is not project proof. Every formal warning needs separate project and guidance bases, considers documented exceptions, and remains within the packaged recommendation-effect ceiling. Counts are not categorically wrong, ratios are not automatically better, and insufficient context leads to abstention or owner confirmation. Owner/source fields are never overwritten by model proposals.
+
+Measurement definitions may be inspected only at exact owner-supplied, commit-pinned paths. Definition presence does not prove execution, deployment, lineage, or data accuracy. AI eval source structure, supplied execution results, deterministic upstream evidence, and production traces remain separate maturity rungs. Langfuse, OpenTelemetry, logs, provider tracing, and custom tracing are vendor-neutral source candidates only.
+
+This is not a Data Engineering, dbt, orchestration, warehouse, lakehouse, semantic-layer, BI, SQL-execution, or analytics-platform audit. Domain logic runs no model, SQL, warehouse, BI, Langfuse, browser, network, or external eval service, and it never changes findings, verdicts, release state, Product Intent, or the evidence graph.
+
 ## Historical judged-demo compatibility
 
 The following workflow is retained solely for the historical buildathon demonstration. It is not the forward private-alpha product.
