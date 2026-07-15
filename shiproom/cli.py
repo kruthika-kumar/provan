@@ -28,6 +28,8 @@ from .intent import compile_bundle as compile_intent, prepare as prepare_intent,
 from .graph import compile_bundle as compile_graph, mapping_prepare, show as show_graph
 from .assessment import compile_assessment, prepare as prepare_assessment, show_assessment
 from .measurement_ai.preparation import prepare as prepare_measurement_ai
+from .measurement_ai.persistence import compile_generation as compile_measurement_ai
+from .measurement_ai.rendering import show as show_measurement_ai
 
 
 def load(path: Path) -> dict:
@@ -66,8 +68,12 @@ def main(argv: list[str] | None = None) -> int:
             def optional_json(path): return json.loads(Path(path).read_text(encoding="utf-8")) if path else None
             result=prepare_measurement_ai(context,review_mode=args.review_mode,capabilities_path=args.capabilities,applicability_path=args.applicability,review_capabilities=optional_json(args.review_capabilities),permission=optional_json(args.permission),owner_paths=args.path)
             print(json.dumps(result,indent=2))
+        elif args.action == "compile":
+            if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.journey: raise SystemExit("measurement-ai compile accepts only --release and optional --preparation")
+            print(json.dumps(compile_measurement_ai(context,args.preparation),indent=2))
         else:
-            raise SystemExit("measurement-ai compile/show becomes available after preparation compilation is installed")
+            if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.preparation: raise SystemExit("measurement-ai show accepts only --release and optional --journey")
+            print(show_measurement_ai(context,args.journey))
     elif args.command == "assessment":
         data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
         if args.action == "prepare":

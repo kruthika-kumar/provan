@@ -10,6 +10,9 @@ from shiproom.measurement_ai.guidance import load_guidance_pack, rule_map
 from shiproom.measurement_ai.overlay import evaluate_basis_path, validate_overlay
 from shiproom.measurement_ai.authority import default_applicability, domain_root
 from shiproom.measurement_ai.preparation import prepare, load_preparation
+from shiproom.measurement_ai.persistence import compile_generation, load_generation
+from shiproom.measurement_ai.rendering import show
+from shiproom.measurement_ai.contracts import sha256_bytes
 from test_assessment import assessment_context
 from test_intent import context_for, inbox, proposal
 from shiproom.intent import prepare as prepare_intent, compile_bundle as compile_intent
@@ -102,3 +105,30 @@ def test_preparation_semantic_tamper_and_unlinked_definition_do_not_create_scope
     prep=domain_root(ctx)/"preparations"/result["preparation_id"]; packet=json.loads((prep/"measurement-ai-source-packet.json").read_text()); packet["coverage_boundary"]="widened"; (prep/"measurement-ai-source-packet.json").write_text(json.dumps(packet,indent=2)+"\n")
     with pytest.raises(ValueError,match="semantic rederivation"):
         load_preparation(ctx,result["preparation_id"])
+
+
+def place_result(ctx, preparation_id, role, record):
+    prep=load_preparation(ctx,preparation_id); work=prep["work_orders"][role]; root=domain_root(ctx)/"inbox"/preparation_id/work["work_order_id"]
+    value={"schema_version":"measurement-result.v1" if role=="measurement" else "ai-evaluation-result.v1","role_id":role,"role_version":"1.0.0","preparation_id":preparation_id,"work_order_id":work["work_order_id"],"base_graph_semantic_hash":work["inputs"]["graph_semantic_hash"],"resolved_review_mode":work["resolved_review_mode"],"records":[record],"warnings":[],"proposals":[],"assumptions":[],"limitations":[]}
+    raw=(json.dumps(value,sort_keys=True)+"\n").encode(); (root/"result.json").write_bytes(raw)
+    receipt={"schema_version":"shiproom.assessment-completion-receipt.v2","executor":{"executor_type":"human","reviewer_label":"manual reviewer"},"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}
+    (root/"completion-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
+
+
+def assessed_record(cid):
+    return {"local_id":"record_1","criterion_id":cid,"disposition":"assessed","uncertainty":"bounded","direct_bases":[{"reference_type":"criterion","reference_id":cid,"classification":"source_verified"}],"criterion_basis_paths":[],"conclusion_evidence_class":"model_reviewed","semantic_review_authority":"model_reviewed","summary":"Bounded review.","gaps":[],"contract_updates":{},"signal_assessments":[],"metric_dimensions":[],"ai_maturity":{},"claims":[]}
+
+
+def test_skip_generation_has_all_six_not_applicable_checks(tmp_path):
+    ctx=conventional_context(tmp_path); prep=prepare(ctx); manifest=compile_generation(ctx,prep["preparation_id"]); assert manifest["compiler_version"]=="portable-measurement-ai.v1"
+    _,artifacts=load_generation(ctx); readiness=artifacts["measurement-ai-readiness.json"]
+    assert len(readiness["checks"])==6 and {item["status"] for item in readiness["checks"]}=={"not_applicable"}
+    assert readiness["accepted_role_validations"]==[] and "no_applicable_measurement_or_ai_surface" in show(ctx)
+
+
+def test_measurement_result_compiles_without_upgrading_prepared_authority(tmp_path):
+    ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); value=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); value["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(value),encoding="utf-8")
+    prep=prepare(ctx,applicability_path=str(path)); place_result(ctx,prep["preparation_id"],"measurement",assessed_record(cid)); compile_generation(ctx,prep["preparation_id"]); _,artifacts=load_generation(ctx)
+    checks={item["check_id"]:item for item in artifacts["measurement-ai-readiness.json"]["checks"]}
+    assert checks["DATA_OUTCOME_EVENT_DEFINED"]["status"]=="owner_confirmation_required"
+    assert checks["DATA_OUTCOME_EVENT_DEFINED"]["check_authority"]=="compiler_derived_from_model_reviewed_assessment"
