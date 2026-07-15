@@ -1667,3 +1667,24 @@ def show_assessment(ctx: LocalExecutionContext, criterion_id: str | None = None)
         browser_authority = item["assessment_authority"]["browser_journey"]
         lines.append(f"Criterion: {item['criterion_id']}"); lines.append("Base evidence: " + ", ".join(f"{key}={value}" for key, value in item["base_evidence_state"].items())); lines.append("Assessment roles: " + (", ".join(sorted(item["assessment"])) or "none")); lines.append(f"Browser: {browser['status']} observation_authority={browser_authority['observation_authority']} judgment_authority={browser_authority['judgment_authority']} observations={','.join(browser_authority['observation_ids']) or 'none'} judgments={','.join(browser_authority['judgment_ids']) or 'none'}"); lines.append("Assessment gaps: " + (", ".join(item["assessment_gap_ids"]) or "none")); lines.append("Targeted tests: " + (", ".join(item["targeted_test_specification_ids"]) or "none"))
     return "\n".join(lines)
+
+
+def load_measurement_ai_input(ctx: LocalExecutionContext) -> dict:
+    """Return an optional, fully validated Session 4 dependency.
+
+    Absence is distinct from a malformed or stale pointer.  Consumers decide
+    whether the validated assessment contributes to their own semantic input.
+    """
+    root = _root(ctx); pointer_path = root / "current-assessment.json"
+    if not pointer_path.exists():
+        return {"assessment_state": "absent"}
+    if pointer_path.is_symlink() or not pointer_path.is_file():
+        raise ValueError("portable assessment pointer is malformed")
+    pointer = _load_json_bytes(pointer_path.read_bytes())
+    manifest, artifacts = load_assessment(ctx)
+    return {
+        "assessment_state": "present",
+        "generation": pointer["generation"],
+        "manifest": manifest,
+        "artifacts": artifacts,
+    }

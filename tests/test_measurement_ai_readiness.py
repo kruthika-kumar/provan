@@ -8,6 +8,19 @@ import pytest
 from shiproom.measurement_ai.contracts import effective_basis_class
 from shiproom.measurement_ai.guidance import load_guidance_pack, rule_map
 from shiproom.measurement_ai.overlay import evaluate_basis_path, validate_overlay
+from shiproom.measurement_ai.authority import default_applicability, domain_root
+from shiproom.measurement_ai.preparation import prepare, load_preparation
+from test_assessment import assessment_context
+from test_intent import context_for, inbox, proposal
+from shiproom.intent import prepare as prepare_intent, compile_bundle as compile_intent
+from shiproom.graph import compile_bundle as compile_graph, load_assessment_input
+
+
+def conventional_context(tmp_path):
+    ctx=context_for(tmp_path); packet=prepare_intent(ctx,["docs/brief.md"],[]); value=proposal(packet)
+    value["criteria"][0]["required_evidence_categories"]=["owner_confirmation"]
+    path=inbox(ctx); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(value),encoding="utf-8")
+    compile_intent(ctx,str(path)); compile_graph(ctx); return ctx
 
 
 def test_guidance_registry_is_closed_and_packaged():
@@ -57,3 +70,35 @@ def test_overlay_exact_schema_and_reference_validation():
 def test_foundation_json_schemas_parse():
     for name in ("measurement-ai-role.v1.json", "work-order.v4.json", "measurement-ai-overlay.v1.json"):
         assert isinstance(json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(name).read_text()), dict)
+
+
+def test_measurement_ai_zero_role_preparation_is_exact_and_reloadable(tmp_path):
+    ctx=conventional_context(tmp_path)
+    result=prepare(ctx)
+    assert result["work_orders"] == []
+    assert result["skip_reason"] == "no_applicable_measurement_or_ai_surface"
+    loaded=load_preparation(ctx)
+    assert loaded["manifest"]["issued_roles"] == []
+    assert loaded["manifest"]["skip_reason"] == result["skip_reason"]
+
+
+def test_instrumentation_requirement_issues_only_measurement_role(tmp_path):
+    ctx=assessment_context(tmp_path)
+    root=domain_root(ctx)/"inputs"; root.mkdir(parents=True)
+    value=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion")
+    value["measurement"]["criterion_ids"]=[cid]
+    path=root/"applicability.json"; path.write_text(json.dumps(value),encoding="utf-8")
+    result=prepare(ctx,applicability_path=str(path))
+    assert [item["role_id"] for item in result["work_orders"]] == ["measurement"]
+    loaded=load_preparation(ctx,result["preparation_id"])
+    assert loaded["work_orders"]["measurement"]["permissions"]["allowed_commands"] == []
+
+
+def test_preparation_semantic_tamper_and_unlinked_definition_do_not_create_scope(tmp_path):
+    ctx=conventional_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True)
+    value=default_applicability(); value["measurement"]["measurement_definition_paths"]=[{"path":"docs/brief.md","requirement_ids":[],"criterion_ids":[],"journey_ids":[],"declared_external":False}]
+    path=root/"applicability.json"; path.write_text(json.dumps(value),encoding="utf-8")
+    result=prepare(ctx,applicability_path=str(path)); assert result["work_orders"] == []
+    prep=domain_root(ctx)/"preparations"/result["preparation_id"]; packet=json.loads((prep/"measurement-ai-source-packet.json").read_text()); packet["coverage_boundary"]="widened"; (prep/"measurement-ai-source-packet.json").write_text(json.dumps(packet,indent=2)+"\n")
+    with pytest.raises(ValueError,match="semantic rederivation"):
+        load_preparation(ctx,result["preparation_id"])

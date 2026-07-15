@@ -104,7 +104,7 @@ def sha256_bytes(raw: bytes) -> str:
 
 
 def render_json(value: object) -> bytes:
-    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    return (json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
 
 
 def _pairs(pairs: list[tuple[str, object]]) -> dict:
