@@ -14,7 +14,7 @@ from shiproom.runs import LocalRunStore
 from shiproom.context import compile_project_context, context_event_metadata, verify_context_handoff, verify_context_isolation
 from shiproom.authority import LocalExecutionContext, bind_release_authority
 from shiproom.graph import ARTIFACTS as GRAPH_ARTIFACTS, compile_bundle as graph_compile, load_bundle as graph_load, mapping_prepare, show as graph_show
-from shiproom.intent import compile_bundle as intent_compile, prepare as intent_prepare
+from shiproom.intent import compile_bundle as intent_compile, load_bundle as intent_load, prepare as intent_prepare
 from shiproom.onboarding import initialize
 from shiproom.project import canonical_json, content_hash
 from shiproom.assessment import compile_assessment, default_capabilities, load_assessment, load_preparation, prepare as assessment_prepare
@@ -41,7 +41,11 @@ def _graph_context(root: Path, *, browser_relevant: bool = False) -> LocalExecut
     def citation(line,quote):return {"source_id":src["source_id"],"start_line":line,"end_line":line,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}
     req=citation(2,"Users can publish cards."); claim=citation(3,"approval_required")
     proposal={"schema_version":"intent-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"source_packet_hash":packet["packet_hash"],"claims":[{"local_id":"claim","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[claim],"requirement_local_ids":["req"]}],"requirements":[{"local_id":"req","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[req],"claim_local_ids":["claim"],"related_journey_ids":["Publish card"],"materiality":"release_scope","rationale":"fixture","owner_confirmation_required":False,"ambiguity_local_ids":[]}],"criteria":[{"local_id":"criterion","parent_requirement_local_id":"req","actor":None,"preconditions":[],"action":"publish","expected_outcomes":[],"failure_behavior":None,"required_evidence_categories":["browser_or_http" if browser_relevant else "owner_confirmation"],"source_refs":[req],"field_source_refs":{},"classification":"explicit","confirmation_state":"confirmed","blocker_eligible":True,"ambiguity_local_ids":[]}],"ambiguities":[]}
-    inbox=repo/".shiproom/local/releases/rel_graph_eval/product-intent/inbox/proposal.json"; inbox.parent.mkdir(parents=True,exist_ok=True); inbox.write_text(json.dumps(proposal),encoding="utf-8"); intent_compile(ctx,str(inbox)); return ctx
+    inbox=repo/".shiproom/local/releases/rel_graph_eval/product-intent/inbox/proposal.json"; inbox.parent.mkdir(parents=True,exist_ok=True); inbox.write_text(json.dumps(proposal),encoding="utf-8"); intent_compile(ctx,str(inbox))
+    if browser_relevant:
+        _, artifacts = intent_load(ctx); criterion_id = artifacts["acceptance-criteria.json"]["criteria"][0]["criterion_id"]
+        ctx.release["checks"] = [{"check_id":"canonical-unit-pass","type":"test","criterion_id":criterion_id,"target":"tests/test_publication.py::test_publish","passed":True,"status":"passed","evidence_status":"deterministically_verified","runtime_outcome":"passed"}]
+    return ctx
 
 
 def _graph_behavioral_evals(check) -> None:
@@ -84,7 +88,7 @@ def _assessment_behavioral_evals(check) -> None:
         inputs=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/assessment/inputs"; inputs.mkdir(parents=True); capabilities=default_capabilities(); capabilities["capabilities"]["browser"]["available"]=True; capabilities["permissions"]["browser"]["granted"]=True; capability_path=inputs/"eval.json"; capability_path.write_text(json.dumps(capabilities),encoding="utf-8")
         assessment_prepare(ctx,capabilities_path=str(capability_path)); preparation=load_preparation(ctx); write_core_results(ctx,preparation); before=snapshot_read_only_state(ctx); compile_assessment(ctx); _,initial=load_assessment(ctx); assert_read_only_state(ctx,before)
         effective=initial["effective-assessment-view.json"]["criteria"][0]; overlay=initial["assessment-graph-overlay.json"]; engineering=initial["engineering-assessment.json"]["payload"]["criteria"][0]; adequacy=initial["test-adequacy.json"]["payload"]["criteria"][0]
-        check("ASSESSMENT_PASSING_TEST_NOT_COVERAGE",engineering["overall_adequacy"]=="inadequate" and effective["base_evidence_state"]["test"]=="unknown")
+        check("ASSESSMENT_PASSING_TEST_NOT_COVERAGE",engineering["overall_adequacy"]=="inadequate" and effective["base_evidence_state"]["test"]=="closed")
         candidate_nodes=[node for node in preparation["contexts"]["engineering_assessment"]["base_graph_context"]["nodes"] if node["node_type"]=="implementation_reference" and node.get("provenance")=="mapping_proposal"]
         check("ASSESSMENT_SOURCE_CANDIDATE_NOT_PROOF",bool(candidate_nodes) and effective["base_evidence_state"]["implementation"]=="unknown")
         check("ASSESSMENT_UNIT_COVERAGE_BOUNDARY_GAP",adequacy["test_layer"]=="unit" and adequacy["assertion_adequacy"]=="adequate" and adequacy["boundary_adequacy"]=="inadequate" and adequacy["overall_adequacy"]=="partial")
