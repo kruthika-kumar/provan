@@ -125,14 +125,17 @@
                 "required": [
                   "status",
                   "reason_code",
-                  "authorized_targets"
+                  "authorized_targets",
+                  "observation_ids",
+                  "judgment_ids"
                 ],
                 "additionalProperties": false,
                 "properties": {
                   "status": {
                     "enum": [
                       "not_issued",
-                      "not_inspected"
+                      "not_inspected",
+                      "observed"
                     ]
                   },
                   "reason_code": {
@@ -173,7 +176,9 @@
                         }
                       }
                     }
-                  }
+                  },
+                  "observation_ids": {"type":"array","uniqueItems":true,"items":{"type":"string"}},
+                  "judgment_ids": {"type":"array","uniqueItems":true,"items":{"type":"string"}}
                 }
               }
             }
@@ -214,7 +219,7 @@
                 ]
               },
               "browser_journey": {
-                "const": "not_inspected"
+                "enum": ["browser_observed", "not_inspected"]
               }
             }
           },

@@ -11,6 +11,8 @@ import pytest
 import shiproom.assessment as assessment_module
 from shiproom.assessment import CORE_ROLES, _validate_targeted_gap_links, compile_assessment, compile_core_results, load_assessment, load_preparation, prepare as prepare_assessment, show_assessment
 from test_assessment import assessment_context, write_json
+from scripts.assessment_acceptance_fixture import assert_read_only_state, snapshot_read_only_state, write_browser_submission
+from test_assessment import browser_assessment_context
 
 
 def common(local_id: str, id_field: str, record: dict, disposition: str = "assessed") -> dict:
@@ -243,3 +245,38 @@ def test_result_semantic_hash_ignores_preparation_and_work_order_handles(tmp_pat
     second=prepare_assessment(ctx); issue_results(ctx); second_hashes=compile_core_results(ctx,second["preparation_id"])["snapshot_hashes"]
     assert first["preparation_id"] != second["preparation_id"]
     assert {role:value["result_semantic_hash"] for role,value in first_hashes.items()} == {role:value["result_semantic_hash"] for role,value in second_hashes.items()}
+
+
+def test_valid_browser_observation_is_bounded_and_never_refines_base_graph(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema")
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); before=snapshot_read_only_state(ctx)
+    write_browser_submission(ctx,preparation); manifest=compile_assessment(ctx); _,artifacts=load_assessment(ctx); assert_read_only_state(ctx,before)
+    criterion=artifacts["effective-assessment-view.json"]["criteria"][0]; browser=criterion["assessment"]["browser_journey"]
+    gap_states={item["gap_type"]:item["state"] for item in preparation["contexts"]["browser_journey"]["base_graph_context"]["gaps"] if item["criterion_id"]==criterion["criterion_id"]}
+    assert manifest["result_snapshot_hashes"]["browser_journey"]["result_semantic_hash"].startswith("sha256:")
+    assert browser["status"] == "observed" and browser["observation_ids"] and browser["judgment_ids"]
+    assert criterion["assessment_authority"]["browser_journey"] == "browser_observed"
+    assert criterion["base_evidence_state"] == {"implementation":gap_states.get("implementation_gap","unknown"),"test":gap_states.get("test_evidence_gap","unknown"),"instrumentation":gap_states.get("instrumentation_gap","unknown"),"runtime":gap_states.get("runtime_evidence_gap","unknown")}
+    overlay=artifacts["assessment-graph-overlay.json"]
+    assert any(node["node_type"]=="browser_observation" and node["evidence_class"]=="browser_observed" for node in overlay["nodes"])
+    assert any(node.get("role_id")=="browser_journey" and node["evidence_class"]=="model_reviewed" for node in overlay["nodes"])
+    jsonschema.validate(artifacts["browser-journey.json"],json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v2.json").read_text()))
+    jsonschema.validate(overlay,json.loads(resources.files("shiproom.assessment_schemas").joinpath("assessment-graph-overlay.v2.json").read_text()))
+    jsonschema.validate(manifest,json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v2.json").read_text()))
+    assert "Browser: observed authority=browser_observed" in show_assessment(ctx,criterion["criterion_id"])
+
+
+@pytest.mark.parametrize("failure", ["artifact", "receipt"])
+def test_invalid_browser_artifact_or_receipt_binding_fails(tmp_path: Path, failure: str):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx)
+    write_browser_submission(ctx,preparation,corrupt_artifact_hash=failure=="artifact",corrupt_receipt_hash=failure=="receipt")
+    with pytest.raises(ValueError,match="browser evidence artifact binding|completion receipt binding"): compile_assessment(ctx)
+
+
+@pytest.mark.parametrize("failure", ["ungranted_url", "evidence_traversal"])
+def test_browser_scope_and_evidence_directory_are_fail_closed(tmp_path: Path, failure: str):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); path=write_browser_submission(ctx,preparation); result=json.loads(path.read_text())
+    if failure=="ungranted_url": result["payload"]["observations"][0]["url"]="https://outside.example/path"
+    else: result["payload"]["evidence"][0]["path"]="../observation.json"
+    write_json(path,result); refresh_receipt(path)
+    with pytest.raises(ValueError,match="target exceeds grant|path escapes"): compile_assessment(ctx)

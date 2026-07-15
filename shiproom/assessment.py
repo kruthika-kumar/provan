@@ -54,6 +54,9 @@ ASSUMPTION_LIMIT = 100
 LIMITATION_LIMIT = 100
 RATIONALE_LIMIT = 4096
 DETAIL_LIMIT = 16384
+EVIDENCE_FILE_LIMIT = 5 * 1024 * 1024
+EVIDENCE_TOTAL_LIMIT = 25 * 1024 * 1024
+EVIDENCE_MEDIA_TYPES = {"image/png", "image/jpeg", "application/json", "application/x-ndjson", "text/plain; charset=utf-8"}
 RESULT_SCHEMAS = {
     "product_assessment": "product-assessment-result.v2",
     "engineering_assessment": "engineering-assessment-result.v2",
@@ -62,7 +65,7 @@ RESULT_SCHEMAS = {
     "browser_journey": "browser-journey-result.v2",
 }
 RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
-ASSESSMENT_COMPILER_VERSION = "portable-assessment.v3"
+ASSESSMENT_COMPILER_VERSION = "portable-assessment.v4"
 ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v2"
 ASSESSMENT_POINTER_SCHEMA = "current-portable-assessment.v1"
 OVERLAY_SCHEMA = "assessment-graph-overlay.v2"
@@ -1117,6 +1120,118 @@ def _validate_role_result(raw: bytes, receipt_raw: bytes, role: str, preparation
     return value, receipt, normalized
 
 
+def _effective_port(parsed) -> int | None:
+    return parsed.port if parsed.port is not None else (443 if parsed.scheme.lower() == "https" else 80 if parsed.scheme.lower() == "http" else None)
+
+
+def _url_is_authorized(raw: str, targets: list[dict]) -> bool:
+    try: parsed = urlparse(raw)
+    except ValueError: return False
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname or parsed.username is not None or parsed.password is not None: return False
+    path = parsed.path or "/"
+    for target in targets:
+        allowed = urlparse(target["url"])
+        pattern = target["path_pattern"]
+        path_ok = path.startswith(pattern[:-1]) if pattern.endswith("*") else path == pattern
+        if parsed.scheme.lower() == allowed.scheme.lower() and parsed.hostname.lower() == (allowed.hostname or "").lower() and _effective_port(parsed) == _effective_port(allowed) and path_ok: return True
+    return False
+
+
+def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path, preparation: dict, role_definition: dict) -> dict:
+    if len(raw) > RESULT_BYTES_LIMIT: raise ValueError("browser result exceeds size limit")
+    value = _load_json_bytes(raw); work = preparation["work_orders"]["browser_journey"]; context = preparation["contexts"]["browser_journey"]
+    fields = {"schema_version", "role_id", "role_version", "preparation_id", "preparation_semantic_hash", "work_order_id", "work_order_hash", "base_graph_generation", "base_graph_semantic_hash", "payload", "assumptions", "limitations"}
+    if set(value) != fields or value.get("schema_version") != RESULT_SCHEMAS["browser_journey"] or value.get("role_id") != "browser_journey" or value.get("role_version") != work["role_version"] or value.get("preparation_id") != work["preparation_id"] or value.get("preparation_semantic_hash") != work["preparation_semantic_hash"] or value.get("work_order_id") != work["work_order_id"] or value.get("work_order_hash") != work["work_order_hash"] or value.get("base_graph_generation") != work["inputs"]["base_graph_generation"] or value.get("base_graph_semantic_hash") != work["inputs"]["base_graph_semantic_hash"]: raise ValueError("browser result binding mismatch")
+    payload = value["payload"]
+    if not isinstance(payload, dict) or set(payload) != {"criteria", "observations", "judgments", "evidence"}: raise ValueError("invalid browser result payload")
+    assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; criteria = []; seen_local = set()
+    for record in payload["criteria"]:
+        if not isinstance(record, dict) or set(record) != {"local_id", "criterion_id", "disposition", "uncertainty", "rationale"} or record.get("criterion_id") not in assigned: raise ValueError("invalid browser criterion disposition")
+        local = _text(record["local_id"], "browser criterion local_id", 120)
+        if local in seen_local: raise ValueError("duplicate browser local ID")
+        seen_local.add(local); disposition = _enum(record["disposition"], {"assessed", "not_inspected", "blocked_by_input_ambiguity"}, "browser disposition"); uncertainty = _enum(record["uncertainty"], UNCERTAINTIES, "browser uncertainty"); _text(record["rationale"], "browser rationale", RATIONALE_LIMIT)
+        if (disposition == "assessed") == (uncertainty == "not_assessed"): raise ValueError("browser disposition/uncertainty mismatch")
+        if (assigned[record["criterion_id"]]["scope_status"] == "blocked_by_ambiguity") != (disposition == "blocked_by_input_ambiguity"): raise ValueError("browser blocked disposition mismatch")
+        criteria.append(record)
+    if len(criteria) != len(assigned) or {item["criterion_id"] for item in criteria} != set(assigned): raise ValueError("browser result criterion coverage is incomplete")
+    allowed_targets = work["permissions"]["browser"]["allowed_targets"]
+    evidence_by_local = {}; evidence_bytes = {}; total = 0
+    if evidence_root.is_symlink() or not evidence_root.is_dir(): raise ValueError("browser evidence directory is invalid")
+    for item in payload["evidence"]:
+        required = {"local_id", "observation_local_id", "path", "media_type", "byte_length", "sha256", "capture_timestamp"}
+        if not isinstance(item, dict) or set(item) != required or item["media_type"] not in EVIDENCE_MEDIA_TYPES: raise ValueError("invalid browser evidence record")
+        local = _text(item["local_id"], "browser evidence local_id", 120)
+        if local in seen_local: raise ValueError("duplicate browser local ID")
+        seen_local.add(local); relative = PurePosixPath(item["path"])
+        if relative.is_absolute() or not relative.parts or any(part in {"", ".", ".."} for part in relative.parts): raise ValueError("browser evidence path escapes evidence directory")
+        path = evidence_root.joinpath(*relative.parts)
+        if item["path"] in evidence_bytes or path.is_symlink() or any(parent.is_symlink() for parent in path.parents if parent != evidence_root.parent) or not path.is_file() or path.resolve().parent != evidence_root.resolve() and evidence_root.resolve() not in path.resolve().parents: raise ValueError("browser evidence file is unavailable")
+        data = path.read_bytes(); total += len(data)
+        if not data or len(data) > EVIDENCE_FILE_LIMIT or total > EVIDENCE_TOTAL_LIMIT or type(item["byte_length"]) is not int or item["byte_length"] != len(data) or item["sha256"] != _sha(data): raise ValueError("browser evidence artifact binding mismatch")
+        if item["media_type"].startswith("text/"):
+            try: data.decode("utf-8")
+            except UnicodeDecodeError as exc: raise ValueError("browser text evidence is invalid UTF-8") from exc
+        try: captured = datetime.fromisoformat(item["capture_timestamp"].replace("Z", "+00:00"))
+        except (AttributeError, ValueError) as exc: raise ValueError("invalid browser evidence timestamp") from exc
+        if captured.tzinfo is None: raise ValueError("invalid browser evidence timestamp")
+        evidence_by_local[local] = item; evidence_bytes[item["path"]] = data
+    observations = []; observations_by_local = {}
+    for item in payload["observations"]:
+        required = {"local_id", "criterion_id", "url", "action", "observed_outcome", "redirect_chain", "capture_timestamp", "evidence_local_ids", "evidence_class"}
+        if not isinstance(item, dict) or set(item) != required or item.get("criterion_id") not in assigned or item.get("evidence_class") != "browser_observed": raise ValueError("invalid browser observation")
+        local = _text(item["local_id"], "browser observation local_id", 120)
+        if local in seen_local: raise ValueError("duplicate browser local ID")
+        seen_local.add(local); _text(item["action"], "browser action", DETAIL_LIMIT); _text(item["observed_outcome"], "browser outcome", DETAIL_LIMIT)
+        if not _url_is_authorized(item["url"], allowed_targets) or not isinstance(item["redirect_chain"], list) or not item["redirect_chain"] or any(not isinstance(url, str) or not _url_is_authorized(url, allowed_targets) for url in item["redirect_chain"]): raise ValueError("browser observation target exceeds grant")
+        try: captured = datetime.fromisoformat(item["capture_timestamp"].replace("Z", "+00:00"))
+        except (AttributeError, ValueError) as exc: raise ValueError("invalid browser observation timestamp") from exc
+        if captured.tzinfo is None: raise ValueError("invalid browser observation timestamp")
+        evidence_ids = _string_list(item["evidence_local_ids"], "browser observation evidence IDs")
+        if len(evidence_ids) != len(set(evidence_ids)) or any(key not in evidence_by_local or evidence_by_local[key]["observation_local_id"] != local or evidence_by_local[key]["capture_timestamp"] != item["capture_timestamp"] for key in evidence_ids): raise ValueError("browser observation evidence linkage is invalid")
+        observations_by_local[local] = item; observations.append(item)
+    if set(evidence_by_local) != {key for item in observations for key in item["evidence_local_ids"]}: raise ValueError("unreferenced browser evidence is forbidden")
+    judgments = []
+    for item in payload["judgments"]:
+        required = {"local_id", "criterion_id", "observation_local_ids", "conclusion", "uncertainty", "evidence_class"}
+        if not isinstance(item, dict) or set(item) != required or item.get("criterion_id") not in assigned or item.get("evidence_class") != "model_reviewed": raise ValueError("invalid browser judgment")
+        local = _text(item["local_id"], "browser judgment local_id", 120)
+        if local in seen_local: raise ValueError("duplicate browser local ID")
+        seen_local.add(local); _text(item["conclusion"], "browser judgment conclusion", DETAIL_LIMIT); _enum(item["uncertainty"], {"none", "bounded", "material"}, "browser judgment uncertainty")
+        refs = _string_list(item["observation_local_ids"], "browser judgment observation IDs")
+        if not refs or len(refs) != len(set(refs)) or any(key not in observations_by_local or observations_by_local[key]["criterion_id"] != item["criterion_id"] for key in refs): raise ValueError("browser judgment observation linkage is invalid")
+        judgments.append(item)
+    assessed = {item["criterion_id"] for item in criteria if item["disposition"] == "assessed"}
+    if any(item["criterion_id"] not in assessed for item in observations + judgments): raise ValueError("browser evidence requires assessed criterion")
+    receipt = _validate_completion_receipt(_load_json_bytes(receipt_raw), work, raw)
+    assumptions = sorted(_bounded_strings(value["assumptions"], "browser assumptions", ASSUMPTION_LIMIT)); limitations = sorted(_bounded_strings(value["limitations"], "browser limitations", LIMITATION_LIMIT))
+    normalized_payload = {"criteria": sorted(criteria, key=lambda item: item["criterion_id"]), "observations": sorted(observations, key=canonical_json), "judgments": sorted(judgments, key=canonical_json), "evidence": sorted(payload["evidence"], key=lambda item: item["path"])}
+    def substantive(item):
+        if isinstance(item, dict): return {key: substantive(value) for key, value in item.items() if key != "local_id"}
+        if isinstance(item, list): return [substantive(value) for value in item]
+        return item
+    semantic = {"role_id": "browser_journey", "role_version": work["role_version"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "payload": substantive(normalized_payload), "assumptions": assumptions, "limitations": limitations}
+    hashes = {"result_semantic_hash": content_hash(semantic), "result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw)}
+    return {"submitted": value, "receipt": receipt, "artifact": normalized_payload, "hashes": hashes, "result_bytes": raw, "receipt_bytes": receipt_raw, "evidence_bytes": evidence_bytes}
+
+
+def _compile_browser_result(preparation: dict, snapshot_root: Path | None = None) -> dict | None:
+    entry = next(item for item in preparation["manifest"]["work_orders"] if item["role_id"] == "browser_journey")
+    if not entry["issued"]: return None
+    work = preparation["work_orders"]["browser_journey"]
+    inbox = (snapshot_root / "browser_journey") if snapshot_root else (_root_from_preparation(preparation) / "inbox" / work["preparation_id"] / work["work_order_id"])
+    result_path, receipt_path, evidence_root = inbox / "result.json", inbox / "completion-receipt.json", inbox / "evidence"
+    present = [path.is_file() and not path.is_symlink() for path in (result_path, receipt_path)]
+    if not any(present): return None
+    if not all(present): raise ValueError("incomplete browser result submission")
+    role = _role_snapshot((preparation["directory"] / "role-definitions/browser_journey.json").read_bytes(), "browser_journey")["value"]
+    return _validate_browser_result(result_path.read_bytes(), receipt_path.read_bytes(), evidence_root, preparation, role)
+
+
+def _root_from_preparation(preparation: dict) -> Path:
+    directory = preparation["directory"]
+    return directory.parents[1] if directory.name.startswith("prep_") else directory.parents[1]
+
+
 def _validate_targeted_gap_links(artifacts: dict) -> None:
     gaps_by_key = {gap["gap_key"]: gap for role in ("product_assessment", "engineering_assessment", "test_adequacy") for gap in artifacts[role]["payload"]["gaps"]}
     for spec in artifacts["targeted_test_planning"]["payload"]["specifications"]:
@@ -1146,7 +1261,9 @@ def _compile_core_results(ctx: LocalExecutionContext, preparation: dict, snapsho
         semantic_result = {"role_id": role, "role_version": normalized["role_version"], "base_graph_semantic_hash": normalized["base_graph_semantic_hash"], "payload": substantive(normalized["payload"]), "assumptions": normalized["assumptions"], "limitations": normalized["limitations"]}
         raw_results[role] = submitted; receipts[role] = receipt; artifacts[role] = normalized; raw_bytes[role] = raw; receipt_bytes[role] = receipt_raw; snapshot_hashes[role] = {"result_semantic_hash": content_hash(semantic_result), "result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw)}
     _validate_targeted_gap_links(artifacts)
-    return {"preparation": preparation, "artifacts": artifacts, "submitted_results": raw_results, "completion_receipts": receipts, "submitted_result_bytes": raw_bytes, "completion_receipt_bytes": receipt_bytes, "snapshot_hashes": snapshot_hashes}
+    browser = _compile_browser_result(preparation, snapshot_root)
+    if browser is not None: snapshot_hashes["browser_journey"] = browser["hashes"]
+    return {"preparation": preparation, "artifacts": artifacts, "submitted_results": raw_results, "completion_receipts": receipts, "submitted_result_bytes": raw_bytes, "completion_receipt_bytes": receipt_bytes, "snapshot_hashes": snapshot_hashes, "browser": browser}
 
 
 def compile_core_results(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
@@ -1186,6 +1303,24 @@ def _browser_placeholder(preparation: dict) -> dict:
             status, reason = "not_issued", "no_authorized_browser_target"
         criteria.append({"criterion_id": criterion_id, "status": status, "reason_code": reason, "authorized_targets": targets.get(criterion_id, [])})
     return {"schema_version": "browser-journey.v2", "work_order_id": entry["work_order_id"], "criteria": criteria, "observations": [], "judgments": []}
+
+
+def _browser_artifact(core: dict) -> dict:
+    placeholder = _browser_placeholder(core["preparation"]); compiled = core.get("browser")
+    if compiled is None: return placeholder
+    payload = compiled["artifact"]; evidence = {item["local_id"]: item for item in payload["evidence"]}; observation_ids = {}
+    observations = []
+    for item in payload["observations"]:
+        observation_id = _assessment_id("browser_observation", {"work_order_id": core["preparation"]["work_orders"]["browser_journey"]["work_order_id"], **{key:value for key,value in item.items() if key != "local_id"}})
+        observation_ids[item["local_id"]] = observation_id
+        observations.append({"observation_id": observation_id, "criterion_id": item["criterion_id"], "url": item["url"], "action": item["action"], "observed_outcome": item["observed_outcome"], "redirect_chain": item["redirect_chain"], "capture_timestamp": item["capture_timestamp"], "evidence_class": "browser_observed", "evidence": [{key: evidence[local][key] for key in ("path", "media_type", "byte_length", "sha256", "capture_timestamp")} for local in item["evidence_local_ids"]]})
+    judgments = []
+    for item in payload["judgments"]:
+        value = {"criterion_id": item["criterion_id"], "observation_ids": sorted(observation_ids[local] for local in item["observation_local_ids"]), "conclusion": item["conclusion"], "uncertainty": item["uncertainty"], "evidence_class": "model_reviewed"}
+        judgments.append({"judgment_id": _assessment_id("browser_judgment", value), **value})
+    observed = {item["criterion_id"] for item in observations}
+    criteria = [{**item, "status": "observed" if item["criterion_id"] in observed else item["status"], "reason_code": None if item["criterion_id"] in observed else item["reason_code"]} for item in placeholder["criteria"]]
+    return {**placeholder, "criteria": criteria, "observations": sorted(observations, key=lambda item: item["observation_id"]), "judgments": sorted(judgments, key=lambda item: item["judgment_id"])}
 
 
 def _build_overlay(core: dict) -> tuple[dict, dict]:
@@ -1229,8 +1364,22 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
         conclusion = criterion_conclusions.get((role, criterion_id))
         if conclusion is None: raise ValueError("assessment gap lacks same-role criterion conclusion")
         add_edge("identifies_assessment_gap", conclusion, gap_id, "model_reviewed")
+    browser_artifact = _browser_artifact(core)
+    if core.get("browser") is not None:
+        browser_hashes = core["browser"]["hashes"]; work_order_id = core["preparation"]["work_orders"]["browser_journey"]["work_order_id"]; executor = core["browser"]["receipt"]["executor"]
+        for observation in browser_artifact["observations"]:
+            node_id = observation["observation_id"]
+            overlay_nodes.append({"node_id": node_id, "node_type": "browser_observation", "criterion_id": observation["criterion_id"], "evidence_class": "browser_observed", "observation": observation, "work_order_id": work_order_id, **browser_hashes, "executor_provenance": executor})
+            add_edge("concerns_criterion", node_id, observation["criterion_id"], "browser_observed")
+        for judgment in browser_artifact["judgments"]:
+            node_id = judgment["judgment_id"]
+            overlay_nodes.append({"node_id": node_id, "node_type": "assessment_conclusion", "role_id": "browser_journey", "assessed_record_id": judgment["criterion_id"], "conclusion_kind": "browser_judgment", "evidence_class": "model_reviewed", "uncertainty": judgment["uncertainty"], "substantive_conclusion": judgment, "basis_node_ids": [], "basis_edge_ids": [], "basis_gap_ids": [], "basis_source_refs": [], "work_order_id": work_order_id, **browser_hashes, "executor_provenance": executor})
+            add_edge("assesses_criterion", node_id, judgment["criterion_id"], "model_reviewed")
+            for observation_id in judgment["observation_ids"]: add_edge("supported_by_browser_observation", node_id, observation_id, "model_reviewed")
     overlay = {"schema_version": OVERLAY_SCHEMA, "release_id": preparation["manifest"]["release_id"], "release_commit": preparation["manifest"]["release_commit"], "preparation_id": preparation["manifest"]["preparation_id"], "base_graph_generation": preparation["manifest"]["graph_generation"], "base_graph_semantic_hash": preparation["manifest"]["graph_semantic_hash"], "nodes": sorted(overlay_nodes, key=lambda item: item["node_id"]), "edges": sorted(edges, key=lambda item: item["edge_id"])}
-    by_criterion = {}; browser_by_criterion = {item["criterion_id"]: item for item in _browser_placeholder(preparation)["criteria"]}
+    by_criterion = {}; browser_by_criterion = {item["criterion_id"]: item for item in browser_artifact["criteria"]}; observations_by_criterion = {}; judgments_by_criterion = {}
+    for item in browser_artifact["observations"]: observations_by_criterion.setdefault(item["criterion_id"], []).append(item["observation_id"])
+    for item in browser_artifact["judgments"]: judgments_by_criterion.setdefault(item["criterion_id"], []).append(item["judgment_id"])
     for criterion_id in sorted(criterion_ids):
         gap_state = {gap["gap_type"]: gap["state"] for gap in base_gaps.values() if gap["criterion_id"] == criterion_id}
         assessment = {}; authority = {}
@@ -1238,15 +1387,16 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
             if node["node_type"] == "assessment_conclusion" and node["assessed_record_id"] == criterion_id:
                 assessment[node["role_id"]] = node["substantive_conclusion"]; authority[node["role_id"]] = node["evidence_class"]
         browser = browser_by_criterion[criterion_id]
-        assessment["browser_journey"] = {"status": browser["status"], "reason_code": browser["reason_code"], "authorized_targets": browser["authorized_targets"]}; authority["browser_journey"] = "not_inspected"
+        assessment["browser_journey"] = {"status": browser["status"], "reason_code": browser["reason_code"], "authorized_targets": browser["authorized_targets"], "observation_ids": sorted(observations_by_criterion.get(criterion_id, [])), "judgment_ids": sorted(judgments_by_criterion.get(criterion_id, []))}; authority["browser_journey"] = "browser_observed" if observations_by_criterion.get(criterion_id) else "not_inspected"
         by_criterion[criterion_id] = {"criterion_id": criterion_id, "base_evidence_state": {"implementation": gap_state.get("implementation_gap", "unknown"), "test": gap_state.get("test_evidence_gap", "unknown"), "instrumentation": gap_state.get("instrumentation_gap", "unknown"), "runtime": gap_state.get("runtime_evidence_gap", "unknown")}, "assessment": assessment, "assessment_authority": authority, "assessment_gap_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "assessment_gap" and node["criterion_id"] == criterion_id), "targeted_test_specification_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "targeted_test_specification" and node["criterion_id"] == criterion_id)}
     effective = {"schema_version": EFFECTIVE_VIEW_SCHEMA, "release_id": preparation["manifest"]["release_id"], "base_graph_generation": preparation["manifest"]["graph_generation"], "authority": {"base_graph": "authoritative_evidence_graph", "assessment_overlay": "authoritative_assessment_record", "effective_view": "derived_only"}, "criteria": [by_criterion[key] for key in sorted(by_criterion)]}
     return overlay, effective
 
 
 def _build_assessment_artifacts(core: dict) -> dict:
-    overlay, effective = _build_overlay(core); prep = core["preparation"]; browser = _browser_placeholder(prep)
-    receipts = {"schema_version": "assessment-compiler-receipts.v2", "preparation_id": prep["manifest"]["preparation_id"], "validations": [{"role_id": role, "work_order_id": prep["work_orders"][role]["work_order_id"], **core["snapshot_hashes"][role], "status": "accepted"} for role in CORE_ROLES]}
+    overlay, effective = _build_overlay(core); prep = core["preparation"]; browser = _browser_artifact(core)
+    accepted_roles = list(CORE_ROLES) + (["browser_journey"] if core.get("browser") is not None else [])
+    receipts = {"schema_version": "assessment-compiler-receipts.v2", "preparation_id": prep["manifest"]["preparation_id"], "validations": [{"role_id": role, "work_order_id": prep["work_orders"][role]["work_order_id"], **core["snapshot_hashes"][role], "status": "accepted"} for role in accepted_roles]}
     return {"product-assessment.json": core["artifacts"]["product_assessment"], "engineering-assessment.json": core["artifacts"]["engineering_assessment"], "test-adequacy.json": core["artifacts"]["test_adequacy"], "targeted-test-plan.json": core["artifacts"]["targeted_test_planning"], "browser-journey.json": browser, "assessment-work-orders.json": prep["manifest"], "assessment-graph-overlay.json": overlay, "effective-assessment-view.json": effective, "assessment-compiler-receipts.json": receipts}
 
 
@@ -1258,7 +1408,7 @@ def _validate_assessment_artifacts(core: dict, artifacts: dict) -> None:
         "assessment_conclusion": {"node_id","node_type","role_id","assessed_record_id","conclusion_kind","evidence_class","uncertainty","substantive_conclusion","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
         "assessment_gap": {"node_id","node_type","role_id","criterion_id","gap_key","gap_kind","aspect_code","actionability","recommended_release_effect","evidence_class","uncertainty","summary","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
         "targeted_test_specification": {"node_id","node_type","criterion_id","specification","evidence_class","uncertainty","basis_node_ids","basis_edge_ids","basis_gap_ids","basis_source_refs","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
-        "browser_observation": {"node_id","node_type","criterion_id","evidence_class","observation","work_order_id","executor_provenance"},
+        "browser_observation": {"node_id","node_type","criterion_id","evidence_class","observation","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"},
     }
     overlay_nodes = {}
     for node in overlay["nodes"]:
@@ -1275,7 +1425,7 @@ def _validate_assessment_artifacts(core: dict, artifacts: dict) -> None:
     effective = artifacts["effective-assessment-view.json"]
     if not isinstance(effective, dict) or set(effective) != {"schema_version","release_id","base_graph_generation","authority","criteria"} or effective.get("schema_version") != EFFECTIVE_VIEW_SCHEMA or effective.get("authority") != {"base_graph":"authoritative_evidence_graph","assessment_overlay":"authoritative_assessment_record","effective_view":"derived_only"}: raise ValueError("effective assessment view schema is invalid")
     for criterion in effective["criteria"]:
-        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or set(criterion["assessment"]) != set(ALL_ROLES) or set(criterion["assessment_authority"]) != set(ALL_ROLES) or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}) or not set(criterion["assessment_authority"].values()).issubset({"model_reviewed","not_inspected"}): raise ValueError("effective assessment criterion schema is invalid")
+        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or set(criterion["assessment"]) != set(ALL_ROLES) or set(criterion["assessment_authority"]) != set(ALL_ROLES) or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}) or not set(criterion["assessment_authority"].values()).issubset({"model_reviewed","browser_observed","not_inspected"}): raise ValueError("effective assessment criterion schema is invalid")
     expected = _build_assessment_artifacts(core)
     if artifacts != expected: raise ValueError("assessment semantic artifacts are stale")
 
@@ -1290,11 +1440,17 @@ def compile_assessment(ctx: LocalExecutionContext, preparation_id: str | None = 
     for role in CORE_ROLES:
         target = snapshots / role; target.mkdir(parents=True)
         (target / "result.json").write_bytes(core["submitted_result_bytes"][role]); (target / "completion-receipt.json").write_bytes(core["completion_receipt_bytes"][role])
+    browser_evidence_hashes = {}
+    if core.get("browser") is not None:
+        target = snapshots / "browser_journey"; (target / "evidence").mkdir(parents=True)
+        (target / "result.json").write_bytes(core["browser"]["result_bytes"]); (target / "completion-receipt.json").write_bytes(core["browser"]["receipt_bytes"])
+        for relative, raw in core["browser"]["evidence_bytes"].items():
+            evidence_path = target / "evidence" / Path(relative); evidence_path.parent.mkdir(parents=True, exist_ok=True); evidence_path.write_bytes(raw); browser_evidence_hashes[relative] = _sha(raw)
     preparation_hashes = {}; preparation_snapshot = directory / "preparation-snapshot"
     for source in sorted((path for path in core["preparation"]["directory"].rglob("*") if path.is_file()), key=lambda path: path.as_posix()):
         if source.is_symlink(): raise ValueError("assessment preparation snapshot cannot contain symlinks")
         relative = source.relative_to(core["preparation"]["directory"]).as_posix(); target = preparation_snapshot / Path(relative); target.parent.mkdir(parents=True, exist_ok=True); raw = source.read_bytes(); target.write_bytes(raw); preparation_hashes[relative] = _sha(raw)
-    manifest = {"schema_version": ASSESSMENT_MANIFEST_SCHEMA, "compiler_version": ASSESSMENT_COMPILER_VERSION, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": core["preparation"]["source_packet"]["project_authority"], "preparation_id": core["preparation"]["manifest"]["preparation_id"], "preparation_semantic_hash": core["preparation"]["manifest"]["preparation_semantic_hash"], "base_graph_generation": core["preparation"]["manifest"]["graph_generation"], "base_graph_semantic_hash": core["preparation"]["manifest"]["graph_semantic_hash"], "artifact_filenames": list(ASSESSMENT_ARTIFACTS), "artifact_hashes": hashes, "preparation_snapshot_hashes": preparation_hashes, "result_snapshot_hashes": core["snapshot_hashes"]}
+    manifest = {"schema_version": ASSESSMENT_MANIFEST_SCHEMA, "compiler_version": ASSESSMENT_COMPILER_VERSION, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "project_authority": core["preparation"]["source_packet"]["project_authority"], "preparation_id": core["preparation"]["manifest"]["preparation_id"], "preparation_semantic_hash": core["preparation"]["manifest"]["preparation_semantic_hash"], "base_graph_generation": core["preparation"]["manifest"]["graph_generation"], "base_graph_semantic_hash": core["preparation"]["manifest"]["graph_semantic_hash"], "artifact_filenames": list(ASSESSMENT_ARTIFACTS), "artifact_hashes": hashes, "preparation_snapshot_hashes": preparation_hashes, "result_snapshot_hashes": core["snapshot_hashes"], "browser_evidence_snapshot_hashes": browser_evidence_hashes}
     manifest["semantic_bundle_hash"] = content_hash({"compiler_version": ASSESSMENT_COMPILER_VERSION, "preparation_semantic_hash": manifest["preparation_semantic_hash"], "base_graph_semantic_hash": manifest["base_graph_semantic_hash"], "artifact_hashes": {key: hashes[key] for key in sorted(hashes)}}); manifest["bundle_hash"] = content_hash(manifest); _atomic(directory / "manifest.json", manifest)
     if _BEFORE_ASSESSMENT_GENERATION_VERIFY: _BEFORE_ASSESSMENT_GENERATION_VERIFY(directory)
     loaded, _ = load_assessment(ctx, _directory=directory)
@@ -1316,7 +1472,7 @@ def load_assessment(ctx: LocalExecutionContext, *, _directory: Path | None = Non
     if raw_directory.is_symlink() or not raw_directory.is_dir() or raw_directory.resolve().parent != (root / "generations").resolve(): raise ValueError("invalid assessment generation")
     directory = raw_directory.resolve(); manifest_path = directory / "manifest.json"
     if manifest_path.is_symlink() or not manifest_path.is_file() or (pointer is not None and _sha(manifest_path.read_bytes()) != pointer["manifest_hash"]): raise ValueError("invalid assessment manifest binding")
-    manifest = _load_json_bytes(manifest_path.read_bytes()); required = {"schema_version","compiler_version","release_id","release_commit","project_authority","preparation_id","preparation_semantic_hash","base_graph_generation","base_graph_semantic_hash","artifact_filenames","artifact_hashes","preparation_snapshot_hashes","result_snapshot_hashes","semantic_bundle_hash","bundle_hash"}
+    manifest = _load_json_bytes(manifest_path.read_bytes()); required = {"schema_version","compiler_version","release_id","release_commit","project_authority","preparation_id","preparation_semantic_hash","base_graph_generation","base_graph_semantic_hash","artifact_filenames","artifact_hashes","preparation_snapshot_hashes","result_snapshot_hashes","browser_evidence_snapshot_hashes","semantic_bundle_hash","bundle_hash"}
     if set(manifest) != required or manifest["schema_version"] != ASSESSMENT_MANIFEST_SCHEMA or manifest["compiler_version"] != ASSESSMENT_COMPILER_VERSION or manifest["bundle_hash"] != content_hash({key: value for key, value in manifest.items() if key != "bundle_hash"}): raise ValueError("assessment manifest invalid or stale")
     snapshot_root = directory / "preparation-snapshot"
     preparation = load_preparation(ctx, manifest["preparation_id"], _directory=snapshot_root)
@@ -1327,6 +1483,13 @@ def load_assessment(ctx: LocalExecutionContext, *, _directory: Path | None = Non
         if stored.is_symlink() or _sha(stored.read_bytes()) != manifest["preparation_snapshot_hashes"][relative]: raise ValueError("assessment preparation snapshot is stale")
     core = _compile_core_results(ctx, preparation, directory / "result-snapshots")
     if core["snapshot_hashes"] != manifest["result_snapshot_hashes"]: raise ValueError("assessment result snapshots are stale")
+    stored_evidence = {}
+    evidence_root = directory / "result-snapshots/browser_journey/evidence"
+    if evidence_root.exists():
+        if evidence_root.is_symlink() or not evidence_root.is_dir(): raise ValueError("assessment browser evidence snapshot is invalid")
+        for path in evidence_root.rglob("*"):
+            if path.is_file(): stored_evidence[path.relative_to(evidence_root).as_posix()] = _sha(path.read_bytes())
+    if stored_evidence != manifest["browser_evidence_snapshot_hashes"]: raise ValueError("assessment browser evidence snapshots are stale")
     artifacts = {}
     if manifest["artifact_filenames"] != list(ASSESSMENT_ARTIFACTS) or set(manifest["artifact_hashes"]) != set(ASSESSMENT_ARTIFACTS): raise ValueError("assessment artifact manifest is invalid")
     for name in ASSESSMENT_ARTIFACTS:
@@ -1343,5 +1506,6 @@ def show_assessment(ctx: LocalExecutionContext, criterion_id: str | None = None)
     if criterion_id and not criteria: raise ValueError("assessment criterion unavailable")
     lines = [f"Assessment generation: {manifest['preparation_id']}", "Authority: base graph authoritative; assessment canonical; effective view derived only"]
     for item in criteria:
-        lines.append(f"Criterion: {item['criterion_id']}"); lines.append("Base evidence: " + ", ".join(f"{key}={value}" for key, value in item["base_evidence_state"].items())); lines.append("Assessment roles: " + (", ".join(sorted(item["assessment"])) or "none")); lines.append("Assessment gaps: " + (", ".join(item["assessment_gap_ids"]) or "none")); lines.append("Targeted tests: " + (", ".join(item["targeted_test_specification_ids"]) or "none"))
+        browser = item["assessment"]["browser_journey"]
+        lines.append(f"Criterion: {item['criterion_id']}"); lines.append("Base evidence: " + ", ".join(f"{key}={value}" for key, value in item["base_evidence_state"].items())); lines.append("Assessment roles: " + (", ".join(sorted(item["assessment"])) or "none")); lines.append(f"Browser: {browser['status']} authority={item['assessment_authority']['browser_journey']} observations={','.join(browser['observation_ids']) or 'none'} judgments={','.join(browser['judgment_ids']) or 'none'}"); lines.append("Assessment gaps: " + (", ".join(item["assessment_gap_ids"]) or "none")); lines.append("Targeted tests: " + (", ".join(item["targeted_test_specification_ids"]) or "none"))
     return "\n".join(lines)

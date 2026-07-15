@@ -17,17 +17,22 @@ from shiproom.graph import ARTIFACTS as GRAPH_ARTIFACTS, compile_bundle as graph
 from shiproom.intent import compile_bundle as intent_compile, prepare as intent_prepare
 from shiproom.onboarding import initialize
 from shiproom.project import canonical_json, content_hash
+from shiproom.assessment import compile_assessment, default_capabilities, load_assessment, load_preparation, prepare as assessment_prepare
 try:
     from scripts.graph_acceptance_fixture import run_controlled_patient
 except ModuleNotFoundError:  # direct ``python scripts/run_evals.py`` execution
     from graph_acceptance_fixture import run_controlled_patient
+try:
+    from scripts.assessment_acceptance_fixture import assert_read_only_state, snapshot_read_only_state, write_browser_submission, write_core_results
+except ModuleNotFoundError:
+    from assessment_acceptance_fixture import assert_read_only_state, snapshot_read_only_state, write_browser_submission, write_core_results
 
 
 def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=root, capture_output=True, check=True)
 
 
-def _graph_context(root: Path) -> LocalExecutionContext:
+def _graph_context(root: Path, *, browser_relevant: bool = False) -> LocalExecutionContext:
     repo=root/"repo"; repo.mkdir(); _git(repo,"init","-b","main"); _git(repo,"config","user.email","eval@example.com"); _git(repo,"config","user.name","Eval")
     (repo/".gitignore").write_text(".shiproom/local/\n",encoding="utf-8"); (repo/"docs").mkdir(); (repo/"docs/brief.md").write_text("# Brief\nUsers can publish cards.\napproval_required\n",encoding="utf-8"); (repo/"demo_patient").mkdir(); patient=subprocess.run(["git","show","HEAD:demo_patient/server.py"],cwd=Path(__file__).parents[1],capture_output=True,check=True).stdout; (repo/"demo_patient/server.py").write_bytes(patient); _git(repo,"add","."); _git(repo,"commit","-m","fixture")
     initialize(repo,project_name="Eval",product_purpose="Evaluate graph",primary_users=["operators"],profile="inspect",local_only=False,confirmed=True); binding,grant=bind_release_authority(repo,"https://example.test","/result")
@@ -35,7 +40,7 @@ def _graph_context(root: Path) -> LocalExecutionContext:
     packet=intent_prepare(ctx,["docs/brief.md"],[]); src=next(x for x in packet["sources"] if x["path"]=="docs/brief.md")
     def citation(line,quote):return {"source_id":src["source_id"],"start_line":line,"end_line":line,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}
     req=citation(2,"Users can publish cards."); claim=citation(3,"approval_required")
-    proposal={"schema_version":"intent-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"source_packet_hash":packet["packet_hash"],"claims":[{"local_id":"claim","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[claim],"requirement_local_ids":["req"]}],"requirements":[{"local_id":"req","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[req],"claim_local_ids":["claim"],"related_journey_ids":["Publish card"],"materiality":"release_scope","rationale":"fixture","owner_confirmation_required":False,"ambiguity_local_ids":[]}],"criteria":[{"local_id":"criterion","parent_requirement_local_id":"req","actor":None,"preconditions":[],"action":"publish","expected_outcomes":[],"failure_behavior":None,"required_evidence_categories":["owner_confirmation"],"source_refs":[req],"field_source_refs":{},"classification":"explicit","confirmation_state":"confirmed","blocker_eligible":True,"ambiguity_local_ids":[]}],"ambiguities":[]}
+    proposal={"schema_version":"intent-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"source_packet_hash":packet["packet_hash"],"claims":[{"local_id":"claim","claim_key":"release.publication_mode","cardinality":"single","value":"approval_required","classification":"explicit","source_refs":[claim],"requirement_local_ids":["req"]}],"requirements":[{"local_id":"req","statement":"Users can publish cards.","classification":"explicit","status":"active","source_refs":[req],"claim_local_ids":["claim"],"related_journey_ids":["Publish card"],"materiality":"release_scope","rationale":"fixture","owner_confirmation_required":False,"ambiguity_local_ids":[]}],"criteria":[{"local_id":"criterion","parent_requirement_local_id":"req","actor":None,"preconditions":[],"action":"publish","expected_outcomes":[],"failure_behavior":None,"required_evidence_categories":["browser_or_http" if browser_relevant else "owner_confirmation"],"source_refs":[req],"field_source_refs":{},"classification":"explicit","confirmation_state":"confirmed","blocker_eligible":True,"ambiguity_local_ids":[]}],"ambiguities":[]}
     inbox=repo/".shiproom/local/releases/rel_graph_eval/product-intent/inbox/proposal.json"; inbox.parent.mkdir(parents=True,exist_ok=True); inbox.write_text(json.dumps(proposal),encoding="utf-8"); intent_compile(ctx,str(inbox)); return ctx
 
 
@@ -69,6 +74,29 @@ def _graph_behavioral_evals(check) -> None:
         try: graph_load(ctx); tamper=False
         except ValueError: tamper=True
         check("GRAPH_SEMANTIC_TAMPER_REJECTED",tamper)
+
+
+def _assessment_behavioral_evals(check) -> None:
+    with tempfile.TemporaryDirectory() as raw:
+        ctx=_graph_context(Path(raw),browser_relevant=True); packet=mapping_prepare(ctx,["docs/brief.md"]); criterion=packet["criterion_ids"][0]; source=packet["selected_sources"][0]; quote="Users can publish cards."
+        mapping={"schema_version":"evidence-mapping-proposal.v1","release_id":packet["release_id"],"release_commit":packet["release_commit"],"product_intent_semantic_bundle_hash":packet["product_intent_semantic_bundle_hash"],"release_projection_hash":packet["release_projection_hash"],"mapping_packet_hash":packet["packet_hash"],"mappings":[{"mapping_id":"assessment_candidate","criterion_id":criterion,"target_type":"implementation_reference","rationale":"Prepared source candidate only.","reference":{"path":source["path"],"returned_git_path":source["returned_git_path"],"git_blob_hash":source["git_blob_hash"],"start_line":2,"end_line":2,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest()}}]}
+        mapping_path=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/requirement-evidence-graph/inbox/assessment.json"; mapping_path.write_text(json.dumps(mapping),encoding="utf-8"); graph_compile(ctx,str(mapping_path))
+        inputs=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/assessment/inputs"; inputs.mkdir(parents=True); capabilities=default_capabilities(); capabilities["capabilities"]["browser"]["available"]=True; capabilities["permissions"]["browser"]["granted"]=True; capability_path=inputs/"eval.json"; capability_path.write_text(json.dumps(capabilities),encoding="utf-8")
+        assessment_prepare(ctx,capabilities_path=str(capability_path)); preparation=load_preparation(ctx); write_core_results(ctx,preparation); before=snapshot_read_only_state(ctx); compile_assessment(ctx); _,initial=load_assessment(ctx); assert_read_only_state(ctx,before)
+        effective=initial["effective-assessment-view.json"]["criteria"][0]; overlay=initial["assessment-graph-overlay.json"]; engineering=initial["engineering-assessment.json"]["payload"]["criteria"][0]; adequacy=initial["test-adequacy.json"]["payload"]["criteria"][0]
+        check("ASSESSMENT_PASSING_TEST_NOT_COVERAGE",engineering["overall_adequacy"]=="inadequate" and effective["base_evidence_state"]["test"]=="unknown")
+        candidate_nodes=[node for node in preparation["contexts"]["engineering_assessment"]["base_graph_context"]["nodes"] if node["node_type"]=="implementation_reference" and node.get("provenance")=="mapping_proposal"]
+        check("ASSESSMENT_SOURCE_CANDIDATE_NOT_PROOF",bool(candidate_nodes) and effective["base_evidence_state"]["implementation"]=="unknown")
+        check("ASSESSMENT_UNIT_COVERAGE_BOUNDARY_GAP",adequacy["test_layer"]=="unit" and adequacy["assertion_adequacy"]=="adequate" and adequacy["boundary_adequacy"]=="inadequate" and adequacy["overall_adequacy"]=="partial")
+        check("ASSESSMENT_NO_COMMAND_EXECUTION",all(not preparation["work_orders"][role]["permissions"]["shell"]["allowed_commands"] for role in ("product_assessment","engineering_assessment","test_adequacy","targeted_test_planning")))
+        check("ASSESSMENT_MANUAL_PORTABLE_WORK_ORDER",all(node["executor_provenance"]["executor_type"]=="human" for node in overlay["nodes"]))
+        base_before=effective["base_evidence_state"].copy(); write_browser_submission(ctx,preparation); compile_assessment(ctx); _,observed=load_assessment(ctx); assert_read_only_state(ctx,before); observed_effective=observed["effective-assessment-view.json"]["criteria"][0]; browser=observed_effective["assessment"]["browser_journey"]
+        browser_ok=browser["status"]=="observed" and observed_effective["assessment_authority"]["browser_journey"]=="browser_observed" and any(node.get("role_id")=="browser_journey" and node["evidence_class"]=="model_reviewed" for node in observed["assessment-graph-overlay.json"]["nodes"])
+        work=preparation["work_orders"]["browser_journey"]; receipt=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"completion-receipt.json"; value=json.loads(receipt.read_text()); value["result_snapshot_hash"]="sha256:"+"0"*64; receipt.write_text(json.dumps(value),encoding="utf-8")
+        try: compile_assessment(ctx); invalid_rejected=False
+        except ValueError: invalid_rejected=True
+        check("ASSESSMENT_BROWSER_PROVENANCE_BOUNDARY",browser_ok and invalid_rejected and observed_effective["base_evidence_state"]==base_before)
+        check("ASSESSMENT_OVERLAY_NEVER_REFINES_BASE",observed_effective["base_evidence_state"]==base_before and before["graph_pointer"]==snapshot_read_only_state(ctx)["graph_pointer"] and json.dumps(ctx.release,sort_keys=True,separators=(",",":"))==before["release"])
 
 
 def main() -> int:
@@ -124,6 +152,7 @@ def main() -> int:
         boundary = boundary and not verify_context_handoff(a_ctx,[{"agent_id":agent,"metadata":stale} for agent in ("manager","specialist","verifier")])
         check("CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE",boundary)
     _graph_behavioral_evals(check)
+    _assessment_behavioral_evals(check)
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
     return 0 if all(p for _, p in cases) else 1
 

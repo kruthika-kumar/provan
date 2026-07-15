@@ -1,19 +1,35 @@
 # Shiproom
 
-Shiproom is a fresh-built release-assurance agency operated through Hermes. A release manager selects independent review modules, gathers typed evidence, applies only allowlisted branch fixes, independently reruns failed checks, and publishes a structured verdict.
+Shiproom is a packet-only, read-only release-assessment compiler. It prepares portable reviewer work orders, validates independently produced Product and Engineering results, and composes a canonical assessment overlay without changing the release, evidence graph, findings, decisions, or verdict.
 
 ## Fresh-build provenance
 
 The implementation, schemas, prompts, tests, demo patient, and reports in this repository were created during the event. The prior blueprint is a read-only specification and is excluded from Git.
 
-## Quick start
+## Private assessment quick start
 
 Install Core and optional development dependencies:
 
 ```powershell
 python -m pip install -e ".[dev]"
-shiproom modules list
+shiproom assessment prepare --release release-state/release.json
 ```
+
+Complete each issued work order manually or through a compatible harness using only its prepared role packet. Write the exact result and separate completion receipt into the preparation-scoped inbox, then compile and inspect the derived assessment:
+
+```powershell
+shiproom assessment compile --release release-state/release.json
+shiproom assessment show --release release-state/release.json
+shiproom graph show --release release-state/release.json --effective
+```
+
+Work orders are commit-, Product Intent-, graph-, role-, and schema-bound. Manual completion is first-class. Product, Engineering, test-adequacy, and targeted-test conclusions remain `model_reviewed`. A valid optional browser observation is `browser_observed`, while its interpretation remains `model_reviewed`; neither can refine deterministic base-graph state. Missing submissions fail closed for required roles. Browser absence is explicit and criterion-specific.
+
+The production private-alpha path never invokes a model, browser, network, project command, or remediation workflow from domain logic. It writes only ignored release-local preparation and assessment generations.
+
+## Historical judged-demo compatibility
+
+The following workflow is retained solely for the historical buildathon demonstration. It is not the forward private-alpha product.
 
 Start the patient in **Terminal A** and leave it running:
 
@@ -142,3 +158,20 @@ Criterion summaries expose `direct_relationships` and an ordered
 `criterion_path`; every step includes `edge_id` plus `forward` or `reverse`
 traversal. This keeps owner decisions, remediation, and closure auditable even
 when their canonical edges point away from the criterion path.
+
+## Portable assessment (private alpha)
+
+`assessment prepare` issues immutable `shiproom.work-order.v2` documents with snapshotted role definitions and packaged result schemas. Capabilities may be declared only through bounded JSON under `.shiproom/local/releases/<release_id>/assessment/inputs/`. Results belong only in the exact preparation/work-order inbox named by the work-order manifest:
+
+```text
+.shiproom/local/releases/<release_id>/assessment/inbox/<preparation_id>/<work_order_id>/
+  result.json
+  completion-receipt.json
+  evidence/
+```
+
+The result never hashes itself. The separate completion receipt binds the exact result bytes and records either human or harness provenance. Prepared packet-source citations are role-bound assessment provenance, not base-graph proof. Newly run shell output may inform reviewer rationale only and is never imported as deterministic command evidence.
+
+Browser work is issued only for `browser_or_http` criteria with an exact release-authorized target plus available and granted browser capability. Every navigation and redirect must stay on the granted origin, effective port, and path. Bound PNG, JPEG, JSON, JSONL, or UTF-8 text artifacts are observations, not product truth by themselves. Invalid receipts, hashes, paths, redirects, or grants reject the whole browser result. A browser observation cannot establish implementation, test adequacy, finding closure, or verdict change.
+
+`effective-assessment-view.json` is derived-only. It keeps the authoritative base evidence dimensions separate from Product, Engineering, test-adequacy, targeted-test, and browser judgments; it is never a replacement Requirement-to-Evidence Graph.

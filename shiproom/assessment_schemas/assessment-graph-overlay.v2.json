@@ -44,6 +44,9 @@
           },
           {
             "$ref": "#/$defs/spec"
+          },
+          {
+            "$ref": "#/$defs/browserObservation"
           }
         ]
       }
@@ -293,7 +296,8 @@
               "enum": [
                 "requirements",
                 "journeys",
-                "criteria"
+                "criteria",
+                "browser_judgment"
               ]
             },
             "substantive_conclusion": {
@@ -515,6 +519,13 @@
         }
       ],
       "unevaluatedProperties": false
+    },
+    "browserObservation": {
+      "type":"object","additionalProperties":false,
+      "required":["node_id","node_type","criterion_id","evidence_class","observation","work_order_id","result_semantic_hash","result_snapshot_hash","completion_receipt_snapshot_hash","executor_provenance"],
+      "properties":{
+        "node_id":{"pattern":"^browser_observation_[0-9a-f]{24}$"},"node_type":{"const":"browser_observation"},"criterion_id":{"type":"string"},"evidence_class":{"const":"browser_observed"},"observation":{"type":"object"},"work_order_id":{"pattern":"^wo_browser_journey_[0-9a-f]{16}$"},"result_semantic_hash":{"$ref":"#/$defs/hash"},"result_snapshot_hash":{"$ref":"#/$defs/hash"},"completion_receipt_snapshot_hash":{"$ref":"#/$defs/hash"},"executor_provenance":{"oneOf":[{"type":"object","required":["executor_type","reviewer_label"],"additionalProperties":false,"properties":{"executor_type":{"const":"human"},"reviewer_label":{"type":["string","null"]}}},{"type":"object","required":["executor_type","harness_id","adapter_version","run_id","model_id"],"additionalProperties":false,"properties":{"executor_type":{"const":"agent_harness"},"harness_id":{"type":"string"},"adapter_version":{"type":"string"},"run_id":{"type":"string"},"model_id":{"type":["string","null"]}}}]}
+      }
     },
     "edge": {
       "type": "object",

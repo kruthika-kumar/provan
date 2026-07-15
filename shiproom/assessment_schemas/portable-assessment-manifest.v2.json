@@ -16,6 +16,7 @@
     "artifact_hashes",
     "preparation_snapshot_hashes",
     "result_snapshot_hashes",
+    "browser_evidence_snapshot_hashes",
     "semantic_bundle_hash",
     "bundle_hash"
   ],
@@ -25,7 +26,7 @@
       "const": "portable-assessment-manifest.v2"
     },
     "compiler_version": {
-      "const": "portable-assessment.v3"
+      "const": "portable-assessment.v4"
     },
     "release_id": {
       "type": "string"
@@ -177,8 +178,16 @@
         },
         "targeted_test_planning": {
           "$ref": "#/$defs/resultHashes"
+        },
+        "browser_journey": {
+          "$ref": "#/$defs/resultHashes"
         }
       }
+    },
+    "browser_evidence_snapshot_hashes": {
+      "type": "object",
+      "propertyNames": {"type": "string", "minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/hash"}
     },
     "semantic_bundle_hash": {
       "$ref": "#/$defs/hash"
