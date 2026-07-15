@@ -30,7 +30,7 @@
       "const": "assessment-work-orders.v3"
     },
     "compiler_version": {
-      "const": "assessment-preparation.v5"
+      "const": "assessment-preparation.v6"
     },
     "preparation_id": {
       "type": "string",

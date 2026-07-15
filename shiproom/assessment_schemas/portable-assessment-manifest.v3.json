@@ -26,7 +26,7 @@
       "const": "portable-assessment-manifest.v3"
     },
     "compiler_version": {
-      "const": "portable-assessment.v5"
+      "const": "portable-assessment.v6"
     },
     "release_id": {
       "type": "string"

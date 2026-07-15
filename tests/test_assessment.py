@@ -21,6 +21,7 @@ from shiproom.assessment import (
     _python_imports,
     _javascript_imports,
     _browser_placeholder,
+    _authorized_browser_target,
     _canonical_browser_url,
     _test_matches,
     _validate_work_order,
@@ -308,7 +309,7 @@ def test_loader_uses_snapshotted_roles_and_has_explicit_compiler_gate(tmp_path: 
     ctx = assessment_context(tmp_path); result = prepare_assessment(ctx)
     monkeypatch.setattr(assessment_module, "load_role_definitions", lambda: (_ for _ in ()).throw(AssertionError("installed roles must not be loaded")))
     assert load_preparation(ctx, result["preparation_id"])["manifest"]["preparation_id"] == result["preparation_id"]
-    directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]; manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "assessment-preparation.v4"; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
+    directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]; manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "assessment-preparation.v5"; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
     with pytest.raises(ValueError, match="stale_assessment_preparation_compiler_version"): load_preparation(ctx)
 
 
@@ -344,6 +345,13 @@ def test_canonical_browser_url_preserves_query_and_rejects_fragments_and_escapes
     assert _canonical_browser_url("HTTPS://Example.TEST:443/result?id=A%20B")[0] == "https://example.test/result?id=A%20B"
     for invalid in ("https://example.test/result#route", "https://example.test/a/%2e%2e/b", "https://example.test/a%2fb", "https://user@example.test/a", "https://example.test/a\\b", "https://exämple.test/a"):
         with pytest.raises(ValueError): _canonical_browser_url(invalid)
+
+
+def test_browser_target_issuance_uses_strict_canonical_urls():
+    valid=_authorized_browser_target("https://example.test",["/result"],"HTTPS://EXAMPLE.TEST:443/result?view=full","canonical_runtime_target")
+    assert valid == {"url":"https://example.test/result?view=full","origin":"https://example.test","path_pattern":"/result","authority":"canonical_runtime_target"}
+    invalid=("https://example.test/result#route","https://example.test/re sult","https://example.test/a%2fb","https://example.test/a/%2e%2e/b","https://user@example.test/result","https://exämple.test/result","/a/../result","//result")
+    assert all(_authorized_browser_target("https://example.test",["/result", "/a/*"],value,"canonical_runtime_target") is None for value in invalid)
 
 
 @pytest.mark.parametrize("role", ["product_assessment", "test_adequacy", "targeted_test_planning"])

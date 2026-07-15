@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path, PurePosixPath
-from urllib.parse import urljoin, urlparse, urlsplit
+from urllib.parse import urlparse, urlsplit
 
 from .authority import LocalExecutionContext
 from .graph import load_assessment_input
@@ -27,7 +27,7 @@ SOURCE_PACKET_SCHEMA = "assessment-source-packet.v3"
 ROLE_CONTEXT_SCHEMA = "assessment-role-context.v1"
 WORK_ORDERS_SCHEMA = "assessment-work-orders.v3"
 POINTER_SCHEMA = "active-assessment-preparation.v1"
-PREPARATION_COMPILER_VERSION = "assessment-preparation.v5"
+PREPARATION_COMPILER_VERSION = "assessment-preparation.v6"
 DISCOVERY_VERSION = "assessment-source-discovery.v1"
 DISCOVERY_SELECTION_ORDER = ("graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match")
 DISCOVERY_LANGUAGES = ("python", "javascript", "typescript")
@@ -66,7 +66,7 @@ RESULT_SCHEMAS = {
     "browser_journey": "browser-journey-result.v3",
 }
 RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
-ASSESSMENT_COMPILER_VERSION = "portable-assessment.v5"
+ASSESSMENT_COMPILER_VERSION = "portable-assessment.v6"
 ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v3"
 ASSESSMENT_POINTER_SCHEMA = "current-portable-assessment.v1"
 OVERLAY_SCHEMA = "assessment-graph-overlay.v2"
@@ -581,12 +581,18 @@ def _population(inputs: dict) -> dict:
 
 
 def _authorized_browser_target(origin: str, allowed: list[str], raw: str, authority: str) -> dict | None:
-    url = raw if raw.startswith(("http://", "https://")) else urljoin(origin + "/", raw.lstrip("/")); parsed = urlparse(url)
-    normalized_origin = f"{parsed.scheme}://{parsed.netloc}"
+    try:
+        canonical_origin_url, origin_parts = _canonical_browser_url(origin)
+        if (origin_parts.path or "/") != "/" or origin_parts.query: return None
+        expected_origin = f"{origin_parts.scheme.lower()}://{urlsplit(canonical_origin_url).netloc}"
+        relative = raw if raw.startswith("/") else "/" + raw
+        url = raw if re.match(r"(?i)^https?://", raw) else expected_origin + relative
+        canonical_url, parsed = _canonical_browser_url(url)
+    except (TypeError, ValueError): return None
+    canonical_origin = f"{parsed.scheme.lower()}://{urlsplit(canonical_url).netloc}"
     path = parsed.path or "/"
-    if normalized_origin != origin or not any(path == pattern or fnmatch.fnmatchcase(path, pattern) for pattern in allowed):
-        return None
-    return {"url": url, "origin": origin, "path_pattern": path, "authority": authority}
+    if canonical_origin != expected_origin or not any(path == pattern or fnmatch.fnmatchcase(path, pattern) for pattern in allowed): return None
+    return {"url": canonical_url, "origin": canonical_origin, "path_pattern": path, "authority": authority}
 
 
 def _browser_scope(ctx: LocalExecutionContext, inputs: dict, population: dict) -> dict:
@@ -1143,7 +1149,7 @@ def _instant(value: object, label: str) -> datetime:
 
 
 def _canonical_browser_url(raw: object) -> tuple[str, object]:
-    if not isinstance(raw, str) or not raw or any(ord(ch) > 127 or ord(ch) < 32 or ord(ch) == 127 for ch in raw) or "\\" in raw:
+    if not isinstance(raw, str) or not raw or any(ord(ch) > 127 or ch.isspace() or ord(ch) < 32 or ord(ch) == 127 for ch in raw) or "\\" in raw:
         raise ValueError("browser URL must be bounded ASCII")
     try: parsed = urlsplit(raw)
     except ValueError as exc: raise ValueError("invalid browser URL") from exc
@@ -1156,7 +1162,7 @@ def _canonical_browser_url(raw: object) -> tuple[str, object]:
     except ValueError as exc: raise ValueError("invalid browser URL port") from exc
     effective_port = port or (443 if scheme == "https" else 80)
     path = parsed.path or "/"
-    if any(part in {".", ".."} for part in path.split("/")): raise ValueError("browser URL path contains dot segment")
+    if path.startswith("//") or "//" in path[1:] or any(part in {".", ".."} for part in path.split("/")): raise ValueError("browser URL path is normalization-sensitive")
     for component, path_component in ((path, True), (parsed.query, False)):
         index = 0
         while index < len(component):
@@ -1194,6 +1200,26 @@ def _evidence_relative_path(raw: object) -> PurePosixPath:
 def _is_reparse(mode_result: os.stat_result) -> bool:
     flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
     return bool(getattr(mode_result, "st_file_attributes", 0) & flag)
+
+
+def _safe_directory_chain(trusted_root: Path, target: Path) -> bool:
+    trusted = trusted_root.absolute(); requested = target.absolute()
+    try: relative = requested.relative_to(trusted)
+    except ValueError as exc: raise ValueError("browser inbox escapes trusted root") from exc
+    current = trusted
+    for part in (None, *relative.parts):
+        if part is not None: current = current / part
+        try: info = current.lstat()
+        except FileNotFoundError: return False
+        if current.is_symlink() or _is_reparse(info) or not stat.S_ISDIR(info.st_mode): raise ValueError("browser inbox ancestry is unsafe")
+    return True
+
+
+def _safe_regular_file(path: Path, label: str) -> bool:
+    try: info = path.lstat()
+    except FileNotFoundError: return False
+    if path.is_symlink() or _is_reparse(info) or not stat.S_ISREG(info.st_mode): raise ValueError(f"{label} is not a safe regular file")
+    return True
 
 
 def _enumerate_evidence_tree(root: Path, declared: set[str]) -> dict[str, Path]:
@@ -1235,6 +1261,25 @@ def _validate_evidence_media(data: bytes, media_type: str) -> None:
             json.loads(line, object_pairs_hook=_pairs, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON value: {value}")))
 
 
+def _browser_semantic_projection(payload: dict) -> tuple[dict, dict]:
+    evidence_ids = {}; evidence_records = []
+    for item in payload["evidence"]:
+        record = {key: value for key, value in item.items() if key not in {"local_id", "observation_local_id"}}
+        identity = content_hash(record); evidence_ids[item["local_id"]] = identity; evidence_records.append(record)
+    observation_ids = {}; observation_records = []
+    for item in payload["observations"]:
+        record = {key: value for key, value in item.items() if key not in {"local_id", "evidence_local_ids"}}
+        record["evidence_hashes"] = sorted(evidence_ids[local] for local in item["evidence_local_ids"])
+        identity = content_hash(record); observation_ids[item["local_id"]] = identity; observation_records.append(record)
+    judgment_records = []
+    for item in payload["judgments"]:
+        record = {key: value for key, value in item.items() if key not in {"local_id", "observation_local_ids"}}
+        record["observation_hashes"] = sorted(observation_ids[local] for local in item["observation_local_ids"]); judgment_records.append(record)
+    criteria = [{key: value for key, value in item.items() if key != "local_id"} for item in payload["criteria"]]
+    projection = {"criteria": sorted(criteria, key=canonical_json), "observations": sorted(observation_records, key=canonical_json), "judgments": sorted(judgment_records, key=canonical_json), "evidence": sorted(evidence_records, key=canonical_json)}
+    return projection, {"evidence": evidence_ids, "observations": observation_ids}
+
+
 def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path, preparation: dict, role_definition: dict) -> dict:
     if len(raw) > RESULT_BYTES_LIMIT: raise ValueError("browser result exceeds size limit")
     value = _load_json_bytes(raw); work = preparation["work_orders"]["browser_journey"]; context = preparation["contexts"]["browser_journey"]
@@ -1244,6 +1289,7 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
     if set(value) != fields or value.get("schema_version") != RESULT_SCHEMAS["browser_journey"] or value.get("role_id") != "browser_journey" or value.get("role_version") != work["role_version"] or value.get("preparation_id") != work["preparation_id"] or value.get("preparation_semantic_hash") != work["preparation_semantic_hash"] or value.get("work_order_id") != work["work_order_id"] or value.get("work_order_hash") != work["work_order_hash"] or value.get("base_graph_generation") != work["inputs"]["base_graph_generation"] or value.get("base_graph_semantic_hash") != work["inputs"]["base_graph_semantic_hash"]: raise ValueError("browser result binding mismatch")
     payload = value["payload"]
     if not isinstance(payload, dict) or set(payload) != {"criteria", "observations", "judgments", "evidence"}: raise ValueError("invalid browser result payload")
+    if any(not isinstance(payload[field], list) for field in ("criteria", "observations", "judgments", "evidence")) or sum(len(payload[field]) for field in ("criteria", "observations", "judgments", "evidence")) > RESULT_RECORD_LIMIT: raise ValueError("browser result exceeds record limit")
     assigned = {item["criterion_id"]: item for item in context["assigned_criteria"]}; criteria = []; seen_local = set()
     for record in payload["criteria"]:
         if not isinstance(record, dict) or set(record) != {"local_id", "criterion_id", "disposition", "uncertainty", "rationale"} or record.get("criterion_id") not in assigned: raise ValueError("invalid browser criterion disposition")
@@ -1254,7 +1300,8 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         if (assigned[record["criterion_id"]]["scope_status"] == "blocked_by_ambiguity") != (disposition == "blocked_by_input_ambiguity"): raise ValueError("browser blocked disposition mismatch")
         criteria.append(record)
     if len(criteria) != len(assigned) or {item["criterion_id"] for item in criteria} != set(assigned): raise ValueError("browser result criterion coverage is incomplete")
-    allowed_targets = work["permissions"]["browser"]["allowed_targets"]
+    target_records = context["browser_criterion_targets"]; criterion_targets = {item["criterion_id"]: item["targets"] for item in target_records}
+    if len(criterion_targets) != len(target_records) or set(criterion_targets) != set(assigned) or any(not targets for targets in criterion_targets.values()): raise ValueError("browser criterion target authority is incomplete")
     evidence_by_local = {}; evidence_bytes = {}; total = 0; declared_paths = set(); casefolded_paths = set()
     for item in payload["evidence"]:
         required = {"local_id", "observation_local_id", "path", "media_type", "byte_length", "sha256", "capture_timestamp"}
@@ -1279,7 +1326,7 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         local = _text(item["local_id"], "browser observation local_id", 120)
         if local in seen_local: raise ValueError("duplicate browser local ID")
         seen_local.add(local); _text(item["action"], "browser action", DETAIL_LIMIT); _text(item["observed_outcome"], "browser outcome", DETAIL_LIMIT)
-        final_url, _ = _canonical_browser_url(item["url"])
+        allowed_targets = criterion_targets[item["criterion_id"]]; final_url, _ = _canonical_browser_url(item["url"])
         chain = item["redirect_chain"]
         if not isinstance(chain, list) or not chain or len(chain) > MAX_REDIRECT_CHAIN: raise ValueError("invalid browser redirect chain")
         canonical_chain = [_canonical_browser_url(url)[0] for url in chain]
@@ -1289,7 +1336,8 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         if not receipt_started <= captured <= receipt_completed: raise ValueError("browser observation timestamp is outside execution interval")
         evidence_ids = _string_list(item["evidence_local_ids"], "browser observation evidence IDs", nonempty=True)
         if len(evidence_ids) != len(set(evidence_ids)) or any(key not in evidence_by_local or evidence_by_local[key]["observation_local_id"] != local or evidence_by_local[key]["capture_timestamp"] != item["capture_timestamp"] for key in evidence_ids): raise ValueError("browser observation evidence linkage is invalid")
-        observations_by_local[local] = item; observations.append(item)
+        normalized_item = {**item, "url": final_url, "redirect_chain": canonical_chain}
+        observations_by_local[local] = normalized_item; observations.append(normalized_item)
     referenced_evidence = [key for item in observations for key in item["evidence_local_ids"]]
     if set(evidence_by_local) != set(referenced_evidence) or len(referenced_evidence) != len(set(referenced_evidence)): raise ValueError("browser evidence must belong to exactly one observation")
     judgments = []
@@ -1307,24 +1355,24 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
     if any(not any(observation["criterion_id"] == criterion_id for observation in observations) for criterion_id in assessed): raise ValueError("assessed browser criterion requires observation")
     assumptions = sorted(_bounded_strings(value["assumptions"], "browser assumptions", ASSUMPTION_LIMIT)); limitations = sorted(_bounded_strings(value["limitations"], "browser limitations", LIMITATION_LIMIT))
     normalized_payload = {"criteria": sorted(criteria, key=lambda item: item["criterion_id"]), "observations": sorted(observations, key=canonical_json), "judgments": sorted(judgments, key=canonical_json), "evidence": sorted(payload["evidence"], key=lambda item: item["path"])}
-    def substantive(item):
-        if isinstance(item, dict): return {key: substantive(value) for key, value in item.items() if key != "local_id"}
-        if isinstance(item, list): return [substantive(value) for value in item]
-        return item
-    semantic = {"role_id": "browser_journey", "role_version": work["role_version"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "payload": substantive(normalized_payload), "assumptions": assumptions, "limitations": limitations}
+    semantic_payload, identities = _browser_semantic_projection(normalized_payload)
+    semantic = {"role_id": "browser_journey", "role_version": work["role_version"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"], "payload": semantic_payload, "assumptions": assumptions, "limitations": limitations}
     hashes = {"result_semantic_hash": content_hash(semantic), "result_snapshot_hash": _sha(raw), "completion_receipt_snapshot_hash": _sha(receipt_raw)}
-    return {"submitted": value, "receipt": receipt, "artifact": normalized_payload, "hashes": hashes, "result_bytes": raw, "receipt_bytes": receipt_raw, "evidence_bytes": evidence_bytes}
+    return {"submitted": value, "receipt": receipt, "artifact": normalized_payload, "identities": identities, "hashes": hashes, "result_bytes": raw, "receipt_bytes": receipt_raw, "evidence_bytes": evidence_bytes}
 
 
 def _compile_browser_result(preparation: dict, snapshot_root: Path | None = None) -> dict | None:
     entry = next(item for item in preparation["manifest"]["work_orders"] if item["role_id"] == "browser_journey")
     if not entry["issued"]: return None
     work = preparation["work_orders"]["browser_journey"]
-    inbox = (snapshot_root / "browser_journey") if snapshot_root else (_root_from_preparation(preparation) / "inbox" / work["preparation_id"] / work["work_order_id"])
+    trusted_root = snapshot_root if snapshot_root else (_root_from_preparation(preparation) / "inbox")
+    inbox = (snapshot_root / "browser_journey") if snapshot_root else (trusted_root / work["preparation_id"] / work["work_order_id"])
     result_path, receipt_path, evidence_root = inbox / "result.json", inbox / "completion-receipt.json", inbox / "evidence"
-    present = [path.is_file() and not path.is_symlink() for path in (result_path, receipt_path)]
+    if not _safe_directory_chain(trusted_root, inbox): return None
+    present = [_safe_regular_file(result_path, "browser result"), _safe_regular_file(receipt_path, "browser completion receipt")]
     if not any(present): return None
     if not all(present): raise ValueError("incomplete browser result submission")
+    if not _safe_directory_chain(trusted_root, evidence_root): raise ValueError("browser evidence directory is unavailable")
     role = _role_snapshot((preparation["directory"] / "role-definitions/browser_journey.json").read_bytes(), "browser_journey")["value"]
     return _validate_browser_result(result_path.read_bytes(), receipt_path.read_bytes(), evidence_root, preparation, role)
 
@@ -1413,7 +1461,7 @@ def _browser_artifact(core: dict) -> dict:
     payload = compiled["artifact"]; evidence = {item["local_id"]: item for item in payload["evidence"]}; observation_ids = {}
     observations = []
     for item in payload["observations"]:
-        observation_id = _assessment_id("browser_observation", {"work_order_id": core["preparation"]["work_orders"]["browser_journey"]["work_order_id"], **{key:value for key,value in item.items() if key != "local_id"}})
+        observation_id = _assessment_id("browser_observation", {"work_order_id": core["preparation"]["work_orders"]["browser_journey"]["work_order_id"], "semantic_observation_hash": compiled["identities"]["observations"][item["local_id"]]})
         observation_ids[item["local_id"]] = observation_id
         observations.append({"observation_id": observation_id, "criterion_id": item["criterion_id"], "url": item["url"], "action": item["action"], "observed_outcome": item["observed_outcome"], "redirect_chain": item["redirect_chain"], "capture_timestamp": item["capture_timestamp"], "evidence_class": "browser_observed", "evidence": [{key: evidence[local][key] for key in ("path", "media_type", "byte_length", "sha256", "capture_timestamp")} for local in item["evidence_local_ids"]]})
     judgments = []

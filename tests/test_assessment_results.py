@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+import subprocess
 from importlib import resources
 from pathlib import Path
 
@@ -134,9 +136,9 @@ def test_assessment_load_rederives_semantics_and_rejects_artifact_tamper(tmp_pat
     with pytest.raises(ValueError, match="semantic artifacts are stale"): load_assessment(ctx)
 
 
-def test_fully_rehashed_portable_assessment_v4_fails_compiler_gate(tmp_path: Path):
+def test_fully_rehashed_portable_assessment_v5_fails_compiler_gate(tmp_path: Path):
     ctx=prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer_path=root/"current-assessment.json"; pointer=json.loads(pointer_path.read_text()); directory=root/"generations"/pointer["generation"]; manifest_path=directory/"manifest.json"; manifest=json.loads(manifest_path.read_text())
-    manifest["compiler_version"]="portable-assessment.v4"; manifest["semantic_bundle_hash"]=assessment_module.content_hash({"compiler_version":"portable-assessment.v4","preparation_semantic_hash":manifest["preparation_semantic_hash"],"base_graph_semantic_hash":manifest["base_graph_semantic_hash"],"artifact_hashes":{key:manifest["artifact_hashes"][key] for key in sorted(manifest["artifact_hashes"])}}); manifest["bundle_hash"]=assessment_module.content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"}); write_json(manifest_path,manifest); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); write_json(pointer_path,pointer)
+    manifest["compiler_version"]="portable-assessment.v5"; manifest["semantic_bundle_hash"]=assessment_module.content_hash({"compiler_version":"portable-assessment.v5","preparation_semantic_hash":manifest["preparation_semantic_hash"],"base_graph_semantic_hash":manifest["base_graph_semantic_hash"],"artifact_hashes":{key:manifest["artifact_hashes"][key] for key in sorted(manifest["artifact_hashes"])}}); manifest["bundle_hash"]=assessment_module.content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"}); write_json(manifest_path,manifest); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); write_json(pointer_path,pointer)
     with pytest.raises(ValueError,match="stale_assessment_compiler_version"): load_assessment(ctx)
 
 
@@ -289,7 +291,7 @@ def test_browser_scope_and_evidence_directory_are_fail_closed(tmp_path: Path, fa
     with pytest.raises(ValueError,match="redirect chain|evidence path"): compile_assessment(ctx)
 
 
-@pytest.mark.parametrize("failure", ["assessed_without_observation","observation_without_evidence","nonassessed_with_records","redirect_start","redirect_final","fragment","timestamp","casefold_path","unlisted_file","wrong_media"])
+@pytest.mark.parametrize("failure", ["assessed_without_observation","observation_without_evidence","nonassessed_with_records","redirect_start","redirect_final","fragment","timestamp","casefold_path","unlisted_file","wrong_media","record_limit"])
 def test_browser_v3_provenance_guards_reject_invalid_submissions(tmp_path: Path, failure: str):
     ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); path=write_browser_submission(ctx,preparation); result=json.loads(path.read_text()); payload=result["payload"]; evidence_path=path.parent/"evidence/observation.json"
     if failure=="assessed_without_observation": payload["observations"]=[]; payload["judgments"]=[]; payload["evidence"]=[]; evidence_path.unlink()
@@ -301,8 +303,9 @@ def test_browser_v3_provenance_guards_reject_invalid_submissions(tmp_path: Path,
     elif failure=="timestamp": payload["observations"][0]["capture_timestamp"]="2026-07-15T09:59:59+00:00"; payload["evidence"][0]["capture_timestamp"]="2026-07-15T09:59:59+00:00"
     elif failure=="casefold_path": duplicate=json.loads(json.dumps(payload["evidence"][0])); duplicate["local_id"]="evidence_case"; duplicate["path"]="Observation.json"; payload["evidence"].append(duplicate); payload["observations"][0]["evidence_local_ids"].append("evidence_case")
     elif failure=="unlisted_file": (path.parent/"evidence/unlisted.txt").write_text("unlisted",encoding="utf-8")
-    else:
+    elif failure=="wrong_media":
         evidence_path.write_bytes(b"not json"); payload["evidence"][0]["byte_length"]=8; payload["evidence"][0]["sha256"]="sha256:"+hashlib.sha256(b"not json").hexdigest()
+    else: payload["judgments"]=[{**payload["judgments"][0],"local_id":f"judgment_{index}"} for index in range(501)]
     write_json(path,result); refresh_receipt(path)
     with pytest.raises((ValueError, json.JSONDecodeError)): compile_assessment(ctx)
 
@@ -312,3 +315,31 @@ def test_browser_observation_without_judgment_preserves_separate_authorities(tmp
     compile_assessment(ctx); _,artifacts=load_assessment(ctx); criterion=artifacts["effective-assessment-view.json"]["criteria"][0]; authority=criterion["assessment_authority"]["browser_journey"]
     assert authority["observation_authority"]=="browser_observed" and authority["judgment_authority"]=="not_inspected" and authority["observation_ids"] and authority["judgment_ids"]==[]
     rendered=show_assessment(ctx,criterion["criterion_id"]); assert "observation_authority=browser_observed judgment_authority=not_inspected" in rendered
+
+
+def test_browser_target_authority_is_criterion_specific(tmp_path: Path):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); result_path=write_browser_submission(ctx,preparation); result=json.loads(result_path.read_text()); context=preparation["contexts"]["browser_journey"]; work=preparation["work_orders"]["browser_journey"]
+    original=context["assigned_criteria"][0]; second={**original,"criterion_id":"criterion_second_browser_target"}; second_target={"url":"https://example.test/other","origin":"https://example.test","path_pattern":"/other","authority":"canonical_runtime_target"}
+    context["assigned_criteria"].append(second); context["browser_criterion_targets"].append({"criterion_id":second["criterion_id"],"targets":[second_target]}); work["permissions"]["browser"]["allowed_targets"].append(second_target)
+    result["payload"]["criteria"].append({"local_id":"criterion_second","criterion_id":second["criterion_id"],"disposition":"not_inspected","uncertainty":"not_assessed","rationale":"No observation was made."}); result["payload"]["observations"][0]["url"]=second_target["url"]; result["payload"]["observations"][0]["redirect_chain"]=[second_target["url"]]; write_json(result_path,result); refresh_receipt(result_path)
+    with pytest.raises(ValueError,match="issued authority"): assessment_module._validate_browser_result(result_path.read_bytes(),(result_path.parent/"completion-receipt.json").read_bytes(),result_path.parent/"evidence",preparation,{})
+
+
+@pytest.mark.parametrize("failure", ["work_order_symlink","evidence_symlink","special_result"])
+def test_browser_inbox_ancestry_rejects_links_and_special_files(tmp_path: Path, failure: str):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); result_path=write_browser_submission(ctx,preparation); inbox=result_path.parent
+    if failure=="special_result": result_path.unlink(); result_path.mkdir()
+    else:
+        source=inbox if failure=="work_order_symlink" else inbox/"evidence"; moved=tmp_path/("moved-inbox" if failure=="work_order_symlink" else "moved-evidence"); shutil.move(str(source),str(moved))
+        try:
+            if os.name=="nt": subprocess.run(["cmd","/c","mklink","/J",str(source),str(moved)],check=True,capture_output=True,text=True)
+            else: os.symlink(moved,source,target_is_directory=True)
+        except (OSError,subprocess.CalledProcessError) as exc: pytest.skip(f"link creation unavailable: {exc}")
+    with pytest.raises(ValueError,match="ancestry|safe regular|evidence directory"): compile_assessment(ctx)
+
+
+def test_browser_semantic_hash_and_observation_identity_ignore_local_labels_and_persist_canonical_urls(tmp_path: Path):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); result_path=write_browser_submission(ctx,preparation); result=json.loads(result_path.read_text()); observation=result["payload"]["observations"][0]; canonical=observation["url"]; submitted=canonical.replace("https://example.test","HTTPS://EXAMPLE.TEST:443"); observation["url"]=submitted; observation["redirect_chain"]=[submitted]; write_json(result_path,result); refresh_receipt(result_path)
+    first=compile_core_results(ctx); first_hash=first["snapshot_hashes"]["browser_journey"]["result_semantic_hash"]; first_artifact=assessment_module._browser_artifact(first); assert first["browser"]["artifact"]["observations"][0]["url"]==canonical
+    result=json.loads(result_path.read_text()); criterion=result["payload"]["criteria"][0]; observation=result["payload"]["observations"][0]; evidence=result["payload"]["evidence"][0]; judgment=result["payload"]["judgments"][0]; criterion["local_id"]="criterion_renamed"; observation["local_id"]="observation_renamed"; evidence["local_id"]="evidence_renamed"; evidence["observation_local_id"]="observation_renamed"; observation["evidence_local_ids"]=["evidence_renamed"]; judgment["local_id"]="judgment_renamed"; judgment["observation_local_ids"]=["observation_renamed"]; write_json(result_path,result); refresh_receipt(result_path)
+    second=compile_core_results(ctx); assert second["snapshot_hashes"]["browser_journey"]["result_semantic_hash"]==first_hash; assert assessment_module._browser_artifact(second)["observations"][0]["observation_id"]==first_artifact["observations"][0]["observation_id"]

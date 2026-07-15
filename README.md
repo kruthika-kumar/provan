@@ -165,13 +165,13 @@ when their canonical edges point away from the criterion path.
 
 | Boundary | Current contract |
 |---|---|
-| Preparation compiler | `assessment-preparation.v5` |
+| Preparation compiler | `assessment-preparation.v6` |
 | Work order | `shiproom.work-order.v3` |
 | Source packet / work-order manifest | `assessment-source-packet.v3` / `assessment-work-orders.v3` |
 | Core roles and results | role `2.0.0`, result v2 |
 | Browser role and result | role `3.0.0`, `browser-journey-result.v3` |
 | Completion receipt / overlay | receipt v2 / overlay v2 |
-| Assessment compiler / manifest | `portable-assessment.v5` / `portable-assessment-manifest.v3` |
+| Assessment compiler / manifest | `portable-assessment.v6` / `portable-assessment-manifest.v3` |
 | Browser artifact / derived view | `browser-journey.v3` / `effective-assessment-view.v3` |
 | Pointer | `current-portable-assessment.v1` |
 
