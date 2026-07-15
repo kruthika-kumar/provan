@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "test-adequacy-result.v2.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "role_id",
+    "role_version",
+    "preparation_id",
+    "preparation_semantic_hash",
+    "work_order_id",
+    "work_order_hash",
+    "base_graph_generation",
+    "base_graph_semantic_hash",
+    "payload",
+    "assumptions",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "test-adequacy-result.v2"
+    },
+    "role_id": {
+      "const": "test_adequacy"
+    },
+    "role_version": {
+      "const": "2.0.0"
+    },
+    "preparation_id": {
+      "pattern": "^prep_[0-9a-f]{32}$"
+    },
+    "preparation_semantic_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "work_order_id": {
+      "pattern": "^wo_test_adequacy_[0-9a-f]{16}$"
+    },
+    "work_order_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "base_graph_generation": {
+      "pattern": "^gen_[0-9a-f]{32}$"
+    },
+    "base_graph_semantic_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "criteria",
+        "gaps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gap"
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "sourceRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "path",
+            "returned_git_path",
+            "git_blob_hash",
+            "normalized_text_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "returned_git_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "git_blob_hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "normalized_text_hash": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "path",
+            "returned_git_path",
+            "git_blob_hash",
+            "normalized_text_hash",
+            "start_line",
+            "end_line",
+            "quote",
+            "quote_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "returned_git_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "git_blob_hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "normalized_text_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "start_line": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "end_line": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            },
+            "quote_hash": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        }
+      ]
+    },
+    "criterion": {
+      "type": "object",
+      "required": [
+        "local_id",
+        "criterion_id",
+        "disposition",
+        "scope_status",
+        "evidence_class",
+        "uncertainty",
+        "rationale",
+        "basis_node_ids",
+        "basis_edge_ids",
+        "basis_gap_ids",
+        "basis_source_refs",
+        "existing_test_node_ids",
+        "test_layer",
+        "assertion_adequacy",
+        "boundary_adequacy",
+        "overall_adequacy",
+        "negative_cases",
+        "recovery_cases",
+        "state_transition_cases",
+        "mock_boundaries"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_id": {
+          "type": "string"
+        },
+        "criterion_id": {
+          "type": "string"
+        },
+        "disposition": {
+          "enum": [
+            "assessed",
+            "not_inspected",
+            "not_applicable",
+            "blocked_by_input_ambiguity"
+          ]
+        },
+        "scope_status": {
+          "enum": [
+            "confirmed",
+            "explicit_pending_confirmation",
+            "inferred_requires_owner",
+            "blocked_by_ambiguity",
+            "not_applicable"
+          ]
+        },
+        "evidence_class": {
+          "enum": [
+            "model_reviewed",
+            "not_inspected"
+          ]
+        },
+        "uncertainty": {
+          "enum": [
+            "none",
+            "bounded",
+            "material",
+            "not_assessed"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "basis_node_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_edge_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_gap_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceRef"
+          }
+        },
+        "existing_test_node_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "test_layer": {
+          "enum": [
+            "unit",
+            "component",
+            "integration",
+            "contract",
+            "end_to_end",
+            "browser",
+            "manual",
+            "unknown"
+          ]
+        },
+        "assertion_adequacy": {
+          "enum": [
+            "adequate",
+            "partial",
+            "inadequate",
+            "not_inspected"
+          ]
+        },
+        "boundary_adequacy": {
+          "enum": [
+            "adequate",
+            "partial",
+            "inadequate",
+            "not_inspected"
+          ]
+        },
+        "overall_adequacy": {
+          "enum": [
+            "adequate",
+            "partial",
+            "inadequate",
+            "not_inspected"
+          ]
+        },
+        "negative_cases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recovery_cases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "state_transition_cases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mock_boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "required": [
+        "local_id",
+        "criterion_id",
+        "gap_kind",
+        "aspect_code",
+        "actionability",
+        "recommended_release_effect",
+        "summary",
+        "uncertainty",
+        "evidence_class",
+        "basis_node_ids",
+        "basis_edge_ids",
+        "basis_gap_ids",
+        "basis_source_refs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_id": {
+          "type": "string"
+        },
+        "criterion_id": {
+          "type": "string"
+        },
+        "gap_kind": {
+          "enum": [
+            "test_coverage_gap",
+            "boundary_coverage_gap",
+            "negative_case_gap",
+            "recovery_case_gap",
+            "state_transition_gap",
+            "assertion_quality_gap",
+            "mock_boundary_gap"
+          ]
+        },
+        "aspect_code": {
+          "type": "string"
+        },
+        "actionability": {
+          "enum": [
+            "actionable",
+            "product_decision_required",
+            "architecture_decision_required",
+            "insufficient_evidence",
+            "not_actionable"
+          ]
+        },
+        "recommended_release_effect": {
+          "enum": [
+            "blocker_candidate",
+            "condition_candidate",
+            "recommendation",
+            "none"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "uncertainty": {
+          "enum": [
+            "none",
+            "bounded",
+            "material"
+          ]
+        },
+        "evidence_class": {
+          "const": "model_reviewed"
+        },
+        "basis_node_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_edge_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_gap_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_source_refs": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/sourceRef"
+          }
+        }
+      }
+    }
+  }
+}

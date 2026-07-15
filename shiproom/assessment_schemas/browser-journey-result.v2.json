@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "browser-journey-result.v2.json",
+  "type": "object",
+  "required": ["schema_version", "role_id", "role_version", "preparation_id", "preparation_semantic_hash", "work_order_id", "work_order_hash", "base_graph_generation", "base_graph_semantic_hash", "payload", "assumptions", "limitations"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "browser-journey-result.v2"},
+    "role_id": {"const": "browser_journey"},
+    "role_version": {"const": "2.0.0"},
+    "preparation_id": {"pattern": "^prep_[0-9a-f]{32}$"},
+    "preparation_semantic_hash": {"$ref": "#/$defs/hash"},
+    "work_order_id": {"pattern": "^wo_browser_journey_[0-9a-f]{16}$"},
+    "work_order_hash": {"$ref": "#/$defs/hash"},
+    "base_graph_generation": {"pattern": "^gen_[0-9a-f]{32}$"},
+    "base_graph_semantic_hash": {"$ref": "#/$defs/hash"},
+    "payload": {
+      "type": "object",
+      "required": ["criteria", "observations", "judgments", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {"type": "array", "items": {"$ref": "#/$defs/criterion"}},
+        "observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}},
+        "judgments": {"type": "array", "items": {"$ref": "#/$defs/judgment"}},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "assumptions": {"type": "array", "maxItems": 100, "uniqueItems": true, "items": {"type": "string", "maxLength": 16384}},
+    "limitations": {"type": "array", "maxItems": 100, "uniqueItems": true, "items": {"type": "string", "maxLength": 16384}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "criterion": {"type": "object", "required": ["local_id", "criterion_id", "disposition", "uncertainty", "rationale"], "additionalProperties": false, "properties": {"local_id": {"type": "string", "minLength": 1, "maxLength": 120}, "criterion_id": {"type": "string", "minLength": 1}, "disposition": {"enum": ["assessed", "not_inspected", "blocked_by_input_ambiguity"]}, "uncertainty": {"enum": ["none", "bounded", "material", "not_assessed"]}, "rationale": {"type": "string", "minLength": 1, "maxLength": 4096}}},
+    "observation": {"type": "object", "required": ["local_id", "criterion_id", "url", "action", "observed_outcome", "redirect_chain", "capture_timestamp", "evidence_local_ids", "evidence_class"], "additionalProperties": false, "properties": {"local_id": {"type": "string", "minLength": 1, "maxLength": 120}, "criterion_id": {"type": "string", "minLength": 1}, "url": {"type": "string", "minLength": 1}, "action": {"type": "string", "minLength": 1, "maxLength": 16384}, "observed_outcome": {"type": "string", "minLength": 1, "maxLength": 16384}, "redirect_chain": {"type": "array", "items": {"type": "string", "minLength": 1}}, "capture_timestamp": {"type": "string", "format": "date-time"}, "evidence_local_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "evidence_class": {"const": "browser_observed"}}},
+    "judgment": {"type": "object", "required": ["local_id", "criterion_id", "observation_local_ids", "conclusion", "uncertainty", "evidence_class"], "additionalProperties": false, "properties": {"local_id": {"type": "string", "minLength": 1, "maxLength": 120}, "criterion_id": {"type": "string", "minLength": 1}, "observation_local_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "conclusion": {"type": "string", "minLength": 1, "maxLength": 16384}, "uncertainty": {"enum": ["none", "bounded", "material"]}, "evidence_class": {"const": "model_reviewed"}}},
+    "evidence": {"type": "object", "required": ["local_id", "observation_local_id", "path", "media_type", "byte_length", "sha256", "capture_timestamp"], "additionalProperties": false, "properties": {"local_id": {"type": "string", "minLength": 1, "maxLength": 120}, "observation_local_id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "media_type": {"enum": ["image/png", "image/jpeg", "application/json", "application/x-ndjson", "text/plain; charset=utf-8"]}, "byte_length": {"type": "integer", "minimum": 1, "maximum": 5242880}, "sha256": {"$ref": "#/$defs/hash"}, "capture_timestamp": {"type": "string", "format": "date-time"}}}
+  }
+}

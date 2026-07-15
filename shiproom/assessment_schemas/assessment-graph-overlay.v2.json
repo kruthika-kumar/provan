@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assessment-graph-overlay.v2.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "release_id",
+    "release_commit",
+    "preparation_id",
+    "base_graph_generation",
+    "base_graph_semantic_hash",
+    "nodes",
+    "edges"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "assessment-graph-overlay.v2"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "release_commit": {
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "preparation_id": {
+      "pattern": "^prep_[0-9a-f]{32}$"
+    },
+    "base_graph_generation": {
+      "pattern": "^gen_[0-9a-f]{32}$"
+    },
+    "base_graph_semantic_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/conclusion"
+          },
+          {
+            "$ref": "#/$defs/gap"
+          },
+          {
+            "$ref": "#/$defs/spec"
+          }
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "required": [
+        "evidence_class",
+        "uncertainty",
+        "basis_node_ids",
+        "basis_edge_ids",
+        "basis_gap_ids",
+        "basis_source_refs",
+        "work_order_id",
+        "result_semantic_hash",
+        "result_snapshot_hash",
+        "completion_receipt_snapshot_hash",
+        "executor_provenance"
+      ],
+      "properties": {
+        "evidence_class": {
+          "enum": [
+            "model_reviewed",
+            "not_inspected"
+          ]
+        },
+        "uncertainty": {
+          "enum": [
+            "none",
+            "bounded",
+            "material",
+            "not_assessed"
+          ]
+        },
+        "basis_node_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_edge_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_gap_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "basis_source_refs": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "path",
+                  "returned_git_path",
+                  "git_blob_hash",
+                  "normalized_text_hash"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "returned_git_path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "git_blob_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$"
+                  },
+                  "normalized_text_hash": {
+                    "$ref": "#/$defs/hash"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "path",
+                  "returned_git_path",
+                  "git_blob_hash",
+                  "normalized_text_hash",
+                  "start_line",
+                  "end_line",
+                  "quote",
+                  "quote_hash"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "returned_git_path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "git_blob_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$"
+                  },
+                  "normalized_text_hash": {
+                    "$ref": "#/$defs/hash"
+                  },
+                  "start_line": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "end_line": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "quote": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "quote_hash": {
+                    "$ref": "#/$defs/hash"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "work_order_id": {
+          "pattern": "^wo_[a-z_]+_[0-9a-f]{16}$"
+        },
+        "result_semantic_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "result_snapshot_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "completion_receipt_snapshot_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "executor_provenance": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "executor_type",
+                "reviewer_label"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "executor_type": {
+                  "const": "human"
+                },
+                "reviewer_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 200
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "executor_type",
+                "harness_id",
+                "adapter_version",
+                "run_id",
+                "model_id"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "executor_type": {
+                  "const": "agent_harness"
+                },
+                "harness_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "adapter_version": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "run_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "model_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 200
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "conclusion": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        },
+        {
+          "required": [
+            "node_id",
+            "node_type",
+            "role_id",
+            "assessed_record_id",
+            "conclusion_kind",
+            "substantive_conclusion"
+          ],
+          "properties": {
+            "node_id": {
+              "type": "string"
+            },
+            "node_type": {
+              "const": "assessment_conclusion"
+            },
+            "role_id": {
+              "type": "string"
+            },
+            "assessed_record_id": {
+              "type": "string"
+            },
+            "conclusion_kind": {
+              "enum": [
+                "requirements",
+                "journeys",
+                "criteria"
+              ]
+            },
+            "substantive_conclusion": {
+              "type": "object"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "gap": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        },
+        {
+          "required": [
+            "node_id",
+            "node_type",
+            "role_id",
+            "criterion_id",
+            "gap_key",
+            "gap_kind",
+            "aspect_code",
+            "actionability",
+            "recommended_release_effect",
+            "summary"
+          ],
+          "properties": {
+            "node_id": {
+              "type": "string"
+            },
+            "node_type": {
+              "const": "assessment_gap"
+            },
+            "role_id": {
+              "type": "string"
+            },
+            "criterion_id": {
+              "type": "string"
+            },
+            "gap_key": {
+              "type": "string"
+            },
+            "gap_kind": {
+              "type": "string"
+            },
+            "aspect_code": {
+              "type": "string"
+            },
+            "actionability": {
+              "type": "string"
+            },
+            "recommended_release_effect": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "spec": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        },
+        {
+          "required": [
+            "node_id",
+            "node_type",
+            "criterion_id",
+            "specification"
+          ],
+          "properties": {
+            "node_id": {
+              "type": "string"
+            },
+            "node_type": {
+              "const": "targeted_test_specification"
+            },
+            "criterion_id": {
+              "type": "string"
+            },
+            "specification": {
+              "type": "object",
+              "required": [
+                "local_id",
+                "criterion_id",
+                "risk_addressed",
+                "test_layer",
+                "setup",
+                "action",
+                "assertions",
+                "negative_cases",
+                "recovery_cases",
+                "required_fixtures",
+                "external_boundaries",
+                "recommended_priority",
+                "aspect_code",
+                "addresses_gap_key",
+                "uncertainty",
+                "rationale",
+                "basis_node_ids",
+                "basis_edge_ids",
+                "basis_gap_ids",
+                "basis_source_refs"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "local_id": {
+                  "type": "string"
+                },
+                "criterion_id": {
+                  "type": "string"
+                },
+                "risk_addressed": {
+                  "type": "string"
+                },
+                "test_layer": {
+                  "enum": [
+                    "unit",
+                    "component",
+                    "integration",
+                    "contract",
+                    "end_to_end",
+                    "browser",
+                    "manual",
+                    "unknown"
+                  ]
+                },
+                "setup": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "assertions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "negative_cases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "recovery_cases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "required_fixtures": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "external_boundaries": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "recommended_priority": {
+                  "enum": [
+                    "release_blocking_candidate",
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                },
+                "aspect_code": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,63}$"
+                },
+                "addresses_gap_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "uncertainty": {
+                  "enum": [
+                    "none",
+                    "bounded",
+                    "material",
+                    "not_assessed"
+                  ]
+                },
+                "rationale": {
+                  "type": "string"
+                },
+                "basis_node_ids": {
+                  "$ref": "#/$defs/ids"
+                },
+                "basis_edge_ids": {
+                  "$ref": "#/$defs/ids"
+                },
+                "basis_gap_ids": {
+                  "$ref": "#/$defs/ids"
+                },
+                "basis_source_refs": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/$defs/sourceRef"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "edge_id",
+        "relationship",
+        "source_node_id",
+        "target_node_id",
+        "assessment_evidence_class"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "edge_id": {
+          "type": "string"
+        },
+        "relationship": {
+          "enum": [
+            "assesses_requirement",
+            "assesses_criterion",
+            "concerns_criterion",
+            "concerns_journey",
+            "supported_by_base_node",
+            "supported_by_browser_observation",
+            "identifies_assessment_gap",
+            "proposes_test_for",
+            "addresses_assessment_gap"
+          ]
+        },
+        "source_node_id": {
+          "type": "string"
+        },
+        "target_node_id": {
+          "type": "string"
+        },
+        "assessment_evidence_class": {
+          "enum": [
+            "model_reviewed",
+            "browser_observed",
+            "not_inspected"
+          ]
+        }
+      }
+    }
+  }
+}

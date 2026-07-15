@@ -7,11 +7,11 @@
   "assigned_record_types": ["acceptance_criterion"],
   "required_coverage": ["every non-superseded criterion"],
   "evidence_hierarchy": ["validated criterion contract", "immutable base graph", "prepared source context", "model-reviewed recommendation"],
-  "allowed_basis_references": ["base criterion ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID"],
+  "allowed_basis_references": ["base criterion ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID", "exact role-bound prepared packet-source reference"],
   "gap_taxonomy": [{"gap_kind": "test_coverage_gap", "aspect_codes": ["general", "public_route", "primary_journey", "failure_state", "recovery_path", "state_transition", "dependency_boundary", "assertion_set", "mock_boundary"]}],
   "aspect_codes": ["general", "public_route", "primary_journey", "failure_state", "recovery_path", "state_transition", "dependency_boundary", "assertion_set", "mock_boundary"],
   "forbidden_claims": ["a test specification is test evidence", "the reviewer may generate or edit test code", "a recommendation closes an assessment gap", "recommended priority changes the release verdict", "model judgment is deterministic evidence"],
-  "required_output_schema": "schemas/targeted-test-result.v2.json",
-  "completion_rules": ["Return a disposition for every assigned criterion.", "Return structured specifications or an explicit none-recommended record.", "Use only the closed layer and priority enums.", "Never include executable test code."],
+  "required_output_schema": "shiproom.assessment_schemas/targeted-test-result.v2.json",
+  "completion_rules": ["Return a disposition for every assigned criterion.", "Use packet-source references only as model-reviewed provenance, never proof.", "Return structured specifications or an explicit none-recommended record.", "Use only the closed layer and priority enums.", "Never include executable test code."],
   "reasoning_examples": {"adequate": ["Specify a browser boundary test that opens the returned URL and asserts public content plus a failed-load recovery state."], "inadequate": ["Write more tests for publishing."]}
 }

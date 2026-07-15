@@ -24,6 +24,7 @@ exclude = ["skills*", "tests*"]
 
 [tool.setuptools.package-data]
 "shiproom.assessment_roles" = ["*.json"]
+"shiproom.assessment_schemas" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

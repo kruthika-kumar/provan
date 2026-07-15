@@ -7,7 +7,7 @@
   "assigned_record_types": ["requirement", "critical_journey", "acceptance_criterion"],
   "required_coverage": ["every non-superseded requirement", "every declared journey", "every non-superseded criterion"],
   "evidence_hierarchy": ["validated Product Intent", "immutable base graph", "prepared repository context", "pre-existing base runtime facts"],
-  "allowed_basis_references": ["base requirement ID", "base criterion ID", "base journey ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID"],
+  "allowed_basis_references": ["base requirement ID", "base criterion ID", "base journey ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID", "exact role-bound prepared packet-source reference"],
   "gap_taxonomy": [
     {"gap_kind": "specification_gap", "aspect_codes": ["general", "primary_journey"]},
     {"gap_kind": "implementation_gap", "aspect_codes": ["general", "public_route"]},
@@ -18,7 +18,7 @@
   ],
   "aspect_codes": ["general", "primary_journey", "public_route", "failure_state", "scope_boundary", "source_conflict"],
   "forbidden_claims": ["assessment judgment is deterministic evidence", "assessment gaps are release findings", "an unconfirmed criterion is a release blocker", "new browser observations were consumed by Product assessment", "the reviewer may mutate release state"],
-  "required_output_schema": "schemas/product-assessment-result.v2.json",
-  "completion_rules": ["Return exactly one disposition for each assigned ID.", "Cite only prepared base references.", "Keep every conclusion model_reviewed or not_inspected.", "Use decision_candidate rather than owner_decision."],
+  "required_output_schema": "shiproom.assessment_schemas/product-assessment-result.v2.json",
+  "completion_rules": ["Return exactly one disposition for each assigned ID.", "Cite only prepared base or role-bound packet-source references.", "Packet-source references remain model-reviewed provenance and are not proof.", "Keep every conclusion model_reviewed or not_inspected.", "Use decision_candidate rather than owner_decision."],
   "reasoning_examples": {"adequate": ["The declared public-sharing outcome is explicit, while runtime coverage remains unknown in the immutable graph."], "inadequate": ["The feature probably works because a route file exists."]}
 }

@@ -3,12 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from importlib import resources
 from pathlib import Path
 
 import pytest
 
 import shiproom.assessment as assessment_module
-from shiproom.assessment import CORE_ROLES, compile_assessment, compile_core_results, load_assessment, load_preparation, prepare as prepare_assessment, show_assessment
+from shiproom.assessment import CORE_ROLES, _validate_targeted_gap_links, compile_assessment, compile_core_results, load_assessment, load_preparation, prepare as prepare_assessment, show_assessment
 from test_assessment import assessment_context, write_json
 
 
@@ -52,6 +53,10 @@ def issue_results(ctx, *, harness_role: str | None = None):
 
 def prepared_results(tmp_path: Path):
     ctx = assessment_context(tmp_path); prepare_assessment(ctx); issue_results(ctx); return ctx
+
+
+def refresh_receipt(result_path: Path) -> None:
+    receipt_path = result_path.parent / "completion-receipt.json"; receipt = json.loads(receipt_path.read_text()); receipt["result_snapshot_hash"] = "sha256:" + hashlib.sha256(result_path.read_bytes()).hexdigest(); write_json(receipt_path, receipt)
 
 
 def test_core_results_compile_without_publishing_assessment_generation(tmp_path: Path):
@@ -102,15 +107,15 @@ def test_complete_assessment_generation_preserves_base_authority_dimensions(tmp_
 def test_published_v2_artifacts_match_checked_in_schema_mirrors(tmp_path: Path):
     jsonschema = pytest.importorskip("jsonschema")
     ctx = prepared_results(tmp_path); manifest = compile_assessment(ctx); _, artifacts = load_assessment(ctx)
-    schema_root = Path(__file__).parents[1] / "schemas"
     mirrors = {
         "assessment-graph-overlay.json": "assessment-graph-overlay.v2.json",
         "effective-assessment-view.json": "effective-assessment-view.v2.json",
         "assessment-compiler-receipts.json": "assessment-compiler-receipts.v2.json",
     }
     for artifact_name, schema_name in mirrors.items():
-        jsonschema.validate(artifacts[artifact_name], json.loads((schema_root / schema_name).read_text()))
-    jsonschema.validate(manifest, json.loads((schema_root / "portable-assessment-manifest.v2.json").read_text()))
+        jsonschema.validate(artifacts[artifact_name], json.loads(resources.files("shiproom.assessment_schemas").joinpath(schema_name).read_text()))
+    jsonschema.validate(artifacts["browser-journey.json"], json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v2.json").read_text()))
+    jsonschema.validate(manifest, json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v2.json").read_text()))
 
 
 def test_overlay_gap_linking_is_exact_and_unmatched_spec_remains_criterion_only(tmp_path: Path):
@@ -187,3 +192,54 @@ def test_pre_pointer_generation_verification_rejects_tamper_and_preserves_pointe
     monkeypatch.setattr(assessment_module,"_BEFORE_ASSESSMENT_GENERATION_VERIFY",tamper)
     with pytest.raises(ValueError,match="artifact"): compile_assessment(ctx)
     assert pointer.read_bytes()==before
+
+
+def test_empty_and_partial_packet_quotes_fail_python_and_snapshotted_schema(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema")
+    ctx=assessment_context(tmp_path); prepare_assessment(ctx,owner_paths=["product_assessment:docs/brief.md"]); preparation=issue_results(ctx)
+    work=preparation["work_orders"]["product_assessment"]; path=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"result.json"
+    result=json.loads(path.read_text()); source=preparation["contexts"]["product_assessment"]["sources"][0]
+    ref={key:source[key] for key in ("path","returned_git_path","git_blob_hash","normalized_text_hash")}|{"start_line":1,"end_line":1,"quote":"","quote_hash":"sha256:"+hashlib.sha256(b"").hexdigest()}
+    result["payload"]["criteria"][0]["basis_node_ids"]=[]; result["payload"]["criteria"][0]["basis_source_refs"]=[ref]
+    write_json(path,result); refresh_receipt(path)
+    schema=json.loads((preparation["directory"]/work["required_output"]["schema_path"]).read_text())
+    with pytest.raises(jsonschema.ValidationError): jsonschema.validate(result,schema)
+    with pytest.raises(ValueError,match="quote range"): compile_core_results(ctx)
+    partial=json.loads(json.dumps(result)); partial["payload"]["criteria"][0]["basis_source_refs"][0].pop("quote_hash")
+    with pytest.raises(jsonschema.ValidationError): jsonschema.validate(partial,schema)
+
+
+def test_nonassessed_basis_and_product_not_applicable_are_role_bounded(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema")
+    ctx=prepared_results(tmp_path); preparation=load_preparation(ctx); work=preparation["work_orders"]["product_assessment"]
+    path=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"result.json"; result=json.loads(path.read_text())
+    requirement=result["payload"]["requirements"][0]; requirement.update({"disposition":"not_applicable","evidence_class":"not_inspected","uncertainty":"not_assessed","intended_user_outcome":"not_inspected","partial_or_missing":"not_inspected","basis_node_ids":[]})
+    write_json(path,result); refresh_receipt(path)
+    schema=json.loads((preparation["directory"]/work["required_output"]["schema_path"]).read_text()); jsonschema.validate(result,schema)
+    with pytest.raises(ValueError,match="requirements and journeys"): compile_core_results(ctx)
+    result=json.loads(path.read_text()); requirement=result["payload"]["requirements"][0]; requirement["disposition"]="not_inspected"; requirement["basis_node_ids"]=[requirement["requirement_id"]]; write_json(path,result); refresh_receipt(path)
+    with pytest.raises(ValueError,match="basis must be empty"): compile_core_results(ctx)
+
+
+def test_targeted_gap_link_must_use_same_criterion():
+    artifacts={
+        "product_assessment":{"payload":{"gaps":[]}},
+        "engineering_assessment":{"payload":{"gaps":[]}},
+        "test_adequacy":{"payload":{"gaps":[{"gap_key":"test_adequacy|criterion_a|boundary_coverage_gap|public_route","criterion_id":"criterion_a"}]}},
+        "targeted_test_planning":{"payload":{"specifications":[{"criterion_id":"criterion_b","addresses_gap_key":"test_adequacy|criterion_a|boundary_coverage_gap|public_route","basis_node_ids":[],"basis_edge_ids":[],"basis_gap_ids":[],"basis_source_refs":[]}]}}
+    }
+    with pytest.raises(ValueError,match="different criterion"): _validate_targeted_gap_links(artifacts)
+
+
+def test_duplicate_semantic_targeted_specification_is_rejected(tmp_path: Path):
+    ctx=prepared_results(tmp_path); preparation=load_preparation(ctx); work=preparation["work_orders"]["targeted_test_planning"]
+    path=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"result.json"; result=json.loads(path.read_text())
+    duplicate=json.loads(json.dumps(result["payload"]["specifications"][0])); duplicate["local_id"]="another_local_id"; result["payload"]["specifications"].append(duplicate); write_json(path,result); refresh_receipt(path)
+    with pytest.raises(ValueError,match="duplicate semantic targeted"): compile_core_results(ctx)
+
+
+def test_result_semantic_hash_ignores_preparation_and_work_order_handles(tmp_path: Path):
+    ctx=assessment_context(tmp_path); first=prepare_assessment(ctx); issue_results(ctx); first_hashes=compile_core_results(ctx,first["preparation_id"])["snapshot_hashes"]
+    second=prepare_assessment(ctx); issue_results(ctx); second_hashes=compile_core_results(ctx,second["preparation_id"])["snapshot_hashes"]
+    assert first["preparation_id"] != second["preparation_id"]
+    assert {role:value["result_semantic_hash"] for role,value in first_hashes.items()} == {role:value["result_semantic_hash"] for role,value in second_hashes.items()}

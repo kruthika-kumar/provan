@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import json
 import hashlib
+import importlib.util
+import os
+import shutil
 import subprocess
+import sys
+import venv
+from importlib import resources
 from pathlib import Path
 
 import pytest
@@ -14,6 +20,7 @@ from shiproom.assessment import (
     _load_json_bytes,
     _python_imports,
     _javascript_imports,
+    _browser_placeholder,
     _test_matches,
     _validate_work_order,
     load_discovery_registry,
@@ -307,7 +314,6 @@ def test_loader_uses_snapshotted_roles_and_has_explicit_compiler_gate(tmp_path: 
 def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extras(tmp_path: Path):
     jsonschema = pytest.importorskip("jsonschema")
     ctx = assessment_context(tmp_path); prepare_assessment(ctx); loaded = load_preparation(ctx)
-    root = Path(__file__).parents[1] / "schemas"
     contracts = [
         ("assessment-capabilities.v1.json", loaded["capabilities"]),
             ("assessment-source-packet.v2.json", loaded["source_packet"]),
@@ -316,7 +322,7 @@ def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extra
     contracts.extend(("assessment-role.v1.json", item["value"]) for item in load_role_definitions().values())
     contracts.extend(("work-order.v2.json", item) for item in loaded["work_orders"].values())
     for schema_name, value in contracts:
-        schema = json.loads((root / schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
+        schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath(schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
         invalid = dict(value); invalid["unexpected"] = True
         with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
 
@@ -334,5 +340,52 @@ def test_explicit_release_browser_target_authority_is_rejected_by_python_and_sch
     jsonschema = pytest.importorskip("jsonschema"); ctx, capability_path = browser_assessment_context(tmp_path); prepare_assessment(ctx, capabilities_path=str(capability_path)); work = load_preparation(ctx)["work_orders"]["browser_journey"]
     invalid = json.loads(json.dumps(work)); invalid["permissions"]["browser"]["allowed_targets"][0]["authority"] = "explicit_release_browser_target"; invalid["work_order_hash"] = _work_order_hash(invalid)
     with pytest.raises(ValueError, match="browser target"): _validate_work_order(invalid)
-    schema = json.loads((Path(__file__).parents[1] / "schemas/work-order.v2.json").read_text(encoding="utf-8"))
+    schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath("work-order.v2.json").read_text(encoding="utf-8"))
     with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
+
+
+def test_assessment_contracts_are_packaged_resources_and_browser_v1_is_unchanged():
+    names={item.name for item in resources.files("shiproom.assessment_schemas").iterdir() if item.name.endswith(".json")}
+    assert {"work-order.v1.json","work-order.v2.json","browser-journey-result.v1.json","browser-journey-result.v2.json","browser-journey.v2.json"}.issubset(names)
+    legacy=json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey-result.v1.json").read_text())
+    assert legacy["$id"] == "browser-journey-result.v1.json"
+
+
+def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: Path):
+    project=Path(__file__).resolve().parents[1]; build_source=tmp_path/"wheel-source"; build_source.mkdir()
+    shutil.copy2(project/"pyproject.toml",build_source/"pyproject.toml")
+    shutil.copy2(project/"LICENSE",build_source/"LICENSE")
+    shutil.copytree(project/"shiproom",build_source/"shiproom")
+    shutil.copytree(project/"demo_patient",build_source/"demo_patient")
+    wheelhouse=tmp_path/"wheelhouse"; wheelhouse.mkdir()
+    build_python=Path(sys.executable)
+    if importlib.util.find_spec("wheel") is None:
+        bundled=Path.home()/".cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe"
+        if not bundled.is_file(): pytest.skip("wheel build backend is unavailable")
+        build_python=bundled
+    build_env={**os.environ,"PIP_NO_CACHE_DIR":"1"}
+    subprocess.run([str(build_python),"-m","pip","wheel","--no-deps","--no-build-isolation","-w",str(wheelhouse),str(build_source)],env=build_env,check=True,capture_output=True,text=True)
+    environment=tmp_path/"installed"; venv.EnvBuilder(with_pip=True,system_site_packages=True).create(environment)
+    python=environment/("Scripts/python.exe" if os.name=="nt" else "bin/python"); command=environment/("Scripts/shiproom.exe" if os.name=="nt" else "bin/shiproom")
+    wheel=next(wheelhouse.glob("shiproom-*.whl")); subprocess.run([str(python),"-m","pip","install","--no-deps",str(wheel)],check=True,capture_output=True,text=True)
+    ctx=assessment_context(tmp_path/"external-repository"); release_path=ctx.repository_root/"release.json"; write_json(release_path,ctx.release)
+    env={key:value for key,value in os.environ.items() if key not in {"PYTHONPATH","PYTHONHOME"}}
+    imported=subprocess.run([str(python),"-c","import shiproom; print(shiproom.__file__)"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout.strip()
+    assert str(project).lower() not in imported.lower() and "site-packages" in imported.lower()
+    subprocess.run([str(command),"assessment","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+
+
+def test_browser_placeholders_are_criterion_specific():
+    criteria=[
+        {"criterion_id":"criterion_issued","required_evidence_categories":["browser_or_http"]},
+        {"criterion_id":"criterion_limited","required_evidence_categories":["browser_or_http"]},
+        {"criterion_id":"criterion_unrelated","required_evidence_categories":["owner_confirmation"]},
+        {"criterion_id":"criterion_unauthorized","required_evidence_categories":["browser_or_http"]},
+    ]
+    target={"url":"https://example.test/result/1","origin":"https://example.test","path_pattern":"/result/1","authority":"deployment_grant"}
+    preparation={"source_packet":{"population":{"criteria":criteria},"browser_work_order":{"issued":True,"reason_code":None,"assigned_criterion_ids":["criterion_issued"],"scope_limited_criterion_ids":["criterion_limited"],"criterion_targets":[{"criterion_id":"criterion_issued","targets":[target]}]}},"manifest":{"work_orders":[{"role_id":"browser_journey","work_order_id":"wo_browser_journey_0123456789abcdef"}]}}
+    records={item["criterion_id"]:item for item in _browser_placeholder(preparation)["criteria"]}
+    assert records["criterion_issued"]["status"] == "not_inspected" and records["criterion_issued"]["authorized_targets"] == [target]
+    assert records["criterion_limited"]["reason_code"] == "browser_scope_insufficient"
+    assert records["criterion_unrelated"]["reason_code"] == "not_browser_relevant"
+    assert records["criterion_unauthorized"]["reason_code"] == "no_authorized_browser_target"

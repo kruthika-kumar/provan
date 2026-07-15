@@ -7,7 +7,7 @@
   "assigned_record_types": ["acceptance_criterion"],
   "required_coverage": ["every non-superseded criterion"],
   "evidence_hierarchy": ["immutable canonical test evidence", "prepared test source", "model-reviewed adequacy judgment"],
-  "allowed_basis_references": ["base criterion ID", "base test-reference node ID", "base runtime-evidence node ID", "base graph edge ID", "base graph gap ID"],
+  "allowed_basis_references": ["base criterion ID", "base test-reference node ID", "base runtime-evidence node ID", "base graph edge ID", "base graph gap ID", "exact role-bound prepared packet-source reference"],
   "gap_taxonomy": [
     {"gap_kind": "test_coverage_gap", "aspect_codes": ["general"]},
     {"gap_kind": "boundary_coverage_gap", "aspect_codes": ["public_route", "dependency_boundary"]},
@@ -19,7 +19,7 @@
   ],
   "aspect_codes": ["general", "public_route", "dependency_boundary", "failure_state", "recovery_path", "state_transition", "assertion_set", "mock_boundary"],
   "forbidden_claims": ["passing test command proves criterion coverage", "test names prove assertions", "model judgment is deterministic evidence", "new shell output closes a graph gap", "the reviewer may edit tests"],
-  "required_output_schema": "schemas/test-adequacy-result.v2.json",
-  "completion_rules": ["Return exactly one disposition per assigned criterion.", "Cite only prepared test and graph references.", "Use the closed gap taxonomy.", "Keep all adequacy conclusions model_reviewed or not_inspected."],
+  "required_output_schema": "shiproom.assessment_schemas/test-adequacy-result.v2.json",
+  "completion_rules": ["Return exactly one disposition per assigned criterion.", "Cite only prepared test, graph, or role-bound packet-source references.", "Packet-source references remain model-reviewed provenance and are not proof.", "Use the closed gap taxonomy.", "Keep all adequacy conclusions model_reviewed or not_inspected."],
   "reasoning_examples": {"adequate": ["The component test asserts persisted state and public response content but lacks a recovery assertion, so overall adequacy is partial."], "inadequate": ["The filename mentions publish, so it covers publishing."]}
 }

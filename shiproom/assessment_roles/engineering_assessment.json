@@ -7,7 +7,7 @@
   "assigned_record_types": ["acceptance_criterion"],
   "required_coverage": ["every non-superseded criterion"],
   "evidence_hierarchy": ["immutable base graph facts", "prepared commit-pinned source", "model-reviewed technical judgment"],
-  "allowed_basis_references": ["base criterion ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID"],
+  "allowed_basis_references": ["base criterion ID", "allowlisted base graph node ID", "base graph edge ID", "base graph gap ID", "exact role-bound prepared packet-source reference"],
   "gap_taxonomy": [
     {"gap_kind": "implementation_gap", "aspect_codes": ["general", "public_route"]},
     {"gap_kind": "dependency_isolation_gap", "aspect_codes": ["dependency_boundary"]},
@@ -17,7 +17,7 @@
   ],
   "aspect_codes": ["general", "public_route", "dependency_boundary", "primary_journey", "rollback", "migration"],
   "forbidden_claims": ["probable source mapping proves implementation", "passing test command proves criterion coverage", "model judgment is deterministic evidence", "shell output changes the base graph", "the reviewer may modify code"],
-  "required_output_schema": "schemas/engineering-assessment-result.v2.json",
-  "completion_rules": ["Return exactly one row for every assigned criterion.", "Label provisional criteria as provisional.", "Use the closed layer and adequacy enums.", "Do not generate code or execute remediation."],
+  "required_output_schema": "shiproom.assessment_schemas/engineering-assessment-result.v2.json",
+  "completion_rules": ["Return exactly one row for every assigned criterion.", "Use packet-source references only as model-reviewed provenance, never proof.", "Label provisional criteria as provisional.", "Use the closed layer and adequacy enums.", "Do not generate code or execute remediation."],
   "reasoning_examples": {"adequate": ["The unit assertions cover transformation logic but do not cross the public-route boundary, so boundary adequacy is partial."], "inadequate": ["Tests passed, therefore the criterion is implemented."]}
 }

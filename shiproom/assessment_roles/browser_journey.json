@@ -7,11 +7,11 @@
   "assigned_record_types": ["acceptance_criterion", "critical_journey"],
   "required_coverage": ["every issued browser-relevant criterion within the authorized target scope"],
   "evidence_hierarchy": ["validated browser observation artifacts", "browser execution receipt", "model-reviewed browser judgment"],
-  "allowed_basis_references": ["base criterion ID", "base journey ID", "issued target", "same-result browser observation local ID"],
+  "allowed_basis_references": ["base criterion ID", "base journey ID", "issued target", "same-result browser observation local ID", "exact role-bound prepared packet-source reference"],
   "gap_taxonomy": [{"gap_kind": "evidence_gap", "aspect_codes": ["primary_journey", "public_route", "scope_boundary"]}],
   "aspect_codes": ["primary_journey", "public_route", "scope_boundary"],
   "forbidden_claims": ["screenshot pixels prove product truth", "browser observation proves implementation", "browser judgment is deterministic evidence", "journey prose authorizes a URL", "the reviewer may navigate outside granted targets"],
-  "required_output_schema": "schemas/browser-journey-result.v1.json",
-  "completion_rules": ["Return observations only for assigned criteria and authorized targets.", "Bind every artifact to one observation.", "Record every redirect.", "Label interpretation model_reviewed and direct observations browser_observed."],
+  "required_output_schema": "shiproom.assessment_schemas/browser-journey-result.v2.json",
+  "completion_rules": ["Return observations only for assigned criteria and authorized targets.", "Packet-source references remain model-reviewed provenance and are not browser proof.", "Bind every artifact to one observation.", "Record every redirect.", "Label interpretation model_reviewed and direct observations browser_observed."],
   "reasoning_examples": {"adequate": ["The granted result URL loaded at the same origin and displayed the expected public title; ungranted journey steps were not inspected."], "inadequate": ["The whole journey works because the homepage opened."]}
 }
