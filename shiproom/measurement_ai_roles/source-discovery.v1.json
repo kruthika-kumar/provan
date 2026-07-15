@@ -1,0 +1,10 @@
+{
+  "schema_version": "measurement-ai-source-discovery.v1",
+  "selection_order": ["relevant_graph_mapped_path", "owner_role_path", "measurement_definition_path", "exact_test_name_match", "static_import_one_hop", "test_helper_one_hop", "linked_ai_prompt_eval_config"],
+  "supported_languages": ["python", "javascript", "typescript"],
+  "javascript_extensions": [".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"],
+  "measurement_definition_extensions": [".md", ".txt", ".json", ".yaml", ".yml", ".sql"],
+  "ai_import_allowlist": ["openai", "anthropic", "cohere", "google.generativeai", "google.genai", "mistralai"],
+  "limits": {"per_file_bytes": 262144, "files_per_role": 64, "source_text_bytes_per_role": 2097152, "structural_records_per_role": 2048, "structural_bytes_per_role": 2097152},
+  "unsupported": ["semantic grep", "recursive discovery", "dynamic imports", "installed package traversal", "arbitrary SQL discovery", "network inspection"]
+}

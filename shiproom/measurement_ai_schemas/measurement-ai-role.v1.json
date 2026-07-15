@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"shiproom.measurement-ai-role.v1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","role_id","role_version","applicability","mandate","assessment_method","assigned_record_types","required_coverage","evidence_hierarchy","allowed_basis_references","capability_requirements","gap_taxonomy","recommendation_taxonomy","forbidden_claims","required_output_schema","completion_rules","reasoning_examples"],
+  "properties":{
+    "schema_version":{"const":"shiproom.measurement-ai-role.v1"},
+    "role_id":{"enum":["measurement","ai_evaluation"]},
+    "role_version":{"const":"1.0.0"},
+    "applicability":{"$ref":"#/$defs/strings"},"mandate":{"type":"string","minLength":1,"maxLength":4096},
+    "assessment_method":{"$ref":"#/$defs/strings"},"assigned_record_types":{"$ref":"#/$defs/strings"},
+    "required_coverage":{"$ref":"#/$defs/strings"},"evidence_hierarchy":{"$ref":"#/$defs/strings"},
+    "allowed_basis_references":{"$ref":"#/$defs/strings"},"gap_taxonomy":{"$ref":"#/$defs/strings"},
+    "recommendation_taxonomy":{"$ref":"#/$defs/strings"},"forbidden_claims":{"$ref":"#/$defs/strings"},
+    "required_output_schema":{"enum":["measurement-result.v1","ai-evaluation-result.v1"]},
+    "completion_rules":{"$ref":"#/$defs/strings"},
+    "capability_requirements":{"type":"object","additionalProperties":false,"required":["file_read","shell","browser","network"],"properties":{"file_read":{"const":"required"},"shell":{"const":"unavailable"},"browser":{"const":"unavailable"},"network":{"const":"unavailable"}}},
+    "reasoning_examples":{"type":"object","additionalProperties":false,"required":["adequate","inadequate"],"properties":{"adequate":{"$ref":"#/$defs/strings"},"inadequate":{"$ref":"#/$defs/strings"}}}
+  },
+  "$defs":{"strings":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1,"maxLength":4096}}}
+}

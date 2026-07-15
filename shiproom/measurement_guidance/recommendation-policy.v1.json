@@ -1,0 +1,8 @@
+{
+  "schema_version": "measurement-recommendation-policy.v1",
+  "recommendation_classes": ["deterministic_contract_gap", "research_backed_warning", "contextual_hypothesis", "owner_confirmation_question", "contextual_metric_proposal"],
+  "rule_effect_ceilings": {
+    "MEAS_DECISION_001":"owner_confirmation","MEAS_COUNT_002":"non_blocking_warning","MEAS_RATIO_003":"non_blocking_warning","MEAS_POPULATION_004":"owner_confirmation","MEAS_WINDOW_005":"non_blocking_warning","MEAS_PROXY_006":"non_blocking_warning","MEAS_GUARDRAIL_007":"non_blocking_warning","MEAS_ATTRIBUTION_008":"condition_candidate","MEAS_SIGNAL_009":"owner_confirmation","AI_EVAL_010":"non_blocking_warning","AI_FAILURE_011":"non_blocking_warning","AI_VERSION_012":"non_blocking_warning","AI_JUDGE_013":"owner_confirmation"
+  },
+  "global_rules": ["no_project_basis_suppresses", "no_guidance_basis_becomes_hypothesis", "generic_guidance_never_blocks", "metric_proposal_never_overwrites_prepared_authority", "guidance_is_not_project_evidence"]
+}

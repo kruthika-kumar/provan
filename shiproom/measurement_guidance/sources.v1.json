@@ -1,0 +1,9 @@
+{
+  "schema_version": "measurement-guidance-sources.v1",
+  "sources": [
+    {"source_id": "SRC_GOOGLE_HEART_2010", "title": "Measuring the User Experience on a Large Scale: User-Centered Metrics for Web Applications", "locator": "ACM CHI 2010", "publication_date": "2010", "authority_class": "primary_research", "summary": "Introduces a structured framework connecting product goals, signals, and metrics while preserving context."},
+    {"source_id": "SRC_MICROSOFT_CONTROLLED_EXPERIMENTS", "title": "Practical Guide to Controlled Experiments on the Web", "locator": "Microsoft Research / KDD", "publication_date": "2007", "authority_class": "primary_research", "summary": "Describes practical experiment design, metrics, guardrails, and interpretation risks."},
+    {"source_id": "SRC_NIST_AI_RMF_1_0", "title": "Artificial Intelligence Risk Management Framework 1.0", "locator": "NIST AI 100-1", "publication_date": "2023", "authority_class": "authoritative_standard", "summary": "Provides structured AI risk, measurement, and evidence-management guidance."},
+    {"source_id": "SRC_NIST_AI_600_1", "title": "Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile", "locator": "NIST AI 600-1", "publication_date": "2024", "authority_class": "authoritative_standard", "summary": "Provides generative-AI risk and evaluation considerations including validity, monitoring, and failure behavior."}
+  ]
+}

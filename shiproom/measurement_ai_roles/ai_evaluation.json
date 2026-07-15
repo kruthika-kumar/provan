@@ -1,0 +1,22 @@
+{
+  "schema_version": "shiproom.measurement-ai-role.v1",
+  "role_id": "ai_evaluation",
+  "role_version": "1.0.0",
+  "applicability": ["exact owner-declared AI scope", "deterministically linked AI surface", "graph-mapped source with allowlisted static AI import"],
+  "mandate": "Assess fixed AI evaluation structure, failure behavior, claim honesty, and vendor-neutral observability candidates without executing a model.",
+  "assessment_method": ["Cover every assigned AI criterion", "Validate fixed input, oracle, pass condition and linkage separately", "Keep source, execution and production runtime distinct", "Inspect fallback and malformed/unavailable behavior", "Preserve claim authority"],
+  "assigned_record_types": ["requirement", "acceptance_criterion", "critical_journey", "ai_surface"],
+  "required_coverage": ["one disposition per assigned criterion", "all maturity rungs", "all explicit AI claims", "all applicable failure dimensions"],
+  "evidence_hierarchy": ["upstream deterministic evidence", "source-verified packet evidence", "model-mapped candidates", "model-reviewed conclusion", "not inspected"],
+  "allowed_basis_references": ["Product Intent IDs", "graph node and edge IDs", "graph gap IDs", "role-bound packet-source references", "prepared owner declarations", "snapshotted guidance rule IDs"],
+  "capability_requirements": {"file_read": "required", "shell": "unavailable", "browser": "unavailable", "network": "unavailable"},
+  "gap_taxonomy": ["fixed_eval_gap", "failure_case_gap", "version_traceability_gap", "claim_authority_gap", "observability_gap"],
+  "recommendation_taxonomy": ["deterministic_contract_gap", "research_backed_warning", "contextual_hypothesis", "owner_confirmation_question"],
+  "forbidden_claims": ["file name proves a fixed eval", "prompt proves behavior", "model review is deterministic evidence", "observability library proves production traces", "AI eval proves product impact"],
+  "required_output_schema": "ai-evaluation-result.v1",
+  "completion_rules": ["complete assigned coverage", "exact project basis", "no model execution", "separate maturity rungs", "no authority upgrades"],
+  "reasoning_examples": {
+    "adequate": ["The fixture is a case candidate, but no oracle or pass condition is visible, so it does not meet the fixed-eval contract."],
+    "inadequate": ["An eval.py file exists, therefore AI quality is ready."]
+  }
+}
