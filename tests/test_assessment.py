@@ -21,6 +21,7 @@ from shiproom.assessment import (
     _python_imports,
     _javascript_imports,
     _browser_placeholder,
+    _canonical_browser_url,
     _test_matches,
     _validate_work_order,
     load_discovery_registry,
@@ -307,7 +308,7 @@ def test_loader_uses_snapshotted_roles_and_has_explicit_compiler_gate(tmp_path: 
     ctx = assessment_context(tmp_path); result = prepare_assessment(ctx)
     monkeypatch.setattr(assessment_module, "load_role_definitions", lambda: (_ for _ in ()).throw(AssertionError("installed roles must not be loaded")))
     assert load_preparation(ctx, result["preparation_id"])["manifest"]["preparation_id"] == result["preparation_id"]
-    directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]; manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "assessment-preparation.v1"; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
+    directory = ctx.repository_root / ".shiproom/local/releases/rel_intent/assessment/preparations" / result["preparation_id"]; manifest_path = directory / "assessment-work-orders.json"; manifest = json.loads(manifest_path.read_text()); manifest["compiler_version"] = "assessment-preparation.v4"; write_json(manifest_path, manifest); rehash_preparation(ctx, result["preparation_id"])
     with pytest.raises(ValueError, match="stale_assessment_preparation_compiler_version"): load_preparation(ctx)
 
 
@@ -316,15 +317,33 @@ def test_phase4a_json_schema_mirrors_accept_generated_contracts_and_reject_extra
     ctx = assessment_context(tmp_path); prepare_assessment(ctx); loaded = load_preparation(ctx)
     contracts = [
         ("assessment-capabilities.v1.json", loaded["capabilities"]),
-            ("assessment-source-packet.v2.json", loaded["source_packet"]),
-            ("assessment-work-orders.v2.json", loaded["manifest"]),
+            ("assessment-source-packet.v3.json", loaded["source_packet"]),
+            ("assessment-work-orders.v3.json", loaded["manifest"]),
     ]
     contracts.extend(("assessment-role.v1.json", item["value"]) for item in load_role_definitions().values())
-    contracts.extend(("work-order.v2.json", item) for item in loaded["work_orders"].values())
+    contracts.extend(("work-order.v3.json", item) for item in loaded["work_orders"].values())
     for schema_name, value in contracts:
         schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath(schema_name).read_text(encoding="utf-8")); jsonschema.validate(value, schema)
         invalid = dict(value); invalid["unexpected"] = True
         with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
+
+
+def test_work_order_v3_role_versions_and_result_schemas_are_role_conditional(tmp_path: Path):
+    jsonschema = pytest.importorskip("jsonschema"); ctx, capability_path = browser_assessment_context(tmp_path); prepare_assessment(ctx, capabilities_path=str(capability_path)); loaded = load_preparation(ctx)
+    schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath("work-order.v3.json").read_text())
+    for role, work in loaded["work_orders"].items():
+        jsonschema.validate(work, schema)
+        assert work["role_version"] == ("3.0.0" if role == "browser_journey" else "2.0.0")
+        assert work["required_output"]["schema_path"].endswith("browser-journey-result.v3.json" if role == "browser_journey" else "-result.v2.json")
+        invalid=json.loads(json.dumps(work)); invalid["role_version"]="2.0.0" if role=="browser_journey" else "3.0.0"; invalid["work_order_hash"]=_work_order_hash(invalid)
+        with pytest.raises(ValueError, match="role version"): _validate_work_order(invalid)
+        with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
+
+
+def test_canonical_browser_url_preserves_query_and_rejects_fragments_and_escapes():
+    assert _canonical_browser_url("HTTPS://Example.TEST:443/result?id=A%20B")[0] == "https://example.test/result?id=A%20B"
+    for invalid in ("https://example.test/result#route", "https://example.test/a/%2e%2e/b", "https://example.test/a%2fb", "https://user@example.test/a", "https://example.test/a\\b", "https://exämple.test/a"):
+        with pytest.raises(ValueError): _canonical_browser_url(invalid)
 
 
 @pytest.mark.parametrize("role", ["product_assessment", "test_adequacy", "targeted_test_planning"])
@@ -340,13 +359,13 @@ def test_explicit_release_browser_target_authority_is_rejected_by_python_and_sch
     jsonschema = pytest.importorskip("jsonschema"); ctx, capability_path = browser_assessment_context(tmp_path); prepare_assessment(ctx, capabilities_path=str(capability_path)); work = load_preparation(ctx)["work_orders"]["browser_journey"]
     invalid = json.loads(json.dumps(work)); invalid["permissions"]["browser"]["allowed_targets"][0]["authority"] = "explicit_release_browser_target"; invalid["work_order_hash"] = _work_order_hash(invalid)
     with pytest.raises(ValueError, match="browser target"): _validate_work_order(invalid)
-    schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath("work-order.v2.json").read_text(encoding="utf-8"))
+    schema = json.loads(resources.files("shiproom.assessment_schemas").joinpath("work-order.v3.json").read_text(encoding="utf-8"))
     with pytest.raises(jsonschema.ValidationError): jsonschema.validate(invalid, schema)
 
 
 def test_assessment_contracts_are_packaged_resources_and_browser_v1_is_unchanged():
     names={item.name for item in resources.files("shiproom.assessment_schemas").iterdir() if item.name.endswith(".json")}
-    assert {"work-order.v1.json","work-order.v2.json","browser-journey-result.v1.json","browser-journey-result.v2.json","browser-journey.v2.json"}.issubset(names)
+    assert {"work-order.v1.json","work-order.v2.json","work-order.v3.json","browser-journey-result.v1.json","browser-journey-result.v2.json","browser-journey-result.v3.json","browser-journey.v2.json","browser-journey.v3.json","effective-assessment-view.v3.json","portable-assessment-manifest.v3.json"}.issubset(names)
     legacy=json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey-result.v1.json").read_text())
     assert legacy["$id"] == "browser-journey-result.v1.json"
 

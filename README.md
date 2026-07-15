@@ -161,7 +161,19 @@ when their canonical edges point away from the criterion path.
 
 ## Portable assessment (private alpha)
 
-`assessment prepare` issues immutable `shiproom.work-order.v2` documents with snapshotted role definitions and packaged result schemas. Capabilities may be declared only through bounded JSON under `.shiproom/local/releases/<release_id>/assessment/inputs/`. Results belong only in the exact preparation/work-order inbox named by the work-order manifest:
+`assessment prepare` issues immutable `shiproom.work-order.v3` documents with snapshotted role definitions and packaged result schemas. Core roles remain `2.0.0` with result v2; browser work uses role `3.0.0` and `browser-journey-result.v3`. Preparations use source-packet/work-order-manifest v3, completed assessment generations use `portable-assessment-manifest.v3`, browser artifacts use `browser-journey.v3`, and the derived presentation is `effective-assessment-view.v3`. Earlier packaged contracts and snapshots remain unchanged. Capabilities may be declared only through bounded JSON under `.shiproom/local/releases/<release_id>/assessment/inputs/`. Results belong only in the exact preparation/work-order inbox named by the work-order manifest:
+
+| Boundary | Current contract |
+|---|---|
+| Preparation compiler | `assessment-preparation.v5` |
+| Work order | `shiproom.work-order.v3` |
+| Source packet / work-order manifest | `assessment-source-packet.v3` / `assessment-work-orders.v3` |
+| Core roles and results | role `2.0.0`, result v2 |
+| Browser role and result | role `3.0.0`, `browser-journey-result.v3` |
+| Completion receipt / overlay | receipt v2 / overlay v2 |
+| Assessment compiler / manifest | `portable-assessment.v5` / `portable-assessment-manifest.v3` |
+| Browser artifact / derived view | `browser-journey.v3` / `effective-assessment-view.v3` |
+| Pointer | `current-portable-assessment.v1` |
 
 ```text
 .shiproom/local/releases/<release_id>/assessment/inbox/<preparation_id>/<work_order_id>/
@@ -172,6 +184,6 @@ when their canonical edges point away from the criterion path.
 
 The result never hashes itself. The separate completion receipt binds the exact result bytes and records either human or harness provenance. Prepared packet-source citations are role-bound assessment provenance, not base-graph proof. Newly run shell output may inform reviewer rationale only and is never imported as deterministic command evidence.
 
-Browser work is issued only for `browser_or_http` criteria with an exact release-authorized target plus available and granted browser capability. Every navigation and redirect must stay on the granted origin, effective port, and path. Bound PNG, JPEG, JSON, JSONL, or UTF-8 text artifacts are observations, not product truth by themselves. Invalid receipts, hashes, paths, redirects, or grants reject the whole browser result. A browser observation cannot establish implementation, test adequacy, finding closure, or verdict change.
+Browser work is issued only for `browser_or_http` criteria with an exact release-authorized target plus available and granted browser capability. Every assessed criterion needs a same-criterion observation, every observation needs exclusively owned evidence, and every judgment cites a same-criterion observation. URLs are absolute ASCII HTTP(S), fragments are forbidden, queries remain exact, and the bounded redirect chain must start at an issued URL, end at the reported final URL, and remain inside the grant. Evidence paths are strict casefold-unique POSIX paths and the evidence directory must contain exactly the declared regular files. Bound PNG, JPEG, JSON, JSONL, or UTF-8 text artifacts are observations, not product truth by themselves. Invalid receipts, timestamps, media bytes, hashes, paths, redirects, or grants reject the whole browser result. A browser observation cannot establish implementation, test adequacy, finding closure, or verdict change.
 
-`effective-assessment-view.json` is derived-only. It keeps the authoritative base evidence dimensions separate from Product, Engineering, test-adequacy, targeted-test, and browser judgments; it is never a replacement Requirement-to-Evidence Graph.
+`effective-assessment-view.v3` is derived-only. It exposes browser observation authority and model-reviewed judgment authority separately, with their respective IDs. It keeps the authoritative base evidence dimensions separate from Product, Engineering, test-adequacy, targeted-test, and browser judgments; it is never a replacement Requirement-to-Evidence Graph.

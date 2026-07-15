@@ -1,0 +1,583 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assessment-work-orders.v3.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "compiler_version",
+    "preparation_id",
+    "preparation_semantic_hash",
+    "preparation_inputs",
+    "release_id",
+    "release_commit",
+    "graph_generation",
+    "graph_semantic_hash",
+    "intent_semantic_hash",
+    "mapping_packet_hash",
+    "source_packet_hash",
+    "capabilities_hash",
+    "capabilities_snapshot_filename",
+    "capabilities_snapshot_hash",
+    "discovery_registry",
+    "role_definitions",
+    "work_orders",
+    "manifest_hash",
+    "contract_schemas"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "assessment-work-orders.v3"
+    },
+    "compiler_version": {
+      "const": "assessment-preparation.v5"
+    },
+    "preparation_id": {
+      "type": "string",
+      "pattern": "^prep_[0-9a-f]{32}$"
+    },
+    "preparation_semantic_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "preparation_inputs": {
+      "type": "object",
+      "required": [
+        "base_commit",
+        "owner_paths"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "base_commit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          ]
+        },
+        "owner_paths": {
+          "type": "object",
+          "required": [
+            "product_assessment",
+            "engineering_assessment",
+            "test_adequacy",
+            "targeted_test_planning",
+            "browser_journey"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "product_assessment": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "engineering_assessment": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "test_adequacy": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "targeted_test_planning": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "browser_journey": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "release_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "graph_generation": {
+      "type": "string",
+      "pattern": "^gen_[0-9a-f]{32}$"
+    },
+    "graph_semantic_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "intent_semantic_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "mapping_packet_hash": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_packet_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "capabilities_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "capabilities_snapshot_filename": {
+      "enum": [
+        "capabilities.json",
+        "submitted-capabilities.json"
+      ]
+    },
+    "capabilities_snapshot_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "discovery_registry": {
+      "type": "object",
+      "required": [
+        "semantic_hash",
+        "snapshot_hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "semantic_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "snapshot_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "role_definitions": {
+      "type": "object",
+      "required": [
+        "product_assessment",
+        "engineering_assessment",
+        "test_adequacy",
+        "targeted_test_planning",
+        "browser_journey"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "product_assessment": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "engineering_assessment": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "test_adequacy": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "targeted_test_planning": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "browser_journey": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "work_orders": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "role_id",
+          "required",
+          "issued",
+          "reason_code",
+          "work_order_id",
+          "work_order_hash",
+          "work_order_snapshot_hash",
+          "work_order_path",
+          "result_path",
+          "completion_receipt_path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "role_id": {
+            "enum": [
+              "product_assessment",
+              "engineering_assessment",
+              "test_adequacy",
+              "targeted_test_planning",
+              "browser_journey"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "issued": {
+            "type": "boolean"
+          },
+          "reason_code": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ]
+          },
+          "work_order_id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "pattern": "^wo_[a-z_]+_[0-9a-f]{16}$"
+              }
+            ]
+          },
+          "work_order_hash": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "work_order_snapshot_hash": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "work_order_path": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ]
+          },
+          "result_path": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ]
+          },
+          "completion_receipt_path": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    "manifest_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "contract_schemas": {
+      "type": "object",
+      "required": [
+        "assessment-completion-receipt.v2.json",
+        "browser-journey-result.v3.json",
+        "engineering-assessment-result.v2.json",
+        "product-assessment-result.v2.json",
+        "targeted-test-result.v2.json",
+        "test-adequacy-result.v2.json",
+        "work-order.v3.json"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "assessment-completion-receipt.v2.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "browser-journey-result.v3.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "engineering-assessment-result.v2.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "product-assessment-result.v2.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "targeted-test-result.v2.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "test-adequacy-result.v2.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "work-order.v3.json": {
+          "type": "object",
+          "required": [
+            "semantic_hash",
+            "snapshot_hash",
+            "schema_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "semantic_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "schema_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

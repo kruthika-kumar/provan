@@ -13,11 +13,22 @@ def _write(path: Path, value: object) -> None:
 
 def snapshot_read_only_state(ctx) -> dict:
     root = ctx.repository_root
-    graph_pointer = root / ".shiproom/local/releases" / ctx.release["release_id"] / "requirement-evidence-graph/current-generation.json"
+    release_root = root / ".shiproom/local/releases" / ctx.release["release_id"]
+    def generation_snapshot(name: str) -> dict:
+        domain = release_root / name; pointer = domain / "current-generation.json"; pointer_bytes = pointer.read_bytes(); value = json.loads(pointer_bytes)
+        generation = domain / "generations" / value["generation"]
+        files = {path.relative_to(generation).as_posix(): "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() for path in generation.rglob("*") if path.is_file()}
+        return {"pointer": pointer_bytes, "generation": value["generation"], "files": files}
+    release_files = {}
+    for path in (root / "release.json", release_root / "release.json"):
+        if path.is_file(): release_files[path.relative_to(root).as_posix()] = path.read_bytes()
     status = subprocess.run(["git", "status", "--porcelain=v1", "--untracked-files=no"], cwd=root, text=True, capture_output=True, check=True).stdout
     return {
         "release": json.dumps(ctx.release, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
-        "graph_pointer": graph_pointer.read_bytes(),
+        "release_files": release_files,
+        "intent_generation": generation_snapshot("product-intent"),
+        "graph_generation": generation_snapshot("requirement-evidence-graph"),
+        "graph_pointer": (release_root / "requirement-evidence-graph/current-generation.json").read_bytes(),
         "tracked_status": status,
         "head": subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip(),
     }
@@ -41,7 +52,7 @@ def write_browser_submission(ctx, preparation: dict, *, corrupt_artifact_hash: b
     evidence_hash = "sha256:" + hashlib.sha256(evidence).hexdigest()
     if corrupt_artifact_hash: evidence_hash = "sha256:" + "0" * 64
     result = {
-        "schema_version": "browser-journey-result.v2", "role_id": "browser_journey", "role_version": work["role_version"],
+        "schema_version": "browser-journey-result.v3", "role_id": "browser_journey", "role_version": work["role_version"],
         "preparation_id": work["preparation_id"], "preparation_semantic_hash": work["preparation_semantic_hash"], "work_order_id": work["work_order_id"], "work_order_hash": work["work_order_hash"],
         "base_graph_generation": work["inputs"]["base_graph_generation"], "base_graph_semantic_hash": work["inputs"]["base_graph_semantic_hash"],
         "payload": {

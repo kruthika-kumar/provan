@@ -95,7 +95,8 @@ def _assessment_behavioral_evals(check) -> None:
         check("ASSESSMENT_NO_COMMAND_EXECUTION",all(not preparation["work_orders"][role]["permissions"]["shell"]["allowed_commands"] for role in ("product_assessment","engineering_assessment","test_adequacy","targeted_test_planning")))
         check("ASSESSMENT_MANUAL_PORTABLE_WORK_ORDER",all(node["executor_provenance"]["executor_type"]=="human" for node in overlay["nodes"]))
         base_before=effective["base_evidence_state"].copy(); write_browser_submission(ctx,preparation); compile_assessment(ctx); _,observed=load_assessment(ctx); assert_read_only_state(ctx,before); observed_effective=observed["effective-assessment-view.json"]["criteria"][0]; browser=observed_effective["assessment"]["browser_journey"]
-        browser_ok=browser["status"]=="observed" and observed_effective["assessment_authority"]["browser_journey"]=="browser_observed" and any(node.get("role_id")=="browser_journey" and node["evidence_class"]=="model_reviewed" for node in observed["assessment-graph-overlay.json"]["nodes"])
+        browser_authority=observed_effective["assessment_authority"]["browser_journey"]
+        browser_ok=browser["status"]=="observed" and browser_authority["observation_authority"]=="browser_observed" and browser_authority["judgment_authority"]=="model_reviewed" and any(node.get("role_id")=="browser_journey" and node["evidence_class"]=="model_reviewed" for node in observed["assessment-graph-overlay.json"]["nodes"])
         work=preparation["work_orders"]["browser_journey"]; receipt=ctx.repository_root/".shiproom/local/releases/rel_graph_eval/assessment/inbox"/work["preparation_id"]/work["work_order_id"]/"completion-receipt.json"; value=json.loads(receipt.read_text()); value["result_snapshot_hash"]="sha256:"+"0"*64; receipt.write_text(json.dumps(value),encoding="utf-8")
         try: compile_assessment(ctx); invalid_rejected=False
         except ValueError: invalid_rejected=True

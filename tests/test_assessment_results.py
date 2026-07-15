@@ -111,13 +111,13 @@ def test_published_v2_artifacts_match_checked_in_schema_mirrors(tmp_path: Path):
     ctx = prepared_results(tmp_path); manifest = compile_assessment(ctx); _, artifacts = load_assessment(ctx)
     mirrors = {
         "assessment-graph-overlay.json": "assessment-graph-overlay.v2.json",
-        "effective-assessment-view.json": "effective-assessment-view.v2.json",
+        "effective-assessment-view.json": "effective-assessment-view.v3.json",
         "assessment-compiler-receipts.json": "assessment-compiler-receipts.v2.json",
     }
     for artifact_name, schema_name in mirrors.items():
         jsonschema.validate(artifacts[artifact_name], json.loads(resources.files("shiproom.assessment_schemas").joinpath(schema_name).read_text()))
-    jsonschema.validate(artifacts["browser-journey.json"], json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v2.json").read_text()))
-    jsonschema.validate(manifest, json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v2.json").read_text()))
+    jsonschema.validate(artifacts["browser-journey.json"], json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v3.json").read_text()))
+    jsonschema.validate(manifest, json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v3.json").read_text()))
 
 
 def test_overlay_gap_linking_is_exact_and_unmatched_spec_remains_criterion_only(tmp_path: Path):
@@ -132,6 +132,12 @@ def test_assessment_load_rederives_semantics_and_rejects_artifact_tamper(tmp_pat
     ctx = prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer=json.loads((root/"current-assessment.json").read_text()); directory=root/"generations"/pointer["generation"]; path=directory/"effective-assessment-view.json"; artifact=json.loads(path.read_text()); artifact["criteria"][0]["base_evidence_state"]["test"]="open"; write_json(path,artifact)
     manifest_path=directory/"manifest.json"; manifest=json.loads(manifest_path.read_text()); manifest["artifact_hashes"][path.name]="sha256:"+hashlib.sha256(path.read_bytes()).hexdigest(); manifest["semantic_bundle_hash"]=assessment_module.content_hash({"compiler_version":assessment_module.ASSESSMENT_COMPILER_VERSION,"preparation_semantic_hash":manifest["preparation_semantic_hash"],"base_graph_semantic_hash":manifest["base_graph_semantic_hash"],"artifact_hashes":{key:manifest["artifact_hashes"][key] for key in sorted(manifest["artifact_hashes"])}}); manifest["bundle_hash"]=assessment_module.content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"}); write_json(manifest_path,manifest); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); write_json(root/"current-assessment.json",pointer)
     with pytest.raises(ValueError, match="semantic artifacts are stale"): load_assessment(ctx)
+
+
+def test_fully_rehashed_portable_assessment_v4_fails_compiler_gate(tmp_path: Path):
+    ctx=prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer_path=root/"current-assessment.json"; pointer=json.loads(pointer_path.read_text()); directory=root/"generations"/pointer["generation"]; manifest_path=directory/"manifest.json"; manifest=json.loads(manifest_path.read_text())
+    manifest["compiler_version"]="portable-assessment.v4"; manifest["semantic_bundle_hash"]=assessment_module.content_hash({"compiler_version":"portable-assessment.v4","preparation_semantic_hash":manifest["preparation_semantic_hash"],"base_graph_semantic_hash":manifest["base_graph_semantic_hash"],"artifact_hashes":{key:manifest["artifact_hashes"][key] for key in sorted(manifest["artifact_hashes"])}}); manifest["bundle_hash"]=assessment_module.content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"}); write_json(manifest_path,manifest); pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_path.read_bytes()).hexdigest(); write_json(pointer_path,pointer)
+    with pytest.raises(ValueError,match="stale_assessment_compiler_version"): load_assessment(ctx)
 
 
 def test_late_pointer_failure_preserves_prior_assessment(tmp_path: Path, monkeypatch):
@@ -179,7 +185,7 @@ def test_result_hashes_are_semantic_snapshot_and_receipt_specific(tmp_path: Path
 
 
 def test_embedded_preparation_snapshot_tampering_fails_closed(tmp_path: Path):
-    ctx=prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer=json.loads((root/"current-assessment.json").read_text()); directory=root/"generations"/pointer["generation"]; schema=directory/"preparation-snapshot/contract-schemas/work-order.v2.json"; schema.write_bytes(schema.read_bytes()+b" ")
+    ctx=prepared_results(tmp_path); compile_assessment(ctx); root=ctx.repository_root/".shiproom/local/releases/rel_intent/assessment"; pointer=json.loads((root/"current-assessment.json").read_text()); directory=root/"generations"/pointer["generation"]; schema=directory/"preparation-snapshot/contract-schemas/work-order.v3.json"; schema.write_bytes(schema.read_bytes()+b" ")
     with pytest.raises(ValueError,match="preparation semantic rederivation failed|preparation snapshot is stale"): load_assessment(ctx)
 
 
@@ -250,20 +256,21 @@ def test_result_semantic_hash_ignores_preparation_and_work_order_handles(tmp_pat
 def test_valid_browser_observation_is_bounded_and_never_refines_base_graph(tmp_path: Path):
     jsonschema = pytest.importorskip("jsonschema")
     ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); before=snapshot_read_only_state(ctx)
-    write_browser_submission(ctx,preparation); manifest=compile_assessment(ctx); _,artifacts=load_assessment(ctx); assert_read_only_state(ctx,before)
+    result_path=write_browser_submission(ctx,preparation); jsonschema.validate(json.loads(result_path.read_text()),json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey-result.v3.json").read_text())); manifest=compile_assessment(ctx); _,artifacts=load_assessment(ctx); assert_read_only_state(ctx,before)
     criterion=artifacts["effective-assessment-view.json"]["criteria"][0]; browser=criterion["assessment"]["browser_journey"]
     gap_states={item["gap_type"]:item["state"] for item in preparation["contexts"]["browser_journey"]["base_graph_context"]["gaps"] if item["criterion_id"]==criterion["criterion_id"]}
     assert manifest["result_snapshot_hashes"]["browser_journey"]["result_semantic_hash"].startswith("sha256:")
     assert browser["status"] == "observed" and browser["observation_ids"] and browser["judgment_ids"]
-    assert criterion["assessment_authority"]["browser_journey"] == "browser_observed"
+    assert criterion["assessment_authority"]["browser_journey"] == {"observation_authority":"browser_observed","judgment_authority":"model_reviewed","observation_ids":criterion["assessment"]["browser_journey"]["observation_ids"],"judgment_ids":criterion["assessment"]["browser_journey"]["judgment_ids"]}
     assert criterion["base_evidence_state"] == {"implementation":gap_states.get("implementation_gap","unknown"),"test":gap_states.get("test_evidence_gap","unknown"),"instrumentation":gap_states.get("instrumentation_gap","unknown"),"runtime":gap_states.get("runtime_evidence_gap","unknown")}
     overlay=artifacts["assessment-graph-overlay.json"]
     assert any(node["node_type"]=="browser_observation" and node["evidence_class"]=="browser_observed" for node in overlay["nodes"])
     assert any(node.get("role_id")=="browser_journey" and node["evidence_class"]=="model_reviewed" for node in overlay["nodes"])
-    jsonschema.validate(artifacts["browser-journey.json"],json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v2.json").read_text()))
+    jsonschema.validate(artifacts["browser-journey.json"],json.loads(resources.files("shiproom.assessment_schemas").joinpath("browser-journey.v3.json").read_text()))
+    jsonschema.validate(artifacts["effective-assessment-view.json"],json.loads(resources.files("shiproom.assessment_schemas").joinpath("effective-assessment-view.v3.json").read_text()))
     jsonschema.validate(overlay,json.loads(resources.files("shiproom.assessment_schemas").joinpath("assessment-graph-overlay.v2.json").read_text()))
-    jsonschema.validate(manifest,json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v2.json").read_text()))
-    assert "Browser: observed authority=browser_observed" in show_assessment(ctx,criterion["criterion_id"])
+    jsonschema.validate(manifest,json.loads(resources.files("shiproom.assessment_schemas").joinpath("portable-assessment-manifest.v3.json").read_text()))
+    rendered=show_assessment(ctx,criterion["criterion_id"]); assert "Browser: observed observation_authority=browser_observed judgment_authority=model_reviewed" in rendered
 
 
 @pytest.mark.parametrize("failure", ["artifact", "receipt"])
@@ -279,4 +286,29 @@ def test_browser_scope_and_evidence_directory_are_fail_closed(tmp_path: Path, fa
     if failure=="ungranted_url": result["payload"]["observations"][0]["url"]="https://outside.example/path"
     else: result["payload"]["evidence"][0]["path"]="../observation.json"
     write_json(path,result); refresh_receipt(path)
-    with pytest.raises(ValueError,match="target exceeds grant|path escapes"): compile_assessment(ctx)
+    with pytest.raises(ValueError,match="redirect chain|evidence path"): compile_assessment(ctx)
+
+
+@pytest.mark.parametrize("failure", ["assessed_without_observation","observation_without_evidence","nonassessed_with_records","redirect_start","redirect_final","fragment","timestamp","casefold_path","unlisted_file","wrong_media"])
+def test_browser_v3_provenance_guards_reject_invalid_submissions(tmp_path: Path, failure: str):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); path=write_browser_submission(ctx,preparation); result=json.loads(path.read_text()); payload=result["payload"]; evidence_path=path.parent/"evidence/observation.json"
+    if failure=="assessed_without_observation": payload["observations"]=[]; payload["judgments"]=[]; payload["evidence"]=[]; evidence_path.unlink()
+    elif failure=="observation_without_evidence": payload["observations"][0]["evidence_local_ids"]=[]; payload["evidence"]=[]; evidence_path.unlink()
+    elif failure=="nonassessed_with_records": payload["criteria"][0]["disposition"]="not_inspected"; payload["criteria"][0]["uncertainty"]="not_assessed"
+    elif failure=="redirect_start": payload["observations"][0]["redirect_chain"]=[payload["observations"][0]["url"]+"?unexpected=1",payload["observations"][0]["url"]]
+    elif failure=="redirect_final": payload["observations"][0]["redirect_chain"].append(payload["observations"][0]["url"]+"?final=other")
+    elif failure=="fragment": payload["observations"][0]["url"] += "#route"; payload["observations"][0]["redirect_chain"]=[payload["observations"][0]["url"]]
+    elif failure=="timestamp": payload["observations"][0]["capture_timestamp"]="2026-07-15T09:59:59+00:00"; payload["evidence"][0]["capture_timestamp"]="2026-07-15T09:59:59+00:00"
+    elif failure=="casefold_path": duplicate=json.loads(json.dumps(payload["evidence"][0])); duplicate["local_id"]="evidence_case"; duplicate["path"]="Observation.json"; payload["evidence"].append(duplicate); payload["observations"][0]["evidence_local_ids"].append("evidence_case")
+    elif failure=="unlisted_file": (path.parent/"evidence/unlisted.txt").write_text("unlisted",encoding="utf-8")
+    else:
+        evidence_path.write_bytes(b"not json"); payload["evidence"][0]["byte_length"]=8; payload["evidence"][0]["sha256"]="sha256:"+hashlib.sha256(b"not json").hexdigest()
+    write_json(path,result); refresh_receipt(path)
+    with pytest.raises((ValueError, json.JSONDecodeError)): compile_assessment(ctx)
+
+
+def test_browser_observation_without_judgment_preserves_separate_authorities(tmp_path: Path):
+    ctx, capability_path=browser_assessment_context(tmp_path); prepare_assessment(ctx,capabilities_path=str(capability_path)); preparation=issue_results(ctx); path=write_browser_submission(ctx,preparation); result=json.loads(path.read_text()); result["payload"]["judgments"]=[]; write_json(path,result); refresh_receipt(path)
+    compile_assessment(ctx); _,artifacts=load_assessment(ctx); criterion=artifacts["effective-assessment-view.json"]["criteria"][0]; authority=criterion["assessment_authority"]["browser_journey"]
+    assert authority["observation_authority"]=="browser_observed" and authority["judgment_authority"]=="not_inspected" and authority["observation_ids"] and authority["judgment_ids"]==[]
+    rendered=show_assessment(ctx,criterion["criterion_id"]); assert "observation_authority=browser_observed judgment_authority=not_inspected" in rendered

@@ -7,12 +7,13 @@ import json
 import os
 import posixpath
 import re
+import stat
 import subprocess
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path, PurePosixPath
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlsplit
 
 from .authority import LocalExecutionContext
 from .graph import load_assessment_input
@@ -20,13 +21,13 @@ from .project import canonical_json, content_hash, validate_command, validate_po
 
 
 ROLE_SCHEMA = "shiproom.assessment-role.v1"
-WORK_ORDER_SCHEMA = "shiproom.work-order.v2"
+WORK_ORDER_SCHEMA = "shiproom.work-order.v3"
 CAPABILITIES_SCHEMA = "shiproom.assessment-capabilities.v1"
-SOURCE_PACKET_SCHEMA = "assessment-source-packet.v2"
+SOURCE_PACKET_SCHEMA = "assessment-source-packet.v3"
 ROLE_CONTEXT_SCHEMA = "assessment-role-context.v1"
-WORK_ORDERS_SCHEMA = "assessment-work-orders.v2"
+WORK_ORDERS_SCHEMA = "assessment-work-orders.v3"
 POINTER_SCHEMA = "active-assessment-preparation.v1"
-PREPARATION_COMPILER_VERSION = "assessment-preparation.v4"
+PREPARATION_COMPILER_VERSION = "assessment-preparation.v5"
 DISCOVERY_VERSION = "assessment-source-discovery.v1"
 DISCOVERY_SELECTION_ORDER = ("graph_mapped_source", "owner_role_path", "relevant_configuration", "python_test_name_match", "javascript_test_name_match", "python_static_import_one_hop", "javascript_literal_import_one_hop", "test_helper_import_one_hop", "approved_command_source", "ci_approved_command_match")
 DISCOVERY_LANGUAGES = ("python", "javascript", "typescript")
@@ -40,7 +41,7 @@ ROLE_OUTPUT_SCHEMAS = {
     "engineering_assessment": "shiproom.assessment_schemas/engineering-assessment-result.v2.json",
     "test_adequacy": "shiproom.assessment_schemas/test-adequacy-result.v2.json",
     "targeted_test_planning": "shiproom.assessment_schemas/targeted-test-result.v2.json",
-    "browser_journey": "shiproom.assessment_schemas/browser-journey-result.v2.json",
+    "browser_journey": "shiproom.assessment_schemas/browser-journey-result.v3.json",
 }
 SOURCE_FILE_LIMIT = 256 * 1024
 ROLE_FILE_LIMIT = 64
@@ -62,14 +63,15 @@ RESULT_SCHEMAS = {
     "engineering_assessment": "engineering-assessment-result.v2",
     "test_adequacy": "test-adequacy-result.v2",
     "targeted_test_planning": "targeted-test-result.v2",
-    "browser_journey": "browser-journey-result.v2",
+    "browser_journey": "browser-journey-result.v3",
 }
 RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
-ASSESSMENT_COMPILER_VERSION = "portable-assessment.v4"
-ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v2"
+ASSESSMENT_COMPILER_VERSION = "portable-assessment.v5"
+ASSESSMENT_MANIFEST_SCHEMA = "portable-assessment-manifest.v3"
 ASSESSMENT_POINTER_SCHEMA = "current-portable-assessment.v1"
 OVERLAY_SCHEMA = "assessment-graph-overlay.v2"
-EFFECTIVE_VIEW_SCHEMA = "effective-assessment-view.v2"
+EFFECTIVE_VIEW_SCHEMA = "effective-assessment-view.v3"
+MAX_REDIRECT_CHAIN = 16
 ASSESSMENT_ARTIFACTS = ("product-assessment.json", "engineering-assessment.json", "test-adequacy.json", "targeted-test-plan.json", "browser-journey.json", "assessment-work-orders.json", "assessment-graph-overlay.json", "effective-assessment-view.json", "assessment-compiler-receipts.json")
 OVERLAY_BASE_NODE_TYPES = {"source", "implementation_reference", "test_reference", "instrumentation_reference", "runtime_evidence", "finding", "closure_evidence"}
 _BEFORE_ASSESSMENT_POINTER_REPLACE = None
@@ -140,7 +142,7 @@ def _installed_schema_bytes(filename: str) -> bytes:
 
 
 def _contract_snapshots() -> dict[str, dict]:
-    names = {"work-order.v2.json", "assessment-completion-receipt.v2.json", "browser-journey-result.v2.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
+    names = {"work-order.v3.json", "assessment-completion-receipt.v2.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
     result = {}
     for name in sorted(names):
         raw = _installed_schema_bytes(name); value = _load_json_bytes(raw)
@@ -178,6 +180,9 @@ def _validate_role(value: dict, expected_role: str | None = None) -> dict:
     _text(value["required_output_schema"], "required_output_schema", 200)
     if value["required_output_schema"] != ROLE_OUTPUT_SCHEMAS[value["role_id"]]:
         raise ValueError("role output schema mismatch")
+    expected_version = "3.0.0" if value["role_id"] == "browser_journey" else "2.0.0"
+    if value["role_version"] != expected_version:
+        raise ValueError("role version mismatch")
     examples = value["reasoning_examples"]
     if not isinstance(examples, dict) or set(examples) != {"adequate", "inadequate"}:
         raise ValueError("invalid reasoning examples")
@@ -731,6 +736,10 @@ def _validate_work_order(value: dict) -> None:
         raise ValueError("invalid work-order identity")
     if not value["work_order_id"].startswith("wo_" + value["role_id"] + "_"):
         raise ValueError("work-order role identity mismatch")
+    expected_role_version = "3.0.0" if value["role_id"] == "browser_journey" else "2.0.0"
+    expected_result = Path(ROLE_OUTPUT_SCHEMAS[value["role_id"]]).name
+    if value["role_version"] != expected_role_version:
+        raise ValueError("work-order role version mismatch")
     for field in ("work_order_hash", "preparation_semantic_hash", "role_definition_hash", "role_definition_snapshot_hash"):
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", value[field]):
             raise ValueError(f"invalid {field}")
@@ -769,6 +778,8 @@ def _validate_work_order(value: dict) -> None:
     for field in output: _text(output[field], f"required_output.{field}", 500)
     for field in ("schema_semantic_hash", "schema_snapshot_hash", "completion_receipt_schema_semantic_hash", "completion_receipt_schema_snapshot_hash"):
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", output[field]): raise ValueError("invalid work-order contract hash")
+    if output["schema_path"] != "contract-schemas/" + expected_result or output["schema_version"] != RESULT_SCHEMAS[value["role_id"]] or output["completion_receipt_schema_path"] != "contract-schemas/assessment-completion-receipt.v2.json" or output["completion_receipt_schema_version"] != "assessment-completion-receipt.v2":
+        raise ValueError("work-order portable contract mismatch")
     _string_list(value["forbidden_claims"], "forbidden_claims", nonempty=True)
 
 
@@ -882,7 +893,7 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str | None = No
     for path in contract_root.iterdir():
         if path.is_symlink() or not path.is_file(): raise ValueError("invalid assessment contract snapshot")
         raw = path.read_bytes(); value = _load_json_bytes(raw); contracts[path.name] = {"bytes": raw, "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "schema_version": value.get("$id", path.name).removesuffix(".json")}
-    expected_names = {"work-order.v2.json", "assessment-completion-receipt.v2.json", "browser-journey-result.v2.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
+    expected_names = {"work-order.v3.json", "assessment-completion-receipt.v2.json", *(Path(value).name for value in ROLE_OUTPUT_SCHEMAS.values())}
     if set(contracts) != expected_names: raise ValueError("assessment contract snapshot set invalid")
     expected = _build_preparation(ctx, preparation_id, capabilities_bundle, roles, discovery, contracts, preparation_inputs["base_commit"], owner)
     if stored_manifest != expected["manifest"] or manifest_path.read_bytes() != _render(expected["manifest"]): raise ValueError("assessment preparation semantic rederivation failed: manifest")
@@ -1124,22 +1135,111 @@ def _effective_port(parsed) -> int | None:
     return parsed.port if parsed.port is not None else (443 if parsed.scheme.lower() == "https" else 80 if parsed.scheme.lower() == "http" else None)
 
 
-def _url_is_authorized(raw: str, targets: list[dict]) -> bool:
-    try: parsed = urlparse(raw)
-    except ValueError: return False
-    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname or parsed.username is not None or parsed.password is not None: return False
+def _instant(value: object, label: str) -> datetime:
+    try: parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError) as exc: raise ValueError(f"invalid {label}") from exc
+    if parsed.tzinfo is None: raise ValueError(f"invalid {label}")
+    return parsed.astimezone(timezone.utc)
+
+
+def _canonical_browser_url(raw: object) -> tuple[str, object]:
+    if not isinstance(raw, str) or not raw or any(ord(ch) > 127 or ord(ch) < 32 or ord(ch) == 127 for ch in raw) or "\\" in raw:
+        raise ValueError("browser URL must be bounded ASCII")
+    try: parsed = urlsplit(raw)
+    except ValueError as exc: raise ValueError("invalid browser URL") from exc
+    scheme = parsed.scheme.lower()
+    if scheme not in {"http", "https"} or not parsed.netloc or parsed.username is not None or parsed.password is not None or not parsed.hostname or parsed.fragment:
+        raise ValueError("invalid browser URL authority")
+    host = parsed.hostname
+    if any(ord(ch) > 127 for ch in host): raise ValueError("browser URL host must be ASCII")
+    try: port = parsed.port
+    except ValueError as exc: raise ValueError("invalid browser URL port") from exc
+    effective_port = port or (443 if scheme == "https" else 80)
     path = parsed.path or "/"
+    if any(part in {".", ".."} for part in path.split("/")): raise ValueError("browser URL path contains dot segment")
+    for component, path_component in ((path, True), (parsed.query, False)):
+        index = 0
+        while index < len(component):
+            if component[index] != "%": index += 1; continue
+            if index + 2 >= len(component) or not re.fullmatch(r"[0-9A-Fa-f]{2}", component[index + 1:index + 3]): raise ValueError("browser URL contains malformed escape")
+            byte = int(component[index + 1:index + 3], 16)
+            if byte == 0x25 or byte < 0x20 or byte == 0x7F or (path_component and byte in {0x2F, 0x5C, 0x2E}): raise ValueError("browser URL contains forbidden escape")
+            index += 3
+    canonical_host = host.lower(); rendered_host = f"[{canonical_host}]" if ":" in canonical_host else canonical_host
+    default_port = 443 if scheme == "https" else 80
+    authority = rendered_host if effective_port == default_port else f"{rendered_host}:{effective_port}"
+    canonical = f"{scheme}://{authority}{path}" + (f"?{parsed.query}" if parsed.query else "")
+    return canonical, parsed
+
+
+def _url_is_authorized(raw: object, targets: list[dict]) -> bool:
+    try: canonical, parsed = _canonical_browser_url(raw)
+    except ValueError: return False
     for target in targets:
-        allowed = urlparse(target["url"])
+        try: _, allowed = _canonical_browser_url(target["url"])
+        except ValueError: continue
         pattern = target["path_pattern"]
-        path_ok = path.startswith(pattern[:-1]) if pattern.endswith("*") else path == pattern
+        path = parsed.path or "/"; path_ok = path.startswith(pattern[:-1]) if pattern.endswith("*") else path == pattern
         if parsed.scheme.lower() == allowed.scheme.lower() and parsed.hostname.lower() == (allowed.hostname or "").lower() and _effective_port(parsed) == _effective_port(allowed) and path_ok: return True
     return False
+
+
+def _evidence_relative_path(raw: object) -> PurePosixPath:
+    if not isinstance(raw, str) or not raw or "\\" in raw or ":" in raw or any(ord(ch) < 32 or ord(ch) == 127 for ch in raw): raise ValueError("invalid browser evidence path")
+    relative = PurePosixPath(raw)
+    if relative.is_absolute() or not relative.parts or any(part in {"", ".", ".."} for part in relative.parts) or relative.as_posix() != raw: raise ValueError("invalid browser evidence path")
+    return relative
+
+
+def _is_reparse(mode_result: os.stat_result) -> bool:
+    flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(getattr(mode_result, "st_file_attributes", 0) & flag)
+
+
+def _enumerate_evidence_tree(root: Path, declared: set[str]) -> dict[str, Path]:
+    expected_directories = {PurePosixPath(path).parent.as_posix() for path in declared}
+    expected_directories.discard("."); expected_directories |= {parent.as_posix() for path in declared for parent in PurePosixPath(path).parents if parent.as_posix() != "."}
+    files: dict[str, Path] = {}; directories: set[str] = set()
+    def visit(directory: Path, prefix: PurePosixPath) -> None:
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                relative = (prefix / entry.name).as_posix(); info = entry.stat(follow_symlinks=False)
+                if entry.is_symlink() or _is_reparse(info): raise ValueError("browser evidence tree contains link or reparse point")
+                if stat.S_ISDIR(info.st_mode): directories.add(relative); visit(Path(entry.path), prefix / entry.name)
+                elif stat.S_ISREG(info.st_mode): files[relative] = Path(entry.path)
+                else: raise ValueError("browser evidence tree contains special file")
+    info = root.lstat()
+    if not stat.S_ISDIR(info.st_mode) or root.is_symlink() or _is_reparse(info): raise ValueError("browser evidence directory is invalid")
+    visit(root, PurePosixPath())
+    if set(files) != declared or directories != expected_directories: raise ValueError("browser evidence directory does not exactly match declaration")
+    return files
+
+
+def _validate_evidence_media(data: bytes, media_type: str) -> None:
+    if media_type == "image/png":
+        if not data.startswith(b"\x89PNG\r\n\x1a\n"): raise ValueError("browser PNG evidence has invalid signature")
+    elif media_type == "image/jpeg":
+        if len(data) < 5 or not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9"): raise ValueError("browser JPEG evidence has invalid signature")
+    elif media_type == "text/plain; charset=utf-8":
+        try: data.decode("utf-8")
+        except UnicodeDecodeError as exc: raise ValueError("browser text evidence is invalid UTF-8") from exc
+    elif media_type == "application/json":
+        try: json.loads(data.decode("utf-8"), object_pairs_hook=_pairs, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON value: {value}")))
+        except UnicodeDecodeError as exc: raise ValueError("browser JSON evidence is invalid UTF-8") from exc
+    elif media_type == "application/x-ndjson":
+        try: text_value = data.decode("utf-8")
+        except UnicodeDecodeError as exc: raise ValueError("browser JSONL evidence is invalid UTF-8") from exc
+        lines = text_value.splitlines()
+        if not lines or any(not line for line in lines): raise ValueError("browser JSONL evidence contains blank line")
+        for line in lines:
+            json.loads(line, object_pairs_hook=_pairs, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON value: {value}")))
 
 
 def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path, preparation: dict, role_definition: dict) -> dict:
     if len(raw) > RESULT_BYTES_LIMIT: raise ValueError("browser result exceeds size limit")
     value = _load_json_bytes(raw); work = preparation["work_orders"]["browser_journey"]; context = preparation["contexts"]["browser_journey"]
+    receipt = _validate_completion_receipt(_load_json_bytes(receipt_raw), work, raw)
+    receipt_started = _instant(receipt["started_at"], "browser receipt start"); receipt_completed = _instant(receipt["completed_at"], "browser receipt completion")
     fields = {"schema_version", "role_id", "role_version", "preparation_id", "preparation_semantic_hash", "work_order_id", "work_order_hash", "base_graph_generation", "base_graph_semantic_hash", "payload", "assumptions", "limitations"}
     if set(value) != fields or value.get("schema_version") != RESULT_SCHEMAS["browser_journey"] or value.get("role_id") != "browser_journey" or value.get("role_version") != work["role_version"] or value.get("preparation_id") != work["preparation_id"] or value.get("preparation_semantic_hash") != work["preparation_semantic_hash"] or value.get("work_order_id") != work["work_order_id"] or value.get("work_order_hash") != work["work_order_hash"] or value.get("base_graph_generation") != work["inputs"]["base_graph_generation"] or value.get("base_graph_semantic_hash") != work["inputs"]["base_graph_semantic_hash"]: raise ValueError("browser result binding mismatch")
     payload = value["payload"]
@@ -1155,26 +1255,23 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         criteria.append(record)
     if len(criteria) != len(assigned) or {item["criterion_id"] for item in criteria} != set(assigned): raise ValueError("browser result criterion coverage is incomplete")
     allowed_targets = work["permissions"]["browser"]["allowed_targets"]
-    evidence_by_local = {}; evidence_bytes = {}; total = 0
-    if evidence_root.is_symlink() or not evidence_root.is_dir(): raise ValueError("browser evidence directory is invalid")
+    evidence_by_local = {}; evidence_bytes = {}; total = 0; declared_paths = set(); casefolded_paths = set()
     for item in payload["evidence"]:
         required = {"local_id", "observation_local_id", "path", "media_type", "byte_length", "sha256", "capture_timestamp"}
         if not isinstance(item, dict) or set(item) != required or item["media_type"] not in EVIDENCE_MEDIA_TYPES: raise ValueError("invalid browser evidence record")
         local = _text(item["local_id"], "browser evidence local_id", 120)
         if local in seen_local: raise ValueError("duplicate browser local ID")
-        seen_local.add(local); relative = PurePosixPath(item["path"])
-        if relative.is_absolute() or not relative.parts or any(part in {"", ".", ".."} for part in relative.parts): raise ValueError("browser evidence path escapes evidence directory")
-        path = evidence_root.joinpath(*relative.parts)
-        if item["path"] in evidence_bytes or path.is_symlink() or any(parent.is_symlink() for parent in path.parents if parent != evidence_root.parent) or not path.is_file() or path.resolve().parent != evidence_root.resolve() and evidence_root.resolve() not in path.resolve().parents: raise ValueError("browser evidence file is unavailable")
-        data = path.read_bytes(); total += len(data)
+        seen_local.add(local); relative = _evidence_relative_path(item["path"]); folded = relative.as_posix().casefold()
+        if relative.as_posix() in declared_paths or folded in casefolded_paths: raise ValueError("duplicate browser evidence path")
+        declared_paths.add(relative.as_posix()); casefolded_paths.add(folded)
+        captured = _instant(item["capture_timestamp"], "browser evidence timestamp")
+        if not receipt_started <= captured <= receipt_completed: raise ValueError("browser evidence timestamp is outside execution interval")
+        evidence_by_local[local] = item
+    files = _enumerate_evidence_tree(evidence_root, declared_paths)
+    for local, item in evidence_by_local.items():
+        data = files[item["path"]].read_bytes(); total += len(data)
         if not data or len(data) > EVIDENCE_FILE_LIMIT or total > EVIDENCE_TOTAL_LIMIT or type(item["byte_length"]) is not int or item["byte_length"] != len(data) or item["sha256"] != _sha(data): raise ValueError("browser evidence artifact binding mismatch")
-        if item["media_type"].startswith("text/"):
-            try: data.decode("utf-8")
-            except UnicodeDecodeError as exc: raise ValueError("browser text evidence is invalid UTF-8") from exc
-        try: captured = datetime.fromisoformat(item["capture_timestamp"].replace("Z", "+00:00"))
-        except (AttributeError, ValueError) as exc: raise ValueError("invalid browser evidence timestamp") from exc
-        if captured.tzinfo is None: raise ValueError("invalid browser evidence timestamp")
-        evidence_by_local[local] = item; evidence_bytes[item["path"]] = data
+        _validate_evidence_media(data, item["media_type"]); evidence_bytes[item["path"]] = data
     observations = []; observations_by_local = {}
     for item in payload["observations"]:
         required = {"local_id", "criterion_id", "url", "action", "observed_outcome", "redirect_chain", "capture_timestamp", "evidence_local_ids", "evidence_class"}
@@ -1182,14 +1279,19 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         local = _text(item["local_id"], "browser observation local_id", 120)
         if local in seen_local: raise ValueError("duplicate browser local ID")
         seen_local.add(local); _text(item["action"], "browser action", DETAIL_LIMIT); _text(item["observed_outcome"], "browser outcome", DETAIL_LIMIT)
-        if not _url_is_authorized(item["url"], allowed_targets) or not isinstance(item["redirect_chain"], list) or not item["redirect_chain"] or any(not isinstance(url, str) or not _url_is_authorized(url, allowed_targets) for url in item["redirect_chain"]): raise ValueError("browser observation target exceeds grant")
-        try: captured = datetime.fromisoformat(item["capture_timestamp"].replace("Z", "+00:00"))
-        except (AttributeError, ValueError) as exc: raise ValueError("invalid browser observation timestamp") from exc
-        if captured.tzinfo is None: raise ValueError("invalid browser observation timestamp")
-        evidence_ids = _string_list(item["evidence_local_ids"], "browser observation evidence IDs")
+        final_url, _ = _canonical_browser_url(item["url"])
+        chain = item["redirect_chain"]
+        if not isinstance(chain, list) or not chain or len(chain) > MAX_REDIRECT_CHAIN: raise ValueError("invalid browser redirect chain")
+        canonical_chain = [_canonical_browser_url(url)[0] for url in chain]
+        issued = {_canonical_browser_url(target["url"])[0] for target in allowed_targets}
+        if canonical_chain[0] not in issued or chain[-1] != item["url"] or canonical_chain[-1] != final_url or any(not _url_is_authorized(url, allowed_targets) for url in chain): raise ValueError("browser redirect chain exceeds issued authority")
+        captured = _instant(item["capture_timestamp"], "browser observation timestamp")
+        if not receipt_started <= captured <= receipt_completed: raise ValueError("browser observation timestamp is outside execution interval")
+        evidence_ids = _string_list(item["evidence_local_ids"], "browser observation evidence IDs", nonempty=True)
         if len(evidence_ids) != len(set(evidence_ids)) or any(key not in evidence_by_local or evidence_by_local[key]["observation_local_id"] != local or evidence_by_local[key]["capture_timestamp"] != item["capture_timestamp"] for key in evidence_ids): raise ValueError("browser observation evidence linkage is invalid")
         observations_by_local[local] = item; observations.append(item)
-    if set(evidence_by_local) != {key for item in observations for key in item["evidence_local_ids"]}: raise ValueError("unreferenced browser evidence is forbidden")
+    referenced_evidence = [key for item in observations for key in item["evidence_local_ids"]]
+    if set(evidence_by_local) != set(referenced_evidence) or len(referenced_evidence) != len(set(referenced_evidence)): raise ValueError("browser evidence must belong to exactly one observation")
     judgments = []
     for item in payload["judgments"]:
         required = {"local_id", "criterion_id", "observation_local_ids", "conclusion", "uncertainty", "evidence_class"}
@@ -1202,7 +1304,7 @@ def _validate_browser_result(raw: bytes, receipt_raw: bytes, evidence_root: Path
         judgments.append(item)
     assessed = {item["criterion_id"] for item in criteria if item["disposition"] == "assessed"}
     if any(item["criterion_id"] not in assessed for item in observations + judgments): raise ValueError("browser evidence requires assessed criterion")
-    receipt = _validate_completion_receipt(_load_json_bytes(receipt_raw), work, raw)
+    if any(not any(observation["criterion_id"] == criterion_id for observation in observations) for criterion_id in assessed): raise ValueError("assessed browser criterion requires observation")
     assumptions = sorted(_bounded_strings(value["assumptions"], "browser assumptions", ASSUMPTION_LIMIT)); limitations = sorted(_bounded_strings(value["limitations"], "browser limitations", LIMITATION_LIMIT))
     normalized_payload = {"criteria": sorted(criteria, key=lambda item: item["criterion_id"]), "observations": sorted(observations, key=canonical_json), "judgments": sorted(judgments, key=canonical_json), "evidence": sorted(payload["evidence"], key=lambda item: item["path"])}
     def substantive(item):
@@ -1302,7 +1404,7 @@ def _browser_placeholder(preparation: dict) -> dict:
         else:
             status, reason = "not_issued", "no_authorized_browser_target"
         criteria.append({"criterion_id": criterion_id, "status": status, "reason_code": reason, "authorized_targets": targets.get(criterion_id, [])})
-    return {"schema_version": "browser-journey.v2", "work_order_id": entry["work_order_id"], "criteria": criteria, "observations": [], "judgments": []}
+    return {"schema_version": "browser-journey.v3", "work_order_id": entry["work_order_id"], "criteria": criteria, "observations": [], "judgments": []}
 
 
 def _browser_artifact(core: dict) -> dict:
@@ -1387,7 +1489,9 @@ def _build_overlay(core: dict) -> tuple[dict, dict]:
             if node["node_type"] == "assessment_conclusion" and node["assessed_record_id"] == criterion_id:
                 assessment[node["role_id"]] = node["substantive_conclusion"]; authority[node["role_id"]] = node["evidence_class"]
         browser = browser_by_criterion[criterion_id]
-        assessment["browser_journey"] = {"status": browser["status"], "reason_code": browser["reason_code"], "authorized_targets": browser["authorized_targets"], "observation_ids": sorted(observations_by_criterion.get(criterion_id, [])), "judgment_ids": sorted(judgments_by_criterion.get(criterion_id, []))}; authority["browser_journey"] = "browser_observed" if observations_by_criterion.get(criterion_id) else "not_inspected"
+        observation_ids = sorted(observations_by_criterion.get(criterion_id, [])); judgment_ids = sorted(judgments_by_criterion.get(criterion_id, []))
+        assessment["browser_journey"] = {"status": browser["status"], "reason_code": browser["reason_code"], "authorized_targets": browser["authorized_targets"], "observation_ids": observation_ids, "judgment_ids": judgment_ids}
+        authority["browser_journey"] = {"observation_authority": "browser_observed" if observation_ids else "not_inspected", "judgment_authority": "model_reviewed" if judgment_ids else "not_inspected", "observation_ids": observation_ids, "judgment_ids": judgment_ids}
         by_criterion[criterion_id] = {"criterion_id": criterion_id, "base_evidence_state": {"implementation": gap_state.get("implementation_gap", "unknown"), "test": gap_state.get("test_evidence_gap", "unknown"), "instrumentation": gap_state.get("instrumentation_gap", "unknown"), "runtime": gap_state.get("runtime_evidence_gap", "unknown")}, "assessment": assessment, "assessment_authority": authority, "assessment_gap_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "assessment_gap" and node["criterion_id"] == criterion_id), "targeted_test_specification_ids": sorted(node["node_id"] for node in overlay_nodes if node["node_type"] == "targeted_test_specification" and node["criterion_id"] == criterion_id)}
     effective = {"schema_version": EFFECTIVE_VIEW_SCHEMA, "release_id": preparation["manifest"]["release_id"], "base_graph_generation": preparation["manifest"]["graph_generation"], "authority": {"base_graph": "authoritative_evidence_graph", "assessment_overlay": "authoritative_assessment_record", "effective_view": "derived_only"}, "criteria": [by_criterion[key] for key in sorted(by_criterion)]}
     return overlay, effective
@@ -1425,7 +1529,10 @@ def _validate_assessment_artifacts(core: dict, artifacts: dict) -> None:
     effective = artifacts["effective-assessment-view.json"]
     if not isinstance(effective, dict) or set(effective) != {"schema_version","release_id","base_graph_generation","authority","criteria"} or effective.get("schema_version") != EFFECTIVE_VIEW_SCHEMA or effective.get("authority") != {"base_graph":"authoritative_evidence_graph","assessment_overlay":"authoritative_assessment_record","effective_view":"derived_only"}: raise ValueError("effective assessment view schema is invalid")
     for criterion in effective["criteria"]:
-        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or set(criterion["assessment"]) != set(ALL_ROLES) or set(criterion["assessment_authority"]) != set(ALL_ROLES) or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}) or not set(criterion["assessment_authority"].values()).issubset({"model_reviewed","browser_observed","not_inspected"}): raise ValueError("effective assessment criterion schema is invalid")
+        if not isinstance(criterion, dict) or set(criterion) != {"criterion_id","base_evidence_state","assessment","assessment_authority","assessment_gap_ids","targeted_test_specification_ids"} or set(criterion["base_evidence_state"]) != {"implementation","test","instrumentation","runtime"} or set(criterion["assessment"]) != set(ALL_ROLES) or set(criterion["assessment_authority"]) != set(ALL_ROLES) or not set(criterion["base_evidence_state"].values()).issubset({"open","closed","unknown"}): raise ValueError("effective assessment criterion schema is invalid")
+        browser_authority = criterion["assessment_authority"]["browser_journey"]
+        if not isinstance(browser_authority, dict) or set(browser_authority) != {"observation_authority","judgment_authority","observation_ids","judgment_ids"} or browser_authority["observation_authority"] not in {"browser_observed","not_inspected"} or browser_authority["judgment_authority"] not in {"model_reviewed","not_inspected"} or browser_authority["observation_ids"] != criterion["assessment"]["browser_journey"]["observation_ids"] or browser_authority["judgment_ids"] != criterion["assessment"]["browser_journey"]["judgment_ids"]: raise ValueError("effective browser authority schema is invalid")
+        if any(criterion["assessment_authority"][role] not in {"model_reviewed","not_inspected"} for role in CORE_ROLES): raise ValueError("effective core authority schema is invalid")
     expected = _build_assessment_artifacts(core)
     if artifacts != expected: raise ValueError("assessment semantic artifacts are stale")
 
@@ -1473,7 +1580,9 @@ def load_assessment(ctx: LocalExecutionContext, *, _directory: Path | None = Non
     directory = raw_directory.resolve(); manifest_path = directory / "manifest.json"
     if manifest_path.is_symlink() or not manifest_path.is_file() or (pointer is not None and _sha(manifest_path.read_bytes()) != pointer["manifest_hash"]): raise ValueError("invalid assessment manifest binding")
     manifest = _load_json_bytes(manifest_path.read_bytes()); required = {"schema_version","compiler_version","release_id","release_commit","project_authority","preparation_id","preparation_semantic_hash","base_graph_generation","base_graph_semantic_hash","artifact_filenames","artifact_hashes","preparation_snapshot_hashes","result_snapshot_hashes","browser_evidence_snapshot_hashes","semantic_bundle_hash","bundle_hash"}
-    if set(manifest) != required or manifest["schema_version"] != ASSESSMENT_MANIFEST_SCHEMA or manifest["compiler_version"] != ASSESSMENT_COMPILER_VERSION or manifest["bundle_hash"] != content_hash({key: value for key, value in manifest.items() if key != "bundle_hash"}): raise ValueError("assessment manifest invalid or stale")
+    if set(manifest) != required or manifest["schema_version"] != ASSESSMENT_MANIFEST_SCHEMA: raise ValueError("assessment manifest invalid or stale")
+    if manifest["compiler_version"] != ASSESSMENT_COMPILER_VERSION: raise ValueError("stale_assessment_compiler_version")
+    if manifest["bundle_hash"] != content_hash({key: value for key, value in manifest.items() if key != "bundle_hash"}): raise ValueError("assessment manifest invalid or stale")
     snapshot_root = directory / "preparation-snapshot"
     preparation = load_preparation(ctx, manifest["preparation_id"], _directory=snapshot_root)
     if manifest["release_id"] != ctx.release["release_id"] or manifest["release_commit"] != ctx.authority_binding["repository_commit"] or manifest["project_authority"] != preparation["source_packet"]["project_authority"] or manifest["preparation_semantic_hash"] != preparation["manifest"]["preparation_semantic_hash"] or manifest["base_graph_generation"] != preparation["manifest"]["graph_generation"] or manifest["base_graph_semantic_hash"] != preparation["manifest"]["graph_semantic_hash"]: raise ValueError("assessment authority is stale")
@@ -1507,5 +1616,6 @@ def show_assessment(ctx: LocalExecutionContext, criterion_id: str | None = None)
     lines = [f"Assessment generation: {manifest['preparation_id']}", "Authority: base graph authoritative; assessment canonical; effective view derived only"]
     for item in criteria:
         browser = item["assessment"]["browser_journey"]
-        lines.append(f"Criterion: {item['criterion_id']}"); lines.append("Base evidence: " + ", ".join(f"{key}={value}" for key, value in item["base_evidence_state"].items())); lines.append("Assessment roles: " + (", ".join(sorted(item["assessment"])) or "none")); lines.append(f"Browser: {browser['status']} authority={item['assessment_authority']['browser_journey']} observations={','.join(browser['observation_ids']) or 'none'} judgments={','.join(browser['judgment_ids']) or 'none'}"); lines.append("Assessment gaps: " + (", ".join(item["assessment_gap_ids"]) or "none")); lines.append("Targeted tests: " + (", ".join(item["targeted_test_specification_ids"]) or "none"))
+        browser_authority = item["assessment_authority"]["browser_journey"]
+        lines.append(f"Criterion: {item['criterion_id']}"); lines.append("Base evidence: " + ", ".join(f"{key}={value}" for key, value in item["base_evidence_state"].items())); lines.append("Assessment roles: " + (", ".join(sorted(item["assessment"])) or "none")); lines.append(f"Browser: {browser['status']} observation_authority={browser_authority['observation_authority']} judgment_authority={browser_authority['judgment_authority']} observations={','.join(browser_authority['observation_ids']) or 'none'} judgments={','.join(browser_authority['judgment_ids']) or 'none'}"); lines.append("Assessment gaps: " + (", ".join(item["assessment_gap_ids"]) or "none")); lines.append("Targeted tests: " + (", ".join(item["targeted_test_specification_ids"]) or "none"))
     return "\n".join(lines)

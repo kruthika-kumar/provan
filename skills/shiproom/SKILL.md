@@ -1,8 +1,6 @@
 ---
 name: shiproom
 description: Operate an evidence-gated release room for a repository, live URL, product promise, and critical journey.
-version: 0.2.0
-platforms: [windows, linux, macos]
 metadata:
   hermes:
     tags: [release, qa, delegation, github]
@@ -72,9 +70,9 @@ Never use `module_result.v0` for this workflow. Never request or inspect additio
 
 Product, Engineering, test-adequacy, and targeted-test records use only `model_reviewed` or `not_inspected`. Targeted test specifications are recommendations, never test code or evidence. Every assigned record receives one disposition; omission is invalid.
 
-For an issued browser work order, navigate only the exact allowed target set. Record the full redirect chain, final URL, action, outcome, capture time, and bounded evidence hashes. A direct validated observation is `browser_observed`; any interpretation remains `model_reviewed`. Stop and report a scope limitation before leaving the granted origin, effective port, or path. Browser evidence cannot change base graph gaps, close findings, or alter a verdict.
+For an issued `shiproom.work-order.v3` browser work order, return `browser-journey-result.v3`. Navigate only the exact allowed target set. Use absolute ASCII HTTP(S) URLs without fragments; preserve query bytes. Record a redirect chain of at most 16 entries beginning at an issued URL and ending at the final observation URL. Keep every hop inside the granted origin, effective port, and path. Give every assessed criterion an observation, every observation exclusively owned evidence, and every judgment a same-criterion observation. Evidence paths must be casefold-unique POSIX-relative paths and the evidence directory must contain only the declared files. A direct validated observation is `browser_observed`; any interpretation remains `model_reviewed`. Browser evidence cannot change base graph gaps, close findings, or alter a verdict.
 
-The authoritative base graph and canonical assessment overlay remain separate. Treat `effective-assessment-view.v2` as a derived presentation only.
+The authoritative base graph and canonical assessment overlay remain separate. Treat `effective-assessment-view.v3` as a derived presentation only. Preserve its separate `observation_authority`, `judgment_authority`, `observation_ids`, and `judgment_ids`; never report model-reviewed judgment as browser-observed.
 
 ## Historical judged-demo delegation
 

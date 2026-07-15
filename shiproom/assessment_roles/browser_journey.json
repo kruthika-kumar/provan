@@ -1,7 +1,7 @@
 {
   "schema_version": "shiproom.assessment-role.v1",
   "role_id": "browser_journey",
-  "role_version": "2.0.0",
+  "role_version": "3.0.0",
   "mandate": "Observe only authorized release-bound browser targets and report bounded journey observations.",
   "assessment_method": ["Use only exact targets in the issued work order.", "Record navigation, redirects, actions, outcomes, and artifacts.", "Keep observations distinct from reviewer judgments.", "Stop when navigation leaves the granted origin or path."],
   "assigned_record_types": ["acceptance_criterion", "critical_journey"],
@@ -11,7 +11,7 @@
   "gap_taxonomy": [{"gap_kind": "evidence_gap", "aspect_codes": ["primary_journey", "public_route", "scope_boundary"]}],
   "aspect_codes": ["primary_journey", "public_route", "scope_boundary"],
   "forbidden_claims": ["screenshot pixels prove product truth", "browser observation proves implementation", "browser judgment is deterministic evidence", "journey prose authorizes a URL", "the reviewer may navigate outside granted targets"],
-  "required_output_schema": "shiproom.assessment_schemas/browser-journey-result.v2.json",
-  "completion_rules": ["Return observations only for assigned criteria and authorized targets.", "Packet-source references remain model-reviewed provenance and are not browser proof.", "Bind every artifact to one observation.", "Record every redirect.", "Label interpretation model_reviewed and direct observations browser_observed."],
+  "required_output_schema": "shiproom.assessment_schemas/browser-journey-result.v3.json",
+  "completion_rules": ["Return at least one evidence-backed observation for every assessed assigned criterion.", "Return no observations or judgments for non-assessed criteria.", "Packet-source references remain model-reviewed provenance and are not browser proof.", "Bind every artifact to exactly one observation.", "Record at most sixteen authorized redirects, forbid URL fragments, and preserve query bytes.", "Label interpretation model_reviewed and direct observations browser_observed."],
   "reasoning_examples": {"adequate": ["The granted result URL loaded at the same origin and displayed the expected public title; ungranted journey steps were not inspected."], "inadequate": ["The whole journey works because the homepage opened."]}
 }
