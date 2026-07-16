@@ -12,11 +12,13 @@ from .contracts import PREPARATION_COMPILER_VERSION, is_material_recommendation,
 from .guidance import load_guidance_pack
 from .preparation import _review_resolution, load_preparation
 from .results import normalize_result
-from .trust import exact_children, validate_ancestry
+from .trust import ensure_directory, exact_children, safe_entry, validate_ancestry
 
 
 def _atomic(path:Path,value:dict)->None:
-    path.parent.mkdir(parents=True,exist_ok=True); tmp=path.with_name(path.name+".tmp"); tmp.write_bytes(render_json(value)); tmp.replace(path)
+    safe_entry(path.parent,directory=True,label="verifier atomic parent"); tmp=path.with_name(path.name+".tmp")
+    if tmp.exists() or tmp.is_symlink(): safe_entry(tmp,directory=False,label="verifier temporary file")
+    tmp.write_bytes(render_json(value)); tmp.replace(path)
 
 
 def _primary(ctx:LocalExecutionContext,preparation_id:str,role:str)->tuple[dict,dict,bytes,bytes]:
@@ -39,13 +41,13 @@ def prepare_verifier(ctx:LocalExecutionContext,preparation_id:str,role:str,revie
     if resolution["resolved"]!="expert_escalated_review": raise ValueError("verifier participant is not authorized for expert review")
     for participant in resolution["participants"]:
         if participant["type"]=="model" and "skeptical_material_review" not in participant["qualified_capabilities"]: raise ValueError("model verifier lacks skeptical_material_review qualification")
-    verifier_id="verifier_prep_"+uuid.uuid4().hex; work_id=stable_id("verifier_wo",{"primary":result["result_semantic_hash"],"role":role}); trusted=domain_root(ctx)/"verifier-preparations"; trusted.mkdir(exist_ok=True); directory=trusted/verifier_id; directory.mkdir()
+    verifier_id="verifier_prep_"+uuid.uuid4().hex; work_id=stable_id("verifier_wo",{"primary":result["result_semantic_hash"],"role":role}); trusted=ensure_directory(ctx.repository_root,domain_root(ctx)/"verifier-preparations",label="verifier preparations"); directory=ensure_directory(ctx.repository_root,trusted/verifier_id,label="verifier preparation")
     work={"schema_version":"measurement-verifier-work-order.v3","verifier_preparation_id":verifier_id,"verifier_work_order_id":work_id,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"primary_role_id":role,"primary_work_order_id":prep["work_orders"][role]["work_order_id"],"primary_result_semantic_hash":result["result_semantic_hash"],"primary_result_snapshot_hash":result["result_snapshot_hash"],"primary_receipt_snapshot_hash":result["receipt_snapshot_hash"],"primary_snapshot_path":"primary-snapshot/normalized-result.json","material_recommendation_ids":sorted(item["recommendation_id"] for item in material),"required_qualification_capabilities":["skeptical_material_review"],"work_order_hash":""}; work["work_order_hash"]=content_hash({k:v for k,v in work.items() if k!="work_order_hash"})
-    (directory/"primary-snapshot").mkdir(); (directory/"primary-snapshot"/"result.json").write_bytes(raw); (directory/"primary-snapshot"/"completion-receipt.json").write_bytes(receipt); _atomic(directory/"primary-snapshot"/"normalized-result.json",result["normalized"]); _atomic(directory/"work-order.json",work); _atomic(directory/"review-inputs.json",{"review_capabilities":review_capabilities,"permission":permission,"resolution":resolution,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts)})
-    qr=directory/"qualification-receipts"; qr.mkdir()
+    primary=ensure_directory(ctx.repository_root,directory/"primary-snapshot",label="verifier primary snapshot"); (primary/"result.json").write_bytes(raw); (primary/"completion-receipt.json").write_bytes(receipt); _atomic(primary/"normalized-result.json",result["normalized"]); _atomic(directory/"work-order.json",work); _atomic(directory/"review-inputs.json",{"review_capabilities":review_capabilities,"permission":permission,"resolution":resolution,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"qualification_receipts":sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in receipts),key=lambda item:item["qualification_id"])})
+    qr=ensure_directory(ctx.repository_root,directory/"qualification-receipts",label="verifier qualification snapshots")
     for item in receipts: (qr/(item["value"]["qualification_id"]+".json")).write_bytes(item["bytes"])
     manifest={"schema_version":"measurement-verifier-preparation.v3","compiler_version":PREPARATION_COMPILER_VERSION,"verifier_preparation_id":verifier_id,"primary_preparation_id":preparation_id,"primary_role_id":role,"primary_result_semantic_hash":result["result_semantic_hash"],"primary_result_snapshot_hash":result["result_snapshot_hash"],"primary_receipt_snapshot_hash":result["receipt_snapshot_hash"],"work_order_id":work_id,"work_order_snapshot_hash":sha256_bytes(render_json(work)),"review_capabilities_hash":content_hash(review_capabilities),"permission_hash":content_hash(permission),"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"preparation_hash":""}; manifest["preparation_hash"]=content_hash({k:v for k,v in manifest.items() if k!="preparation_hash"}); _atomic(directory/"manifest.json",manifest)
-    inbox=domain_root(ctx)/"verifier-inbox"/verifier_id/work_id; inbox.mkdir(parents=True)
+    inbox=ensure_directory(ctx.repository_root,domain_root(ctx)/"verifier-inbox"/verifier_id/work_id,label="verifier inbox")
     return {"verifier_preparation_id":verifier_id,"work_order":work,"manifest":manifest,"review_resolution":resolution}
 
 
@@ -67,13 +69,16 @@ def _receipt(value:dict,work:dict,result_raw:bytes,resolution:dict)->dict:
 def _load_review(ctx:LocalExecutionContext,directory:Path,prep:dict)->dict:
     inputs=load_json_bytes((directory/"review-inputs.json").read_bytes()); receipts=[]; task_root=directory/"qualification-receipts"
     validate_ancestry(directory,task_root,directory=True,label="measurement AI verifier qualification snapshots")
+    declared={item["qualification_id"]+".json" for item in inputs["qualification_receipts"]}
+    if {path.name for path in task_root.iterdir()}!=declared: raise ValueError("verifier qualification receipt snapshot set mismatch")
     from .qualification import build_qualification_task, load_qualification_receipt
     task=build_qualification_task(prep["guidance"])
     for path in sorted(task_root.iterdir(),key=lambda item:item.name):
         validate_ancestry(task_root,path,directory=False,label="measurement AI verifier qualification receipt")
         receipts.append(load_qualification_receipt(path,task))
     resolution,used=_review_resolution("expert_escalated_review",inputs["review_capabilities"],inputs["permission"],ctx.repository_root,prep["guidance"],receipts)
-    if resolution!=inputs["resolution"] or sorted(item["snapshot_hash"] for item in used)!=inputs["qualification_receipt_hashes"]: raise ValueError("verifier review authority semantic rederivation failed")
+    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in used),key=lambda item:item["qualification_id"])
+    if resolution!=inputs["resolution"] or sorted(item["snapshot_hash"] for item in used)!=inputs["qualification_receipt_hashes"] or used_records!=inputs["qualification_receipts"]: raise ValueError("verifier review authority semantic rederivation failed")
     return resolution
 
 

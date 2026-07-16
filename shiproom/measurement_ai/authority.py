@@ -20,19 +20,13 @@ from .contracts import (
     sha256_bytes, stable_id, validate_relative_path,
 )
 from .trust import validate_ancestry
-
-
-MEASUREMENT_FIELDS = (
-    "decision_question", "decision_use_case", "decision_owner", "decision_timing",
-    "decision_rule_or_interpretation", "intended_outcome", "unit", "unit_of_observation",
-    "eligible_population", "exposure_or_opportunity_definition", "numerator", "denominator",
-    "aggregation_level", "observation_window", "attribution_rule", "expected_direction",
-    "decision_threshold_or_interpretation", "journey_start", "success_condition", "failure_condition",
-    "guardrails", "experiment_exposure", "inference_intent", "outcome_delay",
-    "minimum_maturity_window", "incomplete_observation_possible", "censoring_limitation",
-    "denominator_state", "eligible_denominator_population", "zero_denominator_handling",
-    "release_can_affect_denominator", "definition_state", "execution_state", "data_accuracy_state",
+from .registries import (
+    AGGREGATION_METHODS, DURATION_UNITS, GUARDRAIL_APPLICABILITY,
+    MEASUREMENT_FIELD_SPECS, METRIC_ROLES, TYPED_SOURCE_SUBTYPES, UNIT_KINDS,
 )
+
+
+MEASUREMENT_FIELDS = tuple(MEASUREMENT_FIELD_SPECS)
 AI_IMPORTS = {"openai", "anthropic", "cohere", "google.generativeai", "google.genai", "mistralai"}
 
 
@@ -74,15 +68,68 @@ def default_applicability() -> dict:
     return {
         "schema_version": APPLICABILITY_SCHEMA,
         "measurement": {"requirement_ids": [], "criterion_ids": [], "journey_ids": [], "paths": [], "measurement_definition_paths": [], "contracts": []},
-        "ai": {"requirement_ids": [], "criterion_ids": [], "journey_ids": [], "paths": []},
+        "ai": {"requirement_ids": [], "criterion_ids": [], "journey_ids": [], "paths": [], "linked_sources": []},
     }
+
+
+def _typed_field_value(name: str, value: object) -> None:
+    spec=MEASUREMENT_FIELD_SPECS[name]; kind=spec["kind"]
+    if kind=="text":
+        if not isinstance(value,str) or not value.strip() or len(value)>4096: raise ValueError(f"{name} must be bounded non-empty text")
+    elif kind=="enum":
+        if value not in spec["values"]: raise ValueError(f"invalid {name}")
+    elif kind=="boolean":
+        if not isinstance(value,bool): raise ValueError(f"{name} must be Boolean")
+    elif kind=="unit":
+        require_exact(value,{"label","kind"},name)
+        require_text(value["label"],name+".label",200)
+        if value["kind"] not in UNIT_KINDS: raise ValueError("invalid unit kind")
+    elif kind=="duration":
+        require_exact(value,{"value","unit","anchor"},name)
+        if not isinstance(value["value"],(int,float)) or isinstance(value["value"],bool) or value["value"]<=0: raise ValueError(f"{name}.value must be positive")
+        if value["unit"] not in DURATION_UNITS: raise ValueError(f"invalid {name}.unit")
+        if value["anchor"] is not None: require_text(value["anchor"],name+".anchor",500)
+    elif kind=="exposure":
+        require_exact(value,{"definition","opportunity_unit","varies"},name)
+        require_text(value["definition"],name+".definition",4096); require_text(value["opportunity_unit"],name+".opportunity_unit",500)
+        if not isinstance(value["varies"],bool): raise ValueError("exposure varies must be Boolean")
+    elif kind=="estimand_component":
+        require_exact(value,{"definition","population"},name)
+        require_text(value["definition"],name+".definition",4096); require_text(value["population"],name+".population",4096)
+    elif kind=="aggregation":
+        require_exact(value,{"method","description"},name)
+        if value["method"] not in AGGREGATION_METHODS: raise ValueError("invalid aggregation method")
+        if value["description"] is not None: require_text(value["description"],name+".description",4096)
+    elif kind=="guardrails":
+        if not isinstance(value,list) or len(value)>50: raise ValueError("guardrails must be a bounded list")
+        for item in value:
+            require_exact(item,{"name","definition","applicability"},"guardrail")
+            require_text(item["name"],"guardrail.name",200); require_text(item["definition"],"guardrail.definition",4096)
+            if item["applicability"] not in GUARDRAIL_APPLICABILITY: raise ValueError("invalid guardrail applicability")
+    elif kind=="experiment_exposure":
+        require_exact(value,{"assignment_unit","exposure_event","exposure_timing"},name)
+        for key in value: require_text(value[key],name+"."+key,4096)
+    else: raise ValueError(f"unsupported measurement field type: {name}")
+
+
+def _source_binding(item:dict,label:str)->dict:
+    keys={"path","returned_git_path","git_blob_hash","start_line","end_line","quote","quote_hash","declared_subtype","criterion_ids","journey_ids"}
+    require_exact(item,keys,label); item["path"]=validate_relative_path(item["path"],label+" path")
+    item["returned_git_path"]=validate_relative_path(item["returned_git_path"],label+" returned path")
+    if not re.fullmatch(r"[0-9a-f]{40}",item["git_blob_hash"] or "") or not re.fullmatch(r"sha256:[0-9a-f]{64}",item["quote_hash"] or ""): raise ValueError("invalid typed source hash")
+    if not isinstance(item["start_line"],int) or not isinstance(item["end_line"],int) or item["start_line"]<1 or item["end_line"]<item["start_line"]: raise ValueError("invalid typed source range")
+    require_text(item["quote"],label+" quote",16384)
+    if item["declared_subtype"] not in TYPED_SOURCE_SUBTYPES: raise ValueError("invalid typed source subtype")
+    require_string_list(item["criterion_ids"],label+" criterion IDs"); require_string_list(item["journey_ids"],label+" journey IDs")
+    if not item["criterion_ids"] and not item["journey_ids"]: raise ValueError("typed source binding requires exact scope")
+    return item
 
 
 def validate_applicability(value: dict) -> dict:
     require_exact(value, {"schema_version", "measurement", "ai"}, "measurement AI applicability")
     if value["schema_version"] != APPLICABILITY_SCHEMA: raise ValueError("invalid applicability version")
     measurement = require_exact(value["measurement"], {"requirement_ids", "criterion_ids", "journey_ids", "paths", "measurement_definition_paths", "contracts"}, "measurement applicability")
-    ai = require_exact(value["ai"], {"requirement_ids", "criterion_ids", "journey_ids", "paths"}, "AI applicability")
+    ai = require_exact(value["ai"], {"requirement_ids", "criterion_ids", "journey_ids", "paths", "linked_sources"}, "AI applicability")
     for scope in (measurement, ai):
         for key in ("requirement_ids", "criterion_ids", "journey_ids"):
             require_string_list(scope[key], key)
@@ -108,8 +155,35 @@ def validate_applicability(value: dict) -> dict:
         for name, field in item["fields"].items():
             require_exact(field, {"value", "state"}, f"owner field {name}")
             if field["state"] != "owner_confirmed": raise ValueError("owner declaration fields must be owner_confirmed")
-        if not isinstance(item["metric_roles"], list) or not isinstance(item["required_signals"], list): raise ValueError("invalid metric roles or signals")
+            _typed_field_value(name,field["value"])
+        if not isinstance(item["metric_roles"], list) or len(item["metric_roles"])!=len(set(item["metric_roles"])) or any(role not in METRIC_ROLES for role in item["metric_roles"]): raise ValueError("invalid metric roles")
+        if not isinstance(item["required_signals"], list): raise ValueError("invalid required signals")
+        for signal in item["required_signals"]:
+            require_exact(signal,{"name","required_properties","event_sources","property_sources"},"required signal")
+            require_text(signal["name"],"signal name",200); require_string_list(signal["required_properties"],"required properties")
+            if not isinstance(signal["event_sources"],list) or not isinstance(signal["property_sources"],list): raise ValueError("invalid signal source bindings")
+            for binding in signal["event_sources"]: _source_binding(binding,"event source")
+            for prop in signal["property_sources"]:
+                require_exact(prop,{"property_name","sources"},"property source"); require_text(prop["property_name"],"property name",200)
+                if prop["property_name"] not in signal["required_properties"]: raise ValueError("property source is not a required property")
+                for binding in prop["sources"]: _source_binding(binding,"property source")
+    if not isinstance(ai["linked_sources"],list): raise ValueError("AI linked_sources must be a list")
+    for binding in ai["linked_sources"]: _source_binding(binding,"AI linked source")
+    for contract in measurement["contracts"]: _validate_contract_consistency(contract["fields"])
     return value
+
+
+def _validate_contract_consistency(fields:dict)->None:
+    values={name:item["value"] for name,item in fields.items()}
+    state=values.get("denominator_state")
+    if state=="not_required" and values.get("denominator") is not None: raise ValueError("not-required denominator must be absent")
+    if state=="required_and_defined":
+        required=("numerator","denominator","eligible_denominator_population","zero_denominator_handling","aggregation_level")
+        if any(values.get(name) is None for name in required): raise ValueError("defined denominator contract is incomplete")
+    if state=="required_but_unresolved" and values.get("denominator") is not None: raise ValueError("unresolved denominator cannot be established")
+    aggregation=values.get("aggregation_level")
+    if isinstance(aggregation,dict) and aggregation.get("method") in {"rate","ratio","percentage"}:
+        if state!="required_and_defined": raise ValueError("rate or ratio requires a defined denominator")
 
 
 def _read_release_local_input(ctx: LocalExecutionContext, path_value: str | None, filename: str, default: dict, validator) -> dict:
@@ -137,11 +211,11 @@ def normalize_text(text: str) -> str:
     return text.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
 
 
-def source_record(ctx: LocalExecutionContext, path: str, *, mandatory: bool, rules: list[str], reason: str, provenance: str) -> dict:
+def source_record(ctx: LocalExecutionContext, path: str, *, mandatory: bool, rules: list[str], reason: str, provenance: str, discovery:dict|None=None) -> dict:
     blob = ctx.read_release_blob(path, SOURCE_LIMIT)
     if blob["classification"] != "text" or blob["text"] is None: raise ValueError(f"measurement AI source is not UTF-8 text: {path}")
     text = normalize_text(blob["text"]); raw = text.encode("utf-8")
-    return {"path": blob["path"], "returned_git_path": blob["path"], "git_blob_hash": blob["blob_hash"], "normalized_text_hash": sha256_bytes(raw), "size_bytes": len(raw), "text": text, "mandatory": mandatory, "selection_rule_ids": sorted(set(rules)), "selection_reason": reason, "provenance": provenance}
+    return {"path": blob["path"], "returned_git_path": blob["path"], "git_blob_hash": blob["blob_hash"], "normalized_text_hash": sha256_bytes(raw), "size_bytes": len(raw), "text": text, "mandatory": mandatory, "selection_rule_ids": sorted(set(rules)), "selection_reason": reason, "provenance": provenance,"discovery":discovery}
 
 
 def _node_paths(graph: dict, role: str) -> list[tuple[str, str, str]]:
@@ -165,6 +239,45 @@ def _python_imports(text: str) -> set[str]:
         if isinstance(node, ast.Import): result.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module: result.add(node.module)
     return result
+
+
+def _literal_import_candidates(path:str,text:str)->list[tuple[str,str]]:
+    """Resolve only literal one-hop repository-relative imports."""
+    source=PurePosixPath(path); parent=source.parent; candidates=[]
+    if source.suffix==".py":
+        try: tree=ast.parse(text)
+        except SyntaxError: return []
+        for node in ast.walk(tree):
+            names=[]; statement=ast.get_source_segment(text,node) or "static import"
+            if isinstance(node,ast.Import): names=[alias.name for alias in node.names]
+            elif isinstance(node,ast.ImportFrom):
+                prefix=parent
+                for _ in range(max(node.level-1,0)): prefix=prefix.parent
+                module=(node.module or "").replace(".","/")
+                names=[(prefix/PurePosixPath(module)).as_posix()] if node.level else [module]
+            for name in names:
+                base=name.replace(".","/") if "/" not in name else name
+                for candidate in (base+".py",base+"/__init__.py"):
+                    candidates.append((statement,candidate))
+    elif source.suffix in {".js",".jsx",".mjs",".cjs",".ts",".tsx",".mts",".cts"}:
+        pattern=r"(?:from\s+|require\(|import\()\s*['\"](\.{1,2}/[^'\"]+)['\"]"
+        extensions=(".js",".jsx",".mjs",".cjs",".ts",".tsx",".mts",".cts")
+        for match in re.finditer(pattern,text):
+            raw=match.group(1); base=PurePosixPath(posixpath.normpath((parent/raw).as_posix()))
+            if base.suffix in extensions: candidates.append((match.group(0),base.as_posix()))
+            else:
+                for ext in extensions: candidates.extend(((match.group(0),(base.as_posix()+ext)),(match.group(0),(base/('index'+ext)).as_posix())))
+    return sorted(set(candidates))
+
+
+def _binding_record(ctx:LocalExecutionContext,binding:dict,role:str)->dict:
+    record=source_record(ctx,binding["path"],mandatory=True,rules=["exact_typed_source_binding"],reason="exact typed source binding",provenance="owner_declared_typed_binding")
+    if record["returned_git_path"]!=binding["returned_git_path"] or record["git_blob_hash"]!=binding["git_blob_hash"]: raise ValueError("typed source binding blob mismatch")
+    lines=record["text"].splitlines(); start=binding["start_line"]; end=binding["end_line"]
+    if end>len(lines): raise ValueError("typed source range exceeds source")
+    quote="\n".join(lines[start-1:end])
+    if quote!=binding["quote"] or sha256_bytes(quote.encode("utf-8"))!=binding["quote_hash"]: raise ValueError("typed source quote binding mismatch")
+    return record
 
 
 def _has_ai_import(source: dict) -> bool:
@@ -195,6 +308,12 @@ def select_sources(ctx: LocalExecutionContext, inputs: dict, applicability: dict
         for path, _, classification in graph_paths[role]: seeds[role].append((path, True, "relevant_graph_mapped_path", classification))
         for path in owner_paths[role]: seeds[role].append((path, True, "owner_role_path", "owner_declared"))
     for item in definitions: seeds["measurement"].append((item["path"], True, "measurement_definition_path", "owner_declared"))
+    typed_bindings={role:[] for role in ROLES}
+    for contract in applicability["measurement"]["contracts"]:
+        for signal in contract["required_signals"]:
+            typed_bindings["measurement"].extend(signal["event_sources"])
+            for prop in signal["property_sources"]: typed_bindings["measurement"].extend(prop["sources"])
+    typed_bindings["ai_evaluation"].extend(applicability["ai"]["linked_sources"])
     for role in ROLES:
         for path, mandatory, rule, provenance in seeds[role]:
             try:
@@ -204,12 +323,26 @@ def select_sources(ctx: LocalExecutionContext, inputs: dict, applicability: dict
                 limitations[role].append({"kind":"source_unavailable","path":path,"detail":str(exc)}); continue
             if path in selected[role] and selected[role][path]["git_blob_hash"] != record["git_blob_hash"]: raise ValueError("source selection collision")
             selected[role][path] = record
+        for binding in typed_bindings[role]:
+            record=_binding_record(ctx,binding,role); selected[role][record["path"]]=record
         original = list(selected[role])
+        selected_tests=[]
         for path in original:
             for candidate in _test_candidates(path):
                 if candidate in selected[role]: continue
-                try: selected[role][candidate] = source_record(ctx, candidate, mandatory=False, rules=["exact_test_name_match"], reason=f"test name match for {path}", provenance="discovery_registry")
+                try:
+                    selected[role][candidate] = source_record(ctx, candidate, mandatory=False, rules=["exact_test_name_match"], reason=f"test name match for {path}", provenance="discovery_registry")
+                    selected_tests.append(candidate)
                 except (FileNotFoundError, PermissionError, ValueError): pass
+        # Imports from original seeds are one hop.  Imports from exact tests
+        # are helper/fixture candidates and are never promoted to new seeds.
+        for seed_path in original+selected_tests:
+            seed=selected[role][seed_path]; rule="one_hop_test_helper" if seed_path in selected_tests else "one_hop_static_import"
+            for statement,resolved in _literal_import_candidates(seed_path,seed["text"]):
+                if resolved in selected[role]: continue
+                discovery={"seed_path":seed_path,"import_statement":statement,"resolved_path":resolved,"selection_rule_id":rule,"depth":1}
+                try: selected[role][resolved]=source_record(ctx,resolved,mandatory=False,rules=[rule],reason=f"one-hop import from {seed_path}",provenance="discovery_registry",discovery=discovery)
+                except (FileNotFoundError,PermissionError,ValueError): pass
     output = {}
     for role in ROLES:
         records = sorted(selected[role].values(), key=lambda item: item["path"])
@@ -235,8 +368,11 @@ def build_authority_input(ctx: LocalExecutionContext, applicability: dict, owner
     valid_req = {item["requirement_id"] for item in requirements}; valid_crit = {item["criterion_id"] for item in criteria}; valid_journey = {item["node_id"] for item in journey_nodes}
     for section in (applicability["measurement"], applicability["ai"]):
         if not set(section["requirement_ids"]).issubset(valid_req) or not set(section["criterion_ids"]).issubset(valid_crit) or not set(section["journey_ids"]).issubset(valid_journey): raise ValueError("owner applicability references unknown intent IDs")
+    for binding in applicability["ai"]["linked_sources"]:
+        if not set(binding["criterion_ids"]).issubset(valid_crit) or not set(binding["journey_ids"]).issubset(valid_journey): raise ValueError("typed AI source references unknown intent IDs")
     measurement_applicable = {item["criterion_id"] for item in criteria if "instrumentation" in item["required_evidence_categories"]}
     measurement_candidate = set(); ai_applicable = set(applicability["ai"]["criterion_ids"]); ai_candidate = set()
+    for binding in applicability["ai"]["linked_sources"]: ai_applicable.update(binding["criterion_ids"])
     for edge in graph_edges:
         if edge["relationship"] == "may_be_observed_by" and edge["source_node_id"] in valid_crit:
             if edge["establishment_classification"] == "deterministically_established": measurement_applicable.add(edge["source_node_id"])
@@ -266,7 +402,7 @@ def build_authority_input(ctx: LocalExecutionContext, applicability: dict, owner
         selected = [item for item in effective if item.get("criterion_id") in relevant]
         if selected:
             assessment_dependency = {"state":"required_present","generation":assessment_input["generation"],"semantic_hash":assessment_input["manifest"]["semantic_bundle_hash"]}
-    return {"graph_input":graph_input,"assessment_input":assessment_input,"assessment_dependency":assessment_dependency,"requirements":requirements,"criteria":criteria,"journeys":journey_nodes,"role_scopes":role_scopes,"role_sources":sources,"linked_measurement_definitions":linked_definitions,"unlinked_measurement_definitions":unlinked_definitions}
+    return {"graph_input":graph_input,"assessment_input":assessment_input,"assessment_dependency":assessment_dependency,"requirements":requirements,"criteria":criteria,"journeys":journey_nodes,"role_scopes":role_scopes,"role_sources":sources,"linked_measurement_definitions":linked_definitions,"unlinked_measurement_definitions":unlinked_definitions,"ai_linked_sources":applicability["ai"]["linked_sources"]}
 
 
 def prepared_contracts(authority: dict, applicability: dict) -> list[dict]:
@@ -288,23 +424,29 @@ def prepared_contracts(authority: dict, applicability: dict) -> list[dict]:
                     for outcome in criteria[cid].get("expected_outcomes", []): candidates.append({"value":outcome,"field_state":"source_declared","provenance":"product_intent","source_refs":criteria[cid].get("field_source_refs", {}).get("expected_outcomes", []),"base_ids":[cid]})
             if name == "success_condition":
                 values = [outcome for cid in related for outcome in criteria[cid].get("expected_outcomes", [])]
-                for value in values: candidates.append({"value":value,"field_state":"source_declared","provenance":"product_intent","source_refs":[],"base_ids":related})
+                for cid in related:
+                    for value in criteria[cid].get("expected_outcomes",[]): candidates.append({"value":value,"field_state":"source_declared","provenance":"product_intent","source_refs":criteria[cid].get("field_source_refs",{}).get("expected_outcomes",[]),"base_ids":[cid]})
             if name == "failure_condition":
                 for cid in related:
-                    if criteria[cid].get("failure_behavior") is not None: candidates.append({"value":criteria[cid]["failure_behavior"],"field_state":"source_declared","provenance":"product_intent","source_refs":[],"base_ids":[cid]})
-            unique = {canonical_json(item["value"]): item for item in candidates}
+                    if criteria[cid].get("failure_behavior") is not None: candidates.append({"value":criteria[cid]["failure_behavior"],"field_state":"source_declared","provenance":"product_intent","source_refs":criteria[cid].get("field_source_refs",{}).get("failure_behavior",[]),"base_ids":[cid]})
+            grouped={}
+            for candidate in candidates: grouped.setdefault(canonical_json(candidate["value"]),[]).append(candidate)
             if not candidates: field = {"value":None,"field_state":"unresolved","assertion_scope":"not_inspected","provenance":[],"source_refs":[],"base_ids":[],"competing_values":[],"model_proposals":[]}
-            elif len(unique) == 1:
-                value = next(iter(unique.values())); field = {"value":value["value"],"field_state":value["field_state"],"assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[],"model_proposals":[]}
-            else: field = {"value":None,"field_state":"unresolved","assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[json.loads(key) for key in sorted(unique)],"model_proposals":[]}
+            elif len(grouped) == 1:
+                items=next(iter(grouped.values())); value=items[0]
+                field = {"value":value["value"],"field_state":value["field_state"],"assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in items}),"source_refs":sorted({canonical_json(ref):ref for item in items for ref in item["source_refs"]}.values(),key=canonical_json),"base_ids":sorted({base for item in items for base in item["base_ids"]}),"competing_values":[],"model_proposals":[]}
+            else:
+                competing=[]
+                for key,items in sorted(grouped.items()): competing.append({"value":json.loads(key),"field_state":items[0]["field_state"],"provenance":sorted({item["provenance"] for item in items}),"source_refs":sorted({canonical_json(ref):ref for item in items for ref in item["source_refs"]}.values(),key=canonical_json),"base_ids":sorted({base for item in items for base in item["base_ids"]})})
+                field = {"value":None,"field_state":"unresolved","assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":competing,"model_proposals":[]}
             prepared[name] = field
         signals = []
         owner_signals = owner["required_signals"] if owner else []
         for index, signal in enumerate(owner_signals):
-            if not isinstance(signal, dict) or set(signal) != {"name", "required_properties"}: raise ValueError("invalid owner required signal")
-            signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"name":signal["name"]}),"name":signal["name"],"name_state":"owner_confirmed","required_properties":sorted(signal["required_properties"]),"criterion_ids":related})
+            if not isinstance(signal, dict) or set(signal) != {"name", "required_properties","event_sources","property_sources"}: raise ValueError("invalid owner required signal")
+            signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"name":signal["name"]}),"name":signal["name"],"name_state":"owner_confirmed","required_properties":sorted(signal["required_properties"]),"criterion_ids":related,"event_sources":signal["event_sources"],"property_sources":signal["property_sources"]})
         if not signals:
-            signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"criteria":related}),"name":None,"name_state":"unresolved","required_properties":[],"criterion_ids":related})
+            signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"criteria":related}),"name":None,"name_state":"unresolved","required_properties":[],"criterion_ids":related,"event_sources":[],"property_sources":[]})
         contracts.append({
             "contract_id":stable_id("measurement_contract",{"journey":journey_id,"criteria":related}),
             "journey_id":journey_id,"journey_text":journey["journey_text"],"criterion_ids":related,
@@ -408,4 +550,25 @@ def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[di
             "assertion_scope":"contract_declaration","direct_fact_authority": direct,
             "origin":"owner_declaration" if "owner_confirmed" in states else "product_intent",
             "reference_ids":[contract["contract_id"]],"allowed_relationships": ["supports_conclusion", "supports_warning"]}
+        for signal in contract["required_signals"]:
+            for binding in signal["event_sources"]:
+                _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_event_definition")
+            for prop in signal["property_sources"]:
+                for binding in prop["sources"]:
+                    _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_property_definition",property_name=prop["property_name"])
+    for binding in authority.get("ai_linked_sources",[]):
+        _add_typed_binding(registry,paths,binding,"ai_evaluation",binding["criterion_ids"],binding["declared_subtype"])
+    for item in registry.values():
+        item.setdefault("direct_fact_meaning","The prepared record exists with the stated direct factual authority.")
+        item.setdefault("semantic_assessment_authority","not_performed")
     return sorted(registry.values(), key=lambda item: item["basis_id"]), sorted(paths, key=lambda item: item["path_id"])
+
+
+def _add_typed_binding(registry:dict,paths:list,binding:dict,role:str,criterion_ids:list[str],subtype:str,property_name:str|None=None)->None:
+    scoped=sorted(set(criterion_ids)&set(binding["criterion_ids"]))
+    if not scoped: return
+    bid=stable_id("basis",{"subtype":subtype,"path":binding["path"],"blob":binding["git_blob_hash"],"range":[binding["start_line"],binding["end_line"]],"criteria":scoped,"property":property_name})
+    registry[bid]={"basis_id":bid,"basis_type":subtype,"object_id":property_name or binding["path"],"role_ids":[role],"criterion_ids":scoped,"journey_ids":binding["journey_ids"],"field_state":"owner_confirmed","assertion_scope":"source_definition_claim","direct_fact_authority":"deterministically_established","direct_fact_meaning":"The owner identified this exact source range as the declared typed definition.","semantic_assessment_authority":"not_performed","origin":"owner_declaration","reference_ids":[binding["path"],binding["git_blob_hash"],binding["quote_hash"]],"allowed_relationships":["supports_conclusion","supports_warning"]}
+    for cid in scoped:
+        pid=stable_id("basis_path",{"basis":bid,"criterion":cid,"owner_scope":True})
+        paths.append({"path_id":pid,"role_ids":[role],"criterion_id":cid,"start_basis_id":bid,"steps":[],"required":True,"effective_authority":"deterministically_established"})

@@ -7,6 +7,10 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from shiproom.project import canonical_json, content_hash
+from .registries import (
+    AI_MATURITY_RUNGS, DECISION_USE_CASES, DEFINITION_STATES, DENOMINATOR_STATES,
+    INFERENCE_INTENTS, METRIC_ROLES, ROLE_RESULT_SCHEMAS,
+)
 
 
 PREPARATION_COMPILER_VERSION = "measurement-ai-preparation.v3"
@@ -28,10 +32,7 @@ RECEIPT_SCHEMA = "measurement-ai-completion-receipt.v3"
 
 ROLES = ("measurement", "ai_evaluation")
 ROLE_VERSIONS = {role: "3.0.0" for role in ROLES}
-RESULT_SCHEMAS = {
-    "measurement": "measurement-result.v3",
-    "ai_evaluation": "ai-evaluation-result.v3",
-}
+RESULT_SCHEMAS = ROLE_RESULT_SCHEMAS
 
 CHECK_IDS = (
     "DATA_OUTCOME_EVENT_DEFINED",
@@ -68,14 +69,6 @@ RECOMMENDATION_EFFECTS = {
     "none", "owner_confirmation", "non_blocking_warning", "proposal_only",
     "condition_candidate", "blocker_candidate",
 }
-DECISION_USE_CASES = {
-    "launch_monitoring", "ongoing_kpi", "product_diagnosis", "comparative_noncausal_review",
-    "causal_experiment", "operational_health", "safety_or_quality_guardrail",
-}
-METRIC_ROLES = {"outcome", "diagnostic", "guardrail", "operational_or_data_quality"}
-INFERENCE_INTENTS = {"descriptive", "comparative_noncausal", "causal_experiment", "not_specified"}
-DENOMINATOR_STATES = {"not_required", "required_and_defined", "required_but_unresolved", "not_inspected"}
-DEFINITION_STATES = {"supplied_and_inspected", "declared_external", "not_supplied", "not_inspected"}
 DIMENSION_STATES = {"adequate", "contextual_concern", "material_concern", "insufficient_context", "not_applicable", "not_inspected"}
 NODE_TYPES = {
     "measurement_contract", "metric_definition", "required_signal", "event_candidate",
@@ -104,12 +97,6 @@ CHECK_GAP_REGISTRY = {
     "observability_gap": None,
 }
 
-AI_MATURITY_RUNGS = (
-    "case_candidate", "fixed_input", "oracle_or_rubric", "pass_condition",
-    "journey_or_criterion_linkage", "prompt_or_model_binding", "known_failure",
-    "fallback", "malformed_output", "unavailable_model", "supplied_execution_result",
-    "deterministically_validated_result", "production_trace_linkage",
-)
 
 
 def is_material_recommendation(value: dict) -> bool:

@@ -41,3 +41,27 @@ def exact_children(path: Path, expected: set[str], label: str) -> None:
         info = entry.lstat()
         if entry.is_symlink() or is_reparse(info) or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
             raise ValueError(f"{label} contains an unsafe entry")
+
+
+def ensure_directory(trusted_root:Path,target:Path,*,label:str)->Path:
+    """Create a directory without ever traversing an unsafe existing node."""
+    root=Path(os.path.abspath(trusted_root)); destination=Path(os.path.abspath(target))
+    try: relative=destination.relative_to(root)
+    except ValueError as exc: raise ValueError(f"{label} escapes its trusted root") from exc
+    safe_entry(root,directory=True,label=f"{label} trusted root")
+    current=root
+    for part in relative.parts:
+        current=current/part
+        if current.exists() or current.is_symlink(): safe_entry(current,directory=True,label=label)
+        else:
+            current.mkdir()
+            safe_entry(current,directory=True,label=label)
+    return destination
+
+
+def safe_atomic_path(trusted_root:Path,path:Path,*,label:str)->Path:
+    ensure_directory(trusted_root,path.parent,label=label+" parent")
+    temporary=path.with_name(path.name+".tmp")
+    for candidate in (path,temporary):
+        if candidate.exists() or candidate.is_symlink(): safe_entry(candidate,directory=False,label=label)
+    return temporary

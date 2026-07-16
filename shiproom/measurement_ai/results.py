@@ -11,6 +11,8 @@ from .contracts import (
     semantic_without_local_ids, sha256_bytes, stable_id,
 )
 from .guidance import eligible_rule_ids, rule_map
+from .registries import METRIC_DIMENSIONS as REGISTERED_METRIC_DIMENSIONS, ROLE_RESULT_SCHEMAS, RUNG_BASIS_TYPES
+from .authority import _typed_field_value
 
 
 MEASUREMENT_FIELDS={"local_id","criterion_id","journey_ids","scope_state","disposition","uncertainty","basis_ids","basis_path_ids","conclusion_evidence_class","semantic_review_authority","summary","contract_updates","signal_assessments","metric_dimensions","gaps"}
@@ -19,27 +21,15 @@ RECOMMENDATION_FIELDS={"local_id","criterion_id","recommendation_class","summary
 GAP_FIELDS={"local_id","gap_kind","aspect_code","summary","basis_ids","basis_path_ids"}
 MATURITY_STATES={"established","candidate","not_established","not_inspected","not_applicable"}
 OBSERVABILITY_KINDS={"langfuse","opentelemetry","application_logging","provider_native_tracing","custom_tracing"}
-METRIC_DIMENSIONS={"decision_use_case_alignment","metric_role","outcome_alignment","population","opportunity_exposure","denominator","window","attribution","interpretation_rule","guardrails","inference_intent_alignment"}
+METRIC_DIMENSIONS=set(REGISTERED_METRIC_DIMENSIONS)
 EFFECT_RANK={"none":0,"proposal_only":0,"non_blocking_warning":1,"owner_confirmation":2,"condition_candidate":3,"blocker_candidate":4}
 
 BASIS_TYPES={
-    "event_candidate":{"source_reference","implementation_reference","instrumentation_reference"},
-    "property":{"source_reference","instrumentation_reference"},
+    "event_candidate":{"instrumentation_event_definition"},
+    "property":{"instrumentation_property_definition"},
     "test":{"test_reference"},
     "runtime":{"runtime_evidence"},
-    "case_candidate":{"source_reference","implementation_reference","test_reference"},
-    "fixed_input":{"source_reference","test_reference","ai_fixture"},
-    "oracle_or_rubric":{"source_reference","test_reference","ai_oracle"},
-    "pass_condition":{"source_reference","test_reference","ai_pass_condition"},
-    "journey_or_criterion_linkage":{"source_reference","implementation_reference","test_reference"},
-    "prompt_or_model_binding":{"source_reference","implementation_reference"},
-    "known_failure":{"source_reference","test_reference","runtime_evidence"},
-    "fallback":{"source_reference","test_reference","runtime_evidence"},
-    "malformed_output":{"source_reference","test_reference","runtime_evidence"},
-    "unavailable_model":{"source_reference","test_reference","runtime_evidence"},
-    "supplied_execution_result":{"test_reference","runtime_evidence","ai_execution"},
-    "deterministically_validated_result":{"runtime_evidence","ai_execution"},
-    "production_trace_linkage":{"runtime_evidence","production_trace"},
+    **RUNG_BASIS_TYPES,
     "observability":{"source_reference","implementation_reference","observability_candidate"},
 }
 
@@ -87,8 +77,11 @@ def _typed_authority(item:dict,record:dict,context:dict,role:str,kind:str)->dict
     proxy={"criterion_id":record["criterion_id"],"basis_ids":item["basis_ids"],"basis_path_ids":item["basis_path_ids"]}
     authority=_authority(proxy,context,role); registry={entry["basis_id"]:entry for entry in context["basis_registry"]}
     allowed=BASIS_TYPES[kind]
-    if item.get("state")=="established" and (not item["basis_ids"] or any(registry[bid]["basis_type"] not in allowed for bid in item["basis_ids"])): raise ValueError(f"{kind} requires compatible prepared basis")
-    if item.get("state")=="established" and authority["criterion_scoped_basis_authority"] in {"not_inspected","model_mapped_candidate"}: raise ValueError(f"{kind} cannot be established through weak criterion authority")
+    established=item.get("state")=="established" or kind in {"event_candidate","test","runtime"}
+    if established and (not item["basis_ids"] or any(registry[bid]["basis_type"] not in allowed for bid in item["basis_ids"])): raise ValueError(f"{kind} requires compatible prepared basis")
+    if established and authority["criterion_scoped_basis_authority"] in {"not_inspected","model_mapped_candidate"}: raise ValueError(f"{kind} cannot be established through weak criterion authority")
+    semantic_kinds={"event_candidate","property",*RUNG_BASIS_TYPES}
+    if established and kind in semantic_kinds and record["semantic_review_authority"]=="not_performed": raise ValueError(f"{kind} requires a separate semantic assessment")
     return authority
 
 
@@ -181,7 +174,7 @@ def normalize_result(raw:bytes,receipt_raw:bytes,work:dict,context:dict,guidance
     if len(raw)>RESULT_BYTES_LIMIT: raise ValueError("measurement AI result exceeds byte limit")
     value=load_json_bytes(raw); required={"schema_version","role_id","role_version","preparation_id","work_order_id","base_graph_semantic_hash","resolved_review_mode","records","recommendations","assumptions","limitations"}; require_exact(value,required,"measurement AI result")
     role=work["role_id"]; expected_schema="measurement-result.v3" if role=="measurement" else "ai-evaluation-result.v3"
-    if value["schema_version"]!=expected_schema or value["role_id"]!=role or value["role_version"]!="3.0.0" or value["preparation_id"]!=work["preparation_id"] or value["work_order_id"]!=work["work_order_id"] or value["base_graph_semantic_hash"]!=work["inputs"]["graph_semantic_hash"] or value["resolved_review_mode"]!=work["resolved_review_mode"]: raise ValueError("unbound measurement AI result")
+    if work["required_output"]["schema_version"]!=ROLE_RESULT_SCHEMAS.get(role) or value["schema_version"]!=expected_schema or value["role_id"]!=role or value["role_version"]!="3.0.0" or value["preparation_id"]!=work["preparation_id"] or value["work_order_id"]!=work["work_order_id"] or value["base_graph_semantic_hash"]!=work["inputs"]["graph_semantic_hash"] or value["resolved_review_mode"]!=work["resolved_review_mode"]: raise ValueError("unbound measurement AI result")
     require_string_list(value["assumptions"],"assumptions"); require_string_list(value["limitations"],"limitations")
     if not isinstance(value["records"],list) or not isinstance(value["recommendations"],list): raise ValueError("invalid result collections")
     assigned=set(context["assigned"]["criterion_ids"]); records={}; accepted={"common.assumptions","common.limitations","common.recommendations"}
@@ -195,7 +188,10 @@ def normalize_result(raw:bytes,receipt_raw:bytes,work:dict,context:dict,guidance
         authority=_authority(submitted,context,role)
         if role=="measurement":
             if value["resolved_review_mode"]=="contract_only" and (submitted["contract_updates"] or submitted["metric_dimensions"] or submitted["gaps"]): raise ValueError("contract-only result contains semantic content")
-            for update in submitted["contract_updates"]: require_exact(update,{"local_id","field_name","proposed_value","rationale"},"contract update")
+            for update in submitted["contract_updates"]:
+                require_exact(update,{"local_id","field_name","proposed_value","rationale"},"contract update")
+                if update["field_name"] not in context["prepared_measurement_contracts"][0]["fields"] if context["prepared_measurement_contracts"] else True: raise ValueError("unknown measurement contract field")
+                _typed_field_value(update["field_name"],update["proposed_value"])
             if submitted["contract_updates"]: accepted.add("measurement.contract_updates")
             for signal in submitted["signal_assessments"]:
                 require_exact(signal,{"local_id","signal_id","event_candidates","property_results","tests","runtime_evidence"},"signal assessment")

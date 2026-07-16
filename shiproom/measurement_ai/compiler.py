@@ -5,10 +5,11 @@ from copy import deepcopy
 from .contracts import CHECK_IDS, COMPILER_VERSION, OVERLAY_SCHEMA, effective_basis_class, is_material_recommendation, semantic_without_local_ids, stable_id
 from .overlay import validate_overlay
 from .projection import PROJECTION_REGISTRY, validate_projection_coverage
+from .registries import METRIC_DIMENSIONS
 
 
 PRECEDENCE={"gap":0,"owner_confirmation_required":1,"not_inspected":2,"ready":3,"not_applicable":4}
-DIMENSIONS={"decision_use_case_alignment","metric_role","outcome_alignment","population","opportunity_exposure","denominator","window","attribution","interpretation_rule","guardrails","inference_intent_alignment"}
+DIMENSIONS=set(METRIC_DIMENSIONS)
 
 
 def _contracts_for(prepared:list[dict],cid:str)->list[dict]: return [item for item in prepared if cid in item["criterion_ids"]]

@@ -21,12 +21,14 @@ from .contracts import (
 )
 from .guidance import GUIDANCE_FILES, eligible_rule_ids, load_guidance_pack, load_guidance_pack_from_directory, rule_map
 from .qualification import build_qualification_task, load_qualification_receipt, qualification_store
-from .trust import exact_children, safe_entry, validate_ancestry
+from .trust import ensure_directory, exact_children, safe_entry, validate_ancestry
+from .registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, ROLE_RESULT_SCHEMAS
 
 
 def _atomic(path: Path, value: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+    safe_entry(path.parent,directory=True,label="atomic write parent")
     temporary = path.with_name(path.name + ".tmp")
+    if temporary.exists() or temporary.is_symlink(): safe_entry(temporary,directory=False,label="atomic temporary file")
     temporary.write_bytes(render_json(value)); temporary.replace(path)
 
 
@@ -41,6 +43,11 @@ def _roles() -> dict[str, dict]:
         item = _resource("shiproom.measurement_ai_roles", role + ".v3.json")
         if item["value"].get("role_id") != role or item["value"].get("role_version") != ROLE_VERSIONS[role]:
             raise ValueError("invalid measurement AI role definition")
+        expected_gaps=set(MEASUREMENT_GAP_KINDS if role=="measurement" else AI_GAP_KINDS)
+        if set(item["value"].get("gap_taxonomy",[]))!=expected_gaps or item["value"].get("required_output_schema")!=ROLE_RESULT_SCHEMAS[role]: raise ValueError("measurement AI role registry parity failure")
+        coverage=set(item["value"].get("required_coverage",[]))
+        required=set(METRIC_DIMENSIONS if role=="measurement" else AI_MATURITY_RUNGS)
+        if not required.issubset(coverage): raise ValueError("measurement AI role coverage registry parity failure")
         result[role] = item
     return result
 
@@ -100,7 +107,7 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
         elif review_capabilities.get("executor_type")=="agent_harness":
             require_exact(review_capabilities,{"schema_version","executor_type","active_candidate_id","qualification_receipt_path","configured_candidates","fresh_session_supported","automatic_switch_allowed","cost_disclosure"},"model review capabilities")
             if review_capabilities["automatic_switch_allowed"] is not False: raise ValueError("automatic model switching is forbidden")
-            for item in review_capabilities["configured_candidates"]: require_exact(item,{"candidate_id","provider_id","model_id","qualification_receipt_path"},"configured model candidate")
+            for item in review_capabilities["configured_candidates"]: require_exact(item,{"candidate_id","provider_id","model_id","qualification_id","qualification_snapshot_hash","qualification_receipt_path"},"configured model candidate")
         else: raise ValueError("invalid review capability executor")
         if review_capabilities.get("schema_version")!="measurement-review-capabilities.v3": raise ValueError("invalid review capabilities version")
     if permission is not None:
@@ -108,7 +115,7 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
         if permission["schema_version"]!="measurement-review-permission.v3" or permission["release_id"] is None or not isinstance(permission["expert_review_granted"],bool): raise ValueError("invalid measurement review permission")
         if permission["model_switch"].get("decision") in {"not_requested","declined"}: require_exact(permission["model_switch"],{"decision"},"model switch decision")
         elif permission["model_switch"].get("decision")=="granted":
-            require_exact(permission["model_switch"],{"decision","candidate_id","provider_id","model_id","fresh_session_granted"},"model switch grant")
+            require_exact(permission["model_switch"],{"decision","candidate_id","provider_id","model_id","qualification_id","qualification_snapshot_hash","fresh_session_granted"},"model switch grant")
             if permission["model_switch"]["fresh_session_granted"] is not True: raise ValueError("model switch requires a fresh-session grant")
         else: raise ValueError("invalid model switch decision")
     if requested == "contract_only": return {"requested":requested,"resolved":"contract_only","reason":"requested_contract_only","participants":[]},[]
@@ -126,7 +133,7 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
             chosen_candidate=next((item for item in review_capabilities.get("configured_candidates",[]) if item.get("candidate_id")==active_id),None)
             try:
                 if receipt_bundles is not None:
-                    chosen=next((item for item in supplied.values() if chosen_candidate and item["value"]["provider_id"]==chosen_candidate["provider_id"] and item["value"]["model_id"]==chosen_candidate["model_id"]),None)
+                    chosen=supplied.get(chosen_candidate["qualification_id"]) if chosen_candidate else None
                 else:
                     candidate=Path(receipt_path); candidate=candidate if candidate.is_absolute() else repository_root/candidate
                     validate_ancestry(qualification_store(repository_root),candidate,directory=False,label="qualification receipt")
@@ -138,10 +145,10 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
             candidate=next((item for item in review_capabilities.get("configured_candidates",[]) if item.get("candidate_id")==candidate_id),None)
             if granted and candidate and review_capabilities.get("fresh_session_supported"):
                 grant=permission["model_switch"]
-                if (grant["provider_id"],grant["model_id"])!=(candidate["provider_id"],candidate["model_id"]): raise ValueError("model-switch permission candidate identity mismatch")
+                if (grant["provider_id"],grant["model_id"],grant["qualification_id"],grant["qualification_snapshot_hash"])!=(candidate["provider_id"],candidate["model_id"],candidate["qualification_id"],candidate["qualification_snapshot_hash"]): raise ValueError("model-switch permission candidate identity mismatch")
                 try:
                     if receipt_bundles is not None:
-                        chosen=next((item for item in supplied.values() if item["value"]["provider_id"]==candidate["provider_id"] and item["value"]["model_id"]==candidate["model_id"]),None)
+                        chosen=supplied.get(candidate["qualification_id"])
                     else:
                         path=Path(candidate["qualification_receipt_path"]); path=path if path.is_absolute() else repository_root/path
                         validate_ancestry(qualification_store(repository_root),path,directory=False,label="qualification receipt")
@@ -149,7 +156,7 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
                     chosen_candidate=candidate; switched=True
                 except (ValueError,OSError): chosen=None
         if chosen is not None:
-            if chosen_candidate is None or (chosen["value"]["provider_id"],chosen["value"]["model_id"])!=(chosen_candidate["provider_id"],chosen_candidate["model_id"]): raise ValueError("qualification receipt candidate identity mismatch")
+            if chosen_candidate is None or (chosen["value"]["provider_id"],chosen["value"]["model_id"],chosen["value"]["qualification_id"],chosen["snapshot_hash"])!=(chosen_candidate["provider_id"],chosen_candidate["model_id"],chosen_candidate["qualification_id"],chosen_candidate["qualification_snapshot_hash"]): raise ValueError("qualification receipt candidate identity mismatch")
             if requested=="expert_escalated_review" and not (permission or {}).get("expert_review_granted",False): return {"requested":requested,"resolved":"contract_only","reason":"expert_permission_not_granted","participants":[]},[]
             participant={"type":"model","candidate_id":chosen_candidate["candidate_id"],"provider_id":chosen["value"]["provider_id"],"model_id":chosen["value"]["model_id"],"qualification_id":chosen["value"]["qualification_id"],"qualification_snapshot_hash":chosen["snapshot_hash"],"qualified_capabilities":chosen["value"]["qualified_capabilities"],"model_switch":switched}
             return {"requested":requested,"resolved":requested,"reason":"qualified_model_participant","participants":[participant]},[chosen]
@@ -317,23 +324,26 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     roles=_roles(); discovery=_discovery(); contracts=_contracts(); guidance=load_guidance_pack()
     if permission is not None and permission.get("release_id")!=ctx.release["release_id"]: raise ValueError("measurement review permission release binding mismatch")
     review,receipts=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
-    review_inputs={"requested_mode":review_mode,"review_capabilities":review_capabilities,"permission":permission,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts)}
+    review_inputs={"requested_mode":review_mode,"review_capabilities":review_capabilities,"permission":permission,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"qualification_receipts":sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in receipts),key=lambda item:item["qualification_id"])}
     expected=_build(ctx,prep_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=_owner_paths(owner_paths),review=review,review_inputs=review_inputs,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
-    root=domain_root(ctx); directory=root/"preparations"/prep_id; directory.mkdir(parents=True)
+    root=ensure_directory(ctx.repository_root,domain_root(ctx),label="measurement AI root")
+    directory=ensure_directory(ctx.repository_root,root/"preparations"/prep_id,label="measurement AI preparation")
     _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_inputs":review_inputs,"review_resolution":review,"assessment_dependency":expected["source_packet"]["assessment_dependency"]})
-    receipt_root=directory/"qualification-receipts"; receipt_root.mkdir()
+    receipt_root=ensure_directory(ctx.repository_root,directory/"qualification-receipts",label="qualification receipt snapshots")
     for item in receipts: (receipt_root/(item["value"]["qualification_id"]+".json")).write_bytes(item["bytes"])
     (directory/"capabilities.json").write_bytes(capabilities["bytes"]); (directory/"applicability.json").write_bytes(applicability["bytes"])
     _atomic(directory/"measurement-ai-source-packet.json",expected["source_packet"]); _atomic(directory/"measurement-ai-work-orders.json",expected["manifest"])
     (directory/"source-discovery.v1.json").write_bytes(discovery["bytes"])
-    for role,item in roles.items(): p=directory/"role-definitions"/(role+".json"); p.parent.mkdir(exist_ok=True); p.write_bytes(item["bytes"])
-    for name,item in contracts.items(): p=directory/"contract-schemas"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(item["bytes"])
+    role_root=ensure_directory(ctx.repository_root,directory/"role-definitions",label="role definition snapshots")
+    for role,item in roles.items(): (role_root/(role+".json")).write_bytes(item["bytes"])
+    contract_root=ensure_directory(ctx.repository_root,directory/"contract-schemas",label="contract schema snapshots")
+    for name,item in contracts.items(): (contract_root/name).write_bytes(item["bytes"])
     for name in ("guidance-registry.v2.json","sources.v1.json","recommendation-policy.v2.json","qualification-suite.v2.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
-        p=directory/"guidance-pack"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes())
-    (directory/"role-context").mkdir(exist_ok=True); (directory/"work-orders").mkdir(exist_ok=True)
+        p=ensure_directory(ctx.repository_root,directory/"guidance-pack",label="guidance snapshots")/name; p.write_bytes(resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes())
+    ensure_directory(ctx.repository_root,directory/"role-context",label="role contexts"); ensure_directory(ctx.repository_root,directory/"work-orders",label="work orders")
     for role,context in expected["contexts"].items(): _atomic(directory/"role-context"/(role+".json"),context)
     for role,work in expected["work_orders"].items():
-        p=directory/"work-orders"/(work["work_order_id"]+".json"); _atomic(p,work); (root/"inbox"/prep_id/work["work_order_id"]).mkdir(parents=True,exist_ok=True)
+        p=directory/"work-orders"/(work["work_order_id"]+".json"); _atomic(p,work); ensure_directory(ctx.repository_root,root/"inbox"/prep_id/work["work_order_id"],label="measurement AI inbox")
     _atomic(root/"active-preparation.json",expected["pointer"])
     return {"preparation_id":prep_id,"preparation_semantic_hash":expected["manifest"]["preparation_semantic_hash"],"skip_reason":expected["manifest"]["skip_reason"],"work_orders":expected["manifest"]["work_orders"],"resolved_review_mode":expected["semantic_basis"]["review"]["resolved"]}
 
@@ -363,6 +373,8 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, 
     for name in GUIDANCE_FILES: _safe_entry(guidance_root/name,False,"guidance resource")
     guidance=load_guidance_pack_from_directory(guidance_root)
     receipt_root=directory/"qualification-receipts"; _safe_entry(receipt_root,True,"qualification receipt snapshots")
+    declared_receipts={item["qualification_id"]+".json" for item in inputs["review_inputs"]["qualification_receipts"]}
+    if {path.name for path in receipt_root.iterdir()}!=declared_receipts: raise ValueError("qualification receipt snapshot set is invalid")
     task=build_qualification_task(guidance); receipt_bundles=[]
     for path in sorted(receipt_root.iterdir(),key=lambda item:item.name):
         if not path.name.endswith(".json"): raise ValueError("qualification receipt snapshot set is invalid")
@@ -370,7 +382,8 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, 
     review_inputs=inputs["review_inputs"]
     if review_inputs["permission"] is not None and review_inputs["permission"].get("release_id")!=ctx.release["release_id"]: raise ValueError("measurement review permission release binding mismatch")
     review,_used=_review_resolution(review_inputs["requested_mode"],review_inputs["review_capabilities"],review_inputs["permission"],ctx.repository_root,guidance,receipt_bundles)
-    if sorted(item["snapshot_hash"] for item in _used)!=review_inputs["qualification_receipt_hashes"] or review!=inputs["review_resolution"]: raise ValueError("measurement review resolution semantic rederivation failed")
+    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in _used),key=lambda item:item["qualification_id"])
+    if sorted(item["snapshot_hash"] for item in _used)!=review_inputs["qualification_receipt_hashes"] or used_records!=review_inputs["qualification_receipts"] or review!=inputs["review_resolution"]: raise ValueError("measurement review resolution semantic rederivation failed")
     expected=_build(ctx,preparation_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=inputs["owner_paths"],review=review,review_inputs=review_inputs,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance,assessment_dependency=inputs["assessment_dependency"])
     if stored != expected["manifest"] or (directory/"measurement-ai-work-orders.json").read_bytes()!=render_json(expected["manifest"]):
         differing=sorted(key for key in set(stored)|set(expected["manifest"]) if stored.get(key)!=expected["manifest"].get(key))

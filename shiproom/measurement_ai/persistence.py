@@ -16,6 +16,7 @@ from .contracts import COMPILER_VERSION, GENERATION_POINTER_SCHEMA, MANIFEST_SCH
 from .preparation import load_preparation
 from .results import normalize_result
 from .verifier import load_verifier, validate_embedded_verifier
+from .trust import ensure_directory, safe_entry
 
 
 BEFORE_GENERATION_VERIFY=None
@@ -23,7 +24,9 @@ AFTER_GENERATION_VERIFY=None
 
 
 def _atomic(path:Path,value:dict)->None:
-    path.parent.mkdir(parents=True,exist_ok=True); tmp=path.with_name(path.name+".tmp"); tmp.write_bytes(render_json(value)); tmp.replace(path)
+    safe_entry(path.parent,directory=True,label="generation atomic parent"); tmp=path.with_name(path.name+".tmp")
+    if tmp.exists() or tmp.is_symlink(): safe_entry(tmp,directory=False,label="generation temporary file")
+    tmp.write_bytes(render_json(value)); tmp.replace(path)
 
 
 def _is_reparse(info:os.stat_result)->bool:
@@ -103,7 +106,8 @@ def compile_generation(ctx:LocalExecutionContext,preparation_id:str|None=None,ve
     artifacts=build_artifacts(prep,results,verifiers)
     projections=artifacts["measurement-contract.json"]["accepted_field_projections"]
     artifacts["measurement-ai-compiler-receipts.json"]=_compiler_receipts(results,verifiers,projections)
-    generation="gen_"+uuid.uuid4().hex; directory=root/"generations"/generation; directory.mkdir(parents=True)
+    root=ensure_directory(ctx.repository_root,root,label="measurement AI root")
+    generation="gen_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root/"generations"/generation,label="measurement AI generation")
     _copy_tree(prep["directory"],directory/"preparation-snapshot")
     (directory/"result-snapshots").mkdir()
     result_hashes={}
