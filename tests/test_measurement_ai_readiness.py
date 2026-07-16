@@ -13,7 +13,7 @@ import jsonschema
 from shiproom.measurement_ai.contracts import effective_basis_class
 from shiproom.measurement_ai.guidance import load_guidance_pack, rule_map
 from shiproom.measurement_ai.overlay import evaluate_basis_path, validate_overlay
-from shiproom.measurement_ai.authority import default_applicability, domain_root
+from shiproom.measurement_ai.authority import _literal_import_candidates, _typed_field_value, default_applicability, domain_root
 from shiproom.measurement_ai.preparation import prepare, load_preparation
 from shiproom.measurement_ai.persistence import compile_generation, load_generation
 from shiproom.measurement_ai.rendering import show
@@ -22,6 +22,8 @@ from shiproom.measurement_ai.qualification import build_qualification_task, comp
 from shiproom.measurement_ai.results import normalize_result
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
+from shiproom.measurement_ai.registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_FIELD_SPECS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, PROJECTION_REGISTRY, ROLE_RESULT_SCHEMAS
+from shiproom.measurement_ai.trust import ensure_directory
 import shiproom.measurement_ai.persistence as measurement_persistence
 import shiproom.measurement_ai.authority as measurement_authority
 from scripts.measurement_ai_acceptance_fixture import snapshot_measurement_ai_read_only, assert_measurement_ai_read_only
@@ -86,6 +88,47 @@ def test_overlay_exact_schema_and_reference_validation():
 def test_foundation_json_schemas_parse():
     for name in ("measurement-ai-role.v3.json", "work-order.v6.json", "measurement-ai-overlay.v3.json"):
         assert isinstance(json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(name).read_text()), dict)
+
+
+def test_v3_prerelease_audit_receipt_justifies_in_place_repair():
+    receipt=json.loads((resources.files("shiproom").joinpath("..","tests","measurement_ai_v3_prerelease_audit.json")).read_text())
+    assert receipt["audit_commit"]=="005ac55955ea029725373889b2747b2ccb11ee55"
+    assert receipt["tracked_runtime_artifacts"]==[]
+    assert receipt["release_local_root_state"]=="absent"
+    assert receipt["active_preparation_pointers"]==[] and receipt["active_generation_pointers"]==[]
+    assert receipt["accepted_non_test_v3_preparations"]==[] and receipt["accepted_non_test_v3_generations"]==[]
+
+
+def test_shared_registries_cover_data_practice_ai_roles_and_projections():
+    expected_fields={"decision_question","decision_use_case","decision_owner","decision_timing","decision_rule_or_interpretation","intended_outcome","unit","unit_of_observation","expected_direction","decision_threshold_or_interpretation","eligible_population","exposure_or_opportunity_definition","experiment_exposure","numerator","denominator","denominator_state","eligible_denominator_population","zero_denominator_handling","aggregation_level","release_can_affect_denominator","observation_window","attribution_rule","outcome_delay","minimum_maturity_window","incomplete_observation_possible","censoring_limitation","journey_start","success_condition","failure_condition","guardrails","inference_intent","definition_state","execution_state","data_accuracy_state"}
+    assert set(MEASUREMENT_FIELD_SPECS)==expected_fields
+    assert len(METRIC_DIMENSIONS)==11 and len(AI_MATURITY_RUNGS)==13
+    assert ROLE_RESULT_SCHEMAS=={"measurement":"measurement-result.v3","ai_evaluation":"ai-evaluation-result.v3"}
+    measurement=json.loads(resources.files("shiproom.measurement_ai_roles").joinpath("measurement.v3.json").read_text()); ai=json.loads(resources.files("shiproom.measurement_ai_roles").joinpath("ai_evaluation.v3.json").read_text())
+    assert set(measurement["gap_taxonomy"])==set(MEASUREMENT_GAP_KINDS) and set(METRIC_DIMENSIONS).issubset(measurement["required_coverage"])
+    assert set(ai["gap_taxonomy"])==set(AI_GAP_KINDS) and set(AI_MATURITY_RUNGS).issubset(ai["required_coverage"])
+    assert {"measurement.contract_updates","measurement.signal_assessments.event_candidates","measurement.signal_assessments.property_results","ai_evaluation.maturity_rungs","ai_evaluation.judge_assessments","common.recommendations","common.verifier_dispositions"}.issubset(PROJECTION_REGISTRY)
+
+
+def test_measurement_field_registry_enforces_field_specific_types():
+    _typed_field_value("decision_use_case","launch_monitoring")
+    _typed_field_value("unit",{"label":"customers","kind":"count"})
+    _typed_field_value("observation_window",{"value":7,"unit":"days","anchor":"exposure"})
+    with pytest.raises(ValueError): _typed_field_value("decision_use_case","best_metric")
+    with pytest.raises(ValueError): _typed_field_value("release_can_affect_denominator","false")
+    with pytest.raises(ValueError): _typed_field_value("unit","customers")
+
+
+def test_static_import_selection_is_literal_and_one_hop_only():
+    py=_literal_import_candidates("app/main.py","from .helpers import fixture\nimport app.runtime\n")
+    js=_literal_import_candidates("src/main.ts",'import helper from "./helper"; const cfg=require("./config");')
+    assert ("from .helpers import fixture","app/helpers.py") in py and ("import app.runtime","app/runtime.py") in py
+    assert any(path=="src/helper.ts" for _,path in js) and any(path=="src/config.ts" for _,path in js)
+
+
+def test_trusted_directory_creation_rejects_existing_non_directory_ancestor(tmp_path):
+    root=tmp_path/"repo"; root.mkdir(); (root/"blocked").write_text("not a directory")
+    with pytest.raises(ValueError,match="unsafe"): ensure_directory(root,root/"blocked"/"child",label="attack path")
 
 
 def test_all_committed_v1_resources_are_byte_identical_to_db2b984():

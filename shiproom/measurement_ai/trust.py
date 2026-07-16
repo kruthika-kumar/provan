@@ -65,3 +65,29 @@ def safe_atomic_path(trusted_root:Path,path:Path,*,label:str)->Path:
     for candidate in (path,temporary):
         if candidate.exists() or candidate.is_symlink(): safe_entry(candidate,directory=False,label=label)
     return temporary
+
+
+def write_bytes_safe(trusted_root:Path,path:Path,data:bytes,*,label:str)->None:
+    """Write a new/regular file only through validated trusted ancestry."""
+    ensure_directory(trusted_root,path.parent,label=label+" parent")
+    if path.exists() or path.is_symlink(): safe_entry(path,directory=False,label=label)
+    path.write_bytes(data)
+
+
+def replace_bytes_safe(trusted_root:Path,path:Path,data:bytes,*,label:str)->None:
+    temporary=safe_atomic_path(trusted_root,path,label=label)
+    temporary.write_bytes(data)
+    safe_entry(temporary,directory=False,label=label+" temporary")
+    if path.exists() or path.is_symlink(): safe_entry(path,directory=False,label=label)
+    temporary.replace(path)
+
+
+def repository_root_for(path:Path)->Path:
+    """Return the lexical repository root without resolving filesystem links."""
+    absolute=Path(os.path.abspath(path))
+    for candidate in (absolute,*absolute.parents):
+        marker=candidate/".git"
+        if marker.exists() and marker.is_dir():
+            safe_entry(candidate,directory=True,label="repository root")
+            return candidate
+    raise ValueError("trusted repository root was not found")

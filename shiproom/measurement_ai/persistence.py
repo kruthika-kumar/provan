@@ -16,7 +16,7 @@ from .contracts import COMPILER_VERSION, GENERATION_POINTER_SCHEMA, MANIFEST_SCH
 from .preparation import load_preparation
 from .results import normalize_result
 from .verifier import load_verifier, validate_embedded_verifier
-from .trust import ensure_directory, safe_entry
+from .trust import ensure_directory, replace_bytes_safe, repository_root_for, safe_entry, write_bytes_safe
 
 
 BEFORE_GENERATION_VERIFY=None
@@ -24,9 +24,7 @@ AFTER_GENERATION_VERIFY=None
 
 
 def _atomic(path:Path,value:dict)->None:
-    safe_entry(path.parent,directory=True,label="generation atomic parent"); tmp=path.with_name(path.name+".tmp")
-    if tmp.exists() or tmp.is_symlink(): safe_entry(tmp,directory=False,label="generation temporary file")
-    tmp.write_bytes(render_json(value)); tmp.replace(path)
+    replace_bytes_safe(repository_root_for(path),path,render_json(value),label="generation atomic write")
 
 
 def _is_reparse(info:os.stat_result)->bool:
@@ -55,8 +53,8 @@ def validate_trusted_ancestry(root:Path,path:Path,*,directory:bool,label:str)->N
         else: _safe_directory(current,label)
 
 
-def _copy_tree(source:Path,target:Path)->None:
-    _safe_directory(source,"snapshot root"); target.mkdir()
+def _copy_tree(source:Path,target:Path,trusted_root:Path)->None:
+    _safe_directory(source,"snapshot root"); ensure_directory(trusted_root,target,label="snapshot target")
     seen=set()
     def visit(src:Path,dst:Path,prefix:str="")->None:
         for entry in sorted(src.iterdir(),key=lambda p:p.name):
@@ -64,8 +62,8 @@ def _copy_tree(source:Path,target:Path)->None:
             if folded in seen: raise ValueError("snapshot contains case-fold duplicate paths")
             seen.add(folded); info=entry.lstat()
             if entry.is_symlink() or _is_reparse(info): raise ValueError("snapshot contains a link or reparse point")
-            if stat.S_ISDIR(info.st_mode): dst_child=dst/entry.name; dst_child.mkdir(); visit(entry,dst_child,relative)
-            elif stat.S_ISREG(info.st_mode): (dst/entry.name).write_bytes(entry.read_bytes())
+            if stat.S_ISDIR(info.st_mode): dst_child=dst/entry.name; ensure_directory(trusted_root,dst_child,label="snapshot directory"); visit(entry,dst_child,relative)
+            elif stat.S_ISREG(info.st_mode): write_bytes_safe(trusted_root,dst/entry.name,entry.read_bytes(),label="snapshot file")
             else: raise ValueError("snapshot contains a special file")
     visit(source,target)
 
@@ -108,15 +106,15 @@ def compile_generation(ctx:LocalExecutionContext,preparation_id:str|None=None,ve
     artifacts["measurement-ai-compiler-receipts.json"]=_compiler_receipts(results,verifiers,projections)
     root=ensure_directory(ctx.repository_root,root,label="measurement AI root")
     generation="gen_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root/"generations"/generation,label="measurement AI generation")
-    _copy_tree(prep["directory"],directory/"preparation-snapshot")
-    (directory/"result-snapshots").mkdir()
+    _copy_tree(prep["directory"],directory/"preparation-snapshot",ctx.repository_root)
+    ensure_directory(ctx.repository_root,directory/"result-snapshots",label="result snapshots")
     result_hashes={}
     for role,result in results.items():
-        target=directory/"result-snapshots"/role; target.mkdir(parents=True); (target/"result.json").write_bytes(result["raw_result"]); (target/"completion-receipt.json").write_bytes(result["raw_receipt"]); _atomic(target/"normalized-result.json",result["normalized"])
+        target=ensure_directory(ctx.repository_root,directory/"result-snapshots"/role,label="role result snapshot"); write_bytes_safe(ctx.repository_root,target/"result.json",result["raw_result"],label="result snapshot"); write_bytes_safe(ctx.repository_root,target/"completion-receipt.json",result["raw_receipt"],label="receipt snapshot"); _atomic(target/"normalized-result.json",result["normalized"])
         result_hashes[role]={"semantic_hash":result["result_semantic_hash"],"snapshot_hash":result["result_snapshot_hash"],"completion_receipt_snapshot_hash":result["receipt_snapshot_hash"]}
     verifier_hashes={}
     for verifier_id,verifier in verifiers.items():
-        target=directory/"verifier-snapshots"/verifier_id; target.mkdir(parents=True); _copy_tree(root/"verifier-preparations"/verifier_id,target/"preparation"); inbox=root/"verifier-inbox"/verifier_id/verifier["work_order"]["verifier_work_order_id"]; _copy_tree(inbox,target/"result")
+        target=ensure_directory(ctx.repository_root,directory/"verifier-snapshots"/verifier_id,label="verifier snapshot"); _copy_tree(root/"verifier-preparations"/verifier_id,target/"preparation",ctx.repository_root); inbox=root/"verifier-inbox"/verifier_id/verifier["work_order"]["verifier_work_order_id"]; _copy_tree(inbox,target/"result",ctx.repository_root)
         verifier_hashes[verifier_id]={"semantic_hash":verifier["semantic_hash"],"snapshot_hash":verifier["result_snapshot_hash"],"completion_receipt_snapshot_hash":verifier["receipt_snapshot_hash"]}
     artifact_hashes={}
     for name,value in artifacts.items(): _atomic(directory/name,value); artifact_hashes[name]={"snapshot_hash":sha256_bytes((directory/name).read_bytes())}

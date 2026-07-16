@@ -21,15 +21,12 @@ from .contracts import (
 )
 from .guidance import GUIDANCE_FILES, eligible_rule_ids, load_guidance_pack, load_guidance_pack_from_directory, rule_map
 from .qualification import build_qualification_task, load_qualification_receipt, qualification_store
-from .trust import ensure_directory, exact_children, safe_entry, validate_ancestry
+from .trust import ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
 from .registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, ROLE_RESULT_SCHEMAS
 
 
 def _atomic(path: Path, value: dict) -> None:
-    safe_entry(path.parent,directory=True,label="atomic write parent")
-    temporary = path.with_name(path.name + ".tmp")
-    if temporary.exists() or temporary.is_symlink(): safe_entry(temporary,directory=False,label="atomic temporary file")
-    temporary.write_bytes(render_json(value)); temporary.replace(path)
+    replace_bytes_safe(repository_root_for(path),path,render_json(value),label="measurement AI atomic write")
 
 
 def _resource(package: str, name: str) -> dict:
@@ -330,16 +327,16 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     directory=ensure_directory(ctx.repository_root,root/"preparations"/prep_id,label="measurement AI preparation")
     _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_inputs":review_inputs,"review_resolution":review,"assessment_dependency":expected["source_packet"]["assessment_dependency"]})
     receipt_root=ensure_directory(ctx.repository_root,directory/"qualification-receipts",label="qualification receipt snapshots")
-    for item in receipts: (receipt_root/(item["value"]["qualification_id"]+".json")).write_bytes(item["bytes"])
-    (directory/"capabilities.json").write_bytes(capabilities["bytes"]); (directory/"applicability.json").write_bytes(applicability["bytes"])
+    for item in receipts: write_bytes_safe(ctx.repository_root,receipt_root/(item["value"]["qualification_id"]+".json"),item["bytes"],label="qualification snapshot")
+    write_bytes_safe(ctx.repository_root,directory/"capabilities.json",capabilities["bytes"],label="capability snapshot"); write_bytes_safe(ctx.repository_root,directory/"applicability.json",applicability["bytes"],label="applicability snapshot")
     _atomic(directory/"measurement-ai-source-packet.json",expected["source_packet"]); _atomic(directory/"measurement-ai-work-orders.json",expected["manifest"])
-    (directory/"source-discovery.v1.json").write_bytes(discovery["bytes"])
+    write_bytes_safe(ctx.repository_root,directory/"source-discovery.v1.json",discovery["bytes"],label="discovery snapshot")
     role_root=ensure_directory(ctx.repository_root,directory/"role-definitions",label="role definition snapshots")
-    for role,item in roles.items(): (role_root/(role+".json")).write_bytes(item["bytes"])
+    for role,item in roles.items(): write_bytes_safe(ctx.repository_root,role_root/(role+".json"),item["bytes"],label="role snapshot")
     contract_root=ensure_directory(ctx.repository_root,directory/"contract-schemas",label="contract schema snapshots")
-    for name,item in contracts.items(): (contract_root/name).write_bytes(item["bytes"])
+    for name,item in contracts.items(): write_bytes_safe(ctx.repository_root,contract_root/name,item["bytes"],label="contract snapshot")
     for name in ("guidance-registry.v2.json","sources.v1.json","recommendation-policy.v2.json","qualification-suite.v2.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
-        p=ensure_directory(ctx.repository_root,directory/"guidance-pack",label="guidance snapshots")/name; p.write_bytes(resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes())
+        p=ensure_directory(ctx.repository_root,directory/"guidance-pack",label="guidance snapshots")/name; write_bytes_safe(ctx.repository_root,p,resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes(),label="guidance snapshot")
     ensure_directory(ctx.repository_root,directory/"role-context",label="role contexts"); ensure_directory(ctx.repository_root,directory/"work-orders",label="work orders")
     for role,context in expected["contexts"].items(): _atomic(directory/"role-context"/(role+".json"),context)
     for role,work in expected["work_orders"].items():

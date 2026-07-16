@@ -6,7 +6,7 @@ from shiproom.project import content_hash
 
 from .contracts import load_json_bytes, render_json, require_exact, require_string_list, require_text, sha256_bytes, stable_id
 from .guidance import load_guidance_pack
-from .trust import ensure_directory, safe_entry, validate_ancestry
+from .trust import ensure_directory, replace_bytes_safe, safe_entry, validate_ancestry
 
 
 TASK_SCHEMA="measurement-reviewer-qualification-task.v3"
@@ -50,8 +50,8 @@ def load_qualification_receipt(path:Path,task:dict)->dict:
 
 
 def prepare_qualification(repository_root:Path)->dict:
-    task=build_qualification_task(load_guidance_pack()); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); (store/"qualification-task.v3.json").write_bytes(render_json(task)); return task
+    task=build_qualification_task(load_guidance_pack()); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); replace_bytes_safe(repository_root,store/"qualification-task.v3.json",render_json(task),label="qualification task"); return task
 
 
 def compile_qualification(repository_root:Path,result_path:Path)->dict:
-    guidance=load_guidance_pack(); task=build_qualification_task(guidance); raw=result_path.read_bytes(); value=load_json_bytes(raw); receipt=grade_qualification_result(value,task,sha256_bytes(raw)); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); (store/(receipt["qualification_id"]+".json")).write_bytes(render_json(receipt)); return receipt
+    guidance=load_guidance_pack(); task=build_qualification_task(guidance); raw=result_path.read_bytes(); value=load_json_bytes(raw); receipt=grade_qualification_result(value,task,sha256_bytes(raw)); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); replace_bytes_safe(repository_root,store/(receipt["qualification_id"]+".json"),render_json(receipt),label="qualification receipt"); return receipt
