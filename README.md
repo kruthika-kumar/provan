@@ -33,12 +33,18 @@ After Product Intent and the Requirement-to-Evidence Graph are current, prepare 
 
 ```powershell
 shiproom measurement-ai prepare --release release-state/release.json --review-mode contract_only
-# Complete only the issued measurement-result.v1 / ai-evaluation-result.v1 work orders.
+# Complete only the issued measurement-result.v2 / ai-evaluation-result.v2 work orders.
 shiproom measurement-ai compile --release release-state/release.json
 shiproom measurement-ai show --release release-state/release.json
 ```
 
 The capability answers whether the release can measure its promised outcome, distinguish success from failure, and evaluate AI behavior separately and honestly. It has exactly two portable roles: `measurement` and `ai_evaluation`. `contract_only` performs deterministic structure/provenance checks. `guided_review` applies only the immutable 13-rule Measurement Guidance Pack; model participants require a capability-specific qualification receipt, while guided humans use the same rules and effect ceilings without Shiproom certifying their expertise. `expert_escalated_review` additionally requires permission and a skeptical verifier. Shiproom never switches models silently.
+
+New preparations use `shiproom.work-order.v5`, `shiproom.measurement-ai-role.v2` (`2.0.0`), and the v2 result/artifact contracts. Reviewers cite compiler-issued basis and criterion-path IDs; they never submit factual classifications. Criterion factual authority is derived in this order: an uninspected required step, a candidate relationship, a fully deterministic path, then a fully source-backed path. Reviewer and curated-guidance authority are always shown separately and never strengthen the factual basis.
+
+Expert review is explicitly staged. First complete and validate the primary role result. Then issue `shiproom measurement-ai verifier prepare --release <release> --preparation <prep_id> --role <role>`. The immutable verifier preparation binds the primary semantic hash, result byte hash, and receipt byte hash. Complete its separate result and receipt, then pass its preparation ID to the final compile with `--verifier-preparation`. Changing the primary submission invalidates the verifier output.
+
+Guidance eligibility is calculated by Python from closed predicates over the prepared packet. A reviewer may cite only eligible rules and must disposition every registered exception. Unknown material exceptions require abstention or owner confirmation. Model qualification is mechanically graded by capability; free-text persuasiveness is not a qualification signal. Provider, model, harness, and executor identity remain provenance and do not affect substantive assessment IDs.
 
 Guidance constrains reviewer reasoning; it is not project proof. Every formal warning needs separate project and guidance bases, considers documented exceptions, and remains within the packaged recommendation-effect ceiling. Counts are not categorically wrong, ratios are not automatically better, and insufficient context leads to abstention or owner confirmation. Owner/source fields are never overwritten by model proposals.
 

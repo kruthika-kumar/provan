@@ -5,7 +5,7 @@ from datetime import datetime
 from shiproom.project import content_hash
 
 from .contracts import (
-    DIMENSION_STATES, DISPOSITIONS, RESULT_BYTES_LIMIT, SEMANTIC_REVIEW_AUTHORITIES,
+    DIMENSION_STATES, DISPOSITIONS, RECOMMENDATION_CLASSES, RECOMMENDATION_EFFECTS, RESULT_BYTES_LIMIT, SEMANTIC_REVIEW_AUTHORITIES,
     UNCERTAINTIES, effective_basis_class, load_json_bytes, require_exact,
     require_string_list, semantic_without_local_ids, sha256_bytes, stable_id,
 )
@@ -18,6 +18,9 @@ RECOMMENDATION_FIELDS={"local_id","criterion_id","recommendation_class","summary
 GAP_FIELDS={"gap_kind","aspect_code","summary","basis_ids","basis_path_ids","requested_effect"}
 GAP_KINDS={"measurement_contract_gap","instrumentation_mapping_gap","critical_property_gap","metric_decision_gap","fixed_eval_gap","failure_case_gap","version_traceability_gap","claim_authority_gap","observability_gap"}
 EFFECT_RANK={"none":0,"proposal_only":0,"non_blocking_warning":1,"owner_confirmation":2,"condition_candidate":3,"blocker_candidate":4}
+MATURITY_STATES={"established","candidate","not_established","not_inspected","not_applicable"}
+MATURITY_KEYS={"case_candidate","fixed_input","oracle_or_rubric","pass_condition","journey_or_criterion_linkage","prompt_or_model_binding","known_failure","supplied_execution_result","deterministically_validated_result","production_trace_linkage"}
+OBSERVABILITY_KINDS={"langfuse","opentelemetry","application_logging","provider_native_tracing","custom_tracing"}
 
 
 def _semantic_hash(role:str,version:str,graph_hash:str,normalized:dict)->str:
@@ -82,6 +85,8 @@ def _validate_gap(gap:dict,record:dict,context:dict,role:str)->dict:
 
 def _validate_recommendation(item:dict,record:dict,context:dict,role:str,guidance:dict,mode:str)->dict:
     require_exact(item,RECOMMENDATION_FIELDS,"measurement recommendation")
+    if item["recommendation_class"] not in RECOMMENDATION_CLASSES or item["requested_effect"] not in RECOMMENDATION_EFFECTS or not isinstance(item["abstained"],bool): raise ValueError("invalid recommendation enum")
+    if role=="ai_evaluation" and item["recommendation_class"]=="contextual_metric_proposal": raise ValueError("AI review cannot propose a product metric")
     if item["criterion_id"]!=record["criterion_id"]: raise ValueError("recommendation criterion mismatch")
     proxy={"criterion_id":record["criterion_id"],"basis_ids":item["basis_ids"],"basis_path_ids":item["basis_path_ids"]}
     authority=_authority(proxy,context,role)
@@ -137,6 +142,33 @@ def normalize_result(raw:bytes,receipt_raw:bytes,work:dict,context:dict,guidance
             forbidden=(submitted["contract_updates"] or submitted["metric_dimensions"]) if role=="measurement" else submitted["claims"]
             if forbidden or submitted["semantic_review_authority"]!="not_performed": raise ValueError("contract-only result contains semantic review content")
         if role=="measurement" and any(item.get("state") not in DIMENSION_STATES for item in submitted["metric_dimensions"]): raise ValueError("invalid metric dimension")
+        if role=="measurement":
+            for update in submitted["contract_updates"]:
+                require_exact(update,{"field_name","proposed_value","rationale"},"contract update")
+            for signal in submitted["signal_assessments"]:
+                require_exact(signal,{"signal_id","event_candidate_basis_ids","property_results","test_basis_ids","runtime_basis_ids"},"signal assessment")
+                for key in ("event_candidate_basis_ids","test_basis_ids","runtime_basis_ids"): _authority({"criterion_id":cid,"basis_ids":signal[key],"basis_path_ids":[]},context,role)
+                for prop in signal["property_results"]:
+                    require_exact(prop,{"property_name","state","basis_ids"},"signal property result")
+                    if prop["state"] not in {"present","missing","unresolved","not_inspected"}: raise ValueError("invalid signal property state")
+                    _authority({"criterion_id":cid,"basis_ids":prop["basis_ids"],"basis_path_ids":[]},context,role)
+            seen_dimensions=set()
+            for dimension in submitted["metric_dimensions"]:
+                require_exact(dimension,{"dimension","state","rationale"},"metric dimension")
+                if dimension["dimension"] in seen_dimensions: raise ValueError("duplicate metric dimension")
+                seen_dimensions.add(dimension["dimension"])
+        else:
+            if set(submitted["ai_maturity"])!=MATURITY_KEYS or any(value not in MATURITY_STATES for value in submitted["ai_maturity"].values()): raise ValueError("invalid AI maturity record")
+            claim_ids=set()
+            for claim in submitted["claims"]:
+                require_exact(claim,{"claim_id","statement","presented_as_proof","basis_ids","basis_path_ids"},"AI claim")
+                if claim["claim_id"] in claim_ids or not isinstance(claim["presented_as_proof"],bool): raise ValueError("invalid AI claim")
+                claim_ids.add(claim["claim_id"]); _authority({"criterion_id":cid,"basis_ids":claim["basis_ids"],"basis_path_ids":claim["basis_path_ids"]},context,role)
+            candidate_ids=set()
+            for candidate in submitted["observability_candidates"]:
+                require_exact(candidate,{"candidate_id","kind","basis_ids","supported_dimensions"},"observability candidate")
+                if candidate["candidate_id"] in candidate_ids or candidate["kind"] not in OBSERVABILITY_KINDS: raise ValueError("invalid observability candidate")
+                candidate_ids.add(candidate["candidate_id"]); require_string_list(candidate["supported_dimensions"],"observability dimensions"); _authority({"criterion_id":cid,"basis_ids":candidate["basis_ids"],"basis_path_ids":[]},context,role)
         authority=_authority(submitted,context,role)
         gaps=[_validate_gap(gap,submitted,context,role) for gap in submitted["gaps"]]
         records[cid]={**submitted,"gaps":sorted(gaps,key=lambda x:(x["gap_kind"],x["aspect_code"])),"compiled_authority":authority}

@@ -76,9 +76,13 @@ The authoritative base graph and canonical assessment overlay remain separate. T
 
 ## Private Measurement & AI Readiness protocol
 
-Consume exactly one `shiproom.work-order.v4` role packet for `measurement` or `ai_evaluation`. Never request additional files, execute commands/models/SQL/evals, inspect a data platform, mutate state, or submit top-level readiness status or forged owner/source/runtime authority. Return the exact v1 result schema named by the work order plus a separate completion receipt.
+Consume exactly one `shiproom.work-order.v5` role packet for `measurement` or `ai_evaluation`. Follow the snapshotted `shiproom.measurement-ai-role.v2` method. Never request additional files, execute commands/models/SQL/evals, inspect a data platform, mutate state, or submit top-level readiness status, factual classifications, arbitrary graph paths, or forged owner/source/runtime authority. Return the exact v2 result schema named by the work order plus a separate completion receipt.
 
 Keep factual basis and reviewer authority separate. A source or runtime fact reached through a candidate criterion path remains candidate context; guided or dual review changes only reviewer authority. Measurement fields from owners or canonical sources cannot be overwritten by a model proposal.
+
+Use only compiler-issued basis IDs and criterion-path IDs. Python derives factual authority with `not_inspected` before `model_mapped_candidate`, then fully deterministic and fully source-backed paths. Cite a guidance rule only when the packet marks it eligible, disposition every registered exception, and abstain or ask the owner when a material exception is unknown. Curated guidance constrains review; it is never project evidence.
+
+For `expert_escalated_review`, complete the primary work order first. A later immutable verifier work order binds the validated primary semantic hash, result snapshot hash, and receipt snapshot hash. The verifier challenges material recommendations and cannot choose or overwrite a metric. Submit verifier output only to its separate verifier inbox; mutation of the primary submission invalidates it.
 
 In `contract_only`, report structural completeness, provenance/conflicts, bounded instrumentation mapping, and owner questions only. For guided semantic advice, cite an exact snapshotted guidance rule and an exact project basis, consider its exceptions, respect its effect ceiling, and abstain when context is insufficient. Never impose a ratio, denominator, window, cohort, attribution rule, or guardrail. Guidance is a review method, not evidence that the project is defective.
 

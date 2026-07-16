@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import stat
 import uuid
 from importlib import resources
 from pathlib import Path
@@ -17,9 +18,9 @@ from .contracts import (
     PREPARATION_COMPILER_VERSION, PREPARATION_POINTER_SCHEMA, RECEIPT_SCHEMA,
     RESULT_SCHEMAS, REVIEW_MODES, ROLE_CONTEXT_SCHEMA, ROLE_VERSIONS, ROLES,
     SOURCE_PACKET_SCHEMA, WORK_ORDER_SCHEMA, WORK_ORDERS_SCHEMA, load_json_bytes,
-    render_json, sha256_bytes, stable_id, validate_relative_path, work_order_hash,
+    render_json, require_exact, sha256_bytes, stable_id, validate_relative_path, work_order_hash,
 )
-from .guidance import load_guidance_pack
+from .guidance import GUIDANCE_FILES, load_guidance_pack, load_guidance_pack_from_directory
 from .qualification import build_qualification_task, load_qualification_receipt
 
 
@@ -48,8 +49,7 @@ def _discovery() -> dict:
     return _resource("shiproom.measurement_ai_roles", "source-discovery.v1.json")
 
 
-def _contracts() -> dict[str, dict]:
-    names = (
+CONTRACT_NAMES = (
         "work-order.v5.json", "measurement-result.v2.json", "ai-evaluation-result.v2.json",
         "measurement-ai-source-packet.v2.json", "measurement-ai-role-context.v2.json",
         "measurement-ai-work-orders.v2.json", "measurement-ai-overlay.v2.json",
@@ -58,10 +58,22 @@ def _contracts() -> dict[str, dict]:
         "measurement-ai-compiler-receipts.v2.json", "portable-measurement-ai-manifest.v2.json",
         "measurement-verifier-preparation.v2.json", "measurement-verifier-work-order.v2.json",
         "measurement-verifier-result.v2.json",
-    )
-    result = {name: _resource("shiproom.measurement_ai_schemas", name) for name in names}
+)
+
+
+def _contracts() -> dict[str, dict]:
+    result = {name: _resource("shiproom.measurement_ai_schemas", name) for name in CONTRACT_NAMES}
     result["assessment-completion-receipt.v2.json"] = _resource("shiproom.assessment_schemas", "assessment-completion-receipt.v2.json")
     return result
+
+
+def _safe_entry(path:Path,directory:bool,label:str)->None:
+    info=path.lstat(); reparse=bool(getattr(info,"st_file_attributes",0)&getattr(stat,"FILE_ATTRIBUTE_REPARSE_POINT",0x400))
+    if path.is_symlink() or reparse or (not stat.S_ISDIR(info.st_mode) if directory else not stat.S_ISREG(info.st_mode)): raise ValueError(f"unsafe {label}")
+
+
+def _read_safe(path:Path,label:str)->bytes:
+    _safe_entry(path,False,label); return path.read_bytes()
 
 
 def _owner_paths(values: list[str] | None) -> dict[str, list[str]]:
@@ -79,6 +91,21 @@ def _owner_paths(values: list[str] | None) -> dict[str, list[str]]:
 
 def _review_resolution(requested: str, review_capabilities: dict | None, permission: dict | None, repository_root:Path, guidance:dict) -> dict:
     if requested not in REVIEW_MODES: raise ValueError("invalid measurement review mode")
+    if review_capabilities is not None:
+        if review_capabilities.get("executor_type")=="human":
+            require_exact(review_capabilities,{"schema_version","executor_type","reviewer_label"},"human review capabilities")
+        elif review_capabilities.get("executor_type")=="agent_harness":
+            require_exact(review_capabilities,{"schema_version","executor_type","active_candidate_id","qualification_receipt_path","configured_candidates","fresh_session_supported","automatic_switch_allowed","cost_disclosure"},"model review capabilities")
+            if review_capabilities["automatic_switch_allowed"] is not False: raise ValueError("automatic model switching is forbidden")
+            for item in review_capabilities["configured_candidates"]: require_exact(item,{"candidate_id","provider_id","model_id","qualification_receipt_path"},"configured model candidate")
+        else: raise ValueError("invalid review capability executor")
+        if review_capabilities.get("schema_version")!="measurement-review-capabilities.v2": raise ValueError("invalid review capabilities version")
+    if permission is not None:
+        require_exact(permission,{"schema_version","release_id","expert_review_granted","model_switch"},"measurement review permission")
+        if permission["schema_version"]!="measurement-review-permission.v2" or not isinstance(permission["expert_review_granted"],bool): raise ValueError("invalid measurement review permission")
+        if permission["model_switch"].get("decision") in {"not_requested","declined"}: require_exact(permission["model_switch"],{"decision"},"model switch decision")
+        elif permission["model_switch"].get("decision")=="granted": require_exact(permission["model_switch"],{"decision","candidate_id","fresh_session_required"},"model switch grant")
+        else: raise ValueError("invalid model switch decision")
     if requested == "contract_only": return {"requested":requested,"resolved":"contract_only","reason":"requested_contract_only","participants":[]}
     # A human may complete guided review using the bound pack without model qualification.
     if review_capabilities and review_capabilities.get("executor_type") == "human":
@@ -122,8 +149,12 @@ def _issue_role(authority: dict, role: str) -> bool:
 
 
 def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bundle: dict, applicability_bundle: dict,
-           owner_paths: dict, review: dict, roles: dict, discovery: dict, contracts: dict, guidance: dict) -> dict:
+           owner_paths: dict, review: dict, roles: dict, discovery: dict, contracts: dict, guidance: dict,
+           assessment_dependency:dict|None=None) -> dict:
     authority = build_authority_input(ctx, applicability_bundle["value"], owner_paths)
+    if assessment_dependency is not None:
+        if assessment_dependency.get("state")=="not_used": authority["assessment_dependency"]={"state":"not_used","generation":None,"semantic_hash":None}
+        elif authority["assessment_dependency"]!=assessment_dependency: raise ValueError("consumed portable assessment dependency is stale")
     prepared = prepared_contracts(authority, applicability_bundle["value"])
     basis_registry, basis_paths = build_basis_registry(authority, prepared)
     issued = [role for role in ROLES if _issue_role(authority, role)]
@@ -220,7 +251,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     roles=_roles(); discovery=_discovery(); contracts=_contracts(); guidance=load_guidance_pack(); review=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
     expected=_build(ctx,prep_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=_owner_paths(owner_paths),review=review,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
     root=domain_root(ctx); directory=root/"preparations"/prep_id; directory.mkdir(parents=True)
-    _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_resolution":review})
+    _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_resolution":review,"assessment_dependency":expected["source_packet"]["assessment_dependency"]})
     (directory/"capabilities.json").write_bytes(capabilities["bytes"]); (directory/"applicability.json").write_bytes(applicability["bytes"])
     _atomic(directory/"measurement-ai-source-packet.json",expected["source_packet"]); _atomic(directory/"measurement-ai-work-orders.json",expected["manifest"])
     (directory/"source-discovery.v1.json").write_bytes(discovery["bytes"])
@@ -228,6 +259,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     for name,item in contracts.items(): p=directory/"contract-schemas"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(item["bytes"])
     for name in ("guidance-registry.v2.json","sources.v1.json","recommendation-policy.v2.json","qualification-suite.v2.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
         p=directory/"guidance-pack"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes())
+    (directory/"role-context").mkdir(exist_ok=True); (directory/"work-orders").mkdir(exist_ok=True)
     for role,context in expected["contexts"].items(): _atomic(directory/"role-context"/(role+".json"),context)
     for role,work in expected["work_orders"].items():
         p=directory/"work-orders"/(work["work_order_id"]+".json"); _atomic(p,work); (root/"inbox"/prep_id/work["work_order_id"]).mkdir(parents=True,exist_ok=True)
@@ -239,32 +271,42 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, 
     root=domain_root(ctx); pointer=None
     if directory is None and preparation_id is None:
         p=root/"active-preparation.json"
-        if p.is_symlink() or not p.is_file(): raise ValueError("active measurement AI preparation unavailable")
-        pointer=load_json_bytes(p.read_bytes()); preparation_id=pointer.get("preparation_id")
+        try: pointer=load_json_bytes(_read_safe(p,"active measurement AI preparation pointer"))
+        except FileNotFoundError as exc: raise ValueError("active measurement AI preparation unavailable") from exc
+        preparation_id=pointer.get("preparation_id")
     if not isinstance(preparation_id,str) or not re.fullmatch(r"prep_[0-9a-f]{32}",preparation_id): raise ValueError("invalid measurement AI preparation ID")
     directory=directory or root/"preparations"/preparation_id
-    if directory.is_symlink() or not directory.is_dir(): raise ValueError("invalid measurement AI preparation directory")
-    stored=load_json_bytes((directory/"measurement-ai-work-orders.json").read_bytes())
+    _safe_entry(directory,True,"measurement AI preparation directory")
+    stored=load_json_bytes(_read_safe(directory/"measurement-ai-work-orders.json","preparation manifest"))
     if stored.get("compiler_version") != PREPARATION_COMPILER_VERSION: raise ValueError("stale_measurement_ai_preparation_compiler_version")
-    inputs=load_json_bytes((directory/"preparation-inputs.json").read_bytes()); capabilities={"value":load_json_bytes((directory/"capabilities.json").read_bytes()),"bytes":(directory/"capabilities.json").read_bytes()}; applicability={"value":load_json_bytes((directory/"applicability.json").read_bytes()),"bytes":(directory/"applicability.json").read_bytes()}
-    roles={role:_resource_from_bytes(role+".json",(directory/"role-definitions"/(role+".json")).read_bytes()) for role in ROLES}
-    discovery=_resource_from_bytes("source-discovery.v1.json",(directory/"source-discovery.v1.json").read_bytes())
-    contracts={p.name:_resource_from_bytes(p.name,p.read_bytes()) for p in (directory/"contract-schemas").iterdir() if p.is_file()}
-    guidance=load_guidance_pack(); expected=_build(ctx,preparation_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=inputs["owner_paths"],review=inputs["review_resolution"],roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
+    inputs=load_json_bytes(_read_safe(directory/"preparation-inputs.json","preparation inputs")); cap_raw=_read_safe(directory/"capabilities.json","capabilities"); app_raw=_read_safe(directory/"applicability.json","applicability"); capabilities={"value":load_json_bytes(cap_raw),"bytes":cap_raw}; applicability={"value":load_json_bytes(app_raw),"bytes":app_raw}
+    role_root=directory/"role-definitions"; _safe_entry(role_root,True,"role definitions"); expected_role_files={role+".json" for role in ROLES}
+    if {p.name for p in role_root.iterdir()}!=expected_role_files: raise ValueError("role definition snapshot set is invalid")
+    roles={role:_resource_from_bytes(role+".json",_read_safe(role_root/(role+".json"),"role definition")) for role in ROLES}
+    discovery=_resource_from_bytes("source-discovery.v1.json",_read_safe(directory/"source-discovery.v1.json","source discovery registry"))
+    contract_root=directory/"contract-schemas"; _safe_entry(contract_root,True,"contract schema directory"); expected_contracts=set(CONTRACT_NAMES)|{"assessment-completion-receipt.v2.json"}
+    if {p.name for p in contract_root.iterdir()}!=expected_contracts: raise ValueError("contract schema snapshot set is invalid")
+    contracts={name:_resource_from_bytes(name,_read_safe(contract_root/name,"contract schema")) for name in sorted(expected_contracts)}
+    guidance_root=directory/"guidance-pack"; _safe_entry(guidance_root,True,"guidance pack")
+    if {p.name for p in guidance_root.iterdir()}!=set(GUIDANCE_FILES): raise ValueError("guidance snapshot set is invalid")
+    for name in GUIDANCE_FILES: _safe_entry(guidance_root/name,False,"guidance resource")
+    guidance=load_guidance_pack_from_directory(guidance_root); expected=_build(ctx,preparation_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=inputs["owner_paths"],review=inputs["review_resolution"],roles=roles,discovery=discovery,contracts=contracts,guidance=guidance,assessment_dependency=inputs["assessment_dependency"])
     if stored != expected["manifest"] or (directory/"measurement-ai-work-orders.json").read_bytes()!=render_json(expected["manifest"]):
         differing=sorted(key for key in set(stored)|set(expected["manifest"]) if stored.get(key)!=expected["manifest"].get(key))
         raise ValueError("measurement AI preparation semantic rederivation failed: "+",".join(differing))
-    if (directory/"measurement-ai-source-packet.json").read_bytes()!=render_json(expected["source_packet"]): raise ValueError("measurement AI source packet semantic rederivation failed")
-    expected_files={role+".json" for role in expected["contexts"]}; context_root=directory/"role-context"; actual={p.name for p in context_root.iterdir()} if context_root.exists() else set()
+    if _read_safe(directory/"measurement-ai-source-packet.json","source packet")!=render_json(expected["source_packet"]): raise ValueError("measurement AI source packet semantic rederivation failed")
+    expected_files={role+".json" for role in expected["contexts"]}; context_root=directory/"role-context"; _safe_entry(context_root,True,"role context directory"); actual={p.name for p in context_root.iterdir()}
     if actual != expected_files: raise ValueError("measurement AI role context set mismatch")
     for role,context in expected["contexts"].items():
-        if (context_root/(role+".json")).read_bytes()!=render_json(context): raise ValueError("measurement AI role context semantic rederivation failed")
-    work_root=directory/"work-orders"; actual_work={p.name for p in work_root.iterdir()} if work_root.exists() else set(); expected_work={w["work_order_id"]+".json" for w in expected["work_orders"].values()}
+        if _read_safe(context_root/(role+".json"),"role context")!=render_json(context): raise ValueError("measurement AI role context semantic rederivation failed")
+    work_root=directory/"work-orders"; _safe_entry(work_root,True,"work-order directory"); actual_work={p.name for p in work_root.iterdir()}; expected_work={w["work_order_id"]+".json" for w in expected["work_orders"].values()}
     if actual_work != expected_work: raise ValueError("measurement AI work-order set mismatch")
     for work in expected["work_orders"].values():
-        if (work_root/(work["work_order_id"]+".json")).read_bytes()!=render_json(work): raise ValueError("measurement AI work order semantic rederivation failed")
+        if _read_safe(work_root/(work["work_order_id"]+".json"),"work order")!=render_json(work): raise ValueError("measurement AI work order semantic rederivation failed")
+    expected_top={"preparation-inputs.json","capabilities.json","applicability.json","measurement-ai-source-packet.json","measurement-ai-work-orders.json","source-discovery.v1.json","role-definitions","contract-schemas","guidance-pack","role-context","work-orders"}
+    if {p.name for p in directory.iterdir()}!=expected_top: raise ValueError("measurement AI preparation file set mismatch")
     if pointer is not None and pointer != expected["pointer"]: raise ValueError("measurement AI preparation pointer binding is stale")
-    return {"directory":directory,**expected,"contracts":contracts,"capabilities":capabilities["value"],"applicability":applicability["value"]}
+    return {"directory":directory,**expected,"contracts":contracts,"guidance":guidance,"capabilities":capabilities["value"],"applicability":applicability["value"]}
 
 
 def _resource_from_bytes(name: str, raw: bytes) -> dict:

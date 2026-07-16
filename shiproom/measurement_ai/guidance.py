@@ -16,9 +16,17 @@ GUIDANCE_FILES = (
 
 
 def load_guidance_pack() -> dict:
+    return _load_guidance(lambda name: resources.files(GUIDANCE_PACKAGE).joinpath(name).read_bytes())
+
+
+def load_guidance_pack_from_directory(directory) -> dict:
+    return _load_guidance(lambda name: (directory / name).read_bytes())
+
+
+def _load_guidance(reader) -> dict:
     snapshots = {}
     for name in GUIDANCE_FILES:
-        raw = resources.files(GUIDANCE_PACKAGE).joinpath(name).read_bytes()
+        raw = reader(name)
         snapshots[name] = {
             "bytes": raw,
             "snapshot_hash": sha256_bytes(raw),
@@ -90,6 +98,8 @@ def evaluate_trigger(trigger: dict, facts: dict[str, object]) -> bool:
     if operator == "absent": return not present
     if operator == "state_is":
         actual = actual.get("field_state") if isinstance(actual, dict) else actual
+    elif isinstance(actual, dict) and "value" in actual:
+        actual = actual["value"]
     expected = trigger.get("value")
     if operator in {"equals", "state_is"}: return actual == expected
     if operator == "not_equals": return actual != expected

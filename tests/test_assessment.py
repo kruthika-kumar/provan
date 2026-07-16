@@ -401,6 +401,9 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     assert str(project).lower() not in imported.lower() and "site-packages" in imported.lower()
     subprocess.run([str(command),"assessment","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
     subprocess.run([str(command),"measurement-ai","prepare","--release",str(release_path),"--review-mode","contract_only"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    subprocess.run([str(command),"measurement-ai","compile","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    shown=subprocess.run([str(command),"measurement-ai","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout
+    assert "Measurement & AI Readiness" in shown and "no_applicable_measurement_or_ai_surface" in shown
 
 
 def test_browser_placeholders_are_criterion_specific():

@@ -13,7 +13,6 @@ from shiproom.project import content_hash
 from .authority import domain_root
 from .compiler import build_artifacts
 from .contracts import COMPILER_VERSION, GENERATION_POINTER_SCHEMA, MANIFEST_SCHEMA, load_json_bytes, render_json, sha256_bytes
-from .guidance import load_guidance_pack
 from .preparation import load_preparation
 from .results import normalize_result
 from .verifier import load_verifier, validate_embedded_verifier
@@ -57,7 +56,7 @@ def _copy_tree(source:Path,target:Path)->None:
 
 
 def _read_results(ctx:LocalExecutionContext,prep:dict,root:Path)->dict:
-    result={}; guidance=load_guidance_pack()
+    result={}; guidance=prep["guidance"]
     expected={work["work_order_id"] for work in prep["work_orders"].values()}
     inbox=root/"inbox"/prep["manifest"]["preparation_id"]
     if inbox.exists():
@@ -89,6 +88,7 @@ def compile_generation(ctx:LocalExecutionContext,preparation_id:str|None=None,ve
     artifacts["measurement-ai-compiler-receipts.json"]={"schema_version":"measurement-ai-compiler-receipts.v2","compiler_version":COMPILER_VERSION,"validations":[{"kind":"primary_result","role_id":role,"semantic_hash":value["result_semantic_hash"]} for role,value in sorted(results.items())]+[{"kind":"verifier_result","verifier_preparation_id":key,"semantic_hash":value["semantic_hash"]} for key,value in sorted(verifiers.items())]}
     generation="gen_"+uuid.uuid4().hex; directory=root/"generations"/generation; directory.mkdir(parents=True)
     _copy_tree(prep["directory"],directory/"preparation-snapshot")
+    (directory/"result-snapshots").mkdir()
     result_hashes={}
     for role,result in results.items():
         target=directory/"result-snapshots"/role; target.mkdir(parents=True); (target/"result.json").write_bytes(result["raw_result"]); (target/"completion-receipt.json").write_bytes(result["raw_receipt"]); _atomic(target/"normalized-result.json",result["normalized"])
@@ -108,15 +108,22 @@ def compile_generation(ctx:LocalExecutionContext,preparation_id:str|None=None,ve
 
 
 def load_generation_directory(ctx:LocalExecutionContext,directory:Path)->tuple[dict,dict]:
-    if directory.is_symlink() or not directory.is_dir() or not re.fullmatch(r"gen_[0-9a-f]{32}",directory.name): raise ValueError("invalid measurement AI generation")
-    manifest_path=directory/"manifest.json"; manifest=load_json_bytes(manifest_path.read_bytes())
+    if not re.fullmatch(r"gen_[0-9a-f]{32}",directory.name): raise ValueError("invalid measurement AI generation")
+    _safe_directory(directory,"measurement AI generation")
+    manifest_path=directory/"manifest.json"; _safe_file(manifest_path,"measurement AI manifest"); manifest=load_json_bytes(manifest_path.read_bytes())
     if manifest.get("compiler_version")!=COMPILER_VERSION: raise ValueError("stale_measurement_ai_compiler_version")
     if manifest.get("release_id")!=ctx.release["release_id"] or manifest.get("release_commit")!=ctx.authority_binding["repository_commit"]: raise ValueError("stale measurement AI release binding")
     prep=load_preparation(ctx,manifest["preparation_id"],directory=directory/"preparation-snapshot")
     if manifest["preparation_semantic_hash"]!=prep["manifest"]["preparation_semantic_hash"]: raise ValueError("measurement AI preparation binding mismatch")
-    results={}; guidance=load_guidance_pack()
+    results={}; guidance=prep["guidance"]
+    result_root=directory/"result-snapshots"; _safe_directory(result_root,"embedded result snapshot root")
+    if {p.name for p in result_root.iterdir()}!=set(prep["work_orders"]): raise ValueError("embedded result role set mismatch")
     for role,work in prep["work_orders"].items():
-        root=directory/"result-snapshots"/role; raw=(root/"result.json").read_bytes(); receipt=(root/"completion-receipt.json").read_bytes(); result=normalize_result(raw,receipt,work,prep["contexts"][role],guidance)
+        root=directory/"result-snapshots"/role
+        _safe_directory(root,"embedded role result");
+        if {p.name for p in root.iterdir()}!={"result.json","completion-receipt.json","normalized-result.json"}: raise ValueError("embedded role result file set mismatch")
+        for name in ("result.json","completion-receipt.json","normalized-result.json"): _safe_file(root/name,"embedded role result file")
+        raw=(root/"result.json").read_bytes(); receipt=(root/"completion-receipt.json").read_bytes(); result=normalize_result(raw,receipt,work,prep["contexts"][role],guidance)
         if (root/"normalized-result.json").read_bytes()!=render_json(result["normalized"]): raise ValueError("measurement AI normalized result tamper")
         results[role]=result
     # Verifier snapshots are immutable comparison values; their bindings are
@@ -134,18 +141,23 @@ def load_generation_directory(ctx:LocalExecutionContext,directory:Path)->tuple[d
     expected=build_artifacts(prep,results,verifiers); expected["measurement-ai-compiler-receipts.json"]={"schema_version":"measurement-ai-compiler-receipts.v2","compiler_version":COMPILER_VERSION,"validations":[{"kind":"primary_result","role_id":role,"semantic_hash":value["result_semantic_hash"]} for role,value in sorted(results.items())]+[{"kind":"verifier_result","verifier_preparation_id":key,"semantic_hash":value["semantic_hash"]} for key,value in sorted(verifiers.items())]}; artifact_hashes={}
     for name,value in expected.items():
         path=directory/name
-        if not path.is_file() or path.read_bytes()!=render_json(value): raise ValueError("measurement AI semantic rederivation failed")
+        _safe_file(path,"measurement AI artifact")
+        if path.read_bytes()!=render_json(value): raise ValueError("measurement AI semantic rederivation failed")
         artifact_hashes[name]=sha256_bytes(path.read_bytes())
     result_hashes={role:{"result_semantic_hash":r["result_semantic_hash"],"result_snapshot_hash":r["result_snapshot_hash"],"completion_receipt_snapshot_hash":r["receipt_snapshot_hash"]} for role,r in results.items()}
     verifier_hashes=manifest.get("verifier_hashes",{})
     expected_manifest={**manifest,"result_hashes":result_hashes,"verifier_hashes":verifier_hashes,"artifact_hashes":artifact_hashes,"semantic_bundle_hash":content_hash({"preparation":prep["manifest"]["preparation_semantic_hash"],"results":result_hashes,"verifiers":verifier_hashes,"artifacts":expected,"compiler":COMPILER_VERSION}),"bundle_hash":""}; expected_manifest["bundle_hash"]=content_hash({k:v for k,v in expected_manifest.items() if k!="bundle_hash"})
     if manifest!=expected_manifest or manifest_path.read_bytes()!=render_json(expected_manifest): raise ValueError("measurement AI manifest semantic rederivation failed")
+    expected_top={"manifest.json","preparation-snapshot","result-snapshots",*expected}
+    if verifier_hashes: expected_top.add("verifier-snapshots")
+    if {p.name for p in directory.iterdir()}!=expected_top: raise ValueError("measurement AI generation file set mismatch")
     return manifest,expected
 
 
 def load_generation(ctx:LocalExecutionContext)->tuple[dict,dict]:
     root=domain_root(ctx); path=root/"current-generation.json"
-    if path.is_symlink() or not path.is_file(): raise ValueError("measurement AI generation unavailable")
+    try: _safe_file(path,"measurement AI generation pointer")
+    except FileNotFoundError as exc: raise ValueError("measurement AI generation unavailable") from exc
     pointer=load_json_bytes(path.read_bytes()); generation=pointer.get("generation")
     if set(pointer)!={"schema_version","generation","manifest_snapshot_hash","semantic_bundle_hash"} or pointer["schema_version"]!=GENERATION_POINTER_SCHEMA or not isinstance(generation,str): raise ValueError("invalid measurement AI pointer")
     directory=root/"generations"/generation; manifest,artifacts=load_generation_directory(ctx,directory)
