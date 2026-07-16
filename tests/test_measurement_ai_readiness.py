@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import hashlib
 import subprocess
+import socket
+import urllib.request
 from importlib import resources
 
 import pytest
@@ -16,7 +18,7 @@ from shiproom.measurement_ai.preparation import prepare, load_preparation
 from shiproom.measurement_ai.persistence import compile_generation, load_generation
 from shiproom.measurement_ai.rendering import show
 from shiproom.measurement_ai.contracts import sha256_bytes
-from shiproom.measurement_ai.qualification import grade_qualification_result
+from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store
 from shiproom.measurement_ai.results import normalize_result
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
@@ -95,6 +97,15 @@ def test_all_committed_v1_resources_are_byte_identical_to_db2b984():
         baseline=subprocess.run(["git","show",ledger["baseline_commit"]+":"+relative],cwd=root,check=True,capture_output=True).stdout
         assert current==baseline
         assert "sha256:"+hashlib.sha256(current).hexdigest()==expected
+
+
+@pytest.mark.parametrize("ledger_name",["v1-resource-hashes.json","v2-resource-hashes.json"])
+def test_all_frozen_measurement_ai_resources_match_their_committed_ledgers(ledger_name):
+    ledger=json.loads(resources.files("shiproom.measurement_ai_roles").joinpath(ledger_name).read_text())
+    root=resources.files("shiproom").joinpath("..").resolve()
+    for relative,expected in ledger["hashes"].items():
+        current=(root/relative).read_bytes(); baseline=subprocess.run(["git","show",ledger["baseline_commit"]+":"+relative],cwd=root,check=True,capture_output=True).stdout
+        assert current==baseline and "sha256:"+hashlib.sha256(current).hexdigest()==expected
 
 
 def test_guidance_eligibility_is_compiler_evaluated():
@@ -192,6 +203,21 @@ def test_staged_verifier_binds_all_primary_hashes(tmp_path):
     with pytest.raises(ValueError,match="primary result changed"): load_verifier(ctx,verifier["verifier_preparation_id"])
 
 
+def _expert_material_submission(tmp_path):
+    ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); journey=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="critical_journey"); app["measurement"]["criterion_ids"]=[cid]; fields={name:{"value":value,"state":"owner_confirmed"} for name,value in {"decision_question":"Did the release cause improvement?","decision_use_case":"causal_experiment","decision_owner":"product owner","decision_timing":"launch review","decision_rule_or_interpretation":"compare assigned groups","unit_of_observation":"customer","eligible_population":"invited customers","observation_window":"14 days","inference_intent":"causal_experiment","numerator":"completed"}.items()}; app["measurement"]["contracts"]=[{"local_id":"metric","journey_id":journey,"criterion_ids":[cid],"fields":fields,"metric_roles":["outcome"],"required_signals":[{"name":"completed","required_properties":["id"]}]}]; path=root/"expert.json"; path.write_text(json.dumps(app),encoding="utf-8")
+    before=snapshot_measurement_ai_read_only(ctx); info=prepare(ctx,review_mode="expert_escalated_review",review_capabilities={"schema_version":"measurement-review-capabilities.v3","executor_type":"human","reviewer_label":"primary"},permission={"schema_version":"measurement-review-permission.v3","release_id":ctx.release["release_id"],"expert_review_granted":True,"model_switch":{"decision":"not_requested"}},applicability_path=str(path)); record=assessed_record(cid); record["semantic_review_authority"]="dual_reviewed_with_curated_guidance"; place_result(ctx,info["preparation_id"],"measurement",record); prep=load_preparation(ctx,info["preparation_id"]); work=prep["work_orders"]["measurement"]; inbox=domain_root(ctx)/"inbox"/info["preparation_id"]/work["work_order_id"]; value=json.loads((inbox/"result.json").read_text()); basis=value["records"][0]["basis_ids"]; paths=value["records"][0]["basis_path_ids"]; dims=("decision_use_case_alignment","metric_role","outcome_alignment","population","opportunity_exposure","denominator","window","attribution","interpretation_rule","guardrails","inference_intent_alignment"); value["records"][0]["metric_dimensions"]=[{"dimension":name,"state":"material_concern" if name=="attribution" else "adequate","rationale":"bounded","basis_ids":basis,"basis_path_ids":paths} for name in dims]; value["recommendations"]=[{"local_id":"material","criterion_id":cid,"recommendation_class":"research_backed_warning","summary":"Causal interpretation needs assignment evidence.","basis_ids":basis,"basis_path_ids":paths,"guidance_rule_ids":["MEAS_ATTRIBUTION_008"],"exception_dispositions":[{"exception_id":name,"disposition":"ruled_out","basis_ids":basis} for name in ("descriptive_intent","randomized_assignment_defined","explicit_noncausal_comparison")],"abstained":False,"automatic_replacements":[]}]; raw=(json.dumps(value,sort_keys=True)+"\n").encode(); (inbox/"result.json").write_bytes(raw); receipt=json.loads((inbox/"completion-receipt.json").read_text()); receipt["result_snapshot_hash"]=sha256_bytes(raw); (inbox/"completion-receipt.json").write_text(json.dumps(receipt)); verifier=prepare_verifier(ctx,info["preparation_id"],"measurement"); return ctx,info,cid,verifier,before
+
+
+@pytest.mark.parametrize("disposition,expected_effect,expected_status",[("supported","condition_candidate","gap"),("disputed","owner_confirmation","owner_confirmation_required")])
+def test_verifier_disposition_changes_canonical_effect(tmp_path,monkeypatch,disposition,expected_effect,expected_status):
+    import shiproom.authority as authority_module
+    monkeypatch.setattr(authority_module,"run_bounded_command",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("project command invoked"))); monkeypatch.setattr(socket,"create_connection",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("network invoked"))); monkeypatch.setattr(urllib.request,"urlopen",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("HTTP invoked")))
+    ctx,info,cid,verifier,before=_expert_material_submission(tmp_path/disposition); work=verifier["work_order"]; inbox=domain_root(ctx)/"verifier-inbox"/verifier["verifier_preparation_id"]/work["verifier_work_order_id"]
+    reviews=[{"recommendation_id":rid,"disposition":disposition,"unsupported_assumption_codes":[] if disposition=="supported" else ["unsupported_causal_assumption"],"ignored_exception_ids":[],"severity_supported":disposition=="supported","abstention_required":False,"rationale":"bounded verifier disposition"} for rid in work["material_recommendation_ids"]]
+    value={"schema_version":"measurement-verifier-result.v3","verifier_preparation_id":verifier["verifier_preparation_id"],"verifier_work_order_id":work["verifier_work_order_id"],"primary_result_semantic_hash":work["primary_result_semantic_hash"],"primary_result_snapshot_hash":work["primary_result_snapshot_hash"],"primary_receipt_snapshot_hash":work["primary_receipt_snapshot_hash"],"recommendation_reviews":reviews}; raw=(json.dumps(value,sort_keys=True)+"\n").encode(); (inbox/"result.json").write_bytes(raw); receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":{"executor_type":"human","reviewer_label":"skeptical verifier"},"work_order_id":work["verifier_work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}; (inbox/"completion-receipt.json").write_text(json.dumps(receipt)); compile_generation(ctx,info["preparation_id"],[verifier["verifier_preparation_id"]]); _,artifacts=load_generation(ctx); warning=artifacts["launch-measurement-plan.json"]["warnings"][0]; check=next(item for item in artifacts["measurement-ai-readiness.json"]["checks"] if item["check_id"]=="DATA_PRIMARY_METRIC_DECISION_USEFUL"); quality=artifacts["measurement-ai-readiness.json"]["metric_quality"][0]
+    assert warning["derived_effect"]==expected_effect and warning["verifier_disposition"]==disposition and check["status"]==expected_status and quality["verifier_dispositions"]==[disposition]; show(ctx); assert_measurement_ai_read_only(ctx,before)
+
+
 def test_qualification_is_mechanically_graded_and_hash_bound():
     from shiproom.measurement_ai.qualification import build_qualification_task
     pack=load_guidance_pack(); task=build_qualification_task(pack); cases=[]
@@ -199,6 +225,8 @@ def test_qualification_is_mechanically_graded_and_hash_bound():
         cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
     value={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"configured","model_id":"qualified","case_results":cases}
     receipt=grade_qualification_result(value,task,"sha256:"+"1"*64); assert "ratio_denominator_review" in receipt["qualified_capabilities"]
+    for candidate,name in ((task,"measurement-reviewer-qualification-task.v3.json"),(value,"measurement-reviewer-qualification-result.v3.json"),(receipt,"measurement-reviewer-qualification-receipt.v3.json")):
+        schema=json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(name).read_text()); jsonschema.Draft202012Validator(schema).validate(candidate)
     value["task_hash"]="sha256:"+"0"*64
     with pytest.raises(ValueError,match="binding mismatch"): grade_qualification_result(value,task,"sha256:"+"1"*64)
 
@@ -218,3 +246,51 @@ def test_late_generation_failure_preserves_previous_pointer(tmp_path,monkeypatch
 
 def test_measurement_ai_operations_preserve_complete_upstream_artifact_sets(tmp_path):
     ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)
+
+
+def test_v3_schema_python_parity_for_generated_and_tampered_preparation(tmp_path):
+    ctx=conventional_context(tmp_path); info=prepare(ctx); prep=load_preparation(ctx,info["preparation_id"])
+    accepted=[(prep["source_packet"],"measurement-ai-source-packet.v3.json"),(prep["manifest"],"measurement-ai-work-orders.v3.json"),(prep["pointer"],"active-measurement-ai-preparation.v3.json")]
+    for value,name in accepted:
+        schema=json.loads((prep["directory"]/"contract-schemas"/name).read_text()); jsonschema.Draft202012Validator(schema).validate(value)
+    manifest_path=prep["directory"]/"measurement-ai-work-orders.json"; original=manifest_path.read_bytes(); value=json.loads(original); value["unexpected_nested"]={}; schema=json.loads((prep["directory"]/"contract-schemas"/"measurement-ai-work-orders.v3.json").read_text())
+    with pytest.raises(jsonschema.ValidationError): jsonschema.Draft202012Validator(schema).validate(value)
+    manifest_path.write_text(json.dumps(value),encoding="utf-8")
+    with pytest.raises(ValueError): load_preparation(ctx,info["preparation_id"])
+    manifest_path.write_bytes(original); load_preparation(ctx,info["preparation_id"])
+
+
+def test_old_preparation_and_pointer_fail_closed_without_mutation(tmp_path):
+    ctx=conventional_context(tmp_path); info=prepare(ctx); prep_manifest=domain_root(ctx)/"preparations"/info["preparation_id"]/"measurement-ai-work-orders.json"; value=json.loads(prep_manifest.read_text()); value["compiler_version"]="measurement-ai-preparation.v2"; prep_manifest.write_text(json.dumps(value),encoding="utf-8")
+    with pytest.raises(ValueError,match="stale_measurement_ai_preparation_compiler_version.*new v3 preparation"): load_preparation(ctx,info["preparation_id"])
+    # Recreate a valid v3 preparation/generation, then make the current pointer
+    # target a syntactically valid old generation.  The stale load is read-only.
+    info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); pointer=domain_root(ctx)/"current-generation.json"; pointer_value=json.loads(pointer.read_text()); generation=domain_root(ctx)/"generations"/pointer_value["generation"]; manifest=generation/"manifest.json"; old=json.loads(manifest.read_text()); old["compiler_version"]="portable-measurement-ai.v2"; manifest.write_text(json.dumps(old),encoding="utf-8"); before=pointer.read_bytes()
+    with pytest.raises(ValueError,match="stale_measurement_ai_generation_compiler_version.*new v3 preparation"): load_generation(ctx)
+    assert pointer.read_bytes()==before and generation.exists()
+
+
+def test_canonical_artifacts_ignore_preparation_handles_and_local_labels(tmp_path):
+    ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8")
+    artifacts=[]
+    for label in ("first_local_label","renamed_local_label"):
+        info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); record["local_id"]=label; place_result(ctx,info["preparation_id"],"measurement",record); compile_generation(ctx,info["preparation_id"]); _,current=load_generation(ctx); artifacts.append({name:value for name,value in current.items() if name!="measurement-ai-compiler-receipts.json"})
+    assert artifacts[0]==artifacts[1]
+
+
+def test_domain_core_records_zero_external_operations(tmp_path,monkeypatch):
+    import shiproom.authority as authority_module
+    monkeypatch.setattr(authority_module,"run_bounded_command",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("project command invoked")))
+    monkeypatch.setattr(socket,"create_connection",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("network invoked")))
+    monkeypatch.setattr(urllib.request,"urlopen",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("HTTP invoked")))
+    ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); task=prepare_qualification(ctx.repository_root); cases=[]
+    for expected in task["cases"]: cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
+    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"guarded","model_id":"guarded","case_results":cases}; result_path=qualification_store(ctx.repository_root)/"qualification-result.json"; result_path.write_text(json.dumps(result),encoding="utf-8"); compile_qualification(ctx.repository_root,result_path); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)
+    operations=[item for item in artifacts["measurement-ai-compiler-receipts.json"]["validations"] if item["kind"]=="external_operation"]
+    assert {item["operation"] for item in operations}=={"model","command","network","browser","sql","external_service"} and all(item["count"]==0 for item in operations)
+
+
+def test_shiproom_skill_documents_v3_authority_and_staged_verifier():
+    skill=(resources.files("shiproom").joinpath("..","skills","shiproom","SKILL.md")).read_text(encoding="utf-8")
+    for value in ("shiproom.work-order.v6","shiproom.measurement-ai-role.v3","required criterion-path IDs","contract_declaration","immutable v3 verifier preparation","supported`, `downgrade`, `disputed`, or `owner_confirmation_required"):
+        assert value in skill

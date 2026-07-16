@@ -19,7 +19,7 @@ from .contracts import (
     SOURCE_PACKET_SCHEMA, WORK_ORDER_SCHEMA, WORK_ORDERS_SCHEMA, load_json_bytes,
     render_json, require_exact, sha256_bytes, stable_id, validate_relative_path, work_order_hash,
 )
-from .guidance import GUIDANCE_FILES, load_guidance_pack, load_guidance_pack_from_directory
+from .guidance import GUIDANCE_FILES, eligible_rule_ids, load_guidance_pack, load_guidance_pack_from_directory, rule_map
 from .qualification import build_qualification_task, load_qualification_receipt, qualification_store
 from .trust import exact_children, safe_entry, validate_ancestry
 
@@ -170,6 +170,26 @@ def _issue_role(authority: dict, role: str) -> bool:
     return bool(scope["applicable_criterion_ids"] or scope["candidate_criterion_ids"])
 
 
+def _required_qualification_capabilities(issued:list[str],prepared:list[dict],guidance:dict)->dict[str,list[str]]:
+    required={role:set() for role in ROLES}
+    if "measurement" in issued:
+        required["measurement"].update({"contract_structure","metric_decision_alignment"})
+        rules=rule_map(guidance)
+        for contract in prepared:
+            facts={"contract."+name:field for name,field in contract["fields"].items()}
+            numerator=contract["fields"]["numerator"]["value"]; denominator=contract["fields"]["denominator"]["value"]
+            facts["metric.form"]="ratio" if numerator is not None and denominator is not None else "absolute_count" if numerator is not None else None
+            for rule_id in eligible_rule_ids(guidance,facts):
+                # Measurement preparation evaluates only measurement guidance.
+                # AI rules intentionally use absent/not-equals predicates and
+                # would otherwise make an unrelated measurement packet demand
+                # AI-review capabilities.
+                if rule_id.startswith("MEAS_"):
+                    required["measurement"].add(rules[rule_id]["qualified_capability"])
+    if "ai_evaluation" in issued: required["ai_evaluation"].update({"ai_eval_structure","ai_claim_authority_review"})
+    return {role:sorted(values) for role,values in required.items()}
+
+
 def _intent_requirement(item:dict)->dict:
     keys=("requirement_id","statement","classification","status","source_refs","claim_ids","related_journey_ids","materiality","rationale","owner_confirmation_required","ambiguity_dependencies")
     return {key:item[key] for key in keys}
@@ -202,7 +222,7 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
     prepared = prepared_contracts(authority, applicability_bundle["value"])
     basis_registry, basis_paths = build_basis_registry(authority, prepared)
     issued = [role for role in ROLES if _issue_role(authority, role)]
-    required_by_role={"measurement":["contract_structure","metric_decision_alignment","absolute_count_opportunity_review","ratio_denominator_review","population_review","window_delay_review","proxy_outcome_review","guardrail_review","causal_claim_review"],"ai_evaluation":["ai_eval_structure","ai_claim_authority_review"]}
+    required_by_role=_required_qualification_capabilities(issued,prepared,guidance)
     model_participants=[item for item in review.get("participants",[]) if item.get("type")=="model"]
     required=sorted({cap for role in issued for cap in required_by_role[role]}) if review["resolved"]!="contract_only" else []
     if model_participants and any(not set(required).issubset(set(item.get("qualified_capabilities",[]))) for item in model_participants):
