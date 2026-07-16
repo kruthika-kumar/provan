@@ -16,4 +16,8 @@ def show(ctx:LocalExecutionContext,journey_id:str|None=None)->str:
     for check in readiness["checks"]:
         lines.append(f"{check['check_id']}: {check['status']} authority={check['check_authority']} semantic={check['semantic_review_authority']} scope={','.join(check['readiness_scope'])}")
         if check["reason_codes"]: lines.append("  reasons: "+", ".join(check["reason_codes"]))
+        for record in check["record_derivations"]:
+            basis=",".join(record["criterion_basis_effective_authorities"]) or "not_inspected"
+            lines.append(f"  criterion {record['criterion_id']}: {record['status']} basis={basis} reviewer={record['reviewer_conclusion_authority']} semantic={record['semantic_review_authority']}")
+            if record["runtime_limitations"]: lines.append("    runtime: "+"; ".join(record["runtime_limitations"]))
     return "\n".join(lines)

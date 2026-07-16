@@ -11,6 +11,7 @@ from .contracts import (
 from .preparation import prepare, load_preparation
 from .persistence import compile_generation, load_generation
 from .rendering import show
+from .verifier import prepare_verifier, load_verifier
 
 __all__ = [
     "CHECK_IDS",
@@ -24,4 +25,6 @@ __all__ = [
     "compile_generation",
     "load_generation",
     "show",
+    "prepare_verifier",
+    "load_verifier",
 ]

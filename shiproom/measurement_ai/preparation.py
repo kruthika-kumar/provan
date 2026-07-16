@@ -20,6 +20,7 @@ from .contracts import (
     render_json, sha256_bytes, stable_id, validate_relative_path, work_order_hash,
 )
 from .guidance import load_guidance_pack
+from .qualification import build_qualification_task, load_qualification_receipt
 
 
 def _atomic(path: Path, value: dict) -> None:
@@ -76,7 +77,7 @@ def _owner_paths(values: list[str] | None) -> dict[str, list[str]]:
     return result
 
 
-def _review_resolution(requested: str, review_capabilities: dict | None, permission: dict | None) -> dict:
+def _review_resolution(requested: str, review_capabilities: dict | None, permission: dict | None, repository_root:Path, guidance:dict) -> dict:
     if requested not in REVIEW_MODES: raise ValueError("invalid measurement review mode")
     if requested == "contract_only": return {"requested":requested,"resolved":"contract_only","reason":"requested_contract_only","participants":[]}
     # A human may complete guided review using the bound pack without model qualification.
@@ -84,6 +85,25 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
         if requested == "expert_escalated_review" and not (permission or {}).get("expert_review_granted", False):
             return {"requested":requested,"resolved":"contract_only","reason":"expert_permission_not_granted","participants":[]}
         return {"requested":requested,"resolved":requested,"reason":"guided_human_reviewer","participants":[{"type":"human"}]}
+    if review_capabilities and review_capabilities.get("executor_type")=="agent_harness":
+        task=build_qualification_task(guidance); chosen=None; switched=False
+        receipt_path=review_capabilities.get("qualification_receipt_path")
+        if receipt_path:
+            candidate=Path(receipt_path)
+            if not candidate.is_absolute(): candidate=repository_root/candidate
+            try: chosen=load_qualification_receipt(candidate,task)
+            except (ValueError,OSError): chosen=None
+        if chosen is None:
+            granted=(permission or {}).get("model_switch",{}).get("decision")=="granted"
+            candidate_id=(permission or {}).get("model_switch",{}).get("candidate_id")
+            candidate=next((item for item in review_capabilities.get("configured_candidates",[]) if item.get("candidate_id")==candidate_id),None)
+            if granted and candidate and review_capabilities.get("fresh_session_supported"):
+                path=Path(candidate["qualification_receipt_path"]); path=path if path.is_absolute() else repository_root/path
+                try: chosen=load_qualification_receipt(path,task); switched=True
+                except (ValueError,OSError): chosen=None
+        if chosen is not None:
+            if requested=="expert_escalated_review" and not (permission or {}).get("expert_review_granted",False): return {"requested":requested,"resolved":"contract_only","reason":"expert_permission_not_granted","participants":[]}
+            return {"requested":requested,"resolved":requested,"reason":"qualified_model_participant","participants":[{"type":"model","qualification_id":chosen["value"]["qualification_id"],"qualification_snapshot_hash":chosen["snapshot_hash"],"qualified_capabilities":chosen["value"]["qualified_capabilities"],"model_switch":switched}]}
     return {"requested":requested,"resolved":"contract_only","reason":"no_qualified_model_participant","participants":[]}
 
 
@@ -107,6 +127,11 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
     prepared = prepared_contracts(authority, applicability_bundle["value"])
     basis_registry, basis_paths = build_basis_registry(authority, prepared)
     issued = [role for role in ROLES if _issue_role(authority, role)]
+    required_by_role={"measurement":["contract_structure","metric_decision_alignment","absolute_count_opportunity_review","ratio_denominator_review","population_review","window_delay_review","proxy_outcome_review","guardrail_review","causal_claim_review"],"ai_evaluation":["ai_eval_structure","ai_claim_authority_review"]}
+    model_participants=[item for item in review.get("participants",[]) if item.get("type")=="model"]
+    required=sorted({cap for role in issued for cap in required_by_role[role]}) if review["resolved"]!="contract_only" else []
+    if model_participants and any(not set(required).issubset(set(item.get("qualified_capabilities",[]))) for item in model_participants):
+        review={"requested":review["requested"],"resolved":"contract_only","reason":"qualification_capabilities_incomplete","participants":[]}; required=[]
     skip_reason = None if issued else "no_applicable_measurement_or_ai_surface"
     semantic_basis = {
         "compiler_version":PREPARATION_COMPILER_VERSION,"release_id":ctx.release["release_id"],
@@ -175,7 +200,7 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
             "capability_requirements":{"file_read":"required","shell":"unavailable","browser":"unavailable","network":"unavailable"},
             "permissions":{"repository":"read_only","allowed_paths":[item["path"] for item in sources["sources"]],"allowed_commands":[]},
             "required_output":{"schema_path":"contract-schemas/"+result_name,"schema_version":RESULT_SCHEMAS[role],"schema_semantic_hash":result_contract["semantic_hash"],"schema_snapshot_hash":result_contract["snapshot_hash"],"output_path":f"{root_rel}/inbox/{preparation_id}/{wid}/result.json","completion_receipt_schema_path":"contract-schemas/assessment-completion-receipt.v2.json","completion_receipt_schema_version":RECEIPT_SCHEMA,"completion_receipt_schema_semantic_hash":receipt_contract["semantic_hash"],"completion_receipt_schema_snapshot_hash":receipt_contract["snapshot_hash"],"completion_receipt_path":f"{root_rel}/inbox/{preparation_id}/{wid}/completion-receipt.json"},
-            "required_qualification_capabilities":[],"qualification_receipt_hashes":[],
+            "required_qualification_capabilities":required_by_role[role] if review["resolved"]!="contract_only" and model_participants else [],"qualification_receipt_hashes":[item["qualification_snapshot_hash"] for item in model_participants],
             "forbidden_claims":roles[role]["value"]["forbidden_claims"],
         }
         work["work_order_hash"]=work_order_hash(work); work_orders[role]=work
@@ -192,7 +217,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
             owner_paths: list[str]|None=None) -> dict:
     ctx.require("file.read"); prep_id="prep_"+uuid.uuid4().hex
     capabilities=load_capabilities_input(ctx,capabilities_path); applicability=load_applicability_input(ctx,applicability_path)
-    roles=_roles(); discovery=_discovery(); contracts=_contracts(); guidance=load_guidance_pack(); review=_review_resolution(review_mode,review_capabilities,permission)
+    roles=_roles(); discovery=_discovery(); contracts=_contracts(); guidance=load_guidance_pack(); review=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
     expected=_build(ctx,prep_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=_owner_paths(owner_paths),review=review,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
     root=domain_root(ctx); directory=root/"preparations"/prep_id; directory.mkdir(parents=True)
     _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_resolution":review})
@@ -207,7 +232,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     for role,work in expected["work_orders"].items():
         p=directory/"work-orders"/(work["work_order_id"]+".json"); _atomic(p,work); (root/"inbox"/prep_id/work["work_order_id"]).mkdir(parents=True,exist_ok=True)
     _atomic(root/"active-preparation.json",expected["pointer"])
-    return {"preparation_id":prep_id,"preparation_semantic_hash":expected["manifest"]["preparation_semantic_hash"],"skip_reason":expected["manifest"]["skip_reason"],"work_orders":expected["manifest"]["work_orders"],"resolved_review_mode":review["resolved"]}
+    return {"preparation_id":prep_id,"preparation_semantic_hash":expected["manifest"]["preparation_semantic_hash"],"skip_reason":expected["manifest"]["skip_reason"],"work_orders":expected["manifest"]["work_orders"],"resolved_review_mode":expected["semantic_basis"]["review"]["resolved"]}
 
 
 def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, *, directory: Path|None=None) -> dict:

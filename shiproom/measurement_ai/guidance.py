@@ -76,3 +76,26 @@ def _validate_trigger(trigger: object) -> None:
 
 def rule_map(pack: dict) -> dict[str, dict]:
     return {item["rule_id"]: item for item in pack["registry"]["rules"]}
+
+
+def evaluate_trigger(trigger: dict, facts: dict[str, object]) -> bool:
+    if "all" in trigger:
+        return all(evaluate_trigger(item, facts) for item in trigger["all"])
+    if "any" in trigger:
+        return any(evaluate_trigger(item, facts) for item in trigger["any"])
+    field, operator = trigger["field"], trigger["operator"]
+    present = field in facts and facts[field] is not None
+    actual = facts.get(field)
+    if operator == "present": return present
+    if operator == "absent": return not present
+    if operator == "state_is":
+        actual = actual.get("field_state") if isinstance(actual, dict) else actual
+    expected = trigger.get("value")
+    if operator in {"equals", "state_is"}: return actual == expected
+    if operator == "not_equals": return actual != expected
+    if operator == "in": return actual in expected
+    raise ValueError("unsupported guidance trigger operator")
+
+
+def eligible_rule_ids(pack: dict, facts: dict[str, object]) -> set[str]:
+    return {rule["rule_id"] for rule in pack["registry"]["rules"] if evaluate_trigger(rule["trigger"], facts)}
