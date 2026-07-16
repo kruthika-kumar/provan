@@ -88,6 +88,10 @@ In `contract_only`, report structural completeness, provenance/conflicts, bounde
 
 Keep product outcomes and AI behavior separate. An eval filename is not a qualified fixed case; preserve fixed input, oracle/rubric, pass condition, criterion linkage, versions, execution results, deterministic validation, and production traces as separate states. Treat tracing libraries as candidates only. Manual human completion is first-class; model participants require bound qualification for guided/expert capabilities, and no model switch occurs without explicit permission.
 
+For a compiler-issued typed source binding, preserve `prepared_object_type`, `declaration_authority`, and `semantic_assessment_authority` separately. An owner-bound exact quote proves only the declaration and exact range at source-definition scope. Your assessment of whether it is a valid event, property, fixed input, oracle, pass condition, version binding, or failure case remains reviewer judgment. Never convert the label or quote into source-verified semantic adequacy, implementation, execution, runtime behavior, or AI quality. Cite only the exact typed basis and required criterion-path IDs supplied in the packet.
+
+Cover all thirteen AI maturity rungs: case candidate, fixed input, oracle/rubric, pass condition, journey/criterion linkage, prompt/model binding, known failure, fallback, malformed output, unavailable model, supplied execution, deterministic validation, and production trace linkage. For an LLM judge, return its type/model, rubric or prompt, version binding, human calibration evidence, agreement evidence, and limitations. Missing calibration is `not_established`; do not call the eval invalid solely for that reason or certify statistical representativeness, judge validity, threshold quality, production quality, or causal impact.
+
 ## Historical judged-demo delegation
 
 The remaining delegation and remediation instructions apply only to `historical_judged_demo`. They are not reachable from the private assessment protocol above.

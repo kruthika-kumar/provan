@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import subprocess
 import socket
 import urllib.request
@@ -90,6 +91,21 @@ def test_foundation_json_schemas_parse():
         assert isinstance(json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(name).read_text()), dict)
 
 
+def test_all_27_v3_portable_contracts_are_closed_json_schemas():
+    root=resources.files("shiproom.measurement_ai_schemas")
+    names=sorted(item.name for item in root.iterdir() if item.name.endswith("v3.json"))+["work-order.v6.json"]
+    assert len(names)==27 and len(set(names))==27
+    for name in names:
+        schema=json.loads(root.joinpath(name).read_text()); jsonschema.Draft202012Validator.check_schema(schema)
+        def walk(value):
+            if isinstance(value,dict):
+                if value.get("type")=="object": assert "additionalProperties" in value, name
+                for child in value.values(): walk(child)
+            elif isinstance(value,list):
+                for child in value: walk(child)
+        walk(schema)
+
+
 def test_v3_prerelease_audit_receipt_justifies_in_place_repair():
     receipt=json.loads((resources.files("shiproom").joinpath("..","tests","measurement_ai_v3_prerelease_audit.json")).read_text())
     assert receipt["audit_commit"]=="005ac55955ea029725373889b2747b2ccb11ee55"
@@ -129,6 +145,13 @@ def test_static_import_selection_is_literal_and_one_hop_only():
 def test_trusted_directory_creation_rejects_existing_non_directory_ancestor(tmp_path):
     root=tmp_path/"repo"; root.mkdir(); (root/"blocked").write_text("not a directory")
     with pytest.raises(ValueError,match="unsafe"): ensure_directory(root,root/"blocked"/"child",label="attack path")
+
+
+def test_trusted_directory_creation_rejects_symlinked_ancestor(tmp_path):
+    root=tmp_path/"repo"; root.mkdir(); outside=tmp_path/"outside"; outside.mkdir(); link=root/"linked"
+    try: os.symlink(outside,link,target_is_directory=True)
+    except (OSError,NotImplementedError): pytest.skip("symlink creation is unavailable")
+    with pytest.raises(ValueError,match="unsafe"): ensure_directory(root,link/"preparation",label="linked preparation")
 
 
 def test_all_committed_v1_resources_are_byte_identical_to_db2b984():

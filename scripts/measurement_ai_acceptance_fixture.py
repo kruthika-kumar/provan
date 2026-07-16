@@ -17,7 +17,7 @@ def snapshot_measurement_ai_read_only(ctx)->dict:
     release_root=ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]
     def git(*args): return subprocess.run(["git",*args],cwd=ctx.repository_root,text=True,capture_output=True,check=True).stdout
     release_path=next((path for path in (ctx.repository_root/"release-state").glob("*.json") if json.loads(path.read_text()).get("release_id")==ctx.release["release_id"]),None) if (ctx.repository_root/"release-state").exists() else None
-    return {"release_object":canonical_json(ctx.release),"release_file":release_path.read_bytes() if release_path else None,"intent":_hashes(release_root/"product-intent"),"graph":_hashes(release_root/"requirement-evidence-graph"),"assessment":_hashes(release_root/"assessment"),"project_contract":_hashes(ctx.repository_root/".shiproom"),"head":git("rev-parse","HEAD").strip(),"branch":git("branch","--show-current").strip(),"status":git("status","--short","--untracked-files=no")}
+    return {"release_object":canonical_json(ctx.release),"release_file":release_path.read_bytes() if release_path else None,"intent":_hashes(release_root/"product-intent"),"graph":_hashes(release_root/"requirement-evidence-graph"),"assessment":_hashes(release_root/"assessment"),"project_contract":_hashes(ctx.repository_root/".shiproom"),"head":git("rev-parse","HEAD").strip(),"branch":git("branch","--show-current").strip(),"status":git("status","--short","--untracked-files=no"),"tracked_blobs":git("ls-files","-s")}
 
 
 def assert_measurement_ai_read_only(ctx,before:dict)->None:
