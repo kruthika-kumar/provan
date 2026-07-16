@@ -6,11 +6,12 @@ from shiproom.project import content_hash
 
 from .contracts import load_json_bytes, render_json, require_exact, require_string_list, require_text, sha256_bytes, stable_id
 from .guidance import load_guidance_pack
+from .trust import validate_ancestry
 
 
-TASK_SCHEMA="measurement-reviewer-qualification-task.v2"
-RESULT_SCHEMA="measurement-reviewer-qualification-result.v2"
-RECEIPT_SCHEMA="measurement-reviewer-qualification-receipt.v2"
+TASK_SCHEMA="measurement-reviewer-qualification-task.v3"
+RESULT_SCHEMA="measurement-reviewer-qualification-result.v3"
+RECEIPT_SCHEMA="measurement-reviewer-qualification-receipt.v3"
 QUALIFIED_CAPABILITIES={"contract_structure","metric_decision_alignment","absolute_count_opportunity_review","ratio_denominator_review","population_review","window_delay_review","proxy_outcome_review","guardrail_review","causal_claim_review","ai_eval_structure","ai_claim_authority_review","skeptical_material_review"}
 
 
@@ -18,8 +19,8 @@ def qualification_store(repository_root:Path)->Path:
     return repository_root/".shiproom"/"local"/"measurement-reviewer-qualifications"
 
 
-def build_qualification_task(guidance:dict,result_schema_version:str="measurement-result.v2")->dict:
-    task={"schema_version":TASK_SCHEMA,"task_id":stable_id("qualification_task",{"guidance":guidance["pack_hash"],"schema":result_schema_version}),"role_prompt_version":"measurement-ai-role.v2","guidance_pack_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v2.json"]["semantic_hash"],"result_schema_version":result_schema_version,"qualification_suite_version":guidance["qualification_suite"]["suite_version"],"qualification_suite_hash":guidance["snapshots"]["qualification-suite.v2.json"]["semantic_hash"],"cases":guidance["qualification_suite"]["cases"],"task_hash":""}
+def build_qualification_task(guidance:dict,result_schema_version:str="measurement-result.v3")->dict:
+    task={"schema_version":TASK_SCHEMA,"task_id":stable_id("qualification_task",{"guidance":guidance["pack_hash"],"schema":result_schema_version}),"role_prompt_version":"measurement-ai-role.v3","guidance_pack_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v2.json"]["semantic_hash"],"result_schema_version":result_schema_version,"qualification_suite_version":guidance["qualification_suite"]["suite_version"],"qualification_suite_hash":guidance["snapshots"]["qualification-suite.v2.json"]["semantic_hash"],"cases":guidance["qualification_suite"]["cases"],"task_hash":""}
     task["task_hash"]=content_hash({k:v for k,v in task.items() if k!="task_hash"}); return task
 
 
@@ -41,14 +42,15 @@ def grade_qualification_result(value:dict,task:dict,result_snapshot_hash:str)->d
 
 
 def load_qualification_receipt(path:Path,task:dict)->dict:
-    if path.is_symlink() or not path.is_file(): raise ValueError("qualification receipt must be a regular file")
+    store=path.parent
+    validate_ancestry(store,path,directory=False,label="qualification receipt")
     raw=path.read_bytes(); value=load_json_bytes(raw); require_exact(value,{"schema_version","qualification_id","task_id","task_hash","provider_id","model_id","qualified_capabilities","case_ids","result_semantic_hash","result_snapshot_hash"},"qualification receipt")
     if value["schema_version"]!=RECEIPT_SCHEMA or value["task_id"]!=task["task_id"] or value["task_hash"]!=task["task_hash"] or not set(value["qualified_capabilities"]).issubset(QUALIFIED_CAPABILITIES) or value["case_ids"]!=sorted(item["case_id"] for item in task["cases"]): raise ValueError("qualification receipt is stale or invalid")
     return {"value":value,"bytes":raw,"snapshot_hash":sha256_bytes(raw)}
 
 
 def prepare_qualification(repository_root:Path)->dict:
-    task=build_qualification_task(load_guidance_pack()); store=qualification_store(repository_root); store.mkdir(parents=True,exist_ok=True); (store/"qualification-task.v2.json").write_bytes(render_json(task)); return task
+    task=build_qualification_task(load_guidance_pack()); store=qualification_store(repository_root); store.mkdir(parents=True,exist_ok=True); (store/"qualification-task.v3.json").write_bytes(render_json(task)); return task
 
 
 def compile_qualification(repository_root:Path,result_path:Path)->dict:

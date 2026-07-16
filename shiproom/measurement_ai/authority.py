@@ -16,9 +16,10 @@ from shiproom.project import canonical_json, content_hash
 from .contracts import (
     APPLICABILITY_SCHEMA, CAPABILITIES_SCHEMA, DEFINITION_STATES, FIELD_STATES,
     ROLE_FILE_LIMIT, ROLE_TEXT_LIMIT, ROLES, SCOPE_STATES, SOURCE_LIMIT,
-    load_json_bytes, require_exact, require_string_list, require_text,
+    effective_basis_class, load_json_bytes, require_exact, require_string_list, require_text,
     sha256_bytes, stable_id, validate_relative_path,
 )
+from .trust import validate_ancestry
 
 
 MEASUREMENT_FIELDS = (
@@ -29,6 +30,8 @@ MEASUREMENT_FIELDS = (
     "decision_threshold_or_interpretation", "journey_start", "success_condition", "failure_condition",
     "guardrails", "experiment_exposure", "inference_intent", "outcome_delay",
     "minimum_maturity_window", "incomplete_observation_possible", "censoring_limitation",
+    "denominator_state", "eligible_denominator_population", "zero_denominator_handling",
+    "release_can_affect_denominator", "definition_state", "execution_state", "data_accuracy_state",
 )
 AI_IMPORTS = {"openai", "anthropic", "cohere", "google.generativeai", "google.genai", "mistralai"}
 
@@ -115,8 +118,8 @@ def _read_release_local_input(ctx: LocalExecutionContext, path_value: str | None
         return {"value": validator(load_json_bytes(raw)), "bytes": raw, "filename": filename}
     path = Path(path_value)
     root = domain_root(ctx) / "inputs"
-    if path.is_symlink() or not path.is_file() or path.resolve().parent != root.resolve():
-        raise ValueError("measurement AI input must be a regular JSON file directly under the release-local inputs directory")
+    if path.parent.absolute()!=root.absolute(): raise ValueError("measurement AI input must be directly under the release-local inputs directory")
+    validate_ancestry(root,path,directory=False,label="measurement AI input")
     raw = path.read_bytes()
     if len(raw) > 256 * 1024: raise ValueError("measurement AI input exceeds byte limit")
     return {"value": validator(load_json_bytes(raw)), "bytes": raw, "filename": path.name}
@@ -262,7 +265,7 @@ def build_authority_input(ctx: LocalExecutionContext, applicability: dict, owner
         effective = assessment_input["artifacts"].get("effective-assessment-view.json", {}).get("criteria", [])
         selected = [item for item in effective if item.get("criterion_id") in relevant]
         if selected:
-            assessment_dependency = {"state":"required_present","generation":assessment_input["generation"],"semantic_hash":assessment_input["manifest"]["semantic_bundle_hash"],"records":selected}
+            assessment_dependency = {"state":"required_present","generation":assessment_input["generation"],"semantic_hash":assessment_input["manifest"]["semantic_bundle_hash"]}
     return {"graph_input":graph_input,"assessment_input":assessment_input,"assessment_dependency":assessment_dependency,"requirements":requirements,"criteria":criteria,"journeys":journey_nodes,"role_scopes":role_scopes,"role_sources":sources,"linked_measurement_definitions":linked_definitions,"unlinked_measurement_definitions":unlinked_definitions}
 
 
@@ -290,10 +293,10 @@ def prepared_contracts(authority: dict, applicability: dict) -> list[dict]:
                 for cid in related:
                     if criteria[cid].get("failure_behavior") is not None: candidates.append({"value":criteria[cid]["failure_behavior"],"field_state":"source_declared","provenance":"product_intent","source_refs":[],"base_ids":[cid]})
             unique = {canonical_json(item["value"]): item for item in candidates}
-            if not candidates: field = {"value":None,"field_state":"unresolved","provenance":[],"source_refs":[],"base_ids":[],"competing_values":[],"model_proposals":[]}
+            if not candidates: field = {"value":None,"field_state":"unresolved","assertion_scope":"not_inspected","provenance":[],"source_refs":[],"base_ids":[],"competing_values":[],"model_proposals":[]}
             elif len(unique) == 1:
-                value = next(iter(unique.values())); field = {"value":value["value"],"field_state":value["field_state"],"provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[],"model_proposals":[]}
-            else: field = {"value":None,"field_state":"unresolved","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[json.loads(key) for key in sorted(unique)],"model_proposals":[]}
+                value = next(iter(unique.values())); field = {"value":value["value"],"field_state":value["field_state"],"assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[],"model_proposals":[]}
+            else: field = {"value":None,"field_state":"unresolved","assertion_scope":"contract_declaration","provenance":sorted({item["provenance"] for item in candidates}),"source_refs":[],"base_ids":sorted({base for item in candidates for base in item["base_ids"]}),"competing_values":[json.loads(key) for key in sorted(unique)],"model_proposals":[]}
             prepared[name] = field
         signals = []
         owner_signals = owner["required_signals"] if owner else []
@@ -302,7 +305,14 @@ def prepared_contracts(authority: dict, applicability: dict) -> list[dict]:
             signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"name":signal["name"]}),"name":signal["name"],"name_state":"owner_confirmed","required_properties":sorted(signal["required_properties"]),"criterion_ids":related})
         if not signals:
             signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"criteria":related}),"name":None,"name_state":"unresolved","required_properties":[],"criterion_ids":related})
-        contracts.append({"contract_id":stable_id("measurement_contract",{"journey":journey_id,"criteria":related}),"journey_id":journey_id,"journey_text":journey["journey_text"],"criterion_ids":related,"fields":prepared,"metric_roles":owner["metric_roles"] if owner else [],"required_signals":signals})
+        contracts.append({
+            "contract_id":stable_id("measurement_contract",{"journey":journey_id,"criteria":related}),
+            "journey_id":journey_id,"journey_text":journey["journey_text"],"criterion_ids":related,
+            "fields":prepared,"metric_roles":owner["metric_roles"] if owner else [],"required_signals":signals,
+            "definition_state":prepared["definition_state"]["value"] or "not_supplied",
+            "execution_state":prepared["execution_state"]["value"] or "not_inspected",
+            "data_accuracy_state":prepared["data_accuracy_state"]["value"] or "not_inspected",
+        })
     return contracts
 
 
@@ -317,7 +327,7 @@ def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[di
     criterion_ids = {item["criterion_id"] for item in authority["criteria"]}
     class_map = {
         "source_backed": "source_verified",
-        "owner_confirmed": "source_verified",
+        "owner_confirmed": "deterministically_established",
         "deterministically_established": "deterministically_established",
         "model_mapped_candidate": "model_mapped_candidate",
         "not_inspected": "not_inspected",
@@ -328,9 +338,11 @@ def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[di
 
     for cid in sorted(criterion_ids):
         bid = stable_id("basis", {"type": "criterion", "id": cid})
-        registry[bid] = {"basis_id": bid, "basis_type": "base_node", "object_id": cid,
+        registry[bid] = {"basis_id": bid, "basis_type": "source_reference", "object_id": cid,
             "role_ids": list(ROLES), "criterion_ids": [cid], "journey_ids": [],
-            "direct_fact_authority": "source_verified", "allowed_relationships": ["assesses_criterion"]}
+            "field_state":"source_declared","assertion_scope":"contract_declaration",
+            "direct_fact_authority": "source_verified", "origin":"product_intent",
+            "reference_ids":[cid],"allowed_relationships": ["assesses_criterion"]}
 
     for edge in sorted(graph["edges"], key=lambda item: item["edge_id"]):
         cid = edge["source_node_id"] if edge["source_node_id"] in criterion_ids else edge["target_node_id"] if edge["target_node_id"] in criterion_ids else None
@@ -347,30 +359,53 @@ def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[di
         if not role_ids:
             continue
         bid = stable_id("basis", {"type": "graph_node", "id": other, "edge": edge["edge_id"]})
-        registry[bid] = {"basis_id": bid, "basis_type": "base_node", "object_id": other,
+        basis_type={
+            "implementation_reference":"implementation_reference","instrumentation_reference":"instrumentation_reference",
+            "test_reference":"test_reference","runtime_evidence":"runtime_evidence",
+        }.get(ntype,"source_reference")
+        assertion_scope={"implementation_reference":"implementation","instrumentation_reference":"instrumentation","test_reference":"test","runtime_evidence":"runtime"}.get(ntype,"source_definition")
+        registry[bid] = {"basis_id": bid, "basis_type": basis_type, "object_id": other,
             "role_ids": sorted(role_ids), "criterion_ids": [cid], "journey_ids": [],
-            "direct_fact_authority": direct, "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+            "field_state":"not_inspected" if direct=="not_inspected" else "source_declared",
+            "assertion_scope":assertion_scope,"direct_fact_authority": direct,
+            "origin":"requirement_evidence_graph","reference_ids":[other,edge["edge_id"]],
+            "allowed_relationships": ["supports_conclusion", "supports_warning"]}
         traversal = "reverse" if edge["target_node_id"] == other else "forward"
         # The path starts at the factual node and terminates at the criterion.
         traversal = "reverse" if edge["target_node_id"] == other else "forward"
         pid = stable_id("basis_path", {"basis": bid, "criterion": cid, "edge": edge["edge_id"]})
         paths.append({"path_id": pid, "role_ids": sorted(role_ids), "criterion_id": cid,
-            "start_basis_id": bid, "steps": [{"edge_id": edge["edge_id"], "traversal": traversal,
-            "direct_fact_authority": direct, "required": True}], "effective_fact_authority": direct})
+            "start_basis_id": bid, "steps": [{"edge_id": edge["edge_id"], "traversal": traversal}],
+            "required":True,"effective_authority": direct})
 
     for role in ROLES:
         for source in authority["role_sources"][role]["sources"]:
-            linked = sorted({cid for path, cid, _ in _node_paths(graph, role) if path == source["path"]})
+            mappings=[(cid,classification) for path,cid,classification in _node_paths(graph,role) if path==source["path"]]
+            linked = sorted({cid for cid,_ in mappings})
+            mapped_authorities=[class_map.get(classification,"not_inspected") for _,classification in mappings]
+            direct=effective_basis_class(mapped_authorities) if mapped_authorities else "not_inspected"
             bid = stable_id("basis", {"type": "project_source", "role": role, "path": source["path"], "blob": source["git_blob_hash"]})
-            registry[bid] = {"basis_id": bid, "basis_type": "project_source", "object_id": source["path"],
+            registry[bid] = {"basis_id": bid, "basis_type": "source_reference", "object_id": source["path"],
                 "role_ids": [role], "criterion_ids": linked, "journey_ids": [],
-                "direct_fact_authority": "source_verified", "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+                "field_state":"source_declared" if linked else "not_inspected","assertion_scope":"source_definition",
+                "direct_fact_authority": direct,"origin":"project_source",
+                "reference_ids":[source["path"],source["git_blob_hash"]],
+                "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+            for cid,classification in mappings:
+                for edge in graph["edges"]:
+                    target=nodes.get(edge["target_node_id"],{})
+                    if edge["source_node_id"]==cid and target.get("path")==source["path"] and edge["establishment_classification"]==classification:
+                        pid=stable_id("basis_path",{"basis":bid,"criterion":cid,"edge":edge["edge_id"]})
+                        paths.append({"path_id":pid,"role_ids":[role],"criterion_id":cid,"start_basis_id":bid,"steps":[{"edge_id":edge["edge_id"],"traversal":"reverse"}],"required":True,"effective_authority":class_map.get(classification,"not_inspected")})
 
     for contract in prepared:
         bid = stable_id("basis", {"type": "prepared_contract", "id": contract["contract_id"]})
         states = {field["field_state"] for field in contract["fields"].values()}
-        direct = "not_inspected" if "unresolved" in states else "source_verified"
-        registry[bid] = {"basis_id": bid, "basis_type": "prepared_contract", "object_id": contract["contract_id"],
+        direct = "not_inspected" if "unresolved" in states else ("deterministically_established" if states=={"owner_confirmed"} else "source_verified")
+        registry[bid] = {"basis_id": bid, "basis_type": "owner_declaration" if "owner_confirmed" in states else "source_reference", "object_id": contract["contract_id"],
             "role_ids": ["measurement"], "criterion_ids": contract["criterion_ids"], "journey_ids": [contract["journey_id"]],
-            "direct_fact_authority": direct, "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+            "field_state":"unresolved" if direct=="not_inspected" else ("owner_confirmed" if "owner_confirmed" in states else "source_declared"),
+            "assertion_scope":"contract_declaration","direct_fact_authority": direct,
+            "origin":"owner_declaration" if "owner_confirmed" in states else "product_intent",
+            "reference_ids":[contract["contract_id"]],"allowed_relationships": ["supports_conclusion", "supports_warning"]}
     return sorted(registry.values(), key=lambda item: item["basis_id"]), sorted(paths, key=lambda item: item["path_id"])

@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+import os
+import stat
+from pathlib import Path
+
+
+def is_reparse(info: os.stat_result) -> bool:
+    return bool(getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+
+
+def safe_entry(path: Path, *, directory: bool, label: str) -> None:
+    info = path.lstat()
+    invalid = path.is_symlink() or is_reparse(info)
+    invalid = invalid or (not stat.S_ISDIR(info.st_mode) if directory else not stat.S_ISREG(info.st_mode))
+    if invalid:
+        raise ValueError(f"{label} is unsafe")
+
+
+def validate_ancestry(root: Path, path: Path, *, directory: bool, label: str) -> None:
+    root_abs = Path(os.path.abspath(root))
+    path_abs = Path(os.path.abspath(path))
+    try:
+        relative = path_abs.relative_to(root_abs)
+    except ValueError as exc:
+        raise ValueError(f"{label} escapes its trusted root") from exc
+    safe_entry(root_abs, directory=True, label=f"{label} trusted root")
+    current = root_abs
+    for index, part in enumerate(relative.parts):
+        current = current / part
+        safe_entry(current, directory=directory if index == len(relative.parts) - 1 else True, label=label)
+
+
+def exact_children(path: Path, expected: set[str], label: str) -> None:
+    safe_entry(path, directory=True, label=label)
+    entries = list(path.iterdir())
+    folded = [entry.name.casefold() for entry in entries]
+    if len(folded) != len(set(folded)) or {entry.name for entry in entries} != expected:
+        raise ValueError(f"{label} file set mismatch")
+    for entry in entries:
+        info = entry.lstat()
+        if entry.is_symlink() or is_reparse(info) or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
+            raise ValueError(f"{label} contains an unsafe entry")

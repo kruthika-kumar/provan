@@ -72,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
             else: raise SystemExit("measurement-ai qualification requires prepare, or compile --result")
         elif args.action == "verifier":
             if args.qualification_action!="prepare" or not args.preparation or not args.role: raise SystemExit("measurement-ai verifier prepare requires --preparation and --role")
-            print(json.dumps(prepare_verifier(context,args.preparation,args.role),indent=2))
+            def optional_json(path): return json.loads(Path(path).read_text(encoding="utf-8")) if path else None
+            print(json.dumps(prepare_verifier(context,args.preparation,args.role,optional_json(args.review_capabilities),optional_json(args.permission)),indent=2))
         elif args.action == "prepare":
             def optional_json(path): return json.loads(Path(path).read_text(encoding="utf-8")) if path else None
             result=prepare_measurement_ai(context,review_mode=args.review_mode,capabilities_path=args.capabilities,applicability_path=args.applicability,review_capabilities=optional_json(args.review_capabilities),permission=optional_json(args.permission),owner_paths=args.path)

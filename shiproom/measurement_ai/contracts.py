@@ -9,28 +9,28 @@ from typing import Any
 from shiproom.project import canonical_json, content_hash
 
 
-PREPARATION_COMPILER_VERSION = "measurement-ai-preparation.v2"
-COMPILER_VERSION = "portable-measurement-ai.v2"
-ROLE_SCHEMA = "shiproom.measurement-ai-role.v2"
-WORK_ORDER_SCHEMA = "shiproom.work-order.v5"
-CAPABILITIES_SCHEMA = "measurement-ai-capabilities.v2"
-APPLICABILITY_SCHEMA = "measurement-ai-applicability.v2"
-REVIEW_CAPABILITIES_SCHEMA = "measurement-review-capabilities.v2"
-PERMISSION_SCHEMA = "measurement-review-permission.v2"
-SOURCE_PACKET_SCHEMA = "measurement-ai-source-packet.v2"
-ROLE_CONTEXT_SCHEMA = "measurement-ai-role-context.v2"
-WORK_ORDERS_SCHEMA = "measurement-ai-work-orders.v2"
-OVERLAY_SCHEMA = "measurement-ai-overlay.v2"
-MANIFEST_SCHEMA = "portable-measurement-ai-manifest.v2"
-PREPARATION_POINTER_SCHEMA = "active-measurement-ai-preparation.v2"
-GENERATION_POINTER_SCHEMA = "current-portable-measurement-ai.v2"
-RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
+PREPARATION_COMPILER_VERSION = "measurement-ai-preparation.v3"
+COMPILER_VERSION = "portable-measurement-ai.v3"
+ROLE_SCHEMA = "shiproom.measurement-ai-role.v3"
+WORK_ORDER_SCHEMA = "shiproom.work-order.v6"
+CAPABILITIES_SCHEMA = "measurement-ai-capabilities.v3"
+APPLICABILITY_SCHEMA = "measurement-ai-applicability.v3"
+REVIEW_CAPABILITIES_SCHEMA = "measurement-review-capabilities.v3"
+PERMISSION_SCHEMA = "measurement-review-permission.v3"
+SOURCE_PACKET_SCHEMA = "measurement-ai-source-packet.v3"
+ROLE_CONTEXT_SCHEMA = "measurement-ai-role-context.v3"
+WORK_ORDERS_SCHEMA = "measurement-ai-work-orders.v3"
+OVERLAY_SCHEMA = "measurement-ai-overlay.v3"
+MANIFEST_SCHEMA = "portable-measurement-ai-manifest.v3"
+PREPARATION_POINTER_SCHEMA = "active-measurement-ai-preparation.v3"
+GENERATION_POINTER_SCHEMA = "current-portable-measurement-ai.v3"
+RECEIPT_SCHEMA = "measurement-ai-completion-receipt.v3"
 
 ROLES = ("measurement", "ai_evaluation")
-ROLE_VERSIONS = {role: "2.0.0" for role in ROLES}
+ROLE_VERSIONS = {role: "3.0.0" for role in ROLES}
 RESULT_SCHEMAS = {
-    "measurement": "measurement-result.v2",
-    "ai_evaluation": "ai-evaluation-result.v2",
+    "measurement": "measurement-result.v3",
+    "ai_evaluation": "ai-evaluation-result.v3",
 }
 
 CHECK_IDS = (
@@ -90,6 +90,30 @@ RELATIONSHIPS = {
     "assesses_criterion", "applies_guidance_rule", "identifies_warning", "proposes_owner_confirmation",
     "evaluates_ai_criterion", "has_execution_result", "has_observability_candidate",
 }
+
+CHECK_GAP_REGISTRY = {
+    "outcome_event_definition_gap": "DATA_OUTCOME_EVENT_DEFINED",
+    "success_failure_distinction_gap": "DATA_SUCCESS_AND_FAILURE_DISTINGUISHABLE",
+    "critical_property_gap": "DATA_CRITICAL_EVENT_PROPERTIES_PRESENT",
+    "metric_decision_gap": "DATA_PRIMARY_METRIC_DECISION_USEFUL",
+    "fixed_eval_gap": "AI_FIXED_EVAL_OR_REPRO_CASE_EXISTS",
+    "claim_authority_gap": "AI_MODEL_CLAIM_NOT_PRESENTED_AS_PROOF",
+    "instrumentation_mapping_gap": None,
+    "failure_case_gap": None,
+    "version_traceability_gap": None,
+    "observability_gap": None,
+}
+
+AI_MATURITY_RUNGS = (
+    "case_candidate", "fixed_input", "oracle_or_rubric", "pass_condition",
+    "journey_or_criterion_linkage", "prompt_or_model_binding", "known_failure",
+    "fallback", "malformed_output", "unavailable_model", "supplied_execution_result",
+    "deterministically_validated_result", "production_trace_linkage",
+)
+
+
+def is_material_recommendation(value: dict) -> bool:
+    return value.get("derived_effect") in {"condition_candidate", "blocker_candidate"}
 
 SOURCE_LIMIT = 256 * 1024
 ROLE_FILE_LIMIT = 64
@@ -166,7 +190,17 @@ def semantic_without_local_ids(value: object) -> object:
     if isinstance(value, list):
         return [semantic_without_local_ids(item) for item in value]
     if isinstance(value, dict):
-        return {key: semantic_without_local_ids(item) for key, item in value.items() if key not in {"local_id", "provider_id", "model_id", "run_id", "reviewer_label"}}
+        return {
+            key: semantic_without_local_ids(item)
+            for key, item in value.items()
+            if key not in {
+                "local_id", "provider_id", "model_id", "candidate_id", "run_id",
+                "reviewer_label", "preparation_id", "work_order_id",
+                "verifier_preparation_id", "verifier_work_order_id",
+                "result_snapshot_hash", "receipt_snapshot_hash",
+                "completion_receipt_snapshot_hash", "started_at", "completed_at",
+            }
+        }
     return value
 
 
@@ -210,10 +244,11 @@ def effective_basis_class(classes: list[str]) -> str:
         return "not_inspected"
     if "model_mapped_candidate" in classes:
         return "model_mapped_candidate"
-    if set(classes) == {"deterministically_established"}:
+    factual = [item for item in classes if item != "model_reviewed"]
+    if not factual:
+        return "not_inspected"
+    if set(factual) == {"deterministically_established"}:
         return "deterministically_established"
-    if set(classes) == {"source_verified"}:
+    if set(factual).issubset({"source_verified", "deterministically_established"}):
         return "source_verified"
-    if "model_reviewed" in classes:
-        return "model_reviewed"
-    raise ValueError("mixed deterministic and source-backed path lacks a defined terminal authority")
+    raise ValueError("invalid criterion-scoped factual authority mixture")
