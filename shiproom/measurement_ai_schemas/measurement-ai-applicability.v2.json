@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"measurement-ai-applicability.v2",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","measurement","ai"],
+  "properties":{
+    "schema_version":{"const":"measurement-ai-applicability.v2"},
+    "measurement":{"$ref":"#/$defs/measurement"},
+    "ai":{"$ref":"#/$defs/scope"}
+  },
+  "$defs":{
+    "ids":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "scope":{"type":"object","additionalProperties":false,"required":["requirement_ids","criterion_ids","journey_ids","paths"],"properties":{"requirement_ids":{"$ref":"#/$defs/ids"},"criterion_ids":{"$ref":"#/$defs/ids"},"journey_ids":{"$ref":"#/$defs/ids"},"paths":{"$ref":"#/$defs/ids"}}},
+    "definition":{"type":"object","additionalProperties":false,"required":["path","requirement_ids","criterion_ids","journey_ids","declared_external"],"properties":{"path":{"type":"string","minLength":1},"requirement_ids":{"$ref":"#/$defs/ids"},"criterion_ids":{"$ref":"#/$defs/ids"},"journey_ids":{"$ref":"#/$defs/ids"},"declared_external":{"type":"boolean"}}},
+    "signal":{"type":"object","additionalProperties":false,"required":["name","required_properties"],"properties":{"name":{"type":"string","minLength":1},"required_properties":{"$ref":"#/$defs/ids"}}},
+    "contract":{"type":"object","additionalProperties":false,"required":["local_id","journey_id","criterion_ids","fields","metric_roles","required_signals"],"properties":{"local_id":{"type":"string","minLength":1},"journey_id":{"type":"string","minLength":1},"criterion_ids":{"$ref":"#/$defs/ids"},"fields":{"type":"object","additionalProperties":{"type":"object","additionalProperties":false,"required":["value","state"],"properties":{"value":{},"state":{"const":"owner_confirmed"}}}},"metric_roles":{"$ref":"#/$defs/ids"},"required_signals":{"type":"array","items":{"$ref":"#/$defs/signal"}}}},
+    "measurement":{"type":"object","additionalProperties":false,"required":["requirement_ids","criterion_ids","journey_ids","paths","measurement_definition_paths","contracts"],"properties":{"requirement_ids":{"$ref":"#/$defs/ids"},"criterion_ids":{"$ref":"#/$defs/ids"},"journey_ids":{"$ref":"#/$defs/ids"},"paths":{"$ref":"#/$defs/ids"},"measurement_definition_paths":{"type":"array","items":{"$ref":"#/$defs/definition"}},"contracts":{"type":"array","items":{"$ref":"#/$defs/contract"}}}}
+  }
+}

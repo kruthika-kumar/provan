@@ -304,3 +304,73 @@ def prepared_contracts(authority: dict, applicability: dict) -> list[dict]:
             signals.append({"signal_id":stable_id("signal",{"journey":journey_id,"criteria":related}),"name":None,"name_state":"unresolved","required_properties":[],"criterion_ids":related})
         contracts.append({"contract_id":stable_id("measurement_contract",{"journey":journey_id,"criteria":related}),"journey_id":journey_id,"journey_text":journey["journey_text"],"criterion_ids":related,"fields":prepared,"metric_roles":owner["metric_roles"] if owner else [],"required_signals":signals})
     return contracts
+
+
+def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Create the only factual references reviewers may cite.
+
+    Classifications and criterion paths are compiler-owned.  Reviewers receive
+    stable IDs and cannot submit either authority labels or arbitrary paths.
+    """
+    graph = authority["graph_input"]["graph_artifacts"]["requirement-evidence-graph.json"]
+    nodes = {item["node_id"]: item for item in graph["nodes"]}
+    criterion_ids = {item["criterion_id"] for item in authority["criteria"]}
+    class_map = {
+        "source_backed": "source_verified",
+        "owner_confirmed": "source_verified",
+        "deterministically_established": "deterministically_established",
+        "model_mapped_candidate": "model_mapped_candidate",
+        "not_inspected": "not_inspected",
+        "missing": "not_inspected",
+    }
+    registry: dict[str, dict] = {}
+    paths: list[dict] = []
+
+    for cid in sorted(criterion_ids):
+        bid = stable_id("basis", {"type": "criterion", "id": cid})
+        registry[bid] = {"basis_id": bid, "basis_type": "base_node", "object_id": cid,
+            "role_ids": list(ROLES), "criterion_ids": [cid], "journey_ids": [],
+            "direct_fact_authority": "source_verified", "allowed_relationships": ["assesses_criterion"]}
+
+    for edge in sorted(graph["edges"], key=lambda item: item["edge_id"]):
+        cid = edge["source_node_id"] if edge["source_node_id"] in criterion_ids else edge["target_node_id"] if edge["target_node_id"] in criterion_ids else None
+        other = edge["target_node_id"] if cid == edge["source_node_id"] else edge["source_node_id"]
+        if not cid or other not in nodes:
+            continue
+        direct = class_map.get(edge.get("establishment_classification"), "not_inspected")
+        role_ids = []
+        ntype = nodes[other].get("node_type")
+        if ntype in {"implementation_reference", "test_reference", "instrumentation_reference", "runtime_evidence", "finding", "closure_evidence"}:
+            role_ids.append("measurement")
+        if ntype in {"implementation_reference", "test_reference", "runtime_evidence", "finding", "closure_evidence"}:
+            role_ids.append("ai_evaluation")
+        if not role_ids:
+            continue
+        bid = stable_id("basis", {"type": "graph_node", "id": other, "edge": edge["edge_id"]})
+        registry[bid] = {"basis_id": bid, "basis_type": "base_node", "object_id": other,
+            "role_ids": sorted(role_ids), "criterion_ids": [cid], "journey_ids": [],
+            "direct_fact_authority": direct, "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+        traversal = "reverse" if edge["target_node_id"] == other else "forward"
+        # The path starts at the factual node and terminates at the criterion.
+        traversal = "reverse" if edge["target_node_id"] == other else "forward"
+        pid = stable_id("basis_path", {"basis": bid, "criterion": cid, "edge": edge["edge_id"]})
+        paths.append({"path_id": pid, "role_ids": sorted(role_ids), "criterion_id": cid,
+            "start_basis_id": bid, "steps": [{"edge_id": edge["edge_id"], "traversal": traversal,
+            "direct_fact_authority": direct, "required": True}], "effective_fact_authority": direct})
+
+    for role in ROLES:
+        for source in authority["role_sources"][role]["sources"]:
+            linked = sorted({cid for path, cid, _ in _node_paths(graph, role) if path == source["path"]})
+            bid = stable_id("basis", {"type": "project_source", "role": role, "path": source["path"], "blob": source["git_blob_hash"]})
+            registry[bid] = {"basis_id": bid, "basis_type": "project_source", "object_id": source["path"],
+                "role_ids": [role], "criterion_ids": linked, "journey_ids": [],
+                "direct_fact_authority": "source_verified", "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+
+    for contract in prepared:
+        bid = stable_id("basis", {"type": "prepared_contract", "id": contract["contract_id"]})
+        states = {field["field_state"] for field in contract["fields"].values()}
+        direct = "not_inspected" if "unresolved" in states else "source_verified"
+        registry[bid] = {"basis_id": bid, "basis_type": "prepared_contract", "object_id": contract["contract_id"],
+            "role_ids": ["measurement"], "criterion_ids": contract["criterion_ids"], "journey_ids": [contract["journey_id"]],
+            "direct_fact_authority": direct, "allowed_relationships": ["supports_conclusion", "supports_warning"]}
+    return sorted(registry.values(), key=lambda item: item["basis_id"]), sorted(paths, key=lambda item: item["path_id"])

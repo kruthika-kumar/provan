@@ -9,8 +9,8 @@ from .contracts import load_json_bytes, sha256_bytes
 
 GUIDANCE_PACKAGE = "shiproom.measurement_guidance"
 GUIDANCE_FILES = (
-    "guidance-registry.v1.json", "sources.v1.json", "recommendation-policy.v1.json",
-    "qualification-suite.v1.json", "metric-design.v1.md", "experimentation.v1.md",
+    "guidance-registry.v2.json", "sources.v1.json", "recommendation-policy.v2.json",
+    "qualification-suite.v2.json", "metric-design.v1.md", "experimentation.v1.md",
     "ai-evaluation.v1.md",
 )
 
@@ -24,10 +24,10 @@ def load_guidance_pack() -> dict:
             "snapshot_hash": sha256_bytes(raw),
             "semantic_hash": content_hash(load_json_bytes(raw)) if name.endswith(".json") else sha256_bytes(raw),
         }
-    registry = load_json_bytes(snapshots["guidance-registry.v1.json"]["bytes"])
+    registry = load_json_bytes(snapshots["guidance-registry.v2.json"]["bytes"])
     sources = load_json_bytes(snapshots["sources.v1.json"]["bytes"])
-    policy = load_json_bytes(snapshots["recommendation-policy.v1.json"]["bytes"])
-    suite = load_json_bytes(snapshots["qualification-suite.v1.json"]["bytes"])
+    policy = load_json_bytes(snapshots["recommendation-policy.v2.json"]["bytes"])
+    suite = load_json_bytes(snapshots["qualification-suite.v2.json"]["bytes"])
     validate_guidance(registry, sources, policy, suite)
     return {
         "snapshots": snapshots,
@@ -40,21 +40,38 @@ def load_guidance_pack() -> dict:
 
 
 def validate_guidance(registry: dict, sources: dict, policy: dict, suite: dict) -> None:
-    if registry.get("schema_version") != "measurement-guidance-pack.v1" or len(registry.get("rules", [])) != 13:
+    if registry.get("schema_version") != "measurement-guidance-pack.v2" or len(registry.get("rules", [])) != 13:
         raise ValueError("invalid measurement guidance registry")
     source_ids = {item.get("source_id") for item in sources.get("sources", [])}
     if source_ids != {"SRC_GOOGLE_HEART_2010", "SRC_MICROSOFT_CONTROLLED_EXPERIMENTS", "SRC_NIST_AI_RMF_1_0", "SRC_NIST_AI_600_1"}:
         raise ValueError("invalid measurement guidance sources")
     rule_ids = set()
     for rule in registry["rules"]:
-        expected = {"rule_id", "claim", "applicability_conditions", "exceptions", "allowed_output_classes", "forbidden_output_classes", "source_ids", "maximum_effect"}
+        expected = {"rule_id", "claim", "trigger", "exceptions", "allowed_output_classes", "forbidden_output_classes", "source_ids", "maximum_effect", "qualified_capability"}
         if not isinstance(rule, dict) or set(rule) != expected or rule["rule_id"] in rule_ids or not set(rule["source_ids"]).issubset(source_ids):
             raise ValueError("invalid measurement guidance rule")
+        _validate_trigger(rule["trigger"])
+        exception_ids=set()
+        for exception in rule["exceptions"]:
+            if not isinstance(exception,dict) or set(exception)!={"exception_id","material","project_basis_required"} or exception["exception_id"] in exception_ids or not isinstance(exception["material"],bool) or not isinstance(exception["project_basis_required"],bool): raise ValueError("invalid measurement guidance exception")
+            exception_ids.add(exception["exception_id"])
         rule_ids.add(rule["rule_id"])
-    if policy.get("schema_version") != "measurement-recommendation-policy.v1" or set(policy.get("rule_effect_ceilings", {})) != rule_ids:
+    if policy.get("schema_version") != "measurement-recommendation-policy.v2" or set(policy.get("allowed_trigger_operators",[]))!={"equals","not_equals","in","present","absent","state_is","all","any"}:
         raise ValueError("invalid measurement recommendation policy")
-    if suite.get("schema_version") != "measurement-qualification-suite.v1" or not suite.get("cases"):
+    if suite.get("schema_version") != "measurement-qualification-suite.v2" or not suite.get("cases"):
         raise ValueError("invalid measurement qualification suite")
+
+
+def _validate_trigger(trigger: object) -> None:
+    if not isinstance(trigger,dict): raise ValueError("invalid guidance trigger")
+    if set(trigger) in ({"all"},{"any"}):
+        values=next(iter(trigger.values()))
+        if not isinstance(values,list) or not values: raise ValueError("invalid guidance trigger group")
+        for item in values: _validate_trigger(item)
+        return
+    if set(trigger) not in ({"field","operator"},{"field","operator","value"}) or trigger.get("operator") not in {"equals","not_equals","in","present","absent","state_is"} or not isinstance(trigger.get("field"),str): raise ValueError("invalid guidance trigger predicate")
+    if trigger["operator"] in {"present","absent"} and "value" in trigger: raise ValueError("presence trigger cannot carry value")
+    if trigger["operator"] not in {"present","absent"} and "value" not in trigger: raise ValueError("guidance trigger value required")
 
 
 def rule_map(pack: dict) -> dict[str, dict]:

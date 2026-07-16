@@ -10,7 +10,7 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.project import canonical_json, content_hash
 
 from .authority import (
-    build_authority_input, domain_root, load_applicability_input,
+    build_authority_input, build_basis_registry, domain_root, load_applicability_input,
     load_capabilities_input, prepared_contracts,
 )
 from .contracts import (
@@ -36,7 +36,7 @@ def _resource(package: str, name: str) -> dict:
 def _roles() -> dict[str, dict]:
     result = {}
     for role in ROLES:
-        item = _resource("shiproom.measurement_ai_roles", role + ".json")
+        item = _resource("shiproom.measurement_ai_roles", role + ".v2.json")
         if item["value"].get("role_id") != role or item["value"].get("role_version") != ROLE_VERSIONS[role]:
             raise ValueError("invalid measurement AI role definition")
         result[role] = item
@@ -48,12 +48,18 @@ def _discovery() -> dict:
 
 
 def _contracts() -> dict[str, dict]:
-    result = {
-        "work-order.v4.json": _resource("shiproom.measurement_ai_schemas", "work-order.v4.json"),
-        "measurement-result.v1.json": _resource("shiproom.measurement_ai_schemas", "measurement-result.v1.json"),
-        "ai-evaluation-result.v1.json": _resource("shiproom.measurement_ai_schemas", "ai-evaluation-result.v1.json"),
-        "assessment-completion-receipt.v2.json": _resource("shiproom.assessment_schemas", "assessment-completion-receipt.v2.json"),
-    }
+    names = (
+        "work-order.v5.json", "measurement-result.v2.json", "ai-evaluation-result.v2.json",
+        "measurement-ai-source-packet.v2.json", "measurement-ai-role-context.v2.json",
+        "measurement-ai-work-orders.v2.json", "measurement-ai-overlay.v2.json",
+        "measurement-contract.v2.json", "instrumentation-coverage.v2.json",
+        "measurement-ai-readiness.v2.json", "launch-measurement-plan.v2.json",
+        "measurement-ai-compiler-receipts.v2.json", "portable-measurement-ai-manifest.v2.json",
+        "measurement-verifier-preparation.v2.json", "measurement-verifier-work-order.v2.json",
+        "measurement-verifier-result.v2.json",
+    )
+    result = {name: _resource("shiproom.measurement_ai_schemas", name) for name in names}
+    result["assessment-completion-receipt.v2.json"] = _resource("shiproom.assessment_schemas", "assessment-completion-receipt.v2.json")
     return result
 
 
@@ -99,6 +105,7 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
            owner_paths: dict, review: dict, roles: dict, discovery: dict, contracts: dict, guidance: dict) -> dict:
     authority = build_authority_input(ctx, applicability_bundle["value"], owner_paths)
     prepared = prepared_contracts(authority, applicability_bundle["value"])
+    basis_registry, basis_paths = build_basis_registry(authority, prepared)
     issued = [role for role in ROLES if _issue_role(authority, role)]
     skip_reason = None if issued else "no_applicable_measurement_or_ai_surface"
     semantic_basis = {
@@ -111,8 +118,9 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
         "applicability":applicability_bundle["value"],"owner_paths":owner_paths,"review":review,
         "role_hashes":{role:roles[role]["semantic_hash"] for role in ROLES},
         "discovery_hash":discovery["semantic_hash"],"guidance_hash":guidance["pack_hash"],
-        "policy_hash":guidance["snapshots"]["recommendation-policy.v1.json"]["semantic_hash"],"contract_hashes":{name:item["semantic_hash"] for name,item in contracts.items()},
+        "policy_hash":guidance["snapshots"]["recommendation-policy.v2.json"]["semantic_hash"],"contract_hashes":{name:item["semantic_hash"] for name,item in contracts.items()},
         "role_scopes":authority["role_scopes"],"role_sources":authority["role_sources"],"prepared_contracts":prepared,
+        "basis_registry":basis_registry,"basis_paths":basis_paths,
         "issued_roles":issued,"skip_reason":skip_reason,
     }
     semantic_hash = content_hash(semantic_basis)
@@ -122,7 +130,7 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
         "release_commit":ctx.authority_binding["repository_commit"],"product_intent_semantic_hash":semantic_basis["product_intent_semantic_hash"],
         "graph_generation":semantic_basis["graph_generation"],"graph_semantic_hash":semantic_basis["graph_semantic_hash"],
         "assessment_dependency":authority["assessment_dependency"],"role_scopes":authority["role_scopes"],
-        "role_sources":authority["role_sources"],"prepared_measurement_contracts":prepared,"review_resolution":review,
+        "role_sources":authority["role_sources"],"prepared_measurement_contracts":prepared,"basis_registry":basis_registry,"basis_paths":basis_paths,"review_resolution":review,
         "coverage_boundary":"Commit-pinned bounded measurement and AI sources plus validated Product Intent and Requirement-to-Evidence Graph.",
         "skip_reason":skip_reason,"packet_hash":"",
     }
@@ -139,7 +147,9 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
             "journeys":[item for item in authority["journeys"] if item["node_id"] in assigned["journey_ids"]],
             "graph_context":{"nodes":[],"edges":[],"gaps":[]},"sources":sources["sources"],"source_coverage":sources["coverage"],
             "limitations":sources["limitations"],"prepared_measurement_contracts":prepared if role == "measurement" else [],
-            "review_resolution":review,"guidance_registry_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v1.json"]["semantic_hash"],"packet_hash":"",
+            "basis_registry":[item for item in basis_registry if role in item["role_ids"]],
+            "basis_paths":[item for item in basis_paths if role in item["role_ids"]],
+            "review_resolution":review,"guidance_registry_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v2.json"]["semantic_hash"],"packet_hash":"",
         }
         # Referentially closed two-hop graph context around assigned criteria.
         graph = authority["graph_input"]["graph_artifacts"]["requirement-evidence-graph.json"]
@@ -161,16 +171,17 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
             "preparation_semantic_hash":semantic_hash,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],
             "role_id":role,"role_version":ROLE_VERSIONS[role],"role_definition_hash":roles[role]["semantic_hash"],"role_definition_snapshot_hash":roles[role]["snapshot_hash"],
             "objective":roles[role]["value"]["mandate"],"requested_review_mode":review["requested"],"resolved_review_mode":review["resolved"],
-            "inputs":{"packet_path":f"preparations/{preparation_id}/role-context/{role}.json","packet_hash":context["packet_hash"],**assigned,"surface_ids":[],"allowed_paths":[item["path"] for item in sources["sources"]],"product_intent_semantic_hash":semantic_basis["product_intent_semantic_hash"],"graph_semantic_hash":semantic_basis["graph_semantic_hash"],"assessment_dependency":authority["assessment_dependency"]["state"]},
+            "inputs":{"packet_path":f"preparations/{preparation_id}/role-context/{role}.json","packet_hash":context["packet_hash"],**assigned,"surface_ids":[],"allowed_paths":[item["path"] for item in sources["sources"]],"product_intent_semantic_hash":semantic_basis["product_intent_semantic_hash"],"graph_semantic_hash":semantic_basis["graph_semantic_hash"],"assessment_dependency":authority["assessment_dependency"]["state"],"basis_registry_hash":content_hash(context["basis_registry"])},
             "capability_requirements":{"file_read":"required","shell":"unavailable","browser":"unavailable","network":"unavailable"},
             "permissions":{"repository":"read_only","allowed_paths":[item["path"] for item in sources["sources"]],"allowed_commands":[]},
             "required_output":{"schema_path":"contract-schemas/"+result_name,"schema_version":RESULT_SCHEMAS[role],"schema_semantic_hash":result_contract["semantic_hash"],"schema_snapshot_hash":result_contract["snapshot_hash"],"output_path":f"{root_rel}/inbox/{preparation_id}/{wid}/result.json","completion_receipt_schema_path":"contract-schemas/assessment-completion-receipt.v2.json","completion_receipt_schema_version":RECEIPT_SCHEMA,"completion_receipt_schema_semantic_hash":receipt_contract["semantic_hash"],"completion_receipt_schema_snapshot_hash":receipt_contract["snapshot_hash"],"completion_receipt_path":f"{root_rel}/inbox/{preparation_id}/{wid}/completion-receipt.json"},
+            "required_qualification_capabilities":[],"qualification_receipt_hashes":[],
             "forbidden_claims":roles[role]["value"]["forbidden_claims"],
         }
         work["work_order_hash"]=work_order_hash(work); work_orders[role]=work
     entries=[]
     for role,work in work_orders.items(): entries.append({"role_id":role,"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"snapshot_hash":sha256_bytes(render_json(work))})
-    manifest={"schema_version":WORK_ORDERS_SCHEMA,"compiler_version":PREPARATION_COMPILER_VERSION,"preparation_id":preparation_id,"preparation_semantic_hash":semantic_hash,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"issued_roles":issued,"skip_reason":skip_reason,"source_packet_hash":source_packet["packet_hash"],"capabilities_hash":content_hash(capabilities_bundle["value"]),"applicability_hash":content_hash(applicability_bundle["value"]),"role_definition_hashes":semantic_basis["role_hashes"],"discovery_hash":discovery["semantic_hash"],"guidance_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v1.json"]["semantic_hash"],"contract_schema_hashes":semantic_basis["contract_hashes"],"work_orders":entries,"manifest_hash":""}
+    manifest={"schema_version":WORK_ORDERS_SCHEMA,"compiler_version":PREPARATION_COMPILER_VERSION,"preparation_id":preparation_id,"preparation_semantic_hash":semantic_hash,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"issued_roles":issued,"skip_reason":skip_reason,"source_packet_hash":source_packet["packet_hash"],"capabilities_hash":content_hash(capabilities_bundle["value"]),"applicability_hash":content_hash(applicability_bundle["value"]),"role_definition_hashes":semantic_basis["role_hashes"],"discovery_hash":discovery["semantic_hash"],"guidance_hash":guidance["pack_hash"],"recommendation_policy_hash":guidance["snapshots"]["recommendation-policy.v2.json"]["semantic_hash"],"contract_schema_hashes":semantic_basis["contract_hashes"],"work_orders":entries,"manifest_hash":""}
     manifest["manifest_hash"]=content_hash({k:v for k,v in manifest.items() if k != "manifest_hash"})
     pointer={"schema_version":PREPARATION_POINTER_SCHEMA,"preparation_id":preparation_id,"preparation_semantic_hash":semantic_hash,"manifest_snapshot_hash":sha256_bytes(render_json(manifest))}
     return {"authority":authority,"source_packet":source_packet,"contexts":contexts,"work_orders":work_orders,"manifest":manifest,"pointer":pointer,"semantic_basis":semantic_basis}
@@ -190,7 +201,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     (directory/"source-discovery.v1.json").write_bytes(discovery["bytes"])
     for role,item in roles.items(): p=directory/"role-definitions"/(role+".json"); p.parent.mkdir(exist_ok=True); p.write_bytes(item["bytes"])
     for name,item in contracts.items(): p=directory/"contract-schemas"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(item["bytes"])
-    for name in ("guidance-registry.v1.json","sources.v1.json","recommendation-policy.v1.json","qualification-suite.v1.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
+    for name in ("guidance-registry.v2.json","sources.v1.json","recommendation-policy.v2.json","qualification-suite.v2.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
         p=directory/"guidance-pack"/name; p.parent.mkdir(exist_ok=True); p.write_bytes(resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes())
     for role,context in expected["contexts"].items(): _atomic(directory/"role-context"/(role+".json"),context)
     for role,work in expected["work_orders"].items():

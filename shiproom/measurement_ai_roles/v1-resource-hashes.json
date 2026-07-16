@@ -1,0 +1,21 @@
+{
+  "baseline_commit":"db2b9844e90645f4943794b9c341667b4f91e327",
+  "hashes":{
+    "shiproom/measurement_ai_roles/__init__.py":"sha256:59dee9ed07c621dc3ee3691cb5be72201d24275580a095f60f205e46fb465ea6",
+    "shiproom/measurement_ai_roles/ai_evaluation.json":"sha256:0ca0f78866d2bfe23062df5d9dcab081d1f73e272ea4932abdabeacee37c7282",
+    "shiproom/measurement_ai_roles/measurement.json":"sha256:f07e39f6f51e1d8f5e008c7ac926a7820100d4f6c1033bc3f23141a35a3383fa",
+    "shiproom/measurement_ai_roles/source-discovery.v1.json":"sha256:507426138eebaf38e21af46ecf6dd932af87bba9f78c3a76854c4825246cf03d",
+    "shiproom/measurement_ai_schemas/__init__.py":"sha256:86265d99100a03a2fe7b6af7a9c74ec17eb58e74bfeff8dd7a0fd7772d87dff9",
+    "shiproom/measurement_ai_schemas/ai-evaluation-result.v1.json":"sha256:0ecdc08ec3aead221f9cd2a66ecdd1fda828306b128c08516eac7f8f71e9eb8c",
+    "shiproom/measurement_ai_schemas/current-portable-measurement-ai.v1.json":"sha256:966eddd8f3c3921332f13a93d980d8fbf801cd0a21629400087072fa2f1d1740",
+    "shiproom/measurement_ai_schemas/instrumentation-coverage.v1.json":"sha256:e74ac2c2249b953e5b3891e20d27e0d07577515fcbb2df73a9376e6769f6f518",
+    "shiproom/measurement_ai_schemas/launch-measurement-plan.v1.json":"sha256:06456681f8e341e15b5535a48a23704579703dad2b2a8b63ad2781ab400905cb",
+    "shiproom/measurement_ai_schemas/measurement-ai-overlay.v1.json":"sha256:699ce5a84b32f83bc72c3c45e14b6f4928c2ae790ebb1c93374cf86e68512ebc",
+    "shiproom/measurement_ai_schemas/measurement-ai-readiness.v1.json":"sha256:480cb1ac8f8c4228350ca7008daaf2853ff2e81257446f1586b4a66565c69c66",
+    "shiproom/measurement_ai_schemas/measurement-ai-role.v1.json":"sha256:8d0fd80db71f1c4f3a182cf46855177e9c0ec4bfbe6c7fd51aa357a9f5b3ff26",
+    "shiproom/measurement_ai_schemas/measurement-contract.v1.json":"sha256:1aeca2145bdca47714cf39ec535c425fe192cc10b310b2a40bc0abf46d197832",
+    "shiproom/measurement_ai_schemas/measurement-result.v1.json":"sha256:c7ba704d4f504f8cfc1a7f90bb48fd3566a97def8664d55d6160c5d4d2c2f425",
+    "shiproom/measurement_ai_schemas/portable-measurement-ai-manifest.v1.json":"sha256:364bc0c4fbad97a8fb3e4f5007865391eeea3c418a4471d2c948a1ee158a1230",
+    "shiproom/measurement_ai_schemas/work-order.v4.json":"sha256:1fba0e50c189ce4d5abe09a6df7e804b7fe0447994eb5c3abb61e049e738a758"
+  }
+}

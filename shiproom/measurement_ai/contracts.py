@@ -9,28 +9,28 @@ from typing import Any
 from shiproom.project import canonical_json, content_hash
 
 
-PREPARATION_COMPILER_VERSION = "measurement-ai-preparation.v1"
-COMPILER_VERSION = "portable-measurement-ai.v1"
-ROLE_SCHEMA = "shiproom.measurement-ai-role.v1"
-WORK_ORDER_SCHEMA = "shiproom.work-order.v4"
-CAPABILITIES_SCHEMA = "measurement-ai-capabilities.v1"
-APPLICABILITY_SCHEMA = "measurement-ai-applicability.v1"
-REVIEW_CAPABILITIES_SCHEMA = "measurement-review-capabilities.v1"
-PERMISSION_SCHEMA = "measurement-review-permission.v1"
-SOURCE_PACKET_SCHEMA = "measurement-ai-source-packet.v1"
-ROLE_CONTEXT_SCHEMA = "measurement-ai-role-context.v1"
-WORK_ORDERS_SCHEMA = "measurement-ai-work-orders.v1"
-OVERLAY_SCHEMA = "measurement-ai-overlay.v1"
-MANIFEST_SCHEMA = "portable-measurement-ai-manifest.v1"
-PREPARATION_POINTER_SCHEMA = "active-measurement-ai-preparation.v1"
-GENERATION_POINTER_SCHEMA = "current-portable-measurement-ai.v1"
+PREPARATION_COMPILER_VERSION = "measurement-ai-preparation.v2"
+COMPILER_VERSION = "portable-measurement-ai.v2"
+ROLE_SCHEMA = "shiproom.measurement-ai-role.v2"
+WORK_ORDER_SCHEMA = "shiproom.work-order.v5"
+CAPABILITIES_SCHEMA = "measurement-ai-capabilities.v2"
+APPLICABILITY_SCHEMA = "measurement-ai-applicability.v2"
+REVIEW_CAPABILITIES_SCHEMA = "measurement-review-capabilities.v2"
+PERMISSION_SCHEMA = "measurement-review-permission.v2"
+SOURCE_PACKET_SCHEMA = "measurement-ai-source-packet.v2"
+ROLE_CONTEXT_SCHEMA = "measurement-ai-role-context.v2"
+WORK_ORDERS_SCHEMA = "measurement-ai-work-orders.v2"
+OVERLAY_SCHEMA = "measurement-ai-overlay.v2"
+MANIFEST_SCHEMA = "portable-measurement-ai-manifest.v2"
+PREPARATION_POINTER_SCHEMA = "active-measurement-ai-preparation.v2"
+GENERATION_POINTER_SCHEMA = "current-portable-measurement-ai.v2"
 RECEIPT_SCHEMA = "shiproom.assessment-completion-receipt.v2"
 
 ROLES = ("measurement", "ai_evaluation")
-ROLE_VERSIONS = {role: "1.0.0" for role in ROLES}
+ROLE_VERSIONS = {role: "2.0.0" for role in ROLES}
 RESULT_SCHEMAS = {
-    "measurement": "measurement-result.v1",
-    "ai_evaluation": "ai-evaluation-result.v1",
+    "measurement": "measurement-result.v2",
+    "ai_evaluation": "ai-evaluation-result.v2",
 }
 
 CHECK_IDS = (
@@ -206,12 +206,14 @@ def effective_basis_class(classes: list[str]) -> str:
         return "not_inspected"
     if any(item not in BASIS_EVIDENCE_CLASSES for item in classes):
         raise ValueError("invalid basis evidence class")
-    if "model_mapped_candidate" in classes:
-        return "model_mapped_candidate"
     if "not_inspected" in classes:
         return "not_inspected"
+    if "model_mapped_candidate" in classes:
+        return "model_mapped_candidate"
+    if set(classes) == {"deterministically_established"}:
+        return "deterministically_established"
+    if set(classes) == {"source_verified"}:
+        return "source_verified"
     if "model_reviewed" in classes:
         return "model_reviewed"
-    if "source_verified" in classes:
-        return "source_verified"
-    return "deterministically_established"
+    raise ValueError("mixed deterministic and source-backed path lacks a defined terminal authority")
