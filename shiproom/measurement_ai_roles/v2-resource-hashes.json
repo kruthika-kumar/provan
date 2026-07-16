@@ -1,0 +1,33 @@
+{
+  "baseline_commit": "1da8eb1a8f039c0b6ca798fd731859a997ae59c1",
+  "hashes": {
+    "shiproom/measurement_ai_roles/ai_evaluation.v2.json": "sha256:ca6ea443d9d367bf8c721de1d8878279098a29116b91d08a4596d9c7e4f661ea",
+    "shiproom/measurement_ai_roles/measurement.v2.json": "sha256:e700d226194959a6d639f439f42fdeb317e8dac9ca0ce58904e4f118c5794a3b",
+    "shiproom/measurement_ai_schemas/active-measurement-ai-preparation.v2.json": "sha256:8e333487433558d6ed1c4dd8be3f0b778d42c29a5dcc08bcabdb69d0eda4d2a2",
+    "shiproom/measurement_ai_schemas/ai-evaluation-result.v2.json": "sha256:d3bb7d255cede8004a2d0d45bd503c931d20992cacc1aa639fca19588c8cb3f2",
+    "shiproom/measurement_ai_schemas/current-portable-measurement-ai.v2.json": "sha256:412d50854a174a0a500c4fce4952b8b2d1bd4840beaad7fbb09fe00f27ccd6b7",
+    "shiproom/measurement_ai_schemas/instrumentation-coverage.v2.json": "sha256:d353722925707819f497ce19561143cd3972bcc58e9cc6bc24f677aaf192eeea",
+    "shiproom/measurement_ai_schemas/launch-measurement-plan.v2.json": "sha256:82babfece7b327f1fc7d8d79f4de4faca7bbcd6ef3d9bb1ca0000e16acf96d5e",
+    "shiproom/measurement_ai_schemas/measurement-ai-applicability.v2.json": "sha256:32d63ff6e8d04f0370647ff2690777e6f5767e66ece276fdbd8aad18735624ed",
+    "shiproom/measurement_ai_schemas/measurement-ai-capabilities.v2.json": "sha256:05cb38f75d5c08ac84eb5c26cd172986e1011e84d7ae6db9dda0adc00035829b",
+    "shiproom/measurement_ai_schemas/measurement-ai-compiler-receipts.v2.json": "sha256:36d5ced069e04cc5818287dd4d162ae33027a5176c598011b034f8bc84960267",
+    "shiproom/measurement_ai_schemas/measurement-ai-overlay.v2.json": "sha256:1a88106a68cec56cf3c4e2c8093a2c7620f82601353f2edfa436ef4a45e5806b",
+    "shiproom/measurement_ai_schemas/measurement-ai-readiness.v2.json": "sha256:dc1e24244aa654dc399ed3515d4be857178b2cf229fdadc8090a92ccbfff4304",
+    "shiproom/measurement_ai_schemas/measurement-ai-role-context.v2.json": "sha256:a1a78f1a8a028992d37c83f669611df39ebd5fa7ad9e81c231d81fb753e79285",
+    "shiproom/measurement_ai_schemas/measurement-ai-role.v2.json": "sha256:b825796ccdaa7102804fe40a615d576375f91cfdbba30de781cc66c50cc6c0c8",
+    "shiproom/measurement_ai_schemas/measurement-ai-source-packet.v2.json": "sha256:429c35c403032da72858e7fd0a4e816312896674bb6e5198d802ccf649968249",
+    "shiproom/measurement_ai_schemas/measurement-ai-work-orders.v2.json": "sha256:a71b4477848c75338d4f5a0f4de8c976f3132f4cd81d3c6447366f8f2faa2200",
+    "shiproom/measurement_ai_schemas/measurement-contract.v2.json": "sha256:3d900fa939bc7b9d26a85096880aa9accfae419a06a14842d229f3b7711ba0be",
+    "shiproom/measurement_ai_schemas/measurement-result.v2.json": "sha256:c833e74da6b26316fb42629dcdedd9bb45175b4f6dd5fc0859da42642a0e85b8",
+    "shiproom/measurement_ai_schemas/measurement-review-capabilities.v2.json": "sha256:0e6710f6641b8138757584208f32a80dfbdc5a59b735e7d87b0e669d13b8834d",
+    "shiproom/measurement_ai_schemas/measurement-review-permission.v2.json": "sha256:9131722cd4c790a5d7b880e2b11222a40b482ee054ef782e7e0909df8351bb33",
+    "shiproom/measurement_ai_schemas/measurement-reviewer-qualification-receipt.v2.json": "sha256:f0a1a3f2caf3a75b15edc4f73e6522bab3de1b3fa6941e47573d6ee73b5d7dd9",
+    "shiproom/measurement_ai_schemas/measurement-reviewer-qualification-result.v2.json": "sha256:75a9a6067615b394beee8f479aced2bb51dac3f9be61bd30c49a0422a7749d9c",
+    "shiproom/measurement_ai_schemas/measurement-reviewer-qualification-task.v2.json": "sha256:cd0c2fc050175df74725e2bf908efdc1873094599b07c8d3addbdb2c001ce4b9",
+    "shiproom/measurement_ai_schemas/measurement-verifier-preparation.v2.json": "sha256:3a0ae769680598bbf9a6a982bdc12d43fb4af3b72e063b4aa6d45d9970b0e44f",
+    "shiproom/measurement_ai_schemas/measurement-verifier-result.v2.json": "sha256:61b2c86802ce1135222e14a8330f9d1d804f2f77b87ef0a7dfd37b824bbd4fb9",
+    "shiproom/measurement_ai_schemas/measurement-verifier-work-order.v2.json": "sha256:e6d7c28f4509f63a6c6d8774c0259a7cd6f2d0ba56856d1a1f46a5c5b93791c4",
+    "shiproom/measurement_ai_schemas/portable-measurement-ai-manifest.v2.json": "sha256:cbd400b1221dea062e3e72e50b20ad410a012772856c9ffdf165b400a2c766c2",
+    "shiproom/measurement_ai_schemas/work-order.v5.json": "sha256:9f2541c7b38a0cc28542f33c4a940dd16e6ee5239f81badd1acb45a75c716e94"
+  }
+}

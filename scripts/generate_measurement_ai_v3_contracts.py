@@ -1,0 +1,227 @@
+"""Generate the additive Measurement & AI Readiness v3 JSON contracts.
+
+The Python validators remain authoritative for semantic bindings.  These
+checked-in schemas are exact structural mirrors and deliberately contain no
+open-ended object or detail-bag variants.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMAS = ROOT / "shiproom" / "measurement_ai_schemas"
+ROLES = ROOT / "shiproom" / "measurement_ai_roles"
+HASH = {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+TEXT = {"type": "string", "minLength": 1, "maxLength": 4096}
+ID = {"type": "string", "minLength": 1, "maxLength": 256}
+IDS = {"type": "array", "maxItems": 2048, "uniqueItems": True, "items": ID}
+REVIEW_MODES = ["contract_only", "guided_review", "expert_escalated_review"]
+SCOPE_STATES = ["applicable", "owner_confirmation_required", "not_applicable", "not_inspected"]
+DISPOSITIONS = ["assessed", "not_inspected", "not_applicable", "blocked_by_input_ambiguity"]
+UNCERTAINTIES = ["none", "bounded", "material", "not_assessed"]
+SEMANTIC_AUTHORITIES = ["not_performed", "model_reviewed", "model_reviewed_with_curated_guidance", "dual_reviewed_with_curated_guidance"]
+MATURITY_RUNGS = ["case_candidate", "fixed_input", "oracle_or_rubric", "pass_condition", "journey_or_criterion_linkage", "prompt_or_model_binding", "known_failure", "fallback", "malformed_output", "unavailable_model", "supplied_execution_result", "deterministically_validated_result", "production_trace_linkage"]
+METRIC_DIMENSIONS = ["decision_use_case_alignment", "metric_role", "outcome_alignment", "population", "opportunity_exposure", "denominator", "window", "attribution", "interpretation_rule", "guardrails", "inference_intent_alignment"]
+
+
+def obj(required: list[str], properties: dict, *, one_of: list[dict] | None = None) -> dict:
+    result = {"type": "object", "additionalProperties": False, "required": required, "properties": properties}
+    if one_of is not None:
+        result["oneOf"] = one_of
+    return result
+
+
+def arr(item: dict, *, maximum: int = 500, minimum: int = 0, unique: bool = False) -> dict:
+    result = {"type": "array", "minItems": minimum, "maxItems": maximum, "items": item}
+    if unique:
+        result["uniqueItems"] = True
+    return result
+
+
+def document(name: str, properties: dict, required: list[str], defs: dict | None = None) -> dict:
+    value = {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": name, **obj(required, properties)}
+    if defs:
+        value["$defs"] = defs
+    return value
+
+
+def write(name: str, value: dict) -> None:
+    (SCHEMAS / name).write_text(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
+def scalar() -> dict:
+    return {"oneOf": [{"type": "string", "maxLength": 4096}, {"type": "boolean"}, {"type": "integer"}, {"type": "number"}, {"type": "null"}, {"type": "array", "maxItems": 100, "items": {"type": "string", "maxLength": 1000}}]}
+
+
+def common_defs() -> dict:
+    step = obj(["edge_id", "traversal"], {"edge_id": ID, "traversal": {"enum": ["forward", "reverse"]}})
+    basis_record = obj(
+        ["basis_id", "basis_type", "role_ids", "criterion_ids", "journey_ids", "field_state", "assertion_scope", "direct_fact_authority", "origin", "reference_ids"],
+        {"basis_id": ID, "basis_type": {"enum": ["owner_declaration", "source_reference", "implementation_reference", "instrumentation_reference", "test_reference", "runtime_evidence", "confirmed_contradiction", "ai_fixture", "ai_oracle", "ai_pass_condition", "ai_execution", "production_trace", "observability_candidate"]}, "role_ids": IDS, "criterion_ids": IDS, "journey_ids": IDS, "field_state": {"enum": ["owner_confirmed", "source_declared", "model_proposed", "unresolved", "not_applicable", "not_inspected"]}, "assertion_scope": {"enum": ["contract_declaration", "source_definition", "implementation", "instrumentation", "test", "runtime", "ai_evaluation", "production_trace"]}, "direct_fact_authority": {"enum": ["source_verified", "deterministically_established", "model_mapped_candidate", "not_inspected"]}, "origin": {"enum": ["product_intent", "requirement_evidence_graph", "owner_declaration", "project_source", "portable_assessment"]}, "reference_ids": IDS},
+    )
+    basis_path = obj(["path_id", "start_basis_id", "criterion_id", "role_ids", "steps", "required", "effective_authority"], {"path_id": ID, "start_basis_id": ID, "criterion_id": ID, "role_ids": IDS, "steps": arr(step, maximum=64), "required": {"type": "boolean"}, "effective_authority": {"enum": ["source_verified", "deterministically_established", "model_mapped_candidate", "not_inspected"]}})
+    source = obj(["path", "returned_git_path", "git_blob_hash", "normalized_text_hash", "size_bytes", "text", "mandatory", "selection_rule_ids", "selection_reason", "provenance"], {"path": ID, "returned_git_path": ID, "git_blob_hash": HASH, "normalized_text_hash": HASH, "size_bytes": {"type": "integer", "minimum": 0, "maximum": 262144}, "text": {"type": "string", "maxLength": 262144}, "mandatory": {"type": "boolean"}, "selection_rule_ids": IDS, "selection_reason": TEXT, "provenance": ID})
+    executor = {"oneOf": [obj(["executor_type", "reviewer_label"], {"executor_type": {"const": "human"}, "reviewer_label": TEXT}), obj(["executor_type", "candidate_id", "provider_id", "model_id", "harness_id", "adapter_version", "run_id"], {"executor_type": {"const": "agent_harness"}, "candidate_id": ID, "provider_id": ID, "model_id": ID, "harness_id": ID, "adapter_version": ID, "run_id": ID})]}
+    return {"hash": HASH, "id": ID, "ids": IDS, "text": TEXT, "step": step, "basis_record": basis_record, "basis_path": basis_path, "source": source, "executor": executor}
+
+
+def role_schema() -> dict:
+    props = {"schema_version": {"const": "shiproom.measurement-ai-role.v3"}, "role_id": {"enum": ["measurement", "ai_evaluation"]}, "role_version": {"const": "3.0.0"}, "mandate": TEXT, "applicability": arr(TEXT, maximum=50), "assessment_method": arr(TEXT, maximum=50, minimum=1), "assigned_record_types": IDS, "required_coverage": arr(TEXT, maximum=100), "evidence_hierarchy": arr(TEXT, maximum=50), "allowed_basis_references": IDS, "capability_requirements": obj(["file_read", "shell", "browser", "network"], {"file_read": {"const": "required"}, "shell": {"const": "unavailable"}, "browser": {"const": "unavailable"}, "network": {"const": "unavailable"}}), "gap_taxonomy": IDS, "recommendation_taxonomy": IDS, "forbidden_claims": arr(TEXT, maximum=100), "completion_rules": arr(TEXT, maximum=100), "reasoning_examples": obj(["adequate", "inadequate"], {"adequate": arr(TEXT, maximum=20), "inadequate": arr(TEXT, maximum=20)})}
+    return document("shiproom.measurement-ai-role.v3", props, list(props))
+
+
+def result_schema(role: str) -> dict:
+    defs = common_defs()
+    authority = obj(["basis_ids", "basis_path_ids"], {"basis_ids": IDS, "basis_path_ids": IDS})
+    gap_kinds = ["outcome_event_definition_gap", "success_failure_distinction_gap", "critical_property_gap", "metric_decision_gap"] if role == "measurement" else ["fixed_eval_gap", "claim_authority_gap", "failure_case_gap", "version_traceability_gap", "observability_gap"]
+    gap = obj(["local_id", "gap_kind", "aspect_code", "summary", "basis_ids", "basis_path_ids"], {"local_id": ID, "gap_kind": {"enum": gap_kinds}, "aspect_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"}, "summary": TEXT, **authority["properties"]})
+    exception = obj(["exception_id", "disposition", "basis_ids"], {"exception_id": ID, "disposition": {"enum": ["applies", "ruled_out", "unknown", "not_relevant"]}, "basis_ids": IDS})
+    recommendation = obj(["local_id", "criterion_id", "recommendation_class", "summary", "basis_ids", "basis_path_ids", "guidance_rule_ids", "exception_dispositions", "abstained", "automatic_replacements"], {"local_id": ID, "criterion_id": ID, "recommendation_class": {"enum": ["deterministic_contract_gap", "research_backed_warning", "contextual_hypothesis", "owner_confirmation_question", "contextual_metric_proposal"] if role == "measurement" else ["deterministic_contract_gap", "research_backed_warning", "contextual_hypothesis", "owner_confirmation_question"]}, "summary": TEXT, **authority["properties"], "guidance_rule_ids": IDS, "exception_dispositions": arr(exception, maximum=50), "abstained": {"type": "boolean"}, "automatic_replacements": IDS})
+    common = {"local_id": ID, "criterion_id": ID, "scope_state": {"enum": SCOPE_STATES}, "disposition": {"enum": DISPOSITIONS}, "uncertainty": {"enum": UNCERTAINTIES}, **authority["properties"], "conclusion_evidence_class": {"enum": ["model_reviewed", "not_inspected"]}, "semantic_review_authority": {"enum": SEMANTIC_AUTHORITIES}, "summary": {"type": "string", "maxLength": 4096}, "gaps": arr(gap)}
+    if role == "measurement":
+        update = obj(["local_id", "field_name", "proposed_value", "rationale"], {"local_id": ID, "field_name": ID, "proposed_value": scalar(), "rationale": TEXT})
+        typed = obj(["local_id", "basis_ids", "basis_path_ids"], {"local_id": ID, **authority["properties"]})
+        prop = obj(["local_id", "property_name", "state", "basis_ids", "basis_path_ids"], {"local_id": ID, "property_name": ID, "state": {"enum": ["present", "missing", "unresolved", "not_inspected"]}, **authority["properties"]})
+        signal = obj(["local_id", "signal_id", "event_candidates", "property_results", "tests", "runtime_evidence"], {"local_id": ID, "signal_id": ID, "event_candidates": arr(typed), "property_results": arr(prop), "tests": arr(typed), "runtime_evidence": arr(typed)})
+        dimension = obj(["dimension", "state", "rationale", "basis_ids", "basis_path_ids"], {"dimension": {"enum": METRIC_DIMENSIONS}, "state": {"enum": ["adequate", "contextual_concern", "material_concern", "insufficient_context", "not_applicable", "not_inspected"]}, "rationale": {"type": "string", "maxLength": 4096}, **authority["properties"]})
+        common.update({"journey_ids": IDS, "contract_updates": arr(update), "signal_assessments": arr(signal), "metric_dimensions": arr(dimension, maximum=11)})
+    else:
+        rung = obj(["local_id", "rung", "state", "basis_ids", "basis_path_ids", "limitations"], {"local_id": ID, "rung": {"enum": MATURITY_RUNGS}, "state": {"enum": ["established", "candidate", "not_established", "not_inspected", "not_applicable"]}, **authority["properties"], "limitations": arr(TEXT, maximum=50)})
+        judge = obj(["local_id", "judge_type", "judge_model", "rubric_or_prompt", "version_binding", "calibration_state", "agreement_state", "limitations", "basis_ids", "basis_path_ids"], {"local_id": ID, "judge_type": {"enum": ["deterministic", "human", "llm_judge", "hybrid"]}, "judge_model": {"type": ["string", "null"], "maxLength": 256}, "rubric_or_prompt": {"type": ["string", "null"], "maxLength": 4096}, "version_binding": {"enum": ["established", "not_established", "not_applicable", "not_inspected"]}, "calibration_state": {"enum": ["established", "not_established", "not_applicable", "not_inspected"]}, "agreement_state": {"enum": ["established", "not_established", "not_applicable", "not_inspected"]}, "limitations": arr(TEXT, maximum=50), **authority["properties"]})
+        claim = obj(["local_id", "claim_id", "statement", "presented_as_proof", "basis_ids", "basis_path_ids"], {"local_id": ID, "claim_id": ID, "statement": TEXT, "presented_as_proof": {"type": "boolean"}, **authority["properties"]})
+        obs = obj(["local_id", "kind", "basis_ids", "basis_path_ids", "supported_dimensions"], {"local_id": ID, "kind": {"enum": ["langfuse", "opentelemetry", "application_logging", "provider_native_tracing", "custom_tracing"]}, **authority["properties"], "supported_dimensions": IDS})
+        common.update({"maturity_rungs": arr(rung, maximum=13), "judge_assessments": arr(judge), "claims": arr(claim), "observability_candidates": arr(obs)})
+    record = obj(list(common), common)
+    props = {"schema_version": {"const": f"{role.replace('_', '-') if role == 'ai_evaluation' else role}-result.v3"}, "role_id": {"const": role}, "role_version": {"const": "3.0.0"}, "preparation_id": {"type": "string", "pattern": "^prep_[0-9a-f]{32}$"}, "work_order_id": {"type": "string", "pattern": f"^wo_{role}_[0-9a-f]{{16}}$"}, "base_graph_semantic_hash": HASH, "resolved_review_mode": {"enum": REVIEW_MODES}, "records": arr(record), "recommendations": arr(recommendation), "assumptions": arr(TEXT, maximum=100, unique=True), "limitations": arr(TEXT, maximum=100, unique=True)}
+    return document(props["schema_version"]["const"], props, list(props), defs)
+
+
+def generate() -> None:
+    SCHEMAS.mkdir(exist_ok=True)
+    write("measurement-ai-role.v3.json", role_schema())
+    write("measurement-result.v3.json", result_schema("measurement"))
+    write("ai-evaluation-result.v3.json", result_schema("ai_evaluation"))
+    # The remaining governing contracts are exact closed envelopes.  Their
+    # nested authoritative records reference the same closed definitions used
+    # by the Python validators.
+    defs = common_defs()
+    capability = document("measurement-ai-capabilities.v3", {"schema_version": {"const": "measurement-ai-capabilities.v3"}, "substrate": obj(["id", "execution_mode"], {"id": ID, "execution_mode": ID}), "capabilities": obj(["file_read", "shell", "browser", "network"], {k: obj(["available"], {"available": {"type": "boolean"}}) for k in ("file_read", "shell", "browser", "network")}), "permissions": obj(["file_read", "shell", "browser", "network"], {"file_read": obj(["granted", "scope"], {"granted": {"const": True}, "scope": {"const": "prepared_packet_only"}}), **{k: obj(["granted"], {"granted": {"const": False}}) for k in ("shell", "browser", "network")}})}, ["schema_version", "substrate", "capabilities", "permissions"])
+    write("measurement-ai-capabilities.v3.json", capability)
+    owner_field = obj(["value", "state"], {"value": scalar(), "state": {"const": "owner_confirmed"}})
+    measurement_fields = ["decision_question", "decision_use_case", "decision_owner", "decision_timing", "decision_rule_or_interpretation", "intended_outcome", "unit", "unit_of_observation", "eligible_population", "exposure_or_opportunity_definition", "numerator", "denominator", "denominator_state", "eligible_denominator_population", "zero_denominator_handling", "release_can_affect_denominator", "aggregation_level", "observation_window", "attribution_rule", "expected_direction", "decision_threshold_or_interpretation", "journey_start", "success_condition", "failure_condition", "guardrails", "experiment_exposure", "inference_intent", "outcome_delay", "minimum_maturity_window", "incomplete_observation_possible", "censoring_limitation", "definition_state", "execution_state", "data_accuracy_state"]
+    fields = {name: owner_field for name in measurement_fields}
+    signal = obj(["name", "required_properties"], {"name": ID, "required_properties": IDS})
+    contract = obj(["local_id", "journey_id", "criterion_ids", "fields", "metric_roles", "required_signals"], {"local_id": ID, "journey_id": ID, "criterion_ids": IDS, "fields": {"type": "object", "additionalProperties": False, "properties": fields}, "metric_roles": arr({"enum": ["outcome", "diagnostic", "guardrail", "operational_or_data_quality"]}, maximum=4, unique=True), "required_signals": arr(signal)})
+    definition = obj(["path", "requirement_ids", "criterion_ids", "journey_ids", "declared_external"], {"path": ID, "requirement_ids": IDS, "criterion_ids": IDS, "journey_ids": IDS, "declared_external": {"type": "boolean"}})
+    scope = obj(["requirement_ids", "criterion_ids", "journey_ids", "paths"], {"requirement_ids": IDS, "criterion_ids": IDS, "journey_ids": IDS, "paths": IDS})
+    measurement_scope = obj(["requirement_ids", "criterion_ids", "journey_ids", "paths", "measurement_definition_paths", "contracts"], {**scope["properties"], "measurement_definition_paths": arr(definition), "contracts": arr(contract)})
+    write("measurement-ai-applicability.v3.json", document("measurement-ai-applicability.v3", {"schema_version": {"const": "measurement-ai-applicability.v3"}, "measurement": measurement_scope, "ai": scope}, ["schema_version", "measurement", "ai"]))
+    candidate = obj(["candidate_id", "provider_id", "model_id", "qualification_receipt_path"], {"candidate_id": ID, "provider_id": ID, "model_id": ID, "qualification_receipt_path": ID})
+    review_caps = {"oneOf": [obj(["schema_version", "executor_type", "reviewer_label"], {"schema_version": {"const": "measurement-review-capabilities.v3"}, "executor_type": {"const": "human"}, "reviewer_label": TEXT}), obj(["schema_version", "executor_type", "active_candidate_id", "qualification_receipt_path", "configured_candidates", "fresh_session_supported", "automatic_switch_allowed", "cost_disclosure"], {"schema_version": {"const": "measurement-review-capabilities.v3"}, "executor_type": {"const": "agent_harness"}, "active_candidate_id": ID, "qualification_receipt_path": ID, "configured_candidates": arr(candidate, maximum=20), "fresh_session_supported": {"type": "boolean"}, "automatic_switch_allowed": {"const": False}, "cost_disclosure": {"type": "string", "maxLength": 4096}})]}
+    write("measurement-review-capabilities.v3.json", {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "measurement-review-capabilities.v3", **review_caps})
+    switch = {"oneOf": [obj(["decision"], {"decision": {"enum": ["not_requested", "declined"]}}), obj(["decision", "candidate_id", "provider_id", "model_id", "fresh_session_granted"], {"decision": {"const": "granted"}, "candidate_id": ID, "provider_id": ID, "model_id": ID, "fresh_session_granted": {"const": True}})]}
+    write("measurement-review-permission.v3.json", document("measurement-review-permission.v3", {"schema_version": {"const": "measurement-review-permission.v3"}, "release_id": ID, "expert_review_granted": {"type": "boolean"}, "model_switch": switch}, ["schema_version", "release_id", "expert_review_granted", "model_switch"]))
+    receipt_props = {"schema_version": {"const": "measurement-ai-completion-receipt.v3"}, "executor": defs["executor"], "work_order_id": ID, "work_order_hash": HASH, "result_snapshot_hash": HASH, "started_at": {"type": "string", "format": "date-time"}, "completed_at": {"type": "string", "format": "date-time"}}
+    write("measurement-ai-completion-receipt.v3.json", document("measurement-ai-completion-receipt.v3", receipt_props, list(receipt_props), defs))
+    # Exact envelopes for generated structures. Each collection item has a
+    # closed field set; semantic cross-references are enforced in Python.
+    exact_envelopes()
+    write_roles()
+
+
+def exact_envelopes() -> None:
+    defs = common_defs()
+    hash_map = {"type": "object", "additionalProperties": HASH}
+    dependency = {"oneOf": [obj(["state", "generation", "semantic_hash"], {"state": {"const": "not_used"}, "generation": {"type": "null"}, "semantic_hash": {"type": "null"}}), obj(["state", "generation", "semantic_hash"], {"state": {"const": "required_present"}, "generation": ID, "semantic_hash": HASH})]}
+    pointer_p = {"schema_version": {"const": "active-measurement-ai-preparation.v3"}, "preparation_id": {"type": "string", "pattern": "^prep_[0-9a-f]{32}$"}, "preparation_semantic_hash": HASH, "manifest_snapshot_hash": HASH}
+    write("active-measurement-ai-preparation.v3.json", document("active-measurement-ai-preparation.v3", pointer_p, list(pointer_p)))
+    pointer_g = {"schema_version": {"const": "current-portable-measurement-ai.v3"}, "generation": {"type": "string", "pattern": "^gen_[0-9a-f]{32}$"}, "manifest_snapshot_hash": HASH, "semantic_bundle_hash": HASH}
+    write("current-portable-measurement-ai.v3.json", document("current-portable-measurement-ai.v3", pointer_g, list(pointer_g)))
+    assigned = obj(["requirement_ids", "criterion_ids", "journey_ids"], {"requirement_ids": IDS, "criterion_ids": IDS, "journey_ids": IDS})
+    output = obj(["schema_path", "schema_version", "schema_semantic_hash", "schema_snapshot_hash", "output_path", "completion_receipt_schema_path", "completion_receipt_schema_version", "completion_receipt_schema_semantic_hash", "completion_receipt_schema_snapshot_hash", "completion_receipt_path"], {"schema_path": ID, "schema_version": {"enum": ["measurement-result.v3", "ai-evaluation-result.v3"]}, "schema_semantic_hash": HASH, "schema_snapshot_hash": HASH, "output_path": ID, "completion_receipt_schema_path": ID, "completion_receipt_schema_version": {"const": "measurement-ai-completion-receipt.v3"}, "completion_receipt_schema_semantic_hash": HASH, "completion_receipt_schema_snapshot_hash": HASH, "completion_receipt_path": ID})
+    inputs = obj(["packet_path", "packet_hash", "requirement_ids", "criterion_ids", "journey_ids", "surface_ids", "allowed_paths", "product_intent_semantic_hash", "graph_semantic_hash", "assessment_dependency", "basis_registry_hash"], {"packet_path": ID, "packet_hash": HASH, **assigned["properties"], "surface_ids": IDS, "allowed_paths": IDS, "product_intent_semantic_hash": HASH, "graph_semantic_hash": HASH, "assessment_dependency": {"enum": ["not_used", "required_present"]}, "basis_registry_hash": HASH})
+    work_props = {"schema_version": {"const": "shiproom.work-order.v6"}, "work_order_id": ID, "work_order_hash": HASH, "preparation_id": ID, "preparation_semantic_hash": HASH, "release_id": ID, "release_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "role_id": {"enum": ["measurement", "ai_evaluation"]}, "role_version": {"const": "3.0.0"}, "role_definition_hash": HASH, "role_definition_snapshot_hash": HASH, "objective": TEXT, "requested_review_mode": {"enum": REVIEW_MODES}, "resolved_review_mode": {"enum": REVIEW_MODES}, "inputs": inputs, "capability_requirements": obj(["file_read", "shell", "browser", "network"], {"file_read": {"const": "required"}, "shell": {"const": "unavailable"}, "browser": {"const": "unavailable"}, "network": {"const": "unavailable"}}), "permissions": obj(["repository", "allowed_paths", "allowed_commands"], {"repository": {"const": "read_only"}, "allowed_paths": IDS, "allowed_commands": {"type": "array", "maxItems": 0}}), "required_output": output, "required_qualification_capabilities": IDS, "qualification_receipt_hashes": {"type": "array", "uniqueItems": True, "items": HASH}, "forbidden_claims": arr(TEXT, maximum=100)}
+    write("work-order.v6.json", document("shiproom.work-order.v6", work_props, list(work_props)))
+    role_scope = obj(["applicable_criterion_ids", "candidate_criterion_ids", "unbounded_candidate_count"], {"applicable_criterion_ids": IDS, "candidate_criterion_ids": IDS, "unbounded_candidate_count": {"type": "integer", "minimum": 0}})
+    coverage = obj(["coverage_status", "candidate_files_considered", "files_included", "files_omitted_due_to_cap", "omitted_paths"], {"coverage_status": {"enum": ["complete", "bounded_incomplete"]}, "candidate_files_considered": {"type": "integer", "minimum": 0}, "files_included": {"type": "integer", "minimum": 0, "maximum": 64}, "files_omitted_due_to_cap": {"type": "integer", "minimum": 0}, "omitted_paths": IDS})
+    source_group = obj(["sources", "coverage", "limitations"], {"sources": arr(defs["source"], maximum=64), "coverage": coverage, "limitations": arr(TEXT, maximum=500)})
+    # Complex source/context snapshots use closed named arrays; the compiler
+    # performs full semantic equality against its pure reconstruction.
+    source_props = {"schema_version": {"const": "measurement-ai-source-packet.v3"}, "compiler_version": {"const": "measurement-ai-preparation.v3"}, "preparation_id": ID, "preparation_semantic_hash": HASH, "release_id": ID, "release_commit": ID, "product_intent_semantic_hash": HASH, "graph_generation": ID, "graph_semantic_hash": HASH, "assessment_dependency": dependency, "role_scopes": obj(["measurement", "ai_evaluation"], {"measurement": role_scope, "ai_evaluation": role_scope}), "role_sources": obj(["measurement", "ai_evaluation"], {"measurement": source_group, "ai_evaluation": source_group}), "prepared_measurement_contracts": arr({"type": "object", "additionalProperties": False, "required": ["contract_id", "journey_id", "criterion_ids", "fields", "metric_roles", "required_signals", "definition_state", "execution_state", "data_accuracy_state"], "properties": {"contract_id": ID, "journey_id": {"type": ["string", "null"]}, "criterion_ids": IDS, "fields": {"type": "array", "items": obj(["field_name", "value", "field_state", "assertion_scope", "basis_ids"], {"field_name": ID, "value": scalar(), "field_state": {"enum": ["owner_confirmed", "source_declared", "model_proposed", "unresolved", "not_applicable", "not_inspected"]}, "assertion_scope": ID, "basis_ids": IDS})}, "metric_roles": IDS, "required_signals": arr(obj(["signal_id", "name", "name_state", "required_properties", "criterion_ids"], {"signal_id": ID, "name": {"type": ["string", "null"]}, "name_state": {"enum": ["owner_confirmed", "source_declared", "model_proposed", "unresolved", "not_applicable", "not_inspected"]}, "required_properties": IDS, "criterion_ids": IDS})), "definition_state": {"enum": ["supplied_and_inspected", "declared_external", "not_supplied", "not_inspected"]}, "execution_state": {"enum": ["established", "not_established", "not_inspected"]}, "data_accuracy_state": {"enum": ["established", "not_established", "not_inspected"]}}}), "basis_registry": arr(defs["basis_record"], maximum=2048), "basis_paths": arr(defs["basis_path"], maximum=2048), "review_resolution": {"$ref": "#/$defs/review_resolution"}, "coverage_boundary": TEXT, "skip_reason": {"type": ["string", "null"], "enum": ["no_applicable_measurement_or_ai_surface", None]}, "packet_hash": HASH}
+    review_participant = {"oneOf": [obj(["type"], {"type": {"const": "human"}}), obj(["type", "candidate_id", "provider_id", "model_id", "qualification_id", "qualification_snapshot_hash", "qualified_capabilities", "model_switch"], {"type": {"const": "model"}, "candidate_id": ID, "provider_id": ID, "model_id": ID, "qualification_id": ID, "qualification_snapshot_hash": HASH, "qualified_capabilities": IDS, "model_switch": {"type": "boolean"}})]}
+    review_resolution = obj(["requested", "resolved", "reason", "participants"], {"requested": {"enum": REVIEW_MODES}, "resolved": {"enum": REVIEW_MODES}, "reason": ID, "participants": arr(review_participant, maximum=4)})
+    defs2 = {**defs, "review_resolution": review_resolution}
+    write("measurement-ai-source-packet.v3.json", document("measurement-ai-source-packet.v3", source_props, list(source_props), defs2))
+    context_props = {"schema_version": {"const": "measurement-ai-role-context.v3"}, "preparation_id": ID, "preparation_semantic_hash": HASH, "role_id": {"enum": ["measurement", "ai_evaluation"]}, "role_version": {"const": "3.0.0"}, "release_id": ID, "release_commit": ID, "assigned": assigned, "scope": role_scope, "requirements": arr(obj(["requirement_id", "scope_status"], {"requirement_id": ID, "scope_status": ID})), "criteria": arr(obj(["criterion_id", "requirement_id", "scope_status", "required_evidence_categories", "blocker_eligible"], {"criterion_id": ID, "requirement_id": ID, "scope_status": ID, "required_evidence_categories": IDS, "blocker_eligible": {"type": "boolean"}})), "journeys": arr(obj(["node_id", "node_type", "title"], {"node_id": ID, "node_type": {"const": "critical_journey"}, "title": TEXT})), "graph_context": obj(["nodes", "edges", "gaps"], {"nodes": arr(obj(["node_id", "node_type", "provenance"], {"node_id": ID, "node_type": ID, "provenance": ID})), "edges": arr(obj(["edge_id", "source_node_id", "target_node_id", "relationship", "establishment_classification"], {"edge_id": ID, "source_node_id": ID, "target_node_id": ID, "relationship": ID, "establishment_classification": ID})), "gaps": arr(obj(["gap_id", "criterion_id", "gap_type", "state", "basis_node_ids", "basis_edge_ids"], {"gap_id": ID, "criterion_id": ID, "gap_type": ID, "state": ID, "basis_node_ids": IDS, "basis_edge_ids": IDS}))}), "sources": arr(defs["source"], maximum=64), "source_coverage": coverage, "limitations": arr(TEXT), "prepared_measurement_contracts": source_props["prepared_measurement_contracts"], "basis_registry": arr(defs["basis_record"]), "basis_paths": arr(defs["basis_path"]), "review_resolution": review_resolution, "guidance_registry_hash": HASH, "recommendation_policy_hash": HASH, "packet_hash": HASH}
+    write("measurement-ai-role-context.v3.json", document("measurement-ai-role-context.v3", context_props, list(context_props), defs2))
+    work_entry = obj(["role_id", "work_order_id", "work_order_hash", "snapshot_hash"], {"role_id": {"enum": ["measurement", "ai_evaluation"]}, "work_order_id": ID, "work_order_hash": HASH, "snapshot_hash": HASH})
+    manifest_props = {"schema_version": {"const": "measurement-ai-work-orders.v3"}, "compiler_version": {"const": "measurement-ai-preparation.v3"}, "preparation_id": ID, "preparation_semantic_hash": HASH, "release_id": ID, "release_commit": ID, "issued_roles": arr({"enum": ["measurement", "ai_evaluation"]}, maximum=2, unique=True), "skip_reason": {"type": ["string", "null"], "enum": ["no_applicable_measurement_or_ai_surface", None]}, "source_packet_hash": HASH, "capabilities_hash": HASH, "applicability_hash": HASH, "review_inputs_hash": HASH, "role_definition_hashes": hash_map, "discovery_hash": HASH, "guidance_hash": HASH, "recommendation_policy_hash": HASH, "contract_schema_hashes": hash_map, "work_orders": arr(work_entry, maximum=2), "manifest_hash": HASH}
+    write("measurement-ai-work-orders.v3.json", document("measurement-ai-work-orders.v3", manifest_props, list(manifest_props)))
+    qualification_contracts(defs)
+    artifact_contracts(defs, dependency)
+
+
+def qualification_contracts(defs: dict) -> None:
+    strings = arr(ID, maximum=100, unique=True)
+    case = obj(["case_id", "allowed_semantic_assessments", "forbidden_semantic_assessments", "required_recommendation_classes", "forbidden_recommendation_classes", "required_guidance_rules", "required_exception_ids", "maximum_effect", "abstention_required", "forbidden_claim_codes", "required_authority_labels", "automatic_replacement_prohibitions", "qualified_capabilities"], {"case_id": ID, "allowed_semantic_assessments": strings, "forbidden_semantic_assessments": strings, "required_recommendation_classes": strings, "forbidden_recommendation_classes": strings, "required_guidance_rules": strings, "required_exception_ids": strings, "maximum_effect": ID, "abstention_required": {"type": "boolean"}, "forbidden_claim_codes": strings, "required_authority_labels": strings, "automatic_replacement_prohibitions": strings, "qualified_capabilities": strings})
+    task_props = {"schema_version": {"const": "measurement-reviewer-qualification-task.v3"}, "task_id": ID, "role_prompt_version": {"const": "measurement-ai-role.v3"}, "guidance_pack_hash": HASH, "recommendation_policy_hash": HASH, "result_schema_version": {"enum": ["measurement-result.v3", "ai-evaluation-result.v3", "measurement-verifier-result.v3"]}, "qualification_suite_version": ID, "qualification_suite_hash": HASH, "cases": arr(case, maximum=100, minimum=1), "task_hash": HASH}
+    write("measurement-reviewer-qualification-task.v3.json", document("measurement-reviewer-qualification-task.v3", task_props, list(task_props)))
+    case_result = obj(["case_id", "semantic_assessment", "recommendation_classes", "guidance_rule_ids", "exception_ids", "effect", "abstained", "claim_codes", "authority_labels", "automatic_replacements"], {"case_id": ID, "semantic_assessment": ID, "recommendation_classes": strings, "guidance_rule_ids": strings, "exception_ids": strings, "effect": ID, "abstained": {"type": "boolean"}, "claim_codes": strings, "authority_labels": strings, "automatic_replacements": strings})
+    result_props = {"schema_version": {"const": "measurement-reviewer-qualification-result.v3"}, "task_id": ID, "task_hash": HASH, "provider_id": ID, "model_id": ID, "case_results": arr(case_result, maximum=100, minimum=1)}
+    write("measurement-reviewer-qualification-result.v3.json", document("measurement-reviewer-qualification-result.v3", result_props, list(result_props)))
+    receipt_props = {"schema_version": {"const": "measurement-reviewer-qualification-receipt.v3"}, "qualification_id": ID, "task_id": ID, "task_hash": HASH, "provider_id": ID, "model_id": ID, "qualified_capabilities": strings, "case_ids": strings, "result_semantic_hash": HASH, "result_snapshot_hash": HASH}
+    write("measurement-reviewer-qualification-receipt.v3.json", document("measurement-reviewer-qualification-receipt.v3", receipt_props, list(receipt_props)))
+    review = obj(["recommendation_id", "disposition", "unsupported_assumption_codes", "ignored_exception_ids", "severity_supported", "abstention_required", "rationale"], {"recommendation_id": ID, "disposition": {"enum": ["supported", "downgrade", "disputed", "owner_confirmation_required"]}, "unsupported_assumption_codes": strings, "ignored_exception_ids": strings, "severity_supported": {"type": "boolean"}, "abstention_required": {"type": "boolean"}, "rationale": {"type": "string", "maxLength": 4096}})
+    vresult = {"schema_version": {"const": "measurement-verifier-result.v3"}, "verifier_preparation_id": ID, "verifier_work_order_id": ID, "primary_result_semantic_hash": HASH, "primary_result_snapshot_hash": HASH, "primary_receipt_snapshot_hash": HASH, "recommendation_reviews": arr(review, minimum=1)}
+    write("measurement-verifier-result.v3.json", document("measurement-verifier-result.v3", vresult, list(vresult)))
+    vwork = {"schema_version": {"const": "measurement-verifier-work-order.v3"}, "verifier_preparation_id": ID, "verifier_work_order_id": ID, "release_id": ID, "release_commit": ID, "primary_role_id": {"enum": ["measurement", "ai_evaluation"]}, "primary_work_order_id": ID, "primary_result_semantic_hash": HASH, "primary_result_snapshot_hash": HASH, "primary_receipt_snapshot_hash": HASH, "primary_snapshot_path": ID, "material_recommendation_ids": IDS, "required_qualification_capabilities": {"type": "array", "const": ["skeptical_material_review"]}, "work_order_hash": HASH}
+    write("measurement-verifier-work-order.v3.json", document("measurement-verifier-work-order.v3", vwork, list(vwork)))
+    vprep = {"schema_version": {"const": "measurement-verifier-preparation.v3"}, "compiler_version": {"const": "measurement-ai-preparation.v3"}, "verifier_preparation_id": ID, "primary_preparation_id": ID, "primary_role_id": {"enum": ["measurement", "ai_evaluation"]}, "primary_result_semantic_hash": HASH, "primary_result_snapshot_hash": HASH, "primary_receipt_snapshot_hash": HASH, "work_order_id": ID, "work_order_snapshot_hash": HASH, "review_capabilities_hash": HASH, "permission_hash": HASH, "qualification_receipt_hashes": arr(HASH, maximum=4, unique=True), "preparation_hash": HASH}
+    write("measurement-verifier-preparation.v3.json", document("measurement-verifier-preparation.v3", vprep, list(vprep)))
+
+
+def artifact_contracts(defs: dict, dependency: dict) -> None:
+    # Artifacts retain complete normalized canonical records. Exact nested
+    # variants are discriminated by `record_type`/`node_type` in Python and in
+    # the overlay schema; these envelopes reject all undeclared top fields.
+    canonical = obj(["record_id", "record_type", "criterion_id", "payload_hash"], {"record_id": ID, "record_type": ID, "criterion_id": {"type": ["string", "null"]}, "payload_hash": HASH})
+    for filename, schema, fields in (
+        ("measurement-contract.v3.json", "measurement-contract.v3", ["release_id", "contracts", "accepted_field_projections"]),
+        ("instrumentation-coverage.v3.json", "instrumentation-coverage.v3", ["release_id", "signals", "event_candidates", "property_assessments", "test_candidates", "runtime_bindings", "observability_candidates", "coverage_boundary", "accepted_field_projections"]),
+        ("measurement-ai-readiness.v3.json", "measurement-ai-readiness.v3", ["release_id", "checks", "accepted_role_validations", "metric_quality", "ai_evaluation", "accepted_field_projections"]),
+        ("launch-measurement-plan.v3.json", "launch-measurement-plan.v3", ["release_id", "warnings", "proposals", "gaps", "owner_confirmation_proposals", "assumptions", "limitations", "accepted_field_projections"]),
+    ):
+        props = {"schema_version": {"const": schema}}
+        for field in fields:
+            if field == "release_id": props[field] = ID
+            elif field == "coverage_boundary": props[field] = TEXT
+            elif field == "accepted_field_projections": props[field] = obj([], {}, one_of=None) | {"additionalProperties": {"type": "array", "items": ID, "uniqueItems": True}}
+            else: props[field] = arr(canonical)
+        write(filename, document(schema, props, list(props)))
+    node = obj(["node_id", "node_type", "provenance", "criterion_ids", "payload_hash"], {"node_id": ID, "node_type": {"enum": ["measurement_contract", "metric_definition", "required_signal", "event_candidate", "signal_property", "instrumentation_test", "runtime_evidence_binding", "reviewer_conclusion", "guidance_rule_reference", "measurement_warning", "ai_eval_case", "ai_eval_rung", "ai_eval_execution", "production_trace", "observability_candidate", "owner_confirmation_proposal", "project_source_reference"]}, "provenance": {"enum": ["measurement_ai_compiler", "measurement_reviewer", "prepared_project_source", "upstream_binding"]}, "criterion_ids": IDS, "payload_hash": HASH})
+    edge = obj(["edge_id", "source_node_id", "target_node_id", "relationship", "criterion_id", "direct_fact_authority", "criterion_path", "criterion_basis_authority", "origin", "reference_ids"], {"edge_id": ID, "source_node_id": ID, "target_node_id": ID, "relationship": ID, "criterion_id": ID, "direct_fact_authority": {"enum": ["source_verified", "deterministically_established", "model_mapped_candidate", "not_inspected"]}, "criterion_path": arr(defs["step"], maximum=64), "criterion_basis_authority": {"enum": ["source_verified", "deterministically_established", "model_mapped_candidate", "not_inspected"]}, "origin": ID, "reference_ids": IDS})
+    overlay_props = {"schema_version": {"const": "measurement-ai-overlay.v3"}, "release_id": ID, "release_commit": ID, "product_intent_semantic_hash": HASH, "graph_semantic_hash": HASH, "nodes": arr(node, maximum=10000), "edges": arr(edge, maximum=20000)}
+    write("measurement-ai-overlay.v3.json", document("measurement-ai-overlay.v3", overlay_props, list(overlay_props), defs))
+    validation = {"oneOf": [obj(["kind", "role_id", "semantic_hash"], {"kind": {"const": "primary_result"}, "role_id": {"enum": ["measurement", "ai_evaluation"]}, "semantic_hash": HASH}), obj(["kind", "verifier_preparation_id", "semantic_hash"], {"kind": {"const": "verifier_result"}, "verifier_preparation_id": ID, "semantic_hash": HASH}), obj(["kind", "accepted_field", "destinations"], {"kind": {"const": "field_projection"}, "accepted_field": ID, "destinations": IDS}), obj(["kind", "operation", "count"], {"kind": {"const": "external_operation"}, "operation": {"enum": ["model", "command", "network", "browser", "sql", "external_service"]}, "count": {"const": 0}})]}
+    receipts = {"schema_version": {"const": "measurement-ai-compiler-receipts.v3"}, "compiler_version": {"const": "portable-measurement-ai.v3"}, "validations": arr(validation, maximum=10000), "assumptions": arr(TEXT, maximum=200), "limitations": arr(TEXT, maximum=200)}
+    write("measurement-ai-compiler-receipts.v3.json", document("measurement-ai-compiler-receipts.v3", receipts, list(receipts)))
+    hash_record = obj(["semantic_hash", "snapshot_hash", "completion_receipt_snapshot_hash"], {"semantic_hash": HASH, "snapshot_hash": HASH, "completion_receipt_snapshot_hash": HASH})
+    artifact_hash = obj(["snapshot_hash"], {"snapshot_hash": HASH})
+    manifest = {"schema_version": {"const": "portable-measurement-ai-manifest.v3"}, "compiler_version": {"const": "portable-measurement-ai.v3"}, "generation": ID, "release_id": ID, "release_commit": ID, "preparation_id": ID, "preparation_semantic_hash": HASH, "product_intent_semantic_hash": HASH, "graph_semantic_hash": HASH, "assessment_dependency": dependency, "result_hashes": {"type": "object", "additionalProperties": hash_record}, "verifier_hashes": {"type": "object", "additionalProperties": hash_record}, "artifact_hashes": {"type": "object", "additionalProperties": artifact_hash}, "semantic_bundle_hash": HASH, "bundle_hash": HASH}
+    write("portable-measurement-ai-manifest.v3.json", document("portable-measurement-ai-manifest.v3", manifest, list(manifest)))
+
+
+def write_roles() -> None:
+    for role in ("measurement", "ai_evaluation"):
+        current = json.loads((ROLES / f"{role}.v2.json").read_text(encoding="utf-8"))
+        current["schema_version"] = "shiproom.measurement-ai-role.v3"
+        current["role_version"] = "3.0.0"
+        current["completion_rules"] = list(current["completion_rules"]) + ["Reference only compiler-issued typed bases and paths.", "Every accepted substantive field must have a canonical projection."]
+        current["forbidden_claims"] = list(current["forbidden_claims"]) + ["Owner confirmation proves implementation, runtime, downstream execution, data accuracy, or AI performance."]
+        (ROLES / f"{role}.v3.json").write_text(json.dumps(current, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    generate()
