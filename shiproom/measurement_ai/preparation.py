@@ -20,7 +20,7 @@ from .contracts import (
     render_json, require_exact, sha256_bytes, stable_id, validate_relative_path, work_order_hash,
 )
 from .guidance import GUIDANCE_FILES, eligible_rule_ids, load_guidance_pack, load_guidance_pack_from_directory, rule_map
-from .qualification import build_qualification_task, load_qualification_receipt, qualification_store
+from .qualification import load_qualification_bundle, qualification_store
 from .trust import ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
 from .registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, ROLE_RESULT_SCHEMAS
 
@@ -96,15 +96,15 @@ def _owner_paths(values: list[str] | None) -> dict[str, list[str]]:
 
 
 def _review_resolution(requested: str, review_capabilities: dict | None, permission: dict | None,
-                       repository_root:Path, guidance:dict, receipt_bundles:list[dict]|None=None) -> tuple[dict,list[dict]]:
+                       repository_root:Path, guidance:dict, qualification_bundles:list[dict]|None=None) -> tuple[dict,list[dict]]:
     if requested not in REVIEW_MODES: raise ValueError("invalid measurement review mode")
     if review_capabilities is not None:
         if review_capabilities.get("executor_type")=="human":
             require_exact(review_capabilities,{"schema_version","executor_type","reviewer_label"},"human review capabilities")
         elif review_capabilities.get("executor_type")=="agent_harness":
-            require_exact(review_capabilities,{"schema_version","executor_type","active_candidate_id","qualification_receipt_path","configured_candidates","fresh_session_supported","automatic_switch_allowed","cost_disclosure"},"model review capabilities")
+            require_exact(review_capabilities,{"schema_version","executor_type","active_candidate_id","qualification_bundle_path","configured_candidates","fresh_session_supported","automatic_switch_allowed","cost_disclosure"},"model review capabilities")
             if review_capabilities["automatic_switch_allowed"] is not False: raise ValueError("automatic model switching is forbidden")
-            for item in review_capabilities["configured_candidates"]: require_exact(item,{"candidate_id","provider_id","model_id","qualification_id","qualification_snapshot_hash","qualification_receipt_path"},"configured model candidate")
+            for item in review_capabilities["configured_candidates"]: require_exact(item,{"candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash","qualification_bundle_path"},"configured model candidate")
         else: raise ValueError("invalid review capability executor")
         if review_capabilities.get("schema_version")!="measurement-review-capabilities.v3": raise ValueError("invalid review capabilities version")
     if permission is not None:
@@ -112,7 +112,7 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
         if permission["schema_version"]!="measurement-review-permission.v3" or permission["release_id"] is None or not isinstance(permission["expert_review_granted"],bool): raise ValueError("invalid measurement review permission")
         if permission["model_switch"].get("decision") in {"not_requested","declined"}: require_exact(permission["model_switch"],{"decision"},"model switch decision")
         elif permission["model_switch"].get("decision")=="granted":
-            require_exact(permission["model_switch"],{"decision","candidate_id","provider_id","model_id","qualification_id","qualification_snapshot_hash","fresh_session_granted"},"model switch grant")
+            require_exact(permission["model_switch"],{"decision","candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash","fresh_session_granted"},"model switch grant")
             if permission["model_switch"]["fresh_session_granted"] is not True: raise ValueError("model switch requires a fresh-session grant")
         else: raise ValueError("invalid model switch decision")
     if requested == "contract_only": return {"requested":requested,"resolved":"contract_only","reason":"requested_contract_only","participants":[]},[]
@@ -122,19 +122,19 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
             return {"requested":requested,"resolved":"contract_only","reason":"expert_permission_not_granted","participants":[]},[]
         return {"requested":requested,"resolved":requested,"reason":"guided_human_reviewer","participants":[{"type":"human"}]},[]
     if review_capabilities and review_capabilities.get("executor_type")=="agent_harness":
-        task=build_qualification_task(guidance); chosen=None; switched=False; chosen_candidate=None
-        supplied={item["value"]["qualification_id"]:item for item in (receipt_bundles or [])}
-        receipt_path=review_capabilities.get("qualification_receipt_path")
-        if receipt_path:
+        chosen=None; switched=False; chosen_candidate=None
+        supplied={item["value"]["qualification_id"]:item for item in (qualification_bundles or [])}
+        bundle_path=review_capabilities.get("qualification_bundle_path")
+        if bundle_path:
             active_id=review_capabilities.get("active_candidate_id")
             chosen_candidate=next((item for item in review_capabilities.get("configured_candidates",[]) if item.get("candidate_id")==active_id),None)
             try:
-                if receipt_bundles is not None:
+                if qualification_bundles is not None:
                     chosen=supplied.get(chosen_candidate["qualification_id"]) if chosen_candidate else None
                 else:
-                    candidate=Path(receipt_path); candidate=candidate if candidate.is_absolute() else repository_root/candidate
-                    validate_ancestry(qualification_store(repository_root),candidate,directory=False,label="qualification receipt")
-                    chosen=load_qualification_receipt(candidate,task)
+                    candidate=Path(bundle_path); candidate=candidate if candidate.is_absolute() else repository_root/candidate
+                    validate_ancestry(qualification_store(repository_root),candidate,directory=True,label="qualification bundle")
+                    chosen=load_qualification_bundle(candidate,guidance)
             except (ValueError,OSError): chosen=None
         if chosen is None:
             granted=(permission or {}).get("model_switch",{}).get("decision")=="granted"
@@ -142,20 +142,20 @@ def _review_resolution(requested: str, review_capabilities: dict | None, permiss
             candidate=next((item for item in review_capabilities.get("configured_candidates",[]) if item.get("candidate_id")==candidate_id),None)
             if granted and candidate and review_capabilities.get("fresh_session_supported"):
                 grant=permission["model_switch"]
-                if (grant["provider_id"],grant["model_id"],grant["qualification_id"],grant["qualification_snapshot_hash"])!=(candidate["provider_id"],candidate["model_id"],candidate["qualification_id"],candidate["qualification_snapshot_hash"]): raise ValueError("model-switch permission candidate identity mismatch")
+                if (grant["provider_id"],grant["model_id"],grant["qualification_id"],grant["qualification_bundle_hash"])!=(candidate["provider_id"],candidate["model_id"],candidate["qualification_id"],candidate["qualification_bundle_hash"]): raise ValueError("model-switch permission candidate identity mismatch")
                 try:
-                    if receipt_bundles is not None:
+                    if qualification_bundles is not None:
                         chosen=supplied.get(candidate["qualification_id"])
                     else:
-                        path=Path(candidate["qualification_receipt_path"]); path=path if path.is_absolute() else repository_root/path
-                        validate_ancestry(qualification_store(repository_root),path,directory=False,label="qualification receipt")
-                        chosen=load_qualification_receipt(path,task)
+                        path=Path(candidate["qualification_bundle_path"]); path=path if path.is_absolute() else repository_root/path
+                        validate_ancestry(qualification_store(repository_root),path,directory=True,label="qualification bundle")
+                        chosen=load_qualification_bundle(path,guidance)
                     chosen_candidate=candidate; switched=True
                 except (ValueError,OSError): chosen=None
         if chosen is not None:
-            if chosen_candidate is None or (chosen["value"]["provider_id"],chosen["value"]["model_id"],chosen["value"]["qualification_id"],chosen["snapshot_hash"])!=(chosen_candidate["provider_id"],chosen_candidate["model_id"],chosen_candidate["qualification_id"],chosen_candidate["qualification_snapshot_hash"]): raise ValueError("qualification receipt candidate identity mismatch")
+            if chosen_candidate is None or (chosen["value"]["provider_id"],chosen["value"]["model_id"],chosen["value"]["qualification_id"],chosen["qualification_bundle_hash"])!=(chosen_candidate["provider_id"],chosen_candidate["model_id"],chosen_candidate["qualification_id"],chosen_candidate["qualification_bundle_hash"]): raise ValueError("qualification bundle candidate identity mismatch")
             if requested=="expert_escalated_review" and not (permission or {}).get("expert_review_granted",False): return {"requested":requested,"resolved":"contract_only","reason":"expert_permission_not_granted","participants":[]},[]
-            participant={"type":"model","candidate_id":chosen_candidate["candidate_id"],"provider_id":chosen["value"]["provider_id"],"model_id":chosen["value"]["model_id"],"qualification_id":chosen["value"]["qualification_id"],"qualification_snapshot_hash":chosen["snapshot_hash"],"qualified_capabilities":chosen["value"]["qualified_capabilities"],"model_switch":switched}
+            participant={"type":"model","candidate_id":chosen_candidate["candidate_id"],"provider_id":chosen["value"]["provider_id"],"model_id":chosen["value"]["model_id"],"qualification_id":chosen["value"]["qualification_id"],"qualification_bundle_hash":chosen["qualification_bundle_hash"],"qualified_capabilities":chosen["value"]["qualified_capabilities"],"model_switch":switched}
             return {"requested":requested,"resolved":requested,"reason":"qualified_model_participant","participants":[participant]},[chosen]
     return {"requested":requested,"resolved":"contract_only","reason":"no_qualified_model_participant","participants":[]},[]
 
@@ -300,7 +300,7 @@ def _build(ctx: LocalExecutionContext, preparation_id: str, *, capabilities_bund
             "capability_requirements":{"file_read":"required","shell":"unavailable","browser":"unavailable","network":"unavailable"},
             "permissions":{"repository":"read_only","allowed_paths":[item["path"] for item in sources["sources"]],"allowed_commands":[]},
             "required_output":{"schema_path":"contract-schemas/"+result_name,"schema_version":RESULT_SCHEMAS[role],"schema_semantic_hash":result_contract["semantic_hash"],"schema_snapshot_hash":result_contract["snapshot_hash"],"output_path":f"{root_rel}/inbox/{preparation_id}/{wid}/result.json","completion_receipt_schema_path":"contract-schemas/measurement-ai-completion-receipt.v3.json","completion_receipt_schema_version":RECEIPT_SCHEMA,"completion_receipt_schema_semantic_hash":receipt_contract["semantic_hash"],"completion_receipt_schema_snapshot_hash":receipt_contract["snapshot_hash"],"completion_receipt_path":f"{root_rel}/inbox/{preparation_id}/{wid}/completion-receipt.json"},
-            "required_qualification_capabilities":required_by_role[role] if review["resolved"]!="contract_only" and model_participants else [],"qualification_receipt_hashes":[item["qualification_snapshot_hash"] for item in model_participants],
+            "required_qualification_capabilities":required_by_role[role] if review["resolved"]!="contract_only" and model_participants else [],"qualification_bundle_hashes":[item["qualification_bundle_hash"] for item in model_participants],
             "review_participants":review["participants"],
             "forbidden_claims":roles[role]["value"]["forbidden_claims"],
         }
@@ -320,14 +320,17 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     capabilities=load_capabilities_input(ctx,capabilities_path); applicability=load_applicability_input(ctx,applicability_path)
     roles=_roles(); discovery=_discovery(); contracts=_contracts(); guidance=load_guidance_pack()
     if permission is not None and permission.get("release_id")!=ctx.release["release_id"]: raise ValueError("measurement review permission release binding mismatch")
-    review,receipts=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
-    review_inputs={"requested_mode":review_mode,"review_capabilities":review_capabilities,"permission":permission,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"qualification_receipts":sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in receipts),key=lambda item:item["qualification_id"])}
+    review,bundles=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
+    review_inputs={"requested_mode":review_mode,"review_capabilities":review_capabilities,"permission":permission,"qualification_bundle_hashes":sorted(item["qualification_bundle_hash"] for item in bundles),"qualification_bundles":sorted(({"qualification_id":item["value"]["qualification_id"],"bundle_hash":item["qualification_bundle_hash"]} for item in bundles),key=lambda item:item["qualification_id"])}
     expected=_build(ctx,prep_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=_owner_paths(owner_paths),review=review,review_inputs=review_inputs,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
     root=ensure_directory(ctx.repository_root,domain_root(ctx),label="measurement AI root")
     directory=ensure_directory(ctx.repository_root,root/"preparations"/prep_id,label="measurement AI preparation")
     _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_inputs":review_inputs,"review_resolution":review,"assessment_dependency":expected["source_packet"]["assessment_dependency"]})
-    receipt_root=ensure_directory(ctx.repository_root,directory/"qualification-receipts",label="qualification receipt snapshots")
-    for item in receipts: write_bytes_safe(ctx.repository_root,receipt_root/(item["value"]["qualification_id"]+".json"),item["bytes"],label="qualification snapshot")
+    bundle_root=ensure_directory(ctx.repository_root,directory/"qualification-bundles",label="qualification bundle snapshots")
+    for item in bundles:
+        target=ensure_directory(ctx.repository_root,bundle_root/item["value"]["qualification_id"],label="qualification bundle snapshot")
+        for name in ("qualification-task.json","qualification-result.json","qualification-receipt.json"):
+            write_bytes_safe(ctx.repository_root,target/name,(item["directory"]/name).read_bytes(),label="qualification bundle file")
     write_bytes_safe(ctx.repository_root,directory/"capabilities.json",capabilities["bytes"],label="capability snapshot"); write_bytes_safe(ctx.repository_root,directory/"applicability.json",applicability["bytes"],label="applicability snapshot")
     _atomic(directory/"measurement-ai-source-packet.json",expected["source_packet"]); _atomic(directory/"measurement-ai-work-orders.json",expected["manifest"])
     write_bytes_safe(ctx.repository_root,directory/"source-discovery.v1.json",discovery["bytes"],label="discovery snapshot")
@@ -369,18 +372,15 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, 
     if {p.name for p in guidance_root.iterdir()}!=set(GUIDANCE_FILES): raise ValueError("guidance snapshot set is invalid")
     for name in GUIDANCE_FILES: _safe_entry(guidance_root/name,False,"guidance resource")
     guidance=load_guidance_pack_from_directory(guidance_root)
-    receipt_root=directory/"qualification-receipts"; _safe_entry(receipt_root,True,"qualification receipt snapshots")
-    declared_receipts={item["qualification_id"]+".json" for item in inputs["review_inputs"]["qualification_receipts"]}
-    if {path.name for path in receipt_root.iterdir()}!=declared_receipts: raise ValueError("qualification receipt snapshot set is invalid")
-    task=build_qualification_task(guidance); receipt_bundles=[]
-    for path in sorted(receipt_root.iterdir(),key=lambda item:item.name):
-        if not path.name.endswith(".json"): raise ValueError("qualification receipt snapshot set is invalid")
-        receipt_bundles.append(load_qualification_receipt(path,task))
+    bundle_root=directory/"qualification-bundles"; _safe_entry(bundle_root,True,"qualification bundle snapshots")
+    declared_bundles={item["qualification_id"] for item in inputs["review_inputs"]["qualification_bundles"]}
+    if {path.name for path in bundle_root.iterdir()}!=declared_bundles: raise ValueError("qualification bundle snapshot set is invalid")
+    qualification_bundles=[load_qualification_bundle(path,guidance) for path in sorted(bundle_root.iterdir(),key=lambda item:item.name)]
     review_inputs=inputs["review_inputs"]
     if review_inputs["permission"] is not None and review_inputs["permission"].get("release_id")!=ctx.release["release_id"]: raise ValueError("measurement review permission release binding mismatch")
-    review,_used=_review_resolution(review_inputs["requested_mode"],review_inputs["review_capabilities"],review_inputs["permission"],ctx.repository_root,guidance,receipt_bundles)
-    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in _used),key=lambda item:item["qualification_id"])
-    if sorted(item["snapshot_hash"] for item in _used)!=review_inputs["qualification_receipt_hashes"] or used_records!=review_inputs["qualification_receipts"] or review!=inputs["review_resolution"]: raise ValueError("measurement review resolution semantic rederivation failed")
+    review,_used=_review_resolution(review_inputs["requested_mode"],review_inputs["review_capabilities"],review_inputs["permission"],ctx.repository_root,guidance,qualification_bundles)
+    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"bundle_hash":item["qualification_bundle_hash"]} for item in _used),key=lambda item:item["qualification_id"])
+    if sorted(item["qualification_bundle_hash"] for item in _used)!=review_inputs["qualification_bundle_hashes"] or used_records!=review_inputs["qualification_bundles"] or review!=inputs["review_resolution"]: raise ValueError("measurement review resolution semantic rederivation failed")
     expected=_build(ctx,preparation_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=inputs["owner_paths"],review=review,review_inputs=review_inputs,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance,assessment_dependency=inputs["assessment_dependency"])
     if stored != expected["manifest"] or (directory/"measurement-ai-work-orders.json").read_bytes()!=render_json(expected["manifest"]):
         differing=sorted(key for key in set(stored)|set(expected["manifest"]) if stored.get(key)!=expected["manifest"].get(key))
@@ -394,7 +394,7 @@ def load_preparation(ctx: LocalExecutionContext, preparation_id: str|None=None, 
     if actual_work != expected_work: raise ValueError("measurement AI work-order set mismatch")
     for work in expected["work_orders"].values():
         if _read_safe(work_root/(work["work_order_id"]+".json"),"work order")!=render_json(work): raise ValueError("measurement AI work order semantic rederivation failed")
-    expected_top={"preparation-inputs.json","capabilities.json","applicability.json","measurement-ai-source-packet.json","measurement-ai-work-orders.json","source-discovery.v1.json","role-definitions","contract-schemas","guidance-pack","qualification-receipts","role-context","work-orders"}
+    expected_top={"preparation-inputs.json","capabilities.json","applicability.json","measurement-ai-source-packet.json","measurement-ai-work-orders.json","source-discovery.v1.json","role-definitions","contract-schemas","guidance-pack","qualification-bundles","role-context","work-orders"}
     if {p.name for p in directory.iterdir()}!=expected_top: raise ValueError("measurement AI preparation file set mismatch")
     if pointer is not None and pointer != expected["pointer"]: raise ValueError("measurement AI preparation pointer binding is stale")
     return {"directory":directory,**expected,"contracts":contracts,"guidance":guidance,"capabilities":capabilities["value"],"applicability":applicability["value"]}

@@ -24,7 +24,7 @@ from shiproom.measurement_ai.persistence import compile_generation as measuremen
 from shiproom.measurement_ai.results import normalize_result
 from shiproom.measurement_ai.guidance import load_guidance_pack
 from shiproom.measurement_ai.contracts import sha256_bytes
-from shiproom.measurement_ai.qualification import build_qualification_task, grade_qualification_result, qualification_store
+from shiproom.measurement_ai.qualification import build_qualification_task, grade_qualification_result, qualification_store, write_qualification_bundle
 from shiproom.measurement_ai.verifier import prepare_verifier
 from shiproom.graph import load_assessment_input as graph_assessment_input
 try:
@@ -147,9 +147,9 @@ def _qualified_model_capabilities(ctx):
     guidance=load_guidance_pack(); task=build_qualification_task(guidance); cases=[]
     for expected in task["cases"]:
         cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
-    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"eval_provider","model_id":"eval_model","case_results":cases}; raw=(json.dumps(result,sort_keys=True)+"\n").encode(); receipt=grade_qualification_result(result,task,sha256_bytes(raw)); store=qualification_store(ctx.repository_root); store.mkdir(parents=True,exist_ok=True); path=store/(receipt["qualification_id"]+".json"); path.write_text(json.dumps(receipt,sort_keys=True)+"\n",encoding="utf-8")
-    candidate={"candidate_id":"eval_candidate","provider_id":"eval_provider","model_id":"eval_model","qualification_id":receipt["qualification_id"],"qualification_snapshot_hash":sha256_bytes(path.read_bytes()),"qualification_receipt_path":str(path)}
-    return {"schema_version":"measurement-review-capabilities.v3","executor_type":"agent_harness","active_candidate_id":"eval_candidate","qualification_receipt_path":str(path),"configured_candidates":[candidate],"fresh_session_supported":True,"automatic_switch_allowed":False,"cost_disclosure":"Bounded evaluation fixture."}
+    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"eval_provider","model_id":"eval_model","case_results":cases}; raw=(json.dumps(result,sort_keys=True)+"\n").encode(); receipt=grade_qualification_result(result,task,sha256_bytes(raw)); bundle=write_qualification_bundle(ctx.repository_root,task,result,raw,receipt); path=bundle["directory"]
+    candidate={"candidate_id":"eval_candidate","provider_id":"eval_provider","model_id":"eval_model","qualification_id":receipt["qualification_id"],"qualification_bundle_hash":bundle["qualification_bundle_hash"],"qualification_bundle_path":str(path)}
+    return {"schema_version":"measurement-review-capabilities.v3","executor_type":"agent_harness","active_candidate_id":"eval_candidate","qualification_bundle_path":str(path),"configured_candidates":[candidate],"fresh_session_supported":True,"automatic_switch_allowed":False,"cost_disclosure":"Bounded evaluation fixture."}
 
 
 def _expert_verifier_eval(ctx,app,cid,app_path,disposition):

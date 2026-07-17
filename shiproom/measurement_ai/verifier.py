@@ -10,6 +10,7 @@ from shiproom.project import content_hash
 from .authority import domain_root
 from .contracts import PREPARATION_COMPILER_VERSION, is_material_recommendation, load_json_bytes, render_json, require_exact, sha256_bytes, stable_id
 from .guidance import load_guidance_pack
+from .qualification import load_qualification_bundle
 from .preparation import _review_resolution, load_preparation
 from .results import normalize_result
 from .trust import ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
@@ -35,16 +36,19 @@ def prepare_verifier(ctx:LocalExecutionContext,preparation_id:str,role:str,revie
     if not material: raise ValueError("expert verifier requires a material recommendation")
     if review_capabilities is None: review_capabilities={"schema_version":"measurement-review-capabilities.v3","executor_type":"human","reviewer_label":"manual verifier"}
     permission=permission if permission is not None else prep["semantic_basis"]["review_inputs"].get("permission")
-    resolution,receipts=_review_resolution("expert_escalated_review",review_capabilities,permission,ctx.repository_root,prep["guidance"])
+    resolution,bundles=_review_resolution("expert_escalated_review",review_capabilities,permission,ctx.repository_root,prep["guidance"])
     if resolution["resolved"]!="expert_escalated_review": raise ValueError("verifier participant is not authorized for expert review")
     for participant in resolution["participants"]:
         if participant["type"]=="model" and "skeptical_material_review" not in participant["qualified_capabilities"]: raise ValueError("model verifier lacks skeptical_material_review qualification")
     verifier_id="verifier_prep_"+uuid.uuid4().hex; work_id=stable_id("verifier_wo",{"primary":result["result_semantic_hash"],"role":role}); trusted=ensure_directory(ctx.repository_root,domain_root(ctx)/"verifier-preparations",label="verifier preparations"); directory=ensure_directory(ctx.repository_root,trusted/verifier_id,label="verifier preparation")
     work={"schema_version":"measurement-verifier-work-order.v3","verifier_preparation_id":verifier_id,"verifier_work_order_id":work_id,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"primary_role_id":role,"primary_work_order_id":prep["work_orders"][role]["work_order_id"],"primary_result_semantic_hash":result["result_semantic_hash"],"primary_result_snapshot_hash":result["result_snapshot_hash"],"primary_receipt_snapshot_hash":result["receipt_snapshot_hash"],"primary_snapshot_path":"primary-snapshot/normalized-result.json","material_recommendation_ids":sorted(item["recommendation_id"] for item in material),"required_qualification_capabilities":["skeptical_material_review"],"work_order_hash":""}; work["work_order_hash"]=content_hash({k:v for k,v in work.items() if k!="work_order_hash"})
-    primary=ensure_directory(ctx.repository_root,directory/"primary-snapshot",label="verifier primary snapshot"); write_bytes_safe(ctx.repository_root,primary/"result.json",raw,label="verifier primary result snapshot"); write_bytes_safe(ctx.repository_root,primary/"completion-receipt.json",receipt,label="verifier primary receipt snapshot"); _atomic(primary/"normalized-result.json",result["normalized"]); _atomic(directory/"work-order.json",work); _atomic(directory/"review-inputs.json",{"review_capabilities":review_capabilities,"permission":permission,"resolution":resolution,"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"qualification_receipts":sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in receipts),key=lambda item:item["qualification_id"])})
-    qr=ensure_directory(ctx.repository_root,directory/"qualification-receipts",label="verifier qualification snapshots")
-    for item in receipts: write_bytes_safe(ctx.repository_root,qr/(item["value"]["qualification_id"]+".json"),item["bytes"],label="verifier qualification snapshot")
-    manifest={"schema_version":"measurement-verifier-preparation.v3","compiler_version":PREPARATION_COMPILER_VERSION,"verifier_preparation_id":verifier_id,"primary_preparation_id":preparation_id,"primary_role_id":role,"primary_result_semantic_hash":result["result_semantic_hash"],"primary_result_snapshot_hash":result["result_snapshot_hash"],"primary_receipt_snapshot_hash":result["receipt_snapshot_hash"],"work_order_id":work_id,"work_order_snapshot_hash":sha256_bytes(render_json(work)),"review_capabilities_hash":content_hash(review_capabilities),"permission_hash":content_hash(permission),"qualification_receipt_hashes":sorted(item["snapshot_hash"] for item in receipts),"preparation_hash":""}; manifest["preparation_hash"]=content_hash({k:v for k,v in manifest.items() if k!="preparation_hash"}); _atomic(directory/"manifest.json",manifest)
+    review_inputs={"review_capabilities":review_capabilities,"permission":permission,"resolution":resolution,"qualification_bundle_hashes":sorted(item["qualification_bundle_hash"] for item in bundles),"qualification_bundles":sorted(({"qualification_id":item["value"]["qualification_id"],"bundle_hash":item["qualification_bundle_hash"]} for item in bundles),key=lambda item:item["qualification_id"])}
+    primary=ensure_directory(ctx.repository_root,directory/"primary-snapshot",label="verifier primary snapshot"); write_bytes_safe(ctx.repository_root,primary/"result.json",raw,label="verifier primary result snapshot"); write_bytes_safe(ctx.repository_root,primary/"completion-receipt.json",receipt,label="verifier primary receipt snapshot"); _atomic(primary/"normalized-result.json",result["normalized"]); _atomic(directory/"work-order.json",work); _atomic(directory/"review-inputs.json",review_inputs)
+    qr=ensure_directory(ctx.repository_root,directory/"qualification-bundles",label="verifier qualification snapshots")
+    for item in bundles:
+        target=ensure_directory(ctx.repository_root,qr/item["value"]["qualification_id"],label="verifier qualification bundle")
+        for name in ("qualification-task.json","qualification-result.json","qualification-receipt.json"): write_bytes_safe(ctx.repository_root,target/name,(item["directory"]/name).read_bytes(),label="verifier qualification bundle file")
+    manifest={"schema_version":"measurement-verifier-preparation.v3","compiler_version":PREPARATION_COMPILER_VERSION,"verifier_preparation_id":verifier_id,"primary_preparation_id":preparation_id,"primary_role_id":role,"primary_result_semantic_hash":result["result_semantic_hash"],"primary_result_snapshot_hash":result["result_snapshot_hash"],"primary_receipt_snapshot_hash":result["receipt_snapshot_hash"],"work_order_id":work_id,"work_order_snapshot_hash":sha256_bytes(render_json(work)),"review_capabilities_hash":content_hash(review_capabilities),"permission_hash":content_hash(permission),"qualification_bundle_hashes":review_inputs["qualification_bundle_hashes"],"preparation_hash":""}; manifest["preparation_hash"]=content_hash({k:v for k,v in manifest.items() if k!="preparation_hash"}); _atomic(directory/"manifest.json",manifest)
     inbox=ensure_directory(ctx.repository_root,domain_root(ctx)/"verifier-inbox"/verifier_id/work_id,label="verifier inbox")
     return {"verifier_preparation_id":verifier_id,"work_order":work,"manifest":manifest,"review_resolution":resolution}
 
@@ -65,24 +69,20 @@ def _receipt(value:dict,work:dict,result_raw:bytes,resolution:dict)->dict:
 
 
 def _load_review(ctx:LocalExecutionContext,directory:Path,prep:dict)->dict:
-    inputs=load_json_bytes((directory/"review-inputs.json").read_bytes()); receipts=[]; task_root=directory/"qualification-receipts"
+    inputs=load_json_bytes((directory/"review-inputs.json").read_bytes()); task_root=directory/"qualification-bundles"
     validate_ancestry(directory,task_root,directory=True,label="measurement AI verifier qualification snapshots")
-    declared={item["qualification_id"]+".json" for item in inputs["qualification_receipts"]}
-    if {path.name for path in task_root.iterdir()}!=declared: raise ValueError("verifier qualification receipt snapshot set mismatch")
-    from .qualification import build_qualification_task, load_qualification_receipt
-    task=build_qualification_task(prep["guidance"])
-    for path in sorted(task_root.iterdir(),key=lambda item:item.name):
-        validate_ancestry(task_root,path,directory=False,label="measurement AI verifier qualification receipt")
-        receipts.append(load_qualification_receipt(path,task))
-    resolution,used=_review_resolution("expert_escalated_review",inputs["review_capabilities"],inputs["permission"],ctx.repository_root,prep["guidance"],receipts)
-    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"snapshot_hash":item["snapshot_hash"]} for item in used),key=lambda item:item["qualification_id"])
-    if resolution!=inputs["resolution"] or sorted(item["snapshot_hash"] for item in used)!=inputs["qualification_receipt_hashes"] or used_records!=inputs["qualification_receipts"]: raise ValueError("verifier review authority semantic rederivation failed")
+    declared={item["qualification_id"] for item in inputs["qualification_bundles"]}
+    if {path.name for path in task_root.iterdir()}!=declared: raise ValueError("verifier qualification bundle snapshot set mismatch")
+    bundles=[load_qualification_bundle(path,prep["guidance"]) for path in sorted(task_root.iterdir(),key=lambda item:item.name)]
+    resolution,used=_review_resolution("expert_escalated_review",inputs["review_capabilities"],inputs["permission"],ctx.repository_root,prep["guidance"],bundles)
+    used_records=sorted(({"qualification_id":item["value"]["qualification_id"],"bundle_hash":item["qualification_bundle_hash"]} for item in used),key=lambda item:item["qualification_id"])
+    if resolution!=inputs["resolution"] or sorted(item["qualification_bundle_hash"] for item in used)!=inputs["qualification_bundle_hashes"] or used_records!=inputs["qualification_bundles"]: raise ValueError("verifier review authority semantic rederivation failed")
     return resolution
 
 
 def load_verifier(ctx:LocalExecutionContext,verifier_preparation_id:str)->dict:
     root=domain_root(ctx); trusted=root/"verifier-preparations"; directory=trusted/verifier_preparation_id; validate_ancestry(trusted,directory,directory=True,label="measurement AI verifier preparation")
-    exact_children(directory,{"manifest.json","work-order.json","review-inputs.json","qualification-receipts","primary-snapshot"},label="measurement AI verifier preparation")
+    exact_children(directory,{"manifest.json","work-order.json","review-inputs.json","qualification-bundles","primary-snapshot"},label="measurement AI verifier preparation")
     exact_children(directory/"primary-snapshot",{"result.json","completion-receipt.json","normalized-result.json"},label="measurement AI verifier primary snapshot")
     manifest=load_json_bytes((directory/"manifest.json").read_bytes()); work=load_json_bytes((directory/"work-order.json").read_bytes()); prep,result,raw,receipt=_primary(ctx,manifest["primary_preparation_id"],manifest["primary_role_id"]); resolution=_load_review(ctx,directory,prep)
     bindings=(result["result_semantic_hash"],result["result_snapshot_hash"],result["receipt_snapshot_hash"])
@@ -101,12 +101,12 @@ def load_verifier(ctx:LocalExecutionContext,verifier_preparation_id:str)->dict:
     return {"manifest":manifest,"work_order":work,"result":value,"receipt":completion,"result_snapshot_hash":sha256_bytes(result_raw),"receipt_snapshot_hash":sha256_bytes(receipt_raw),"semantic_hash":content_hash({"primary_result_semantic_hash":bindings[0],"reviews":sorted(reviews.values(),key=lambda item:item["recommendation_id"])})}
 
 
-def validate_embedded_verifier(directory:Path,primary_result:dict)->dict:
-    prep_dir=directory/"preparation"; result_dir=directory/"result"; manifest=load_json_bytes((prep_dir/"manifest.json").read_bytes()); work=load_json_bytes((prep_dir/"work-order.json").read_bytes()); review_inputs=load_json_bytes((prep_dir/"review-inputs.json").read_bytes()); resolution=review_inputs["resolution"]
+def validate_embedded_verifier(ctx:LocalExecutionContext,directory:Path,primary_result:dict,preparation:dict)->dict:
+    prep_dir=directory/"preparation"; result_dir=directory/"result"; manifest=load_json_bytes((prep_dir/"manifest.json").read_bytes()); work=load_json_bytes((prep_dir/"work-order.json").read_bytes()); review_inputs=load_json_bytes((prep_dir/"review-inputs.json").read_bytes()); resolution=_load_review(ctx,prep_dir,preparation)
     bindings=(primary_result["result_semantic_hash"],primary_result["result_snapshot_hash"],primary_result["receipt_snapshot_hash"])
     if (manifest["primary_result_semantic_hash"],manifest["primary_result_snapshot_hash"],manifest["primary_receipt_snapshot_hash"])!=bindings: raise ValueError("embedded verifier primary binding mismatch")
     if work["primary_result_semantic_hash"]!=bindings[0] or work["primary_result_snapshot_hash"]!=bindings[1] or work["primary_receipt_snapshot_hash"]!=bindings[2] or work["work_order_hash"]!=content_hash({k:v for k,v in work.items() if k!="work_order_hash"}): raise ValueError("embedded verifier work order binding mismatch")
-    expected_manifest={**manifest,"work_order_snapshot_hash":sha256_bytes(render_json(work)),"review_capabilities_hash":content_hash(review_inputs["review_capabilities"]),"permission_hash":content_hash(review_inputs["permission"]),"qualification_receipt_hashes":review_inputs["qualification_receipt_hashes"],"preparation_hash":""}; expected_manifest["preparation_hash"]=content_hash({k:v for k,v in expected_manifest.items() if k!="preparation_hash"})
+    expected_manifest={**manifest,"work_order_snapshot_hash":sha256_bytes(render_json(work)),"review_capabilities_hash":content_hash(review_inputs["review_capabilities"]),"permission_hash":content_hash(review_inputs["permission"]),"qualification_bundle_hashes":review_inputs["qualification_bundle_hashes"],"preparation_hash":""}; expected_manifest["preparation_hash"]=content_hash({k:v for k,v in expected_manifest.items() if k!="preparation_hash"})
     if expected_manifest!=manifest: raise ValueError("embedded verifier preparation semantic tamper")
     primary_raw=(prep_dir/"primary-snapshot"/"result.json").read_bytes(); primary_receipt=(prep_dir/"primary-snapshot"/"completion-receipt.json").read_bytes()
     if sha256_bytes(primary_raw)!=bindings[1] or sha256_bytes(primary_receipt)!=bindings[2] or (prep_dir/"primary-snapshot"/"normalized-result.json").read_bytes()!=render_json(primary_result["normalized"]): raise ValueError("embedded primary snapshot mismatch")

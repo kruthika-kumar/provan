@@ -6,7 +6,7 @@ from shiproom.project import content_hash
 
 from .contracts import load_json_bytes, render_json, require_exact, require_string_list, require_text, sha256_bytes, stable_id
 from .guidance import load_guidance_pack
-from .trust import ensure_directory, replace_bytes_safe, safe_entry, validate_ancestry
+from .trust import ensure_directory, exact_children, replace_bytes_safe, safe_entry, validate_ancestry, write_bytes_safe
 
 
 TASK_SCHEMA="measurement-reviewer-qualification-task.v3"
@@ -17,6 +17,40 @@ QUALIFIED_CAPABILITIES={"contract_structure","metric_decision_alignment","absolu
 
 def qualification_store(repository_root:Path)->Path:
     return repository_root/".shiproom"/"local"/"measurement-reviewer-qualifications"
+
+
+def _bundle_metadata(task:dict,result:dict,result_raw:bytes,receipt:dict)->dict:
+    task_raw=render_json(task); receipt_raw=render_json(receipt)
+    values={
+        "task_semantic_hash":content_hash(task),"task_snapshot_hash":sha256_bytes(task_raw),
+        "result_semantic_hash":content_hash(result),"result_snapshot_hash":sha256_bytes(result_raw),
+        "receipt_semantic_hash":content_hash(receipt),"receipt_snapshot_hash":sha256_bytes(receipt_raw),
+    }
+    return {**values,"qualification_bundle_hash":content_hash(values)}
+
+
+def write_qualification_bundle(repository_root:Path,task:dict,result:dict,result_raw:bytes,receipt:dict)->dict:
+    root=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store")
+    directory=ensure_directory(repository_root,root/receipt["qualification_id"],label="qualification bundle")
+    expected={"qualification-task.json","qualification-result.json","qualification-receipt.json"}
+    if any(directory.iterdir()): exact_children(directory,expected,"qualification bundle")
+    replace_bytes_safe(repository_root,directory/"qualification-task.json",render_json(task),label="qualification task")
+    replace_bytes_safe(repository_root,directory/"qualification-result.json",result_raw,label="qualification result")
+    replace_bytes_safe(repository_root,directory/"qualification-receipt.json",render_json(receipt),label="qualification receipt")
+    return {"value":receipt,"directory":directory,"bytes":render_json(receipt),**_bundle_metadata(task,result,result_raw,receipt)}
+
+
+def load_qualification_bundle(path:Path,guidance:dict)->dict:
+    directory=Path(path); exact_children(directory,{"qualification-task.json","qualification-result.json","qualification-receipt.json"},"qualification bundle")
+    for name in ("qualification-task.json","qualification-result.json","qualification-receipt.json"):
+        validate_ancestry(directory,directory/name,directory=False,label="qualification bundle file")
+    task_raw=(directory/"qualification-task.json").read_bytes(); result_raw=(directory/"qualification-result.json").read_bytes(); receipt_raw=(directory/"qualification-receipt.json").read_bytes()
+    task=load_json_bytes(task_raw); result=load_json_bytes(result_raw); receipt=load_json_bytes(receipt_raw)
+    expected_task=build_qualification_task(guidance,task.get("result_schema_version",""))
+    if task!=expected_task or task_raw!=render_json(expected_task): raise ValueError("qualification task semantic rederivation failed")
+    expected_receipt=grade_qualification_result(result,expected_task,sha256_bytes(result_raw))
+    if receipt!=expected_receipt or receipt_raw!=render_json(expected_receipt): raise ValueError("qualification receipt regrading failed")
+    return {"value":receipt,"directory":directory,"bytes":receipt_raw,**_bundle_metadata(task,result,result_raw,receipt)}
 
 
 def build_qualification_task(guidance:dict,result_schema_version:str="measurement-result.v3")->dict:
@@ -54,4 +88,4 @@ def prepare_qualification(repository_root:Path)->dict:
 
 
 def compile_qualification(repository_root:Path,result_path:Path)->dict:
-    guidance=load_guidance_pack(); task=build_qualification_task(guidance); raw=result_path.read_bytes(); value=load_json_bytes(raw); receipt=grade_qualification_result(value,task,sha256_bytes(raw)); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); replace_bytes_safe(repository_root,store/(receipt["qualification_id"]+".json"),render_json(receipt),label="qualification receipt"); return receipt
+    guidance=load_guidance_pack(); task=build_qualification_task(guidance); raw=result_path.read_bytes(); value=load_json_bytes(raw); receipt=grade_qualification_result(value,task,sha256_bytes(raw)); bundle=write_qualification_bundle(repository_root,task,value,raw,receipt); return {**receipt,"qualification_bundle_hash":bundle["qualification_bundle_hash"],"qualification_bundle_path":str(bundle["directory"])}

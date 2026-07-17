@@ -156,7 +156,7 @@ def load_generation_directory(ctx:LocalExecutionContext,directory:Path)->tuple[d
         for child in verifier_root.iterdir():
             _safe_directory(child,"embedded verifier snapshot")
             vm=load_json_bytes((child/"preparation"/"manifest.json").read_bytes()); role=vm["primary_role_id"]
-            validated=validate_embedded_verifier(child,results[role]); expected_hashes=manifest["verifier_hashes"].get(child.name)
+            validated=validate_embedded_verifier(ctx,child,results[role],prep); expected_hashes=manifest["verifier_hashes"].get(child.name)
             if expected_hashes!={"semantic_hash":validated["semantic_hash"],"snapshot_hash":validated["result_snapshot_hash"],"completion_receipt_snapshot_hash":validated["receipt_snapshot_hash"]}: raise ValueError("embedded verifier snapshot binding mismatch")
             verifiers[child.name]=validated
     material_roles={role for role,result in results.items() if any(is_material_recommendation(item) for item in result["normalized"]["recommendations"])}
