@@ -19,7 +19,8 @@ from shiproom.measurement_ai.preparation import prepare, load_preparation
 from shiproom.measurement_ai.persistence import compile_generation, load_generation
 from shiproom.measurement_ai.rendering import show
 from shiproom.measurement_ai.contracts import sha256_bytes
-from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store
+from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store, load_qualification_bundle
+from shiproom.measurement_ai.contract_parity import parity_report
 from shiproom.measurement_ai.results import normalize_result
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
@@ -104,6 +105,22 @@ def test_all_27_v3_portable_contracts_are_closed_json_schemas():
             elif isinstance(value,list):
                 for child in value: walk(child)
         walk(schema)
+
+
+def test_all_27_contracts_report_python_json_schema_parity(capsys):
+    report=parity_report(); print(json.dumps(report,sort_keys=True)); captured=capsys.readouterr().out
+    assert len(report["contracts"])==27 and report["totals"]=={"accepted":27,"rejected":81}
+    assert "work-order.v6.json" in captured
+
+
+@pytest.mark.parametrize("filename",["qualification-task.json","qualification-result.json","qualification-receipt.json"])
+def test_qualification_bundle_is_regraded_not_receipt_trusted(tmp_path,filename):
+    guidance=load_guidance_pack(); task=build_qualification_task(guidance); cases=[]
+    for expected in task["cases"]: cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
+    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"provider","model_id":"model","case_results":cases}; path=qualification_store(tmp_path)/"qualification-result.json"; path.parent.mkdir(parents=True); path.write_text(json.dumps(result),encoding="utf-8"); compiled=compile_qualification(tmp_path,path); bundle=qualification_store(tmp_path)/compiled["qualification_id"]
+    assert load_qualification_bundle(bundle,guidance)["qualification_bundle_hash"]==compiled["qualification_bundle_hash"]
+    value=json.loads((bundle/filename).read_text()); value["semantic_tamper"]="forged"; (bundle/filename).write_text(json.dumps(value),encoding="utf-8")
+    with pytest.raises((ValueError,KeyError)): load_qualification_bundle(bundle,guidance)
 
 
 def test_v3_prerelease_audit_receipt_justifies_in_place_repair():
@@ -226,13 +243,13 @@ def test_unused_assessment_is_conditional_but_malformed_pointer_fails_closed(tmp
     with pytest.raises(ValueError,match="malformed assessment pointer"): load_preparation(ctx,info["preparation_id"])
 
 
-def place_result(ctx, preparation_id, role, record):
+def place_result(ctx, preparation_id, role, record, executor=None):
     prep=load_preparation(ctx,preparation_id); work=prep["work_orders"][role]; root=domain_root(ctx)/"inbox"/preparation_id/work["work_order_id"]
     bases=[item for item in prep["contexts"][role]["basis_registry"] if record["criterion_id"] in item["criterion_ids"]]
     basis=next((item for item in bases if item["direct_fact_authority"] in {"source_verified","deterministically_established"}),bases[0]); record["basis_ids"]=[basis["basis_id"]]; record["basis_path_ids"]=[item["path_id"] for item in prep["contexts"][role]["basis_paths"] if item["start_basis_id"]==basis["basis_id"] and item["criterion_id"]==record["criterion_id"] and item["required"]]
     value={"schema_version":"measurement-result.v3" if role=="measurement" else "ai-evaluation-result.v3","role_id":role,"role_version":"3.0.0","preparation_id":preparation_id,"work_order_id":work["work_order_id"],"base_graph_semantic_hash":work["inputs"]["graph_semantic_hash"],"resolved_review_mode":work["resolved_review_mode"],"records":[record],"recommendations":[],"assumptions":[],"limitations":[]}
     raw=(json.dumps(value,sort_keys=True)+"\n").encode(); (root/"result.json").write_bytes(raw)
-    receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":{"executor_type":"human","reviewer_label":"manual reviewer"},"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}
+    receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":executor or {"executor_type":"human","reviewer_label":"manual reviewer"},"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}
     (root/"completion-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
 
 
@@ -339,9 +356,11 @@ def test_old_preparation_and_pointer_fail_closed_without_mutation(tmp_path):
 def test_canonical_artifacts_ignore_preparation_handles_and_local_labels(tmp_path):
     ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8")
     artifacts=[]
-    for label in ("first_local_label","renamed_local_label"):
-        info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); record["local_id"]=label; place_result(ctx,info["preparation_id"],"measurement",record); compile_generation(ctx,info["preparation_id"]); _,current=load_generation(ctx); artifacts.append({name:value for name,value in current.items() if name!="measurement-ai-compiler-receipts.json"})
-    assert artifacts[0]==artifacts[1]
+    submissions=(("human_local",{"executor_type":"human","reviewer_label":"human"}),("hermes_local",{"executor_type":"agent_harness","candidate_id":"hermes_candidate","provider_id":"provider","model_id":"model","harness_id":"hermes","adapter_version":"1","run_id":"h"}),("codex_local",{"executor_type":"agent_harness","candidate_id":"codex_candidate","provider_id":"provider","model_id":"model","harness_id":"codex","adapter_version":"1","run_id":"c"}),("renamed_local_id",{"executor_type":"human","reviewer_label":"renamed"}))
+    bundles=[]
+    for label,executor in submissions:
+        info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); record["local_id"]=label; place_result(ctx,info["preparation_id"],"measurement",record,executor); manifest=compile_generation(ctx,info["preparation_id"]); _,current=load_generation(ctx); artifacts.append({name:value for name,value in current.items() if name!="measurement-ai-compiler-receipts.json"}); bundles.append(manifest["semantic_bundle_hash"])
+    assert all(value==artifacts[0] for value in artifacts[1:]) and len(set(bundles))==1
 
 
 def test_domain_core_records_zero_external_operations(tmp_path,monkeypatch):
