@@ -7,7 +7,7 @@ from shiproom.project import content_hash
 
 from .contracts import load_json_bytes, render_json, require_exact, require_string_list, require_text, sha256_bytes, stable_id
 from .guidance import load_guidance_pack
-from .trust import ensure_directory, exact_children, replace_bytes_safe, safe_entry, validate_ancestry, write_bytes_safe
+from .trust import ensure_approved_write_target, ensure_directory, exact_children, replace_bytes_safe, safe_entry, validate_ancestry, write_bytes_safe
 
 
 TASK_SCHEMA="measurement-reviewer-qualification-task.v3"
@@ -32,7 +32,7 @@ def _bundle_metadata(task:dict,result:dict,result_raw:bytes,receipt:dict,rubric:
 
 
 def write_qualification_bundle(repository_root:Path,task:dict,result:dict,result_raw:bytes,receipt:dict,rubric:dict)->dict:
-    root=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store")
+    root=ensure_approved_write_target(repository_root,qualification_store(repository_root),label="qualification store")
     directory=ensure_directory(repository_root,root/receipt["qualification_id"],label="qualification bundle")
     expected={"qualification-task.json","qualification-result.json","qualification-receipt.json"}
     if any(directory.iterdir()): exact_children(directory,expected,"qualification bundle")
@@ -96,7 +96,7 @@ def load_qualification_receipt(path:Path,task:dict)->dict:
 
 
 def prepare_qualification(repository_root:Path)->dict:
-    guidance=load_guidance_pack(); task=build_qualification_task(guidance); store=ensure_directory(repository_root,qualification_store(repository_root),label="qualification store"); public=ensure_directory(repository_root,store/"reviewer-packet",label="qualification reviewer packet"); private=ensure_directory(repository_root,store/"compiler-private",label="qualification private packet"); replace_bytes_safe(repository_root,public/"qualification-task.json",render_json(task),label="qualification task"); schema=resources.files("shiproom.measurement_ai_schemas").joinpath("measurement-reviewer-qualification-result.v3.json").read_bytes(); replace_bytes_safe(repository_root,public/"response-schema.json",schema,label="qualification response schema"); replace_bytes_safe(repository_root,private/"grading-rubric.json",guidance["snapshots"]["measurement-qualification-private-rubric.v1.json"]["bytes"],label="qualification private rubric"); return task
+    guidance=load_guidance_pack(); task=build_qualification_task(guidance); store=ensure_approved_write_target(repository_root,qualification_store(repository_root),label="qualification store"); public=ensure_directory(repository_root,store/"reviewer-packet",label="qualification reviewer packet"); private=ensure_directory(repository_root,store/"compiler-private",label="qualification private packet"); replace_bytes_safe(repository_root,public/"qualification-task.json",render_json(task),label="qualification task"); schema=resources.files("shiproom.measurement_ai_schemas").joinpath("measurement-reviewer-qualification-result.v3.json").read_bytes(); replace_bytes_safe(repository_root,public/"response-schema.json",schema,label="qualification response schema"); replace_bytes_safe(repository_root,private/"grading-rubric.json",guidance["snapshots"]["measurement-qualification-private-rubric.v1.json"]["bytes"],label="qualification private rubric"); return task
 
 
 def compile_qualification(repository_root:Path,result_path:Path)->dict:

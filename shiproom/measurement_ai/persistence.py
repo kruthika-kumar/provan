@@ -16,7 +16,7 @@ from .contracts import COMPILER_VERSION, GENERATION_POINTER_SCHEMA, MANIFEST_SCH
 from .preparation import load_preparation
 from .results import normalize_result
 from .verifier import load_verifier, validate_embedded_verifier
-from .trust import ensure_directory, replace_bytes_safe, repository_root_for, safe_entry, write_bytes_safe
+from .trust import ensure_approved_write_target, ensure_directory, replace_bytes_safe, repository_root_for, safe_entry, write_bytes_safe
 
 
 BEFORE_GENERATION_VERIFY=None
@@ -104,7 +104,7 @@ def compile_generation(ctx:LocalExecutionContext,preparation_id:str|None=None,ve
     artifacts=build_artifacts(prep,results,verifiers)
     projections=artifacts["measurement-contract.json"]["accepted_field_projections"]
     artifacts["measurement-ai-compiler-receipts.json"]=_compiler_receipts(results,verifiers,projections)
-    root=ensure_directory(ctx.repository_root,root,label="measurement AI root")
+    root=ensure_approved_write_target(ctx.repository_root,root,label="measurement AI root")
     generation="gen_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root/"generations"/generation,label="measurement AI generation")
     _copy_tree(prep["directory"],directory/"preparation-snapshot",ctx.repository_root)
     ensure_directory(ctx.repository_root,directory/"result-snapshots",label="result snapshots")

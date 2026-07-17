@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from .registries import PROJECTION_REGISTRY
+from .contracts import semantic_without_local_ids
+
+def _projection_semantic(value:dict)->dict:
+    return {key:item for key,item in semantic_without_local_ids(value).items() if key not in {"verifier_disposition","derived_effect","recommendation_class"}}
 
 
 def projection_destinations(field_path: str) -> tuple[str, ...]:
@@ -49,19 +53,34 @@ def expected_projection_tuples(results:dict,artifacts:dict)->list[dict]:
 
 
 def verify_projected_records(results:dict,artifacts:dict)->list[dict]:
-    expected=expected_projection_tuples(results,artifacts); indexes={name:set() for name in ("measurement-contract.json","instrumentation-coverage.json","measurement-ai-readiness.json","launch-measurement-plan.json","measurement-ai-overlay.json")}
+    expected=expected_projection_tuples(results,artifacts); indexes={name:set() for name in ("measurement-contract.json","instrumentation-coverage.json","measurement-ai-readiness.json","launch-measurement-plan.json","measurement-ai-overlay.json")};canonical={name:{} for name in indexes};submitted={}
+    for result in results.values():
+        for record in result["normalized"]["records"]:
+            for signal in record.get("signal_assessments",[]):
+                for key in ("event_candidates","property_results","tests","runtime_evidence"):
+                    for item in signal.get(key,[]):submitted[item["canonical_record_id"]]=_projection_semantic({"signal_id":signal["signal_id"],**item})
+            for key in ("metric_dimensions","maturity_rungs","judge_assessments","observability_candidates"):
+                for item in record.get(key,[]):submitted[item["canonical_record_id"]]=_projection_semantic(item)
+            for item in record.get("claims",[]):submitted[item["claim_id"]]=_projection_semantic(item)
+            for item in record.get("gaps",[]):submitted[item["gap_id"]]=_projection_semantic(item)
+        for item in result["normalized"]["recommendations"]:
+            submitted[item["recommendation_id"]]=_projection_semantic(item)
+            for exception in item["exception_dispositions"]:submitted[exception["exception_analysis_id"]]=_projection_semantic(exception)
     for contract in artifacts["measurement-contract.json"]["contracts"]:
         for field in contract["fields"].values(): indexes["measurement-contract.json"].update(item["proposal_id"] for item in field.get("model_proposals",[]))
     inst=artifacts["instrumentation-coverage.json"]
-    for key in ("event_candidates","property_assessments","test_candidates","runtime_bindings"): indexes["instrumentation-coverage.json"].update(item["canonical_record_id"] for item in inst[key])
+    for key in ("event_candidates","property_assessments","test_candidates","runtime_bindings"):
+        indexes["instrumentation-coverage.json"].update(item["canonical_record_id"] for item in inst[key]);canonical["instrumentation-coverage.json"].update({item["canonical_record_id"]:_projection_semantic(item) for item in inst[key]})
     readiness=artifacts["measurement-ai-readiness.json"]
-    for item in readiness["metric_quality"]: indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in item["dimensions"])
+    for item in readiness["metric_quality"]:
+        indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in item["dimensions"]);canonical["measurement-ai-readiness.json"].update({entry["canonical_record_id"]:_projection_semantic(entry) for entry in item["dimensions"]})
     for item in readiness["ai_evaluation"]:
-        indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in item["maturity_rungs"]+item["judge_assessments"]+item.get("observability_candidates",[])); indexes["measurement-ai-readiness.json"].update(entry["claim_id"] for entry in item["claims"])
+        entries=item["maturity_rungs"]+item["judge_assessments"]+item.get("observability_candidates",[]);indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in entries);canonical["measurement-ai-readiness.json"].update({entry["canonical_record_id"]:_projection_semantic(entry) for entry in entries});indexes["measurement-ai-readiness.json"].update(entry["claim_id"] for entry in item["claims"]);canonical["measurement-ai-readiness.json"].update({entry["claim_id"]:_projection_semantic(entry) for entry in item["claims"]})
     plan=artifacts["launch-measurement-plan.json"]
-    indexes["launch-measurement-plan.json"].update(item["gap_id"] for item in plan["gaps"]); indexes["launch-measurement-plan.json"].update(item["recommendation_id"] for item in plan["warnings"]); indexes["launch-measurement-plan.json"].update(item["proposal_id"] for item in plan["owner_confirmation_proposals"])
-    for item in plan["warnings"]: indexes["launch-measurement-plan.json"].update(entry["exception_analysis_id"] for entry in item["exception_dispositions"])
+    indexes["launch-measurement-plan.json"].update(item["gap_id"] for item in plan["gaps"]);canonical["launch-measurement-plan.json"].update({item["gap_id"]:_projection_semantic(item) for item in plan["gaps"]});indexes["launch-measurement-plan.json"].update(item["recommendation_id"] for item in plan["warnings"]);canonical["launch-measurement-plan.json"].update({item["recommendation_id"]:_projection_semantic(item) for item in plan["warnings"]}); indexes["launch-measurement-plan.json"].update(item["proposal_id"] for item in plan["owner_confirmation_proposals"])
+    for item in plan["warnings"]: indexes["launch-measurement-plan.json"].update(entry["exception_analysis_id"] for entry in item["exception_dispositions"]);canonical["launch-measurement-plan.json"].update({entry["exception_analysis_id"]:_projection_semantic(entry) for entry in item["exception_dispositions"]})
     indexes["measurement-ai-overlay.json"].update(node.get("record_id") for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node.get("record_id"))
     for item in expected:
         if item["destination"]!="measurement-ai-overlay.json" and item["record_id"] not in indexes[item["destination"]]: raise ValueError(f"missing canonical projection: {item['record_kind']} -> {item['destination']}")
+        if item["record_id"] in submitted and item["record_id"] in canonical.get(item["destination"],{}) and canonical[item["destination"]][item["record_id"]]!=submitted[item["record_id"]]: raise ValueError(f"altered canonical projection: {item['record_kind']} -> {item['destination']}")
     return expected

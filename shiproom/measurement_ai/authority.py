@@ -71,6 +71,14 @@ def default_applicability() -> dict:
         "ai": {"requirement_ids": [], "criterion_ids": [], "journey_ids": [], "paths": [], "linked_sources": []},
     }
 
+PROHIBITED_EXTERNAL_OPERATIONS={"model_execution","project_command","network_socket","http_or_browser","sql_execution","warehouse_or_bi_client","tracing_or_external_service","external_evaluation_execution"}
+
+def reject_external_operation(operation:str,receipt:list[dict])->None:
+    """Production policy gate: Session 5 records and rejects external execution."""
+    if operation not in PROHIBITED_EXTERNAL_OPERATIONS: raise ValueError("unknown Measurement and AI operation class")
+    receipt.append({"operation":operation,"attempted":True,"rejected":True,"external_side_effect":False,"reason_code":"measurement_ai_external_operation_forbidden"})
+    raise PermissionError("measurement_ai_external_operation_forbidden: "+operation)
+
 
 def _typed_field_value(name: str, value: object) -> None:
     spec=MEASUREMENT_FIELD_SPECS[name]; kind=spec["kind"]

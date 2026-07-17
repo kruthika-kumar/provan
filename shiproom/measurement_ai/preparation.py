@@ -21,7 +21,7 @@ from .contracts import (
 )
 from .guidance import GUIDANCE_FILES, eligible_rule_ids, load_guidance_pack, load_guidance_pack_from_directory, rule_map
 from .qualification import load_qualification_bundle, qualification_store
-from .trust import ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
+from .trust import ensure_approved_write_target, ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
 from .registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, ROLE_RESULT_SCHEMAS
 
 
@@ -323,7 +323,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     review,bundles=_review_resolution(review_mode,review_capabilities,permission,ctx.repository_root,guidance)
     review_inputs={"requested_mode":review_mode,"review_capabilities":review_capabilities,"permission":permission,"qualification_bundle_hashes":sorted(item["qualification_bundle_hash"] for item in bundles),"qualification_bundles":sorted(({"qualification_id":item["value"]["qualification_id"],"bundle_hash":item["qualification_bundle_hash"]} for item in bundles),key=lambda item:item["qualification_id"])}
     expected=_build(ctx,prep_id,capabilities_bundle=capabilities,applicability_bundle=applicability,owner_paths=_owner_paths(owner_paths),review=review,review_inputs=review_inputs,roles=roles,discovery=discovery,contracts=contracts,guidance=guidance)
-    root=ensure_directory(ctx.repository_root,domain_root(ctx),label="measurement AI root")
+    root=ensure_approved_write_target(ctx.repository_root,domain_root(ctx),label="measurement AI root")
     directory=ensure_directory(ctx.repository_root,root/"preparations"/prep_id,label="measurement AI preparation")
     _atomic(directory/"preparation-inputs.json",{"owner_paths":_owner_paths(owner_paths),"review_inputs":review_inputs,"review_resolution":review,"assessment_dependency":expected["source_packet"]["assessment_dependency"]})
     bundle_root=ensure_directory(ctx.repository_root,directory/"qualification-bundles",label="qualification bundle snapshots")

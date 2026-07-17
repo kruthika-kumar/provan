@@ -63,10 +63,19 @@ def evaluate_basis_path(steps:list[dict],edges:dict[str,dict],start:str,criterio
 def validate_overlay(value:dict,base_node_ids:set[str])->dict:
     require_exact(value,{"schema_version","release_id","release_commit","product_intent_semantic_hash","graph_semantic_hash","nodes","edges","projection_verification"},"measurement AI overlay")
     if value["schema_version"]!=OVERLAY_SCHEMA or not isinstance(value["nodes"],list) or not isinstance(value["edges"],list): raise ValueError("invalid measurement AI overlay")
-    nodes={}
+    nodes={}; projection_keys=set()
     for node in value["nodes"]:
         if not isinstance(node,dict) or node.get("node_type") not in NODE_FIELDS or set(node)!=NODE_FIELDS[node["node_type"]] or node["node_id"] in nodes: raise ValueError("invalid measurement AI overlay node")
-        if node["node_type"]=="projection_reference" and (len(node["criterion_ids"])!=1 or not node["canonical_record_id"] or not node["target_record_id"]): raise ValueError("invalid scoped projection reference")
+        if node["node_type"]=="projection_reference":
+            if len(node["criterion_ids"])!=1 or not node["canonical_record_id"] or not node["target_record_id"]:
+                raise ValueError("invalid scoped projection reference")
+            if node["canonical_record_id"] != node["target_record_id"]:
+                raise ValueError("projection canonical record and target record mismatch")
+            if node["destination_artifact"] not in {"measurement-contract.json","instrumentation-coverage.json","measurement-ai-readiness.json","launch-measurement-plan.json"}:
+                raise ValueError("invalid projection destination")
+            key=(node["canonical_record_id"],node["destination_artifact"],node["criterion_ids"][0])
+            if key in projection_keys: raise ValueError("duplicate canonical projection")
+            projection_keys.add(key)
         if node["provenance"] not in {"measurement_ai_compiler","measurement_reviewer","prepared_project_source","upstream_binding"}: raise ValueError("invalid overlay provenance")
         nodes[node["node_id"]]=node
     edges={}
@@ -82,6 +91,18 @@ def validate_overlay(value:dict,base_node_ids:set[str])->dict:
         if edge["criterion_id"] not in base_node_ids: raise ValueError("invalid overlay criterion")
         effective=evaluate_basis_path(edge["criterion_path"],edges,edge["source_node_id"],edge["criterion_id"])
         if effective!=edge["criterion_basis_authority"]: raise ValueError("stale measurement AI criterion path authority")
+    for node in nodes.values():
+        if node["node_type"]!="projection_reference": continue
+        projection_edges=[edge for edge in edges.values() if edge["source_node_id"]==node["node_id"] and edge["relationship"]=="projects_record_for_criterion"]
+        if len(projection_edges)!=1: raise ValueError("projection reference requires exactly one typed edge")
+        edge=projection_edges[0]; criterion=node["criterion_ids"][0]
+        if edge["target_node_id"]!=criterion or edge["criterion_id"]!=criterion: raise ValueError("projection edge criterion mismatch")
+        if edge["direct_fact_authority"]!=node["authority"] or edge["criterion_basis_authority"]!=node["authority"]: raise ValueError("projection authority mismatch")
     if not isinstance(value["projection_verification"],list) or len({(item.get("record_id"),item.get("destination"),item.get("criterion_id")) for item in value["projection_verification"]})!=len(value["projection_verification"]): raise ValueError("invalid canonical projection verification")
-    for item in value["projection_verification"]: require_exact(item,{"record_id","record_kind","criterion_id","journey_id","authority","destination","target_record_id"},"canonical projection verification")
+    verification_keys=set()
+    for item in value["projection_verification"]:
+        require_exact(item,{"record_id","record_kind","criterion_id","journey_id","authority","destination","target_record_id"},"canonical projection verification")
+        if item["record_id"]!=item["target_record_id"]: raise ValueError("projection verification record mismatch")
+        verification_keys.add((item["record_id"],item["destination"],item["criterion_id"]))
+    if not projection_keys.issubset(verification_keys): raise ValueError("projection reference missing canonical verification")
     return value

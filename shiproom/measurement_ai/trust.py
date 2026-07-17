@@ -58,6 +58,16 @@ def ensure_directory(trusted_root:Path,target:Path,*,label:str)->Path:
             safe_entry(current,directory=True,label=label)
     return destination
 
+def ensure_approved_write_target(repository_root:Path,target:Path,*,label:str)->Path:
+    """Restrict Session 5 writes to its ignored release root or qualification store."""
+    root=Path(os.path.abspath(repository_root));destination=Path(os.path.abspath(target))
+    try:parts=destination.relative_to(root).parts
+    except ValueError as exc:raise ValueError(f"{label} escapes its trusted root") from exc
+    qualification=parts[:3]==(".shiproom","local","measurement-reviewer-qualifications")
+    release=len(parts)>=5 and parts[:3]==(".shiproom","local","releases") and parts[4]=="measurement-ai-readiness"
+    if not (qualification or release):raise ValueError(f"{label} is outside approved ignored roots")
+    return ensure_directory(root,destination,label=label)
+
 
 def safe_atomic_path(trusted_root:Path,path:Path,*,label:str)->Path:
     ensure_directory(trusted_root,path.parent,label=label+" parent")
