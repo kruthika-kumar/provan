@@ -28,6 +28,7 @@ def _string(schema:dict)->str:
     if "prep_" in pattern: return "prep_"+"0"*32
     if "qualification_task_" in pattern: return "qualification_task_"+"0"*24
     if "qualification_" in pattern: return "qualification_"+"0"*24
+    if "qual_case_" in pattern: return "qual_case_001"
     if "wo_(measurement|ai_evaluation)" in pattern: return "wo_measurement_"+"0"*16
     if "wo_measurement" in pattern: return "wo_measurement_"+"0"*16
     if "wo_ai_evaluation" in pattern: return "wo_ai_evaluation_"+"0"*16

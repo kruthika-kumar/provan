@@ -22,6 +22,7 @@ from shiproom.measurement_ai.contracts import sha256_bytes
 from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store, load_qualification_bundle
 from shiproom.measurement_ai.contract_parity import parity_report
 from shiproom.measurement_ai.results import normalize_result
+from shiproom.measurement_ai.results import validate_executor
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
 from shiproom.measurement_ai.registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_FIELD_SPECS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, PROJECTION_REGISTRY, ROLE_RESULT_SCHEMAS
@@ -33,6 +34,7 @@ from test_assessment import assessment_context
 from test_intent import context_for, inbox, proposal
 from shiproom.intent import prepare as prepare_intent, compile_bundle as compile_intent
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input
+from measurement_ai_public_responses import qualification_result
 
 
 def conventional_context(tmp_path):
@@ -115,12 +117,34 @@ def test_all_27_contracts_report_python_json_schema_parity(capsys):
 
 @pytest.mark.parametrize("filename",["qualification-task.json","qualification-result.json","qualification-receipt.json"])
 def test_qualification_bundle_is_regraded_not_receipt_trusted(tmp_path,filename):
-    guidance=load_guidance_pack(); task=build_qualification_task(guidance); cases=[]
-    for expected in task["cases"]: cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
-    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"provider","model_id":"model","case_results":cases}; path=qualification_store(tmp_path)/"qualification-result.json"; path.parent.mkdir(parents=True); path.write_text(json.dumps(result),encoding="utf-8"); compiled=compile_qualification(tmp_path,path); bundle=qualification_store(tmp_path)/compiled["qualification_id"]
+    guidance=load_guidance_pack(); task=build_qualification_task(guidance); result=qualification_result(task); path=qualification_store(tmp_path)/"qualification-result.json"; path.parent.mkdir(parents=True); path.write_text(json.dumps(result),encoding="utf-8"); compiled=compile_qualification(tmp_path,path); bundle=qualification_store(tmp_path)/compiled["qualification_id"]
     assert load_qualification_bundle(bundle,guidance)["qualification_bundle_hash"]==compiled["qualification_bundle_hash"]
     value=json.loads((bundle/filename).read_text()); value["semantic_tamper"]="forged"; (bundle/filename).write_text(json.dumps(value),encoding="utf-8")
     with pytest.raises((ValueError,KeyError)): load_qualification_bundle(bundle,guidance)
+
+def test_qualification_packet_is_blind_and_capabilities_are_independent():
+    pack=load_guidance_pack(); task=build_qualification_task(pack)
+    forbidden={"allowed_semantic_assessments","required_guidance_rules","required_exception_ids","maximum_effect","qualified_capabilities"}
+    assert all(not (set(case)&forbidden) and case["case_id"].startswith("qual_case_") for case in task["cases"])
+    value=qualification_result(task); failed=next(item for item in value["case_results"] if item["case_id"]=="qual_case_007"); failed["claim_codes"]=["ai_eval_proves_product_impact"]
+    receipt=grade_qualification_result(value,task,"sha256:"+"1"*64,pack["qualification_private_rubric"],pack)
+    assert "absolute_count_opportunity_review" in receipt["passed_capabilities"]
+    assert "ai_claim_authority_review" in receipt["failed_capabilities"]
+
+def test_primary_executor_truth_table_rejects_bidirectional_impersonation():
+    human_work={"resolved_review_mode":"guided_review","review_participants":[{"type":"human"}],"required_qualification_capabilities":[]}
+    model={"type":"model","candidate_id":"candidate","provider_id":"provider","model_id":"model","qualification_id":"qualification","qualification_bundle_hash":"sha256:"+"1"*64,"qualified_capabilities":["metric_decision_alignment"],"model_switch":False}
+    model_work={"resolved_review_mode":"guided_review","review_participants":[model],"required_qualification_capabilities":["metric_decision_alignment"]}
+    harness={"executor_type":"agent_harness","participant_binding":{key:model[key] for key in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"}
+    with pytest.raises(ValueError,match="human participant"): validate_executor(harness,human_work)
+    with pytest.raises(ValueError,match="human cannot"): validate_executor({"executor_type":"human","reviewer_label":"person"},model_work)
+    validate_executor(harness,model_work)
+    harness["participant_binding"]["qualification_id"]="wrong"
+    with pytest.raises(ValueError,match="binding mismatch"): validate_executor(harness,model_work)
+
+def test_public_response_fixtures_do_not_depend_on_private_grader():
+    source=(resources.files("shiproom").joinpath("..","tests","measurement_ai_public_responses.py")).read_text(encoding="utf-8")
+    assert "qualification_private_rubric" not in source and "measurement_ai.qualification" not in source and "allowed_semantic_assessments" not in source
 
 
 def test_v3_prerelease_audit_receipt_justifies_in_place_repair():
@@ -303,10 +327,7 @@ def test_verifier_disposition_changes_canonical_effect(tmp_path,monkeypatch,disp
 
 def test_qualification_is_mechanically_graded_and_hash_bound():
     from shiproom.measurement_ai.qualification import build_qualification_task
-    pack=load_guidance_pack(); task=build_qualification_task(pack); cases=[]
-    for expected in task["cases"]:
-        cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
-    value={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"configured","model_id":"qualified","case_results":cases}
+    pack=load_guidance_pack(); task=build_qualification_task(pack); value=qualification_result(task,"configured","qualified")
     receipt=grade_qualification_result(value,task,"sha256:"+"1"*64); assert "ratio_denominator_review" in receipt["qualified_capabilities"]
     for candidate,name in ((task,"measurement-reviewer-qualification-task.v3.json"),(value,"measurement-reviewer-qualification-result.v3.json"),(receipt,"measurement-reviewer-qualification-receipt.v3.json")):
         schema=json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(name).read_text()); jsonschema.Draft202012Validator(schema).validate(candidate)
@@ -356,7 +377,7 @@ def test_old_preparation_and_pointer_fail_closed_without_mutation(tmp_path):
 def test_canonical_artifacts_ignore_preparation_handles_and_local_labels(tmp_path):
     ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]; cid=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8")
     artifacts=[]
-    submissions=(("human_local",{"executor_type":"human","reviewer_label":"human"}),("hermes_local",{"executor_type":"agent_harness","candidate_id":"hermes_candidate","provider_id":"provider","model_id":"model","harness_id":"hermes","adapter_version":"1","run_id":"h"}),("codex_local",{"executor_type":"agent_harness","candidate_id":"codex_candidate","provider_id":"provider","model_id":"model","harness_id":"codex","adapter_version":"1","run_id":"c"}),("renamed_local_id",{"executor_type":"human","reviewer_label":"renamed"}))
+    submissions=(("human_local",{"executor_type":"human","reviewer_label":"human"}),("hermes_local",{"executor_type":"agent_harness","participant_binding":None,"harness_id":"hermes","adapter_version":"1","run_id":"h"}),("codex_local",{"executor_type":"agent_harness","participant_binding":None,"harness_id":"codex","adapter_version":"1","run_id":"c"}),("renamed_local_id",{"executor_type":"human","reviewer_label":"renamed"}))
     bundles=[]
     for label,executor in submissions:
         info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); record["local_id"]=label; place_result(ctx,info["preparation_id"],"measurement",record,executor); manifest=compile_generation(ctx,info["preparation_id"]); _,current=load_generation(ctx); artifacts.append({name:value for name,value in current.items() if name!="measurement-ai-compiler-receipts.json"}); bundles.append(manifest["semantic_bundle_hash"])
@@ -368,9 +389,7 @@ def test_domain_core_records_zero_external_operations(tmp_path,monkeypatch):
     monkeypatch.setattr(authority_module,"run_bounded_command",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("project command invoked")))
     monkeypatch.setattr(socket,"create_connection",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("network invoked")))
     monkeypatch.setattr(urllib.request,"urlopen",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("HTTP invoked")))
-    ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); task=prepare_qualification(ctx.repository_root); cases=[]
-    for expected in task["cases"]: cases.append({"case_id":expected["case_id"],"semantic_assessment":expected["allowed_semantic_assessments"][0],"recommendation_classes":expected["required_recommendation_classes"],"guidance_rule_ids":expected["required_guidance_rules"],"exception_ids":expected["required_exception_ids"],"effect":expected["maximum_effect"],"abstained":expected["abstention_required"],"claim_codes":[],"authority_labels":expected["required_authority_labels"],"automatic_replacements":[]})
-    result={"schema_version":"measurement-reviewer-qualification-result.v3","task_id":task["task_id"],"task_hash":task["task_hash"],"provider_id":"guarded","model_id":"guarded","case_results":cases}; result_path=qualification_store(ctx.repository_root)/"qualification-result.json"; result_path.write_text(json.dumps(result),encoding="utf-8"); compile_qualification(ctx.repository_root,result_path); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)
+    ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); task=prepare_qualification(ctx.repository_root); result=qualification_result(task,"guarded","guarded"); result_path=qualification_store(ctx.repository_root)/"qualification-result.json"; result_path.write_text(json.dumps(result),encoding="utf-8"); compile_qualification(ctx.repository_root,result_path); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)
     operations=[item for item in artifacts["measurement-ai-compiler-receipts.json"]["validations"] if item["kind"]=="external_operation"]
     assert {item["operation"] for item in operations}=={"model","command","network","browser","sql","external_service"} and all(item["count"]==0 for item in operations)
 

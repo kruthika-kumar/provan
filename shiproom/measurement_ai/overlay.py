@@ -6,7 +6,7 @@ from .contracts import BASIS_EVIDENCE_CLASSES, OVERLAY_SCHEMA, effective_basis_c
 COMMON={"node_id","node_type","provenance","criterion_ids"}
 NODE_FIELDS={
     "measurement_contract":COMMON|{"contract_id","journey_id","field_states","metric_roles"},
-    "metric_definition":COMMON|{"path","definition_state","execution_state","data_accuracy_state"},
+    "metric_definition":COMMON|{"path","requirement_ids","journey_ids","declared_external","definition_state","execution_state","data_accuracy_state","definition_authority","git_object_format","git_blob_hash","normalized_text_hash"},
     "required_signal":COMMON|{"signal_id","name","name_state","required_properties"},
     "event_candidate":COMMON|{"basis_id","direct_fact_authority","criterion_basis_authority"},
     "signal_property":COMMON|{"signal_id","property_name","state","basis_ids","criterion_basis_authority"},
@@ -21,7 +21,7 @@ NODE_FIELDS={
     "production_trace":COMMON|{"state","basis_ids","criterion_basis_authority"},
     "observability_candidate":COMMON|{"kind","basis_ids","supported_dimensions","criterion_basis_authority"},
     "owner_confirmation_proposal":COMMON|{"proposal_id","reason"},
-    "project_source_reference":COMMON|{"basis_id","path","blob_hash","direct_fact_authority"},
+    "project_source_reference":COMMON|{"basis_id","path","git_object_format","git_blob_hash","normalized_text_hash","direct_fact_authority"},
     "canonical_projection":COMMON|{"record_id","record_kind"},
 }
 

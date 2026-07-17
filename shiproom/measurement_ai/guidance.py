@@ -10,7 +10,8 @@ from .contracts import load_json_bytes, sha256_bytes
 GUIDANCE_PACKAGE = "shiproom.measurement_guidance"
 GUIDANCE_FILES = (
     "guidance-registry.v2.json", "sources.v1.json", "recommendation-policy.v2.json",
-    "qualification-suite.v2.json", "metric-design.v1.md", "experimentation.v1.md",
+    "qualification-public-cases.v1.json", "measurement-qualification-private-rubric.v1.json",
+    "metric-design.v1.md", "experimentation.v1.md",
     "ai-evaluation.v1.md",
 )
 
@@ -35,19 +36,22 @@ def _load_guidance(reader) -> dict:
     registry = load_json_bytes(snapshots["guidance-registry.v2.json"]["bytes"])
     sources = load_json_bytes(snapshots["sources.v1.json"]["bytes"])
     policy = load_json_bytes(snapshots["recommendation-policy.v2.json"]["bytes"])
-    suite = load_json_bytes(snapshots["qualification-suite.v2.json"]["bytes"])
-    validate_guidance(registry, sources, policy, suite)
+    public_cases = load_json_bytes(snapshots["qualification-public-cases.v1.json"]["bytes"])
+    private_rubric = load_json_bytes(snapshots["measurement-qualification-private-rubric.v1.json"]["bytes"])
+    validate_guidance(registry, sources, policy, public_cases, private_rubric)
     return {
         "snapshots": snapshots,
         "registry": registry,
         "sources": sources,
         "policy": policy,
-        "qualification_suite": suite,
+        "qualification_suite": public_cases,
+        "qualification_public_cases": public_cases,
+        "qualification_private_rubric": private_rubric,
         "pack_hash": content_hash({name: snapshots[name]["semantic_hash"] for name in sorted(snapshots)}),
     }
 
 
-def validate_guidance(registry: dict, sources: dict, policy: dict, suite: dict) -> None:
+def validate_guidance(registry: dict, sources: dict, policy: dict, public_cases: dict, private_rubric: dict) -> None:
     if registry.get("schema_version") != "measurement-guidance-pack.v2" or len(registry.get("rules", [])) != 13:
         raise ValueError("invalid measurement guidance registry")
     source_ids = {item.get("source_id") for item in sources.get("sources", [])}
@@ -66,8 +70,15 @@ def validate_guidance(registry: dict, sources: dict, policy: dict, suite: dict) 
         rule_ids.add(rule["rule_id"])
     if policy.get("schema_version") != "measurement-recommendation-policy.v2" or set(policy.get("allowed_trigger_operators",[]))!={"equals","not_equals","in","present","absent","state_is","all","any"}:
         raise ValueError("invalid measurement recommendation policy")
-    if suite.get("schema_version") != "measurement-qualification-suite.v2" or not suite.get("cases"):
-        raise ValueError("invalid measurement qualification suite")
+    if public_cases.get("schema_version") != "measurement-qualification-public-cases.v1" or not public_cases.get("cases"):
+        raise ValueError("invalid public qualification cases")
+    if private_rubric.get("schema_version") != "measurement-qualification-private-rubric.v1" or private_rubric.get("grading_engine_version") != "measurement-qualification-grader.v1":
+        raise ValueError("invalid private qualification rubric")
+    public_ids=[item.get("case_id") for item in public_cases["cases"]]; rubric_ids=[item.get("case_id") for item in private_rubric.get("cases",[])]
+    if len(public_ids)!=len(set(public_ids)) or set(public_ids)!=set(rubric_ids) or any(not str(value).startswith("qual_case_") for value in public_ids):
+        raise ValueError("qualification public/private case mismatch")
+    forbidden={"allowed_semantic_assessments","forbidden_semantic_assessments","required_recommendation_classes","forbidden_recommendation_classes","required_guidance_rules","required_exception_ids","maximum_effect","abstention_required","forbidden_claim_codes","required_authority_labels","automatic_replacement_prohibitions","qualified_capabilities"}
+    if any(forbidden & set(item) for item in public_cases["cases"]): raise ValueError("public qualification packet leaks private rubric")
 
 
 def _validate_trigger(trigger: object) -> None:

@@ -1,0 +1,17 @@
+{
+  "schema_version": "measurement-qualification-public-cases.v1",
+  "suite_version": "1.0.0",
+  "cases": [
+    {"case_id":"qual_case_001","scenario":"A launch decision intentionally tracks total completed onboardings. Opportunity volume is fixed and a diagnostic rate is reported separately.","facts":["The decision concerns absolute business volume","Opportunity volume is fixed","A diagnostic rate is available"],"requested_capabilities":["absolute_count_opportunity_review"]},
+    {"case_id":"qual_case_002","scenario":"A team compares total completed onboardings between periods, but eligible exposure volume may differ and is not supplied.","facts":["The decision is comparative","Opportunity volume may vary","Exposure context is unavailable"],"requested_capabilities":["absolute_count_opportunity_review"]},
+    {"case_id":"qual_case_003","scenario":"A proposed completion rate uses a denominator that the release itself can change, and zero-denominator handling is unspecified.","facts":["The denominator may be release-sensitive","Zero handling is unresolved"],"requested_capabilities":["ratio_denominator_review"]},
+    {"case_id":"qual_case_004","scenario":"The promised outcome can occur days after exposure, but no observation window or maturity rule is supplied.","facts":["Outcome delay is material","Observation window is absent"],"requested_capabilities":["window_delay_review"]},
+    {"case_id":"qual_case_005","scenario":"The proposed metric measures an intermediate click while the intended user outcome is successful task completion.","facts":["Metric is an intermediate action","No validated proxy relationship is supplied"],"requested_capabilities":["proxy_outcome_review"]},
+    {"case_id":"qual_case_006","scenario":"An application event exists, but the downstream metric definition is external and was not supplied.","facts":["Event source is present","Downstream definition is unavailable"],"requested_capabilities":["metric_decision_alignment"]},
+    {"case_id":"qual_case_007","scenario":"A fixed AI evaluation passes, and a product-impact claim cites only that AI evaluation.","facts":["AI eval structure exists","No product-outcome runtime evidence exists"],"requested_capabilities":["ai_eval_structure","ai_claim_authority_review"]},
+    {"case_id":"qual_case_008","scenario":"A source event candidate exists, but no validated runtime emission evidence is available.","facts":["Source definition is present","Runtime evidence is absent"],"requested_capabilities":["contract_structure"]},
+    {"case_id":"qual_case_009","scenario":"Eligible population context is missing and multiple reasonable population definitions remain possible.","facts":["Population is unresolved","No exception can be ruled out"],"requested_capabilities":["population_review"]},
+    {"case_id":"qual_case_010","scenario":"A generic best-practice statement recommends replacing every count with a ratio without a project-specific trigger.","facts":["No project trigger is supplied","The recommendation is universal"],"requested_capabilities":["skeptical_material_review"]}
+  ],
+  "response_fields": ["semantic_assessment","recommendation_classes","guidance_rule_ids","exception_ids","effect","abstained","claim_codes","authority_labels","automatic_replacements"]
+}

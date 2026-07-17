@@ -338,7 +338,7 @@ def prepare(ctx: LocalExecutionContext, *, review_mode: str="contract_only", cap
     for role,item in roles.items(): write_bytes_safe(ctx.repository_root,role_root/(role+".json"),item["bytes"],label="role snapshot")
     contract_root=ensure_directory(ctx.repository_root,directory/"contract-schemas",label="contract schema snapshots")
     for name,item in contracts.items(): write_bytes_safe(ctx.repository_root,contract_root/name,item["bytes"],label="contract snapshot")
-    for name in ("guidance-registry.v2.json","sources.v1.json","recommendation-policy.v2.json","qualification-suite.v2.json","metric-design.v1.md","experimentation.v1.md","ai-evaluation.v1.md"):
+    for name in GUIDANCE_FILES:
         p=ensure_directory(ctx.repository_root,directory/"guidance-pack",label="guidance snapshots")/name; write_bytes_safe(ctx.repository_root,p,resources.files("shiproom.measurement_guidance").joinpath(name).read_bytes(),label="guidance snapshot")
     ensure_directory(ctx.repository_root,directory/"role-context",label="role contexts"); ensure_directory(ctx.repository_root,directory/"work-orders",label="work orders")
     for role,context in expected["contexts"].items(): _atomic(directory/"role-context"/(role+".json"),context)

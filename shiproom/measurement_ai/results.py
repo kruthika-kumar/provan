@@ -41,16 +41,28 @@ def _semantic_hash(role:str,version:str,graph_hash:str,normalized:dict)->str:
         "payload":semantic_without_local_ids(payload),"assumptions":normalized["assumptions"],"limitations":normalized["limitations"]})
 
 
+def validate_executor(executor:dict,work:dict)->None:
+    participants=work.get("review_participants",[]); mode=work.get("resolved_review_mode")
+    if mode!="contract_only" and len(participants)!=1: raise ValueError("resolved review requires exactly one participant")
+    participant=participants[0] if participants else None
+    if executor.get("executor_type")=="human":
+        require_exact(executor,{"executor_type","reviewer_label"},"human executor")
+        if participant is not None and participant.get("type")!="human": raise ValueError("human cannot complete model participant work")
+    elif executor.get("executor_type")=="agent_harness":
+        require_exact(executor,{"executor_type","participant_binding","harness_id","adapter_version","run_id"},"harness executor")
+        binding=executor["participant_binding"]
+        if participant is None:
+            if mode!="contract_only" or binding is not None: raise ValueError("unbound harness is allowed only for contract-only work")
+        else:
+            if participant.get("type")!="model" or not isinstance(binding,dict): raise ValueError("harness cannot complete human participant work")
+            require_exact(binding,{"candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash"},"model participant binding")
+            if binding!={key:participant[key] for key in binding} or not set(work.get("required_qualification_capabilities",[])).issubset(participant.get("qualified_capabilities",[])): raise ValueError("completion executor participant binding mismatch")
+    else: raise ValueError("invalid completion executor")
+
 def _validate_receipt(value:dict,work:dict,result_raw:bytes)->dict:
     require_exact(value,{"schema_version","executor","work_order_id","work_order_hash","result_snapshot_hash","started_at","completed_at"},"completion receipt")
     if value["schema_version"]!="measurement-ai-completion-receipt.v3" or value["work_order_id"]!=work["work_order_id"] or value["work_order_hash"]!=work["work_order_hash"] or value["result_snapshot_hash"]!=sha256_bytes(result_raw): raise ValueError("completion receipt binding mismatch")
-    executor=value["executor"]
-    if executor.get("executor_type")=="human": require_exact(executor,{"executor_type","reviewer_label"},"human executor")
-    elif executor.get("executor_type")=="agent_harness":
-        require_exact(executor,{"executor_type","candidate_id","provider_id","model_id","harness_id","adapter_version","run_id"},"harness executor")
-        participants=[item for item in work.get("review_participants",[]) if item.get("type")=="model"]
-        if participants and not any((item["candidate_id"],item["provider_id"],item["model_id"])==(executor["candidate_id"],executor["provider_id"],executor["model_id"]) for item in participants): raise ValueError("completion executor is not an authorized qualified candidate")
-    else: raise ValueError("invalid completion executor")
+    validate_executor(value["executor"],work)
     try: start=datetime.fromisoformat(value["started_at"].replace("Z","+00:00")); end=datetime.fromisoformat(value["completed_at"].replace("Z","+00:00"))
     except (TypeError,ValueError) as exc: raise ValueError("invalid completion time") from exc
     if start.tzinfo is None or end.tzinfo is None or start>end: raise ValueError("invalid completion interval")

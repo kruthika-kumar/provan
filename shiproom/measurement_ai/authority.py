@@ -221,7 +221,9 @@ def source_record(ctx: LocalExecutionContext, path: str, *, mandatory: bool, rul
     blob = ctx.read_release_blob(path, SOURCE_LIMIT)
     if blob["classification"] != "text" or blob["text"] is None: raise ValueError(f"measurement AI source is not UTF-8 text: {path}")
     text = normalize_text(blob["text"]); raw = text.encode("utf-8")
-    return {"path": blob["path"], "returned_git_path": blob["path"], "git_blob_hash": blob["blob_hash"], "normalized_text_hash": sha256_bytes(raw), "size_bytes": len(raw), "text": text, "mandatory": mandatory, "selection_rule_ids": sorted(set(rules)), "selection_reason": reason, "provenance": provenance,"discovery":discovery}
+    object_format="sha1" if re.fullmatch(r"[0-9a-f]{40}",blob["blob_hash"]) else "sha256" if re.fullmatch(r"[0-9a-f]{64}",blob["blob_hash"]) else None
+    if object_format is None: raise ValueError("unsupported Git object format")
+    return {"path": blob["path"], "returned_git_path": blob["path"], "git_object_format":object_format, "git_blob_hash": blob["blob_hash"], "normalized_text_hash": sha256_bytes(raw), "size_bytes": len(raw), "text": text, "mandatory": mandatory, "selection_rule_ids": sorted(set(rules)), "selection_reason": reason, "provenance": provenance,"discovery":discovery}
 
 
 def _node_paths(graph: dict, role: str) -> list[tuple[str, str, str]]:

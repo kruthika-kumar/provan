@@ -12,7 +12,7 @@ from .contracts import PREPARATION_COMPILER_VERSION, is_material_recommendation,
 from .guidance import load_guidance_pack
 from .qualification import load_qualification_bundle
 from .preparation import _review_resolution, load_preparation
-from .results import normalize_result
+from .results import normalize_result, validate_executor
 from .trust import ensure_directory, exact_children, replace_bytes_safe, repository_root_for, safe_entry, validate_ancestry, write_bytes_safe
 
 
@@ -56,13 +56,7 @@ def prepare_verifier(ctx:LocalExecutionContext,preparation_id:str,role:str,revie
 def _receipt(value:dict,work:dict,result_raw:bytes,resolution:dict)->dict:
     require_exact(value,{"schema_version","executor","work_order_id","work_order_hash","result_snapshot_hash","started_at","completed_at"},"verifier completion receipt")
     if value["schema_version"]!="measurement-ai-completion-receipt.v3" or value["work_order_id"]!=work["verifier_work_order_id"] or value["work_order_hash"]!=work["work_order_hash"] or value["result_snapshot_hash"]!=sha256_bytes(result_raw): raise ValueError("verifier receipt binding mismatch")
-    executor=value["executor"]
-    if executor.get("executor_type")=="human": require_exact(executor,{"executor_type","reviewer_label"},"human verifier")
-    elif executor.get("executor_type")=="agent_harness":
-        require_exact(executor,{"executor_type","candidate_id","provider_id","model_id","harness_id","adapter_version","run_id"},"model verifier")
-        participants=[item for item in resolution["participants"] if item["type"]=="model"]
-        if not any((item["candidate_id"],item["provider_id"],item["model_id"])==(executor["candidate_id"],executor["provider_id"],executor["model_id"]) and "skeptical_material_review" in item["qualified_capabilities"] for item in participants): raise ValueError("model verifier is not individually qualified")
-    else: raise ValueError("invalid verifier executor")
+    validate_executor(value["executor"],{"resolved_review_mode":resolution["resolved"],"review_participants":resolution["participants"],"required_qualification_capabilities":["skeptical_material_review"]})
     start=datetime.fromisoformat(value["started_at"].replace("Z","+00:00")); end=datetime.fromisoformat(value["completed_at"].replace("Z","+00:00"))
     if start.tzinfo is None or end.tzinfo is None or start>end: raise ValueError("invalid verifier completion interval")
     return value
