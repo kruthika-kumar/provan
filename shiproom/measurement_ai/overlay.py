@@ -22,7 +22,7 @@ NODE_FIELDS={
     "observability_candidate":COMMON|{"kind","basis_ids","supported_dimensions","criterion_basis_authority"},
     "owner_confirmation_proposal":COMMON|{"proposal_id","reason"},
     "project_source_reference":COMMON|{"basis_id","path","git_object_format","git_blob_hash","normalized_text_hash","direct_fact_authority"},
-    "canonical_projection":COMMON|{"record_id","record_kind"},
+    "projection_reference":COMMON|{"journey_id","record_kind","canonical_record_id","destination_artifact","target_record_id","authority"},
 }
 
 RELATION_MATRIX={
@@ -44,6 +44,7 @@ RELATION_MATRIX={
     "evaluates_ai_criterion":({"ai_eval_case"},{"base"}),
     "has_ai_rung":({"ai_eval_case"},{"ai_eval_rung","ai_eval_execution","production_trace"}),
     "has_observability_candidate":({"ai_eval_case"},{"observability_candidate"}),
+    "projects_record_for_criterion":({"projection_reference"},{"base"}),
 }
 
 
@@ -65,6 +66,7 @@ def validate_overlay(value:dict,base_node_ids:set[str])->dict:
     nodes={}
     for node in value["nodes"]:
         if not isinstance(node,dict) or node.get("node_type") not in NODE_FIELDS or set(node)!=NODE_FIELDS[node["node_type"]] or node["node_id"] in nodes: raise ValueError("invalid measurement AI overlay node")
+        if node["node_type"]=="projection_reference" and (len(node["criterion_ids"])!=1 or not node["canonical_record_id"] or not node["target_record_id"]): raise ValueError("invalid scoped projection reference")
         if node["provenance"] not in {"measurement_ai_compiler","measurement_reviewer","prepared_project_source","upstream_binding"}: raise ValueError("invalid overlay provenance")
         nodes[node["node_id"]]=node
     edges={}
@@ -80,6 +82,6 @@ def validate_overlay(value:dict,base_node_ids:set[str])->dict:
         if edge["criterion_id"] not in base_node_ids: raise ValueError("invalid overlay criterion")
         effective=evaluate_basis_path(edge["criterion_path"],edges,edge["source_node_id"],edge["criterion_id"])
         if effective!=edge["criterion_basis_authority"]: raise ValueError("stale measurement AI criterion path authority")
-    if not isinstance(value["projection_verification"],list) or len({(item.get("record_id"),item.get("destination")) for item in value["projection_verification"]})!=len(value["projection_verification"]): raise ValueError("invalid canonical projection verification")
-    for item in value["projection_verification"]: require_exact(item,{"record_id","record_kind","destination"},"canonical projection verification")
+    if not isinstance(value["projection_verification"],list) or len({(item.get("record_id"),item.get("destination"),item.get("criterion_id")) for item in value["projection_verification"]})!=len(value["projection_verification"]): raise ValueError("invalid canonical projection verification")
+    for item in value["projection_verification"]: require_exact(item,{"record_id","record_kind","criterion_id","journey_id","authority","destination","target_record_id"},"canonical projection verification")
     return value

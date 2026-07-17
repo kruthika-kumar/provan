@@ -165,7 +165,7 @@ def _assigned(authority: dict, role: str) -> dict:
     criterion_ids = sorted(set(scope["applicable_criterion_ids"] + scope["candidate_criterion_ids"]))
     criteria = [item for item in authority["criteria"] if item["criterion_id"] in criterion_ids]
     requirement_ids = sorted({item["requirement_id"] for item in criteria})
-    journey_ids = sorted({item["journey_id"] for item in authority.get("linked_measurement_definitions", []) for _ in [0]} | ({item["node_id"] for item in authority["journeys"]} if role == "measurement" and criterion_ids else set()))
+    journey_ids = sorted({journey for item in authority.get("linked_measurement_definitions", []) for journey in item.get("journey_ids",[])} | ({item["node_id"] for item in authority["journeys"]} if role == "measurement" and criterion_ids else set()))
     return {"requirement_ids":requirement_ids,"criterion_ids":criterion_ids,"journey_ids":journey_ids}
 
 

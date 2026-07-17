@@ -23,27 +23,29 @@ def validate_projection_coverage(accepted: set[str], projected: dict[str, set[st
 
 def expected_projection_tuples(results:dict,artifacts:dict)->list[dict]:
     expected=[]
-    def add(record_id:str,kind:str,*destinations:str):
-        for destination in destinations: expected.append({"record_id":record_id,"record_kind":kind,"destination":destination})
+    def add(record_id:str,kind:str,criterion_id:str,journey_id:str|None,authority:str,*destinations:str):
+        for destination in destinations: expected.append({"record_id":record_id,"record_kind":kind,"criterion_id":criterion_id,"journey_id":journey_id,"authority":authority,"destination":destination,"target_record_id":record_id})
     for result in results.values():
         for record in result["normalized"]["records"]:
-            for update in record.get("contract_updates",[]): add(update["proposal_id"],"contract_proposal","measurement-contract.json","measurement-ai-overlay.json")
+            cid=record["criterion_id"]; journey=(record.get("journey_ids") or [None])[0]; authority=record["compiled_authority"]["criterion_scoped_basis_authority"]
+            for update in record.get("contract_updates",[]): add(update["proposal_id"],"contract_proposal",cid,journey,authority,"measurement-contract.json","measurement-ai-overlay.json")
             for signal in record.get("signal_assessments",[]):
-                for item in signal.get("event_candidates",[]): add(item["canonical_record_id"],"event_candidate","instrumentation-coverage.json","measurement-ai-overlay.json")
-                for item in signal.get("property_results",[]): add(item["canonical_record_id"],"property_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
-                for item in signal.get("tests",[]): add(item["canonical_record_id"],"test_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
-                for item in signal.get("runtime_evidence",[]): add(item["canonical_record_id"],"runtime_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
-            for item in record.get("metric_dimensions",[]): add(item["canonical_record_id"],"metric_dimension","measurement-ai-readiness.json")
-            for item in record.get("maturity_rungs",[]): add(item["canonical_record_id"],"ai_maturity_rung","measurement-ai-readiness.json","measurement-ai-overlay.json")
-            for item in record.get("judge_assessments",[]): add(item["canonical_record_id"],"llm_judge_assessment","measurement-ai-readiness.json","measurement-ai-overlay.json")
-            for item in record.get("claims",[]): add(item["claim_id"],"ai_claim_assessment","measurement-ai-readiness.json","measurement-ai-overlay.json")
-            for item in record.get("observability_candidates",[]): add(item["canonical_record_id"],"observability_candidate","measurement-ai-readiness.json","measurement-ai-overlay.json")
-            for item in record.get("gaps",[]): add(item["gap_id"],"gap","launch-measurement-plan.json","measurement-ai-overlay.json")
+                for item in signal.get("event_candidates",[]): add(item["canonical_record_id"],"event_candidate",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("property_results",[]): add(item["canonical_record_id"],"property_assertion",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("tests",[]): add(item["canonical_record_id"],"test_assertion",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("runtime_evidence",[]): add(item["canonical_record_id"],"runtime_assertion",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"instrumentation-coverage.json","measurement-ai-overlay.json")
+            for item in record.get("metric_dimensions",[]): add(item["canonical_record_id"],"metric_dimension",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"measurement-ai-readiness.json")
+            for item in record.get("maturity_rungs",[]): add(item["canonical_record_id"],"ai_maturity_rung",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("judge_assessments",[]): add(item["canonical_record_id"],"llm_judge_assessment",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("claims",[]): add(item["claim_id"],"ai_claim_assessment",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("observability_candidates",[]): add(item["canonical_record_id"],"observability_candidate",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("gaps",[]): add(item["gap_id"],"gap",cid,journey,item["compiled_authority"]["criterion_scoped_basis_authority"],"launch-measurement-plan.json","measurement-ai-overlay.json")
         for recommendation in result["normalized"]["recommendations"]:
-            add(recommendation["recommendation_id"],"recommendation","launch-measurement-plan.json","measurement-ai-overlay.json")
-            for exception in recommendation["exception_dispositions"]: add(exception["exception_analysis_id"],"exception_analysis","launch-measurement-plan.json","measurement-ai-overlay.json")
-    for proposal in artifacts["launch-measurement-plan.json"]["owner_confirmation_proposals"]: add(proposal["proposal_id"],"owner_confirmation_proposal","launch-measurement-plan.json","measurement-ai-overlay.json")
-    return sorted(expected,key=lambda item:(item["record_id"],item["destination"]))
+            cid=recommendation["criterion_id"]; authority=recommendation["compiled_authority"]["criterion_scoped_basis_authority"]; add(recommendation["recommendation_id"],"recommendation",cid,None,authority,"launch-measurement-plan.json","measurement-ai-overlay.json")
+            for exception in recommendation["exception_dispositions"]: add(exception["exception_analysis_id"],"exception_analysis",cid,None,authority,"launch-measurement-plan.json","measurement-ai-overlay.json")
+    for proposal in artifacts["launch-measurement-plan.json"]["owner_confirmation_proposals"]:
+        for cid in proposal["criterion_ids"]: add(proposal["proposal_id"],"owner_confirmation_proposal",cid,proposal["journey_id"],"not_inspected","launch-measurement-plan.json","measurement-ai-overlay.json")
+    return sorted(expected,key=lambda item:(item["record_id"],item["destination"],item["criterion_id"]))
 
 
 def verify_projected_records(results:dict,artifacts:dict)->list[dict]:
@@ -61,5 +63,5 @@ def verify_projected_records(results:dict,artifacts:dict)->list[dict]:
     for item in plan["warnings"]: indexes["launch-measurement-plan.json"].update(entry["exception_analysis_id"] for entry in item["exception_dispositions"])
     indexes["measurement-ai-overlay.json"].update(node.get("record_id") for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node.get("record_id"))
     for item in expected:
-        if item["record_id"] not in indexes[item["destination"]]: raise ValueError(f"missing canonical projection: {item['record_kind']} -> {item['destination']}")
+        if item["destination"]!="measurement-ai-overlay.json" and item["record_id"] not in indexes[item["destination"]]: raise ValueError(f"missing canonical projection: {item['record_kind']} -> {item['destination']}")
     return expected

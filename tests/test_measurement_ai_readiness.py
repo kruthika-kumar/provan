@@ -20,7 +20,8 @@ from shiproom.measurement_ai.persistence import compile_generation, load_generat
 from shiproom.measurement_ai.rendering import show
 from shiproom.measurement_ai.contracts import sha256_bytes
 from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store, load_qualification_bundle
-from shiproom.measurement_ai.contract_parity import parity_report
+from shiproom.measurement_ai.contract_parity import parity_report, private_rubric_parity
+from shiproom.measurement_ai.closeout import CLAIMS, resolve_claims
 from shiproom.measurement_ai.results import normalize_result
 from shiproom.measurement_ai.results import validate_executor
 from shiproom.measurement_ai.guidance import eligible_rule_ids
@@ -113,6 +114,13 @@ def test_all_27_contracts_report_python_json_schema_parity(capsys):
     report=parity_report(); print(json.dumps(report,sort_keys=True)); captured=capsys.readouterr().out
     assert len(report["contracts"])==27 and report["totals"]=={"accepted":27,"rejected":81}
     assert "work-order.v6.json" in captured
+
+def test_private_rubric_has_separate_schema_python_parity():
+    assert private_rubric_parity()=={"accepted":1,"schema_rejected":1,"python_rejected":1}
+
+def test_closeout_claim_registry_resolves_symbols_tests_and_artifacts():
+    passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}; artifacts={assertion["artifact"]:{} for claim in CLAIMS for assertion in claim["artifact_assertions"]}; checks={assertion["assertion"]:(lambda _:True) for claim in CLAIMS for assertion in claim["artifact_assertions"]}
+    resolved=resolve_claims(passed,artifacts,checks); assert len(resolved)==len(CLAIMS) and all(item["status"]=="resolved" for item in resolved)
 
 
 @pytest.mark.parametrize("filename",["qualification-task.json","qualification-result.json","qualification-receipt.json"])
@@ -257,6 +265,18 @@ def test_preparation_semantic_tamper_and_unlinked_definition_do_not_create_scope
     prep=domain_root(ctx)/"preparations"/result["preparation_id"]; packet=json.loads((prep/"measurement-ai-source-packet.json").read_text()); packet["coverage_boundary"]="widened"; (prep/"measurement-ai-source-packet.json").write_text(json.dumps(packet,indent=2)+"\n")
     with pytest.raises(ValueError,match="semantic rederivation"):
         load_preparation(ctx,result["preparation_id"])
+
+def test_downstream_definition_scope_is_exact(tmp_path):
+    ctx=assessment_context(tmp_path); inputs=load_assessment_input(ctx); cid=next(item["criterion_id"] for item in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]); rid=next(item["requirement_id"] for item in inputs["intent_artifacts"]["requirements.json"]["requirements"]); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); app["measurement"]["criterion_ids"]=[cid]; app["measurement"]["measurement_definition_paths"]=[{"path":"docs/brief.md","requirement_ids":[rid],"criterion_ids":[cid],"journey_ids":[],"declared_external":False}]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); place_result(ctx,info["preparation_id"],"measurement",record); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); definition=artifacts["measurement-contract.json"]["downstream_definitions"][0]
+    assert definition["criterion_ids"]==[cid] and definition["requirement_ids"]==[rid] and definition["git_object_format"]=="sha1" and len(definition["git_blob_hash"])==40 and definition["execution_state"]==definition["data_accuracy_state"]=="not_inspected"
+
+def test_projection_references_are_scoped_and_resolved(tmp_path):
+    ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); cid=next(item["node_id"] for item in load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); place_result(ctx,info["preparation_id"],"measurement",assessed_record(cid)); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); refs=[node for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node["node_type"]=="projection_reference"]
+    assert refs and all(node["criterion_ids"]==[cid] and node["canonical_record_id"]==node["target_record_id"] for node in refs)
+
+def test_projection_rejects_orphan_placeholders():
+    value={"schema_version":"measurement-ai-overlay.v3","release_id":"r","release_commit":"a"*40,"product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,"nodes":[{"node_id":"p","node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":[],"journey_id":None,"record_kind":"gap","canonical_record_id":"g","destination_artifact":"launch-measurement-plan.json","target_record_id":"g","authority":"not_inspected"}],"edges":[],"projection_verification":[]}
+    with pytest.raises(ValueError,match="scoped projection"): validate_overlay(value,{"criterion"})
 
 
 def test_unused_assessment_is_conditional_but_malformed_pointer_fails_closed(tmp_path,monkeypatch):

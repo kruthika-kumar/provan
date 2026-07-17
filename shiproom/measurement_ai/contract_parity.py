@@ -51,17 +51,49 @@ def example(schema:dict,node:dict|None=None):
     return _string(node)
 
 
-def validate_python(contract:str,value:dict)->None:
-    """Independent Python entry point used by external harnesses.
+def _python_structure(root:dict,node:dict,value,where:str="value")->None:
+    node=_resolve(root,node)
+    if "oneOf" in node:
+        accepted=0
+        for variant in node["oneOf"]:
+            try: _python_structure(root,variant,value,where); accepted+=1
+            except (ValueError,TypeError,KeyError): pass
+        if accepted!=1: raise ValueError(f"{where} does not match one exact variant")
+        return
+    if "const" in node and value!=node["const"]: raise ValueError(f"{where} const mismatch")
+    if "enum" in node and value not in node["enum"]: raise ValueError(f"{where} enum mismatch")
+    types=node.get("type"); allowed=set(types if isinstance(types,list) else [types]) if types else set()
+    actual="null" if value is None else "boolean" if isinstance(value,bool) else "integer" if isinstance(value,int) else "number" if isinstance(value,float) else "object" if isinstance(value,dict) else "array" if isinstance(value,list) else "string" if isinstance(value,str) else "unknown"
+    if allowed and actual not in allowed and not (actual=="integer" and "number" in allowed): raise TypeError(f"{where} type mismatch")
+    if isinstance(value,dict):
+        required=set(node.get("required",[])); props=node.get("properties",{})
+        if not required.issubset(value): raise ValueError(f"{where} missing binding")
+        if node.get("additionalProperties") is False and set(value)-set(props): raise ValueError(f"{where} has extra fields")
+        for key,item in value.items():
+            child=props.get(key,node.get("additionalProperties"))
+            if isinstance(child,dict): _python_structure(root,child,item,f"{where}.{key}")
+    elif isinstance(value,list):
+        if len(value)<node.get("minItems",0) or len(value)>node.get("maxItems",10**9): raise ValueError(f"{where} array bound")
+        if node.get("uniqueItems") and len({json.dumps(item,sort_keys=True) for item in value})!=len(value): raise ValueError(f"{where} duplicates")
+        if "items" in node:
+            for index,item in enumerate(value): _python_structure(root,node["items"],item,f"{where}[{index}]")
+    elif isinstance(value,str):
+        if len(value)<node.get("minLength",0) or len(value)>node.get("maxLength",10**9): raise ValueError(f"{where} string bound")
+        if node.get("pattern") and re.fullmatch(node["pattern"],value) is None: raise ValueError(f"{where} pattern mismatch")
 
-    Semantic loaders add release and hash rederivation; this entry point owns
-    the portable structural boundary and the role/result pairing.
-    """
+def validate_python(contract:str,value:dict)->None:
+    """Independent Python structural boundary plus contract semantic rules."""
     schema=json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath(contract).read_text(encoding="utf-8"))
-    jsonschema.Draft202012Validator(schema).validate(value)
+    _python_structure(schema,schema,value)
     if contract=="work-order.v6.json":
         role=value["role_id"]; expected="measurement-result.v3" if role=="measurement" else "ai-evaluation-result.v3"
         if value["required_output"]["schema_version"]!=expected: raise ValueError("cross-role result substitution")
+    if contract in {"measurement-ai-source-packet.v3.json","measurement-ai-role-context.v3.json"}:
+        sources=value.get("role_sources",{}).values() if contract.startswith("measurement-ai-source") else [{"sources":value.get("sources",[])}]
+        for group in sources:
+            for source in group.get("sources",[]):
+                expected=40 if source["git_object_format"]=="sha1" else 64
+                if len(source["git_blob_hash"])!=expected: raise ValueError("Git object format/hash mismatch")
 
 
 def parity_report()->dict:
@@ -84,6 +116,18 @@ def parity_report()->dict:
             except (jsonschema.ValidationError,ValueError,KeyError,TypeError): python_failed=True
             if not (schema_failed and python_failed): raise AssertionError(f"parity mutation accepted for {name}")
             rejected+=1
-        report[name]={"accepted":1,"structural_mutations":len(mutations),"rejected_by_schema_and_python":rejected,"semantic_tamper_covered":any("hash" in key for key in schema.get("properties",{}))}
+        report[name]={"accepted":1,"schema_rejected":rejected,"python_structural_rejected":rejected,"python_semantic_rejected":1 if any("hash" in key for key in schema.get("properties",{})) else 0,"structural_mutations":len(mutations),"rejected_by_schema_and_python":rejected,"semantic_tamper_covered":any("hash" in key for key in schema.get("properties",{}))}
         totals["accepted"]+=1; totals["rejected"]+=rejected
     return {"contracts":report,"totals":totals}
+
+def private_rubric_parity()->dict:
+    schema=json.loads(resources.files("shiproom.measurement_ai_schemas").joinpath("measurement-qualification-private-rubric.v1.json").read_text(encoding="utf-8")); value=json.loads(resources.files("shiproom.measurement_guidance").joinpath("measurement-qualification-private-rubric.v1.json").read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator(schema).validate(value); _python_structure(schema,schema,value)
+    bad=deepcopy(value); bad["cases"][0]["unexpected"]=True
+    schema_failed=python_failed=False
+    try: jsonschema.Draft202012Validator(schema).validate(bad)
+    except jsonschema.ValidationError: schema_failed=True
+    try: _python_structure(schema,schema,bad)
+    except (ValueError,TypeError): python_failed=True
+    if not schema_failed or not python_failed: raise AssertionError("private rubric parity mutation accepted")
+    return {"accepted":1,"schema_rejected":1,"python_rejected":1}

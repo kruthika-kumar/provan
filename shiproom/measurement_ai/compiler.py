@@ -194,7 +194,17 @@ def build_artifacts(preparation:dict,results:dict[str,dict],verifiers:dict[str,d
     plan={"schema_version":"launch-measurement-plan.v3","release_id":source["release_id"],"warnings":canonical_recommendations,"proposals":[item for item in canonical_recommendations if item["recommendation_class"] in {"contextual_metric_proposal","contextual_hypothesis"}],"gaps":gaps,"owner_confirmation_proposals":owner_proposals,"assumptions":assumptions,"limitations":limitations,"accepted_field_projections":projections}
     overlay=build_overlay(preparation,results,contracts,instrumentation,readiness,canonical_recommendations,owner_proposals)
     artifacts={"measurement-contract.json":contracts,"instrumentation-coverage.json":instrumentation,"measurement-ai-readiness.json":readiness,"launch-measurement-plan.json":plan,"measurement-ai-overlay.json":overlay}
-    overlay["projection_verification"]=verify_projected_records(results,artifacts); validate_overlay(overlay,{item["node_id"] for item in preparation["authority"]["graph_input"]["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"]})
+    expected=verify_projected_records(results,artifacts)
+    for item in expected:
+        if item["destination"]=="measurement-ai-overlay.json": continue
+        node_id=stable_id("projection_reference",item); edge_id=stable_id("edge",{"source":node_id,"target":item["criterion_id"],"relationship":"projects_record_for_criterion","record":item["record_id"]})
+        overlay["nodes"].append({"node_id":node_id,"node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":[item["criterion_id"]],"journey_id":item["journey_id"],"record_kind":item["record_kind"],"canonical_record_id":item["record_id"],"destination_artifact":item["destination"],"target_record_id":item["target_record_id"],"authority":item["authority"]})
+        overlay["edges"].append({"edge_id":edge_id,"source_node_id":node_id,"target_node_id":item["criterion_id"],"relationship":"projects_record_for_criterion","direct_fact_authority":item["authority"],"criterion_id":item["criterion_id"],"criterion_path":[{"edge_id":edge_id,"traversal":"forward"}],"criterion_basis_authority":item["authority"],"origin":"projection_registry","reference_ids":[item["record_id"],item["destination"]]})
+    overlay["nodes"]=sorted(overlay["nodes"],key=lambda value:value["node_id"]); overlay["edges"]=sorted(overlay["edges"],key=lambda value:value["edge_id"])
+    projected={(node["canonical_record_id"],node["criterion_ids"][0],node["destination_artifact"]) for node in overlay["nodes"] if node["node_type"]=="projection_reference"}
+    for item in expected:
+        if item["destination"]=="measurement-ai-overlay.json" and not any((item["record_id"],item["criterion_id"],destination) in projected for destination in ("measurement-contract.json","instrumentation-coverage.json","measurement-ai-readiness.json","launch-measurement-plan.json")): raise ValueError("missing scoped overlay projection")
+    overlay["projection_verification"]=expected; validate_overlay(overlay,{item["node_id"] for item in preparation["authority"]["graph_input"]["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"]})
     return artifacts
 
 
@@ -274,22 +284,5 @@ def build_overlay(preparation:dict,results:dict,contracts:dict,instrumentation:d
         for cid in proposal["criterion_ids"]:
             pid=stable_id("owner_proposal",{"proposal":proposal["proposal_id"],"criterion":cid}); node({"node_id":pid,"node_type":"owner_confirmation_proposal","provenance":"measurement_ai_compiler","criterion_ids":[cid],"proposal_id":proposal["proposal_id"],"reason":proposal["reason"]}); source_id=next((value for (role,key),value in conclusion_ids.items() if key==cid),None)
             if source_id: edge(source_id,pid,"proposes_owner_confirmation",cid,"not_inspected","compiler",[proposal["proposal_id"]])
-    projected=[]
-    for result in results.values():
-        for record in result["normalized"]["records"]:
-            projected += [(item["proposal_id"],"contract_proposal") for item in record.get("contract_updates",[])]
-            for signal in record.get("signal_assessments",[]):
-                projected += [(item["canonical_record_id"],kind) for key,kind in (("event_candidates","event_candidate"),("property_results","property_assertion"),("tests","test_assertion"),("runtime_evidence","runtime_assertion")) for item in signal.get(key,[])]
-            projected += [(item["canonical_record_id"],"ai_maturity_rung") for item in record.get("maturity_rungs",[])]
-            projected += [(item["canonical_record_id"],"llm_judge_assessment") for item in record.get("judge_assessments",[])]
-            projected += [(item["claim_id"],"ai_claim_assessment") for item in record.get("claims",[])]
-            projected += [(item["canonical_record_id"],"observability_candidate") for item in record.get("observability_candidates",[])]
-            projected += [(item["gap_id"],"gap") for item in record.get("gaps",[])]
-        for item in result["normalized"]["recommendations"]:
-            projected.append((item["recommendation_id"],"recommendation")); projected += [(exc["exception_analysis_id"],"exception_analysis") for exc in item["exception_dispositions"]]
-    projected += [(item["proposal_id"],"owner_confirmation_proposal") for item in owner_proposals]
-    existing={item.get("record_id") for item in nodes}
-    for record_id,kind in sorted(set(projected)):
-        if record_id not in existing: node({"node_id":stable_id("projection",{"record":record_id,"kind":kind}),"node_type":"canonical_projection","provenance":"measurement_ai_compiler","criterion_ids":[],"record_id":record_id,"record_kind":kind})
     value={"schema_version":OVERLAY_SCHEMA,"release_id":source["release_id"],"release_commit":source["release_commit"],"product_intent_semantic_hash":source["product_intent_semantic_hash"],"graph_semantic_hash":source["graph_semantic_hash"],"nodes":sorted(nodes,key=lambda item:item["node_id"]),"edges":sorted(edges,key=lambda item:item["edge_id"]),"projection_verification":[]}
     return validate_overlay(value,base_ids)
