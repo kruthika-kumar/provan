@@ -119,8 +119,8 @@ def test_private_rubric_has_separate_schema_python_parity():
     assert private_rubric_parity()=={"accepted":1,"schema_rejected":1,"python_rejected":1}
 
 def test_closeout_claim_registry_resolves_symbols_tests_and_artifacts():
-    passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}; artifacts={assertion["artifact"]:{} for claim in CLAIMS for assertion in claim["artifact_assertions"]}; checks={assertion["assertion"]:(lambda _:True) for claim in CLAIMS for assertion in claim["artifact_assertions"]}
-    resolved=resolve_claims(passed,artifacts,checks); assert len(resolved)==len(CLAIMS) and all(item["status"]=="resolved" for item in resolved)
+    passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}; artifacts={"qualification-task.json":{"cases":[]},"qualification-receipt.json":{"passed_capabilities":[],"failed_capabilities":[],"private_rubric_semantic_hash":"sha256:"+"1"*64},"work-order.json":{"resolved_review_mode":"contract_only","review_participants":[]},"measurement-ai-overlay.json":{"nodes":[]},"instrumentation-coverage.json":{"event_candidates":[],"property_assessments":[]},"measurement-ai-readiness.json":{"aggregate_precedence_inputs":{},"ai_evaluation":[]},"launch-measurement-plan.json":{"warnings":[]},"measurement-contract.json":{"downstream_definitions":[]},"manifest.json":{"semantic_bundle_hash":"sha256:"+"2"*64},"measurement-ai-compiler-receipts.json":{"validations":[]},"current-measurement-ai.json":{"generation":"gen_x"}}
+    resolved=resolve_claims(passed,artifacts); assert len(resolved)==len(CLAIMS) and all(item["status"]=="resolved" for item in resolved)
 
 
 @pytest.mark.parametrize("filename",["qualification-task.json","qualification-result.json","qualification-receipt.json"])
@@ -157,7 +157,7 @@ def test_public_response_fixtures_do_not_depend_on_private_grader():
 
 def test_v3_prerelease_audit_receipt_justifies_in_place_repair():
     receipt=json.loads((resources.files("shiproom").joinpath("..","tests","measurement_ai_v3_prerelease_audit.json")).read_text())
-    assert receipt["audit_commit"]=="005ac55955ea029725373889b2747b2ccb11ee55"
+    assert receipt["audit_commit"]=="81b322ee46da2fc6237d8bce821adb576f110e96"
     assert receipt["tracked_runtime_artifacts"]==[]
     assert receipt["release_local_root_state"]=="absent"
     assert receipt["active_preparation_pointers"]==[] and receipt["active_generation_pointers"]==[]
