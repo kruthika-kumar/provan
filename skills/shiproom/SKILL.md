@@ -84,6 +84,8 @@ Use only compiler-issued basis IDs and required criterion-path IDs. Python deriv
 
 Qualification packets are blind: use only `reviewer-packet/qualification-task.json` and its response schema. Never request, read, or infer the compiler-private rubric. Qualification is capability-scoped, and a completion receipt must match the exact prepared human or model participant. For model work preserve candidate, provider, model, qualification ID, and qualification-bundle hash exactly. A contract-only harness remains unbound and must not claim qualified semantic authority.
 
+For typed project sources, v3 accepts only explicit SHA-1 Git identity: `git_object_format: sha1`, a 40-hex blob ID, normalized-text SHA-256, exact quote range, and quote hash. Preserve all five bindings. A declared-external measurement definition proves only its owner declaration; its definition content is `not_inspected` with `external_definition_declaration` scope and cannot be presented as inspected source proof.
+
 For `expert_escalated_review`, complete the primary work order first. A later immutable v3 verifier preparation and work order bind the validated primary semantic hash, result snapshot hash, and receipt snapshot hash. The verifier challenges every material recommendation and cannot choose or overwrite a metric. Its `supported`, `downgrade`, `disputed`, or `owner_confirmation_required` disposition changes the canonical effect within policy ceilings. Submit verifier output only to its separate verifier inbox; mutation of the primary submission invalidates it.
 
 In `contract_only`, report structural completeness, provenance/conflicts, bounded instrumentation mapping, and owner questions only. For guided semantic advice, cite an exact snapshotted guidance rule and an exact project basis, consider its exceptions, respect its effect ceiling, and abstain when context is insufficient. Never impose a ratio, denominator, window, cohort, attribution rule, or guardrail. Guidance is a review method, not evidence that the project is defective.
@@ -91,6 +93,8 @@ In `contract_only`, report structural completeness, provenance/conflicts, bounde
 Keep product outcomes and AI behavior separate. An eval filename is not a qualified fixed case; preserve fixed input, oracle/rubric, pass condition, criterion linkage, versions, execution results, deterministic validation, and production traces as separate states. Treat tracing libraries as candidates only. Manual human completion is first-class; model participants require bound qualification for guided/expert capabilities, and no model switch occurs without explicit permission.
 
 Treat model qualification as a three-file authority bundle: rebuilt qualification task, complete qualification result, and derived receipt. Shiproom regrades the result whenever preparation or generation authority is loaded; never rely on a receipt alone. Preserve the bundle hash and exact candidate binding.
+
+Session closeout uses the executable claim registry against final-run JUnit XML and a real applicable Measurement-and-AI artifact bundle. Empty collections, key-presence checks, fabricated passed-test sets, and aggregate counts are not proof.
 
 For AI claims, declare exactly one scope: `configuration`, `eval_structure`, `offline_behavior`, `runtime_behavior`, or `product_outcome`. Source definitions may support configuration or eval structure only. They never prove offline behavior, runtime behavior, model performance, or product outcomes. A readiness `gap` does not itself authorize a blocker or condition effect.
 

@@ -65,7 +65,7 @@ def _harness(v):return len(v.get("runs",[]))>=4 and len({r.get("semantic_bundle_
 def _zero(v):
     ops=[i for i in v.get("validations",[]) if i.get("kind")=="external_operation"]
     return len(ops)==6 and {i["operation"] for i in ops}=={"model","command","network","browser","sql","external_service"} and all(i["count"]==0 for i in ops)
-def _pointer(v):return len(v.get("snapshots",[]))==2 and v["snapshots"][0]==v["snapshots"][1] and bool(v["snapshots"][0]) and v.get("stale_error_code")
+def _pointer(v):return len(v.get("snapshots",[]))==2 and v["snapshots"][0]==v["snapshots"][1] and bool(v["snapshots"][0]) and bool(v.get("stale_error_code"))
 
 ARTIFACT_ASSERTIONS={"blind_public_task":(_blind,"cases"),"material_capability_outcomes":(_caps,"requested_capabilities"),"regraded_bundle_fields":(_regraded,"passed_capabilities"),"exact_participant_binding":(_participants,"review_participants"),"exact_source_nodes":(_sources,"pairs"),"typed_instrumentation_records":(_typed,"event_candidates"),"material_claim_honesty":(_claims,"ai_evaluation"),"mixed_status_aggregate":(_aggregate,"checks"),"material_verifier_effect":(_verifier,"warnings"),"substantive_projection_records":(_projection,"nodes"),"exact_downstream_authority":(_downstream,"downstream_definitions"),"four_way_semantic_identity":(_harness,"runs"),"all_external_operations_zero":(_zero,"validations"),"pointer_bytes_preserved":(_pointer,"snapshots")}
 

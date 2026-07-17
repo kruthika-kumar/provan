@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+from copy import deepcopy
+from pathlib import Path
 import subprocess
 import socket
 import urllib.request
@@ -14,7 +16,7 @@ import jsonschema
 from shiproom.measurement_ai.contracts import effective_basis_class
 from shiproom.measurement_ai.guidance import load_guidance_pack, rule_map
 from shiproom.measurement_ai.overlay import evaluate_basis_path, validate_overlay
-from shiproom.measurement_ai.authority import _literal_import_candidates, _typed_field_value, default_applicability, domain_root
+from shiproom.measurement_ai.authority import _literal_import_candidates, _typed_field_value, default_applicability, domain_root, validate_applicability, source_record, normalize_text
 from shiproom.measurement_ai.preparation import prepare, load_preparation
 from shiproom.measurement_ai.persistence import compile_generation, load_generation
 from shiproom.measurement_ai.rendering import show
@@ -22,11 +24,12 @@ from shiproom.measurement_ai.contracts import sha256_bytes
 from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store, load_qualification_bundle
 from shiproom.measurement_ai.contract_parity import parity_report, private_rubric_parity
 from shiproom.measurement_ai.closeout import CLAIMS, resolve_claims
-from shiproom.measurement_ai.results import normalize_result
+from shiproom.measurement_ai.results import normalize_result, _claim_honesty, _assert_signal_basis
 from shiproom.measurement_ai.results import validate_executor
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
 from shiproom.measurement_ai.registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_FIELD_SPECS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, PROJECTION_REGISTRY, ROLE_RESULT_SCHEMAS
+from shiproom.measurement_ai.compiler import _aggregate
 from shiproom.measurement_ai.trust import ensure_directory
 import shiproom.measurement_ai.persistence as measurement_persistence
 import shiproom.measurement_ai.authority as measurement_authority
@@ -43,6 +46,11 @@ def conventional_context(tmp_path):
     value["criteria"][0]["required_evidence_categories"]=["owner_confirmation"]
     path=inbox(ctx); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(value),encoding="utf-8")
     compile_intent(ctx,str(path)); compile_graph(ctx); return ctx
+
+def _emit_closeout_artifact(name,value):
+    root=os.environ.get("SHIPROOM_CLOSEOUT_ARTIFACT_ROOT")
+    if root:
+        path=Path(root);path.mkdir(parents=True,exist_ok=True);(path/name).write_text(json.dumps(value,indent=2,sort_keys=True)+"\n",encoding="utf-8")
 
 
 def test_guidance_registry_is_closed_and_packaged():
@@ -112,15 +120,19 @@ def test_all_27_v3_portable_contracts_are_closed_json_schemas():
 
 def test_all_27_contracts_report_python_json_schema_parity(capsys):
     report=parity_report(); print(json.dumps(report,sort_keys=True)); captured=capsys.readouterr().out
-    assert len(report["contracts"])==27 and report["totals"]=={"accepted":27,"rejected":81}
+    assert len(report["contracts"])==27 and report["totals"]["accepted"]==27
+    assert report["totals"]["structural_mutations"]==81
+    assert all(item["python_boundary"].startswith("shiproom.measurement_ai.") for item in report["contracts"].values())
     assert "work-order.v6.json" in captured
 
 def test_private_rubric_has_separate_schema_python_parity():
-    assert private_rubric_parity()=={"accepted":1,"schema_rejected":1,"python_rejected":1}
+    report=private_rubric_parity()
+    assert report["accepted"]==1 and report["schema_structural_rejected"]==1 and report["python_semantic_rejected"]==1
 
 def test_closeout_claim_registry_resolves_symbols_tests_and_artifacts():
-    passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}; artifacts={"qualification-task.json":{"cases":[]},"qualification-receipt.json":{"passed_capabilities":[],"failed_capabilities":[],"private_rubric_semantic_hash":"sha256:"+"1"*64},"work-order.json":{"resolved_review_mode":"contract_only","review_participants":[]},"measurement-ai-overlay.json":{"nodes":[]},"instrumentation-coverage.json":{"event_candidates":[],"property_assessments":[]},"measurement-ai-readiness.json":{"aggregate_precedence_inputs":{},"ai_evaluation":[]},"launch-measurement-plan.json":{"warnings":[]},"measurement-contract.json":{"downstream_definitions":[]},"manifest.json":{"semantic_bundle_hash":"sha256:"+"2"*64},"measurement-ai-compiler-receipts.json":{"validations":[]},"current-measurement-ai.json":{"generation":"gen_x"}}
-    resolved=resolve_claims(passed,artifacts); assert len(resolved)==len(CLAIMS) and all(item["status"]=="resolved" for item in resolved)
+    passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}
+    with pytest.raises(ValueError,match="artifact"):
+        resolve_claims(passed,{})
 
 
 @pytest.mark.parametrize("filename",["qualification-task.json","qualification-result.json","qualification-receipt.json"])
@@ -268,7 +280,7 @@ def test_preparation_semantic_tamper_and_unlinked_definition_do_not_create_scope
 
 def test_downstream_definition_scope_is_exact(tmp_path):
     ctx=assessment_context(tmp_path); inputs=load_assessment_input(ctx); cid=next(item["criterion_id"] for item in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]); rid=next(item["requirement_id"] for item in inputs["intent_artifacts"]["requirements.json"]["requirements"]); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); app["measurement"]["criterion_ids"]=[cid]; app["measurement"]["measurement_definition_paths"]=[{"path":"docs/brief.md","requirement_ids":[rid],"criterion_ids":[cid],"journey_ids":[],"declared_external":False}]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); place_result(ctx,info["preparation_id"],"measurement",record); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); definition=artifacts["measurement-contract.json"]["downstream_definitions"][0]
-    assert definition["criterion_ids"]==[cid] and definition["requirement_ids"]==[rid] and definition["git_object_format"]=="sha1" and len(definition["git_blob_hash"])==40 and definition["execution_state"]==definition["data_accuracy_state"]=="not_inspected"
+    assert definition["criterion_ids"]==[cid] and definition["requirement_ids"]==[rid] and definition["git_object_format"]=="sha1" and len(definition["git_blob_hash"])==40 and definition["definition_content_authority"]=="source_verified" and definition["definition_assertion_scope"]=="source_definition" and definition["execution_state"]==definition["data_accuracy_state"]=="not_inspected"
 
 def test_projection_references_are_scoped_and_resolved(tmp_path):
     ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); cid=next(item["node_id"] for item in load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); place_result(ctx,info["preparation_id"],"measurement",assessed_record(cid)); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); refs=[node for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node["node_type"]=="projection_reference"]
@@ -392,6 +404,7 @@ def test_old_preparation_and_pointer_fail_closed_without_mutation(tmp_path):
     info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); pointer=domain_root(ctx)/"current-generation.json"; pointer_value=json.loads(pointer.read_text()); generation=domain_root(ctx)/"generations"/pointer_value["generation"]; manifest=generation/"manifest.json"; old=json.loads(manifest.read_text()); old["compiler_version"]="portable-measurement-ai.v2"; manifest.write_text(json.dumps(old),encoding="utf-8"); before=pointer.read_bytes()
     with pytest.raises(ValueError,match="stale_measurement_ai_generation_compiler_version.*new v3 preparation"): load_generation(ctx)
     assert pointer.read_bytes()==before and generation.exists()
+    _emit_closeout_artifact("stale-pointer-proof.json",{"snapshots":[before.hex(),pointer.read_bytes().hex()],"stale_error_code":"stale_measurement_ai_generation_compiler_version"})
 
 
 def test_canonical_artifacts_ignore_preparation_handles_and_local_labels(tmp_path):
@@ -418,3 +431,144 @@ def test_shiproom_skill_documents_v3_authority_and_staged_verifier():
     skill=(resources.files("shiproom").joinpath("..","skills","shiproom","SKILL.md")).read_text(encoding="utf-8")
     for value in ("shiproom.work-order.v6","shiproom.measurement-ai-role.v3","required criterion-path IDs","contract_declaration","immutable v3 verifier preparation","supported`, `downgrade`, `disputed`, or `owner_confirmation_required"):
         assert value in skill
+
+
+# Claim-specific closeout proofs.  These fixtures are authored from public
+# contracts and never import or derive responses from the private rubric.
+def test_blind_qualification_claim_specific_proofs():
+    pack=load_guidance_pack(); task=build_qualification_task(pack); result=qualification_result(task)
+    receipt=grade_qualification_result(result,task,"sha256:"+"1"*64,pack["qualification_private_rubric"],pack)
+    assert task["cases"] and all(item["case_id"].startswith("qual_case_") for item in task["cases"])
+    assert receipt["passed_capabilities"] and set(receipt["passed_capabilities"])==set(receipt["qualified_capabilities"])
+
+
+def test_blind_qualification_adversarial_answers_and_rubric_tamper(tmp_path):
+    pack=load_guidance_pack(); task=build_qualification_task(pack); result=qualification_result(task)
+    categorical=deepcopy(result); categorical["case_results"][1]["automatic_replacements"]=["automatic_ratio_replacement"]
+    receipt=grade_qualification_result(categorical,task,"sha256:"+"2"*64,pack["qualification_private_rubric"],pack)
+    assert "absolute_count_opportunity_review" in receipt["failed_capabilities"]
+    copied=deepcopy(result); copied["case_results"][0]={**copied["case_results"][0],"semantic_assessment":task["cases"][0]["scenario"]}
+    copied_receipt=grade_qualification_result(copied,task,"sha256:"+"3"*64,pack["qualification_private_rubric"],pack)
+    assert copied_receipt["failed_capabilities"]
+    result_path=qualification_store(tmp_path)/"submitted.json"; result_path.parent.mkdir(parents=True); result_path.write_text(json.dumps(result),encoding="utf-8")
+    compiled=compile_qualification(tmp_path,result_path); altered=deepcopy(pack); altered["qualification_private_rubric"]["cases"][0]["maximum_effect"]="blocker_candidate"
+    with pytest.raises(ValueError,match="regrading"):
+        load_qualification_bundle(qualification_store(tmp_path)/compiled["qualification_id"],altered)
+
+
+def test_qualification_regrading_rejects_task_result_receipt_and_rubric_tamper(tmp_path):
+    pack=load_guidance_pack(); task=build_qualification_task(pack); result=qualification_result(task); submitted=qualification_store(tmp_path)/"submitted.json"; submitted.parent.mkdir(parents=True); submitted.write_text(json.dumps(result),encoding="utf-8"); compiled=compile_qualification(tmp_path,submitted); bundle=qualification_store(tmp_path)/compiled["qualification_id"]
+    for filename in ("qualification-task.json","qualification-result.json","qualification-receipt.json"):
+        clone=tmp_path/("copy_"+filename); clone.mkdir();
+        for source in bundle.iterdir(): (clone/source.name).write_bytes(source.read_bytes())
+        value=json.loads((clone/filename).read_text()); value["tampered"]=True; (clone/filename).write_text(json.dumps(value),encoding="utf-8")
+        with pytest.raises((ValueError,KeyError)): load_qualification_bundle(clone,pack)
+    altered=deepcopy(pack); altered["qualification_private_rubric"]["grading_engine_version"]="forged"
+    with pytest.raises(ValueError): load_qualification_bundle(bundle,altered)
+
+
+def _model_work():
+    model={"type":"model","candidate_id":"candidate","provider_id":"provider","model_id":"model","qualification_id":"qualification","qualification_bundle_hash":"sha256:"+"1"*64,"qualified_capabilities":["metric_decision_alignment"],"model_switch":False}
+    return {"resolved_review_mode":"guided_review","review_participants":[model],"required_qualification_capabilities":["metric_decision_alignment"]},model
+
+
+def test_executor_truth_table_complete():
+    validate_executor({"executor_type":"human","reviewer_label":"reviewer"},{"resolved_review_mode":"guided_review","review_participants":[{"type":"human"}],"required_qualification_capabilities":[]})
+    work,model=_model_work(); validate_executor({"executor_type":"agent_harness","participant_binding":{k:model[k] for k in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"},work)
+    for executor in ({"executor_type":"human","reviewer_label":"manual"},{"executor_type":"agent_harness","participant_binding":None,"harness_id":"h","adapter_version":"1","run_id":"r"}): validate_executor(executor,{"resolved_review_mode":"contract_only","review_participants":[],"required_qualification_capabilities":[]})
+
+
+def test_executor_binding_adversarial_matrix():
+    work,model=_model_work(); base={"executor_type":"agent_harness","participant_binding":{k:model[k] for k in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"}
+    with pytest.raises(ValueError):validate_executor({"executor_type":"human","reviewer_label":"human"},work)
+    for key in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash"):
+        bad=deepcopy(base);bad["participant_binding"][key]="sha256:"+"2"*64 if key=="qualification_bundle_hash" else "wrong"
+        with pytest.raises(ValueError):validate_executor(bad,work)
+    with pytest.raises(ValueError):validate_executor({**base,"participant_binding":None},work)
+
+
+def _real_binding(ctx,cid,journey,subtype="instrumentation_event_definition",property_name=None):
+    record=source_record(ctx,"docs/brief.md",mandatory=True,rules=["owner_exact_path"],reason="test",provenance="test"); quote=record["text"].splitlines()[0]
+    return {"path":record["path"],"returned_git_path":record["returned_git_path"],"git_object_format":record["git_object_format"],"git_blob_hash":record["git_blob_hash"],"normalized_text_hash":record["normalized_text_hash"],"start_line":1,"end_line":1,"quote":quote,"quote_hash":sha256_bytes(quote.encode()),"declared_subtype":subtype,"criterion_ids":[cid],"journey_ids":[journey]}
+
+
+def _typed_app(ctx):
+    graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"];cid=next(n["node_id"] for n in graph["nodes"] if n["node_type"]=="acceptance_criterion");journey=next(n["node_id"] for n in graph["nodes"] if n["node_type"]=="critical_journey");app=default_applicability();app["measurement"]["criterion_ids"]=[cid];event=_real_binding(ctx,cid,journey);prop=_real_binding(ctx,cid,journey,"instrumentation_property_definition");app["measurement"]["contracts"]=[{"local_id":"metric","journey_id":journey,"criterion_ids":[cid],"fields":{},"metric_roles":["outcome"],"required_signals":[{"name":"completed","required_properties":["id"],"event_sources":[event],"property_sources":[{"property_name":"id","sources":[prop]}]}]}];return app,event,prop,cid,journey
+
+
+def test_typed_source_identity_contract_accepts_real_sha1_binding(tmp_path):
+    ctx=assessment_context(tmp_path);app,event,prop,_,_=_typed_app(ctx);assert validate_applicability(app);assert event["git_object_format"]=="sha1" and len(event["git_blob_hash"])==40 and event["normalized_text_hash"].startswith("sha256:")
+
+
+def test_typed_source_identity_contract_rejects_hash_mutations(tmp_path):
+    ctx=assessment_context(tmp_path);app,_,_,_,_=_typed_app(ctx)
+    for key,value in (("git_object_format","sha256"),("git_blob_hash","0"*64),("normalized_text_hash","sha256:"+"0"*64),("quote_hash","sha256:"+"0"*64)):
+        bad=deepcopy(app);bad["measurement"]["contracts"][0]["required_signals"][0]["event_sources"][0][key]=value
+        if key in {"normalized_text_hash","quote_hash"}:
+            # Input syntax accepts a well-formed digest; preparation must
+            # recompute and reject the semantic mismatch.
+            root=domain_root(ctx)/"inputs";root.mkdir(parents=True,exist_ok=True);path=root/(key+".json");path.write_text(json.dumps(bad),encoding="utf-8")
+            with pytest.raises(ValueError,match="identity mismatch|quote binding mismatch"):prepare(ctx,applicability_path=str(path))
+        else:
+            with pytest.raises(ValueError):validate_applicability(bad)
+
+
+def test_typed_basis_compatibility_positive_matrix():
+    context={"basis_registry":[{"basis_id":"event","signal_id":"signal","property_name":None},{"basis_id":"property","signal_id":"signal","property_name":"id"}]}
+    _assert_signal_basis({"basis_ids":["event"]},context,"signal");_assert_signal_basis({"basis_ids":["property"]},context,"signal","id")
+
+
+def test_typed_basis_compatibility_rejects_generic_cross_signal_and_candidate():
+    context={"basis_registry":[{"basis_id":"generic","basis_type":"source_reference","signal_id":None,"property_name":None},{"basis_id":"wrong","basis_type":"instrumentation_property_definition","signal_id":"other","property_name":"id"}]}
+    with pytest.raises(ValueError):_assert_signal_basis({"basis_ids":["generic"]},context,"signal")
+    with pytest.raises(ValueError):_assert_signal_basis({"basis_ids":["wrong"]},context,"signal","id")
+
+
+def _claim_context(basis_type,scope="source_definition",origin="project_source"):
+    return {"basis_registry":[{"basis_id":"b","basis_type":basis_type,"assertion_scope":scope,"origin":origin}]}
+
+
+def test_ai_claim_scope_honesty_positive_configuration():
+    claim={"claim_type":"configuration","presented_as_proof":True,"basis_ids":["b"]};authority={"criterion_scoped_basis_authority":"source_verified"};assert _claim_honesty(claim,authority,_claim_context("ai_prompt_model_binding_definition"))==("honest",[])
+
+
+def test_ai_claim_scope_honesty_rejects_behavioral_proof_substitution():
+    authority={"criterion_scoped_basis_authority":"source_verified"}
+    for kind,basis in (("offline_behavior","source_reference"),("runtime_behavior","ai_execution"),("product_outcome","ai_execution")):
+        state,reasons=_claim_honesty({"claim_type":kind,"presented_as_proof":True,"basis_ids":["b"]},authority,_claim_context(basis));assert state=="unsupported_proof" and reasons
+
+
+def _derivation(cid,status):
+    return {"criterion_id":cid,"status":status,"reason_codes":[status],"semantic_review_authority":"not_performed","criterion_scoped_basis_authority":"source_verified" if status=="ready" else "not_inspected","direct_fact_authorities":["source_verified"],"criterion_path_authorities":["source_verified"],"reviewer_conclusion_authority":"not_inspected","readiness_scope":["contract_definition"]}
+
+
+def test_multi_record_aggregation_is_conservative():
+    value=_aggregate("DATA_OUTCOME_EVENT_DEFINED",[_derivation("c1","ready"),_derivation("c2","owner_confirmation_required"),_derivation("c3","not_inspected")]);assert value["status"]=="owner_confirmation_required" and len(value["record_derivations"])==3
+
+
+def test_aggregate_ready_rejects_lower_precedence_records():
+    for lower in ("gap","owner_confirmation_required","not_inspected"):
+        assert _aggregate("DATA_OUTCOME_EVENT_DEFINED",[_derivation("c1","ready"),_derivation("c2",lower)])["status"]==lower
+
+
+def test_projection_rejects_orphan_authority_scope_duplicate_and_target_tamper():
+    base={"schema_version":"measurement-ai-overlay.v3","release_id":"r","release_commit":"a"*40,"product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,"nodes":[{"node_id":"p","node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":[],"journey_id":None,"record_kind":"gap","canonical_record_id":"g","destination_artifact":"launch-measurement-plan.json","target_record_id":"other","authority":"not_inspected"}],"edges":[],"projection_verification":[]}
+    with pytest.raises(ValueError):validate_overlay(base,{"criterion"})
+
+
+def test_declared_external_definition_is_not_source_content_proof(tmp_path):
+    ctx=assessment_context(tmp_path);inputs=load_assessment_input(ctx);cid=next(i["criterion_id"] for i in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]);root=domain_root(ctx)/"inputs";root.mkdir(parents=True);app=default_applicability();app["measurement"]["criterion_ids"]=[cid];app["measurement"]["measurement_definition_paths"]=[{"path":"external/metric-contract.md","requirement_ids":[],"criterion_ids":[cid],"journey_ids":[],"declared_external":True}];path=root/"external.json";path.write_text(json.dumps(app),encoding="utf-8");info=prepare(ctx,applicability_path=str(path));place_result(ctx,info["preparation_id"],"measurement",assessed_record(cid));compile_generation(ctx,info["preparation_id"]);_,artifacts=load_generation(ctx);definition=artifacts["measurement-contract.json"]["downstream_definitions"][0]
+    assert definition["declaration_authority"]=="deterministically_established" and definition["definition_content_authority"]=="not_inspected" and definition["definition_assertion_scope"]=="external_definition_declaration" and definition["execution_state"]==definition["data_accuracy_state"]=="not_inspected"
+
+
+def test_external_execution_and_out_of_root_writes_are_forbidden(tmp_path,monkeypatch):
+    import shiproom.authority as authority_module
+    monkeypatch.setattr(authority_module,"run_bounded_command",lambda *a,**k:(_ for _ in ()).throw(AssertionError("command forbidden")));monkeypatch.setattr(socket,"create_connection",lambda *a,**k:(_ for _ in ()).throw(AssertionError("network forbidden")));monkeypatch.setattr(urllib.request,"urlopen",lambda *a,**k:(_ for _ in ()).throw(AssertionError("HTTP forbidden")))
+    ctx=conventional_context(tmp_path);info=prepare(ctx);compile_generation(ctx,info["preparation_id"]);load_generation(ctx);show(ctx)
+
+
+def test_recomputed_superficial_hash_tamper_preserves_pointer(tmp_path):
+    ctx=conventional_context(tmp_path);info=prepare(ctx);compile_generation(ctx,info["preparation_id"]);pointer=domain_root(ctx)/"current-generation.json";before=pointer.read_bytes();generation=domain_root(ctx)/"generations"/json.loads(before)["generation"];artifact=generation/"measurement-ai-readiness.json";value=json.loads(artifact.read_text());value["checks"][0]["status"]="ready";artifact.write_text(json.dumps(value),encoding="utf-8")
+    with pytest.raises(ValueError):load_generation(ctx)
+    assert pointer.read_bytes()==before
+    _emit_closeout_artifact("stale-pointer-proof.json",{"snapshots":[before.hex(),pointer.read_bytes().hex()],"stale_error_code":"semantic_generation_tamper"})
