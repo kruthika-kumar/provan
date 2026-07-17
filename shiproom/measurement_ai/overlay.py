@@ -22,6 +22,7 @@ NODE_FIELDS={
     "observability_candidate":COMMON|{"kind","basis_ids","supported_dimensions","criterion_basis_authority"},
     "owner_confirmation_proposal":COMMON|{"proposal_id","reason"},
     "project_source_reference":COMMON|{"basis_id","path","blob_hash","direct_fact_authority"},
+    "canonical_projection":COMMON|{"record_id","record_kind"},
 }
 
 RELATION_MATRIX={
@@ -59,7 +60,7 @@ def evaluate_basis_path(steps:list[dict],edges:dict[str,dict],start:str,criterio
 
 
 def validate_overlay(value:dict,base_node_ids:set[str])->dict:
-    require_exact(value,{"schema_version","release_id","release_commit","product_intent_semantic_hash","graph_semantic_hash","nodes","edges"},"measurement AI overlay")
+    require_exact(value,{"schema_version","release_id","release_commit","product_intent_semantic_hash","graph_semantic_hash","nodes","edges","projection_verification"},"measurement AI overlay")
     if value["schema_version"]!=OVERLAY_SCHEMA or not isinstance(value["nodes"],list) or not isinstance(value["edges"],list): raise ValueError("invalid measurement AI overlay")
     nodes={}
     for node in value["nodes"]:
@@ -79,4 +80,6 @@ def validate_overlay(value:dict,base_node_ids:set[str])->dict:
         if edge["criterion_id"] not in base_node_ids: raise ValueError("invalid overlay criterion")
         effective=evaluate_basis_path(edge["criterion_path"],edges,edge["source_node_id"],edge["criterion_id"])
         if effective!=edge["criterion_basis_authority"]: raise ValueError("stale measurement AI criterion path authority")
+    if not isinstance(value["projection_verification"],list) or len({(item.get("record_id"),item.get("destination")) for item in value["projection_verification"]})!=len(value["projection_verification"]): raise ValueError("invalid canonical projection verification")
+    for item in value["projection_verification"]: require_exact(item,{"record_id","record_kind","destination"},"canonical projection verification")
     return value

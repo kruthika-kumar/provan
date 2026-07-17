@@ -135,7 +135,7 @@ def _measurement_record(prep,cid,role):
         rung_paths=[item["path_id"] for item in context["basis_paths"] if basis and item["start_basis_id"]==basis["basis_id"] and item["criterion_id"]==cid and item["required"]]
         rungs.append({"local_id":"rung_"+name,"rung":name,"state":"established" if basis else "not_established","basis_ids":[basis["basis_id"]] if basis else [],"basis_path_ids":rung_paths,"limitations":[]})
     candidate=next((item for item in entries if item["direct_fact_authority"] in {"model_mapped_candidate","not_inspected"}),strong); candidate_paths=[item["path_id"] for item in context["basis_paths"] if item["start_basis_id"]==candidate["basis_id"] and item["criterion_id"]==cid and item["required"]]
-    return {**common,"maturity_rungs":rungs,"judge_assessments":[],"claims":[{"local_id":"claim_local","claim_id":"claim_model_quality","statement":"The model is correct.","presented_as_proof":True,"basis_ids":[candidate["basis_id"]],"basis_path_ids":candidate_paths}],"observability_candidates":[]}
+    return {**common,"maturity_rungs":rungs,"judge_assessments":[],"claims":[{"local_id":"claim_local","claim_id":"claim_model_quality","claim_type":"offline_behavior","asserted_scope":"offline_behavior","claimed_evidence_class":"model_reviewed","statement":"The model is correct.","presented_as_proof":True,"basis_ids":[candidate["basis_id"]],"basis_path_ids":candidate_paths}],"observability_candidates":[]}
 
 
 def _typed_source_binding(ctx,path,cid,journey,subtype):

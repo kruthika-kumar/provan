@@ -162,13 +162,19 @@ def validate_applicability(value: dict) -> dict:
             require_exact(signal,{"name","required_properties","event_sources","property_sources"},"required signal")
             require_text(signal["name"],"signal name",200); require_string_list(signal["required_properties"],"required properties")
             if not isinstance(signal["event_sources"],list) or not isinstance(signal["property_sources"],list): raise ValueError("invalid signal source bindings")
-            for binding in signal["event_sources"]: _source_binding(binding,"event source")
+            for binding in signal["event_sources"]:
+                _source_binding(binding,"event source")
+                if binding["declared_subtype"]!="instrumentation_event_definition": raise ValueError("event source requires instrumentation_event_definition")
             for prop in signal["property_sources"]:
                 require_exact(prop,{"property_name","sources"},"property source"); require_text(prop["property_name"],"property name",200)
                 if prop["property_name"] not in signal["required_properties"]: raise ValueError("property source is not a required property")
-                for binding in prop["sources"]: _source_binding(binding,"property source")
+                for binding in prop["sources"]:
+                    _source_binding(binding,"property source")
+                    if binding["declared_subtype"]!="instrumentation_property_definition": raise ValueError("property source requires instrumentation_property_definition")
     if not isinstance(ai["linked_sources"],list): raise ValueError("AI linked_sources must be a list")
-    for binding in ai["linked_sources"]: _source_binding(binding,"AI linked source")
+    for binding in ai["linked_sources"]:
+        _source_binding(binding,"AI linked source")
+        if not binding["declared_subtype"].startswith("ai_"): raise ValueError("AI linked source requires an AI declared subtype")
     for contract in measurement["contracts"]: _validate_contract_consistency(contract["fields"])
     return value
 
@@ -541,34 +547,37 @@ def build_basis_registry(authority: dict, prepared: list[dict]) -> tuple[list[di
                         paths.append({"path_id":pid,"role_ids":[role],"criterion_id":cid,"start_basis_id":bid,"steps":[{"edge_id":edge["edge_id"],"traversal":"reverse"}],"required":True,"effective_authority":class_map.get(classification,"not_inspected")})
 
     for contract in prepared:
-        bid = stable_id("basis", {"type": "prepared_contract", "id": contract["contract_id"]})
-        states = {field["field_state"] for field in contract["fields"].values()}
-        direct = "not_inspected" if "unresolved" in states else ("deterministically_established" if states=={"owner_confirmed"} else "source_verified")
-        registry[bid] = {"basis_id": bid, "basis_type": "owner_declaration" if "owner_confirmed" in states else "source_reference", "object_id": contract["contract_id"],
-            "role_ids": ["measurement"], "criterion_ids": contract["criterion_ids"], "journey_ids": [contract["journey_id"]],
-            "field_state":"unresolved" if direct=="not_inspected" else ("owner_confirmed" if "owner_confirmed" in states else "source_declared"),
-            "assertion_scope":"contract_declaration","direct_fact_authority": direct,
-            "origin":"owner_declaration" if "owner_confirmed" in states else "product_intent",
-            "reference_ids":[contract["contract_id"]],"allowed_relationships": ["supports_conclusion", "supports_warning"]}
+        for field_name,field in contract["fields"].items():
+            direct={"owner_confirmed":"deterministically_established","source_declared":"source_verified"}.get(field["field_state"],"not_inspected")
+            bid=stable_id("basis",{"type":"measurement_field","contract":contract["contract_id"],"field":field_name,"value":field["value"],"state":field["field_state"]})
+            registry[bid]={"basis_id":bid,"basis_type":"measurement_field_declaration","object_id":contract["contract_id"]+":"+field_name,"contract_id":contract["contract_id"],"field_name":field_name,
+                "role_ids":["measurement"],"criterion_ids":contract["criterion_ids"],"journey_ids":[contract["journey_id"]],"field_state":field["field_state"],"assertion_scope":"contract_declaration",
+                "direct_fact_authority":direct,"origin":"owner_declaration" if field["field_state"]=="owner_confirmed" else "product_intent",
+                "reference_ids":[contract["contract_id"],field_name],"allowed_relationships":["supports_conclusion","supports_warning"]}
+            for cid in contract["criterion_ids"]:
+                pid=stable_id("basis_path",{"basis":bid,"criterion":cid,"field":field_name})
+                paths.append({"path_id":pid,"role_ids":["measurement"],"criterion_id":cid,"start_basis_id":bid,"steps":[],"required":True,"effective_authority":direct})
         for signal in contract["required_signals"]:
             for binding in signal["event_sources"]:
-                _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_event_definition")
+                _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_event_definition",signal_id=signal["signal_id"])
             for prop in signal["property_sources"]:
                 for binding in prop["sources"]:
-                    _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_property_definition",property_name=prop["property_name"])
+                    _add_typed_binding(registry,paths,binding,"measurement",contract["criterion_ids"],"instrumentation_property_definition",property_name=prop["property_name"],signal_id=signal["signal_id"])
     for binding in authority.get("ai_linked_sources",[]):
         _add_typed_binding(registry,paths,binding,"ai_evaluation",binding["criterion_ids"],binding["declared_subtype"])
     for item in registry.values():
+        item.setdefault("contract_id",None); item.setdefault("field_name",None)
+        item.setdefault("signal_id",None); item.setdefault("property_name",None)
         item.setdefault("direct_fact_meaning","The prepared record exists with the stated direct factual authority.")
         item.setdefault("semantic_assessment_authority","not_performed")
     return sorted(registry.values(), key=lambda item: item["basis_id"]), sorted(paths, key=lambda item: item["path_id"])
 
 
-def _add_typed_binding(registry:dict,paths:list,binding:dict,role:str,criterion_ids:list[str],subtype:str,property_name:str|None=None)->None:
+def _add_typed_binding(registry:dict,paths:list,binding:dict,role:str,criterion_ids:list[str],subtype:str,property_name:str|None=None,signal_id:str|None=None)->None:
     scoped=sorted(set(criterion_ids)&set(binding["criterion_ids"]))
     if not scoped: return
     bid=stable_id("basis",{"subtype":subtype,"path":binding["path"],"blob":binding["git_blob_hash"],"range":[binding["start_line"],binding["end_line"]],"criteria":scoped,"property":property_name})
-    registry[bid]={"basis_id":bid,"basis_type":subtype,"object_id":property_name or binding["path"],"role_ids":[role],"criterion_ids":scoped,"journey_ids":binding["journey_ids"],"field_state":"owner_confirmed","assertion_scope":"source_definition_claim","direct_fact_authority":"deterministically_established","direct_fact_meaning":"The owner identified this exact source range as the declared typed definition.","semantic_assessment_authority":"not_performed","origin":"owner_declaration","reference_ids":[binding["path"],binding["git_blob_hash"],binding["quote_hash"]],"allowed_relationships":["supports_conclusion","supports_warning"]}
+    registry[bid]={"basis_id":bid,"basis_type":subtype,"object_id":property_name or binding["path"],"signal_id":signal_id,"property_name":property_name,"role_ids":[role],"criterion_ids":scoped,"journey_ids":binding["journey_ids"],"field_state":"owner_confirmed","assertion_scope":"source_definition_claim","direct_fact_authority":"deterministically_established","direct_fact_meaning":"The owner identified this exact source range as the declared typed definition.","semantic_assessment_authority":"not_performed","origin":"owner_declaration","reference_ids":[binding["path"],binding["git_blob_hash"],binding["quote_hash"]],"allowed_relationships":["supports_conclusion","supports_warning"]}
     for cid in scoped:
         pid=stable_id("basis_path",{"basis":bid,"criterion":cid,"owner_scope":True})
         paths.append({"path_id":pid,"role_ids":[role],"criterion_id":cid,"start_basis_id":bid,"steps":[],"required":True,"effective_authority":"deterministically_established"})

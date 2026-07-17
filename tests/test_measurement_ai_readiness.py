@@ -79,7 +79,7 @@ def test_overlay_exact_schema_and_reference_validation():
         "schema_version":"measurement-ai-overlay.v3","release_id":"rel","release_commit":"a"*40,
         "product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,
         "nodes":[{"node_id":"contract_1","node_type":"measurement_contract","provenance":"measurement_ai_compiler","contract_id":"contract_1","journey_id":None,"criterion_ids":["criterion_1"],"field_states":{},"metric_roles":[]}],
-        "edges":[{"edge_id":"edge_1","source_node_id":"contract_1","target_node_id":"criterion_1","relationship":"governs_criterion","direct_fact_authority":"source_verified","criterion_id":"criterion_1","criterion_path":[{"edge_id":"edge_1","traversal":"forward"}],"criterion_basis_authority":"source_verified","origin":"prepared","reference_ids":[]}],
+        "edges":[{"edge_id":"edge_1","source_node_id":"contract_1","target_node_id":"criterion_1","relationship":"governs_criterion","direct_fact_authority":"source_verified","criterion_id":"criterion_1","criterion_path":[{"edge_id":"edge_1","traversal":"forward"}],"criterion_basis_authority":"source_verified","origin":"prepared","reference_ids":[]}],"projection_verification":[],
     }
     assert validate_overlay(value,{"criterion_1"}) == value
     value["nodes"][0]["extra"] = True

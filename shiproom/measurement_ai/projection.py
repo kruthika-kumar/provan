@@ -19,3 +19,47 @@ def validate_projection_coverage(accepted: set[str], projected: dict[str, set[st
         actual = projected.get(field, set())
         if actual != expected:
             raise ValueError(f"canonical projection mismatch for {field}")
+
+
+def expected_projection_tuples(results:dict,artifacts:dict)->list[dict]:
+    expected=[]
+    def add(record_id:str,kind:str,*destinations:str):
+        for destination in destinations: expected.append({"record_id":record_id,"record_kind":kind,"destination":destination})
+    for result in results.values():
+        for record in result["normalized"]["records"]:
+            for update in record.get("contract_updates",[]): add(update["proposal_id"],"contract_proposal","measurement-contract.json","measurement-ai-overlay.json")
+            for signal in record.get("signal_assessments",[]):
+                for item in signal.get("event_candidates",[]): add(item["canonical_record_id"],"event_candidate","instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("property_results",[]): add(item["canonical_record_id"],"property_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("tests",[]): add(item["canonical_record_id"],"test_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
+                for item in signal.get("runtime_evidence",[]): add(item["canonical_record_id"],"runtime_assertion","instrumentation-coverage.json","measurement-ai-overlay.json")
+            for item in record.get("metric_dimensions",[]): add(item["canonical_record_id"],"metric_dimension","measurement-ai-readiness.json")
+            for item in record.get("maturity_rungs",[]): add(item["canonical_record_id"],"ai_maturity_rung","measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("judge_assessments",[]): add(item["canonical_record_id"],"llm_judge_assessment","measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("claims",[]): add(item["claim_id"],"ai_claim_assessment","measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("observability_candidates",[]): add(item["canonical_record_id"],"observability_candidate","measurement-ai-readiness.json","measurement-ai-overlay.json")
+            for item in record.get("gaps",[]): add(item["gap_id"],"gap","launch-measurement-plan.json","measurement-ai-overlay.json")
+        for recommendation in result["normalized"]["recommendations"]:
+            add(recommendation["recommendation_id"],"recommendation","launch-measurement-plan.json","measurement-ai-overlay.json")
+            for exception in recommendation["exception_dispositions"]: add(exception["exception_analysis_id"],"exception_analysis","launch-measurement-plan.json","measurement-ai-overlay.json")
+    for proposal in artifacts["launch-measurement-plan.json"]["owner_confirmation_proposals"]: add(proposal["proposal_id"],"owner_confirmation_proposal","launch-measurement-plan.json","measurement-ai-overlay.json")
+    return sorted(expected,key=lambda item:(item["record_id"],item["destination"]))
+
+
+def verify_projected_records(results:dict,artifacts:dict)->list[dict]:
+    expected=expected_projection_tuples(results,artifacts); indexes={name:set() for name in ("measurement-contract.json","instrumentation-coverage.json","measurement-ai-readiness.json","launch-measurement-plan.json","measurement-ai-overlay.json")}
+    for contract in artifacts["measurement-contract.json"]["contracts"]:
+        for field in contract["fields"].values(): indexes["measurement-contract.json"].update(item["proposal_id"] for item in field.get("model_proposals",[]))
+    inst=artifacts["instrumentation-coverage.json"]
+    for key in ("event_candidates","property_assessments","test_candidates","runtime_bindings"): indexes["instrumentation-coverage.json"].update(item["canonical_record_id"] for item in inst[key])
+    readiness=artifacts["measurement-ai-readiness.json"]
+    for item in readiness["metric_quality"]: indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in item["dimensions"])
+    for item in readiness["ai_evaluation"]:
+        indexes["measurement-ai-readiness.json"].update(entry["canonical_record_id"] for entry in item["maturity_rungs"]+item["judge_assessments"]+item.get("observability_candidates",[])); indexes["measurement-ai-readiness.json"].update(entry["claim_id"] for entry in item["claims"])
+    plan=artifacts["launch-measurement-plan.json"]
+    indexes["launch-measurement-plan.json"].update(item["gap_id"] for item in plan["gaps"]); indexes["launch-measurement-plan.json"].update(item["recommendation_id"] for item in plan["warnings"]); indexes["launch-measurement-plan.json"].update(item["proposal_id"] for item in plan["owner_confirmation_proposals"])
+    for item in plan["warnings"]: indexes["launch-measurement-plan.json"].update(entry["exception_analysis_id"] for entry in item["exception_dispositions"])
+    indexes["measurement-ai-overlay.json"].update(node.get("record_id") for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node.get("record_id"))
+    for item in expected:
+        if item["record_id"] not in indexes[item["destination"]]: raise ValueError(f"missing canonical projection: {item['record_kind']} -> {item['destination']}")
+    return expected

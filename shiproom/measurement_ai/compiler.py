@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from .contracts import CHECK_IDS, COMPILER_VERSION, OVERLAY_SCHEMA, effective_basis_class, is_material_recommendation, semantic_without_local_ids, stable_id
 from .overlay import validate_overlay
-from .projection import PROJECTION_REGISTRY, validate_projection_coverage
+from .projection import PROJECTION_REGISTRY, validate_projection_coverage, verify_projected_records
 from .registries import METRIC_DIMENSIONS
 
 
@@ -35,7 +35,7 @@ def _record_scopes(record:dict|None)->list[str]:
 
 
 def _gap_reasons(record:dict|None,check_id:str)->list[str]:
-    return sorted({gap["gap_kind"] for gap in (record or {}).get("gaps",[]) if gap.get("permitted_check_id")==check_id and gap.get("derived_effect") in {"condition_candidate","blocker_candidate"}})
+    return sorted({gap["gap_kind"] for gap in (record or {}).get("gaps",[]) if gap.get("permitted_check_id")==check_id and gap.get("readiness_effect")=="gap"})
 
 
 def _derive_one(check_id:str,cid:str,scope_state:str,record:dict|None,prepared:list[dict],canonical_recommendations:list[dict])->dict:
@@ -92,11 +92,12 @@ def _derive_one(check_id:str,cid:str,scope_state:str,record:dict|None,prepared:l
             rungs={item["rung"]:item for item in record["maturity_rungs"]}; required=("fixed_input","oracle_or_rubric","pass_condition","journey_or_criterion_linkage")
             if all(rungs[item]["state"]=="established" and rungs[item]["compiled_authority"]["criterion_scoped_basis_authority"] in {"source_verified","deterministically_established"} for item in required): satisfied=True
             elif eligible: pass
+            elif all(rungs[item]["state"]!="not_inspected" for item in required): eligible=["fixed_eval_gap"]
             else: uninspected=["qualified_fixed_eval_not_established"]
     elif check_id=="AI_MODEL_CLAIM_NOT_PRESENTED_AS_PROOF":
         if not assessed: uninspected=["AI_claims_not_inspected"]
         else:
-            dishonest=[claim["claim_id"] for claim in record["claims"] if claim["presented_as_proof"] and claim["compiled_authority"]["criterion_scoped_basis_authority"] not in {"source_verified","deterministically_established"}]
+            dishonest=[claim["claim_id"] for claim in record["claims"] if claim["honesty_state"]=="unsupported_proof"]
             if dishonest: eligible.extend("model_claim_presented_as_proof:"+item for item in dishonest)
             else: satisfied=True
     status="gap" if eligible else "owner_confirmation_required" if owner else "not_inspected" if (not assessed or uninspected) else "ready" if satisfied else "not_inspected"
@@ -141,7 +142,7 @@ def _projection_map(results:dict[str,dict],has_verifiers:bool,has_owner_proposal
 def build_artifacts(preparation:dict,results:dict[str,dict],verifiers:dict[str,dict]|None=None)->dict:
     source=preparation["source_packet"]; prepared=source["prepared_measurement_contracts"]; scopes=source["role_scopes"]; verifiers=verifiers or {}
     records={role:{item["criterion_id"]:item for item in result["normalized"]["records"]} for role,result in results.items()}; canonical_recommendations=_canonical_recommendations(results,verifiers)
-    candidate_ids=sorted(set(scopes["measurement"]["candidate_criterion_ids"]+scopes["ai_evaluation"]["candidate_criterion_ids"])); has_owner=bool(candidate_ids or any(scopes[role]["unbounded_candidate_count"] for role in scopes)); projections=_projection_map(results,bool(verifiers),has_owner)
+    candidate_ids=sorted(set(scopes["measurement"]["candidate_criterion_ids"]+scopes["ai_evaluation"]["candidate_criterion_ids"])); has_owner=bool(candidate_ids or any(scopes[role]["unbounded_candidate_count"] for role in scopes) or any(field["field_state"]=="unresolved" or field.get("competing_values") for contract in prepared for field in contract["fields"].values())); projections=_projection_map(results,bool(verifiers),has_owner)
     checks=[]; aggregate_inputs={}
     for check_id in CHECK_IDS:
         role="ai_evaluation" if check_id.startswith("AI_") else "measurement"; scope=scopes[role]; ids=sorted(set(scope["applicable_criterion_ids"]+scope["candidate_criterion_ids"])); derivations=[]
@@ -161,19 +162,30 @@ def build_artifacts(preparation:dict,results:dict[str,dict],verifiers:dict[str,d
             for update in by_criterion.get(cid,{}).get("contract_updates",[]):
                 field=contract["fields"].get(update["field_name"])
                 if field is None: raise ValueError("reviewer proposed an unknown measurement contract field")
-                field.setdefault("model_proposals",[]).append({"proposed_value":update["proposed_value"],"rationale":update["rationale"]})
+                field.setdefault("model_proposals",[]).append({"proposal_id":update["proposal_id"],"proposed_value":update["proposed_value"],"rationale":update["rationale"]})
         for field in contract["fields"].values():
             if "model_proposals" in field:
-                field["model_proposals"]=sorted(field["model_proposals"],key=lambda value:(str(value["proposed_value"]),value["rationale"]))
+                field["model_proposals"]=sorted(field["model_proposals"],key=lambda value:value["proposal_id"])
     contracts={"schema_version":"measurement-contract.v3","release_id":source["release_id"],"contracts":canonical_contracts,"downstream_definitions":[{"path":item["path"],"definition_state":"declared_external" if item["declared_external"] else "supplied_and_inspected","execution_state":"not_inspected","data_accuracy_state":"not_inspected"} for item in preparation["applicability"]["measurement"]["measurement_definition_paths"]],"accepted_field_projections":projections}
     instrumentation={"schema_version":"instrumentation-coverage.v3","release_id":source["release_id"],"signals":[signal for contract in prepared for signal in contract["required_signals"]],"event_candidates":[{"signal_id":signal["signal_id"],**candidate} for item in measurement_records for signal in item["signal_assessments"] for candidate in signal["event_candidates"]],"property_assessments":[{"signal_id":signal["signal_id"],**prop} for item in measurement_records for signal in item["signal_assessments"] for prop in signal["property_results"]],"test_candidates":[{"signal_id":signal["signal_id"],**candidate} for item in measurement_records for signal in item["signal_assessments"] for candidate in signal["tests"]],"runtime_bindings":[{"signal_id":signal["signal_id"],**candidate} for item in measurement_records for signal in item["signal_assessments"] for candidate in signal["runtime_evidence"]],"observability_candidates":[candidate for item in ai_records for candidate in item["observability_candidates"]],"coverage_boundary":"Source candidates do not prove runtime emission, downstream execution, data accuracy, populated traces, dashboards, or production monitoring.","accepted_field_projections":projections}
     verifier_by_criterion={cid:sorted({item["verifier_disposition"] for item in canonical_recommendations if item["criterion_id"]==cid and item.get("verifier_disposition") is not None}) for cid in {item["criterion_id"] for item in all_records}}
-    readiness={"schema_version":"measurement-ai-readiness.v3","release_id":source["release_id"],"compiler_version":COMPILER_VERSION,"skip_reason":source["skip_reason"],"checks":checks,"accepted_role_validations":[{"role_id":role,"result_semantic_hash":result["result_semantic_hash"]} for role,result in sorted(results.items())],"aggregate_precedence_inputs":aggregate_inputs,"metric_quality":[{"criterion_id":item["criterion_id"],"dimensions":item["metric_dimensions"],"semantic_review_authority":item["semantic_review_authority"],"criterion_scoped_basis_authority":item["compiled_authority"]["criterion_scoped_basis_authority"],"verifier_dispositions":verifier_by_criterion.get(item["criterion_id"],[])} for item in measurement_records],"ai_evaluation":[{"criterion_id":item["criterion_id"],"maturity_rungs":item["maturity_rungs"],"judge_assessments":item["judge_assessments"],"claims":item["claims"],"criterion_scoped_basis_authority":item["compiled_authority"]["criterion_scoped_basis_authority"],"verifier_dispositions":verifier_by_criterion.get(item["criterion_id"],[])} for item in ai_records],"accepted_field_projections":projections}
+    readiness={"schema_version":"measurement-ai-readiness.v3","release_id":source["release_id"],"compiler_version":COMPILER_VERSION,"skip_reason":source["skip_reason"],"checks":checks,"accepted_role_validations":[{"role_id":role,"result_semantic_hash":result["result_semantic_hash"]} for role,result in sorted(results.items())],"aggregate_precedence_inputs":aggregate_inputs,"metric_quality":[{"criterion_id":item["criterion_id"],"dimensions":item["metric_dimensions"],"semantic_review_authority":item["semantic_review_authority"],"criterion_scoped_basis_authority":item["compiled_authority"]["criterion_scoped_basis_authority"],"verifier_dispositions":verifier_by_criterion.get(item["criterion_id"],[])} for item in measurement_records],"ai_evaluation":[{"criterion_id":item["criterion_id"],"maturity_rungs":item["maturity_rungs"],"judge_assessments":item["judge_assessments"],"claims":item["claims"],"observability_candidates":item["observability_candidates"],"criterion_scoped_basis_authority":item["compiled_authority"]["criterion_scoped_basis_authority"],"verifier_dispositions":verifier_by_criterion.get(item["criterion_id"],[])} for item in ai_records],"accepted_field_projections":projections}
     canonical_recommendations=[semantic_without_local_ids(item) for item in canonical_recommendations]
-    gaps=[semantic_without_local_ids(gap) for item in all_records for gap in item["gaps"]]; assumptions=sorted({value for result in results.values() for value in result["normalized"]["assumptions"]}); limitations=sorted({value for result in results.values() for value in result["normalized"]["limitations"]}); owner_proposals=([{"proposal_id":stable_id("owner_proposal",{"criteria":candidate_ids,"reason":"bounded applicability requires owner confirmation"}),"reason":"bounded applicability requires owner confirmation","criterion_ids":candidate_ids}] if has_owner else [])
+    gaps=[semantic_without_local_ids(gap) for item in all_records for gap in item["gaps"]]; assumptions=sorted({value for result in results.values() for value in result["normalized"]["assumptions"]}); limitations=sorted({value for result in results.values() for value in result["normalized"]["limitations"]})
+    owner_proposals=[]
+    for contract in canonical_contracts:
+        unresolved=sorted(name for name,field in contract["fields"].items() if field["field_state"]=="unresolved" or field.get("competing_values"))
+        signal_reasons=sorted({"signal_identity" for signal in contract["required_signals"] if signal["name_state"]=="unresolved"}|{"signal_properties" for signal in contract["required_signals"] if not signal["required_properties"]})
+        if unresolved or signal_reasons:
+            semantic={"journey_id":contract["journey_id"],"criterion_ids":contract["criterion_ids"],"field_names":unresolved,"reason_codes":signal_reasons}
+            owner_proposals.append({"proposal_id":stable_id("owner_proposal",semantic),"reason":"measurement journey requires owner confirmation","journey_id":contract["journey_id"],"criterion_ids":contract["criterion_ids"],"field_names":unresolved,"reason_codes":signal_reasons})
+    if candidate_ids or any(scopes[role]["unbounded_candidate_count"] for role in scopes):
+        semantic={"criteria":candidate_ids,"reason":"bounded applicability requires owner confirmation"}; owner_proposals.append({"proposal_id":stable_id("owner_proposal",semantic),"reason":semantic["reason"],"journey_id":None,"criterion_ids":candidate_ids,"field_names":[],"reason_codes":["candidate_scope_requires_owner_confirmation"]})
     plan={"schema_version":"launch-measurement-plan.v3","release_id":source["release_id"],"warnings":canonical_recommendations,"proposals":[item for item in canonical_recommendations if item["recommendation_class"] in {"contextual_metric_proposal","contextual_hypothesis"}],"gaps":gaps,"owner_confirmation_proposals":owner_proposals,"assumptions":assumptions,"limitations":limitations,"accepted_field_projections":projections}
     overlay=build_overlay(preparation,results,contracts,instrumentation,readiness,canonical_recommendations,owner_proposals)
-    return {"measurement-contract.json":contracts,"instrumentation-coverage.json":instrumentation,"measurement-ai-readiness.json":readiness,"launch-measurement-plan.json":plan,"measurement-ai-overlay.json":overlay}
+    artifacts={"measurement-contract.json":contracts,"instrumentation-coverage.json":instrumentation,"measurement-ai-readiness.json":readiness,"launch-measurement-plan.json":plan,"measurement-ai-overlay.json":overlay}
+    overlay["projection_verification"]=verify_projected_records(results,artifacts); validate_overlay(overlay,{item["node_id"] for item in preparation["authority"]["graph_input"]["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"]})
+    return artifacts
 
 
 def build_overlay(preparation:dict,results:dict,contracts:dict,instrumentation:dict,readiness:dict,recommendations:list,owner_proposals:list)->dict:
@@ -184,10 +196,9 @@ def build_overlay(preparation:dict,results:dict,contracts:dict,instrumentation:d
         value={"edge_id":eid,"source_node_id":source_id,"target_node_id":target_id,"relationship":relationship,"direct_fact_authority":direct,"criterion_id":cid,"criterion_path":steps,"criterion_basis_authority":authority,"origin":origin,"reference_ids":sorted(set(refs))}; edges.append(value); return value
     contract_nodes={}
     for contract in contracts["contracts"]:
-        states=[field["field_state"] for field in contract["fields"].values()]
-        # Owner confirmation establishes contract declaration only.  It is not
-        # source, implementation, instrumentation, test, or runtime authority.
-        direct="not_inspected" if "unresolved" in states else "source_verified" if "source_declared" in states else "not_inspected"
+        # The contract container groups field assertions; it never inherits a
+        # scalar proof class from a mixture of owner and source fields.
+        direct="not_inspected"
         nid=contract["contract_id"]; contract_nodes.update({cid:nid for cid in contract["criterion_ids"]}); node({"node_id":nid,"node_type":"measurement_contract","provenance":"measurement_ai_compiler","criterion_ids":contract["criterion_ids"],"contract_id":nid,"journey_id":contract["journey_id"],"field_states":{name:item["field_state"] for name,item in contract["fields"].items()},"metric_roles":contract["metric_roles"]})
         for cid in contract["criterion_ids"]:
             e=edge(nid,cid,"governs_criterion",cid,direct,"prepared_contract",[nid]); node_paths[nid]=[{"edge_id":e["edge_id"],"traversal":"forward"}]; node_authority[nid]=direct
@@ -250,5 +261,22 @@ def build_overlay(preparation:dict,results:dict,contracts:dict,instrumentation:d
         for cid in proposal["criterion_ids"]:
             pid=stable_id("owner_proposal",{"proposal":proposal["proposal_id"],"criterion":cid}); node({"node_id":pid,"node_type":"owner_confirmation_proposal","provenance":"measurement_ai_compiler","criterion_ids":[cid],"proposal_id":proposal["proposal_id"],"reason":proposal["reason"]}); source_id=next((value for (role,key),value in conclusion_ids.items() if key==cid),None)
             if source_id: edge(source_id,pid,"proposes_owner_confirmation",cid,"not_inspected","compiler",[proposal["proposal_id"]])
-    value={"schema_version":OVERLAY_SCHEMA,"release_id":source["release_id"],"release_commit":source["release_commit"],"product_intent_semantic_hash":source["product_intent_semantic_hash"],"graph_semantic_hash":source["graph_semantic_hash"],"nodes":sorted(nodes,key=lambda item:item["node_id"]),"edges":sorted(edges,key=lambda item:item["edge_id"])}
+    projected=[]
+    for result in results.values():
+        for record in result["normalized"]["records"]:
+            projected += [(item["proposal_id"],"contract_proposal") for item in record.get("contract_updates",[])]
+            for signal in record.get("signal_assessments",[]):
+                projected += [(item["canonical_record_id"],kind) for key,kind in (("event_candidates","event_candidate"),("property_results","property_assertion"),("tests","test_assertion"),("runtime_evidence","runtime_assertion")) for item in signal.get(key,[])]
+            projected += [(item["canonical_record_id"],"ai_maturity_rung") for item in record.get("maturity_rungs",[])]
+            projected += [(item["canonical_record_id"],"llm_judge_assessment") for item in record.get("judge_assessments",[])]
+            projected += [(item["claim_id"],"ai_claim_assessment") for item in record.get("claims",[])]
+            projected += [(item["canonical_record_id"],"observability_candidate") for item in record.get("observability_candidates",[])]
+            projected += [(item["gap_id"],"gap") for item in record.get("gaps",[])]
+        for item in result["normalized"]["recommendations"]:
+            projected.append((item["recommendation_id"],"recommendation")); projected += [(exc["exception_analysis_id"],"exception_analysis") for exc in item["exception_dispositions"]]
+    projected += [(item["proposal_id"],"owner_confirmation_proposal") for item in owner_proposals]
+    existing={item.get("record_id") for item in nodes}
+    for record_id,kind in sorted(set(projected)):
+        if record_id not in existing: node({"node_id":stable_id("projection",{"record":record_id,"kind":kind}),"node_type":"canonical_projection","provenance":"measurement_ai_compiler","criterion_ids":[],"record_id":record_id,"record_kind":kind})
+    value={"schema_version":OVERLAY_SCHEMA,"release_id":source["release_id"],"release_commit":source["release_commit"],"product_intent_semantic_hash":source["product_intent_semantic_hash"],"graph_semantic_hash":source["graph_semantic_hash"],"nodes":sorted(nodes,key=lambda item:item["node_id"]),"edges":sorted(edges,key=lambda item:item["edge_id"]),"projection_verification":[]}
     return validate_overlay(value,base_ids)

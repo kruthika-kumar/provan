@@ -21,6 +21,7 @@ RECOMMENDATION_FIELDS={"local_id","criterion_id","recommendation_class","summary
 GAP_FIELDS={"local_id","gap_kind","aspect_code","summary","basis_ids","basis_path_ids"}
 MATURITY_STATES={"established","candidate","not_established","not_inspected","not_applicable"}
 OBSERVABILITY_KINDS={"langfuse","opentelemetry","application_logging","provider_native_tracing","custom_tracing"}
+CLAIM_TYPES={"configuration","eval_structure","offline_behavior","runtime_behavior","product_outcome"}
 METRIC_DIMENSIONS=set(REGISTERED_METRIC_DIMENSIONS)
 EFFECT_RANK={"none":0,"proposal_only":0,"non_blocking_warning":1,"owner_confirmation":2,"condition_candidate":3,"blocker_candidate":4}
 
@@ -85,6 +86,28 @@ def _typed_authority(item:dict,record:dict,context:dict,role:str,kind:str)->dict
     return authority
 
 
+def _assert_signal_basis(item:dict,context:dict,signal_id:str,property_name:str|None=None)->None:
+    registry={entry["basis_id"]:entry for entry in context["basis_registry"]}
+    for basis_id in item["basis_ids"]:
+        basis=registry[basis_id]
+        if basis.get("signal_id")!=signal_id: raise ValueError("typed basis belongs to a different signal")
+        if property_name is not None and basis.get("property_name")!=property_name: raise ValueError("typed property basis belongs to a different property")
+
+
+def _claim_honesty(claim:dict,authority:dict,context:dict)->tuple[str,list[str]]:
+    registry={entry["basis_id"]:entry for entry in context["basis_registry"]}; types={registry[bid]["basis_type"] for bid in claim["basis_ids"]}
+    strong=authority["criterion_scoped_basis_authority"]=="deterministically_established"
+    requirements={
+        "configuration": lambda: bool(types & {"ai_prompt_model_binding_definition","source_reference","implementation_reference"}) and authority["criterion_scoped_basis_authority"] in {"source_verified","deterministically_established"},
+        "eval_structure": lambda: {"ai_fixed_input_definition","ai_oracle_or_rubric_definition","ai_pass_condition_definition"}.issubset(types) and authority["criterion_scoped_basis_authority"] in {"source_verified","deterministically_established"},
+        "offline_behavior": lambda: strong and "ai_execution" in types,
+        "runtime_behavior": lambda: strong and bool(types & {"production_trace","runtime_evidence"}),
+        "product_outcome": lambda: strong and any(registry[bid]["basis_type"]=="runtime_evidence" and registry[bid]["assertion_scope"]=="runtime" and registry[bid]["origin"]!="portable_assessment" for bid in claim["basis_ids"]),
+    }
+    honest=not claim["presented_as_proof"] or requirements[claim["claim_type"]]()
+    return ("honest",[]) if honest else ("unsupported_proof",["claim_scope_exceeds_validated_basis"])
+
+
 def _facts(context:dict,record:dict)->dict[str,object]:
     facts={}; cid=record["criterion_id"]
     for contract in [item for item in context.get("prepared_measurement_contracts",[]) if cid in item["criterion_ids"]]:
@@ -117,8 +140,8 @@ def _validate_gap(gap:dict,record:dict,context:dict,role:str,mode:str)->dict:
     # Semantic metric-quality effects are applied only after the staged
     # verifier.  A primary metric gap remains canonical reviewer judgment but
     # cannot independently influence readiness.
-    if gap["gap_kind"]!="metric_decision_gap" and contradiction and record["scope_state"]=="applicable": effect="blocker_candidate" if _blocker_eligible(context,record["criterion_id"]) else "condition_candidate"
-    return {**gap,"gap_id":stable_id("assessment_gap",{"role":role,"criterion":record["criterion_id"],"kind":gap["gap_kind"],"aspect":gap["aspect_code"],"summary":gap["summary"]}),"compiled_authority":authority,"permitted_check_id":CHECK_GAP_REGISTRY[gap["gap_kind"]],"confirmed_contradiction":contradiction,"derived_effect":effect}
+    if gap["gap_kind"] not in {"metric_decision_gap","fixed_eval_gap","claim_authority_gap"} and contradiction and record["scope_state"]=="applicable": effect="blocker_candidate" if _blocker_eligible(context,record["criterion_id"]) else "condition_candidate"
+    return {**gap,"gap_id":stable_id("assessment_gap",{"role":role,"criterion":record["criterion_id"],"kind":gap["gap_kind"],"aspect":gap["aspect_code"],"summary":gap["summary"]}),"compiled_authority":authority,"permitted_check_id":CHECK_GAP_REGISTRY[gap["gap_kind"]],"confirmed_contradiction":contradiction,"readiness_effect":"gap","derived_effect":effect}
 
 
 def _validate_recommendation(item:dict,record:dict,context:dict,role:str,guidance:dict,mode:str)->dict:
@@ -138,6 +161,7 @@ def _validate_recommendation(item:dict,record:dict,context:dict,role:str,guidanc
         if exc["exception_id"] not in registered or exc["exception_id"] in dispositions or exc["disposition"] not in {"applies","ruled_out","unknown","not_relevant"}: raise ValueError("invalid guidance exception disposition")
         if registered[exc["exception_id"]][1]["project_basis_required"] and exc["disposition"] in {"applies","ruled_out"} and not exc["basis_ids"]: raise ValueError("guidance exception requires project basis")
         if any(bid not in item["basis_ids"] for bid in exc["basis_ids"]): raise ValueError("exception basis is outside recommendation basis")
+        exc["exception_analysis_id"]=stable_id("exception_analysis",{"criterion":record["criterion_id"],"rule_ids":cited,**exc})
         dispositions[exc["exception_id"]]=exc
     if set(dispositions)!=set(registered): raise ValueError("guidance exception coverage is incomplete")
     unknown_material=any(exc["material"] and dispositions[eid]["disposition"]=="unknown" for eid,(_,exc) in registered.items())
@@ -192,22 +216,33 @@ def normalize_result(raw:bytes,receipt_raw:bytes,work:dict,context:dict,guidance
                 require_exact(update,{"local_id","field_name","proposed_value","rationale"},"contract update")
                 if update["field_name"] not in context["prepared_measurement_contracts"][0]["fields"] if context["prepared_measurement_contracts"] else True: raise ValueError("unknown measurement contract field")
                 _typed_field_value(update["field_name"],update["proposed_value"])
+                update["proposal_id"]=stable_id("contract_proposal",{"criterion":cid,"field":update["field_name"],"value":update["proposed_value"],"rationale":update["rationale"]})
             if submitted["contract_updates"]: accepted.add("measurement.contract_updates")
             for signal in submitted["signal_assessments"]:
                 require_exact(signal,{"local_id","signal_id","event_candidates","property_results","tests","runtime_evidence"},"signal assessment")
+                prepared_signal=next((entry for contract in context["prepared_measurement_contracts"] for entry in contract["required_signals"] if entry["signal_id"]==signal["signal_id"] and cid in entry["criterion_ids"]),None)
+                if prepared_signal is None: raise ValueError("signal assessment is outside prepared scope")
                 for key,kind,projection in (("event_candidates","event_candidate","measurement.signal_assessments.event_candidates"),("tests","test","measurement.signal_assessments.tests"),("runtime_evidence","runtime","measurement.signal_assessments.runtime_evidence")):
-                    for item in signal[key]: require_exact(item,{"local_id","basis_ids","basis_path_ids"},f"signal {kind}"); item["compiled_authority"]=_typed_authority(item,submitted,context,role,kind)
+                    for item in signal[key]:
+                        require_exact(item,{"local_id","basis_ids","basis_path_ids"},f"signal {kind}"); item["compiled_authority"]=_typed_authority(item,submitted,context,role,kind)
+                        if kind=="event_candidate": _assert_signal_basis(item,context,signal["signal_id"])
+                        item["canonical_record_id"]=stable_id(kind,{"criterion":cid,"signal":signal["signal_id"],"bases":item["basis_ids"],"paths":item["basis_path_ids"]})
                     if signal[key]: accepted.add(projection)
                 for prop in signal["property_results"]:
                     require_exact(prop,{"local_id","property_name","state","basis_ids","basis_path_ids"},"signal property result")
                     if prop["state"] not in {"present","missing","unresolved","not_inspected"}: raise ValueError("invalid signal property state")
-                    prop["compiled_authority"]=_typed_authority({**prop,"state":"established" if prop["state"]=="present" else prop["state"]},submitted,context,role,"property")
+                    if prop["property_name"] not in prepared_signal["required_properties"]: raise ValueError("property assessment is outside prepared signal scope")
+                    strong_state="established" if prop["state"] in {"present","missing"} else prop["state"]
+                    prop["compiled_authority"]=_typed_authority({**prop,"state":strong_state},submitted,context,role,"property")
+                    if prop["state"] in {"present","missing"}: _assert_signal_basis(prop,context,signal["signal_id"],prop["property_name"])
+                    prop["canonical_record_id"]=stable_id("property_assertion",{"criterion":cid,"signal":signal["signal_id"],"property":prop["property_name"],"state":prop["state"],"bases":prop["basis_ids"]})
                 if signal["property_results"]: accepted.add("measurement.signal_assessments.property_results")
             seen=set()
             for dimension in submitted["metric_dimensions"]:
                 require_exact(dimension,{"dimension","state","rationale","basis_ids","basis_path_ids"},"metric dimension")
                 if dimension["dimension"] not in METRIC_DIMENSIONS or dimension["dimension"] in seen or dimension["state"] not in DIMENSION_STATES: raise ValueError("invalid metric dimension")
                 seen.add(dimension["dimension"]); dimension["compiled_authority"]=_authority({"criterion_id":cid,"basis_ids":dimension["basis_ids"],"basis_path_ids":dimension["basis_path_ids"]},context,role)
+                dimension["canonical_record_id"]=stable_id("metric_dimension",{"criterion":cid,**semantic_without_local_ids(dimension)})
             if value["resolved_review_mode"]!="contract_only" and assessed and seen!=METRIC_DIMENSIONS: raise ValueError("semantic measurement review requires all eleven dimensions")
             if submitted["metric_dimensions"]: accepted.add("measurement.metric_dimensions")
         else:
@@ -217,24 +252,29 @@ def normalize_result(raw:bytes,receipt_raw:bytes,work:dict,context:dict,guidance
                 require_exact(rung,{"local_id","rung","state","basis_ids","basis_path_ids","limitations"},"AI maturity rung")
                 if rung["rung"] not in AI_MATURITY_RUNGS or rung["rung"] in seen or rung["state"] not in MATURITY_STATES: raise ValueError("invalid AI maturity rung")
                 seen.add(rung["rung"]); rung["compiled_authority"]=_typed_authority(rung,submitted,context,role,rung["rung"])
+                rung["canonical_record_id"]=stable_id("ai_rung",{"criterion":cid,**semantic_without_local_ids(rung)})
             if assessed and seen!=set(AI_MATURITY_RUNGS): raise ValueError("AI maturity coverage is incomplete")
             if submitted["maturity_rungs"]: accepted.add("ai_evaluation.maturity_rungs")
             for judge in submitted["judge_assessments"]:
                 require_exact(judge,{"local_id","judge_type","judge_model","rubric_or_prompt","version_binding","calibration_state","agreement_state","limitations","basis_ids","basis_path_ids"},"AI judge assessment")
                 judge["compiled_authority"]=_authority({"criterion_id":cid,"basis_ids":judge["basis_ids"],"basis_path_ids":judge["basis_path_ids"]},context,role)
                 if judge["judge_type"]=="llm_judge" and judge["calibration_state"]=="not_established": judge["limitations"]=sorted(set(judge["limitations"]+["LLM-judge calibration is not established."]))
+                judge["canonical_record_id"]=stable_id("judge_assessment",{"criterion":cid,**semantic_without_local_ids(judge)})
             if submitted["judge_assessments"]: accepted.add("ai_evaluation.judge_assessments")
             claim_ids=set()
             for claim in submitted["claims"]:
-                require_exact(claim,{"local_id","claim_id","statement","presented_as_proof","basis_ids","basis_path_ids"},"AI claim")
-                if claim["claim_id"] in claim_ids or not isinstance(claim["presented_as_proof"],bool): raise ValueError("invalid AI claim")
+                require_exact(claim,{"local_id","claim_id","claim_type","asserted_scope","claimed_evidence_class","statement","presented_as_proof","basis_ids","basis_path_ids"},"AI claim")
+                if claim["claim_id"] in claim_ids or claim["claim_type"] not in CLAIM_TYPES or claim["asserted_scope"]!=claim["claim_type"] or claim["claimed_evidence_class"] not in {"source_verified","deterministically_established","model_mapped_candidate","model_reviewed","not_inspected"} or not isinstance(claim["presented_as_proof"],bool): raise ValueError("invalid AI claim")
                 claim_ids.add(claim["claim_id"]); claim["compiled_authority"]=_authority({"criterion_id":cid,"basis_ids":claim["basis_ids"],"basis_path_ids":claim["basis_path_ids"]},context,role)
+                claim["honesty_state"],claim["honesty_reason_codes"]=_claim_honesty(claim,claim["compiled_authority"],context)
+                claim["claim_id"]=stable_id("ai_claim",{"criterion":cid,"type":claim["claim_type"],"scope":claim["asserted_scope"],"statement":claim["statement"],"proof":claim["presented_as_proof"],"bases":claim["basis_ids"],"paths":claim["basis_path_ids"]})
             if submitted["claims"]: accepted.add("ai_evaluation.claims")
             obs_ids=set()
             for candidate in submitted["observability_candidates"]:
                 require_exact(candidate,{"local_id","kind","basis_ids","basis_path_ids","supported_dimensions"},"observability candidate")
                 if candidate["local_id"] in obs_ids or candidate["kind"] not in OBSERVABILITY_KINDS: raise ValueError("invalid observability candidate")
                 obs_ids.add(candidate["local_id"]); candidate["compiled_authority"]=_typed_authority({**candidate,"state":"candidate"},submitted,context,role,"observability")
+                candidate["canonical_record_id"]=stable_id("observability",{"criterion":cid,"kind":candidate["kind"],"bases":candidate["basis_ids"],"dimensions":candidate["supported_dimensions"]})
             if submitted["observability_candidates"]: accepted.add("ai_evaluation.observability_candidates")
         gaps=[_validate_gap(gap,submitted,context,role,value["resolved_review_mode"]) for gap in submitted["gaps"]]
         if gaps: accepted.add("common.gaps")
