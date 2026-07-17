@@ -113,10 +113,14 @@ def _typed_field_value(name: str, value: object) -> None:
 
 
 def _source_binding(item:dict,label:str)->dict:
-    keys={"path","returned_git_path","git_blob_hash","start_line","end_line","quote","quote_hash","declared_subtype","criterion_ids","journey_ids"}
+    keys={"path","returned_git_path","git_object_format","git_blob_hash","normalized_text_hash","start_line","end_line","quote","quote_hash","declared_subtype","criterion_ids","journey_ids"}
     require_exact(item,keys,label); item["path"]=validate_relative_path(item["path"],label+" path")
     item["returned_git_path"]=validate_relative_path(item["returned_git_path"],label+" returned path")
-    if not re.fullmatch(r"[0-9a-f]{40}",item["git_blob_hash"] or "") or not re.fullmatch(r"sha256:[0-9a-f]{64}",item["quote_hash"] or ""): raise ValueError("invalid typed source hash")
+    # The v3 execution substrate is deliberately SHA-1-only.  The format is
+    # explicit so a future SHA-256 repository cannot be silently interpreted
+    # using a forty-character object-id contract.
+    if item["git_object_format"]!="sha1": raise ValueError("unsupported Git object format for typed source binding")
+    if not re.fullmatch(r"[0-9a-f]{40}",item["git_blob_hash"] or "") or not re.fullmatch(r"sha256:[0-9a-f]{64}",item["normalized_text_hash"] or "") or not re.fullmatch(r"sha256:[0-9a-f]{64}",item["quote_hash"] or ""): raise ValueError("invalid typed source hash")
     if not isinstance(item["start_line"],int) or not isinstance(item["end_line"],int) or item["start_line"]<1 or item["end_line"]<item["start_line"]: raise ValueError("invalid typed source range")
     require_text(item["quote"],label+" quote",16384)
     if item["declared_subtype"] not in TYPED_SOURCE_SUBTYPES: raise ValueError("invalid typed source subtype")
@@ -280,7 +284,7 @@ def _literal_import_candidates(path:str,text:str)->list[tuple[str,str]]:
 
 def _binding_record(ctx:LocalExecutionContext,binding:dict,role:str)->dict:
     record=source_record(ctx,binding["path"],mandatory=True,rules=["exact_typed_source_binding"],reason="exact typed source binding",provenance="owner_declared_typed_binding")
-    if record["returned_git_path"]!=binding["returned_git_path"] or record["git_blob_hash"]!=binding["git_blob_hash"]: raise ValueError("typed source binding blob mismatch")
+    if record["returned_git_path"]!=binding["returned_git_path"] or record["git_object_format"]!=binding["git_object_format"] or record["git_blob_hash"]!=binding["git_blob_hash"] or record["normalized_text_hash"]!=binding["normalized_text_hash"]: raise ValueError("typed source binding source identity mismatch")
     lines=record["text"].splitlines(); start=binding["start_line"]; end=binding["end_line"]
     if end>len(lines): raise ValueError("typed source range exceeds source")
     quote="\n".join(lines[start-1:end])
@@ -315,7 +319,10 @@ def select_sources(ctx: LocalExecutionContext, inputs: dict, applicability: dict
     for role in ROLES:
         for path, _, classification in graph_paths[role]: seeds[role].append((path, True, "relevant_graph_mapped_path", classification))
         for path in owner_paths[role]: seeds[role].append((path, True, "owner_role_path", "owner_declared"))
-    for item in definitions: seeds["measurement"].append((item["path"], True, "measurement_definition_path", "owner_declared"))
+    # An external declaration is authority for the declaration only; its
+    # content is intentionally unavailable and must not be read as a source.
+    for item in definitions:
+        if not item["declared_external"]: seeds["measurement"].append((item["path"], True, "measurement_definition_path", "owner_declared"))
     typed_bindings={role:[] for role in ROLES}
     for contract in applicability["measurement"]["contracts"]:
         for signal in contract["required_signals"]:
@@ -579,7 +586,7 @@ def _add_typed_binding(registry:dict,paths:list,binding:dict,role:str,criterion_
     scoped=sorted(set(criterion_ids)&set(binding["criterion_ids"]))
     if not scoped: return
     bid=stable_id("basis",{"subtype":subtype,"path":binding["path"],"blob":binding["git_blob_hash"],"range":[binding["start_line"],binding["end_line"]],"criteria":scoped,"property":property_name})
-    registry[bid]={"basis_id":bid,"basis_type":subtype,"object_id":property_name or binding["path"],"signal_id":signal_id,"property_name":property_name,"role_ids":[role],"criterion_ids":scoped,"journey_ids":binding["journey_ids"],"field_state":"owner_confirmed","assertion_scope":"source_definition_claim","direct_fact_authority":"deterministically_established","direct_fact_meaning":"The owner identified this exact source range as the declared typed definition.","semantic_assessment_authority":"not_performed","origin":"owner_declaration","reference_ids":[binding["path"],binding["git_blob_hash"],binding["quote_hash"]],"allowed_relationships":["supports_conclusion","supports_warning"]}
+    registry[bid]={"basis_id":bid,"basis_type":subtype,"object_id":property_name or binding["path"],"signal_id":signal_id,"property_name":property_name,"role_ids":[role],"criterion_ids":scoped,"journey_ids":binding["journey_ids"],"field_state":"owner_confirmed","assertion_scope":"source_definition_claim","direct_fact_authority":"deterministically_established","direct_fact_meaning":"The owner identified this exact commit-pinned source range as the declared typed definition.","semantic_assessment_authority":"not_performed","origin":"owner_declaration","reference_ids":[binding["path"],binding["git_object_format"],binding["git_blob_hash"],binding["normalized_text_hash"],binding["quote_hash"]],"allowed_relationships":["supports_conclusion","supports_warning"]}
     for cid in scoped:
         pid=stable_id("basis_path",{"basis":bid,"criterion":cid,"owner_scope":True})
         paths.append({"path_id":pid,"role_ids":[role],"criterion_id":cid,"start_basis_id":bid,"steps":[],"required":True,"effective_authority":"deterministically_established"})

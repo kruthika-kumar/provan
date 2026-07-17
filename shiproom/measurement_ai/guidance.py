@@ -72,13 +72,27 @@ def validate_guidance(registry: dict, sources: dict, policy: dict, public_cases:
         raise ValueError("invalid measurement recommendation policy")
     if public_cases.get("schema_version") != "measurement-qualification-public-cases.v1" or not public_cases.get("cases"):
         raise ValueError("invalid public qualification cases")
-    if private_rubric.get("schema_version") != "measurement-qualification-private-rubric.v1" or private_rubric.get("grading_engine_version") != "measurement-qualification-grader.v1":
-        raise ValueError("invalid private qualification rubric")
+    validate_private_rubric(private_rubric)
     public_ids=[item.get("case_id") for item in public_cases["cases"]]; rubric_ids=[item.get("case_id") for item in private_rubric.get("cases",[])]
     if len(public_ids)!=len(set(public_ids)) or set(public_ids)!=set(rubric_ids) or any(not str(value).startswith("qual_case_") for value in public_ids):
         raise ValueError("qualification public/private case mismatch")
     forbidden={"allowed_semantic_assessments","forbidden_semantic_assessments","required_recommendation_classes","forbidden_recommendation_classes","required_guidance_rules","required_exception_ids","maximum_effect","abstention_required","forbidden_claim_codes","required_authority_labels","automatic_replacement_prohibitions","qualified_capabilities"}
     if any(forbidden & set(item) for item in public_cases["cases"]): raise ValueError("public qualification packet leaks private rubric")
+
+
+def validate_private_rubric(private_rubric:dict)->dict:
+    """Independent Python boundary for the compiler-private answer key."""
+    if not isinstance(private_rubric,dict) or set(private_rubric)!={"schema_version","rubric_version","grading_engine_version","cases"} or private_rubric.get("schema_version")!="measurement-qualification-private-rubric.v1" or private_rubric.get("grading_engine_version")!="measurement-qualification-grader.v1":raise ValueError("invalid private qualification rubric")
+    fields={"case_id","qualified_capabilities","allowed_semantic_assessments","forbidden_semantic_assessments","required_recommendation_classes","forbidden_recommendation_classes","required_guidance_rules","required_exception_ids","maximum_effect","abstention_required","forbidden_claim_codes","required_authority_labels","automatic_replacement_prohibitions"}
+    cases=private_rubric["cases"]
+    if not isinstance(cases,list) or not cases:raise ValueError("private qualification rubric requires cases")
+    ids=[]
+    for item in cases:
+        if not isinstance(item,dict) or set(item)!=fields:raise ValueError("invalid private qualification rubric case")
+        ids.append(item["case_id"])
+        if not isinstance(item["qualified_capabilities"],list) or not item["qualified_capabilities"]:raise ValueError("qualification case requires capabilities")
+    if len(ids)!=len(set(ids)):raise ValueError("duplicate private qualification case")
+    return private_rubric
 
 
 def _validate_trigger(trigger: object) -> None:

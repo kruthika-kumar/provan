@@ -6,7 +6,7 @@ from .contracts import BASIS_EVIDENCE_CLASSES, OVERLAY_SCHEMA, effective_basis_c
 COMMON={"node_id","node_type","provenance","criterion_ids"}
 NODE_FIELDS={
     "measurement_contract":COMMON|{"contract_id","journey_id","field_states","metric_roles"},
-    "metric_definition":COMMON|{"path","requirement_ids","journey_ids","declared_external","definition_state","execution_state","data_accuracy_state","definition_authority","git_object_format","git_blob_hash","normalized_text_hash"},
+    "metric_definition":COMMON|{"path","requirement_ids","journey_ids","declared_external","definition_state","execution_state","data_accuracy_state","declaration_authority","definition_content_authority","definition_assertion_scope","git_object_format","git_blob_hash","normalized_text_hash"},
     "required_signal":COMMON|{"signal_id","name","name_state","required_properties"},
     "event_candidate":COMMON|{"basis_id","direct_fact_authority","criterion_basis_authority"},
     "signal_property":COMMON|{"signal_id","property_name","state","basis_ids","criterion_basis_authority"},
