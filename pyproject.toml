@@ -28,6 +28,7 @@ exclude = ["skills*", "tests*"]
 "shiproom.measurement_ai_roles" = ["*.json"]
 "shiproom.measurement_guidance" = ["*.json", "*.md"]
 "shiproom.measurement_ai_schemas" = ["*.json"]
+"shiproom.remediation_schemas" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

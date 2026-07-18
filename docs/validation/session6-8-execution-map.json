@@ -1,0 +1,15 @@
+{
+  "schema_version": "shiproom.session6-8-execution-map.v1",
+  "baseline_commit": "c035e39e218862c541f527f6781e84455a2d834b",
+  "phase0": {"status": "completed_before_combined_run", "commits": ["187d2f83fceb6e66893ccee945bda315f768a8ca", "c035e39e218862c541f527f6781e84455a2d834b"]},
+  "requirements": [
+    {"requirement_id":"S6_GENERATION_AUTHORITY","phase":"session6","implementation_files":["shiproom/remediation_roadmaps"],"production_boundary":"remediation.load_generation","proof_ids":["proof_s6_authority_valid","proof_s6_authority_near","proof_s6_authority_adversarial"],"canonical_artifact":"remediation-index.json","status":"planned"},
+    {"requirement_id":"S6_PLANNER_LIFECYCLE","phase":"session6","implementation_files":["shiproom/remediation_roadmaps"],"production_boundary":"remediation.compile","proof_ids":["proof_s6_planner_valid","proof_s6_planner_near","proof_s6_planner_adversarial"],"canonical_artifact":"remediation-plan.json","status":"planned"},
+    {"requirement_id":"S6_CLOSURE_NON_MUTATION","phase":"session6","implementation_files":["shiproom/remediation_roadmaps"],"production_boundary":"remediation.closure_verify","proof_ids":["proof_s6_closure_valid","proof_s6_closure_near","proof_s6_closure_adversarial"],"canonical_artifact":"closure-contracts","status":"planned"},
+    {"requirement_id":"S7_SPECIALIST_REGISTRY","phase":"session7","implementation_files":["shiproom/review_organisation"],"production_boundary":"review_organisation.prepare","proof_ids":["proof_s7_registry_valid","proof_s7_registry_near","proof_s7_registry_adversarial"],"canonical_artifact":"review-plan.json","status":"planned"},
+    {"requirement_id":"S7_ADAPTATION_AND_REVISION","phase":"session7","implementation_files":["shiproom/review_organisation"],"production_boundary":"review_organisation.adapt","proof_ids":["proof_s7_adaptation_valid","proof_s7_adaptation_near","proof_s7_adaptation_adversarial"],"canonical_artifact":"plan-events.json","status":"planned"},
+    {"requirement_id":"S8_CONTESTABILITY","phase":"session8","implementation_files":["shiproom/contestability"],"production_boundary":"contestability.append_action","proof_ids":["proof_s8_contest_valid","proof_s8_contest_near","proof_s8_contest_adversarial"],"canonical_artifact":"contestation-ledger.json","status":"planned"},
+    {"requirement_id":"S8_MANAGEMENT_ARTIFACTS","phase":"session8","implementation_files":["shiproom/management_artifacts"],"production_boundary":"management.compile","proof_ids":["proof_s8_artifact_valid","proof_s8_artifact_near","proof_s8_artifact_adversarial"],"canonical_artifact":"release-packet-index.json","status":"planned"},
+    {"requirement_id":"S6_8_CLOSEOUT","phase":"integration","implementation_files":["scripts/run_workflow_integration_evals.py"],"production_boundary":"session6_8_closeout.resolve","proof_ids":["proof_closeout_valid","proof_closeout_near","proof_closeout_adversarial"],"canonical_artifact":"session6-8-closeout-report.json","status":"planned"}
+  ]
+}
