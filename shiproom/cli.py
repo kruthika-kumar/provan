@@ -33,6 +33,7 @@ from .measurement_ai.rendering import show as show_measurement_ai
 from .measurement_ai.qualification import prepare_qualification, compile_qualification
 from .measurement_ai.verifier import prepare_verifier
 from .remediation_roadmaps import prepare as prepare_remediation, compile as compile_remediation, load_generation as load_remediation, closure_verify as verify_remediation_closure
+from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan
 
 
 def load(path: Path) -> dict:
@@ -64,6 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     assessment = sub.add_parser("assessment"); assessment.add_argument("action", choices=["prepare", "compile", "show"]); assessment.add_argument("--release", required=True); assessment.add_argument("--capabilities"); assessment.add_argument("--base-commit"); assessment.add_argument("--path", action="append", default=[]); assessment.add_argument("--preparation"); assessment.add_argument("--criterion")
     measurement_ai = sub.add_parser("measurement-ai"); measurement_ai.add_argument("action", choices=["prepare", "compile", "show", "qualification", "verifier"]); measurement_ai.add_argument("qualification_action", nargs="?", choices=["prepare","compile"]); measurement_ai.add_argument("--release", required=True); measurement_ai.add_argument("--review-mode", choices=["contract_only","guided_review","expert_escalated_review"], default="contract_only"); measurement_ai.add_argument("--capabilities"); measurement_ai.add_argument("--applicability"); measurement_ai.add_argument("--review-capabilities"); measurement_ai.add_argument("--permission"); measurement_ai.add_argument("--path", action="append", default=[]); measurement_ai.add_argument("--preparation"); measurement_ai.add_argument("--verifier-preparation", action="append", default=[]); measurement_ai.add_argument("--role", choices=["measurement","ai_evaluation"]); measurement_ai.add_argument("--journey"); measurement_ai.add_argument("--result")
     remediation = sub.add_parser("remediation-roadmap"); remediation.add_argument("action", choices=["prepare", "compile", "show", "closure-verify"]); remediation.add_argument("--release", required=True); remediation.add_argument("--preparation"); remediation.add_argument("--closure-contract"); remediation.add_argument("--evidence")
+    review_plan = sub.add_parser("review-plan"); review_plan.add_argument("action", choices=["prepare", "show", "adapt"]); review_plan.add_argument("--release", required=True); review_plan.add_argument("--trigger"); review_plan.add_argument("--specialist"); review_plan.add_argument("--criterion"); review_plan.add_argument("--evidence-id")
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "measurement-ai":
@@ -100,6 +102,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if args.preparation or not args.closure_contract or not args.evidence: raise SystemExit("remediation-roadmap closure-verify requires --release --closure-contract --evidence")
             print(json.dumps(verify_remediation_closure(context,args.closure_contract,json.loads(Path(args.evidence).read_text(encoding="utf-8"))),indent=2))
+    elif args.command == "review-plan":
+        data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)
+        if args.action == "prepare":
+            if args.trigger or args.specialist or args.criterion or args.evidence_id: raise SystemExit("review-plan prepare accepts only --release")
+            print(json.dumps(prepare_review_plan(context),indent=2))
+        elif args.action == "show":
+            if args.trigger or args.specialist or args.criterion or args.evidence_id: raise SystemExit("review-plan show accepts only --release")
+            manifest,artifacts=load_review_plan(context); print(json.dumps({"generation":manifest["generation"],"plan":artifacts["review-plan.json"]},indent=2))
+        else:
+            if not all((args.trigger,args.specialist,args.criterion,args.evidence_id)): raise SystemExit("review-plan adapt requires --release --trigger --specialist --criterion --evidence-id")
+            print(json.dumps(adapt_review_plan(context,args.trigger,args.specialist,args.criterion,args.evidence_id),indent=2))
     elif args.command == "assessment":
         data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
         if args.action == "prepare":
