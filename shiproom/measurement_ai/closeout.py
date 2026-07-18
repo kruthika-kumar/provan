@@ -31,8 +31,17 @@ def _recursive_private(value):
     return False
 
 def _count(value,path):
-    for part in path.split("."):value=value.get(part,[]) if isinstance(value,dict) else []
-    return len(value) if isinstance(value,(list,dict)) else int(bool(value))
+    values=[value]
+    for part in path.split("."):
+        next_values=[]
+        for item in values:
+            if isinstance(item,dict):next_values.append(item.get(part,[]))
+            elif isinstance(item,list):next_values.extend(entry.get(part,[]) for entry in item if isinstance(entry,dict))
+        values=next_values
+    if len(values)==1 and isinstance(values[0],dict):return len(values[0])
+    flattened=[]
+    for item in values:flattened.extend(item if isinstance(item,list) else [item])
+    return len(flattened)
 
 def _blind(v):return len(v.get("cases",[]))>0 and all(str(c.get("case_id","")).startswith("qual_case_") for c in v["cases"]) and not _recursive_private(v)
 def _caps(v):return bool(v.get("passed_capabilities")) and bool(v.get("failed_capabilities"))
@@ -71,7 +80,7 @@ def _portable_parity(v):
     rows=v.get("contracts",{});return len(rows)==27 and v.get("totals",{}).get("boundaries_invoked")==27 and not v.get("unexpected_passes") and all(r.get("boundary_invoked") and r.get("integration_test_ids") and all(m.get("python_rejected") for m in r.get("structural_mutations",[])+r.get("semantic_mutations",[])) for r in rows.values())
 def _rubric_parity(v):return v.get("boundary_invoked") is True and not v.get("unexpected_passes") and len(v.get("structural_mutations",[]))>=1 and len(v.get("semantic_mutations",[]))>=2 and all(m.get("python_rejected") for m in v.get("structural_mutations",[])+v.get("semantic_mutations",[]))
 
-ARTIFACT_ASSERTIONS={"blind_public_task":(_blind,"cases"),"material_capability_outcomes":(_caps,"requested_capabilities"),"regraded_bundle_fields":(_regraded,"passed_capabilities"),"exact_participant_binding":(_participants,"review_participants"),"exact_source_nodes":(_sources,"pairs"),"typed_instrumentation_records":(_typed,"event_candidates"),"material_claim_honesty":(_claims,"ai_evaluation"),"mixed_status_aggregate":(_aggregate,"checks"),"material_verifier_effect":(_verifier,"warnings"),"substantive_projection_records":(_projection,"nodes"),"exact_downstream_authority":(_downstream,"downstream_definitions"),"four_way_semantic_identity":(_harness,"runs"),"all_external_operations_zero":(_zero,"validations"),"pointer_bytes_preserved":(_pointer,"snapshots"),"all_portable_boundaries_executed":(_portable_parity,"contracts"),"private_rubric_mutations_rejected":(_rubric_parity,"semantic_mutations")}
+ARTIFACT_ASSERTIONS={"blind_public_task":(_blind,"cases"),"material_capability_outcomes":(_caps,"requested_capabilities"),"regraded_bundle_fields":(_regraded,"passed_capabilities"),"exact_participant_binding":(_participants,"review_participants"),"exact_source_nodes":(_sources,"pairs"),"typed_instrumentation_records":(_typed,"event_candidates"),"material_claim_honesty":(_claims,"ai_evaluation"),"mixed_status_aggregate":(_aggregate,"checks.record_derivations"),"material_verifier_effect":(_verifier,"warnings"),"substantive_projection_records":(_projection,"nodes"),"exact_downstream_authority":(_downstream,"downstream_definitions"),"four_way_semantic_identity":(_harness,"runs"),"all_external_operations_zero":(_zero,"validations"),"pointer_bytes_preserved":(_pointer,"snapshots"),"all_portable_boundaries_executed":(_portable_parity,"contracts"),"private_rubric_mutations_rejected":(_rubric_parity,"semantic_mutations")}
 
 def resolve_claims(passed_test_ids:set[str],artifacts:dict[str,dict])->list[dict]:
     ids=[c["claim_id"] for c in CLAIMS]

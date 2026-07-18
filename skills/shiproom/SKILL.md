@@ -94,7 +94,7 @@ Keep product outcomes and AI behavior separate. An eval filename is not a qualif
 
 Treat model qualification as a three-file authority bundle: rebuilt qualification task, complete qualification result, and derived receipt. Shiproom regrades the result whenever preparation or generation authority is loaded; never rely on a receipt alone. Preserve the bundle hash and exact candidate binding.
 
-Session closeout uses the executable claim registry against final-run JUnit XML and a real applicable Measurement-and-AI artifact bundle. Empty collections, key-presence checks, fabricated passed-test sets, and aggregate counts are not proof.
+Session closeout uses the executable claim registry against final-run JUnit XML and a real applicable Measurement-and-AI artifact bundle. It also requires executed production-boundary reports for all 27 portable contracts plus the separately governed private rubric. Empty collections, key-presence checks, fabricated passed-test sets, aggregate counts, and named-but-uninvoked functions are not proof. The final report binds the parity reports and final commit and validates its own hash.
 
 For AI claims, declare exactly one scope: `configuration`, `eval_structure`, `offline_behavior`, `runtime_behavior`, or `product_outcome`. Source definitions may support configuration or eval structure only. They never prove offline behavior, runtime behavior, model performance, or product outcomes. A readiness `gap` does not itself authorize a blocker or condition effect.
 

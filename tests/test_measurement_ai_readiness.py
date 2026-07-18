@@ -16,21 +16,22 @@ import jsonschema
 from shiproom.measurement_ai.contracts import effective_basis_class
 from shiproom.measurement_ai.guidance import load_guidance_pack, rule_map
 from shiproom.measurement_ai.overlay import evaluate_basis_path, validate_overlay
-from shiproom.measurement_ai.authority import _literal_import_candidates, _typed_field_value, default_applicability, domain_root, validate_applicability, source_record, normalize_text
-from shiproom.measurement_ai.preparation import prepare, load_preparation
-from shiproom.measurement_ai.persistence import compile_generation, load_generation
+from shiproom.measurement_ai.authority import _literal_import_candidates, _typed_field_value, default_applicability, domain_root, reject_external_operation, validate_applicability, source_record, normalize_text
+from shiproom.measurement_ai.preparation import prepare, load_preparation, _review_resolution
+from shiproom.measurement_ai.persistence import compile_generation, load_generation, load_generation_directory
 from shiproom.measurement_ai.rendering import show
-from shiproom.measurement_ai.contracts import sha256_bytes
+from shiproom.measurement_ai.contracts import load_json_bytes, render_json, semantic_without_local_ids, sha256_bytes
 from shiproom.measurement_ai.qualification import build_qualification_task, compile_qualification, grade_qualification_result, prepare_qualification, qualification_store, load_qualification_bundle
-from shiproom.measurement_ai.contract_parity import parity_report, private_rubric_parity
+from shiproom.measurement_ai.contract_parity import BoundaryResult, parity_report, private_rubric_parity
 from shiproom.measurement_ai.closeout import CLAIMS, resolve_claims
-from shiproom.measurement_ai.results import normalize_result, _claim_honesty, _assert_signal_basis
+from shiproom.measurement_ai.results import normalize_result, _claim_honesty, _assert_signal_basis, _typed_authority, _validate_receipt
 from shiproom.measurement_ai.results import validate_executor
 from shiproom.measurement_ai.guidance import eligible_rule_ids
 from shiproom.measurement_ai.verifier import prepare_verifier, load_verifier
 from shiproom.measurement_ai.registries import AI_GAP_KINDS, AI_MATURITY_RUNGS, MEASUREMENT_FIELD_SPECS, MEASUREMENT_GAP_KINDS, METRIC_DIMENSIONS, PROJECTION_REGISTRY, ROLE_RESULT_SCHEMAS
 from shiproom.measurement_ai.compiler import _aggregate
-from shiproom.measurement_ai.trust import ensure_directory
+from shiproom.measurement_ai.projection import verify_projected_records
+from shiproom.measurement_ai.trust import ensure_approved_write_target, ensure_directory, safe_atomic_path
 import shiproom.measurement_ai.persistence as measurement_persistence
 import shiproom.measurement_ai.authority as measurement_authority
 from scripts.measurement_ai_acceptance_fixture import snapshot_measurement_ai_read_only, assert_measurement_ai_read_only
@@ -39,6 +40,7 @@ from test_intent import context_for, inbox, proposal
 from shiproom.intent import prepare as prepare_intent, compile_bundle as compile_intent
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input
 from measurement_ai_public_responses import qualification_result
+from shiproom.project import content_hash
 
 
 def conventional_context(tmp_path):
@@ -118,16 +120,24 @@ def test_all_27_v3_portable_contracts_are_closed_json_schemas():
         walk(schema)
 
 
-def test_all_27_contracts_report_python_json_schema_parity(capsys):
-    report=parity_report(); print(json.dumps(report,sort_keys=True)); captured=capsys.readouterr().out
+def test_production_boundary_parity_executes_all_27_contracts(tmp_path,capsys):
+    report=parity_report(_ProductionBoundaryRunner(tmp_path)); print(json.dumps(report,sort_keys=True)); captured=capsys.readouterr().out
     assert len(report["contracts"])==27 and report["totals"]["accepted"]==27
-    assert report["totals"]["structural_mutations"]==81
-    assert all(item["python_boundary"].startswith("shiproom.measurement_ai.") for item in report["contracts"].values())
+    assert report["totals"]["boundaries_invoked"]==27 and not report["unexpected_passes"]
+    assert all(item["boundary_invoked"] and item["production_boundary"].startswith("shiproom.measurement_ai.") for item in report["contracts"].values())
     assert "work-order.v6.json" in captured
+    _emit_closeout_artifact("contract-parity-report.json",report)
 
 def test_private_rubric_has_separate_schema_python_parity():
     report=private_rubric_parity()
-    assert report["accepted"]==1 and report["schema_structural_rejected"]==1 and report["python_semantic_rejected"]==1
+    assert report["accepted"]==1 and report["boundary_invoked"] and len(report["semantic_mutations"])>=2 and all(item["python_rejected"] for item in report["semantic_mutations"])
+    _emit_closeout_artifact("private-rubric-parity-report.json",report)
+
+def test_production_boundary_report_rejects_unexecuted_or_passing_mutation():
+    class Unexecuted:
+        def accepted(self,name): return BoundaryResult({},False,())
+        def rejected(self,name,mutation_name,value): return False
+    with pytest.raises(AssertionError,match="not invoked"): parity_report(Unexecuted())
 
 def test_closeout_claim_registry_resolves_symbols_tests_and_artifacts():
     passed={test for claim in CLAIMS for test in claim["positive_test_ids"]+claim["negative_test_ids"]}
@@ -214,6 +224,15 @@ def test_trusted_directory_creation_rejects_symlinked_ancestor(tmp_path):
     except (OSError,NotImplementedError): pytest.skip("symlink creation is unavailable")
     with pytest.raises(ValueError,match="unsafe"): ensure_directory(root,link/"preparation",label="linked preparation")
 
+def test_measurement_ai_write_boundary_rejects_outside_repository_and_unapproved_roots(tmp_path):
+    root=tmp_path/"repo";root.mkdir();outside=tmp_path/"outside"
+    with pytest.raises(ValueError,match="escapes"):ensure_approved_write_target(root,outside,label="outside write")
+    with pytest.raises(ValueError,match="approved ignored roots"):ensure_approved_write_target(root,root/"src"/"output",label="tracked-tree write")
+
+def test_atomic_write_rejects_unsafe_temporary_path(tmp_path):
+    root=tmp_path/"repo";root.mkdir();parent=root/".shiproom"/"local"/"measurement-reviewer-qualifications";parent.mkdir(parents=True);temporary=parent/"receipt.json.tmp";temporary.mkdir()
+    with pytest.raises(ValueError,match="unsafe"):safe_atomic_path(root,parent/"receipt.json",label="qualification receipt")
+
 
 def test_all_committed_v1_resources_are_byte_identical_to_db2b984():
     ledger=json.loads(resources.files("shiproom.measurement_ai_roles").joinpath("v1-resource-hashes.json").read_text())
@@ -281,10 +300,12 @@ def test_preparation_semantic_tamper_and_unlinked_definition_do_not_create_scope
 def test_downstream_definition_scope_is_exact(tmp_path):
     ctx=assessment_context(tmp_path); inputs=load_assessment_input(ctx); cid=next(item["criterion_id"] for item in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]); rid=next(item["requirement_id"] for item in inputs["intent_artifacts"]["requirements.json"]["requirements"]); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); app["measurement"]["criterion_ids"]=[cid]; app["measurement"]["measurement_definition_paths"]=[{"path":"docs/brief.md","requirement_ids":[rid],"criterion_ids":[cid],"journey_ids":[],"declared_external":False}]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); place_result(ctx,info["preparation_id"],"measurement",record); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); definition=artifacts["measurement-contract.json"]["downstream_definitions"][0]
     assert definition["criterion_ids"]==[cid] and definition["requirement_ids"]==[rid] and definition["git_object_format"]=="sha1" and len(definition["git_blob_hash"])==40 and definition["definition_content_authority"]=="source_verified" and definition["definition_assertion_scope"]=="source_definition" and definition["execution_state"]==definition["data_accuracy_state"]=="not_inspected"
+    _emit_closeout_artifact("measurement-contract.json",artifacts["measurement-contract.json"])
 
 def test_projection_references_are_scoped_and_resolved(tmp_path):
     ctx=assessment_context(tmp_path); root=domain_root(ctx)/"inputs"; root.mkdir(parents=True); app=default_applicability(); cid=next(item["node_id"] for item in load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]["nodes"] if item["node_type"]=="acceptance_criterion"); app["measurement"]["criterion_ids"]=[cid]; path=root/"applicability.json"; path.write_text(json.dumps(app),encoding="utf-8"); info=prepare(ctx,applicability_path=str(path)); place_result(ctx,info["preparation_id"],"measurement",assessed_record(cid)); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); refs=[node for node in artifacts["measurement-ai-overlay.json"]["nodes"] if node["node_type"]=="projection_reference"]
     assert refs and all(node["criterion_ids"]==[cid] and node["canonical_record_id"]==node["target_record_id"] for node in refs)
+    _emit_closeout_artifact("measurement-ai-overlay.json",artifacts["measurement-ai-overlay.json"])
 
 def test_projection_rejects_orphan_placeholders():
     value={"schema_version":"measurement-ai-overlay.v3","release_id":"r","release_commit":"a"*40,"product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,"nodes":[{"node_id":"p","node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":[],"journey_id":None,"record_kind":"gap","canonical_record_id":"g","destination_artifact":"launch-measurement-plan.json","target_record_id":"g","authority":"not_inspected"}],"edges":[],"projection_verification":[]}
@@ -311,6 +332,70 @@ def place_result(ctx, preparation_id, role, record, executor=None):
 
 def assessed_record(cid):
     return {"local_id":"record_1","criterion_id":cid,"journey_ids":[],"scope_state":"applicable","disposition":"assessed","uncertainty":"bounded","basis_ids":[],"basis_path_ids":[],"conclusion_evidence_class":"model_reviewed","semantic_review_authority":"not_performed","summary":"Bounded structural review.","gaps":[],"contract_updates":[],"signal_assessments":[],"metric_dimensions":[]}
+
+
+def _not_inspected_ai_record(cid):
+    return {"local_id":"ai_record","criterion_id":cid,"scope_state":"applicable","disposition":"not_inspected","uncertainty":"not_assessed","basis_ids":[],"basis_path_ids":[],"conclusion_evidence_class":"not_inspected","semantic_review_authority":"not_performed","summary":"not_inspected","maturity_rungs":[],"judge_assessments":[],"claims":[],"observability_candidates":[],"gaps":[]}
+
+def _place_not_inspected_ai(ctx,preparation_id,cid):
+    prep=load_preparation(ctx,preparation_id);work=prep["work_orders"]["ai_evaluation"];root=domain_root(ctx)/"inbox"/preparation_id/work["work_order_id"]
+    value={"schema_version":"ai-evaluation-result.v3","role_id":"ai_evaluation","role_version":"3.0.0","preparation_id":preparation_id,"work_order_id":work["work_order_id"],"base_graph_semantic_hash":work["inputs"]["graph_semantic_hash"],"resolved_review_mode":work["resolved_review_mode"],"records":[_not_inspected_ai_record(cid)],"recommendations":[],"assumptions":[],"limitations":[]};raw=render_json(value);(root/"result.json").write_bytes(raw);receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":{"executor_type":"human","reviewer_label":"manual reviewer"},"work_order_id":work["work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"};(root/"completion-receipt.json").write_bytes(render_json(receipt))
+
+
+class _ProductionBoundaryRunner:
+    """Persist mutations and invoke the same production loaders used by the CLI."""
+    TEST_ID="test_production_boundary_parity_executes_all_27_contracts"
+    def __init__(self,tmp_path):
+        self.ctx=assessment_context(tmp_path/"portable"); inputs=load_assessment_input(self.ctx); self.cid=next(item["criterion_id"] for item in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"])
+        root=domain_root(self.ctx)/"inputs";root.mkdir(parents=True);app=default_applicability();app["measurement"]["criterion_ids"]=[self.cid];app["ai"]["criterion_ids"]=[self.cid];path=root/"parity-applicability.json";path.write_text(json.dumps(app),encoding="utf-8")
+        self.info=prepare(self.ctx,applicability_path=str(path));place_result(self.ctx,self.info["preparation_id"],"measurement",assessed_record(self.cid));_place_not_inspected_ai(self.ctx,self.info["preparation_id"],self.cid);self.manifest=compile_generation(self.ctx,self.info["preparation_id"]);self.prep=load_preparation(self.ctx,self.info["preparation_id"]);self.generation=domain_root(self.ctx)/"generations"/self.manifest["generation"]
+        qtask=build_qualification_task(load_guidance_pack());submitted=qualification_store(self.ctx.repository_root)/"parity-submitted.json";submitted.parent.mkdir(parents=True,exist_ok=True);submitted.write_text(json.dumps(qualification_result(qtask)),encoding="utf-8");qcompiled=compile_qualification(self.ctx.repository_root,submitted);self.qbundle=qualification_store(self.ctx.repository_root)/qcompiled["qualification_id"]
+        self.verifier_ctx,self.verifier_info,_,self.verifier,_=_expert_material_submission(tmp_path/"verifier");self._complete_verifier();self.verifier_dir=domain_root(self.verifier_ctx)/"verifier-preparations"/self.verifier["verifier_preparation_id"]
+        self.review_capabilities={"schema_version":"measurement-review-capabilities.v3","executor_type":"human","reviewer_label":"parity reviewer"};self.permission={"schema_version":"measurement-review-permission.v3","release_id":self.ctx.release["release_id"],"expert_review_granted":True,"model_switch":{"decision":"not_requested"}}
+
+    def _complete_verifier(self):
+        work=self.verifier["work_order"];inbox=domain_root(self.verifier_ctx)/"verifier-inbox"/self.verifier["verifier_preparation_id"]/work["verifier_work_order_id"]
+        reviews=[{"recommendation_id":rid,"disposition":"supported","unsupported_assumption_codes":[],"ignored_exception_ids":[],"severity_supported":True,"abstention_required":False,"rationale":"bounded"} for rid in work["material_recommendation_ids"]]
+        value={"schema_version":"measurement-verifier-result.v3","verifier_preparation_id":self.verifier["verifier_preparation_id"],"verifier_work_order_id":work["verifier_work_order_id"],"primary_result_semantic_hash":work["primary_result_semantic_hash"],"primary_result_snapshot_hash":work["primary_result_snapshot_hash"],"primary_receipt_snapshot_hash":work["primary_receipt_snapshot_hash"],"recommendation_reviews":reviews};raw=render_json(value);(inbox/"result.json").write_bytes(raw);receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":{"executor_type":"human","reviewer_label":"verifier"},"work_order_id":work["verifier_work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"};(inbox/"completion-receipt.json").write_bytes(render_json(receipt));load_verifier(self.verifier_ctx,self.verifier["verifier_preparation_id"])
+
+    def _path(self,name):
+        wm=self.prep["work_orders"]["measurement"];wa=self.prep["work_orders"]["ai_evaluation"];prep=self.prep["directory"]
+        mapping={"measurement-ai-capabilities.v3.json":prep/"capabilities.json","measurement-ai-applicability.v3.json":prep/"applicability.json","measurement-ai-role.v3.json":prep/"role-definitions"/"measurement.json","work-order.v6.json":prep/"work-orders"/(wm["work_order_id"]+".json"),"measurement-reviewer-qualification-task.v3.json":self.qbundle/"qualification-task.json","measurement-reviewer-qualification-result.v3.json":self.qbundle/"qualification-result.json","measurement-reviewer-qualification-receipt.v3.json":self.qbundle/"qualification-receipt.json","measurement-result.v3.json":domain_root(self.ctx)/"inbox"/self.info["preparation_id"]/wm["work_order_id"]/"result.json","ai-evaluation-result.v3.json":domain_root(self.ctx)/"inbox"/self.info["preparation_id"]/wa["work_order_id"]/"result.json","measurement-ai-completion-receipt.v3.json":domain_root(self.ctx)/"inbox"/self.info["preparation_id"]/wm["work_order_id"]/"completion-receipt.json","measurement-ai-source-packet.v3.json":prep/"measurement-ai-source-packet.json","measurement-ai-role-context.v3.json":prep/"role-context"/"measurement.json","measurement-ai-work-orders.v3.json":prep/"measurement-ai-work-orders.json","active-measurement-ai-preparation.v3.json":domain_root(self.ctx)/"active-preparation.json","measurement-verifier-preparation.v3.json":self.verifier_dir/"manifest.json","measurement-verifier-work-order.v3.json":self.verifier_dir/"work-order.json","measurement-verifier-result.v3.json":domain_root(self.verifier_ctx)/"verifier-inbox"/self.verifier["verifier_preparation_id"]/self.verifier["work_order"]["verifier_work_order_id"]/"result.json","measurement-contract.v3.json":self.generation/"measurement-contract.json","instrumentation-coverage.v3.json":self.generation/"instrumentation-coverage.json","measurement-ai-readiness.v3.json":self.generation/"measurement-ai-readiness.json","launch-measurement-plan.v3.json":self.generation/"launch-measurement-plan.json","measurement-ai-overlay.v3.json":self.generation/"measurement-ai-overlay.json","measurement-ai-compiler-receipts.v3.json":self.generation/"measurement-ai-compiler-receipts.json","portable-measurement-ai-manifest.v3.json":self.generation/"manifest.json","current-portable-measurement-ai.v3.json":domain_root(self.ctx)/"current-generation.json"}
+        return mapping[name]
+
+    def accepted(self,name):
+        if name=="measurement-review-capabilities.v3.json":_review_resolution("guided_review",self.review_capabilities,None,self.ctx.repository_root,load_guidance_pack());return BoundaryResult(deepcopy(self.review_capabilities),True,(self.TEST_ID,))
+        if name=="measurement-review-permission.v3.json":_review_resolution("expert_escalated_review",self.review_capabilities,self.permission,self.ctx.repository_root,load_guidance_pack());return BoundaryResult(deepcopy(self.permission),True,(self.TEST_ID,))
+        path=self._path(name);value=load_json_bytes(path.read_bytes());self._invoke(name,value);return BoundaryResult(value,True,(self.TEST_ID,))
+
+    def _invoke(self,name,value):
+        if name in {"measurement-review-capabilities.v3.json","measurement-review-permission.v3.json"}:
+            caps=value if name.startswith("measurement-review-capabilities") else self.review_capabilities;permission=value if name.startswith("measurement-review-permission") else None;_review_resolution("expert_escalated_review" if permission else "guided_review",caps,permission,self.ctx.repository_root,load_guidance_pack());return
+        if name.startswith("measurement-reviewer-qualification-"):
+            if name.endswith("task.v3.json"):
+                if value!=build_qualification_task(load_guidance_pack()):raise ValueError("task mismatch")
+            elif name.endswith("result.v3.json"):grade_qualification_result(value,build_qualification_task(load_guidance_pack()),"sha256:"+"1"*64,load_guidance_pack()["qualification_private_rubric"],load_guidance_pack())
+            else:load_qualification_bundle(self.qbundle,load_guidance_pack())
+            return
+        if name in {"measurement-result.v3.json","ai-evaluation-result.v3.json"}:
+            role="measurement" if name.startswith("measurement-result") else "ai_evaluation";work=self.prep["work_orders"][role];receipt_path=self._path("measurement-ai-completion-receipt.v3.json") if role=="measurement" else self._path(name).parent/"completion-receipt.json";receipt=load_json_bytes(receipt_path.read_bytes());raw=render_json(value);receipt["result_snapshot_hash"]=sha256_bytes(raw);normalize_result(raw,render_json(receipt),work,self.prep["contexts"][role],self.prep["guidance"]);return
+        if name=="measurement-ai-completion-receipt.v3.json":_validate_receipt(value,self.prep["work_orders"]["measurement"],self._path("measurement-result.v3.json").read_bytes());return
+        if name.startswith("measurement-verifier-"):load_verifier(self.verifier_ctx,self.verifier["verifier_preparation_id"]);return
+        if name in {"measurement-ai-source-packet.v3.json","measurement-ai-role-context.v3.json","measurement-ai-work-orders.v3.json","active-measurement-ai-preparation.v3.json","work-order.v6.json"}:load_preparation(self.ctx,self.info["preparation_id"] if name!="active-measurement-ai-preparation.v3.json" else None);return
+        if name=="current-portable-measurement-ai.v3.json":load_generation(self.ctx);return
+        load_generation_directory(self.ctx,self.generation)
+
+    def rejected(self,name,mutation_name,value):
+        if name in {"measurement-review-capabilities.v3.json","measurement-review-permission.v3.json"}:
+            try:self._invoke(name,value)
+            except Exception:return True
+            return False
+        path=self._path(name);original=path.read_bytes();path.write_bytes(render_json(value))
+        try:
+            try:self._invoke(name,value)
+            except Exception:return True
+            return False
+        finally:path.write_bytes(original)
 
 
 def test_skip_generation_has_all_six_not_applicable_checks(tmp_path):
@@ -355,6 +440,7 @@ def test_verifier_disposition_changes_canonical_effect(tmp_path,monkeypatch,disp
     reviews=[{"recommendation_id":rid,"disposition":disposition,"unsupported_assumption_codes":[] if disposition=="supported" else ["unsupported_causal_assumption"],"ignored_exception_ids":[],"severity_supported":disposition=="supported","abstention_required":False,"rationale":"bounded verifier disposition"} for rid in work["material_recommendation_ids"]]
     value={"schema_version":"measurement-verifier-result.v3","verifier_preparation_id":verifier["verifier_preparation_id"],"verifier_work_order_id":work["verifier_work_order_id"],"primary_result_semantic_hash":work["primary_result_semantic_hash"],"primary_result_snapshot_hash":work["primary_result_snapshot_hash"],"primary_receipt_snapshot_hash":work["primary_receipt_snapshot_hash"],"recommendation_reviews":reviews}; raw=(json.dumps(value,sort_keys=True)+"\n").encode(); (inbox/"result.json").write_bytes(raw); receipt={"schema_version":"measurement-ai-completion-receipt.v3","executor":{"executor_type":"human","reviewer_label":"skeptical verifier"},"work_order_id":work["verifier_work_order_id"],"work_order_hash":work["work_order_hash"],"result_snapshot_hash":sha256_bytes(raw),"started_at":"2026-01-01T00:00:00+00:00","completed_at":"2026-01-01T00:01:00+00:00"}; (inbox/"completion-receipt.json").write_text(json.dumps(receipt)); compile_generation(ctx,info["preparation_id"],[verifier["verifier_preparation_id"]]); _,artifacts=load_generation(ctx); warning=artifacts["launch-measurement-plan.json"]["warnings"][0]; check=next(item for item in artifacts["measurement-ai-readiness.json"]["checks"] if item["check_id"]=="DATA_PRIMARY_METRIC_DECISION_USEFUL"); quality=artifacts["measurement-ai-readiness.json"]["metric_quality"][0]
     assert warning["derived_effect"]==expected_effect and warning["verifier_disposition"]==disposition and check["status"]==expected_status and quality["verifier_dispositions"]==[disposition]; show(ctx); assert_measurement_ai_read_only(ctx,before)
+    _emit_closeout_artifact("launch-measurement-plan.json",artifacts["launch-measurement-plan.json"])
 
 
 def test_qualification_is_mechanically_graded_and_hash_bound():
@@ -415,6 +501,7 @@ def test_canonical_artifacts_ignore_preparation_handles_and_local_labels(tmp_pat
     for label,executor in submissions:
         info=prepare(ctx,applicability_path=str(path)); record=assessed_record(cid); record["local_id"]=label; place_result(ctx,info["preparation_id"],"measurement",record,executor); manifest=compile_generation(ctx,info["preparation_id"]); _,current=load_generation(ctx); artifacts.append({name:value for name,value in current.items() if name!="measurement-ai-compiler-receipts.json"}); bundles.append(manifest["semantic_bundle_hash"])
     assert all(value==artifacts[0] for value in artifacts[1:]) and len(set(bundles))==1
+    _emit_closeout_artifact("harness-neutral-proof.json",{"runs":[{"semantic_bundle_hash":bundle,"principal_artifacts_hash":content_hash({k:v for k,v in artifact.items() if k!="measurement-ai-overlay.json"}),"overlay_hash":content_hash(artifact["measurement-ai-overlay.json"])} for bundle,artifact in zip(bundles,artifacts)]})
 
 
 def test_domain_core_records_zero_external_operations(tmp_path,monkeypatch):
@@ -425,6 +512,7 @@ def test_domain_core_records_zero_external_operations(tmp_path,monkeypatch):
     ctx=conventional_context(tmp_path); before=snapshot_measurement_ai_read_only(ctx); task=prepare_qualification(ctx.repository_root); result=qualification_result(task,"guarded","guarded"); result_path=qualification_store(ctx.repository_root)/"qualification-result.json"; result_path.write_text(json.dumps(result),encoding="utf-8"); compile_qualification(ctx.repository_root,result_path); info=prepare(ctx); compile_generation(ctx,info["preparation_id"]); _,artifacts=load_generation(ctx); show(ctx); assert_measurement_ai_read_only(ctx,before)
     operations=[item for item in artifacts["measurement-ai-compiler-receipts.json"]["validations"] if item["kind"]=="external_operation"]
     assert {item["operation"] for item in operations}=={"model","command","network","browser","sql","external_service"} and all(item["count"]==0 for item in operations)
+    _emit_closeout_artifact("measurement-ai-compiler-receipts.json",artifacts["measurement-ai-compiler-receipts.json"])
 
 
 def test_shiproom_skill_documents_v3_authority_and_staged_verifier():
@@ -440,6 +528,8 @@ def test_blind_qualification_claim_specific_proofs():
     receipt=grade_qualification_result(result,task,"sha256:"+"1"*64,pack["qualification_private_rubric"],pack)
     assert task["cases"] and all(item["case_id"].startswith("qual_case_") for item in task["cases"])
     assert receipt["passed_capabilities"] and set(receipt["passed_capabilities"])==set(receipt["qualified_capabilities"])
+    partial=deepcopy(result);partial["case_results"][1]["automatic_replacements"]=["automatic_ratio_replacement"];partial_receipt=grade_qualification_result(partial,task,"sha256:"+"2"*64,pack["qualification_private_rubric"],pack);assert partial_receipt["passed_capabilities"] and partial_receipt["failed_capabilities"]
+    _emit_closeout_artifact("qualification-task.json",task);_emit_closeout_artifact("qualification-receipt.json",partial_receipt)
 
 
 def test_blind_qualification_adversarial_answers_and_rubric_tamper(tmp_path):
@@ -476,6 +566,21 @@ def test_executor_truth_table_complete():
     validate_executor({"executor_type":"human","reviewer_label":"reviewer"},{"resolved_review_mode":"guided_review","review_participants":[{"type":"human"}],"required_qualification_capabilities":[]})
     work,model=_model_work(); validate_executor({"executor_type":"agent_harness","participant_binding":{k:model[k] for k in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"},work)
     for executor in ({"executor_type":"human","reviewer_label":"manual"},{"executor_type":"agent_harness","participant_binding":None,"harness_id":"h","adapter_version":"1","run_id":"r"}): validate_executor(executor,{"resolved_review_mode":"contract_only","review_participants":[],"required_qualification_capabilities":[]})
+    validate_executor({"executor_type":"human","reviewer_label":"expert"},{"resolved_review_mode":"expert_escalated_review","review_participants":[{"type":"human"}],"required_qualification_capabilities":[]})
+    expert,participant=_model_work();expert["resolved_review_mode"]="expert_escalated_review";validate_executor({"executor_type":"agent_harness","participant_binding":{k:participant[k] for k in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"},expert)
+    _emit_closeout_artifact("work-order.json",{**expert,"review_participants":[participant]})
+
+def test_verifier_executor_truth_table_and_isolated_rejections():
+    human_work={"resolved_review_mode":"expert_escalated_review","review_participants":[{"type":"human"}],"required_qualification_capabilities":["skeptical_material_review"]};validate_executor({"executor_type":"human","reviewer_label":"verifier"},human_work)
+    participant={"type":"model","candidate_id":"candidate","provider_id":"provider","model_id":"model","qualification_id":"qualification","qualification_bundle_hash":"sha256:"+"1"*64,"qualified_capabilities":["skeptical_material_review"],"model_switch":True};model_work={"resolved_review_mode":"expert_escalated_review","review_participants":[participant],"required_qualification_capabilities":["skeptical_material_review"]};base={"executor_type":"agent_harness","participant_binding":{k:participant[k] for k in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash")},"harness_id":"h","adapter_version":"1","run_id":"r"};validate_executor(base,model_work)
+    with pytest.raises(ValueError,match="human participant"):validate_executor(base,human_work)
+    with pytest.raises(ValueError,match="human cannot"):validate_executor({"executor_type":"human","reviewer_label":"person"},model_work)
+    for key in ("candidate_id","provider_id","model_id","qualification_id","qualification_bundle_hash"):
+        bad=deepcopy(base);bad["participant_binding"][key]="sha256:"+"2"*64 if "hash" in key else "wrong"
+        with pytest.raises(ValueError,match="binding mismatch"):validate_executor(bad,model_work)
+    with pytest.raises(ValueError,match="participant work|binding mismatch"):validate_executor({**base,"participant_binding":None},model_work)
+    lacking=deepcopy(model_work);lacking["review_participants"][0]["qualified_capabilities"]=[]
+    with pytest.raises(ValueError,match="binding mismatch"):validate_executor(base,lacking)
 
 
 def test_executor_binding_adversarial_matrix():
@@ -497,7 +602,7 @@ def _typed_app(ctx):
 
 
 def test_typed_source_identity_contract_accepts_real_sha1_binding(tmp_path):
-    ctx=assessment_context(tmp_path);app,event,prop,_,_=_typed_app(ctx);assert validate_applicability(app);assert event["git_object_format"]=="sha1" and len(event["git_blob_hash"])==40 and event["normalized_text_hash"].startswith("sha256:")
+    ctx=assessment_context(tmp_path);app,event,prop,_,_=_typed_app(ctx);assert validate_applicability(app);assert event["git_object_format"]=="sha1" and len(event["git_blob_hash"])==40 and event["normalized_text_hash"].startswith("sha256:");_emit_closeout_artifact("source-identity-proof.json",{"pairs":[{"source_packet":event,"overlay":event}]})
 
 
 def test_typed_source_identity_contract_rejects_hash_mutations(tmp_path):
@@ -516,12 +621,18 @@ def test_typed_source_identity_contract_rejects_hash_mutations(tmp_path):
 def test_typed_basis_compatibility_positive_matrix():
     context={"basis_registry":[{"basis_id":"event","signal_id":"signal","property_name":None},{"basis_id":"property","signal_id":"signal","property_name":"id"}]}
     _assert_signal_basis({"basis_ids":["event"]},context,"signal");_assert_signal_basis({"basis_ids":["property"]},context,"signal","id")
+    authority={"criterion_scoped_basis_authority":"source_verified"};_emit_closeout_artifact("instrumentation-coverage.json",{"event_candidates":[{"basis_ids":["event"],"compiled_authority":authority}],"property_assessments":[{"basis_ids":["property"],"compiled_authority":authority}]})
 
 
 def test_typed_basis_compatibility_rejects_generic_cross_signal_and_candidate():
     context={"basis_registry":[{"basis_id":"generic","basis_type":"source_reference","signal_id":None,"property_name":None},{"basis_id":"wrong","basis_type":"instrumentation_property_definition","signal_id":"other","property_name":"id"}]}
     with pytest.raises(ValueError):_assert_signal_basis({"basis_ids":["generic"]},context,"signal")
     with pytest.raises(ValueError):_assert_signal_basis({"basis_ids":["wrong"]},context,"signal","id")
+
+@pytest.mark.parametrize(("kind","basis_type"),[("event_candidate","instrumentation_event_definition"),("property","instrumentation_property_definition"),("fixed_input","ai_fixed_input_definition"),("oracle_or_rubric","ai_oracle_or_rubric_definition"),("pass_condition","ai_pass_condition_definition"),("prompt_or_model_binding","ai_prompt_model_binding_definition"),("supplied_execution_result","ai_execution"),("production_trace_linkage","production_trace")])
+def test_candidate_tainted_typed_basis_cannot_establish_state_or_readiness(kind,basis_type):
+    role="measurement" if kind in {"event_candidate","property"} else "ai_evaluation";context={"basis_registry":[{"basis_id":"basis","basis_type":basis_type,"role_ids":[role],"criterion_ids":["criterion"],"direct_fact_authority":"source_verified","signal_id":"signal","property_name":"id" if kind=="property" else None}],"basis_paths":[{"path_id":"path","role_ids":[role],"criterion_id":"criterion","start_basis_id":"basis","required":True,"effective_authority":"model_mapped_candidate"}]};record={"criterion_id":"criterion","semantic_review_authority":"model_reviewed_with_curated_guidance"};item={"state":"established","basis_ids":["basis"],"basis_path_ids":["path"]}
+    with pytest.raises(ValueError,match="weak criterion authority"):_typed_authority(item,record,context,role,kind)
 
 
 def _claim_context(basis_type,scope="source_definition",origin="project_source"):
@@ -543,7 +654,7 @@ def _derivation(cid,status):
 
 
 def test_multi_record_aggregation_is_conservative():
-    value=_aggregate("DATA_OUTCOME_EVENT_DEFINED",[_derivation("c1","ready"),_derivation("c2","owner_confirmation_required"),_derivation("c3","not_inspected")]);assert value["status"]=="owner_confirmation_required" and len(value["record_derivations"])==3
+    value=_aggregate("DATA_OUTCOME_EVENT_DEFINED",[_derivation("c1","ready"),_derivation("c2","owner_confirmation_required"),_derivation("c3","not_inspected")]);assert value["status"]=="owner_confirmation_required" and len(value["record_derivations"])==3;_emit_closeout_artifact("measurement-ai-readiness.json",{"ai_evaluation":[{"claims":[{"honesty_state":"honest","honesty_reason_codes":["compatible_configuration_basis"]}]}],"checks":[value]})
 
 
 def test_aggregate_ready_rejects_lower_precedence_records():
@@ -555,6 +666,49 @@ def test_projection_rejects_orphan_authority_scope_duplicate_and_target_tamper()
     base={"schema_version":"measurement-ai-overlay.v3","release_id":"r","release_commit":"a"*40,"product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,"nodes":[{"node_id":"p","node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":[],"journey_id":None,"record_kind":"gap","canonical_record_id":"g","destination_artifact":"launch-measurement-plan.json","target_record_id":"other","authority":"not_inspected"}],"edges":[],"projection_verification":[]}
     with pytest.raises(ValueError):validate_overlay(base,{"criterion"})
 
+def _valid_projection_overlay():
+    node={"node_id":"projection","node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":["criterion"],"journey_id":None,"record_kind":"gap","canonical_record_id":"record","destination_artifact":"launch-measurement-plan.json","target_record_id":"record","authority":"source_verified"}
+    edge={"edge_id":"projection_edge","source_node_id":"projection","target_node_id":"criterion","relationship":"projects_record_for_criterion","direct_fact_authority":"source_verified","criterion_id":"criterion","criterion_path":[{"edge_id":"projection_edge","traversal":"forward"}],"criterion_basis_authority":"source_verified","origin":"projection_registry","reference_ids":["record","launch-measurement-plan.json"]}
+    verification={"record_id":"record","record_kind":"gap","criterion_id":"criterion","journey_id":None,"authority":"source_verified","destination":"launch-measurement-plan.json","target_record_id":"record"}
+    return {"schema_version":"measurement-ai-overlay.v3","release_id":"r","release_commit":"a"*40,"product_intent_semantic_hash":"sha256:"+"1"*64,"graph_semantic_hash":"sha256:"+"2"*64,"nodes":[node],"edges":[edge],"projection_verification":[verification]}
+
+@pytest.mark.parametrize(("case","message"),[("empty_scope","scoped"),("unknown_criterion","dangling"),("wrong_criterion","criterion mismatch"),("duplicate","duplicate"),("wrong_authority","authority mismatch"),("missing_destination","destination"),("wrong_destination","destination"),("record_target_mismatch","record and target"),("missing_edge","typed edge"),("edge_wrong_criterion","criterion mismatch")])
+def test_projection_invariants_fail_in_isolation(case,message):
+    value=_valid_projection_overlay();base={"criterion"}
+    if case=="empty_scope":value["nodes"][0]["criterion_ids"]=[]
+    elif case=="unknown_criterion":value["nodes"][0]["criterion_ids"]=["unknown"];value["edges"][0]["target_node_id"]=value["edges"][0]["criterion_id"]="unknown";value["projection_verification"][0]["criterion_id"]="unknown"
+    elif case in {"wrong_criterion","edge_wrong_criterion"}:base.add("other");value["edges"][0]["target_node_id"]=value["edges"][0]["criterion_id"]="other";value["edges"][0]["criterion_path"][0]["edge_id"]="projection_edge"
+    elif case=="duplicate":other=deepcopy(value["nodes"][0]);other["node_id"]="projection_2";value["nodes"].append(other)
+    elif case=="wrong_authority":value["nodes"][0]["authority"]="not_inspected"
+    elif case=="missing_destination":value["nodes"][0]["destination_artifact"]=""
+    elif case=="wrong_destination":value["nodes"][0]["destination_artifact"]="unknown.json"
+    elif case=="record_target_mismatch":value["nodes"][0]["target_record_id"]="other"
+    elif case=="missing_edge":value["edges"]=[]
+    with pytest.raises(ValueError,match=message):validate_overlay(value,base)
+
+def test_projection_verifier_rejects_absent_destination_and_altered_value():
+    authority={"criterion_scoped_basis_authority":"source_verified"};gap={"local_id":"g","gap_id":"gap","gap_kind":"critical_property_gap","aspect_code":"property","summary":"missing","basis_ids":["b"],"basis_path_ids":["p"],"compiled_authority":authority,"permitted_check_id":"DATA_CRITICAL_EVENT_PROPERTIES_PRESENT","confirmed_contradiction":True,"readiness_effect":"gap","derived_effect":"none"};results={"measurement":{"normalized":{"records":[{"criterion_id":"criterion","journey_ids":[],"compiled_authority":authority,"gaps":[gap]}],"recommendations":[]}}}
+    artifacts={"measurement-contract.json":{"contracts":[]},"instrumentation-coverage.json":{"event_candidates":[],"property_assessments":[],"test_candidates":[],"runtime_bindings":[]},"measurement-ai-readiness.json":{"metric_quality":[],"ai_evaluation":[]},"launch-measurement-plan.json":{"gaps":[],"warnings":[],"owner_confirmation_proposals":[]},"measurement-ai-overlay.json":{"nodes":[]}}
+    with pytest.raises(ValueError,match="missing canonical projection"):verify_projected_records(results,artifacts)
+    artifacts["launch-measurement-plan.json"]["gaps"]=[semantic_without_local_ids(gap)];artifacts["launch-measurement-plan.json"]["gaps"][0]["summary"]="altered"
+    with pytest.raises(ValueError,match="altered canonical projection"):verify_projected_records(results,artifacts)
+
+def test_projection_positive_covers_every_required_substantive_record_kind():
+    kinds=("contract_proposal","property_assertion","metric_dimension","ai_maturity_rung","ai_claim_assessment","llm_judge_assessment","recommendation","exception_analysis","verifier_disposition","owner_confirmation_proposal")
+    value=_valid_projection_overlay();value["nodes"]=[];value["edges"]=[];value["projection_verification"]=[]
+    for index,kind in enumerate(kinds):
+        rid=f"record_{index}";nid=f"projection_{index}";eid=f"projection_edge_{index}";destination="measurement-ai-readiness.json" if kind in {"metric_dimension","ai_maturity_rung","ai_claim_assessment","llm_judge_assessment","verifier_disposition"} else "measurement-contract.json" if kind=="contract_proposal" else "launch-measurement-plan.json"
+        value["nodes"].append({"node_id":nid,"node_type":"projection_reference","provenance":"measurement_ai_compiler","criterion_ids":["criterion"],"journey_id":"journey" if kind in {"contract_proposal","owner_confirmation_proposal"} else None,"record_kind":kind,"canonical_record_id":rid,"destination_artifact":destination,"target_record_id":rid,"authority":"source_verified"})
+        value["edges"].append({"edge_id":eid,"source_node_id":nid,"target_node_id":"criterion","relationship":"projects_record_for_criterion","direct_fact_authority":"source_verified","criterion_id":"criterion","criterion_path":[{"edge_id":eid,"traversal":"forward"}],"criterion_basis_authority":"source_verified","origin":"projection_registry","reference_ids":[rid,destination]})
+        value["projection_verification"].append({"record_id":rid,"record_kind":kind,"criterion_id":"criterion","journey_id":"journey" if kind in {"contract_proposal","owner_confirmation_proposal"} else None,"authority":"source_verified","destination":destination,"target_record_id":rid})
+    assert validate_overlay(value,{"criterion"})==value
+
+def test_typed_basis_cannot_cross_measurement_and_ai_roles():
+    measurement={"basis_registry":[{"basis_id":"ai","basis_type":"ai_fixed_input_definition","role_ids":["ai_evaluation"],"criterion_ids":["criterion"],"direct_fact_authority":"source_verified"}],"basis_paths":[]};record={"criterion_id":"criterion","semantic_review_authority":"model_reviewed_with_curated_guidance"};item={"state":"established","basis_ids":["ai"],"basis_path_ids":[]}
+    with pytest.raises(ValueError,match="unavailable prepared basis"):_typed_authority(item,record,measurement,"measurement","event_candidate")
+    ai={"basis_registry":[{"basis_id":"event","basis_type":"instrumentation_event_definition","role_ids":["measurement"],"criterion_ids":["criterion"],"direct_fact_authority":"source_verified"}],"basis_paths":[]};item["basis_ids"]=["event"]
+    with pytest.raises(ValueError,match="unavailable prepared basis"):_typed_authority(item,record,ai,"ai_evaluation","fixed_input")
+
 
 def test_declared_external_definition_is_not_source_content_proof(tmp_path):
     ctx=assessment_context(tmp_path);inputs=load_assessment_input(ctx);cid=next(i["criterion_id"] for i in inputs["intent_artifacts"]["acceptance-criteria.json"]["criteria"]);root=domain_root(ctx)/"inputs";root.mkdir(parents=True);app=default_applicability();app["measurement"]["criterion_ids"]=[cid];app["measurement"]["measurement_definition_paths"]=[{"path":"external/metric-contract.md","requirement_ids":[],"criterion_ids":[cid],"journey_ids":[],"declared_external":True}];path=root/"external.json";path.write_text(json.dumps(app),encoding="utf-8");info=prepare(ctx,applicability_path=str(path));place_result(ctx,info["preparation_id"],"measurement",assessed_record(cid));compile_generation(ctx,info["preparation_id"]);_,artifacts=load_generation(ctx);definition=artifacts["measurement-contract.json"]["downstream_definitions"][0]
@@ -565,6 +719,12 @@ def test_external_execution_and_out_of_root_writes_are_forbidden(tmp_path,monkey
     import shiproom.authority as authority_module
     monkeypatch.setattr(authority_module,"run_bounded_command",lambda *a,**k:(_ for _ in ()).throw(AssertionError("command forbidden")));monkeypatch.setattr(socket,"create_connection",lambda *a,**k:(_ for _ in ()).throw(AssertionError("network forbidden")));monkeypatch.setattr(urllib.request,"urlopen",lambda *a,**k:(_ for _ in ()).throw(AssertionError("HTTP forbidden")))
     ctx=conventional_context(tmp_path);info=prepare(ctx);compile_generation(ctx,info["preparation_id"]);load_generation(ctx);show(ctx)
+
+def test_each_prohibited_external_operation_is_attempted_rejected_and_side_effect_free():
+    for operation in ("model_execution","project_command","network_socket","http_or_browser","sql_execution","warehouse_or_bi_client","tracing_or_external_service","external_evaluation_execution"):
+        receipt=[]
+        with pytest.raises(PermissionError,match=operation):reject_external_operation(operation,receipt)
+        assert receipt==[{"operation":operation,"attempted":True,"rejected":True,"external_side_effect":False,"reason_code":"measurement_ai_external_operation_forbidden"}]
 
 
 def test_recomputed_superficial_hash_tamper_preserves_pointer(tmp_path):
