@@ -228,3 +228,17 @@ The result never hashes itself. The separate completion receipt binds the exact 
 Browser work is issued only for `browser_or_http` criteria with an exact release-authorized target plus available and granted browser capability. Every assessed criterion needs a same-criterion observation, every observation needs exclusively owned evidence, and every judgment cites a same-criterion observation. URLs are absolute ASCII HTTP(S), fragments are forbidden, queries remain exact, and the bounded redirect chain must start at an issued URL, end at the reported final URL, and remain inside the grant. Evidence paths are strict casefold-unique POSIX paths and the evidence directory must contain exactly the declared regular files. Bound PNG, JPEG, JSON, JSONL, or UTF-8 text artifacts are observations, not product truth by themselves. Invalid receipts, timestamps, media bytes, hashes, paths, redirects, or grants reject the whole browser result. A browser observation cannot establish implementation, test adequacy, finding closure, or verdict change.
 
 `effective-assessment-view.v3` is derived-only. It exposes browser observation authority and model-reviewed judgment authority separately, with their respective IDs. It keeps the authoritative base evidence dimensions separate from Product, Engineering, test-adequacy, targeted-test, and browser judgments; it is never a replacement Requirement-to-Evidence Graph.
+
+## Sessions 6–8 private-alpha workflow
+
+Remediation roadmaps and closure contracts are packet-only and read-only:
+`shiproom remediation-roadmap` can prepare, compile, show, and verify a closure
+candidate, but never edits a reviewed repository or closes a canonical finding.
+Adaptive review plans use a closed specialist catalogue and generic manual,
+Codex-package, or Hermes adapter transport; transport does not affect semantic
+results. Contestability is append-only, preserves original evidence, and needs
+validated owner authority for named-risk acceptance. Management artifacts are
+local canonical JSON with escaped self-contained HTML persona views; GitHub
+output is JSON plus Markdown only and is never posted. Data Engineering,
+unrestricted remediation, automatic PR/merge/deployment, and hosted operation
+remain deferred. See `docs/pilots/` for disposable local pilot guidance.

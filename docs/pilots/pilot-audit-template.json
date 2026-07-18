@@ -1,0 +1,1 @@
+{"schema_version":"shiproom.pilot-audit-template.v1","fields":["repository","release_brief","capabilities","credentials_absent","pm_usefulness","em_usefulness","measurement_usefulness","false_positives","false_negatives","setup_friction","duration","harness_provenance","limitations","p0_p1_triage"]}

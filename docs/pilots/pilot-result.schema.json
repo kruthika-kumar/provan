@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"shiproom.pilot-result.v1","type":"object","additionalProperties":false,"required":["repository_label","audit","limitations"],"properties":{"repository_label":{"type":"string","minLength":1},"audit":{"type":"object"},"limitations":{"type":"array"}}}

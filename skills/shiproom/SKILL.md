@@ -227,3 +227,20 @@ Record native trace identifiers without editing JSON manually:
 ```powershell
 shiproom trace record --release release-state/release.json --live-url <worker-url> --hermes-session-id <session-id> --github-repository kruthika-kumar/shiproom --github-pr-number <number> --github-pr-id <id> --github-comment-id <id> --github-comment-url <url> --cloudflare-deployment-id <id> --report-url <public-report-url>
 ```
+
+## Sessions 6–8 private-alpha extensions
+
+Use remediation roadmaps only as packet-only recommendations. Do not edit the
+reviewed repository, create a PR, merge, deploy, or close a canonical finding
+from private-alpha output. Closure verification returns a candidate status only
+and requires an independent verifier.
+
+Use the closed review-plan specialist catalogue and exact result schemas. A
+manual reviewer, Codex execution package, or Hermes adapter is transport
+provenance, not semantic authority. Do not invent specialists, prompts, or
+Data Engineering capability.
+
+Contestation appends actions without rewriting prior evidence. A named-risk
+action requires an existing release-bound owner authority reference. Management
+artifacts render canonical state locally; GitHub payloads are generated but are
+never posted. Preserve unknowns, candidate authority, and independence limits.
