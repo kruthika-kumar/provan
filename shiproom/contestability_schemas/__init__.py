@@ -1,0 +1,1 @@
+"""Packaged contestability schema resources."""
