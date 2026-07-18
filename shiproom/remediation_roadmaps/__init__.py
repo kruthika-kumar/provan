@@ -153,17 +153,34 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
     if not path.exists():
         return None
     safe_entry(path, directory=False, label="remediation_planner_result")
+    receipt_path = path.with_name("completion-receipt.json")
+    if not receipt_path.exists():
+        raise ValueError("planner_completion_receipt_missing")
+    safe_entry(receipt_path, directory=False, label="remediation_planner_receipt")
     value = json.loads(path.read_text(encoding="utf-8"))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     fields = {"schema_version", "work_order_id", "preparation_id", "records", "assumptions", "limitations"}
     if set(value) != fields or value["schema_version"] != PLANNER_RESULT_SCHEMA or value["work_order_id"] != work["work_order_id"] or value["preparation_id"] != manifest["preparation_id"]:
         raise ValueError("planner_result_binding_mismatch")
+    if set(receipt) != {"schema_version", "work_order_id", "result_snapshot_hash", "executor"} or receipt["schema_version"] != PLANNER_RECEIPT_SCHEMA or receipt["work_order_id"] != work["work_order_id"] or receipt["result_snapshot_hash"] != _sha(path.read_bytes()):
+        raise ValueError("planner_completion_receipt_invalid")
+    executor = receipt["executor"]
+    if not isinstance(executor, dict) or executor.get("executor_type") not in {"human", "agent_harness"}:
+        raise ValueError("planner_executor_invalid")
+    authority = "model_reviewed" if executor["executor_type"] == "agent_harness" else "human_reviewed"
+    owner_ref = executor.get("owner_authority_ref")
+    if owner_ref is not None:
+        valid = [item for item in ctx.release.get("owner_authorities", []) if item.get("authority_id") == owner_ref and item.get("release_id") == ctx.release["release_id"] and item.get("snapshot_hash") == executor.get("owner_authority_snapshot_hash")]
+        if not valid:
+            raise ValueError("planner_owner_authority_invalid")
+        authority = "owner_declared"
     if not isinstance(value["records"], list) or len(value["records"]) != len(work["assigned_issue_ids"]):
         raise ValueError("planner_coverage_incomplete")
     records = {}
     for record in value["records"]:
         if set(record) != {"source_issue_id", *PLANNER_FIELDS} or record["source_issue_id"] not in work["assigned_issue_ids"] or record["source_issue_id"] in records:
             raise ValueError("planner_authority_field_forbidden")
-        records[record["source_issue_id"]] = {name: {"authority": "human_reviewed", "value": record[name]} for name in PLANNER_FIELDS} | {"assumptions": value["assumptions"], "limitations": value["limitations"]}
+        records[record["source_issue_id"]] = {name: {"authority": authority, "value": record[name]} for name in PLANNER_FIELDS} | {"assumptions": value["assumptions"], "limitations": value["limitations"]}
     return {"records_by_issue": records}
 
 

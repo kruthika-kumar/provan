@@ -36,3 +36,22 @@ def test_remediation_prepare_compile_without_optional_planner(tmp_path, monkeypa
     packet=json.loads(packets[0].read_text(encoding="utf-8"))
     assert packet["automation_eligibility"] == "bounded_fix_available"
     assert packet["root_cause_hypotheses"] == {"authority":"not_inspected","value":None}
+
+
+def test_planner_human_cannot_self_declare_owner(tmp_path, monkeypatch):
+    import shiproom.remediation_roadmaps as domain
+    context=_context(tmp_path)
+    authority={"release_id":"rel_remediation","release_commit":"a" * 40,"product_intent":_dependency("not_used"),"graph":_dependency("not_used"),"assessment":_dependency("not_used"),"measurement_ai":_dependency("not_used")}
+    issue={"source_issue_type":"finding","source_issue_id":"finding_1","criterion_id":"criterion_1","requirement_id":"requirement_1","journey_ids":[],"issue_classification":"verified_blocker","issue_authority":"deterministically_established","evidence_refs":[],"automation_class":None}
+    monkeypatch.setattr(domain,"_authority",lambda ctx:authority); monkeypatch.setattr(domain,"_issue_records",lambda ctx,a:[issue])
+    prepared=prepare(context); work=prepared["planner_work_order"]; inbox=domain.root(context)/"inbox"/prepared["preparation_id"]/work["work_order_id"]; inbox.mkdir(parents=True)
+    result={"schema_version":"remediation-planner-result.v1","work_order_id":work["work_order_id"],"preparation_id":prepared["preparation_id"],"records":[{"source_issue_id":"finding_1","root_cause_hypotheses":[],"recommended_changes":[],"test_proposals":[],"instrumentation_implications":[],"rollback_suggestions":[],"complexity":"low","risk":"low","suggested_owner":"owner"}],"assumptions":[],"limitations":[]}
+    raw=(json.dumps(result,sort_keys=True)+"\n").encode(); (inbox/"result.json").write_bytes(raw)
+    receipt={"schema_version":"remediation-planner-completion-receipt.v1","work_order_id":work["work_order_id"],"result_snapshot_hash":"sha256:"+__import__("hashlib").sha256(raw).hexdigest(),"executor":{"executor_type":"human","owner_authority_ref":"invented","owner_authority_snapshot_hash":"sha256:"+"0"*64}}
+    (inbox/"completion-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
+    try:
+        compile(context,prepared["preparation_id"])
+    except ValueError as error:
+        assert str(error) == "planner_owner_authority_invalid"
+    else:
+        raise AssertionError("self-declared human owner authority was accepted")
