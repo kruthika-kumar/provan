@@ -35,6 +35,7 @@ from .measurement_ai.verifier import prepare_verifier
 from .remediation_roadmaps import prepare as prepare_remediation, compile as compile_remediation, load_generation as load_remediation, closure_verify as verify_remediation_closure
 from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan
 from .contestability import append_action as append_contestation, load as load_contestation
+from .management_artifacts import compile as compile_management, load as load_management
 
 
 def load(path: Path) -> dict:
@@ -68,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
     remediation = sub.add_parser("remediation-roadmap"); remediation.add_argument("action", choices=["prepare", "compile", "show", "closure-verify"]); remediation.add_argument("--release", required=True); remediation.add_argument("--preparation"); remediation.add_argument("--closure-contract"); remediation.add_argument("--evidence")
     review_plan = sub.add_parser("review-plan"); review_plan.add_argument("action", choices=["prepare", "show", "adapt"]); review_plan.add_argument("--release", required=True); review_plan.add_argument("--trigger"); review_plan.add_argument("--specialist"); review_plan.add_argument("--criterion"); review_plan.add_argument("--evidence-id")
     contest = sub.add_parser("contestation"); contest.add_argument("action", choices=["add", "show"]); contest.add_argument("--release", required=True); contest.add_argument("--input")
+    management = sub.add_parser("management-artifacts"); management.add_argument("action", choices=["compile", "show"]); management.add_argument("--release", required=True)
     args = parser.parse_args(argv)
     registry = discover()
     if args.command == "measurement-ai":
@@ -123,6 +125,11 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if args.input: raise SystemExit("contestation show accepts only --release")
             manifest,artifacts=load_contestation(context); print(json.dumps({"generation":manifest["generation"],"ledger":artifacts["contestation-ledger.json"]},indent=2))
+    elif args.command == "management-artifacts":
+        data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)
+        if args.action=="compile": print(json.dumps(compile_management(context),indent=2))
+        else:
+            manifest,artifacts=load_management(context); print(json.dumps({"generation":manifest["generation"],"index":artifacts["release-packet-index"]},indent=2))
     elif args.command == "assessment":
         data = load(Path(args.release)); context = LocalExecutionContext.from_release(data)
         if args.action == "prepare":
