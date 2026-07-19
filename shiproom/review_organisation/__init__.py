@@ -127,7 +127,9 @@ def _vector(ctx:LocalExecutionContext)->dict:
     # A filename-like hint is a candidate surface only. It cannot establish selection.
     ai_candidates=[path for path in paths if "ai" in path.lower() or "prompt" in path.lower()]
     migration_candidates=[path for path in paths if "migration" in path.lower()]
-    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":{"declared_capability":"manual_external","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}}
+    change_impact = ctx.release.get("change_impact", {})
+    migration_confirmed = bool(change_impact.get("migration_surface"))
+    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":{"declared_capability":"manual_external","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}}
 
 
 def _selection(vector:dict)->list[dict]:
@@ -266,6 +268,9 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
         successor["revision-ledger.json"] = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
         new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
         return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
+    if specialist_id != "migration_and_rollback":
+        raise ValueError("native_result_requires_native_boundary")
+    validate_migration_result(result)
     criterion_ids = result.get("criterion_ids")
     if not isinstance(criterion_ids, list) or len(criterion_ids) != 1 or not isinstance(criterion_ids[0], str):
         raise ValueError("accepted_result_criterion_link_missing")

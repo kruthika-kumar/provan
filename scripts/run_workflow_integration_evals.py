@@ -146,12 +146,13 @@ def main() -> int:
     run(CASES[6], browser_skip)
     def adaptation():
         with tempfile.TemporaryDirectory() as raw:
-            ctx, cid = _fixture(Path(raw)); prepare_review(ctx)
+            ctx, cid = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; prepare_review(ctx)
             manifest, _ = load_review(ctx)
             order_dir = Path(ctx.repository_root) / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "review-organisation" / "generations" / manifest["generation"] / "specialist-work-orders"
-            work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "product_intent")
-            accepted = submit_result(ctx, "product_intent", {"schema_version": "intent-proposal.v1", "work_order_id": work["work_order_id"], "criterion_ids": [cid]}, {"work_order_id": work["work_order_id"]})
-            adapted = adapt(ctx, "migration_surface_discovered", "product_intent", cid, accepted["result_id"])
+            work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
+            result = {"schema_version": "migration-and-rollback-result.v1", "work_order_id": work["work_order_id"], "criterion_ids": [cid], "evidence_refs": [], "rollback_required": False, "limitations": []}
+            accepted = submit_result(ctx, "migration_and_rollback", result, {"work_order_id": work["work_order_id"]})
+            adapted = adapt(ctx, "migration_surface_discovered", "migration_and_rollback", cid, accepted["result_id"])
             return adapted["status"] == "accepted", ["shiproom.review_organisation.prepare", "shiproom.review_organisation.adapt"], {"generation": adapted["generation"]}
     run(CASES[7], adaptation)
     def revisions():

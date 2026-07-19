@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from shiproom.review_organisation import _dep, _selection, registry, submit_result
 
 
@@ -56,3 +58,23 @@ def test_review_plan_loader_rejects_pointer_tamper(tmp_path, monkeypatch):
     try: domain.load(context)
     except ValueError as error: assert str(error)=="review_plan_pointer_tampered"
     else: raise AssertionError("tampered review pointer accepted")
+
+
+def test_adaptation_requires_an_accepted_specialist_result(tmp_path):
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle, load_assessment_input
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path, multi_criteria=True)
+    compile_bundle(context)
+    criterion_id = load_assessment_input(context)["intent_artifacts"]["acceptance-criteria.json"]["criteria"][0]["criterion_id"]
+    context.release["change_impact"] = {"migration_surface": True}
+    manifest = domain.prepare(context)
+    with pytest.raises(ValueError, match="adaptation_evidence_unlinked"):
+        domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, "untrusted_prose")
+    order_dir = domain.root(context) / "generations" / manifest["generation"] / "specialist-work-orders"
+    work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
+    result = {"schema_version": "migration-and-rollback-result.v1", "work_order_id": work["work_order_id"], "criterion_ids": [criterion_id], "evidence_refs": [], "rollback_required": False, "limitations": []}
+    accepted = domain.submit_result(context, "migration_and_rollback", result, {"work_order_id": work["work_order_id"]})
+    adapted = domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, accepted["result_id"])
+    assert adapted["status"] == "accepted"
