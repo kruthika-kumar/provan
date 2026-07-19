@@ -9,6 +9,10 @@ def test_management_section_registry_is_closed_and_github_has_no_html():
     value=json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text())
     assert set(value["artifacts"]) == {"executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","github-summary-payload"}
     assert "github-summary-html" not in value["artifacts"]
+    required={"section_id","source_dependencies","required_when","record_source","minimum_records","typed_empty_state","authority_passthrough"}
+    specs=[spec for values in value["artifacts"].values() for spec in values]
+    assert specs and all(set(spec)==required and spec["source_dependencies"] for spec in specs)
+    assert all(spec["record_source"]=="measurement_ai_canonical_projection" for spec in value["artifacts"]["measurement-ai-readiness"])
 
 
 def test_recommendation_policy_is_derived_not_a_renderer_choice():

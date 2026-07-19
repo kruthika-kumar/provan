@@ -44,15 +44,29 @@ def dependency_vector(ctx:LocalExecutionContext)->dict:
     contest_state, contest=optional("contestability/current-contestation-generation.json",load_contestation)
     return {"schema_version":"artifact-dependency-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",upstream["graph_generation"],upstream["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",upstream["graph_generation"],upstream["graph_manifest"]["semantic_bundle_hash"]),"assessment":assessment_state,"measurement_ai":measurement_state,"remediation":remediation_state,"review_plan":review_state,"contestability":contest_state,"_loaded":{"assessment":assessment,"measurement":measurement,"remediation":remediation,"review":review,"contest":contest}}
 
-def _sections(name:str)->list[str]:return json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text())["artifacts"][name]
+def _section_specs(name: str) -> list[dict]:
+    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text())
+    specs = value.get("artifacts", {}).get(name)
+    required = {"section_id", "source_dependencies", "required_when", "record_source", "minimum_records", "typed_empty_state", "authority_passthrough"}
+    if value.get("schema_version") != "management-artifact-section-registry.v1" or not isinstance(specs, list) or not specs:
+        raise ValueError("management_section_registry_invalid")
+    ids = []
+    for spec in specs:
+        if set(spec) != required or not isinstance(spec["section_id"], str) or not spec["section_id"] or not isinstance(spec["source_dependencies"], list) or not spec["source_dependencies"] or not isinstance(spec["minimum_records"], int) or spec["minimum_records"] < 0 or not isinstance(spec["authority_passthrough"], bool):
+            raise ValueError("management_section_registry_invalid")
+        ids.append(spec["section_id"])
+    if len(ids) != len(set(ids)):
+        raise ValueError("management_section_registry_invalid")
+    return specs
+
+
+def _sections(name: str) -> list[str]:
+    return [item["section_id"] for item in _section_specs(name)]
 
 
 def _section_contracts(name: str) -> list[dict]:
-    """Make every registered section explicit in canonical artifacts, including emptiness semantics."""
-    return [{"section_id": section, "source_dependencies": ["product_intent", "graph"],
-             "required_when": "source_records_present", "record_source": "canonical_dependency_vector",
-             "minimum_records": 1, "typed_empty_state": "not_used_or_unavailable",
-             "authority_passthrough": True} for section in _sections(name)]
+    """Return the packaged exact sections; artifacts may not invent their own."""
+    return _section_specs(name)
 def _recommendation_policy() -> dict:
     value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text())
     required = {"schema_version", "statuses", "required_inputs", "rules", "unknown_dependency_states", "rule"}
