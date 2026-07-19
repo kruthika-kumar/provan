@@ -33,7 +33,7 @@ from .measurement_ai.rendering import show as show_measurement_ai
 from .measurement_ai.qualification import prepare_qualification, compile_qualification
 from .measurement_ai.verifier import prepare_verifier
 from .remediation_roadmaps import prepare as prepare_remediation, compile as compile_remediation, load_generation as load_remediation, closure_verify as verify_remediation_closure
-from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan
+from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result as submit_review_result
 from .contestability import append_action as append_contestation, load as load_contestation
 from .management_artifacts import compile as compile_management, load as load_management
 
@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     assessment = sub.add_parser("assessment"); assessment.add_argument("action", choices=["prepare", "compile", "show"]); assessment.add_argument("--release", required=True); assessment.add_argument("--capabilities"); assessment.add_argument("--base-commit"); assessment.add_argument("--path", action="append", default=[]); assessment.add_argument("--preparation"); assessment.add_argument("--criterion")
     measurement_ai = sub.add_parser("measurement-ai"); measurement_ai.add_argument("action", choices=["prepare", "compile", "show", "qualification", "verifier"]); measurement_ai.add_argument("qualification_action", nargs="?", choices=["prepare","compile"]); measurement_ai.add_argument("--release", required=True); measurement_ai.add_argument("--review-mode", choices=["contract_only","guided_review","expert_escalated_review"], default="contract_only"); measurement_ai.add_argument("--capabilities"); measurement_ai.add_argument("--applicability"); measurement_ai.add_argument("--review-capabilities"); measurement_ai.add_argument("--permission"); measurement_ai.add_argument("--path", action="append", default=[]); measurement_ai.add_argument("--preparation"); measurement_ai.add_argument("--verifier-preparation", action="append", default=[]); measurement_ai.add_argument("--role", choices=["measurement","ai_evaluation"]); measurement_ai.add_argument("--journey"); measurement_ai.add_argument("--result")
     remediation = sub.add_parser("remediation-roadmap"); remediation.add_argument("action", choices=["prepare", "compile", "show", "closure-verify"]); remediation.add_argument("--release", required=True); remediation.add_argument("--preparation"); remediation.add_argument("--closure-contract"); remediation.add_argument("--evidence")
-    review_plan = sub.add_parser("review-plan"); review_plan.add_argument("action", choices=["prepare", "show", "adapt"]); review_plan.add_argument("--release", required=True); review_plan.add_argument("--trigger"); review_plan.add_argument("--specialist"); review_plan.add_argument("--criterion"); review_plan.add_argument("--evidence-id")
+    review_plan = sub.add_parser("review-plan"); review_plan.add_argument("action", choices=["prepare", "show", "render-package", "submit-result", "adapt"]); review_plan.add_argument("--release", required=True); review_plan.add_argument("--trigger"); review_plan.add_argument("--specialist"); review_plan.add_argument("--criterion"); review_plan.add_argument("--evidence-id"); review_plan.add_argument("--result"); review_plan.add_argument("--receipt")
     contest = sub.add_parser("contestation"); contest.add_argument("action", choices=["add", "show"]); contest.add_argument("--release", required=True); contest.add_argument("--input")
     management = sub.add_parser("management-artifacts"); management.add_argument("action", choices=["compile", "show"]); management.add_argument("--release", required=True)
     args = parser.parse_args(argv)
@@ -89,6 +89,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.action == "compile":
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.journey or args.role: raise SystemExit("measurement-ai compile accepts only --release, optional --preparation, and verifier preparations")
             print(json.dumps(compile_measurement_ai(context,args.preparation,args.verifier_preparation),indent=2))
+        elif args.action == "render-package":
+            if not args.specialist: raise SystemExit("review-plan render-package requires --release --specialist")
+            print(json.dumps(render_review_package(context,args.specialist),indent=2))
+        elif args.action == "submit-result":
+            if not args.specialist or not args.result or not args.receipt: raise SystemExit("review-plan submit-result requires --release --specialist --result --receipt")
+            print(json.dumps(submit_review_result(context,args.specialist,json.loads(Path(args.result).read_text(encoding="utf-8")),json.loads(Path(args.receipt).read_text(encoding="utf-8"))),indent=2))
         else:
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.preparation or args.verifier_preparation or args.role: raise SystemExit("measurement-ai show accepts only --release and optional --journey")
             print(show_measurement_ai(context,args.journey))
