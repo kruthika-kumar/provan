@@ -35,9 +35,16 @@ def test_second_invalid_submission_fails_only_the_specialist(tmp_path, monkeypat
     manifest={"generation":"plan_1"}
     artifacts={"review-plan.json":{"specialists":[{"specialist_id":"python_engineering","state":"selected"}]},"revision-ledger.json":{"entries":[]}}
     monkeypatch.setattr(domain,"load",lambda ctx:(manifest,artifacts))
+    monkeypatch.setattr(domain,"_publish_successor",lambda ctx, manifest, artifacts, label:{"generation":"plan_successor"})
     first=submit_result(context,"python_engineering",{},{}); assert first["status"]=="revision_required"
     artifacts["revision-ledger.json"]["entries"]=[{"specialist_id":"python_engineering"}]
     second=submit_result(context,"python_engineering",{},{}); assert second["status"]=="specialist_failed_closed"
+
+
+def test_registry_symbols_and_contract_pairings_resolve():
+    import shiproom.review_organisation as domain
+    value=domain.validate_specialist_registries()
+    assert len(value["registry"]["specialists"]) == len(value["native_boundaries"]["specialists"])
 
 
 def test_review_plan_loader_rejects_pointer_tamper(tmp_path, monkeypatch):

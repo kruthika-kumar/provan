@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import uuid
 from importlib import resources
@@ -46,6 +47,77 @@ def surface_policy() -> dict:
     return json.loads(resources.files("shiproom.review_organisation").joinpath("review-surface-policy.v1.json").read_text(encoding="utf-8"))
 
 
+def _resolve_symbol(value: str) -> object:
+    """Resolve a published native boundary without treating a prose name as proof.
+
+    The registry is part of the compiler's authority surface.  A typo, a removed
+    native validator, or a cross-specialist contract is an unavailable boundary,
+    never an invitation for the planner to synthesize a weaker substitute.
+    """
+    module_name, separator, attribute = value.rpartition(".")
+    if not separator:
+        raise ValueError("specialist_native_boundary_symbol_invalid")
+    module = importlib.import_module(module_name)
+    target = getattr(module, attribute, None)
+    if not callable(target):
+        raise ValueError("specialist_native_boundary_symbol_invalid")
+    return target
+
+
+def validate_specialist_registries() -> dict:
+    """Validate the fixed specialist/result/native/surface contract matrix."""
+    result = registry()
+    boundaries = native_boundaries()
+    policy = surface_policy()
+    specialists = result.get("specialists")
+    native = boundaries.get("specialists")
+    signals = policy.get("signals")
+    if not isinstance(specialists, list) or not isinstance(native, list) or not isinstance(signals, list):
+        raise ValueError("specialist_registry_invalid")
+    ids = [item.get("specialist_id") for item in specialists]
+    native_ids = [item.get("specialist_id") for item in native]
+    if not ids or len(ids) != len(set(ids)) or set(ids) != set(native_ids):
+        raise ValueError("specialist_registry_cardinality_invalid")
+    by_id = {item["specialist_id"]: item for item in specialists}
+    required_native = {"specialist_id", "native_prepare_function", "native_work_order_contract", "native_context_contract", "native_result_contract", "native_result_validator", "native_completion_receipt_contract", "accepted_result_projection"}
+    for boundary in native:
+        if set(boundary) != required_native:
+            raise ValueError("specialist_native_boundary_invalid")
+        specialist = by_id[boundary["specialist_id"]]
+        if specialist.get("result_schema") != boundary["native_result_contract"]:
+            raise ValueError("specialist_result_contract_mismatch")
+        _resolve_symbol(boundary["native_prepare_function"])
+        _resolve_symbol(boundary["native_result_validator"])
+    seen_signals = set()
+    required_signal = {"signal_type", "source_domain", "source_authority", "surface", "maximum_applicability_authority", "permitted_selection_effect", "permitted_adaptation_effect"}
+    for signal in signals:
+        if set(signal) != required_signal or signal["signal_type"] in seen_signals or signal["surface"] not in by_id:
+            raise ValueError("review_surface_policy_invalid")
+        seen_signals.add(signal["signal_type"])
+        if signal["maximum_applicability_authority"] not in AUTHORITIES:
+            raise ValueError("review_surface_policy_invalid")
+    return {"registry": result, "native_boundaries": boundaries, "surface_policy": policy}
+
+
+def validate_migration_result(value: dict) -> dict:
+    """Native closed validator for the only Session 7-specific specialist result.
+
+    It deliberately does not accept a generic ``details`` bag: the planner can
+    transport this result but cannot turn an arbitrary specialist payload into a
+    migration authority.
+    """
+    required = {"schema_version", "work_order_id", "criterion_ids", "evidence_refs", "rollback_required", "limitations"}
+    if not isinstance(value, dict) or set(value) != required:
+        raise ValueError("migration_result_shape_invalid")
+    if value["schema_version"] != "migration-and-rollback-result.v1" or not isinstance(value["work_order_id"], str) or not value["work_order_id"]:
+        raise ValueError("migration_result_binding_invalid")
+    if not isinstance(value["criterion_ids"], list) or not value["criterion_ids"] or any(not isinstance(item, str) or not item for item in value["criterion_ids"]):
+        raise ValueError("migration_result_criteria_invalid")
+    if not isinstance(value["evidence_refs"], list) or not isinstance(value["rollback_required"], bool) or not isinstance(value["limitations"], list):
+        raise ValueError("migration_result_shape_invalid")
+    return value
+
+
 def _vector(ctx:LocalExecutionContext)->dict:
     graph=load_assessment_input(ctx); nodes=graph["graph_artifacts"]["requirement-evidence-graph.json"].get("nodes",[])
     paths=sorted({node.get("path") for node in nodes if isinstance(node.get("path"),str)})
@@ -75,6 +147,7 @@ def _selection(vector:dict)->list[dict]:
 
 
 def prepare(ctx:LocalExecutionContext)->dict:
+    validate_specialist_registries()
     vector=_vector(ctx); plan_id=_stable("review_plan",vector); generation="plan_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="review_plan_generation")
     selected=_selection(vector); work_orders=[]
     for item in selected:
@@ -105,6 +178,31 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     return manifest,artifacts
 
 
+def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: dict, *, label: str) -> dict:
+    """Publish an immutable review-plan successor and replace the pointer last."""
+    new_generation = "plan_" + uuid.uuid4().hex
+    output = ensure_directory(ctx.repository_root, root(ctx) / "generations" / new_generation, label=label)
+    for name, value in artifacts.items():
+        write_bytes(ctx.repository_root, output / name, _json(value), label=label + "_artifact")
+    prior_orders = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    for path in checked_children(ctx.repository_root, prior_orders, label="prior_specialist_work_orders"):
+        if path.suffix != ".json":
+            raise ValueError("specialist_work_order_file_invalid")
+        read_json(ctx.repository_root, path, label="prior_specialist_work_order")
+        write_bytes(ctx.repository_root, output / "specialist-work-orders" / path.name, read_bytes(ctx.repository_root, path, label="prior_specialist_work_order"), label=label + "_work_order")
+    new_manifest = {"schema_version": "review-plan-generation-manifest.v1", "compiler_version": COMPILER_VERSION,
+                    "generation": new_generation, "plan_id": manifest["plan_id"], "input_vector": manifest["input_vector"],
+                    "artifact_hashes": {name: _hash(_json(value)) for name, value in artifacts.items()},
+                    "semantic_bundle_hash": content_hash({"plan": artifacts["review-plan.json"], "events": artifacts["plan-events.json"]}),
+                    "bundle_hash": ""}
+    new_manifest["bundle_hash"] = content_hash({key: value for key, value in new_manifest.items() if key != "bundle_hash"})
+    write_bytes(ctx.repository_root, output / "manifest.json", _json(new_manifest), label=label + "_manifest")
+    # The pointer is deliberately the final write: a failed successor leaves the
+    # previously readable plan authoritative.
+    replace_bytes(ctx.repository_root, root(ctx) / "current-review-plan.json", _json({"schema_version": "current-review-plan.v1", "generation": new_generation, "manifest_hash": _hash(_json(new_manifest)), "semantic_bundle_hash": new_manifest["semantic_bundle_hash"]}), label="review_plan_pointer")
+    return new_manifest
+
+
 def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_id:str,evidence_id:str)->dict:
     if trigger not in TRIGGERS:raise ValueError("adaptation_trigger_invalid")
     manifest,artifacts=load(ctx);events=artifacts["plan-events.json"]["events"]
@@ -115,21 +213,11 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
     if source_specialist not in {item["specialist_id"] for item in artifacts["review-plan.json"]["specialists"]}:
         raise ValueError("adaptation_evidence_unlinked")
     event={"event_id":identity,"trigger":trigger,"source_specialist":source_specialist,"criterion_id":criterion_id,"evidence_id":evidence_id}
-    vector=manifest["input_vector"]; new_generation="plan_"+uuid.uuid4().hex
-    output=ensure_directory(ctx.repository_root,root(ctx)/"generations"/new_generation,label="review_plan_adaptation")
     plan=dict(artifacts["review-plan.json"]);plan["adaptation_depth"]+=1;plan["supersedes"]=manifest["generation"]
     new_events={"schema_version":"plan-events.v1","events":events+[event]}
     new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"execution-summary.json":artifacts["execution-summary.json"]}
-    for name,value in new_artifacts.items():write_bytes(ctx.repository_root,output/name,_json(value),label="review_plan_adaptation_artifact")
-    prior_orders = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
-    for path in checked_children(ctx.repository_root, prior_orders, label="prior_specialist_work_orders"):
-        # Decode first so a malformed historical order cannot be copied as opaque bytes.
-        read_json(ctx.repository_root, path, label="prior_specialist_work_order")
-        write_bytes(ctx.repository_root, output / "specialist-work-orders" / path.name, read_bytes(ctx.repository_root, path, label="prior_specialist_work_order"), label="superseded_specialist_work_order")
-    new_manifest={"schema_version":"review-plan-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":new_generation,"plan_id":plan["plan_id"],"input_vector":vector,"artifact_hashes":{name:_hash(_json(value)) for name,value in new_artifacts.items()},"semantic_bundle_hash":content_hash({"plan":plan,"events":new_events}),"bundle_hash":""};new_manifest["bundle_hash"]=content_hash({key:value for key,value in new_manifest.items() if key!="bundle_hash"})
-    write_bytes(ctx.repository_root,output/"manifest.json",_json(new_manifest),label="review_plan_adaptation_manifest")
-    replace_bytes(ctx.repository_root,root(ctx)/"current-review-plan.json",_json({"schema_version":"current-review-plan.v1","generation":new_generation,"manifest_hash":_hash(_json(new_manifest)),"semantic_bundle_hash":new_manifest["semantic_bundle_hash"]}),label="review_plan_pointer")
-    return {"status":"accepted","event":event,"prior_generation":manifest["generation"],"generation":new_generation}
+    new_manifest = _publish_successor(ctx, manifest, new_artifacts, label="review_plan_adaptation")
+    return {"status":"accepted","event":event,"prior_generation":manifest["generation"],"generation":new_manifest["generation"]}
 
 
 def render_package(ctx: LocalExecutionContext, specialist_id: str) -> dict:
@@ -157,7 +245,8 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
         attempt = len(prior) + 1
         entry = {"revision_id": _stable("revision", {"generation": manifest["generation"], "specialist": specialist_id, "attempt": attempt, "reason": invalid[0], "pointers": invalid[1]}), "specialist_id": specialist_id, "attempt": attempt, "reason": invalid[0], "json_pointers": invalid[1], "status": "revision_required" if attempt == 1 else "specialist_failed_closed"}
         ledger = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
-        inbox = ensure_directory(ctx.repository_root, root(ctx) / "revision-ledger" / manifest["generation"], label="revision_ledger")
-        write_bytes(ctx.repository_root, inbox / (entry["revision_id"] + ".json"), _json(entry), label="revision_request")
-        return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"]}
+        successor = dict(artifacts)
+        successor["revision-ledger.json"] = ledger
+        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
+        return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
     return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": result["work_order_id"]}

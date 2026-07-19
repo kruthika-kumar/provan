@@ -90,14 +90,18 @@ def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class:
 
 def _optional_assessment(ctx: LocalExecutionContext) -> tuple[dict, dict] | None:
     pointer = ctx.repository_root / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "assessment" / "current-assessment.json"
-    if not pointer.exists():
+    try:
+        safe_entry(pointer, directory=False, label="assessment_pointer")
+    except FileNotFoundError:
         return None
     return load_assessment(ctx)
 
 
 def _optional_measurement(ctx: LocalExecutionContext) -> tuple[dict, dict] | None:
     pointer = ctx.repository_root / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "measurement-ai-readiness" / "current-generation.json"
-    if not pointer.exists():
+    try:
+        safe_entry(pointer, directory=False, label="measurement_ai_pointer")
+    except FileNotFoundError:
         return None
     return load_measurement_ai(ctx)
 
@@ -295,11 +299,20 @@ def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -
 
 def _closure_inbox(ctx: LocalExecutionContext, closure_contract_id: str) -> tuple[dict, dict]:
     inbox = root(ctx) / "closure-inbox" / closure_contract_id
+    exact_children(inbox, {"evidence.json", "verifier-receipt.json"}, label="closure_inbox")
     evidence = read_json(ctx.repository_root, inbox / "evidence.json", label="closure_evidence")
     receipt = read_json(ctx.repository_root, inbox / "verifier-receipt.json", label="closure_verifier_receipt")
-    if not isinstance(evidence, dict) or evidence.get("schema_version") != CLOSURE_EVIDENCE_SCHEMA:
+    evidence_fields = {"schema_version", "closure_contract_id", "release_id", "release_commit", "branch", "fixer_id", "reruns", "regression_results", "test_results", "instrumentation_results", "protected_invariant_outcomes"}
+    receipt_fields = {"schema_version", "closure_contract_id", "evidence_snapshot_hash", "verifier_id", "executor_type"}
+    if not isinstance(evidence, dict) or set(evidence) != evidence_fields or evidence.get("schema_version") != CLOSURE_EVIDENCE_SCHEMA:
         raise ValueError("closure_evidence_contract_invalid")
-    if not isinstance(receipt, dict) or receipt.get("schema_version") != CLOSURE_RECEIPT_SCHEMA:
+    if (not isinstance(evidence.get("reruns"), list) or not evidence["reruns"] or
+            any(not isinstance(item, dict) or set(item) != {"check_id", "passed", "evidence_class"} or not isinstance(item["check_id"], str) or not isinstance(item["passed"], bool) or item["evidence_class"] not in {"deterministically_established", "source_verified"} for item in evidence["reruns"]) or
+            any(not isinstance(evidence[name], list) for name in ("regression_results", "test_results", "instrumentation_results", "protected_invariant_outcomes")) or
+            any(not isinstance(item, dict) or set(item) != {"invariant", "passed"} or not isinstance(item["invariant"], str) or not isinstance(item["passed"], bool) for item in evidence["protected_invariant_outcomes"])):
+        raise ValueError("closure_evidence_contract_invalid")
+    if (not isinstance(receipt, dict) or set(receipt) != receipt_fields or receipt.get("schema_version") != CLOSURE_RECEIPT_SCHEMA or
+            receipt.get("executor_type") not in {"human", "agent_harness"} or not isinstance(receipt.get("verifier_id"), str) or not receipt["verifier_id"]):
         raise ValueError("closure_verifier_receipt_invalid")
     raw = _json(evidence)
     if receipt.get("closure_contract_id") != closure_contract_id or receipt.get("evidence_snapshot_hash") != _sha(raw):
@@ -320,7 +333,8 @@ def closure_verify(ctx: LocalExecutionContext, closure_contract_id: str, evidenc
         submitted, receipt = _closure_inbox(ctx, closure_contract_id)
     except ValueError as exc:
         return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "not_evaluated", "reason_codes": [str(exc)]}
-    if submitted.get("release_id") != ctx.release["release_id"] or submitted.get("release_commit") != ctx.authority_binding["repository_commit"]:
+    expected_branch = ctx.release.get("repository", {}).get("branch") or ctx.release.get("branch") or "owner_action_required"
+    if (submitted.get("release_id") != ctx.release["release_id"] or submitted.get("release_commit") != ctx.authority_binding["repository_commit"] or submitted.get("branch") != expected_branch):
         return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "stale", "reason_codes": ["release_commit_mismatch"]}
     if receipt.get("verifier_id") == submitted.get("fixer_id"):
         raise ValueError("closure_verifier_not_independent")

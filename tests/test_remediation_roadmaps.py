@@ -7,7 +7,7 @@ from shiproom.remediation_roadmaps import _dependency, _policy_decision, compile
 
 
 def _context(tmp_path):
-    return SimpleNamespace(repository_root=tmp_path, release={"release_id":"rel_remediation"}, authority_binding={"repository_commit":"a" * 40})
+    return SimpleNamespace(repository_root=tmp_path, release={"release_id":"rel_remediation", "branch":"current_branch"}, authority_binding={"repository_commit":"a" * 40})
 
 
 def test_optional_dependency_states_require_null_bindings():
@@ -82,3 +82,17 @@ def test_closure_inbox_requires_exact_passing_rerun_and_independent_verifier(tmp
     try: closure_verify(context,closure_id)
     except ValueError as error: assert str(error)=="closure_verifier_not_independent"
     else: raise AssertionError("fixer verified own closure")
+
+
+def test_closure_inbox_rejects_unlisted_file_without_reading_evidence(tmp_path, monkeypatch):
+    import shiproom.remediation_roadmaps as domain
+    context = _context(tmp_path)
+    authority={"release_id":"rel_remediation","release_commit":"a"*40,"product_intent":_dependency("not_used"),"graph":_dependency("not_used"),"assessment":_dependency("not_used"),"measurement_ai":_dependency("not_used")}
+    issue={"source_issue_type":"finding","source_issue_id":"finding_1","criterion_id":"criterion_1","requirement_id":"requirement_1","journey_ids":[],"issue_classification":"verified_blocker","issue_authority":"deterministically_established","evidence_refs":[],"automation_class":None}
+    monkeypatch.setattr(domain,"_authority",lambda ctx:authority); monkeypatch.setattr(domain,"_issue_records",lambda ctx,a:[issue])
+    prepared=prepare(context); manifest=compile(context,prepared["preparation_id"])
+    closure_id=json.loads((root(context)/"generations"/manifest["generation"] / "remediation-plan.json").read_text())["packets"][0]["verification_contract_id"]
+    inbox=root(context)/"closure-inbox"/closure_id; inbox.mkdir(parents=True)
+    (inbox/"extra.json").write_text("{}",encoding="utf-8")
+    result=closure_verify(context,closure_id)
+    assert result["status"]=="not_evaluated" and result["reason_codes"]==["storage_file_set_mismatch:closure_inbox"]

@@ -31,7 +31,10 @@ def dependency_vector(ctx:LocalExecutionContext)->dict:
     upstream=load_assessment_input(ctx)
     release_root=ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]
     def optional(pointer:str, loader):
-        if not (release_root/pointer).exists(): return _dep("not_used"), None
+        try:
+            safe_entry(release_root / pointer, directory=False, label="optional_dependency_pointer")
+        except FileNotFoundError:
+            return _dep("not_used"), None
         manifest, artifacts=loader(ctx)
         return _dep("required_present",manifest.get("generation"),manifest["semantic_bundle_hash"]), artifacts
     assessment_state, assessment=optional("assessment/current-assessment.json",load_assessment)
@@ -50,14 +53,37 @@ def _section_contracts(name: str) -> list[dict]:
              "required_when": "source_records_present", "record_source": "canonical_dependency_vector",
              "minimum_records": 1, "typed_empty_state": "not_used_or_unavailable",
              "authority_passthrough": True} for section in _sections(name)]
-def _policy(ctx:LocalExecutionContext,vector:dict)->dict:
-    blockers=[item for item in ctx.release.get("findings",[]) if item.get("blocker") and item.get("state")!="CLOSED"]
-    return {"status":"do_not_recommend" if blockers else "recommend_with_conditions","reason_codes":["verified_blocker_present"] if blockers else ["no_verified_blocker_in_canonical_release"],"unknowns":[key for key,item in vector.items() if isinstance(item,dict) and item.get("state") in {"not_used","unavailable"}]}
+def _recommendation_policy() -> dict:
+    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text())
+    required = {"schema_version", "statuses", "required_inputs", "rules", "unknown_dependency_states", "rule"}
+    if set(value) != required or value["schema_version"] != "release-recommendation-policy.v1":
+        raise ValueError("release_recommendation_policy_invalid")
+    expected = {"rule_id", "precedence", "when", "status", "reason_codes"}
+    if (not isinstance(value["rules"], list) or not value["rules"] or
+            any(set(rule) != expected or rule["status"] not in value["statuses"] or not isinstance(rule["reason_codes"], list) or not rule["reason_codes"] for rule in value["rules"]) or
+            [rule["precedence"] for rule in value["rules"]] != sorted(rule["precedence"] for rule in value["rules"])):
+        raise ValueError("release_recommendation_policy_invalid")
+    return value
+
+
+def _policy(ctx:LocalExecutionContext,vector:dict, contestation:dict | None)->dict:
+    """Apply the sole packaged recommendation policy to canonical facts only."""
+    policy = _recommendation_policy()
+    blockers = [item for item in ctx.release.get("findings", []) if item.get("blocker") and item.get("state") != "CLOSED"]
+    actions = (contestation or {}).get("contestation-ledger.json", {}).get("actions", [])
+    owner_decision = any(item.get("action_type") in {"accept_named_risk", "defer"} for item in actions)
+    unavailable = any(isinstance(item, dict) and item.get("state") in policy["unknown_dependency_states"] for item in vector.values())
+    predicates = {"verified_blocker_present": bool(blockers), "accepted_condition_or_named_risk": owner_decision,
+                  "required_dependency_unavailable": unavailable, "no_verified_blocker_in_canonical_release": not bool(blockers)}
+    rule = next(item for item in policy["rules"] if predicates.get(item["when"], False))
+    unknowns = [key for key, item in vector.items() if isinstance(item, dict) and item.get("state") in {"not_used", "unavailable"}]
+    return {"status": rule["status"], "reason_codes": rule["reason_codes"], "unknowns": unknowns,
+            "policy_rule_id": rule["rule_id"], "canonical_input_summary": {"open_verified_blockers": len(blockers), "owner_decision_present": owner_decision}}
 def _html(name:str,value:dict)->bytes:
     meta=html.escape(canonical_json(value["artifact_dependency_vector"]),quote=True);body=html.escape(json.dumps(value,ensure_ascii=False,indent=2));return ("<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"artifact-dependency-vector\" content=\""+meta+"\"><style>body{font-family:system-ui;margin:2rem}pre{white-space:pre-wrap}</style></head><body><h1>"+html.escape(name)+"</h1><pre>"+body+"</pre></body></html>").encode()
 
 def compile(ctx:LocalExecutionContext)->dict:
-    vector=dependency_vector(ctx); loaded=vector.pop("_loaded");policy=_policy(ctx,vector);generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="management_generation")
+    vector=dependency_vector(ctx); loaded=vector.pop("_loaded");policy=_policy(ctx,vector,loaded["contest"]);generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="management_generation")
     base={"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector}
     artifacts={
       "executive-release-brief":{**base,"sections":_sections("executive-release-brief"),"section_contracts":_section_contracts("executive-release-brief"),"recommendation":policy,"verified_blockers":[i for i in ctx.release.get("findings",[]) if i.get("blocker")],"unknowns":policy["unknowns"]},

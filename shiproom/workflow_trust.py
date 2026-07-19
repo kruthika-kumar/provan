@@ -69,7 +69,12 @@ def checked_children(repository_root: Path, target: Path, *, label: str) -> list
     if len({name.casefold() for name in names}) != len(names):
         raise ValueError(f"storage_casefold_collision:{label}")
     for entry in entries:
-        safe_entry(entry, directory=entry.is_dir(), label=label)
+        # Do not ask ``Path.is_dir`` here: on a link it follows the link before
+        # the storage boundary has rejected it.  Determine kind from lstat only.
+        mode = entry.lstat().st_mode
+        if not stat.S_ISDIR(mode) and not stat.S_ISREG(mode):
+            raise ValueError(f"unsafe_storage_entry:{label}")
+        safe_entry(entry, directory=stat.S_ISDIR(mode), label=label)
     return entries
 
 
@@ -120,4 +125,7 @@ def exact_children(path: Path, expected: set[str], *, label: str) -> None:
     if set(names) != expected or len({name.casefold() for name in names}) != len(names):
         raise ValueError(f"storage_file_set_mismatch:{label}")
     for entry in entries:
-        safe_entry(entry, directory=entry.is_dir(), label=label)
+        mode = entry.lstat().st_mode
+        if not stat.S_ISDIR(mode) and not stat.S_ISREG(mode):
+            raise ValueError(f"unsafe_storage_entry:{label}")
+        safe_entry(entry, directory=stat.S_ISDIR(mode), label=label)
