@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from shiproom.contestability import append_action, load
+from shiproom.contestability import append_action, load, target_registry
 
 
 def _ctx(tmp_path, owner=True):
@@ -31,3 +31,9 @@ def test_contestation_rejects_unregistered_evidence_compiler(tmp_path):
     try: append_action(_ctx(tmp_path),action)
     except ValueError as error: assert str(error)=="contestation_evidence_compiler_unregistered"
     else: raise AssertionError("unregistered compiler evidence was accepted")
+
+
+def test_target_registry_uses_only_real_production_loaders():
+    values = target_registry()["targets"]
+    assert {item["target_type"] for item in values} >= {"finding", "criterion", "remediation", "assessment_gap", "measurement_ai_check", "review_specialist"}
+    assert all(item["production_loader"].startswith("shiproom.") for item in values)

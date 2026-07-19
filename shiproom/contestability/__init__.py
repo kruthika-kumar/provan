@@ -11,6 +11,8 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.remediation_roadmaps import load_generation as load_remediation
 from shiproom.review_organisation import load as load_review_plan
+from shiproom.assessment import load_assessment
+from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
 
@@ -26,7 +28,23 @@ def _sha(raw:bytes)->str:return "sha256:"+hashlib.sha256(raw).hexdigest()
 def _semantic(value:dict)->dict:return {key:item for key,item in value.items() if key not in {"created_at","sequence","previous_action_hash","action_semantic_hash","target_registry_materiality"}}
 
 def target_registry()->dict:
-    return json.loads(resources.files("shiproom.contestability_schemas").joinpath("contestation-target-registry.v1.json").read_text(encoding="utf-8"))
+    value = json.loads(resources.files("shiproom.contestability_schemas").joinpath("contestation-target-registry.v1.json").read_text(encoding="utf-8"))
+    required = {"target_type", "source_domain", "source_artifact", "record_id_field", "production_loader", "permitted_actions", "evidence_relevance_rule", "materiality_rule", "owner_decision_eligibility"}
+    domains = {"release", "graph", "assessment", "measurement_ai", "remediation", "review_plan"}
+    targets = value.get("targets")
+    if value.get("schema_version") != "contestation-target-registry.v1" or not isinstance(targets, list) or not targets:
+        raise ValueError("contestation_target_registry_invalid")
+    ids = []
+    for target in targets:
+        if set(target) != required or not isinstance(target.get("target_type"), str) or not target["target_type"] or target["source_domain"] not in domains or not isinstance(target["permitted_actions"], list) or not set(target["permitted_actions"]) <= ACTIONS or not target["permitted_actions"] or not isinstance(target["owner_decision_eligibility"], bool):
+            raise ValueError("contestation_target_registry_invalid")
+        ids.append(target["target_type"])
+        module_name, separator, attribute = target["production_loader"].rpartition(".")
+        if not separator or not callable(getattr(__import__(module_name, fromlist=[attribute]), attribute, None)):
+            raise ValueError("contestation_target_registry_invalid")
+    if len(ids) != len(set(ids)):
+        raise ValueError("contestation_target_registry_invalid")
+    return value
 
 def _target_definition(target_type:str)->dict:
     values=[item for item in target_registry()["targets"] if item["target_type"]==target_type]
@@ -47,12 +65,36 @@ def _remediation_target(ctx: LocalExecutionContext, target_id: str, source_gener
         raise ValueError("contestation_target_generation_mismatch")
     return next((item for item in artifacts["remediation-plan.json"].get("packets", []) if item.get("remediation_id") == target_id), None)
 
+
+def _assessment_target(ctx: LocalExecutionContext, target_id: str, source_generation: str) -> dict | None:
+    manifest, artifacts = load_assessment(ctx)
+    if source_generation != manifest.get("generation"):
+        raise ValueError("contestation_target_generation_mismatch")
+    return next((item for item in artifacts.get("assessment-graph-overlay.json", {}).get("nodes", []) if item.get("node_id") == target_id and item.get("node_type") == "assessment_gap"), None)
+
+
+def _measurement_ai_target(ctx: LocalExecutionContext, target_id: str, source_generation: str) -> dict | None:
+    manifest, artifacts = load_measurement_ai(ctx)
+    if source_generation != manifest.get("generation"):
+        raise ValueError("contestation_target_generation_mismatch")
+    return next((item for item in artifacts.get("measurement-ai-readiness.json", {}).get("checks", []) if item.get("check_id") == target_id), None)
+
+
+def _review_plan_target(ctx: LocalExecutionContext, target_id: str, source_generation: str) -> dict | None:
+    manifest, artifacts = load_review_plan(ctx)
+    if source_generation != manifest.get("generation"):
+        raise ValueError("contestation_target_generation_mismatch")
+    return next((item for item in artifacts.get("review-plan.json", {}).get("specialists", []) if item.get("specialist_id") == target_id), None)
+
 def _validate_target(ctx:LocalExecutionContext, action:dict)->dict:
     definition=_target_definition(action["target_type"])
     if action["action"] not in definition["permitted_actions"]:raise ValueError("contestation_action_not_permitted_for_target")
     if definition["source_domain"]=="release": target=_release_target(ctx,action["target_id"])
     elif definition["source_domain"]=="graph": target=_graph_target(ctx,action["target_id"])
     elif definition["source_domain"] == "remediation": target = _remediation_target(ctx, action["target_id"], action["source_generation"])
+    elif definition["source_domain"] == "assessment": target = _assessment_target(ctx, action["target_id"], action["source_generation"])
+    elif definition["source_domain"] == "measurement_ai": target = _measurement_ai_target(ctx, action["target_id"], action["source_generation"])
+    elif definition["source_domain"] == "review_plan": target = _review_plan_target(ctx, action["target_id"], action["source_generation"])
     else: raise ValueError("contestation_target_unregistered")
     if target is None:raise ValueError("contestation_target_not_found")
     return definition
@@ -77,6 +119,26 @@ def _accepted_evidence(ctx: LocalExecutionContext, reference: dict, target_type:
             raise ValueError("contestation_evidence_generation_mismatch")
         if not any(item.get("specialist_id") == reference["record_id"] for item in artifacts["review-plan.json"].get("specialists", [])):
             raise ValueError("contestation_evidence_record_not_found")
+        return
+    if compiler == "assessment":
+        manifest, artifacts = load_assessment(ctx)
+        if reference["generation"] != manifest["generation"]:
+            raise ValueError("contestation_evidence_generation_mismatch")
+        records = artifacts.get("assessment-graph-overlay.json", {}).get("nodes", [])
+        if not any(item.get("node_id") == reference["record_id"] for item in records):
+            raise ValueError("contestation_evidence_record_not_found")
+        if target_type == "assessment_gap" and reference["record_id"] != target_id:
+            raise ValueError("contestation_evidence_irrelevant")
+        return
+    if compiler == "measurement_ai":
+        manifest, artifacts = load_measurement_ai(ctx)
+        if reference["generation"] != manifest["generation"]:
+            raise ValueError("contestation_evidence_generation_mismatch")
+        records = artifacts.get("measurement-ai-readiness.json", {}).get("checks", [])
+        if not any(item.get("check_id") == reference["record_id"] for item in records):
+            raise ValueError("contestation_evidence_record_not_found")
+        if target_type == "measurement_ai_check" and reference["record_id"] != target_id:
+            raise ValueError("contestation_evidence_irrelevant")
         return
     raise ValueError("contestation_evidence_compiler_unregistered")
 
