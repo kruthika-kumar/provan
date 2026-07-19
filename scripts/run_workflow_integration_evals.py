@@ -38,6 +38,17 @@ CASES = (
 )
 
 
+def _workflow_contracts(root: Path) -> dict[str, dict]:
+    value = json.loads((root / "docs" / "validation" / "session6-8-workflow-contracts.json").read_text(encoding="utf-8"))
+    rows = value.get("cases") if isinstance(value, dict) else None
+    if not isinstance(rows, list) or tuple(item.get("case_name") for item in rows) != CASES:
+        raise AssertionError("workflow contract registry changed")
+    required = {"case_name", "fixture_builder", "preconditions", "required_production_functions", "required_assertions", "required_artifacts", "forbidden_substitutions"}
+    if any(set(item) != required or not item["required_production_functions"] or not item["required_assertions"] or not item["required_artifacts"] for item in rows):
+        raise AssertionError("workflow contract registry invalid")
+    return {item["case_name"]: item for item in rows}
+
+
 def _commit(root: Path) -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
 
@@ -103,6 +114,7 @@ def _hashes(manifest: dict) -> dict:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
+    contracts = _workflow_contracts(root)
     results: list[dict] = []
 
     def run(name: str, fn) -> None:
@@ -110,8 +122,14 @@ def main() -> int:
             passed, functions, hashes = fn()
         except Exception as exc:  # receipt preserves the production failure for closeout inspection
             passed, functions, hashes = False, [], {"exception": type(exc).__name__ + ":" + str(exc)}
-        results.append({"name": name, "fixture": "disposable_release_fixture", "production_functions_invoked": functions,
-                        "generated_artifact_hashes": hashes, "assertions_executed": 1, "passed": bool(passed)})
+        contract = contracts[name]
+        functions = list(functions)
+        required_functions = set(contract["required_production_functions"])
+        artifacts_ok = bool(hashes) and all(value not in (None, "") for value in hashes.values())
+        contract_ok = required_functions <= set(functions) and artifacts_ok
+        results.append({"name": name, "fixture": contract["fixture_builder"], "production_functions_invoked": functions,
+                        "generated_artifact_hashes": hashes, "assertions_executed": list(contract["required_assertions"]), "required_artifacts": list(contract["required_artifacts"]),
+                        "forbidden_substitutions": list(contract["forbidden_substitutions"]), "passed": bool(passed and contract_ok)})
 
     def remediation_case(*, blocker: bool, authority: str = "deterministically_established"):
         with tempfile.TemporaryDirectory() as raw:
