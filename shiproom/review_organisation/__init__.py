@@ -154,7 +154,7 @@ def prepare(ctx:LocalExecutionContext)->dict:
         if item["state"]!="selected":continue
         work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"]})
     plan={"schema_version":"review-plan.v1","plan_id":plan_id,"input_vector":vector,"specialists":selected,"adaptation_depth":0,"supersedes":None}
-    artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
+    artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"accepted-results.json":{"schema_version":"accepted-specialist-results.v1","results":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
     for name,value in artifacts.items():write_bytes(ctx.repository_root,directory/name,_json(value),label="review_plan_artifact")
     for work in work_orders:write_bytes(ctx.repository_root,directory/"specialist-work-orders"/(work["work_order_id"]+".json"),_json(work),label="specialist_work_order")
     manifest={"schema_version":"review-plan-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"plan_id":plan_id,"input_vector":vector,"artifact_hashes":{name:_hash(_json(value)) for name,value in artifacts.items()},"semantic_bundle_hash":content_hash({"plan":plan,"work_orders":work_orders}),"bundle_hash":""};manifest["bundle_hash"]=content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"})
@@ -168,7 +168,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     if manifest.get("compiler_version")!=COMPILER_VERSION or manifest["input_vector"]["release_commit"]!=ctx.authority_binding["repository_commit"]:raise ValueError("stale_dependency")
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("review_plan_pointer_tampered")
-    names=("review-plan.json","plan-events.json","revision-ledger.json","execution-summary.json")
+    names=("review-plan.json","plan-events.json","revision-ledger.json","accepted-results.json","execution-summary.json")
     expected=set(names)|{"manifest.json","specialist-work-orders"}
     if {path.name for path in checked_children(ctx.repository_root,directory,label="review_plan_generation")} != expected:
         raise ValueError("review_plan_generation_file_set_mismatch")
@@ -212,10 +212,13 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
     if artifacts["review-plan.json"]["adaptation_depth"]>=3:raise ValueError("adaptation_depth_exceeded")
     if source_specialist not in {item["specialist_id"] for item in artifacts["review-plan.json"]["specialists"]}:
         raise ValueError("adaptation_evidence_unlinked")
+    accepted = [item for item in artifacts["accepted-results.json"]["results"] if item["result_id"] == evidence_id and item["specialist_id"] == source_specialist and item["status"] == "accepted"]
+    if len(accepted) != 1 or accepted[0]["criterion_id"] != criterion_id:
+        raise ValueError("adaptation_evidence_unlinked")
     event={"event_id":identity,"trigger":trigger,"source_specialist":source_specialist,"criterion_id":criterion_id,"evidence_id":evidence_id}
     plan=dict(artifacts["review-plan.json"]);plan["adaptation_depth"]+=1;plan["supersedes"]=manifest["generation"]
     new_events={"schema_version":"plan-events.v1","events":events+[event]}
-    new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"execution-summary.json":artifacts["execution-summary.json"]}
+    new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"accepted-results.json":artifacts["accepted-results.json"],"execution-summary.json":artifacts["execution-summary.json"]}
     new_manifest = _publish_successor(ctx, manifest, new_artifacts, label="review_plan_adaptation")
     return {"status":"accepted","event":event,"prior_generation":manifest["generation"],"generation":new_manifest["generation"]}
 
@@ -249,4 +252,29 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
         successor["revision-ledger.json"] = ledger
         new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
         return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
-    return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": result["work_order_id"]}
+    order_dir = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    orders = [read_json(ctx.repository_root, path, label="specialist_work_order") for path in checked_children(ctx.repository_root, order_dir, label="specialist_work_orders") if path.suffix == ".json"]
+    work = next((item for item in orders if item.get("specialist_id") == specialist_id), None)
+    if work is None or result.get("work_order_id") != work.get("work_order_id") or result.get("schema_version") != specialist.get("result_schema"):
+        # A bound but cross-specialist result is a closed revision reason, not
+        # an accepted source of future adaptation.
+        invalid = ("OUT_OF_SCOPE_RECORD", ["/schema_version"])
+        prior = [item for item in artifacts["revision-ledger.json"]["entries"] if item["specialist_id"] == specialist_id]
+        attempt = len(prior) + 1
+        entry = {"revision_id": _stable("revision", {"generation": manifest["generation"], "specialist": specialist_id, "attempt": attempt, "reason": invalid[0], "pointers": invalid[1]}), "specialist_id": specialist_id, "attempt": attempt, "reason": invalid[0], "json_pointers": invalid[1], "status": "revision_required" if attempt == 1 else "specialist_failed_closed"}
+        successor = dict(artifacts)
+        successor["revision-ledger.json"] = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
+        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
+        return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
+    criterion_ids = result.get("criterion_ids")
+    if not isinstance(criterion_ids, list) or len(criterion_ids) != 1 or not isinstance(criterion_ids[0], str):
+        raise ValueError("accepted_result_criterion_link_missing")
+    result_id = _stable("accepted_result", {"specialist_id": specialist_id, "criterion_id": criterion_ids[0], "result": result})
+    existing = artifacts["accepted-results.json"]["results"]
+    if any(item["result_id"] == result_id for item in existing):
+        return {"status": "idempotent_replay", "specialist_id": specialist_id, "work_order_id": result["work_order_id"], "result_id": result_id}
+    accepted_record = {"result_id": result_id, "specialist_id": specialist_id, "criterion_id": criterion_ids[0], "work_order_id": work["work_order_id"], "result_schema": specialist["result_schema"], "result_semantic_hash": content_hash(result), "status": "accepted"}
+    successor = dict(artifacts)
+    successor["accepted-results.json"] = {"schema_version": "accepted-specialist-results.v1", "results": existing + [accepted_record]}
+    new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_accepted_result")
+    return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": result["work_order_id"], "result_id": result_id, "generation": new_manifest["generation"]}

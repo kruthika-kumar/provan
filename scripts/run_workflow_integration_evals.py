@@ -147,7 +147,11 @@ def main() -> int:
     def adaptation():
         with tempfile.TemporaryDirectory() as raw:
             ctx, cid = _fixture(Path(raw)); prepare_review(ctx)
-            adapted = adapt(ctx, "migration_surface_discovered", "python_engineering", cid, "accepted_evidence_workflow")
+            manifest, _ = load_review(ctx)
+            order_dir = Path(ctx.repository_root) / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "review-organisation" / "generations" / manifest["generation"] / "specialist-work-orders"
+            work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "product_intent")
+            accepted = submit_result(ctx, "product_intent", {"schema_version": "intent-proposal.v1", "work_order_id": work["work_order_id"], "criterion_ids": [cid]}, {"work_order_id": work["work_order_id"]})
+            adapted = adapt(ctx, "migration_surface_discovered", "product_intent", cid, accepted["result_id"])
             return adapted["status"] == "accepted", ["shiproom.review_organisation.prepare", "shiproom.review_organisation.adapt"], {"generation": adapted["generation"]}
     run(CASES[7], adaptation)
     def revisions():
