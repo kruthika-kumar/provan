@@ -10,7 +10,7 @@ from pathlib import Path
 from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import checked_children, ensure_directory, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
 
 
 COMPILER_VERSION="portable-review-plan.v1"
@@ -93,7 +93,15 @@ def prepare(ctx:LocalExecutionContext)->dict:
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     pointer=read_json(ctx.repository_root, root(ctx)/"current-review-plan.json",label="review_plan_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="review_plan_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="review_plan_manifest")
     if manifest.get("compiler_version")!=COMPILER_VERSION or manifest["input_vector"]["release_commit"]!=ctx.authority_binding["repository_commit"]:raise ValueError("stale_dependency")
-    artifacts={name:read_json(ctx.repository_root,directory/name,label="review_plan_artifact") for name in ("review-plan.json","plan-events.json","revision-ledger.json","execution-summary.json")}
+    if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
+        raise ValueError("review_plan_pointer_tampered")
+    names=("review-plan.json","plan-events.json","revision-ledger.json","execution-summary.json")
+    expected=set(names)|{"manifest.json","specialist-work-orders"}
+    if {path.name for path in checked_children(ctx.repository_root,directory,label="review_plan_generation")} != expected:
+        raise ValueError("review_plan_generation_file_set_mismatch")
+    artifacts={name:read_json(ctx.repository_root,directory/name,label="review_plan_artifact") for name in names}
+    if any(_hash(_json(value)) != manifest["artifact_hashes"].get(name) for name,value in artifacts.items()):
+        raise ValueError("review_plan_artifact_tampered")
     return manifest,artifacts
 
 
@@ -113,6 +121,11 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
     new_events={"schema_version":"plan-events.v1","events":events+[event]}
     new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"execution-summary.json":artifacts["execution-summary.json"]}
     for name,value in new_artifacts.items():write_bytes(ctx.repository_root,output/name,_json(value),label="review_plan_adaptation_artifact")
+    prior_orders = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    for path in checked_children(ctx.repository_root, prior_orders, label="prior_specialist_work_orders"):
+        # Decode first so a malformed historical order cannot be copied as opaque bytes.
+        read_json(ctx.repository_root, path, label="prior_specialist_work_order")
+        write_bytes(ctx.repository_root, output / "specialist-work-orders" / path.name, read_bytes(ctx.repository_root, path, label="prior_specialist_work_order"), label="superseded_specialist_work_order")
     new_manifest={"schema_version":"review-plan-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":new_generation,"plan_id":plan["plan_id"],"input_vector":vector,"artifact_hashes":{name:_hash(_json(value)) for name,value in new_artifacts.items()},"semantic_bundle_hash":content_hash({"plan":plan,"events":new_events}),"bundle_hash":""};new_manifest["bundle_hash"]=content_hash({key:value for key,value in new_manifest.items() if key!="bundle_hash"})
     write_bytes(ctx.repository_root,output/"manifest.json",_json(new_manifest),label="review_plan_adaptation_manifest")
     replace_bytes(ctx.repository_root,root(ctx)/"current-review-plan.json",_json({"schema_version":"current-review-plan.v1","generation":new_generation,"manifest_hash":_hash(_json(new_manifest)),"semantic_bundle_hash":new_manifest["semantic_bundle_hash"]}),label="review_plan_pointer")
