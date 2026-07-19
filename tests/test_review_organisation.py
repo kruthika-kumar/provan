@@ -38,3 +38,14 @@ def test_second_invalid_submission_fails_only_the_specialist(tmp_path, monkeypat
     first=submit_result(context,"python_engineering",{},{}); assert first["status"]=="revision_required"
     artifacts["revision-ledger.json"]["entries"]=[{"specialist_id":"python_engineering"}]
     second=submit_result(context,"python_engineering",{},{}); assert second["status"]=="specialist_failed_closed"
+
+
+def test_review_plan_loader_rejects_pointer_tamper(tmp_path, monkeypatch):
+    import shiproom.review_organisation as domain
+    context=SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel_review"},authority_binding={"repository_commit":"a"*40})
+    vector={"release_id":"rel_review","release_commit":"a"*40,"product_intent":_dep("not_used"),"graph":_dep("not_used"),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"not_inspected","criterion_ids":[]},"language_framework_signals":{"python":True,"typescript":False},"migration_signal":{"authority":"not_inspected","evidence_paths":[]},"ai_surface_signal":{"authority":"not_inspected","evidence_paths":[]},"harness":{}}
+    monkeypatch.setattr(domain,"_vector",lambda ctx:vector)
+    manifest=domain.prepare(context); pointer=domain.root(context)/"current-review-plan.json"; value=json.loads(pointer.read_text()); value["semantic_bundle_hash"]="sha256:"+"0"*64; pointer.write_text(json.dumps(value))
+    try: domain.load(context)
+    except ValueError as error: assert str(error)=="review_plan_pointer_tampered"
+    else: raise AssertionError("tampered review pointer accepted")
