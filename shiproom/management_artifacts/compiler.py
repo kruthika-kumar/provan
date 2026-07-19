@@ -13,10 +13,15 @@ from shiproom.remediation_roadmaps import load_generation as load_remediation
 from shiproom.review_organisation import load as load_review_plan
 from shiproom.contestability import load as load_contestation
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 
 COMPILER_VERSION="portable-management-artifacts.v1"
 JSON_ARTIFACTS=("executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","release-recommendation-view")
+
+
+def guard_prohibited_operation(operation: str) -> None:
+    """Reporting is deterministic local rendering, never an adapter surface."""
+    reject_private_alpha_operation(operation)
 
 def root(ctx:LocalExecutionContext)->Path:return ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]/"management-artifacts"
 def _json(v:object)->bytes:return (json.dumps(v,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode()

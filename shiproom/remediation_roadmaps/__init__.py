@@ -13,7 +13,7 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import ensure_directory, exact_children, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import ensure_directory, exact_children, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 
 
 PREPARATION_VERSION = "remediation-roadmap-preparation.v1"
@@ -36,6 +36,11 @@ CONTRACT_SNAPSHOTS = (
     "remediation-planner-completion-receipt.v1.json", "remediation-closure-evidence.v1.json",
     "remediation-closure-verifier-receipt.v1.json", "remediation-closure-verification.v1.json",
 )
+
+
+def guard_prohibited_operation(operation: str) -> None:
+    """Reject a requested external/private-alpha operation at this domain edge."""
+    reject_private_alpha_operation(operation)
 
 
 def root(ctx: LocalExecutionContext) -> Path:

@@ -14,12 +14,17 @@ from shiproom.review_organisation import load as load_review_plan
 from shiproom.assessment import load_assessment
 from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 
 
 ACTIONS={"accept_finding","dispute_with_evidence","clarify_requirement","add_evidence","accept_named_risk","defer","request_remediation"}
 OWNER_ONLY={"accept_named_risk"}
 COMPILER_VERSION="portable-contestability.v1"
+
+
+def guard_prohibited_operation(operation: str) -> None:
+    """Contestation is a ledger only; it cannot reach external adapters."""
+    reject_private_alpha_operation(operation)
 
 
 def root(ctx:LocalExecutionContext)->Path:return ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]/"contestability"
