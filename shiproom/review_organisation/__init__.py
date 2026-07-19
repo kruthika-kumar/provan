@@ -453,6 +453,7 @@ def prepare(ctx:LocalExecutionContext)->dict:
     artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"accepted-results.json":{"schema_version":"accepted-specialist-results.v1","results":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
     for name,value in artifacts.items():write_bytes(ctx.repository_root,directory/name,_json(value),label="review_plan_artifact")
     ensure_directory(ctx.repository_root, directory/"specialist-work-orders", label="review_plan_work_order_directory")
+    ensure_directory(ctx.repository_root, directory/"submissions", label="review_plan_submissions_directory")
     for work in work_orders:write_bytes(ctx.repository_root,directory/"specialist-work-orders"/(work["work_order_id"]+".json"),_json(work),label="specialist_work_order")
     manifest={"schema_version":"review-plan-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"plan_id":plan_id,"input_vector":vector,"artifact_hashes":{name:_hash(_json(value)) for name,value in artifacts.items()},"semantic_bundle_hash":content_hash({"plan":plan,"work_orders":work_orders}),"bundle_hash":""};manifest["bundle_hash"]=content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"})
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="review_plan_manifest")
@@ -467,7 +468,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("review_plan_pointer_tampered")
     names=("review-plan.json","plan-events.json","revision-ledger.json","accepted-results.json","execution-summary.json")
-    expected=set(names)|{"manifest.json","specialist-work-orders"}
+    expected=set(names)|{"manifest.json","specialist-work-orders", "submissions"}
     if {path.name for path in checked_children(ctx.repository_root,directory,label="review_plan_generation")} != expected:
         raise ValueError("review_plan_generation_file_set_mismatch")
     artifacts={name:read_json(ctx.repository_root,directory/name,label="review_plan_artifact") for name in names}
@@ -480,7 +481,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     return manifest,artifacts
 
 
-def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: dict, *, label: str, additional_work_orders: list[dict] | None = None) -> dict:
+def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: dict, *, label: str, additional_work_orders: list[dict] | None = None, additional_submission: tuple[str, int, bytes, bytes, dict] | None = None) -> dict:
     """Publish an immutable review-plan successor and replace the pointer last."""
     new_generation = "plan_" + uuid.uuid4().hex
     output = ensure_directory(ctx.repository_root, root(ctx) / "generations" / new_generation, label=label)
@@ -497,6 +498,26 @@ def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: di
         if not isinstance(work, dict) or not isinstance(work.get("work_order_id"), str):
             raise ValueError("specialist_work_order_invalid")
         write_bytes(ctx.repository_root, output / "specialist-work-orders" / (work["work_order_id"] + ".json"), _json(work), label=label + "_additional_work_order")
+    prior_submissions = root(ctx) / "generations" / manifest["generation"] / "submissions"
+    ensure_directory(ctx.repository_root, output / "submissions", label=label + "_submissions")
+    for specialist_dir in checked_children(ctx.repository_root, prior_submissions, label="prior_submissions"):
+        if not specialist_dir.is_dir():
+            raise ValueError("submission_file_set_invalid")
+        destination = ensure_directory(ctx.repository_root, output / "submissions" / specialist_dir.name, label=label + "_submission_specialist")
+        for attempt_dir in checked_children(ctx.repository_root, specialist_dir, label="prior_submission_attempts"):
+            if not attempt_dir.is_dir():
+                raise ValueError("submission_file_set_invalid")
+            copied = ensure_directory(ctx.repository_root, destination / attempt_dir.name, label=label + "_submission_attempt")
+            for file in checked_children(ctx.repository_root, attempt_dir, label="prior_submission_files"):
+                if file.name not in {"result.json", "completion-receipt.json", "validation.json"}:
+                    raise ValueError("submission_file_set_invalid")
+                write_bytes(ctx.repository_root, copied / file.name, read_bytes(ctx.repository_root, file, label="prior_submission_file"), label=label + "_submission_file")
+    if additional_submission is not None:
+        specialist, attempt, raw, receipt_raw, validation = additional_submission
+        attempt_dir = ensure_directory(ctx.repository_root, output / "submissions" / specialist / str(attempt), label=label + "_submission_attempt")
+        write_bytes(ctx.repository_root, attempt_dir / "result.json", raw, label=label + "_submission_result")
+        write_bytes(ctx.repository_root, attempt_dir / "completion-receipt.json", receipt_raw, label=label + "_submission_receipt")
+        write_bytes(ctx.repository_root, attempt_dir / "validation.json", _json(validation), label=label + "_submission_validation")
     new_manifest = {"schema_version": "review-plan-generation-manifest.v1", "compiler_version": COMPILER_VERSION,
                     "generation": new_generation, "plan_id": manifest["plan_id"], "input_vector": manifest["input_vector"],
                     "artifact_hashes": {name: _hash(_json(value)) for name, value in artifacts.items()},
@@ -663,11 +684,14 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
     if invalid:
         prior = [item for item in artifacts["revision-ledger.json"]["entries"] if item["specialist_id"] == specialist_id]
         attempt = len(prior) + 1
+        if attempt > 2:
+            raise ValueError("revision_attempt_limit_exceeded")
         entry = {"revision_id": _stable("revision", {"generation": manifest["generation"], "specialist": specialist_id, "attempt": attempt, "reason": invalid[0], "pointers": invalid[1]}), "specialist_id": specialist_id, "attempt": attempt, "reason": invalid[0], "json_pointers": invalid[1], "status": "revision_required" if attempt == 1 else "specialist_failed_closed"}
         ledger = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
         successor = dict(artifacts)
         successor["revision-ledger.json"] = ledger
-        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
+        validation = {"schema_version": "specialist-submission-validation.v1", "status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "result_snapshot_hash": _hash(raw), "receipt_snapshot_hash": _hash(receipt_raw)}
+        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision", additional_submission=(specialist_id, attempt, raw, receipt_raw, validation))
         return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
     order_dir = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
     orders = [read_json(ctx.repository_root, path, label="specialist_work_order") for path in checked_children(ctx.repository_root, order_dir, label="specialist_work_orders") if path.suffix == ".json"]
@@ -681,10 +705,13 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
         invalid = ("OUT_OF_SCOPE_RECORD", ["/schema_version"])
         prior = [item for item in artifacts["revision-ledger.json"]["entries"] if item["specialist_id"] == specialist_id]
         attempt = len(prior) + 1
+        if attempt > 2:
+            raise ValueError("revision_attempt_limit_exceeded")
         entry = {"revision_id": _stable("revision", {"generation": manifest["generation"], "specialist": specialist_id, "attempt": attempt, "reason": invalid[0], "pointers": invalid[1]}), "specialist_id": specialist_id, "attempt": attempt, "reason": invalid[0], "json_pointers": invalid[1], "status": "revision_required" if attempt == 1 else "specialist_failed_closed"}
         successor = dict(artifacts)
         successor["revision-ledger.json"] = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
-        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
+        validation = {"schema_version": "specialist-submission-validation.v1", "status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "result_snapshot_hash": _hash(raw), "receipt_snapshot_hash": _hash(receipt_raw)}
+        new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision", additional_submission=(specialist_id, attempt, raw, receipt_raw, validation))
         return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
     _validated, criterion_ids, native_semantic_hash = _validate_native_submission(ctx, specialist_id, binding, raw, receipt_raw)
     if not isinstance(criterion_ids, list) or not criterion_ids or any(not isinstance(item, str) or not item for item in criterion_ids):
@@ -698,7 +725,10 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
     if any(item["result_id"] == accepted["result_id"] for item in existing for accepted in accepted_records):
         return {"status": "idempotent_replay", "specialist_id": specialist_id, "work_order_id": expected_work_order, "result_ids": [item["result_id"] for item in accepted_records]}
     successor["accepted-results.json"] = {"schema_version": "accepted-specialist-results.v1", "results": existing + accepted_records}
-    new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_accepted_result")
+    prior = [item for item in artifacts["revision-ledger.json"]["entries"] if item["specialist_id"] == specialist_id]
+    attempt = len(prior) + 1
+    validation = {"schema_version": "specialist-submission-validation.v1", "status": "accepted", "reason": None, "json_pointers": [], "result_snapshot_hash": _hash(raw), "receipt_snapshot_hash": _hash(receipt_raw), "native_result_semantic_hash": native_semantic_hash}
+    new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_accepted_result", additional_submission=(specialist_id, attempt, raw, receipt_raw, validation))
     return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": expected_work_order, "result_id": accepted_records[0]["result_id"], "result_ids": [item["result_id"] for item in accepted_records], "generation": new_manifest["generation"]}
 
 
