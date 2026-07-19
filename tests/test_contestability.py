@@ -7,7 +7,7 @@ from shiproom.contestability import append_action, load
 
 def _ctx(tmp_path, owner=True):
     authority={"authority_id":"owner_1","release_id":"rel_contest","snapshot_hash":"sha256:"+"1"*64}
-    return SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel_contest","owner_authorities":[authority] if owner else []})
+    return SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel_contest","owner_authorities":[authority] if owner else [],"findings":[{"id":"finding_1","blocker":True,"state":"OPEN"}]})
 
 
 def _action():
