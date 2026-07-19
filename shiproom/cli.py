@@ -33,7 +33,7 @@ from .measurement_ai.rendering import show as show_measurement_ai
 from .measurement_ai.qualification import prepare_qualification, compile_qualification
 from .measurement_ai.verifier import prepare_verifier
 from .remediation_roadmaps import prepare as prepare_remediation, compile as compile_remediation, load_generation as load_remediation, closure_verify as verify_remediation_closure
-from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result_bytes as submit_review_result
+from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result_bytes as submit_review_result, assert_submission_path as assert_review_submission_path
 from .contestability import append_action as append_contestation, load as load_contestation
 from .management_artifacts import compile as compile_management, load as load_management
 from .workflow_trust import read_bytes as trusted_read_bytes, read_json as trusted_read_json
@@ -90,14 +90,6 @@ def main(argv: list[str] | None = None) -> int:
         elif args.action == "compile":
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.journey or args.role: raise SystemExit("measurement-ai compile accepts only --release, optional --preparation, and verifier preparations")
             print(json.dumps(compile_measurement_ai(context,args.preparation,args.verifier_preparation),indent=2))
-        elif args.action == "render-package":
-            if not args.specialist: raise SystemExit("review-plan render-package requires --release --specialist")
-            print(json.dumps(render_review_package(context,args.specialist),indent=2))
-        elif args.action == "submit-result":
-            if not args.specialist or not args.result or not args.receipt: raise SystemExit("review-plan submit-result requires --release --specialist --result --receipt")
-            print(json.dumps(submit_review_result(context,args.specialist,
-                                                  trusted_read_bytes(context.repository_root, Path(args.result), label="review_plan_submission_result"),
-                                                  trusted_read_bytes(context.repository_root, Path(args.receipt), label="review_plan_submission_receipt")),indent=2))
         else:
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.preparation or args.verifier_preparation or args.role: raise SystemExit("measurement-ai show accepts only --release and optional --journey")
             print(show_measurement_ai(context,args.journey))
@@ -121,10 +113,22 @@ def main(argv: list[str] | None = None) -> int:
             if args.trigger or args.specialist or args.criterion or args.evidence_id: raise SystemExit("review-plan prepare accepts only --release")
             print(json.dumps(prepare_review_plan(context),indent=2))
         elif args.action == "show":
-            if args.trigger or args.specialist or args.criterion or args.evidence_id: raise SystemExit("review-plan show accepts only --release")
+            if any((args.trigger, args.specialist, args.criterion, args.evidence_id, args.result, args.receipt)): raise SystemExit("review-plan show accepts only --release")
             manifest,artifacts=load_review_plan(context); print(json.dumps({"generation":manifest["generation"],"plan":artifacts["review-plan.json"]},indent=2))
+        elif args.action == "render-package":
+            if not args.specialist or any((args.trigger, args.criterion, args.evidence_id, args.result, args.receipt)):
+                raise SystemExit("review-plan render-package requires --release --specialist")
+            print(json.dumps(render_review_package(context,args.specialist),indent=2))
+        elif args.action == "submit-result":
+            if not args.specialist or not args.result or not args.receipt or any((args.trigger, args.criterion, args.evidence_id)):
+                raise SystemExit("review-plan submit-result requires --release --specialist --result --receipt")
+            result_path = assert_review_submission_path(context, args.specialist, Path(args.result), kind="result")
+            receipt_path = assert_review_submission_path(context, args.specialist, Path(args.receipt), kind="receipt")
+            print(json.dumps(submit_review_result(context,args.specialist,
+                                                  trusted_read_bytes(context.repository_root, result_path, label="review_plan_submission_result"),
+                                                  trusted_read_bytes(context.repository_root, receipt_path, label="review_plan_submission_receipt")),indent=2))
         else:
-            if not all((args.trigger,args.specialist,args.criterion,args.evidence_id)): raise SystemExit("review-plan adapt requires --release --trigger --specialist --criterion --evidence-id")
+            if not all((args.trigger,args.specialist,args.criterion,args.evidence_id)) or any((args.result,args.receipt)): raise SystemExit("review-plan adapt requires --release --trigger --specialist --criterion --evidence-id")
             print(json.dumps(adapt_review_plan(context,args.trigger,args.specialist,args.criterion,args.evidence_id),indent=2))
     elif args.command == "contestation":
         data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)

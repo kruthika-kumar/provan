@@ -64,6 +64,73 @@ def harness_receipt_contract() -> dict:
         "harness-execution-receipt.v1.json").read_text(encoding="utf-8"))
 
 
+def codex_execution_package_contract() -> dict:
+    return json.loads(resources.files("shiproom.review_organisation").joinpath(
+        "codex-execution-package.v1.json").read_text(encoding="utf-8"))
+
+
+def validate_codex_execution_package(value: dict) -> dict:
+    """Validate the closed handoff package independently of JSON Schema."""
+    required = {
+        "schema_version", "package_id", "plan_id", "specialist_id",
+        "native_preparation_id", "native_preparation_semantic_hash",
+        "native_work_order", "native_context_packet", "result_schema",
+        "completion_receipt_schema", "bounded_working_directory", "allowed_files",
+        "native_empty_reason", "forbidden_operations", "timeout_seconds",
+        "expected_result_path", "expected_receipt_path", "execution_mode",
+        "independence_limitations", "package_semantic_hash",
+    }
+    if not isinstance(value, dict) or set(value) != required:
+        raise ValueError("codex_execution_package_shape_invalid")
+    if value["schema_version"] != "codex-execution-package.v1":
+        raise ValueError("codex_execution_package_version_invalid")
+    for name in ("package_id", "plan_id", "specialist_id", "result_schema", "completion_receipt_schema", "bounded_working_directory", "expected_result_path", "expected_receipt_path", "execution_mode", "independence_limitations", "package_semantic_hash"):
+        if not isinstance(value[name], str) or not value[name]:
+            raise ValueError("codex_execution_package_value_invalid")
+    for name in ("native_work_order", "native_context_packet"):
+        if not isinstance(value[name], dict) or not value[name]:
+            raise ValueError("codex_execution_package_native_binding_invalid")
+    if value["native_preparation_id"] is not None and not isinstance(value["native_preparation_id"], str):
+        raise ValueError("codex_execution_package_native_binding_invalid")
+    if value["native_preparation_semantic_hash"] is not None and (not isinstance(value["native_preparation_semantic_hash"], str) or not value["native_preparation_semantic_hash"].startswith("sha256:")):
+        raise ValueError("codex_execution_package_native_binding_invalid")
+    if not isinstance(value["allowed_files"], list) or any(not isinstance(item, str) or not item for item in value["allowed_files"]):
+        raise ValueError("codex_execution_package_allowed_files_invalid")
+    if not value["allowed_files"] and (not isinstance(value["native_empty_reason"], str) or not value["native_empty_reason"]):
+        raise ValueError("codex_execution_package_native_empty_reason_required")
+    if value["allowed_files"] and value["native_empty_reason"] is not None:
+        raise ValueError("codex_execution_package_native_empty_reason_invalid")
+    if not isinstance(value["forbidden_operations"], list) or not value["forbidden_operations"] or not all(isinstance(item, str) for item in value["forbidden_operations"]):
+        raise ValueError("codex_execution_package_operations_invalid")
+    if not isinstance(value["timeout_seconds"], int) or not 1 <= value["timeout_seconds"] <= 86400:
+        raise ValueError("codex_execution_package_timeout_invalid")
+    expected = content_hash({key: item for key, item in value.items() if key not in {"package_id", "package_semantic_hash", "bounded_working_directory"}})
+    if value["package_semantic_hash"] != expected:
+        raise ValueError("codex_execution_package_semantic_hash_invalid")
+    return value
+
+
+def assert_submission_path(ctx: LocalExecutionContext, specialist_id: str, candidate: Path, *, kind: str) -> Path:
+    """Return an exact trusted package inbox path, never a repository file."""
+    if kind not in {"result", "receipt"}:
+        raise ValueError("review_plan_submission_kind_invalid")
+    manifest, _ = load(ctx)
+    orders = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    matches = [read_json(ctx.repository_root, path, label="specialist_work_order")
+               for path in checked_children(ctx.repository_root, orders, label="specialist_work_orders")
+               if path.suffix == ".json" and read_json(ctx.repository_root, path, label="specialist_work_order").get("specialist_id") == specialist_id]
+    if len(matches) != 1:
+        raise ValueError("specialist_work_order_unavailable")
+    expected = root(ctx) / "inbox" / matches[0]["work_order_id"] / ("result.json" if kind == "result" else "completion-receipt.json")
+    if Path(candidate).is_absolute():
+        target = Path(candidate)
+    else:
+        target = ctx.repository_root / candidate
+    if Path(__import__("os").path.abspath(target)) != Path(__import__("os").path.abspath(expected)):
+        raise ValueError("review_plan_submission_path_invalid")
+    return expected
+
+
 def validate_harness_capability_manifest(value: dict) -> dict:
     fields = {"schema_version", "execution_mode", "declared_capability", "granted_permission", "observed_execution", "independence_limitation"}
     modes = {"native_multi_agent", "isolated_sequential", "single_agent_degraded", "manual_external"}
@@ -441,13 +508,40 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
 
 
 def render_package(ctx: LocalExecutionContext, specialist_id: str) -> dict:
-    manifest, _ = load(ctx)
+    manifest, artifacts = load(ctx)
     directory = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
     matches = [path for path in checked_children(ctx.repository_root, directory, label="specialist_work_orders") if path.suffix == ".json" and read_json(ctx.repository_root, path, label="specialist_work_order").get("specialist_id") == specialist_id]
     if len(matches) != 1:
         raise ValueError("specialist_work_order_unavailable")
     order = read_json(ctx.repository_root, matches[0], label="specialist_work_order")
-    return {"schema_version": "codex-execution-package.v1", "work_order": order, "allowed_files": order["allowed_files"], "forbidden_operations": ["model_execution", "network", "project_command", "sql"], "expected_result_path": "result.json", "expected_receipt_path": "completion-receipt.json"}
+    binding = order.get("native_binding")
+    if not isinstance(binding, dict):
+        raise ValueError("specialist_native_boundary_invalid")
+    # The wrapper does not recreate native packets.  The exact binding is the
+    # trusted reference and the context describes only that bounded packet.
+    allowed_files = list(order.get("allowed_files", []))
+    package = {
+        "schema_version": "codex-execution-package.v1",
+        "package_id": _stable("codex_package", {"plan": manifest["plan_id"], "specialist": specialist_id, "binding": binding}),
+        "plan_id": manifest["plan_id"], "specialist_id": specialist_id,
+        "native_preparation_id": binding.get("preparation_id"),
+        "native_preparation_semantic_hash": binding.get("preparation_semantic_hash"),
+        "native_work_order": order,
+        "native_context_packet": {"domain": binding.get("domain"), "role_id": binding.get("role_id"), "context_hash": binding.get("context_hash"), "input_vector_hash": order["input_vector_hash"]},
+        "result_schema": order["result_schema"],
+        "completion_receipt_schema": order["native_boundary"]["native_completion_receipt_contract"],
+        "bounded_working_directory": "package-workdir/" + specialist_id,
+        "allowed_files": allowed_files,
+        "native_empty_reason": None if allowed_files else "native_packet_has_no_selected_files",
+        "forbidden_operations": ["model_execution", "network", "project_command", "sql", "browser", "warehouse_bi"],
+        "timeout_seconds": 3600,
+        "expected_result_path": "result.json", "expected_receipt_path": "completion-receipt.json",
+        "execution_mode": order["execution_mode"],
+        "independence_limitations": order["harness_capability_manifest"]["independence_limitation"],
+        "package_semantic_hash": "",
+    }
+    package["package_semantic_hash"] = content_hash({key: value for key, value in package.items() if key not in {"package_id", "package_semantic_hash", "bounded_working_directory"}})
+    return validate_codex_execution_package(package)
 
 
 def _validate_native_submission(ctx: LocalExecutionContext, specialist_id: str, binding: dict, raw: bytes, receipt_raw: bytes) -> tuple[dict, list[str], str]:
