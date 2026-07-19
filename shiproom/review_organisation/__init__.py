@@ -134,8 +134,17 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
     specialist = next((item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"] == specialist_id), None)
     if specialist is None or specialist["state"] != "selected":
         raise ValueError("specialist_not_issued")
+    invalid = None
     if result.get("work_order_id") is None or receipt.get("work_order_id") != result.get("work_order_id"):
-        return {"status": "revision_required", "reason": "MISSING_EVIDENCE_LINK", "json_pointers": ["/work_order_id"]}
-    if result.get("authority") in {"deterministically_established", "source_verified"}:
-        return {"status": "revision_required", "reason": "AUTHORITY_UPGRADE", "json_pointers": ["/authority"]}
+        invalid = ("MISSING_EVIDENCE_LINK", ["/work_order_id"])
+    elif result.get("authority") in {"deterministically_established", "source_verified"}:
+        invalid = ("AUTHORITY_UPGRADE", ["/authority"])
+    if invalid:
+        prior = [item for item in artifacts["revision-ledger.json"]["entries"] if item["specialist_id"] == specialist_id]
+        attempt = len(prior) + 1
+        entry = {"revision_id": _stable("revision", {"generation": manifest["generation"], "specialist": specialist_id, "attempt": attempt, "reason": invalid[0], "pointers": invalid[1]}), "specialist_id": specialist_id, "attempt": attempt, "reason": invalid[0], "json_pointers": invalid[1], "status": "revision_required" if attempt == 1 else "specialist_failed_closed"}
+        ledger = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
+        inbox = ensure_directory(ctx.repository_root, root(ctx) / "revision-ledger" / manifest["generation"], label="revision_ledger")
+        write_bytes(ctx.repository_root, inbox / (entry["revision_id"] + ".json"), _json(entry), label="revision_request")
+        return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"]}
     return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": result["work_order_id"]}

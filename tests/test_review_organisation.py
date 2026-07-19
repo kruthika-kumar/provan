@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from shiproom.review_organisation import _dep, _selection, registry
+from shiproom.review_organisation import _dep, _selection, registry, submit_result
 
 
 def test_specialist_registry_is_closed_and_exact():
@@ -27,3 +27,14 @@ def test_browser_absence_is_explicit_not_applicable_not_omission():
     vector={"language_framework_signals":{"python":True,"typescript":False},"browser_applicability":{"authority":"explicitly_not_applicable","criterion_ids":[]},"ai_surface_signal":{"authority":"not_inspected","evidence_paths":[]},"migration_signal":{"authority":"not_inspected","evidence_paths":[]}}
     browser=next(item for item in _selection(vector) if item["specialist_id"]=="browser_journey")
     assert browser["state"]=="skipped" and browser["applicability_authority"]=="explicitly_not_applicable"
+
+
+def test_second_invalid_submission_fails_only_the_specialist(tmp_path, monkeypatch):
+    import shiproom.review_organisation as domain
+    context=SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel"})
+    manifest={"generation":"plan_1"}
+    artifacts={"review-plan.json":{"specialists":[{"specialist_id":"python_engineering","state":"selected"}]},"revision-ledger.json":{"entries":[]}}
+    monkeypatch.setattr(domain,"load",lambda ctx:(manifest,artifacts))
+    first=submit_result(context,"python_engineering",{},{}); assert first["status"]=="revision_required"
+    artifacts["revision-ledger.json"]["entries"]=[{"specialist_id":"python_engineering"}]
+    second=submit_result(context,"python_engineering",{},{}); assert second["status"]=="specialist_failed_closed"
