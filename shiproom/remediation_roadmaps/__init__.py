@@ -230,6 +230,14 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
     for record in value["records"]:
         if set(record) != {"source_issue_id", *PLANNER_FIELDS} or record["source_issue_id"] not in work["assigned_issue_ids"] or record["source_issue_id"] in records:
             raise ValueError("planner_authority_field_forbidden")
+        list_fields = ("root_cause_hypotheses", "recommended_changes", "test_proposals", "instrumentation_implications", "rollback_suggestions")
+        if (any(not isinstance(record[field], list) or len(record[field]) > 64 or any(not isinstance(item, str) or not item or len(item) > 4096 for item in record[field]) for field in list_fields) or
+                record["complexity"] not in {"low", "medium", "high", "unknown"} or record["risk"] not in {"low", "medium", "high", "unknown"} or
+                (record["suggested_owner"] is not None and (not isinstance(record["suggested_owner"], str) or len(record["suggested_owner"]) > 512))):
+            raise ValueError("planner_result_record_invalid")
+        if (not isinstance(value["assumptions"], list) or not isinstance(value["limitations"], list) or
+                any(not isinstance(item, str) or not item or len(item) > 4096 for item in value["assumptions"] + value["limitations"])):
+            raise ValueError("planner_result_narrative_invalid")
         records[record["source_issue_id"]] = {name: {"authority": authority, "value": record[name]} for name in PLANNER_FIELDS} | {"assumptions": value["assumptions"], "limitations": value["limitations"]}
     return {"records_by_issue": records}
 
@@ -306,9 +314,10 @@ def _closure_inbox(ctx: LocalExecutionContext, closure_contract_id: str) -> tupl
     receipt_fields = {"schema_version", "closure_contract_id", "evidence_snapshot_hash", "verifier_id", "executor_type"}
     if not isinstance(evidence, dict) or set(evidence) != evidence_fields or evidence.get("schema_version") != CLOSURE_EVIDENCE_SCHEMA:
         raise ValueError("closure_evidence_contract_invalid")
+    outcome_fields = ("reruns", "regression_results", "test_results", "instrumentation_results")
     if (not isinstance(evidence.get("reruns"), list) or not evidence["reruns"] or
-            any(not isinstance(item, dict) or set(item) != {"check_id", "passed", "evidence_class"} or not isinstance(item["check_id"], str) or not isinstance(item["passed"], bool) or item["evidence_class"] not in {"deterministically_established", "source_verified"} for item in evidence["reruns"]) or
-            any(not isinstance(evidence[name], list) for name in ("regression_results", "test_results", "instrumentation_results", "protected_invariant_outcomes")) or
+            any(not isinstance(evidence[name], list) or len(evidence[name]) > 2048 or any(not isinstance(item, dict) or set(item) != {"check_id", "passed", "evidence_class"} or not isinstance(item["check_id"], str) or not item["check_id"] or not isinstance(item["passed"], bool) or item["evidence_class"] not in {"deterministically_established", "source_verified"} for item in evidence[name]) for name in outcome_fields) or
+            not isinstance(evidence["protected_invariant_outcomes"], list) or
             any(not isinstance(item, dict) or set(item) != {"invariant", "passed"} or not isinstance(item["invariant"], str) or not isinstance(item["passed"], bool) for item in evidence["protected_invariant_outcomes"])):
         raise ValueError("closure_evidence_contract_invalid")
     if (not isinstance(receipt, dict) or set(receipt) != receipt_fields or receipt.get("schema_version") != CLOSURE_RECEIPT_SCHEMA or
@@ -344,6 +353,14 @@ def closure_verify(ctx: LocalExecutionContext, closure_contract_id: str, evidenc
         return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["exact_rerun_identity_missing"]}
     if any(not item.get("passed") or item.get("evidence_class") not in contract["evidence_classes_allowed_to_close"] for item in reruns):
         return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["closure_evidence_not_permitted"]}
+    requirement_groups = (("regression_results", "regression_checks"), ("test_results", "test_requirements"), ("instrumentation_results", "instrumentation_requirements"))
+    for submitted_key, contract_key in requirement_groups:
+        expected_checks = set(contract.get(contract_key, []))
+        submitted_checks = {item["check_id"] for item in submitted[submitted_key]}
+        if submitted_checks != expected_checks:
+            return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["closure_required_outcome_missing"]}
+        if any(not item["passed"] or item["evidence_class"] not in contract["evidence_classes_allowed_to_close"] for item in submitted[submitted_key]):
+            return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["closure_evidence_not_permitted"]}
     if any(not item.get("passed") for item in submitted.get("protected_invariant_outcomes", [])):
         return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["protected_invariant_failed"]}
     if contract.get("owner_decision_requirement"):
