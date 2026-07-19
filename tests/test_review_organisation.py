@@ -142,3 +142,17 @@ def test_changed_consumed_native_preparation_stales_review_plan(tmp_path, monkey
     prepare_assessment(context)
     with pytest.raises(ValueError, match="stale_consumed_assessment_dependency"):
         domain.load(context)
+
+
+def test_selection_uses_closed_surface_policy_and_keeps_candidate_scope():
+    import shiproom.review_organisation as domain
+    vector = {"language_framework_signals":{"python":False,"typescript":False},
+              "browser_applicability":{"authority":"not_inspected","criterion_ids":[]},
+              "ai_surface_signal":{"authority":"candidate_surface","evidence_paths":["src/ai.py"]},
+              "migration_signal":{"authority":"confirmed_surface","evidence_paths":["migrations/v1.py"]}}
+    values = {item["specialist_id"]: item for item in domain._selection(vector)}
+    assert values["ai_evaluation"]["state"] == "selected"
+    assert values["ai_evaluation"]["applicability_authority"] == "candidate_surface"
+    # The registered migration signal caps the review at candidate scope even
+    # when change impact names a migration surface.
+    assert values["migration_and_rollback"]["applicability_authority"] == "candidate_surface"

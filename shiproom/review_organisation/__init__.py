@@ -193,19 +193,37 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
     if vector is None:
         vector = ctx  # type: ignore[assignment]
         ctx = None  # type: ignore[assignment]
+    active_signals = {
+        "python_source": vector["language_framework_signals"]["python"],
+        "typescript_source": vector["language_framework_signals"]["typescript"],
+        "browser_requirement": vector["browser_applicability"]["authority"] == "confirmed_surface",
+        "ai_keyword_candidate": vector["ai_surface_signal"]["authority"] == "candidate_surface",
+        "migration_keyword_candidate": vector["migration_signal"]["authority"] in {"candidate_surface", "confirmed_surface"},
+        # Product Intent's fixed evidence taxonomy is the only canonical
+        # source for these specialist surfaces; implementation omissions do
+        # not manufacture either signal.
+        "test_requirement": False,
+        "instrumentation_requirement": False,
+    }
+    policy_by_surface = {item["surface"]: item for item in surface_policy()["signals"]}
     result=[]
     for entry in registry()["specialists"]:
         sid=entry["specialist_id"]; selected=False; authority="not_inspected"; reasons=[]
-        if sid=="product_intent":selected=True;authority="confirmed_surface";reasons=["product_intent_required"]
-        elif sid=="python_engineering" and vector["language_framework_signals"]["python"]:selected=True;authority="confirmed_surface";reasons=["python_source_present"]
-        elif sid=="typescript_engineering" and vector["language_framework_signals"]["typescript"]:selected=True;authority="confirmed_surface";reasons=["typescript_source_present"]
-        elif sid=="browser_journey":authority=vector["browser_applicability"]["authority"];selected=authority=="confirmed_surface";reasons=["browser_requirement"] if selected else ["browser_not_inspected"]
-        elif sid=="ai_evaluation":authority=vector["ai_surface_signal"]["authority"];selected=authority in {"confirmed_surface","candidate_surface"};reasons=["ai_surface"] if selected else ["ai_not_inspected"]
-        elif sid=="migration_and_rollback":authority=vector["migration_signal"]["authority"];selected=authority in {"confirmed_surface","candidate_surface"};reasons=["migration_signal"] if selected else ["migration_not_inspected"]
-        elif sid in {"test_adequacy","instrumentation"}: selected=vector["language_framework_signals"]["python"] or vector["language_framework_signals"]["typescript"];authority="confirmed_surface" if selected else "not_inspected";reasons=["implementation_surface"] if selected else ["no_confirmed_implementation_surface"]
+        rule = policy_by_surface.get(sid)
+        if rule is not None:
+            signal_active = active_signals.get(rule["signal_type"], False)
+            authority = rule["maximum_applicability_authority"] if signal_active else "not_inspected"
+            selected = signal_active and rule["permitted_selection_effect"] in {"select", "candidate_review"}
+            reasons = [rule["signal_type"] if signal_active else "no_registered_surface_signal"]
+            if sid == "browser_journey" and vector["browser_applicability"]["authority"] == "explicitly_not_applicable":
+                authority, selected, reasons = "explicitly_not_applicable", False, ["browser_explicitly_not_applicable"]
+        elif sid == "product_intent":
+            # See _native_preparation: the legacy proposal path has no native
+            # receipt-bound work order, so it is honestly unavailable here.
+            authority, reasons = "not_inspected", ["native_product_intent_work_order_unavailable"]
         native=next(item for item in native_boundaries()["specialists"] if item["specialist_id"]==sid)
         binding, unavailable_reason = (None, None) if ctx is None or not selected else _native_preparation(ctx, sid)
-        if selected and binding is None:
+        if selected and ctx is not None and binding is None:
             selected = False
             authority = "not_inspected" if authority != "explicitly_not_applicable" else authority
             reasons = reasons + [unavailable_reason]
