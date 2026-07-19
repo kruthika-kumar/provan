@@ -36,6 +36,9 @@ def main() -> int:
     parser.add_argument("--junit", type=Path, required=True)
     parser.add_argument("--workflow-receipt", type=Path, required=True)
     parser.add_argument("--behavioral-receipt", type=Path, required=True)
+    parser.add_argument("--security-receipt", type=Path, required=True)
+    parser.add_argument("--contract-parity-report", type=Path, required=True)
+    parser.add_argument("--wheel-receipt", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=False)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -50,6 +53,9 @@ def main() -> int:
     passed_tests = _junit_passed_ids(junit)
     workflow = _load(args.workflow_receipt)
     behavioral = _load(args.behavioral_receipt)
+    security = _load(args.security_receipt)
+    parity = _load(args.contract_parity_report)
+    wheel = _load(args.wheel_receipt)
     proof_ids = {item["proof_id"] for item in proofs}
     requirements = {item["requirement_id"] for item in completion}
     execution_requirements = {item["requirement_id"] for item in execution}
@@ -68,6 +74,9 @@ def main() -> int:
         "behavioral_receipt_complete": len(behavioral.get("cases", [])) == 35 and all(item.get("passed") for item in behavioral["cases"]),
         "receipts_match_final_commit": workflow.get("final_commit") == commit and behavioral.get("final_commit") == commit,
         "contract_inventory_bound": {item["contract_id"] for item in inventory if item.get("parity_required")} == {item["contract_name"] for item in contracts} and all(item.get("requirement_ids") for item in contracts),
+        "security_receipt_complete": bool(security.get("passed")) and bool(security.get("records")) and all(item.get("typed_rejection") == "private_alpha_operation_prohibited:" + item.get("operation", "") and not item.get("underlying_adapter_called") and not item.get("side_effect_observed") for item in security["records"]),
+        "contract_parity_complete": bool(parity.get("passed")) and bool(parity.get("contracts")),
+        "wheel_receipt_complete": bool(wheel.get("passed")) and wheel.get("final_commit") == commit and wheel.get("exit_code") == 0,
     }
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
@@ -76,7 +85,10 @@ def main() -> int:
                          "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
                          "contract_inventory_hash": _sha((validation / "session6-8-contract-inventory.json").read_bytes()),
                          "junit_hash": _sha(junit), "workflow_receipt_hash": _sha(args.workflow_receipt.read_bytes()),
-                         "behavioral_receipt_hash": _sha(args.behavioral_receipt.read_bytes())},
+                         "behavioral_receipt_hash": _sha(args.behavioral_receipt.read_bytes()),
+                         "security_receipt_hash": _sha(args.security_receipt.read_bytes()),
+                         "contract_parity_report_hash": _sha(args.contract_parity_report.read_bytes()),
+                         "wheel_receipt_hash": _sha(args.wheel_receipt.read_bytes())},
               "prerequisites": prerequisites, "resolved": all(prerequisites.values()), "report_self_hash": ""}
     report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
