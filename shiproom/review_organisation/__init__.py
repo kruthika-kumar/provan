@@ -244,7 +244,8 @@ def _vector(ctx:LocalExecutionContext)->dict:
     paths=sorted({node.get("path") for node in nodes if isinstance(node.get("path"),str)})
     languages={"python":any(path.endswith(".py") for path in paths),"typescript":any(path.endswith((".ts",".tsx")) for path in paths)}
     criteria=graph["intent_artifacts"]["acceptance-criteria.json"].get("criteria",[])
-    browser=any("browser_or_http" in item.get("required_evidence_categories",[]) for item in criteria)
+    categories = {category for item in criteria for category in item.get("required_evidence_categories", [])}
+    browser="browser_or_http" in categories
     # A filename-like hint is a candidate surface only. It cannot establish selection.
     ai_candidates=[path for path in paths if "ai" in path.lower() or "prompt" in path.lower()]
     migration_candidates=[path for path in paths if "migration" in path.lower()]
@@ -252,7 +253,8 @@ def _vector(ctx:LocalExecutionContext)->dict:
     migration_confirmed = bool(change_impact.get("migration_surface"))
     harness = {"schema_version":"agent-harness-capability-manifest.v1","execution_mode":"manual_external","declared_capability":"prepared_packet_only","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}
     validate_harness_capability_manifest(harness)
-    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":harness}
+    typed_refs = lambda category: [{"source_domain":"product_intent", "source_generation":graph["graph_generation"], "record_id":item["criterion_id"], "criterion_id":item["criterion_id"], "authority":"source_verified", "semantic_hash":graph["intent_manifest"]["semantic_bundle_hash"]} for item in criteria if category in item.get("required_evidence_categories", [])]
+    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])],"evidence_refs":typed_refs("browser_or_http")},"language_framework_signals":languages,"test_signal":{"authority":"confirmed_surface" if "test" in categories else "not_inspected", "evidence_refs":typed_refs("test")},"instrumentation_signal":{"authority":"confirmed_surface" if "instrumentation" in categories else "not_inspected", "evidence_refs":typed_refs("instrumentation")},"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"evidence_refs":[{"source_domain":"release", "source_generation":"release_state", "record_id":"change_impact", "criterion_id":None, "authority":"source_verified" if migration_confirmed else "model_mapped_candidate", "semantic_hash":content_hash(change_impact)}] if (migration_confirmed or migration_candidates) else [],"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates,"evidence_refs":[{"source_domain":"graph", "source_generation":graph["graph_generation"], "record_id":path, "criterion_id":None, "authority":"model_mapped_candidate", "semantic_hash":graph["graph_manifest"]["semantic_bundle_hash"]} for path in ai_candidates]},"harness":harness}
 
 
 def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple[dict | None, str | None]:
@@ -299,10 +301,17 @@ def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple
                 "context_hash": preparation["contexts"][role]["packet_hash"],
                 "result_schema": work["required_output"]["schema_version"]}, None
     if specialist_id == "product_intent":
-        # The native Product Intent workflow has a proposal packet but no
-        # independent work-order/receipt lifecycle.  It therefore cannot be
-        # represented honestly by this specialist wrapper yet.
-        return None, "native_product_intent_work_order_unavailable"
+        from shiproom import intent
+        try:
+            packet, _raw = intent._load_packet(ctx)
+        except ValueError:
+            return None, "native_product_intent_packet_unavailable"
+        graph = load_assessment_input(ctx)
+        criteria = graph["intent_artifacts"]["acceptance-criteria.json"].get("criteria", [])
+        return {"domain": "product_intent", "role_id": "product_intent", "preparation_id": packet["packet_hash"],
+                "preparation_semantic_hash": packet["packet_hash"], "work_order_id": None,
+                "work_order_hash": packet["packet_hash"], "context_hash": packet["packet_hash"],
+                "result_schema": "intent-proposal.v1", "criterion_ids": [item["criterion_id"] for item in criteria]}, None
     if specialist_id == "migration_and_rollback":
         return {"domain": "review_organisation", "role_id": specialist_id, "preparation_id": None,
                 "preparation_semantic_hash": None, "work_order_id": None, "work_order_hash": None,
@@ -325,8 +334,8 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
         # Product Intent's fixed evidence taxonomy is the only canonical
         # source for these specialist surfaces; implementation omissions do
         # not manufacture either signal.
-        "test_requirement": False,
-        "instrumentation_requirement": False,
+        "test_requirement": vector.get("test_signal", {}).get("authority") == "confirmed_surface",
+        "instrumentation_requirement": vector.get("instrumentation_signal", {}).get("authority") == "confirmed_surface",
     }
     policy_by_surface = {item["surface"]: item for item in surface_policy()["signals"]}
     harness = vector.get("harness")
@@ -352,16 +361,15 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
             if sid == "browser_journey" and vector["browser_applicability"]["authority"] == "explicitly_not_applicable":
                 authority, selected, reasons = "explicitly_not_applicable", False, ["browser_explicitly_not_applicable"]
         elif sid == "product_intent":
-            # See _native_preparation: the legacy proposal path has no native
-            # receipt-bound work order, so it is honestly unavailable here.
-            authority, reasons = "not_inspected", ["native_product_intent_work_order_unavailable"]
+            authority, selected, reasons = "confirmed_surface", True, ["active_product_intent_packet"]
         native=next(item for item in native_boundaries()["specialists"] if item["specialist_id"]==sid)
         binding, unavailable_reason = (None, None) if ctx is None or not selected else _native_preparation(ctx, sid)
         if selected and ctx is not None and binding is None:
             selected = False
             authority = "not_inspected" if authority != "explicitly_not_applicable" else authority
             reasons = reasons + [unavailable_reason]
-        result.append({"specialist_id":sid,"state":"selected" if selected else "unavailable" if unavailable_reason and authority != "explicitly_not_applicable" else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":[],"required_capabilities":["prepared_packet_read"],"execution_mode":execution_mode,"independence_limitations":[independence_limitation],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native,"native_binding":binding})
+        signal_refs = (vector.get("browser_applicability", {}).get("evidence_refs", []) if sid == "browser_journey" else vector.get("ai_surface_signal", {}).get("evidence_refs", []) if sid == "ai_evaluation" else vector.get("migration_signal", {}).get("evidence_refs", []) if sid == "migration_and_rollback" else vector.get("test_signal", {}).get("evidence_refs", []) if sid == "test_adequacy" else vector.get("instrumentation_signal", {}).get("evidence_refs", []) if sid == "instrumentation" else [])
+        result.append({"specialist_id":sid,"state":"selected" if selected else "unavailable" if unavailable_reason and authority != "explicitly_not_applicable" else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":signal_refs,"required_capabilities":["prepared_packet_read"],"execution_mode":execution_mode,"independence_limitations":[independence_limitation],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native,"native_binding":binding})
     return result
 
 
@@ -419,6 +427,10 @@ def _validate_plan_native_bindings(ctx: LocalExecutionContext, plan: dict) -> No
         if not isinstance(binding, dict):
             raise ValueError("review_plan_native_binding_tampered")
         resolved, reason = _native_preparation(ctx, item.get("specialist_id"))
+        if item.get("specialist_id") == "product_intent" and isinstance(resolved, dict):
+            # Work-order identity is wrapper transport state, not native intent
+            # packet state; compare the shared native authority only.
+            resolved = {**resolved, "work_order_id": binding.get("work_order_id")}
         if reason is not None or resolved != binding:
             raise ValueError("stale_native_specialist_boundary")
 
@@ -429,7 +441,14 @@ def prepare(ctx:LocalExecutionContext)->dict:
     work_orders=[]
     for item in selected:
         if item["state"]!="selected":continue
-        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"harness_capability_manifest":vector["harness"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"],"native_binding":item["native_binding"]})
+        work_order_id = _stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]})
+        binding = json.loads(canonical_json(item["native_binding"]))
+        # Intent proposals intentionally have no work_order_id field.  The
+        # wrapper receipt binds this generated ID while the proposal remains
+        # bound to its exact native source packet.
+        if item["specialist_id"] == "product_intent":
+            binding["work_order_id"] = work_order_id
+        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":work_order_id,"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"harness_capability_manifest":vector["harness"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"],"native_binding":binding})
     plan={"schema_version":"review-plan.v1","plan_id":plan_id,"input_vector":vector,"specialists":selected,"adaptation_depth":0,"supersedes":None}
     artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"accepted-results.json":{"schema_version":"accepted-specialist-results.v1","results":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
     for name,value in artifacts.items():write_bytes(ctx.repository_root,directory/name,_json(value),label="review_plan_artifact")
@@ -552,6 +571,15 @@ def _validate_native_submission(ctx: LocalExecutionContext, specialist_id: str, 
         validate_migration_result(result)
         validate_harness_execution_receipt(receipt, work_order_id=result["work_order_id"])
         return result, result["criterion_ids"], content_hash(result)
+    if binding["domain"] == "product_intent":
+        from shiproom import intent
+        packet, _packet_bytes = intent._load_packet(ctx)
+        intent._validate_proposal(result, packet)
+        validate_harness_execution_receipt(receipt, work_order_id=binding["work_order_id"])
+        criteria = binding.get("criterion_ids", [])
+        if not criteria:
+            raise ValueError("accepted_result_criterion_link_missing")
+        return result, criteria, content_hash(result)
     if binding["domain"] == "assessment":
         from shiproom import assessment
         preparation = assessment.load_preparation(ctx, binding["preparation_id"])
@@ -581,7 +609,8 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
     if specialist is None or specialist["state"] != "selected":
         raise ValueError("specialist_not_issued")
     invalid = None
-    if result.get("work_order_id") is None or receipt.get("work_order_id") != result.get("work_order_id"):
+    is_intent = specialist_id == "product_intent"
+    if (not is_intent and result.get("work_order_id") is None) or (not is_intent and receipt.get("work_order_id") != result.get("work_order_id")):
         invalid = ("MISSING_EVIDENCE_LINK", ["/work_order_id"])
     elif result.get("authority") in {"deterministically_established", "source_verified"}:
         invalid = ("AUTHORITY_UPGRADE", ["/authority"])
@@ -599,7 +628,8 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
     work = next((item for item in orders if item.get("specialist_id") == specialist_id), None)
     binding = work.get("native_binding") if work else None
     expected_work_order = binding.get("work_order_id") if binding and binding.get("work_order_id") else work.get("work_order_id") if work else None
-    if work is None or not isinstance(binding, dict) or result.get("work_order_id") != expected_work_order or result.get("schema_version") != specialist.get("result_schema"):
+    submission_work_order = receipt.get("work_order_id") if is_intent else result.get("work_order_id")
+    if work is None or not isinstance(binding, dict) or submission_work_order != expected_work_order or result.get("schema_version") != specialist.get("result_schema"):
         # A bound but cross-specialist result is a closed revision reason, not
         # an accepted source of future adaptation.
         invalid = ("OUT_OF_SCOPE_RECORD", ["/schema_version"])
