@@ -21,6 +21,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--junit", type=Path, required=True)
     parser.add_argument("--workflow-receipt", type=Path, required=True)
+    parser.add_argument("--behavioral-receipt", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     validation = root / "docs" / "validation"
@@ -29,6 +30,7 @@ def main() -> int:
     claims = _load(validation / "session6-8-claim-registry.json")["claims"]
     junit = args.junit.read_bytes()
     workflow = _load(args.workflow_receipt)
+    behavioral = _load(args.behavioral_receipt)
     proof_ids = {item["proof_id"] for item in proofs}
     requirements = {item["requirement_id"] for item in completion}
     covered = {item for claim in claims for item in claim["requirement_ids"]}
@@ -40,13 +42,15 @@ def main() -> int:
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
         "junit_present": bool(junit),
         "workflow_receipt_complete": len(workflow_cases) == 18 and all(item.get("passed") for item in workflow_cases),
+        "behavioral_receipt_complete": len(behavioral.get("cases", [])) == 35 and all(item.get("passed") for item in behavioral["cases"]),
     }
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
                          "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
                          "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
-                         "junit_hash": _sha(junit), "workflow_receipt_hash": _sha(args.workflow_receipt.read_bytes())},
+                         "junit_hash": _sha(junit), "workflow_receipt_hash": _sha(args.workflow_receipt.read_bytes()),
+                         "behavioral_receipt_hash": _sha(args.behavioral_receipt.read_bytes())},
               "prerequisites": prerequisites, "resolved": all(prerequisites.values()), "report_self_hash": ""}
     report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
