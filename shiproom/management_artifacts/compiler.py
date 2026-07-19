@@ -78,6 +78,17 @@ def compile(ctx:LocalExecutionContext)->dict:
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["release_id"]!=ctx.release["release_id"]:raise ValueError("stale_dependency")
+    if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
+        raise ValueError("management_pointer_tampered")
     artifacts={name:read_json(ctx.repository_root,directory/(name+".json"),label="management_artifact") for name in JSON_ARTIFACTS};github=read_json(ctx.repository_root,directory/"github-summary-payload.json",label="github_payload");vectors=[canonical_json(v["artifact_dependency_vector"]) for v in artifacts.values()]+[canonical_json(github["artifact_dependency_vector"])]
     if len(set(vectors))!=1 or vectors[0]!=canonical_json(manifest["artifact_dependency_vector"]):raise ValueError("artifact_dependency_vector_mismatch")
+    expected = {name + ".json" for name in JSON_ARTIFACTS} | {name + ".html" for name in JSON_ARTIFACTS if name != "release-recommendation-view"} | {"github-summary-payload.json", "github-summary.md", "manifest.json"}
+    actual = {path.name for path in checked_children(ctx.repository_root, directory, label="management_generation")}
+    if actual != expected: raise ValueError("management_generation_file_set_mismatch")
+    for name, digest in manifest["artifact_hashes"].items():
+        if _hash(read_bytes(ctx.repository_root, directory / name, label="management_artifact_hash", max_bytes=2*1024*1024)) != digest:
+            raise ValueError("management_artifact_tampered")
+    current = dependency_vector(ctx); current.pop("_loaded")
+    if canonical_json(current) != canonical_json(manifest["artifact_dependency_vector"]):
+        raise ValueError("stale_dependency")
     return manifest,artifacts
