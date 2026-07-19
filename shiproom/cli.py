@@ -33,7 +33,7 @@ from .measurement_ai.rendering import show as show_measurement_ai
 from .measurement_ai.qualification import prepare_qualification, compile_qualification
 from .measurement_ai.verifier import prepare_verifier
 from .remediation_roadmaps import prepare as prepare_remediation, compile as compile_remediation, load_generation as load_remediation, closure_verify as verify_remediation_closure
-from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result as submit_review_result
+from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result_bytes as submit_review_result
 from .contestability import append_action as append_contestation, load as load_contestation
 from .management_artifacts import compile as compile_management, load as load_management
 
@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(render_review_package(context,args.specialist),indent=2))
         elif args.action == "submit-result":
             if not args.specialist or not args.result or not args.receipt: raise SystemExit("review-plan submit-result requires --release --specialist --result --receipt")
-            print(json.dumps(submit_review_result(context,args.specialist,json.loads(Path(args.result).read_text(encoding="utf-8")),json.loads(Path(args.receipt).read_text(encoding="utf-8"))),indent=2))
+            print(json.dumps(submit_review_result(context,args.specialist,Path(args.result).read_bytes(),Path(args.receipt).read_bytes()),indent=2))
         else:
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.preparation or args.verifier_preparation or args.role: raise SystemExit("measurement-ai show accepts only --release and optional --journey")
             print(show_measurement_ai(context,args.journey))

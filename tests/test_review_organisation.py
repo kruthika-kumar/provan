@@ -78,3 +78,46 @@ def test_adaptation_requires_an_accepted_specialist_result(tmp_path):
     accepted = domain.submit_result(context, "migration_and_rollback", result, {"work_order_id": work["work_order_id"]})
     adapted = domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, accepted["result_id"])
     assert adapted["status"] == "accepted"
+
+
+def test_selected_native_specialists_bind_an_existing_native_preparation(tmp_path, monkeypatch):
+    """A review-plan wrapper may only select the native packet it can load."""
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle
+    from shiproom.assessment import prepare as prepare_assessment
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path)
+    compile_bundle(context)
+    original_vector = domain._vector
+    def with_python_surface(value):
+        vector = original_vector(value)
+        vector["language_framework_signals"]["python"] = True
+        return vector
+    monkeypatch.setattr(domain, "_vector", with_python_surface)
+    first = domain.prepare(context)
+    _, unavailable = domain.load(context)
+    by_id = {item["specialist_id"]: item for item in unavailable["review-plan.json"]["specialists"]}
+    assert by_id["python_engineering"]["state"] == "unavailable"
+    prepare_assessment(context)
+    second = domain.prepare(context)
+    _, selected = domain.load(context)
+    engineering = next(item for item in selected["review-plan.json"]["specialists"] if item["specialist_id"] == "python_engineering")
+    assert engineering["state"] == "selected"
+    assert engineering["native_binding"]["domain"] == "assessment"
+    assert second["input_vector"]["assessment"]["state"] == "required_present"
+    assert first["input_vector"]["assessment"]["state"] == "not_used"
+
+
+def test_later_unused_native_preparation_does_not_stale_prior_plan(tmp_path):
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle
+    from shiproom.assessment import prepare as prepare_assessment
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path)
+    compile_bundle(context)
+    first = domain.prepare(context)
+    prepare_assessment(context)
+    loaded, _ = domain.load(context)
+    assert loaded["generation"] == first["generation"]

@@ -132,7 +132,67 @@ def _vector(ctx:LocalExecutionContext)->dict:
     return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":{"declared_capability":"manual_external","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}}
 
 
-def _selection(vector:dict)->list[dict]:
+def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple[dict | None, str | None]:
+    """Resolve an *existing* native preparation for a wrapped specialist.
+
+    Review Organisation is intentionally not a second assessment compiler.  A
+    selected specialist must be able to point at an already validated native
+    packet and exact native work order.  The absence of that packet is an
+    ``unavailable`` boundary, not a license to mint a look-alike work order.
+    A malformed current native pointer is deliberately allowed to fail closed.
+    """
+    if specialist_id in {"browser_journey", "python_engineering", "typescript_engineering", "test_adequacy"}:
+        from shiproom import assessment
+        role = {"browser_journey": "browser_journey", "python_engineering": "engineering_assessment", "typescript_engineering": "engineering_assessment", "test_adequacy": "test_adequacy"}[specialist_id]
+        try:
+            preparation = assessment.load_preparation(ctx)
+        except ValueError as exc:
+            if str(exc) == "active assessment preparation unavailable":
+                return None, "native_assessment_preparation_unavailable"
+            raise
+        work = preparation["work_orders"].get(role)
+        if work is None:
+            return None, "native_assessment_work_order_unavailable"
+        return {"domain": "assessment", "role_id": role, "preparation_id": preparation["manifest"]["preparation_id"],
+                "preparation_semantic_hash": preparation["manifest"]["preparation_semantic_hash"],
+                "work_order_id": work["work_order_id"], "work_order_hash": work["work_order_hash"],
+                "context_hash": preparation["contexts"][role]["packet_hash"],
+                "result_schema": work["required_output"]["schema_version"]}, None
+    if specialist_id in {"instrumentation", "ai_evaluation"}:
+        from shiproom.measurement_ai.preparation import load_preparation
+        role = "measurement" if specialist_id == "instrumentation" else "ai_evaluation"
+        try:
+            preparation = load_preparation(ctx)
+        except ValueError as exc:
+            if str(exc) == "active measurement AI preparation unavailable":
+                return None, "native_measurement_ai_preparation_unavailable"
+            raise
+        work = preparation["work_orders"].get(role)
+        if work is None:
+            return None, "native_measurement_ai_work_order_unavailable"
+        return {"domain": "measurement_ai", "role_id": role, "preparation_id": preparation["manifest"]["preparation_id"],
+                "preparation_semantic_hash": preparation["manifest"]["preparation_semantic_hash"],
+                "work_order_id": work["work_order_id"], "work_order_hash": work["work_order_hash"],
+                "context_hash": preparation["contexts"][role]["context_hash"],
+                "result_schema": work["required_output"]["schema_version"]}, None
+    if specialist_id == "product_intent":
+        # The native Product Intent workflow has a proposal packet but no
+        # independent work-order/receipt lifecycle.  It therefore cannot be
+        # represented honestly by this specialist wrapper yet.
+        return None, "native_product_intent_work_order_unavailable"
+    if specialist_id == "migration_and_rollback":
+        return {"domain": "review_organisation", "role_id": specialist_id, "preparation_id": None,
+                "preparation_semantic_hash": None, "work_order_id": None, "work_order_hash": None,
+                "context_hash": content_hash({"release": ctx.release["release_id"]}), "result_schema": "migration-and-rollback-result.v1"}, None
+    raise ValueError("specialist_native_boundary_invalid")
+
+
+def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->list[dict]:
+    # Retain a pure vector-only form for registry tests; real preparation always
+    # supplies a context and therefore resolves native boundaries.
+    if vector is None:
+        vector = ctx  # type: ignore[assignment]
+        ctx = None  # type: ignore[assignment]
     result=[]
     for entry in registry()["specialists"]:
         sid=entry["specialist_id"]; selected=False; authority="not_inspected"; reasons=[]
@@ -144,20 +204,65 @@ def _selection(vector:dict)->list[dict]:
         elif sid=="migration_and_rollback":authority=vector["migration_signal"]["authority"];selected=authority in {"confirmed_surface","candidate_surface"};reasons=["migration_signal"] if selected else ["migration_not_inspected"]
         elif sid in {"test_adequacy","instrumentation"}: selected=vector["language_framework_signals"]["python"] or vector["language_framework_signals"]["typescript"];authority="confirmed_surface" if selected else "not_inspected";reasons=["implementation_surface"] if selected else ["no_confirmed_implementation_surface"]
         native=next(item for item in native_boundaries()["specialists"] if item["specialist_id"]==sid)
-        result.append({"specialist_id":sid,"state":"selected" if selected else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":[],"required_capabilities":["prepared_packet_read"],"execution_mode":"manual_external","independence_limitations":["declared capability is not proof of isolation"],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native})
+        binding, unavailable_reason = (None, None) if ctx is None or not selected else _native_preparation(ctx, sid)
+        if selected and binding is None:
+            selected = False
+            authority = "not_inspected" if authority != "explicitly_not_applicable" else authority
+            reasons = reasons + [unavailable_reason]
+        result.append({"specialist_id":sid,"state":"selected" if selected else "unavailable" if unavailable_reason and authority != "explicitly_not_applicable" else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":[],"required_capabilities":["prepared_packet_read"],"execution_mode":"manual_external","independence_limitations":["declared capability is not proof of isolation"],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native,"native_binding":binding})
     return result
+
+
+def _bind_consumed_dependencies(vector: dict, selected: list[dict]) -> dict:
+    """Bind only native generations actually consumed by selected work."""
+    result = json.loads(canonical_json(vector))
+    assessment = [item["native_binding"] for item in selected if item["state"] == "selected" and item["native_binding"] and item["native_binding"]["domain"] == "assessment"]
+    measurement = [item["native_binding"] for item in selected if item["state"] == "selected" and item["native_binding"] and item["native_binding"]["domain"] == "measurement_ai"]
+    if assessment:
+        identities = {(item["preparation_id"], item["preparation_semantic_hash"]) for item in assessment}
+        if len(identities) != 1:
+            raise ValueError("mixed_native_assessment_preparations")
+        generation, semantic_hash = next(iter(identities)); result["assessment"] = _dep("required_present", generation, semantic_hash)
+    if measurement:
+        identities = {(item["preparation_id"], item["preparation_semantic_hash"]) for item in measurement}
+        if len(identities) != 1:
+            raise ValueError("mixed_native_measurement_ai_preparations")
+        generation, semantic_hash = next(iter(identities)); result["measurement_ai"] = _dep("required_present", generation, semantic_hash)
+    return result
+
+
+def _validate_consumed_dependencies(ctx: LocalExecutionContext, vector: dict) -> None:
+    """Fail closed only for generations that actually consumed a native input.
+
+    This deliberately does not discover a later optional preparation: a plan
+    that consumed no assessment or Measurement/AI material remains portable
+    when one is issued later.
+    """
+    assessment_dependency = vector["assessment"]
+    if assessment_dependency["state"] == "required_present":
+        from shiproom import assessment
+        preparation = assessment.load_preparation(ctx, assessment_dependency["generation"])
+        if preparation["manifest"]["preparation_semantic_hash"] != assessment_dependency["semantic_hash"]:
+            raise ValueError("stale_consumed_assessment_dependency")
+    measurement_dependency = vector["measurement_ai"]
+    if measurement_dependency["state"] == "required_present":
+        from shiproom.measurement_ai.preparation import load_preparation
+        preparation = load_preparation(ctx, measurement_dependency["generation"])
+        if preparation["manifest"]["preparation_semantic_hash"] != measurement_dependency["semantic_hash"]:
+            raise ValueError("stale_consumed_measurement_ai_dependency")
 
 
 def prepare(ctx:LocalExecutionContext)->dict:
     validate_specialist_registries()
-    vector=_vector(ctx); plan_id=_stable("review_plan",vector); generation="plan_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="review_plan_generation")
-    selected=_selection(vector); work_orders=[]
+    vector=_vector(ctx); selected=_selection(ctx, vector); vector=_bind_consumed_dependencies(vector, selected); plan_id=_stable("review_plan",vector); generation="plan_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="review_plan_generation")
+    work_orders=[]
     for item in selected:
         if item["state"]!="selected":continue
-        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"]})
+        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"],"native_binding":item["native_binding"]})
     plan={"schema_version":"review-plan.v1","plan_id":plan_id,"input_vector":vector,"specialists":selected,"adaptation_depth":0,"supersedes":None}
     artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"accepted-results.json":{"schema_version":"accepted-specialist-results.v1","results":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
     for name,value in artifacts.items():write_bytes(ctx.repository_root,directory/name,_json(value),label="review_plan_artifact")
+    ensure_directory(ctx.repository_root, directory/"specialist-work-orders", label="review_plan_work_order_directory")
     for work in work_orders:write_bytes(ctx.repository_root,directory/"specialist-work-orders"/(work["work_order_id"]+".json"),_json(work),label="specialist_work_order")
     manifest={"schema_version":"review-plan-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"plan_id":plan_id,"input_vector":vector,"artifact_hashes":{name:_hash(_json(value)) for name,value in artifacts.items()},"semantic_bundle_hash":content_hash({"plan":plan,"work_orders":work_orders}),"bundle_hash":""};manifest["bundle_hash"]=content_hash({key:value for key,value in manifest.items() if key!="bundle_hash"})
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="review_plan_manifest")
@@ -168,6 +273,7 @@ def prepare(ctx:LocalExecutionContext)->dict:
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     pointer=read_json(ctx.repository_root, root(ctx)/"current-review-plan.json",label="review_plan_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="review_plan_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="review_plan_manifest")
     if manifest.get("compiler_version")!=COMPILER_VERSION or manifest["input_vector"]["release_commit"]!=ctx.authority_binding["repository_commit"]:raise ValueError("stale_dependency")
+    _validate_consumed_dependencies(ctx, manifest["input_vector"])
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("review_plan_pointer_tampered")
     names=("review-plan.json","plan-events.json","revision-ledger.json","accepted-results.json","execution-summary.json")
@@ -177,6 +283,9 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     artifacts={name:read_json(ctx.repository_root,directory/name,label="review_plan_artifact") for name in names}
     if any(_hash(_json(value)) != manifest["artifact_hashes"].get(name) for name,value in artifacts.items()):
         raise ValueError("review_plan_artifact_tampered")
+    plan = artifacts["review-plan.json"]
+    if plan.get("input_vector") != manifest["input_vector"] or any(item.get("state") == "selected" and not isinstance(item.get("native_binding"), dict) for item in plan.get("specialists", [])):
+        raise ValueError("review_plan_native_binding_tampered")
     return manifest,artifacts
 
 
@@ -187,6 +296,7 @@ def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: di
     for name, value in artifacts.items():
         write_bytes(ctx.repository_root, output / name, _json(value), label=label + "_artifact")
     prior_orders = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    ensure_directory(ctx.repository_root, output / "specialist-work-orders", label=label + "_work_order_directory")
     for path in checked_children(ctx.repository_root, prior_orders, label="prior_specialist_work_orders"):
         if path.suffix != ".json":
             raise ValueError("specialist_work_order_file_invalid")
@@ -235,7 +345,37 @@ def render_package(ctx: LocalExecutionContext, specialist_id: str) -> dict:
     return {"schema_version": "codex-execution-package.v1", "work_order": order, "allowed_files": order["allowed_files"], "forbidden_operations": ["model_execution", "network", "project_command", "sql"], "expected_result_path": "result.json", "expected_receipt_path": "completion-receipt.json"}
 
 
-def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, receipt: dict) -> dict:
+def _validate_native_submission(ctx: LocalExecutionContext, specialist_id: str, binding: dict, raw: bytes, receipt_raw: bytes) -> tuple[dict, list[str], str]:
+    """Invoke the registered native validator; never emulate it locally."""
+    result = json.loads(raw.decode("utf-8"))
+    receipt = json.loads(receipt_raw.decode("utf-8"))
+    if binding["domain"] == "review_organisation":
+        validate_migration_result(result)
+        if receipt.get("work_order_id") != result["work_order_id"]:
+            raise ValueError("native_completion_receipt_binding_invalid")
+        return result, result["criterion_ids"], content_hash(result)
+    if binding["domain"] == "assessment":
+        from shiproom import assessment
+        preparation = assessment.load_preparation(ctx, binding["preparation_id"])
+        role = binding["role_id"]
+        definitions = assessment.load_role_definitions()
+        if role == "browser_journey":
+            evidence_root = ctx.repository_root / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "assessment" / "inbox" / binding["preparation_id"] / binding["work_order_id"] / "evidence"
+            normalized = assessment._validate_browser_result(raw, receipt_raw, evidence_root, preparation, definitions[role]["value"])
+            return result, list(preparation["contexts"][role]["assigned"]["criterion_ids"]), normalized["hashes"]["result_semantic_hash"]
+        _submitted, _receipt, normalized = assessment._validate_role_result(raw, receipt_raw, role, preparation, definitions[role]["value"])
+        return result, list(preparation["contexts"][role]["assigned"]["criterion_ids"]), content_hash(normalized)
+    if binding["domain"] == "measurement_ai":
+        from shiproom.measurement_ai.preparation import load_preparation
+        from shiproom.measurement_ai.results import normalize_result
+        preparation = load_preparation(ctx, binding["preparation_id"])
+        role = binding["role_id"]
+        normalized = normalize_result(raw, receipt_raw, preparation["work_orders"][role], preparation["contexts"][role], preparation["guidance"])
+        return result, list(preparation["contexts"][role]["assigned"]["criterion_ids"]), normalized["result_semantic_hash"]
+    raise ValueError("specialist_native_boundary_invalid")
+
+
+def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, receipt: dict, raw: bytes, receipt_raw: bytes) -> dict:
     manifest, artifacts = load(ctx)
     specialist = next((item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"] == specialist_id), None)
     if specialist is None or specialist["state"] != "selected":
@@ -257,7 +397,9 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
     order_dir = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
     orders = [read_json(ctx.repository_root, path, label="specialist_work_order") for path in checked_children(ctx.repository_root, order_dir, label="specialist_work_orders") if path.suffix == ".json"]
     work = next((item for item in orders if item.get("specialist_id") == specialist_id), None)
-    if work is None or result.get("work_order_id") != work.get("work_order_id") or result.get("schema_version") != specialist.get("result_schema"):
+    binding = work.get("native_binding") if work else None
+    expected_work_order = binding.get("work_order_id") if binding and binding.get("work_order_id") else work.get("work_order_id") if work else None
+    if work is None or not isinstance(binding, dict) or result.get("work_order_id") != expected_work_order or result.get("schema_version") != specialist.get("result_schema"):
         # A bound but cross-specialist result is a closed revision reason, not
         # an accepted source of future adaptation.
         invalid = ("OUT_OF_SCOPE_RECORD", ["/schema_version"])
@@ -268,18 +410,33 @@ def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, 
         successor["revision-ledger.json"] = {"schema_version": "revision-ledger.v1", "entries": artifacts["revision-ledger.json"]["entries"] + [entry]}
         new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_revision")
         return {"status": entry["status"], "reason": invalid[0], "json_pointers": invalid[1], "revision_id": entry["revision_id"], "generation": new_manifest["generation"]}
-    if specialist_id != "migration_and_rollback":
-        raise ValueError("native_result_requires_native_boundary")
-    validate_migration_result(result)
-    criterion_ids = result.get("criterion_ids")
-    if not isinstance(criterion_ids, list) or len(criterion_ids) != 1 or not isinstance(criterion_ids[0], str):
+    _validated, criterion_ids, native_semantic_hash = _validate_native_submission(ctx, specialist_id, binding, raw, receipt_raw)
+    if not isinstance(criterion_ids, list) or not criterion_ids or any(not isinstance(item, str) or not item for item in criterion_ids):
         raise ValueError("accepted_result_criterion_link_missing")
-    result_id = _stable("accepted_result", {"specialist_id": specialist_id, "criterion_id": criterion_ids[0], "result": result})
+    result_id = _stable("accepted_result", {"specialist_id": specialist_id, "criteria": sorted(criterion_ids), "native_result_semantic_hash": native_semantic_hash})
     existing = artifacts["accepted-results.json"]["results"]
     if any(item["result_id"] == result_id for item in existing):
         return {"status": "idempotent_replay", "specialist_id": specialist_id, "work_order_id": result["work_order_id"], "result_id": result_id}
-    accepted_record = {"result_id": result_id, "specialist_id": specialist_id, "criterion_id": criterion_ids[0], "work_order_id": work["work_order_id"], "result_schema": specialist["result_schema"], "result_semantic_hash": content_hash(result), "status": "accepted"}
+    accepted_records = [{"result_id": _stable("accepted_result", {"parent": result_id, "criterion": criterion_id}), "parent_result_id": result_id, "specialist_id": specialist_id, "criterion_id": criterion_id, "work_order_id": expected_work_order, "result_schema": specialist["result_schema"], "result_semantic_hash": native_semantic_hash, "native_preparation_id": binding.get("preparation_id"), "native_preparation_semantic_hash": binding.get("preparation_semantic_hash"), "status": "accepted"} for criterion_id in sorted(set(criterion_ids))]
     successor = dict(artifacts)
-    successor["accepted-results.json"] = {"schema_version": "accepted-specialist-results.v1", "results": existing + [accepted_record]}
+    if any(item["result_id"] == accepted["result_id"] for item in existing for accepted in accepted_records):
+        return {"status": "idempotent_replay", "specialist_id": specialist_id, "work_order_id": expected_work_order, "result_ids": [item["result_id"] for item in accepted_records]}
+    successor["accepted-results.json"] = {"schema_version": "accepted-specialist-results.v1", "results": existing + accepted_records}
     new_manifest = _publish_successor(ctx, manifest, successor, label="review_plan_accepted_result")
-    return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": result["work_order_id"], "result_id": result_id, "generation": new_manifest["generation"]}
+    return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": expected_work_order, "result_id": accepted_records[0]["result_id"], "result_ids": [item["result_id"] for item in accepted_records], "generation": new_manifest["generation"]}
+
+
+def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, receipt: dict) -> dict:
+    """Compatibility API for canonical in-memory manual submissions."""
+    return _submit_result(ctx, specialist_id, result, receipt, _json(result), _json(receipt))
+
+
+def submit_result_bytes(ctx: LocalExecutionContext, specialist_id: str, raw: bytes, receipt_raw: bytes) -> dict:
+    """Receipt-sensitive API used by the CLI for byte-exact native results."""
+    try:
+        result = json.loads(raw.decode("utf-8")); receipt = json.loads(receipt_raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("specialist_result_json_invalid") from exc
+    if not isinstance(result, dict) or not isinstance(receipt, dict):
+        raise ValueError("specialist_result_shape_invalid")
+    return _submit_result(ctx, specialist_id, result, receipt, raw, receipt_raw)

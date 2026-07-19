@@ -157,12 +157,11 @@ def main() -> int:
     run(CASES[7], adaptation)
     def revisions():
         with tempfile.TemporaryDirectory() as raw:
-            ctx, _ = _fixture(Path(raw)); prepare_review(ctx)
-            # Product Intent is always selected and exercises the exact same
-            # compiler-owned revision lifecycle without relying on a language
-            # fixture to make an unrelated specialist applicable.
-            first = submit_result(ctx, "product_intent", {}, {})
-            second = submit_result(ctx, "product_intent", {}, {})
+            ctx, _ = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; prepare_review(ctx)
+            # Migration is a genuinely selected native Session 7 boundary;
+            # malformed submissions exercise its compiler-owned revision path.
+            first = submit_result(ctx, "migration_and_rollback", {}, {})
+            second = submit_result(ctx, "migration_and_rollback", {}, {})
             return (first["status"] == "revision_required", second["status"] == "specialist_failed_closed", ["shiproom.review_organisation.submit_result"], {"first_generation": first["generation"], "second_generation": second["generation"]})
     run(CASES[8], lambda: (lambda first, second, functions, hashes: (first, functions, hashes))(*revisions()))
     run(CASES[9], lambda: (lambda first, second, functions, hashes: (second, functions, hashes))(*revisions()))
