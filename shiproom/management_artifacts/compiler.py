@@ -42,7 +42,7 @@ def dependency_vector(ctx:LocalExecutionContext)->dict:
     remediation_state, remediation=optional("remediation/current-remediation-generation.json",load_remediation)
     review_state, review=optional("review-organisation/current-review-plan.json",load_review_plan)
     contest_state, contest=optional("contestability/current-contestation-generation.json",load_contestation)
-    return {"schema_version":"artifact-dependency-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",upstream["graph_generation"],upstream["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",upstream["graph_generation"],upstream["graph_manifest"]["semantic_bundle_hash"]),"assessment":assessment_state,"measurement_ai":measurement_state,"remediation":remediation_state,"review_plan":review_state,"contestability":contest_state,"_loaded":{"assessment":assessment,"measurement":measurement,"remediation":remediation,"review":review,"contest":contest}}
+    return {"schema_version":"artifact-dependency-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",upstream["graph_generation"],upstream["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",upstream["graph_generation"],upstream["graph_manifest"]["semantic_bundle_hash"]),"assessment":assessment_state,"measurement_ai":measurement_state,"remediation":remediation_state,"review_plan":review_state,"contestability":contest_state,"_loaded":{"upstream":upstream,"assessment":assessment,"measurement":measurement,"remediation":remediation,"review":review,"contest":contest}}
 
 def _section_specs(name: str) -> list[dict]:
     value = json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text())
@@ -67,6 +67,52 @@ def _sections(name: str) -> list[str]:
 def _section_contracts(name: str) -> list[dict]:
     """Return the packaged exact sections; artifacts may not invent their own."""
     return _section_specs(name)
+
+
+def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext, loaded: dict, vector: dict) -> list[dict]:
+    """Materialize every registered report section from canonical inputs.
+
+    The renderer consumes these records verbatim.  It does not infer authority
+    or recompute Measurement/AI state; an unavailable dependency gets its
+    registry-defined typed empty state instead of a fabricated narrative.
+    """
+    upstream = loaded.get("upstream", {"intent_artifacts": {}, "graph_artifacts": {}})
+    intent = upstream["intent_artifacts"]
+    graph = upstream["graph_artifacts"]
+    graph_nodes = graph.get("requirement-evidence-graph.json", {}).get("nodes", [])
+    requirements = intent.get("requirements.json", {}).get("requirements", [])
+    criteria = intent.get("acceptance-criteria.json", {}).get("criteria", [])
+    journeys = [item for item in graph_nodes if item.get("node_type") == "critical_journey"]
+    assessment = loaded["assessment"] or {}
+    measurement = loaded["measurement"] or {}
+    remediation = loaded["remediation"] or {}
+    contest = loaded["contest"] or {}
+    sources = {
+        "requirements": requirements, "criteria": criteria, "critical_journeys": journeys,
+        "repository_map": [ctx.release.get("repository", {})] if ctx.release.get("repository") else [],
+        "components": graph_nodes, "implementation_state": graph_nodes,
+        "test_evidence": assessment.get("test-adequacy.json", {}).get("payload", {}).get("criteria", []),
+        "instrumentation": measurement.get("instrumentation-coverage.json", {}).get("signals", []),
+        "runtime_evidence": assessment.get("effective-assessment-view.json", {}).get("criteria", []),
+        "measurement_contract": measurement.get("measurement-contract.json", {}).get("contracts", []),
+        "event_property_coverage": measurement.get("instrumentation-coverage.json", {}).get("signals", []),
+        "ai_maturity": measurement.get("measurement-ai-readiness.json", {}).get("checks", []),
+        "claim_honesty": measurement.get("measurement-ai-readiness.json", {}).get("checks", []),
+        "issues": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "packets": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "closure_contracts": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "contestation": contest.get("contestation-ledger.json", {}).get("actions", []),
+        "owner_decisions": ctx.release.get("owner_decisions", []),
+        "verified_blockers": [item for item in ctx.release.get("findings", []) if item.get("blocker")],
+    }
+    result = []
+    for spec in specs:
+        records = sources.get(spec["section_id"], [])
+        if not isinstance(records, list):
+            records = [records]
+        unavailable = all(vector.get(dep, {}).get("state") in {"not_used", "unavailable", "not_applicable"} for dep in spec["source_dependencies"])
+        result.append({"section_id": spec["section_id"], "state": spec["typed_empty_state"] if unavailable and not records else "populated" if records else "empty_no_canonical_records", "records": records, "authority_passthrough": spec["authority_passthrough"]})
+    return result
 def _recommendation_policy() -> dict:
     value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text())
     required = {"schema_version", "statuses", "required_inputs", "rules", "unknown_dependency_states", "rule"}
@@ -99,13 +145,16 @@ def _html(name:str,value:dict)->bytes:
 def compile(ctx:LocalExecutionContext)->dict:
     vector=dependency_vector(ctx); loaded=vector.pop("_loaded");policy=_policy(ctx,vector,loaded["contest"]);generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="management_generation")
     base={"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector}
+    def report(name: str, **extra: object) -> dict:
+        contracts = _section_contracts(name)
+        return {**base, "sections": _sections(name), "section_contracts": contracts, "section_records": _section_records(name, contracts, ctx=ctx, loaded=loaded, vector=vector), **extra}
     artifacts={
-      "executive-release-brief":{**base,"sections":_sections("executive-release-brief"),"section_contracts":_section_contracts("executive-release-brief"),"recommendation":policy,"verified_blockers":[i for i in ctx.release.get("findings",[]) if i.get("blocker")],"unknowns":policy["unknowns"]},
-      "product-release-review":{**base,"sections":_sections("product-release-review"),"section_contracts":_section_contracts("product-release-review"),"matrix":[]},
-      "engineering-release-assessment":{**base,"sections":_sections("engineering-release-assessment"),"section_contracts":_section_contracts("engineering-release-assessment"),"repository":ctx.release.get("repository",{})},
-      "measurement-ai-readiness":{**base,"sections":_sections("measurement-ai-readiness"),"section_contracts":_section_contracts("measurement-ai-readiness"),"authority_note":"Canonical Measurement & AI authority is not recalculated by reporting.","canonical_artifacts":loaded["measurement"] or {}},
-      "remediation-overview":{**base,"sections":_sections("remediation-overview"),"section_contracts":_section_contracts("remediation-overview"),"remediation_dependency":vector["remediation"],"canonical_artifacts":loaded["remediation"] or {}},
-      "release-packet-index":{**base,"sections":_sections("release-packet-index"),"section_contracts":_section_contracts("release-packet-index"),"artifacts":list(JSON_ARTIFACTS)},
+      "executive-release-brief":report("executive-release-brief",recommendation=policy,verified_blockers=[i for i in ctx.release.get("findings",[]) if i.get("blocker")],unknowns=policy["unknowns"]),
+      "product-release-review":report("product-release-review",matrix=[{"requirement_id": item.get("requirement_id"), "criterion_ids": item.get("criterion_ids", [])} for item in loaded.get("upstream", {"intent_artifacts": {}})["intent_artifacts"].get("requirements.json", {}).get("requirements", [])]),
+      "engineering-release-assessment":report("engineering-release-assessment",repository=ctx.release.get("repository",{})),
+      "measurement-ai-readiness":report("measurement-ai-readiness",authority_note="Canonical Measurement & AI authority is not recalculated by reporting.",canonical_artifacts=loaded["measurement"] or {}),
+      "remediation-overview":report("remediation-overview",remediation_dependency=vector["remediation"],canonical_artifacts=loaded["remediation"] or {}),
+      "release-packet-index":report("release-packet-index",artifacts=list(JSON_ARTIFACTS)),
       "release-recommendation-view":{**base,"sections":["computed_recommendation","canonical_finding_state","owner_decision_state","accepted_conditions","unknowns","source_generations"],"section_contracts":[{"section_id":s,"source_dependencies":["product_intent","graph"],"required_when":"always","record_source":"canonical_dependency_vector","minimum_records":1,"typed_empty_state":"not_used_or_unavailable","authority_passthrough":True} for s in ["computed_recommendation","canonical_finding_state","owner_decision_state","accepted_conditions","unknowns","source_generations"]],"computed_recommendation":policy,"canonical_finding_state":ctx.release.get("findings",[]),"owner_decision_state":ctx.release.get("owner_decisions",[]),"contestation":loaded["contest"] or {}}}
     for name,value in artifacts.items():
         write_bytes(ctx.repository_root,directory/(name+".json"),_json(value),label="management_json")
