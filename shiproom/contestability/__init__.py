@@ -11,7 +11,7 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.remediation_roadmaps import load_generation as load_remediation
 from shiproom.review_organisation import load as load_review_plan
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import ensure_directory, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
 
 
 ACTIONS={"accept_finding","dispute_with_evidence","clarify_requirement","add_evidence","accept_named_risk","defer","request_remediation"}
@@ -127,4 +127,11 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     if pointer is None:raise ValueError("contestation_generation_unavailable")
     directory=root(ctx)/"generations"/pointer["generation"];manifest=read_json(ctx.repository_root,directory/"manifest.json",label="contestation_manifest");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");effects=read_json(ctx.repository_root,directory/"contestation-effects.json",label="contestation_effects")
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["actions_hash"]!=content_hash([_semantic(item) for item in ledger["actions"]]):raise ValueError("contestation_generation_tampered")
+    if pointer.get("manifest_hash") != _sha(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
+        raise ValueError("contestation_pointer_tampered")
+    if {path.name for path in checked_children(ctx.repository_root, directory, label="contestation_generation")} != {"manifest.json", "contestation-ledger.json", "contestation-effects.json"}:
+        raise ValueError("contestation_generation_file_set_mismatch")
+    for name, digest in manifest["artifact_hashes"].items():
+        if _sha(read_bytes(ctx.repository_root, directory / name, label="contestation_artifact")) != digest:
+            raise ValueError("contestation_artifact_tampered")
     return manifest,{"contestation-ledger.json":ledger,"contestation-effects.json":effects}
