@@ -142,7 +142,7 @@ def _issue_records(ctx: LocalExecutionContext, authority: dict) -> list[dict]:
     return sorted(result, key=lambda item: (item["source_issue_type"], item["source_issue_id"]))
 
 
-def _minimal_packet(issue: dict, planner: dict | None) -> dict:
+def _minimal_packet(issue: dict, planner: dict | None, ctx: LocalExecutionContext) -> dict:
     remediation_id = _stable("remediation", {key: issue[key] for key in ("source_issue_type", "source_issue_id", "criterion_id", "requirement_id")})
     closure_id = _stable("closure", {"remediation_id": remediation_id, "evidence": issue["evidence_refs"]})
     semantic = {name: {"authority": "not_inspected", "value": None} for name in PLANNER_FIELDS}
@@ -154,7 +154,9 @@ def _minimal_packet(issue: dict, planner: dict | None) -> dict:
         permitted = list(AUTOMATION_CLASSES)
     eligibility = "bounded_fix_available" if issue.get("automation_class") in (permitted or []) else "roadmap_only"
     packet = {"remediation_id": remediation_id, **issue, "user_or_business_impact": {"authority": "not_inspected", "value": None}, "automation_eligibility": eligibility, "execution_modes": ["roadmap_only", "external_agent_handoff"], "verification_contract_id": closure_id, "protected_invariants": ["canonical_findings_unchanged", "canonical_verdict_unchanged", "no_automatic_merge"], "allowed_closure_evidence_classes": ["deterministically_established"], **semantic}
-    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "regression_checks": [], "test_requirements": [], "instrumentation_requirements": [], "protected_invariants": packet["protected_invariants"], "allowed_repository_commit": issue.get("release_commit_state", "current_commit"), "allowed_branch": issue.get("allowed_branch", "current_branch"), "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), "source_generation": issue.get("source_generation", "current"), "release_commit": issue.get("release_commit", "current"), "expiry_or_stale_bindings": {"release_commit": "current"}}
+    commit = ctx.authority_binding["repository_commit"]
+    branch = ctx.release.get("repository", {}).get("branch") or ctx.release.get("branch") or "owner_action_required"
+    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "regression_checks": [], "test_requirements": [], "instrumentation_requirements": [], "protected_invariants": packet["protected_invariants"], "allowed_repository_commit": commit, "allowed_branch": branch, "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), "source_generation": issue.get("source_generation", "current"), "release_commit": commit, "expiry_or_stale_bindings": {"release_commit": commit}}
     return {"packet": packet, "contract": contract}
 
 
@@ -228,7 +230,7 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     source = read_json(ctx.repository_root, directory / "remediation-source-packet.json", label="remediation_source_packet")
     if content_hash(source) != manifest["source_packet_hash"]:
         raise ValueError("remediation_source_packet_tampered")
-    items = [_minimal_packet(issue, planner) for issue in source["issues"] if issue["issue_classification"] in ACTIONABLE]
+    items = [_minimal_packet(issue, planner, ctx) for issue in source["issues"] if issue["issue_classification"] in ACTIONABLE]
     packets = [item["packet"] for item in items]; contracts = [item["contract"] for item in items]
     if len({item["remediation_id"] for item in packets}) != len(packets) or len({item["remediation_id"] for item in contracts}) != len(contracts):
         raise ValueError("remediation_cardinality_invalid")
