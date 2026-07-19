@@ -273,6 +273,16 @@ def main() -> int:
     if len(cases) != 35:
         raise AssertionError(f"expected exactly 35 evals, got {len(cases)}")
     for name, passed in cases: print(f"{'PASS' if passed else 'FAIL'} {name}")
+    root = Path(__file__).resolve().parents[1]
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+    receipt = {"schema_version": "shiproom.behavioral-eval-receipt.v1", "final_commit": commit,
+               "cases": [{"name": name, "passed": passed, "assertion_count": 1} for name, passed in cases]}
+    encoded = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    receipt["receipt_hash"] = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    target = Path(os.environ.get("SHIPROOM_EVAL_RECEIPT", root / ".shiproom" / "local" / "behavioral-eval-receipt.json"))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print("receipt=" + str(target))
     return 0 if all(p for _, p in cases) else 1
 
 
