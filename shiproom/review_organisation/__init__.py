@@ -480,7 +480,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     return manifest,artifacts
 
 
-def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: dict, *, label: str) -> dict:
+def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: dict, *, label: str, additional_work_orders: list[dict] | None = None) -> dict:
     """Publish an immutable review-plan successor and replace the pointer last."""
     new_generation = "plan_" + uuid.uuid4().hex
     output = ensure_directory(ctx.repository_root, root(ctx) / "generations" / new_generation, label=label)
@@ -493,10 +493,14 @@ def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: di
             raise ValueError("specialist_work_order_file_invalid")
         read_json(ctx.repository_root, path, label="prior_specialist_work_order")
         write_bytes(ctx.repository_root, output / "specialist-work-orders" / path.name, read_bytes(ctx.repository_root, path, label="prior_specialist_work_order"), label=label + "_work_order")
+    for work in additional_work_orders or []:
+        if not isinstance(work, dict) or not isinstance(work.get("work_order_id"), str):
+            raise ValueError("specialist_work_order_invalid")
+        write_bytes(ctx.repository_root, output / "specialist-work-orders" / (work["work_order_id"] + ".json"), _json(work), label=label + "_additional_work_order")
     new_manifest = {"schema_version": "review-plan-generation-manifest.v1", "compiler_version": COMPILER_VERSION,
                     "generation": new_generation, "plan_id": manifest["plan_id"], "input_vector": manifest["input_vector"],
                     "artifact_hashes": {name: _hash(_json(value)) for name, value in artifacts.items()},
-                    "semantic_bundle_hash": content_hash({"plan": artifacts["review-plan.json"], "events": artifacts["plan-events.json"]}),
+                    "semantic_bundle_hash": content_hash({"plan": artifacts["review-plan.json"], "events": artifacts["plan-events.json"], "work_orders": additional_work_orders or []}),
                     "bundle_hash": ""}
     new_manifest["bundle_hash"] = content_hash({key: value for key, value in new_manifest.items() if key != "bundle_hash"})
     write_bytes(ctx.repository_root, output / "manifest.json", _json(new_manifest), label=label + "_manifest")
@@ -519,10 +523,52 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
     if len(accepted) != 1 or accepted[0]["criterion_id"] != criterion_id:
         raise ValueError("adaptation_evidence_unlinked")
     event={"event_id":identity,"trigger":trigger,"source_specialist":source_specialist,"criterion_id":criterion_id,"evidence_id":evidence_id}
-    plan=dict(artifacts["review-plan.json"]);plan["adaptation_depth"]+=1;plan["supersedes"]=manifest["generation"]
+    plan=json.loads(canonical_json(artifacts["review-plan.json"])); plan["adaptation_depth"] += 1; plan["supersedes"] = manifest["generation"]
+    target = {"migration_surface_discovered": "migration_and_rollback", "ai_surface_discovered": "ai_evaluation", "browser_surface_disproven": "browser_journey"}[trigger]
+    target_item = next((item for item in plan["specialists"] if item["specialist_id"] == target), None)
+    if target_item is None:
+        raise ValueError("adaptation_trigger_effect_mismatch")
+    prior_orders_dir = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
+    prior_orders = [read_json(ctx.repository_root, path, label="specialist_work_order") for path in checked_children(ctx.repository_root, prior_orders_dir, label="specialist_work_orders") if path.suffix == ".json"]
+    prior_order = next((item for item in prior_orders if item.get("specialist_id") == target and not item.get("superseded_by")), None)
+    additional: list[dict] = []
+    if trigger == "browser_surface_disproven":
+        if target_item["state"] not in {"selected", "skipped"}:
+            raise ValueError("adaptation_trigger_effect_mismatch")
+        if target_item["state"] == "skipped" and target_item["applicability_authority"] == "explicitly_not_applicable":
+            raise ValueError("adaptation_has_no_substantive_effect")
+        target_item["state"] = "skipped"; target_item["applicability_authority"] = "explicitly_not_applicable"; target_item["reason_codes"] = ["browser_surface_disproven"]
+        effect = "browser_work_superseded"
+    else:
+        # Candidate/model-reviewed evidence may only add work.  Reuse native
+        # preparation resolution rather than minting a look-alike packet.
+        binding, unavailable = _native_preparation(ctx, target)
+        if binding is None:
+            target_item["state"] = "unavailable"; target_item["reason_codes"] = [unavailable or "native_preparation_unavailable"]
+            effect = "native_work_unavailable"
+        else:
+            target_item["state"] = "selected"; target_item["native_binding"] = binding
+            target_item["applicability_authority"] = "candidate_surface" if target_item["applicability_authority"] != "confirmed_surface" else "confirmed_surface"
+            effect = "specialist_work_issued"
+    if prior_order is not None:
+        replacement = json.loads(canonical_json(prior_order))
+        replacement["work_order_id"] = _stable("wo", {"prior": prior_order["work_order_id"], "event": identity})
+        replacement["supersedes_work_order_id"] = prior_order["work_order_id"]
+        replacement["adaptation_event_id"] = identity
+        if target_item.get("native_binding"):
+            replacement["native_binding"] = target_item["native_binding"]
+        additional.append(replacement)
+    elif target_item["state"] == "selected":
+        work_id = _stable("wo", {"plan": plan["plan_id"], "specialist": target, "event": identity})
+        additional.append({"schema_version":"specialist-work-order.v1","work_order_id":work_id,"plan_id":plan["plan_id"],"specialist_id":target,"role_version":target_item["role_version"],"result_schema":target_item["result_schema"],"input_vector_hash":content_hash(manifest["input_vector"]),"allowed_files":[],"execution_mode":target_item["execution_mode"],"harness_capability_manifest":manifest["input_vector"]["harness"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":target_item["native_boundary"],"native_binding":target_item["native_binding"],"adaptation_event_id":identity})
+    plan["last_adaptation"] = {"event_id": identity, "effect": effect, "target_specialist": target, "superseded_work_order_id": prior_order.get("work_order_id") if prior_order else None, "replacement_work_order_ids": [item["work_order_id"] for item in additional]}
+    if content_hash(plan) == content_hash(artifacts["review-plan.json"]):
+        raise ValueError("adaptation_has_no_substantive_effect")
+    event["effect"] = effect; event["target_specialist"] = target; event["replacement_work_order_ids"] = [item["work_order_id"] for item in additional]
     new_events={"schema_version":"plan-events.v1","events":events+[event]}
-    new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"accepted-results.json":artifacts["accepted-results.json"],"execution-summary.json":artifacts["execution-summary.json"]}
-    new_manifest = _publish_successor(ctx, manifest, new_artifacts, label="review_plan_adaptation")
+    summary = json.loads(canonical_json(artifacts["execution-summary.json"])); summary["adaptation_event_id"] = identity; summary["active_specialists"] = [item["specialist_id"] for item in plan["specialists"] if item["state"] == "selected"]
+    new_artifacts={"review-plan.json":plan,"plan-events.json":new_events,"revision-ledger.json":artifacts["revision-ledger.json"],"accepted-results.json":artifacts["accepted-results.json"],"execution-summary.json":summary}
+    new_manifest = _publish_successor(ctx, manifest, new_artifacts, label="review_plan_adaptation", additional_work_orders=additional)
     return {"status":"accepted","event":event,"prior_generation":manifest["generation"],"generation":new_manifest["generation"]}
 
 
