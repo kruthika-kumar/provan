@@ -99,6 +99,21 @@ def _validate(ctx:LocalExecutionContext, action:dict)->dict:
     return action
 
 
+def _owner_decision_budget(ctx: LocalExecutionContext, actions: list[dict]) -> dict:
+    candidates = []
+    for action in actions:
+        if action["action"] not in {"accept_named_risk", "defer"}:
+            continue
+        target = _target_definition(action["target_type"])
+        if not target["owner_decision_eligibility"]:
+            continue
+        priority = 1 if target["materiality_rule"] == "canonical_blocker_or_condition" else 3
+        candidates.append({"action_id": action["action_id"], "target_id": action["target_id"], "priority": priority,
+                           "reason_code": target["materiality_rule"]})
+    ordered = sorted(candidates, key=lambda item: (item["priority"], item["action_id"]))
+    return {"immediate_owner_decisions": ordered[:2], "overflow_owner_decisions": ordered[2:]}
+
+
 def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
     pointer=root(ctx)/"current-contestation-generation.json"
     if not pointer.exists():return [],None
@@ -115,7 +130,7 @@ def append_action(ctx:LocalExecutionContext, action:dict)->dict:
     action={**action,"sequence":len(actions)+1,"previous_action_hash":previous,"action_semantic_hash":semantic}
     actions=actions+[action];generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="contestation_generation")
     ledger={"schema_version":"contestation-ledger.v1","release_id":ctx.release["release_id"],"actions":actions}
-    derived={"schema_version":"contestation-effects.v1","named_risk_effects":[{"action_id":item["action_id"],"effect":"accepted_named_risk"} for item in actions if item["action"]=="accept_named_risk"],"remediation_requests":[item["action_id"] for item in actions if item["action"]=="request_remediation"]}
+    derived={"schema_version":"contestation-effects.v1","named_risk_effects":[{"action_id":item["action_id"],"effect":"accepted_named_risk"} for item in actions if item["action"]=="accept_named_risk"],"remediation_requests":[item["action_id"] for item in actions if item["action"]=="request_remediation"], **_owner_decision_budget(ctx, actions)}
     write_bytes(ctx.repository_root,directory/"contestation-ledger.json",_json(ledger),label="contestation_ledger");write_bytes(ctx.repository_root,directory/"contestation-effects.json",_json(derived),label="contestation_effects")
     manifest={"schema_version":"contestation-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"release_id":ctx.release["release_id"],"actions_hash":content_hash([_semantic(item) for item in actions]),"artifact_hashes":{"contestation-ledger.json":_sha(_json(ledger)),"contestation-effects.json":_sha(_json(derived))},"semantic_bundle_hash":content_hash({"ledger":ledger,"effects":derived})}
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="contestation_manifest");replace_bytes(ctx.repository_root,root(ctx)/"current-contestation-generation.json",_json({"schema_version":"current-contestation-generation.v1","generation":generation,"manifest_hash":_sha(_json(manifest)),"semantic_bundle_hash":manifest["semantic_bundle_hash"]}),label="contestation_pointer")
