@@ -36,6 +36,7 @@ def main() -> int:
     parser.add_argument("--junit", type=Path, required=True)
     parser.add_argument("--workflow-receipt", type=Path, required=True)
     parser.add_argument("--behavioral-receipt", type=Path, required=True)
+    parser.add_argument("--receipt", type=Path, required=False)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     validation = root / "docs" / "validation"
@@ -80,6 +81,12 @@ def main() -> int:
     report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    if args.receipt is not None:
+        receipt = {"schema_version": "session6-8-final-closeout-receipt.v1", "final_commit": commit,
+                   "report_hash": _sha(args.output.read_bytes()), "report_self_hash": report["report_self_hash"]}
+        receipt["receipt_hash"] = _sha(json.dumps({key: value for key, value in receipt.items() if key != "receipt_hash"}, sort_keys=True, separators=(",", ":")).encode())
+        args.receipt.parent.mkdir(parents=True, exist_ok=True)
+        args.receipt.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return 0 if report["resolved"] else 2
 
 
