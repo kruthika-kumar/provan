@@ -8,6 +8,7 @@ from importlib import resources
 from pathlib import Path
 
 from shiproom.authority import LocalExecutionContext
+from shiproom.graph import load_assessment_input
 from shiproom.remediation_roadmaps import load_generation as load_remediation
 from shiproom.review_organisation import load as load_review_plan
 from shiproom.project import canonical_json, content_hash
@@ -36,15 +37,23 @@ def _release_target(ctx:LocalExecutionContext,target_id:str)->dict|None:
     return next((item for item in ctx.release.get("findings",[]) if item.get("id")==target_id),None)
 
 def _graph_target(ctx:LocalExecutionContext,target_id:str)->dict|None:
-    # The current graph loader is intentionally not duplicated here; a criterion ID is accepted only from intent linkage.
-    return next((item for item in ctx.release.get("criteria",[]) if item.get("criterion_id")==target_id),None)
+    input_value = load_assessment_input(ctx)
+    return next((item for item in input_value["intent_artifacts"]["acceptance-criteria.json"].get("criteria", []) if item.get("criterion_id") == target_id), None)
+
+
+def _remediation_target(ctx: LocalExecutionContext, target_id: str, source_generation: str) -> dict | None:
+    manifest, artifacts = load_remediation(ctx)
+    if source_generation != manifest.get("generation"):
+        raise ValueError("contestation_target_generation_mismatch")
+    return next((item for item in artifacts["remediation-plan.json"].get("packets", []) if item.get("remediation_id") == target_id), None)
 
 def _validate_target(ctx:LocalExecutionContext, action:dict)->dict:
     definition=_target_definition(action["target_type"])
     if action["action"] not in definition["permitted_actions"]:raise ValueError("contestation_action_not_permitted_for_target")
     if definition["source_domain"]=="release": target=_release_target(ctx,action["target_id"])
     elif definition["source_domain"]=="graph": target=_graph_target(ctx,action["target_id"])
-    else: target={"remediation_id":action["target_id"]} if action["source_generation"] else None
+    elif definition["source_domain"] == "remediation": target = _remediation_target(ctx, action["target_id"], action["source_generation"])
+    else: raise ValueError("contestation_target_unregistered")
     if target is None:raise ValueError("contestation_target_not_found")
     return definition
 
@@ -116,7 +125,10 @@ def _owner_decision_budget(ctx: LocalExecutionContext, actions: list[dict]) -> d
 
 def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
     pointer=root(ctx)/"current-contestation-generation.json"
-    if not pointer.exists():return [],None
+    try:
+        safe_entry(pointer, directory=False, label="contestation_pointer")
+    except FileNotFoundError:
+        return [],None
     value=read_json(ctx.repository_root,pointer,label="contestation_pointer");directory=root(ctx)/"generations"/value["generation"];safe_entry(directory,directory=True,label="contestation_generation");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");return ledger["actions"],value
 
 
