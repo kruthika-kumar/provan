@@ -404,6 +404,17 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     subprocess.run([str(command),"measurement-ai","compile","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
     shown=subprocess.run([str(command),"measurement-ai","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout
     assert "Measurement & AI Readiness" in shown and "no_applicable_measurement_or_ai_surface" in shown
+    # Sessions 6--8 must remain operable from the installed distribution, not
+    # merely importable from it.  These commands consume the persisted native
+    # Product Intent/graph state created above.
+    for action in ("prepare", "compile", "show"):
+        subprocess.run([str(command),"remediation-roadmap",action,"--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    subprocess.run([str(command),"review-plan","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    package=subprocess.run([str(command),"review-plan","render-package","--release",str(release_path),"--specialist","product_intent"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    assert json.loads(package.stdout)["schema_version"] == "codex-execution-package.v1"
+    subprocess.run([str(command),"review-plan","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    subprocess.run([str(command),"management-artifacts","compile","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    subprocess.run([str(command),"management-artifacts","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
 
 
 def test_browser_placeholders_are_criterion_specific():

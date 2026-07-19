@@ -151,6 +151,19 @@ def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext
             records = [records]
         dependencies = ["contestability" if dep == "contestation" else dep for dep in spec["source_dependencies"]]
         unavailable = all(vector.get(dep, {}).get("state") in {"not_used", "unavailable", "not_applicable"} for dep in dependencies)
+        # A consumed Measurement & AI generation can canonically establish that
+        # the release has no applicable measurement/AI surface.  Its six
+        # compiler-derived checks are the source records for that state; an
+        # empty contract list is not missing upstream material.
+        if (not records and spec["record_source"] == "measurement_ai_canonical_projection"
+                and vector.get("measurement_ai", {}).get("state") == "required_present"):
+            readiness = measurement.get("measurement-ai-readiness.json", {})
+            if readiness.get("skip_reason") == "no_applicable_measurement_or_ai_surface":
+                records = [{"record_id": item["check_id"], "status": item["status"],
+                            "check_authority": item["check_authority"],
+                            "semantic_review_authority": item["semantic_review_authority"],
+                            "coverage_boundary": item["coverage_boundary"]}
+                           for item in readiness.get("checks", [])]
         if not records and not unavailable and spec["record_source"] == "canonical_dependency_vector":
             # The vector itself is canonical and makes an honest, bounded
             # status record for a section whose specialised upstream material

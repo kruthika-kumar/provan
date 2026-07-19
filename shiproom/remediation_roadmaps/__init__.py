@@ -327,6 +327,12 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     if len({item["remediation_id"] for item in packets}) != len(packets) or len({item["remediation_id"] for item in contracts}) != len(contracts):
         raise ValueError("remediation_cardinality_invalid")
     generation = "gen_" + uuid.uuid4().hex; output = ensure_directory(ctx.repository_root, root(ctx) / "generations" / generation, label="remediation_generation")
+    # These directories are part of the immutable generation layout even when
+    # there are no actionable issues.  The loader deliberately closes the
+    # directory tree, so an empty remediation generation must materialize the
+    # two empty collections rather than making their absence ambiguous.
+    ensure_directory(ctx.repository_root, output / "remediation-packets", label="remediation_packets")
+    ensure_directory(ctx.repository_root, output / "closure-contracts", label="closure_contracts")
     artifacts = {"remediation-index.json": {"schema_version": "remediation-index.v1", "release_id": ctx.release["release_id"], "authority": source["authority"], "remediation_ids": [item["remediation_id"] for item in packets]}, "remediation-plan.json": {"schema_version": "remediation-plan.v1", "release_id": ctx.release["release_id"], "packets": packets}, "remediation-overlay.json": {"schema_version": "remediation-overlay.v1", "nodes": [{"node_id": item["remediation_id"], "node_type": "remediation_packet", "authority": item["issue_authority"]} for item in packets]}}
     for name, value in artifacts.items():
         write_bytes(ctx.repository_root, output / name, _json(value), label="remediation_artifact")
