@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from importlib import resources
 from pathlib import Path
@@ -61,6 +62,26 @@ def _contract_snapshots() -> dict[str, dict]:
         snapshots[name] = {"schema_version": value.get("$id", value.get("schema_version", name.removesuffix(".json"))),
                            "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "bytes": raw}
     return snapshots
+
+
+def validate_planner_work_order(value: dict) -> dict:
+    """Independent closed boundary for the optional planner work order."""
+    required = {"schema_version", "work_order_id", "preparation_id", "release_id", "assigned_issue_ids", "forbidden_fields", "contract_bindings", "source_packet_hash"}
+    expected_bindings = {"remediation-planner-role.v1.json", "remediation-planner-result.v1.json", "remediation-planner-completion-receipt.v1.json"}
+    if not isinstance(value, dict) or set(value) != required or value.get("schema_version") != PLANNER_WORK_ORDER_SCHEMA:
+        raise ValueError("remediation_planner_work_order_invalid")
+    if not isinstance(value["work_order_id"], str) or not re.fullmatch(r"wo_remediation_planner_[0-9a-f]{24}", value["work_order_id"]) or not isinstance(value["preparation_id"], str) or not re.fullmatch(r"prep_[0-9a-f]{32}", value["preparation_id"]) or not isinstance(value["release_id"], str) or not value["release_id"]:
+        raise ValueError("remediation_planner_work_order_invalid")
+    if not isinstance(value["assigned_issue_ids"], list) or not value["assigned_issue_ids"] or len(set(value["assigned_issue_ids"])) != len(value["assigned_issue_ids"]) or any(not isinstance(item, str) or not item for item in value["assigned_issue_ids"]):
+        raise ValueError("remediation_planner_work_order_invalid")
+    if not isinstance(value["forbidden_fields"], list) or not value["forbidden_fields"] or any(not isinstance(item, str) or not item for item in value["forbidden_fields"]):
+        raise ValueError("remediation_planner_work_order_invalid")
+    if not isinstance(value["source_packet_hash"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", value["source_packet_hash"]) or not isinstance(value["contract_bindings"], dict) or set(value["contract_bindings"]) != expected_bindings:
+        raise ValueError("remediation_planner_work_order_invalid")
+    for binding in value["contract_bindings"].values():
+        if not isinstance(binding, dict) or set(binding) != {"schema_version", "semantic_hash", "snapshot_hash"} or not isinstance(binding["schema_version"], str) or not all(isinstance(binding[key], str) and re.fullmatch(r"sha256:[0-9a-f]{64}", binding[key]) for key in ("semantic_hash", "snapshot_hash")):
+            raise ValueError("remediation_planner_work_order_invalid")
+    return value
 
 
 def _dependency(state: str, generation: str | None = None, semantic_hash: str | None = None) -> dict:
@@ -204,6 +225,7 @@ def prepare(ctx: LocalExecutionContext) -> dict:
     source = {"schema_version": "remediation-source-packet.v1", "preparation_id": preparation_id, "authority": authority, "issues": issues, "contract_schema_hashes": {name: contracts[name]["semantic_hash"] for name in contracts}}
     if work_order is not None:
         work_order["source_packet_hash"] = content_hash(source)
+        validate_planner_work_order(work_order)
     manifest = {"schema_version": "remediation-work-orders.v1", "compiler_version": PREPARATION_VERSION, "preparation_id": preparation_id, "authority": authority, "source_packet_hash": content_hash(source), "contract_schema_hashes": {name: {key: value for key, value in item.items() if key != "bytes"} for name, item in contracts.items()}, "planner_work_order": work_order, "manifest_hash": ""}
     manifest["manifest_hash"] = content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"})
     write_bytes(ctx.repository_root, directory / "remediation-source-packet.json", _json(source), label="remediation_source_packet")
@@ -293,11 +315,13 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     manifest = read_json(ctx.repository_root, directory / "remediation-work-orders.json", label="remediation_work_orders")
     if manifest["compiler_version"] != PREPARATION_VERSION or manifest["manifest_hash"] != content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"}):
         raise ValueError("stale_remediation_preparation")
-    planner = _planner_result(ctx, directory, manifest)
     source = read_json(ctx.repository_root, directory / "remediation-source-packet.json", label="remediation_source_packet")
     if content_hash(source) != manifest["source_packet_hash"]:
         raise ValueError("remediation_source_packet_tampered")
     _validate_preparation_contract_snapshots(ctx, directory, manifest, source)
+    if manifest.get("planner_work_order") is not None:
+        validate_planner_work_order(manifest["planner_work_order"])
+    planner = _planner_result(ctx, directory, manifest)
     items = [_minimal_packet(issue, planner, ctx) for issue in source["issues"] if issue["issue_classification"] in ACTIONABLE]
     packets = [item["packet"] for item in items]; contracts = [item["contract"] for item in items]
     if len({item["remediation_id"] for item in packets}) != len(packets) or len({item["remediation_id"] for item in contracts}) != len(contracts):
