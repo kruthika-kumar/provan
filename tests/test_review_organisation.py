@@ -40,6 +40,16 @@ def test_harness_declaration_does_not_replace_a_bound_execution_receipt():
         domain.validate_harness_execution_receipt(receipt, work_order_id="wo_migration_and_rollback_" + "a" * 16)
 
 
+def test_codex_execution_package_is_closed_and_hash_bound():
+    import shiproom.review_organisation as domain
+    value = {"schema_version":"codex-execution-package.v1","package_id":"pkg","plan_id":"plan","specialist_id":"migration_and_rollback","native_preparation_id":None,"native_preparation_semantic_hash":None,"native_work_order":{"work_order_id":"wo"},"native_context_packet":{"context_hash":"sha256:"+"0"*64},"result_schema":"migration-and-rollback-result.v1","completion_receipt_schema":"harness-execution-receipt.v1","bounded_working_directory":"package-workdir/migration","allowed_files":[],"native_empty_reason":"native_packet_has_no_selected_files","forbidden_operations":["network"],"timeout_seconds":60,"expected_result_path":"result.json","expected_receipt_path":"completion-receipt.json","execution_mode":"manual_external","independence_limitations":"declaration is not proof","package_semantic_hash":""}
+    value["package_semantic_hash"] = domain.content_hash({key:item for key,item in value.items() if key not in {"package_id","package_semantic_hash","bounded_working_directory"}})
+    assert domain.validate_codex_execution_package(value) == value
+    value["timeout_seconds"] = 0
+    with pytest.raises(ValueError, match="codex_execution_package_timeout_invalid"):
+        domain.validate_codex_execution_package(value)
+
+
 def test_selected_work_order_snapshots_the_closed_harness_declaration(tmp_path):
     from scripts.run_evals import _graph_context
     from shiproom.graph import compile_bundle
