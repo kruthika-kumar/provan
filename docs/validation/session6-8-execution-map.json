@@ -2,12 +2,12 @@
   "schema_version": "shiproom.session6-8-execution-map.v2",
   "baseline_minimum_ancestor": "99a1dfcc78fb8f1b90c71646cfc29bc557100b63",
   "requirements": [
-    {"requirement_id":"S6_AUTHORITY_POLICY","production_boundary":"shiproom.remediation_roadmaps._policy_decision","proof_ids":["p_s6_authority_valid","p_s6_authority_near","p_s6_authority_invalid"],"canonical_artifact":"remediation-plan.json","status":"implemented"},
-    {"requirement_id":"S6_CLOSURE_INBOX","production_boundary":"shiproom.remediation_roadmaps.closure_verify","proof_ids":["p_s6_closure_valid","p_s6_closure_near","p_s6_closure_invalid"],"canonical_artifact":"closure-contracts","status":"implemented"},
-    {"requirement_id":"S7_NATIVE_BOUNDARIES","production_boundary":"shiproom.review_organisation.prepare","proof_ids":["p_s7_native_valid","p_s7_native_near","p_s7_native_invalid"],"canonical_artifact":"review-plan.json","status":"implemented"},
-    {"requirement_id":"S7_ADAPTATION","production_boundary":"shiproom.review_organisation.adapt","proof_ids":["p_s7_adapt_valid","p_s7_adapt_near","p_s7_adapt_invalid"],"canonical_artifact":"plan-events.json","status":"implemented"},
-    {"requirement_id":"S8_CONTESTABILITY","production_boundary":"shiproom.contestability.append_action","proof_ids":["p_s8_contest_valid","p_s8_contest_near","p_s8_contest_invalid"],"canonical_artifact":"contestation-ledger.json","status":"implemented"},
-    {"requirement_id":"S8_MANAGEMENT_VECTOR","production_boundary":"shiproom.management_artifacts.compile","proof_ids":["p_s8_management_valid","p_s8_management_near","p_s8_management_invalid"],"canonical_artifact":"release-packet-index.json","status":"implemented"}
+    {"requirement_id":"S6_AUTHORITY_POLICY","production_boundary":"shiproom.remediation_roadmaps._policy_decision","proof_ids":["p_s6_authority_valid","p_s6_authority_near","p_s6_authority_invalid"],"canonical_artifact":"remediation-plan.json","status":"verified"},
+    {"requirement_id":"S6_CLOSURE_INBOX","production_boundary":"shiproom.remediation_roadmaps.closure_verify","proof_ids":["p_s6_closure_valid","p_s6_closure_near","p_s6_closure_invalid"],"canonical_artifact":"closure-contracts","status":"verified"},
+    {"requirement_id":"S7_NATIVE_BOUNDARIES","production_boundary":"shiproom.review_organisation.prepare","proof_ids":["p_s7_native_valid","p_s7_native_near","p_s7_native_invalid"],"canonical_artifact":"review-plan.json","status":"verified"},
+    {"requirement_id":"S7_ADAPTATION","production_boundary":"shiproom.review_organisation.adapt","proof_ids":["p_s7_adapt_valid","p_s7_adapt_near","p_s7_adapt_invalid"],"canonical_artifact":"plan-events.json","status":"verified"},
+    {"requirement_id":"S8_CONTESTABILITY","production_boundary":"shiproom.contestability.append_action","proof_ids":["p_s8_contest_valid","p_s8_contest_near","p_s8_contest_invalid"],"canonical_artifact":"contestation-ledger.json","status":"verified"},
+    {"requirement_id":"S8_MANAGEMENT_VECTOR","production_boundary":"shiproom.management_artifacts.compile","proof_ids":["p_s8_management_valid","p_s8_management_near","p_s8_management_invalid"],"canonical_artifact":"release-packet-index.json","status":"verified"}
   ],
   "execution_constraints": [
     "ordinary human reviewers are human_reviewed, never owner_declared without release-bound owner authority",
