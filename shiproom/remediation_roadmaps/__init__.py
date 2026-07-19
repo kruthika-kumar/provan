@@ -59,7 +59,20 @@ def _dependency(state: str, generation: str | None = None, semantic_hash: str | 
 
 
 def authority_policy() -> dict:
-    return json.loads(resources.files("shiproom.remediation_schemas").joinpath("remediation-issue-authority-policy.v1.json").read_text(encoding="utf-8"))
+    value = json.loads(resources.files("shiproom.remediation_schemas").joinpath("remediation-issue-authority-policy.v1.json").read_text(encoding="utf-8"))
+    required = {"rule_id", "finding_state", "blocker", "criterion_authority", "evidence_class", "open_state", "owner_decision_state", "freshness", "issue_class", "actionable", "automation_classes", "closure_evidence_classes"}
+    if value.get("schema_version") != "remediation-issue-authority-policy.v1" or not isinstance(value.get("rules"), list):
+        raise ValueError("remediation_issue_authority_policy_invalid")
+    seen = set()
+    for rule in value["rules"]:
+        if set(rule) != required or rule["rule_id"] in seen:
+            raise ValueError("remediation_issue_authority_policy_invalid")
+        seen.add(rule["rule_id"])
+        if rule["issue_class"] not in ACTIONABLE | {"not_inspected"} or not isinstance(rule["actionable"], bool):
+            raise ValueError("remediation_issue_authority_policy_invalid")
+        if not set(rule["automation_classes"]) <= AUTOMATION_CLASSES or not set(rule["closure_evidence_classes"]) <= {"deterministically_established", "source_verified"}:
+            raise ValueError("remediation_issue_authority_policy_invalid")
+    return value
 
 
 def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class: str, open_state: str, owner_required: bool, fresh: bool) -> dict:
