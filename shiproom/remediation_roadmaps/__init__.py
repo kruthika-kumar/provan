@@ -243,6 +243,8 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     for item in contracts:
         write_bytes(ctx.repository_root, output / "closure-contracts" / (item["closure_contract_id"] + ".json"), _json(item), label="closure_contract")
     hashes = {name: _sha(_json(value)) for name, value in artifacts.items()}
+    hashes.update({"remediation-packets/" + item["remediation_id"] + ".json": _sha(_json(item)) for item in packets})
+    hashes.update({"closure-contracts/" + item["closure_contract_id"] + ".json": _sha(_json(item)) for item in contracts})
     generated = {"schema_version": GENERATION_MANIFEST_SCHEMA, "compiler_version": COMPILER_VERSION, "generation": generation, "release_id": ctx.release["release_id"], "release_commit": ctx.authority_binding["repository_commit"], "authority": source["authority"], "preparation_id": preparation_id, "artifact_hashes": hashes, "semantic_bundle_hash": content_hash({"authority": source["authority"], "packets": packets, "contracts": contracts}), "bundle_hash": ""}
     generated["bundle_hash"] = content_hash({key: value for key, value in generated.items() if key != "bundle_hash"})
     write_bytes(ctx.repository_root, output / "manifest.json", _json(generated), label="remediation_manifest")
@@ -261,6 +263,20 @@ def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -
     artifacts = {name: read_json(ctx.repository_root, directory / name, label="remediation_artifact") for name in ("remediation-index.json", "remediation-plan.json", "remediation-overlay.json")}
     if any(_sha(_json(artifacts[name])) != manifest["artifact_hashes"].get(name) for name in artifacts):
         raise ValueError("remediation_artifact_tampered")
+    packets = artifacts["remediation-plan.json"].get("packets", [])
+    expected_packets = {item["remediation_id"] + ".json" for item in packets}
+    expected_contracts = {item["verification_contract_id"] + ".json" for item in packets}
+    exact_children(directory / "remediation-packets", expected_packets, label="remediation_packets")
+    exact_children(directory / "closure-contracts", expected_contracts, label="closure_contracts")
+    for item in packets:
+        packet_path = directory / "remediation-packets" / (item["remediation_id"] + ".json")
+        contract_path = directory / "closure-contracts" / (item["verification_contract_id"] + ".json")
+        packet = read_json(ctx.repository_root, packet_path, label="remediation_packet")
+        contract = read_json(ctx.repository_root, contract_path, label="closure_contract")
+        if packet != item or contract.get("remediation_id") != item["remediation_id"]:
+            raise ValueError("remediation_packet_contract_link_invalid")
+        if _sha(_json(packet)) != manifest["artifact_hashes"].get("remediation-packets/" + item["remediation_id"] + ".json") or _sha(_json(contract)) != manifest["artifact_hashes"].get("closure-contracts/" + item["verification_contract_id"] + ".json"):
+            raise ValueError("remediation_packet_contract_tampered")
     return manifest, artifacts
 
 
