@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from shiproom.remediation_roadmaps import _dependency, compile, prepare
+from shiproom.remediation_roadmaps import _dependency, compile, prepare, closure_verify, root
 
 
 def _context(tmp_path):
@@ -55,3 +55,24 @@ def test_planner_human_cannot_self_declare_owner(tmp_path, monkeypatch):
         assert str(error) == "planner_owner_authority_invalid"
     else:
         raise AssertionError("self-declared human owner authority was accepted")
+
+
+def test_closure_inbox_requires_exact_passing_rerun_and_independent_verifier(tmp_path, monkeypatch):
+    import hashlib
+    import shiproom.remediation_roadmaps as domain
+    context = _context(tmp_path)
+    authority={"release_id":"rel_remediation","release_commit":"a"*40,"product_intent":_dependency("not_used"),"graph":_dependency("not_used"),"assessment":_dependency("not_used"),"measurement_ai":_dependency("not_used")}
+    issue={"source_issue_type":"finding","source_issue_id":"finding_1","criterion_id":"criterion_1","requirement_id":"requirement_1","journey_ids":[],"issue_classification":"verified_blocker","issue_authority":"deterministically_established","evidence_refs":[],"automation_class":None}
+    monkeypatch.setattr(domain,"_authority",lambda ctx:authority); monkeypatch.setattr(domain,"_issue_records",lambda ctx,a:[issue])
+    prepared=prepare(context); manifest=compile(context,prepared["preparation_id"])
+    packet=json.loads((root(context)/"generations"/manifest["generation"] / "remediation-plan.json").read_text()) ["packets"][0]
+    closure_id=packet["verification_contract_id"]; inbox=root(context)/"closure-inbox"/closure_id; inbox.mkdir(parents=True)
+    evidence={"schema_version":"remediation-closure-evidence.v1","closure_contract_id":closure_id,"release_id":"rel_remediation","release_commit":"a"*40,"branch":"current_branch","fixer_id":"fixer","reruns":[{"check_id":"finding_1","passed":True,"evidence_class":"deterministically_established"}],"regression_results":[],"test_results":[],"instrumentation_results":[],"protected_invariant_outcomes":[{"invariant":"canonical_findings_unchanged","passed":True}]}
+    raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode(); (inbox/"evidence.json").write_bytes(raw)
+    receipt={"schema_version":"remediation-closure-verifier-receipt.v1","closure_contract_id":closure_id,"evidence_snapshot_hash":"sha256:"+hashlib.sha256(raw).hexdigest(),"verifier_id":"verifier","executor_type":"human"}
+    (inbox/"verifier-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
+    assert closure_verify(context,closure_id)["status"] == "satisfied_candidate"
+    receipt["verifier_id"]="fixer"; (inbox/"verifier-receipt.json").write_text(json.dumps(receipt),encoding="utf-8")
+    try: closure_verify(context,closure_id)
+    except ValueError as error: assert str(error)=="closure_verifier_not_independent"
+    else: raise AssertionError("fixer verified own closure")
