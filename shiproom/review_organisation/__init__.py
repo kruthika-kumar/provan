@@ -10,7 +10,7 @@ from pathlib import Path
 from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import ensure_directory, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_json, replace_bytes, safe_entry, write_bytes
 
 
 COMPILER_VERSION="portable-review-plan.v1"
@@ -122,7 +122,7 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
 def render_package(ctx: LocalExecutionContext, specialist_id: str) -> dict:
     manifest, _ = load(ctx)
     directory = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
-    matches = [path for path in directory.iterdir() if path.suffix == ".json" and read_json(ctx.repository_root, path, label="specialist_work_order").get("specialist_id") == specialist_id]
+    matches = [path for path in checked_children(ctx.repository_root, directory, label="specialist_work_orders") if path.suffix == ".json" and read_json(ctx.repository_root, path, label="specialist_work_order").get("specialist_id") == specialist_id]
     if len(matches) != 1:
         raise ValueError("specialist_work_order_unavailable")
     order = read_json(ctx.repository_root, matches[0], label="specialist_work_order")

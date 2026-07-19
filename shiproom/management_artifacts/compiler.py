@@ -13,7 +13,7 @@ from shiproom.remediation_roadmaps import load_generation as load_remediation
 from shiproom.review_organisation import load as load_review_plan
 from shiproom.contestability import load as load_contestation
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import ensure_directory, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
 
 COMPILER_VERSION="portable-management-artifacts.v1"
 JSON_ARTIFACTS=("executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","release-recommendation-view")
@@ -64,12 +64,12 @@ def compile(ctx:LocalExecutionContext)->dict:
         if name!="release-recommendation-view":write_bytes(ctx.repository_root,directory/(name+".html"),_html(name,value),label="management_html")
     github={**base,"sections":_sections("github-summary-payload"),"recommendation":policy,"local_references":[name+".json" for name in JSON_ARTIFACTS]}
     write_bytes(ctx.repository_root,directory/"github-summary-payload.json",_json(github),label="github_payload");write_bytes(ctx.repository_root,directory/"github-summary.md",("# Shiproom release summary\n\nRecommendation: `"+policy["status"]+"`\n").encode(),label="github_markdown")
-    hashes={path.name:_hash(path.read_bytes()) for path in directory.iterdir() if path.is_file()};manifest={"schema_version":"management-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector,"artifact_hashes":hashes,"semantic_bundle_hash":content_hash(artifacts),"bundle_hash":""};manifest["bundle_hash"]=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"})
+    hashes={path.name:_hash(read_bytes(ctx.repository_root,path,label="management_generated_artifact",max_bytes=2*1024*1024)) for path in checked_children(ctx.repository_root,directory,label="management_generation") if path.is_file()};manifest={"schema_version":"management-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector,"artifact_hashes":hashes,"semantic_bundle_hash":content_hash(artifacts),"bundle_hash":""};manifest["bundle_hash"]=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"})
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="management_manifest");replace_bytes(ctx.repository_root,root(ctx)/"current-management-generation.json",_json({"schema_version":"current-management-generation.v1","generation":generation,"manifest_hash":_hash(_json(manifest)),"semantic_bundle_hash":manifest["semantic_bundle_hash"]}),label="management_pointer");return manifest
 
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
-    pointer=json.loads((root(ctx)/"current-management-generation.json").read_text());directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=json.loads((directory/"manifest.json").read_text())
+    pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["release_id"]!=ctx.release["release_id"]:raise ValueError("stale_dependency")
-    artifacts={name:json.loads((directory/(name+".json")).read_text()) for name in JSON_ARTIFACTS};github=json.loads((directory/"github-summary-payload.json").read_text());vectors=[canonical_json(v["artifact_dependency_vector"]) for v in artifacts.values()]+[canonical_json(github["artifact_dependency_vector"])]
+    artifacts={name:read_json(ctx.repository_root,directory/(name+".json"),label="management_artifact") for name in JSON_ARTIFACTS};github=read_json(ctx.repository_root,directory/"github-summary-payload.json",label="github_payload");vectors=[canonical_json(v["artifact_dependency_vector"]) for v in artifacts.values()]+[canonical_json(github["artifact_dependency_vector"])]
     if len(set(vectors))!=1 or vectors[0]!=canonical_json(manifest["artifact_dependency_vector"]):raise ValueError("artifact_dependency_vector_mismatch")
     return manifest,artifacts

@@ -188,12 +188,12 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
     if not receipt_path.exists():
         raise ValueError("planner_completion_receipt_missing")
     safe_entry(receipt_path, directory=False, label="remediation_planner_receipt")
-    value = json.loads(path.read_text(encoding="utf-8"))
-    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    value = read_json(ctx.repository_root, path, label="remediation_planner_result")
+    receipt = read_json(ctx.repository_root, receipt_path, label="remediation_planner_receipt")
     fields = {"schema_version", "work_order_id", "preparation_id", "records", "assumptions", "limitations"}
     if set(value) != fields or value["schema_version"] != PLANNER_RESULT_SCHEMA or value["work_order_id"] != work["work_order_id"] or value["preparation_id"] != manifest["preparation_id"]:
         raise ValueError("planner_result_binding_mismatch")
-    if set(receipt) != {"schema_version", "work_order_id", "result_snapshot_hash", "executor"} or receipt["schema_version"] != PLANNER_RECEIPT_SCHEMA or receipt["work_order_id"] != work["work_order_id"] or receipt["result_snapshot_hash"] != _sha(path.read_bytes()):
+    if set(receipt) != {"schema_version", "work_order_id", "result_snapshot_hash", "executor"} or receipt["schema_version"] != PLANNER_RECEIPT_SCHEMA or receipt["work_order_id"] != work["work_order_id"] or receipt["result_snapshot_hash"] != _sha(read_bytes(ctx.repository_root, path, label="remediation_planner_result")):
         raise ValueError("planner_completion_receipt_invalid")
     executor = receipt["executor"]
     if not isinstance(executor, dict) or executor.get("executor_type") not in {"human", "agent_harness"}:
@@ -218,14 +218,14 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
 def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
     active = root(ctx) / "active-preparation.json"
     if preparation_id is None:
-        value = json.loads(active.read_text(encoding="utf-8")); preparation_id = value["preparation_id"]
+        value = read_json(ctx.repository_root, active, label="remediation_active_preparation"); preparation_id = value["preparation_id"]
     directory = root(ctx) / "preparations" / preparation_id
     safe_entry(directory, directory=True, label="remediation_preparation")
-    manifest = json.loads((directory / "remediation-work-orders.json").read_text(encoding="utf-8"))
+    manifest = read_json(ctx.repository_root, directory / "remediation-work-orders.json", label="remediation_work_orders")
     if manifest["compiler_version"] != PREPARATION_VERSION or manifest["manifest_hash"] != content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"}):
         raise ValueError("stale_remediation_preparation")
     planner = _planner_result(ctx, directory, manifest)
-    source = json.loads((directory / "remediation-source-packet.json").read_text(encoding="utf-8"))
+    source = read_json(ctx.repository_root, directory / "remediation-source-packet.json", label="remediation_source_packet")
     if content_hash(source) != manifest["source_packet_hash"]:
         raise ValueError("remediation_source_packet_tampered")
     items = [_minimal_packet(issue, planner) for issue in source["issues"] if issue["issue_classification"] in ACTIONABLE]
@@ -251,12 +251,12 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
 
 def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -> tuple[dict, dict]:
     if directory is None:
-        pointer = json.loads((root(ctx) / "current-remediation-generation.json").read_text(encoding="utf-8")); directory = root(ctx) / "generations" / pointer["generation"]
+        pointer = read_json(ctx.repository_root, root(ctx) / "current-remediation-generation.json", label="remediation_pointer"); directory = root(ctx) / "generations" / pointer["generation"]
     safe_entry(directory, directory=True, label="remediation_generation")
-    manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    manifest = read_json(ctx.repository_root, directory / "manifest.json", label="remediation_manifest")
     if manifest.get("compiler_version") != COMPILER_VERSION or manifest.get("release_commit") != ctx.authority_binding["repository_commit"]:
         raise ValueError("stale_dependency")
-    artifacts = {name: json.loads((directory / name).read_text(encoding="utf-8")) for name in ("remediation-index.json", "remediation-plan.json", "remediation-overlay.json")}
+    artifacts = {name: read_json(ctx.repository_root, directory / name, label="remediation_artifact") for name in ("remediation-index.json", "remediation-plan.json", "remediation-overlay.json")}
     if any(_sha(_json(artifacts[name])) != manifest["artifact_hashes"].get(name) for name in artifacts):
         raise ValueError("remediation_artifact_tampered")
     return manifest, artifacts
