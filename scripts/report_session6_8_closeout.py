@@ -40,6 +40,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     validation = root / "docs" / "validation"
     completion = _load(validation / "session6-8-completion-map.json")["requirements"]
+    execution = _load(validation / "session6-8-execution-map.json")["requirements"]
     proofs = _load(validation / "session6-8-proof-manifest.json")["proofs"]
     claims = _load(validation / "session6-8-claim-registry.json")["claims"]
     junit = args.junit.read_bytes()
@@ -48,12 +49,14 @@ def main() -> int:
     behavioral = _load(args.behavioral_receipt)
     proof_ids = {item["proof_id"] for item in proofs}
     requirements = {item["requirement_id"] for item in completion}
+    execution_requirements = {item["requirement_id"] for item in execution}
     covered = {item for claim in claims for item in claim["requirement_ids"]}
     workflow_cases = workflow.get("cases", [])
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     valid_fixture_classes = {"valid", "near_valid", "adversarial_invalid"}
     prerequisites = {
-        "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered,
+        "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered == execution_requirements,
+        "execution_map_bound": all(item.get("status") != "planned" and item.get("production_boundary") and item.get("proof_ids") for item in execution),
         "all_proofs_verified": all(item["status"] == "verified" and item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
         "all_requirements_verified": all(item["status"] == "verified" for item in completion),
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
@@ -64,6 +67,7 @@ def main() -> int:
     }
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
+                         "execution_map_hash": _sha((validation / "session6-8-execution-map.json").read_bytes()),
                          "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
                          "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
                          "junit_hash": _sha(junit), "workflow_receipt_hash": _sha(args.workflow_receipt.read_bytes()),

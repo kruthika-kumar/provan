@@ -36,6 +36,7 @@ from .remediation_roadmaps import prepare as prepare_remediation, compile as com
 from .review_organisation import prepare as prepare_review_plan, load as load_review_plan, adapt as adapt_review_plan, render_package as render_review_package, submit_result_bytes as submit_review_result
 from .contestability import append_action as append_contestation, load as load_contestation
 from .management_artifacts import compile as compile_management, load as load_management
+from .workflow_trust import read_bytes as trusted_read_bytes, read_json as trusted_read_json
 
 
 def load(path: Path) -> dict:
@@ -94,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(render_review_package(context,args.specialist),indent=2))
         elif args.action == "submit-result":
             if not args.specialist or not args.result or not args.receipt: raise SystemExit("review-plan submit-result requires --release --specialist --result --receipt")
-            print(json.dumps(submit_review_result(context,args.specialist,Path(args.result).read_bytes(),Path(args.receipt).read_bytes()),indent=2))
+            print(json.dumps(submit_review_result(context,args.specialist,
+                                                  trusted_read_bytes(context.repository_root, Path(args.result), label="review_plan_submission_result"),
+                                                  trusted_read_bytes(context.repository_root, Path(args.receipt), label="review_plan_submission_receipt")),indent=2))
         else:
             if args.capabilities or args.applicability or args.review_capabilities or args.permission or args.path or args.preparation or args.verifier_preparation or args.role: raise SystemExit("measurement-ai show accepts only --release and optional --journey")
             print(show_measurement_ai(context,args.journey))
@@ -127,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
         data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)
         if args.action=="add":
             if not args.input: raise SystemExit("contestation add requires --release --input")
-            print(json.dumps(append_contestation(context,json.loads(Path(args.input).read_text(encoding="utf-8"))),indent=2))
+            print(json.dumps(append_contestation(context, trusted_read_json(context.repository_root, Path(args.input), label="contestation_action_input")),indent=2))
         else:
             if args.input: raise SystemExit("contestation show accepts only --release")
             manifest,artifacts=load_contestation(context); print(json.dumps({"generation":manifest["generation"],"ledger":artifacts["contestation-ledger.json"]},indent=2))

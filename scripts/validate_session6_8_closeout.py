@@ -8,10 +8,13 @@ from pathlib import Path
 def main() -> int:
     root=Path(__file__).resolve().parents[1]; validation=root/"docs"/"validation"
     completion=json.loads((validation/"session6-8-completion-map.json").read_text(encoding="utf-8"))["requirements"]
+    execution=json.loads((validation/"session6-8-execution-map.json").read_text(encoding="utf-8"))["requirements"]
     proofs=json.loads((validation/"session6-8-proof-manifest.json").read_text(encoding="utf-8"))["proofs"]
     claims=json.loads((validation/"session6-8-claim-registry.json").read_text(encoding="utf-8"))["claims"]
     requirement_ids={item["requirement_id"] for item in completion}; proof_ids={item["proof_id"] for item in proofs}
+    execution_ids={item["requirement_id"] for item in execution}
     if len(requirement_ids)!=len(completion) or any(item["status"]=="planned" for item in completion): raise SystemExit("completion map is incomplete")
+    if execution_ids != requirement_ids or any(item.get("status") == "planned" or not item.get("production_boundary") or not item.get("proof_ids") for item in execution): raise SystemExit("execution map is incomplete")
     if {item["requirement_id"] for item in proofs} != requirement_ids: raise SystemExit("proof requirements are not exhaustive")
     covered={rid for claim in claims for rid in claim["requirement_ids"]}
     if covered != requirement_ids or any(not claim["requirement_ids"] for claim in claims): raise SystemExit("claim requirements are not exhaustive")

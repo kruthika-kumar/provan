@@ -262,6 +262,17 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
         "instrumentation_requirement": False,
     }
     policy_by_surface = {item["surface"]: item for item in surface_policy()["signals"]}
+    harness = vector.get("harness")
+    if isinstance(harness, dict) and set(harness) == {"schema_version", "execution_mode", "declared_capability", "granted_permission", "observed_execution", "independence_limitation"}:
+        validate_harness_capability_manifest(harness)
+        execution_mode = harness["execution_mode"]
+        independence_limitation = harness["independence_limitation"]
+    else:
+        # Pure selection tests deliberately do not need an operational
+        # transport declaration.  Real preparations always receive the closed
+        # vector manifest from _vector.
+        execution_mode = "manual_external"
+        independence_limitation = "declared capability is not proof of isolation"
     result=[]
     for entry in registry()["specialists"]:
         sid=entry["specialist_id"]; selected=False; authority="not_inspected"; reasons=[]
@@ -283,7 +294,7 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
             selected = False
             authority = "not_inspected" if authority != "explicitly_not_applicable" else authority
             reasons = reasons + [unavailable_reason]
-        result.append({"specialist_id":sid,"state":"selected" if selected else "unavailable" if unavailable_reason and authority != "explicitly_not_applicable" else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":[],"required_capabilities":["prepared_packet_read"],"execution_mode":"manual_external","independence_limitations":["declared capability is not proof of isolation"],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native,"native_binding":binding})
+        result.append({"specialist_id":sid,"state":"selected" if selected else "unavailable" if unavailable_reason and authority != "explicitly_not_applicable" else "skipped","applicability_authority":authority,"reason_codes":reasons,"evidence_refs":[],"required_capabilities":["prepared_packet_read"],"execution_mode":execution_mode,"independence_limitations":[independence_limitation],"result_schema":entry["result_schema"],"role_version":entry["role_version"],"native_boundary":native,"native_binding":binding})
     return result
 
 
@@ -330,6 +341,10 @@ def _validate_consumed_dependencies(ctx: LocalExecutionContext, vector: dict) ->
 
 def _validate_plan_native_bindings(ctx: LocalExecutionContext, plan: dict) -> None:
     """Re-resolve every selected native boundary from current trusted inputs."""
+    harness = plan.get("input_vector", {}).get("harness")
+    if not isinstance(harness, dict):
+        raise ValueError("review_plan_harness_manifest_missing")
+    validate_harness_capability_manifest(harness)
     for item in plan.get("specialists", []):
         if item.get("state") != "selected":
             continue
@@ -347,7 +362,7 @@ def prepare(ctx:LocalExecutionContext)->dict:
     work_orders=[]
     for item in selected:
         if item["state"]!="selected":continue
-        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"],"native_binding":item["native_binding"]})
+        work_orders.append({"schema_version":"specialist-work-order.v1","work_order_id":_stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]}),"plan_id":plan_id,"specialist_id":item["specialist_id"],"role_version":item["role_version"],"result_schema":item["result_schema"],"input_vector_hash":content_hash(vector),"allowed_files":[],"execution_mode":item["execution_mode"],"harness_capability_manifest":vector["harness"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":item["native_boundary"],"native_binding":item["native_binding"]})
     plan={"schema_version":"review-plan.v1","plan_id":plan_id,"input_vector":vector,"specialists":selected,"adaptation_depth":0,"supersedes":None}
     artifacts={"review-plan.json":plan,"plan-events.json":{"schema_version":"plan-events.v1","events":[]},"revision-ledger.json":{"schema_version":"revision-ledger.v1","entries":[]},"accepted-results.json":{"schema_version":"accepted-specialist-results.v1","results":[]},"execution-summary.json":{"schema_version":"execution-summary.v1","execution_modes":[item["execution_mode"] for item in selected if item["state"]=="selected"]}}
     for name,value in artifacts.items():write_bytes(ctx.repository_root,directory/name,_json(value),label="review_plan_artifact")

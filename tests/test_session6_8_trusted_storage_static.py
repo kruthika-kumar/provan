@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from shiproom.workflow_trust import checked_children
+from shiproom.workflow_trust import checked_children, ensure_directory, write_bytes
 
 
 DOMAINS = ("remediation_roadmaps", "review_organisation", "contestability", "management_artifacts")
@@ -77,3 +77,16 @@ def test_trusted_children_rejects_link_without_following_it(tmp_path):
         pytest.skip("platform does not permit creating a test symlink")
     with pytest.raises(ValueError, match="unsafe_storage_entry"):
         checked_children(root, generation, label="attack_link")
+
+
+def test_trusted_write_rejects_a_preexisting_symlink_ancestor(tmp_path):
+    repository = tmp_path / "repository"; repository.mkdir()
+    target = tmp_path / "outside"; target.mkdir()
+    try:
+        os.symlink(target, repository / ".shiproom", target_is_directory=True)
+    except OSError:
+        pytest.skip("platform does not permit creating a test symlink")
+    destination = repository / ".shiproom" / "local" / "releases" / "rel" / "remediation" / "generation" / "artifact.json"
+    with pytest.raises(ValueError, match="unsafe_storage_entry"):
+        write_bytes(repository, destination, b"{}", label="symlinked_write")
+    assert not (target / "local").exists()

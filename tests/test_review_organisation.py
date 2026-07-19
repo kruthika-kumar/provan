@@ -40,6 +40,22 @@ def test_harness_declaration_does_not_replace_a_bound_execution_receipt():
         domain.validate_harness_execution_receipt(receipt, work_order_id="wo_migration_and_rollback_" + "a" * 16)
 
 
+def test_selected_work_order_snapshots_the_closed_harness_declaration(tmp_path):
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path)
+    compile_bundle(context)
+    context.release["change_impact"] = {"migration_surface": True}
+    manifest = domain.prepare(context)
+    order_root = domain.root(context) / "generations" / manifest["generation"] / "specialist-work-orders"
+    work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_root.glob("*.json")
+                if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
+    assert domain.validate_harness_capability_manifest(work["harness_capability_manifest"])
+    assert work["harness_capability_manifest"] == domain.load(context)[1]["review-plan.json"]["input_vector"]["harness"]
+
+
 def test_browser_absence_is_explicit_not_applicable_not_omission():
     vector={"language_framework_signals":{"python":True,"typescript":False},"browser_applicability":{"authority":"explicitly_not_applicable","criterion_ids":[]},"ai_surface_signal":{"authority":"not_inspected","evidence_paths":[]},"migration_signal":{"authority":"not_inspected","evidence_paths":[]}}
     browser=next(item for item in _selection(vector) if item["specialist_id"]=="browser_journey")
@@ -97,6 +113,8 @@ def test_adaptation_requires_an_accepted_specialist_result(tmp_path):
     accepted = domain.submit_result(context, "migration_and_rollback", result, receipt)
     adapted = domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, accepted["result_id"])
     assert adapted["status"] == "accepted"
+    replay = domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, accepted["result_id"])
+    assert replay["status"] == "duplicate_trigger"
 
 
 def test_selected_native_specialists_bind_an_existing_native_preparation(tmp_path, monkeypatch):

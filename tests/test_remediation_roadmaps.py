@@ -27,6 +27,18 @@ def test_closed_or_stale_finding_cannot_remain_actionable():
     assert closed["actionable"] is False and stale["actionable"] is False
 
 
+def test_authority_policy_fails_closed_when_no_registered_rule_matches(monkeypatch):
+    import shiproom.remediation_roadmaps as domain
+    monkeypatch.setattr(domain, "authority_policy", lambda: {"rules": []})
+    try:
+        domain._policy_decision(blocker=False, criterion_authority="not_inspected", evidence_class="not_inspected",
+                                open_state="open", owner_required=False, fresh=True)
+    except ValueError as error:
+        assert str(error) == "remediation_issue_authority_policy_no_match"
+    else:
+        raise AssertionError("unregistered remediation authority tuple was accepted")
+
+
 def test_remediation_prepare_compile_without_optional_planner(tmp_path, monkeypatch):
     import shiproom.remediation_roadmaps as domain
     context=_context(tmp_path)
