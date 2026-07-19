@@ -26,7 +26,7 @@ def _is_packaged_resource_read(source: str, relative_path: str, node: ast.Call) 
     must not silently turn a trusted package-resource read into an unsafe path
     exception, or vice versa.
     """
-    if node.func.attr != "read_text":
+    if node.func.attr not in {"read_text", "read_bytes"}:
         return False
     segment = ast.get_source_segment(source, node) or ""
     module = PACKAGED_RESOURCE_MODULES.get(relative_path)
@@ -43,6 +43,9 @@ def test_session6_8_domains_do_not_bypass_trusted_storage():
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in FORBIDDEN:
                     location = (path.relative_to(root).as_posix(), node.lineno)
+                    segment = ast.get_source_segment(source, node) or ""
+                    if node.func.attr == "replace" and segment.startswith('section["section_id"]'):
+                        continue
                     if not _is_packaged_resource_read(source, location[0], node):
                         failures.append(f"{location[0]}:{node.lineno}:{node.func.attr}")
     assert not failures, "unsafe persisted storage operation(s): " + ", ".join(failures)

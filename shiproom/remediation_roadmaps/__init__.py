@@ -29,6 +29,12 @@ AUTOMATION_CLASSES = {"exact_route_mismatch", "broken_internal_link", "simple_co
 CLOSURE_EVIDENCE_SCHEMA = "remediation-closure-evidence.v1"
 CLOSURE_RECEIPT_SCHEMA = "remediation-closure-verifier-receipt.v1"
 CLOSURE_VERIFICATION_SCHEMA = "remediation-closure-verification.v1"
+CONTRACT_SNAPSHOTS = (
+    "remediation-issue-authority-policy.v1.json", "remediation-planner-role.v1.json",
+    "remediation-planner-work-order.v1.json", "remediation-planner-result.v1.json",
+    "remediation-planner-completion-receipt.v1.json", "remediation-closure-evidence.v1.json",
+    "remediation-closure-verifier-receipt.v1.json", "remediation-closure-verification.v1.json",
+)
 
 
 def root(ctx: LocalExecutionContext) -> Path:
@@ -45,6 +51,16 @@ def _sha(raw: bytes) -> str:
 
 def _stable(prefix: str, value: object) -> str:
     return prefix + "_" + hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()[:24]
+
+
+def _contract_snapshots() -> dict[str, dict]:
+    snapshots = {}
+    for name in CONTRACT_SNAPSHOTS:
+        raw = resources.files("shiproom.remediation_schemas").joinpath(name).read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+        snapshots[name] = {"schema_version": value.get("$id", value.get("schema_version", name.removesuffix(".json"))),
+                           "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw), "bytes": raw}
+    return snapshots
 
 
 def _dependency(state: str, generation: str | None = None, semantic_hash: str | None = None) -> dict:
@@ -178,17 +194,22 @@ def _minimal_packet(issue: dict, planner: dict | None, ctx: LocalExecutionContex
 
 
 def prepare(ctx: LocalExecutionContext) -> dict:
-    authority = _authority(ctx); issues = _issue_records(ctx, authority); preparation_id = "prep_" + uuid.uuid4().hex
+    authority = _authority(ctx); issues = _issue_records(ctx, authority); preparation_id = "prep_" + uuid.uuid4().hex; contracts = _contract_snapshots()
     directory = ensure_directory(ctx.repository_root, root(ctx) / "preparations" / preparation_id, label="remediation_preparation")
     actionable = [item for item in issues if item["issue_classification"] in ACTIONABLE]
     work_order = None
     if actionable:
-        work_order = {"schema_version": PLANNER_WORK_ORDER_SCHEMA, "work_order_id": _stable("wo_remediation_planner", {"authority": authority, "issues": [item["source_issue_id"] for item in actionable]}), "preparation_id": preparation_id, "release_id": ctx.release["release_id"], "assigned_issue_ids": [item["source_issue_id"] for item in actionable], "forbidden_fields": ["issue_classification", "issue_authority", "evidence_refs", "criterion_id", "requirement_id", "journey_ids", "automation_eligibility", "closure_status", "protected_invariants"]}
-    source = {"schema_version": "remediation-source-packet.v1", "preparation_id": preparation_id, "authority": authority, "issues": issues}
-    manifest = {"schema_version": "remediation-work-orders.v1", "compiler_version": PREPARATION_VERSION, "preparation_id": preparation_id, "authority": authority, "source_packet_hash": content_hash(source), "planner_work_order": work_order, "manifest_hash": ""}
+        bindings = {name: {key: value for key, value in contracts[name].items() if key != "bytes"} for name in ("remediation-planner-role.v1.json", "remediation-planner-result.v1.json", "remediation-planner-completion-receipt.v1.json")}
+        work_order = {"schema_version": PLANNER_WORK_ORDER_SCHEMA, "work_order_id": _stable("wo_remediation_planner", {"authority": authority, "issues": [item["source_issue_id"] for item in actionable]}), "preparation_id": preparation_id, "release_id": ctx.release["release_id"], "assigned_issue_ids": [item["source_issue_id"] for item in actionable], "forbidden_fields": ["issue_classification", "issue_authority", "evidence_refs", "criterion_id", "requirement_id", "journey_ids", "automation_eligibility", "closure_status", "protected_invariants"], "contract_bindings": bindings, "source_packet_hash": ""}
+    source = {"schema_version": "remediation-source-packet.v1", "preparation_id": preparation_id, "authority": authority, "issues": issues, "contract_schema_hashes": {name: contracts[name]["semantic_hash"] for name in contracts}}
+    if work_order is not None:
+        work_order["source_packet_hash"] = content_hash(source)
+    manifest = {"schema_version": "remediation-work-orders.v1", "compiler_version": PREPARATION_VERSION, "preparation_id": preparation_id, "authority": authority, "source_packet_hash": content_hash(source), "contract_schema_hashes": {name: {key: value for key, value in item.items() if key != "bytes"} for name, item in contracts.items()}, "planner_work_order": work_order, "manifest_hash": ""}
     manifest["manifest_hash"] = content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"})
     write_bytes(ctx.repository_root, directory / "remediation-source-packet.json", _json(source), label="remediation_source_packet")
     write_bytes(ctx.repository_root, directory / "remediation-work-orders.json", _json(manifest), label="remediation_manifest")
+    for name, item in contracts.items():
+        write_bytes(ctx.repository_root, directory / "contract-schemas" / name, item["bytes"], label="remediation_contract_snapshot")
     if work_order:
         write_bytes(ctx.repository_root, directory / "work-orders" / (work_order["work_order_id"] + ".json"), _json(work_order), label="remediation_work_order")
     replace_bytes(ctx.repository_root, root(ctx) / "active-preparation.json", _json({"schema_version": "active-remediation-preparation.v1", "preparation_id": preparation_id, "manifest_hash": _sha(_json(manifest))}), label="remediation_pointer")
@@ -244,6 +265,25 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
     return {"records_by_issue": records}
 
 
+def _validate_preparation_contract_snapshots(ctx: LocalExecutionContext, directory: Path, manifest: dict, source: dict) -> None:
+    expected = set(CONTRACT_SNAPSHOTS)
+    contract_root = directory / "contract-schemas"
+    exact_children(contract_root, expected, label="remediation_contract_schemas")
+    actual = {}
+    for name in sorted(expected):
+        raw = read_bytes(ctx.repository_root, contract_root / name, label="remediation_contract_schema")
+        value = json.loads(raw.decode("utf-8"))
+        actual[name] = {"schema_version": value.get("$id", value.get("schema_version", name.removesuffix(".json"))),
+                        "semantic_hash": content_hash(value), "snapshot_hash": _sha(raw)}
+    if manifest.get("contract_schema_hashes") != actual or source.get("contract_schema_hashes") != {name: actual[name]["semantic_hash"] for name in actual}:
+        raise ValueError("remediation_contract_snapshot_tampered")
+    work = manifest.get("planner_work_order")
+    if work is not None:
+        expected_bindings = {name: actual[name] for name in ("remediation-planner-role.v1.json", "remediation-planner-result.v1.json", "remediation-planner-completion-receipt.v1.json")}
+        if work.get("contract_bindings") != expected_bindings or work.get("source_packet_hash") != manifest.get("source_packet_hash"):
+            raise ValueError("remediation_work_order_contract_binding_invalid")
+
+
 def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
     active = root(ctx) / "active-preparation.json"
     if preparation_id is None:
@@ -257,6 +297,7 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     source = read_json(ctx.repository_root, directory / "remediation-source-packet.json", label="remediation_source_packet")
     if content_hash(source) != manifest["source_packet_hash"]:
         raise ValueError("remediation_source_packet_tampered")
+    _validate_preparation_contract_snapshots(ctx, directory, manifest, source)
     items = [_minimal_packet(issue, planner, ctx) for issue in source["issues"] if issue["issue_classification"] in ACTIONABLE]
     packets = [item["packet"] for item in items]; contracts = [item["contract"] for item in items]
     if len({item["remediation_id"] for item in packets}) != len(packets) or len({item["remediation_id"] for item in contracts}) != len(contracts):

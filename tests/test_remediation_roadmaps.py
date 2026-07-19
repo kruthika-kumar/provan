@@ -96,3 +96,22 @@ def test_closure_inbox_rejects_unlisted_file_without_reading_evidence(tmp_path, 
     (inbox/"extra.json").write_text("{}",encoding="utf-8")
     result=closure_verify(context,closure_id)
     assert result["status"]=="not_evaluated" and result["reason_codes"]==["storage_file_set_mismatch:closure_inbox"]
+
+
+def test_planner_work_order_binds_immutable_contract_snapshots(tmp_path, monkeypatch):
+    import shiproom.remediation_roadmaps as domain
+    context = _context(tmp_path)
+    authority={"release_id":"rel_remediation","release_commit":"a"*40,"product_intent":_dependency("not_used"),"graph":_dependency("not_used"),"assessment":_dependency("not_used"),"measurement_ai":_dependency("not_used")}
+    issue={"source_issue_type":"finding","source_issue_id":"finding_1","criterion_id":"criterion_1","requirement_id":"requirement_1","journey_ids":[],"issue_classification":"verified_blocker","issue_authority":"deterministically_established","evidence_refs":[],"automation_class":None}
+    monkeypatch.setattr(domain,"_authority",lambda ctx:authority); monkeypatch.setattr(domain,"_issue_records",lambda ctx,a:[issue])
+    prepared = prepare(context)
+    work = prepared["planner_work_order"]
+    assert set(work["contract_bindings"]) == {"remediation-planner-role.v1.json","remediation-planner-result.v1.json","remediation-planner-completion-receipt.v1.json"}
+    schema = domain.root(context) / "preparations" / prepared["preparation_id"] / "contract-schemas" / "remediation-planner-result.v1.json"
+    schema.write_text("{}", encoding="utf-8")
+    try:
+        compile(context, prepared["preparation_id"])
+    except ValueError as error:
+        assert str(error) == "remediation_contract_snapshot_tampered"
+    else:
+        raise AssertionError("tampered remediation contract snapshot was accepted")
