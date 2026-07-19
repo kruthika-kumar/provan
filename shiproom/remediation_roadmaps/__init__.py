@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from importlib import resources
 from pathlib import Path
 
 from shiproom.assessment import load_assessment
@@ -11,7 +12,7 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import ensure_directory, exact_children, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import ensure_directory, exact_children, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
 
 
 PREPARATION_VERSION = "remediation-roadmap-preparation.v1"
@@ -25,6 +26,9 @@ POINTER_SCHEMA = "current-remediation-generation.v1"
 ACTIONABLE = {"verified_blocker", "condition_candidate", "owner_decision_required", "model_reviewed_recommendation", "roadmap_opportunity"}
 PLANNER_FIELDS = ("root_cause_hypotheses", "recommended_changes", "test_proposals", "instrumentation_implications", "rollback_suggestions", "complexity", "risk", "suggested_owner")
 AUTOMATION_CLASSES = {"exact_route_mismatch", "broken_internal_link", "simple_configuration_mismatch", "missing_narrow_regression_test", "clearly_false_success_state_copy"}
+CLOSURE_EVIDENCE_SCHEMA = "remediation-closure-evidence.v1"
+CLOSURE_RECEIPT_SCHEMA = "remediation-closure-verifier-receipt.v1"
+CLOSURE_VERIFICATION_SCHEMA = "remediation-closure-verification.v1"
 
 
 def root(ctx: LocalExecutionContext) -> Path:
@@ -52,6 +56,23 @@ def _dependency(state: str, generation: str | None = None, semantic_hash: str | 
     elif generation is not None or semantic_hash is not None:
         raise ValueError("optional_dependency_must_be_null")
     return {"state": state, "generation": generation, "semantic_hash": semantic_hash}
+
+
+def authority_policy() -> dict:
+    return json.loads(resources.files("shiproom.remediation_schemas").joinpath("remediation-issue-authority-policy.v1.json").read_text(encoding="utf-8"))
+
+
+def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class: str, open_state: str, owner_required: bool, fresh: bool) -> dict:
+    """Single authority policy evaluator; rules are intentionally ordered by specificity."""
+    for rule in authority_policy()["rules"]:
+        expected = {"blocker": blocker, "criterion_authority": criterion_authority, "evidence_class": evidence_class,
+                    "open_state": open_state, "owner_decision_state": "required" if owner_required else "not_required",
+                    "freshness": "fresh" if fresh else "stale"}
+        if all(rule[key] == "any" or rule[key] == value for key, value in expected.items()):
+            return {"issue_classification": rule["issue_class"], "actionable": rule["actionable"],
+                    "permitted_automation_classes": rule["automation_classes"],
+                    "allowed_closure_evidence_classes": rule["closure_evidence_classes"]}
+    raise ValueError("remediation_issue_authority_policy_no_match")
 
 
 def _optional_assessment(ctx: LocalExecutionContext) -> tuple[dict, dict] | None:
@@ -84,12 +105,16 @@ def _authority(ctx: LocalExecutionContext) -> dict:
 def _issue_records(ctx: LocalExecutionContext, authority: dict) -> list[dict]:
     records: list[dict] = []
     for finding in ctx.release.get("findings", []):
-        if finding.get("state") == "CLOSED":
-            continue
-        classification = "verified_blocker" if finding.get("blocker") else "condition_candidate"
-        evidence = [{"kind": "canonical_finding", "id": finding.get("id"), "authority": "deterministically_established"}]
+        state = "closed" if finding.get("state") == "CLOSED" else "open"
+        evidence_class = finding.get("evidence_class", "not_inspected")
+        criterion_authority = finding.get("criterion_authority", evidence_class)
+        policy = _policy_decision(blocker=bool(finding.get("blocker")), criterion_authority=criterion_authority,
+                                  evidence_class=evidence_class, open_state=state,
+                                  owner_required=bool(finding.get("owner_decision_required")), fresh=True)
+        evidence = [{"kind": "canonical_finding", "id": finding.get("id"), "authority": evidence_class}]
         seed = {"source_issue_type": "finding", "source_issue_id": finding.get("id"), "criterion_id": finding.get("criterion_id"), "requirement_id": finding.get("requirement_id"), "journey_ids": finding.get("journey_ids", [])}
-        records.append({**seed, "issue_classification": classification, "issue_authority": "deterministically_established", "evidence_refs": evidence, "automation_class": finding.get("automation_class") if finding.get("automation_class") in AUTOMATION_CLASSES else None})
+        records.append({**seed, **policy, "issue_authority": evidence_class, "evidence_refs": evidence,
+                        "automation_class": finding.get("automation_class") if finding.get("automation_class") in policy["permitted_automation_classes"] else None})
     assessment = _optional_assessment(ctx)
     if assessment:
         _, artifacts = assessment
@@ -97,7 +122,8 @@ def _issue_records(ctx: LocalExecutionContext, authority: dict) -> list[dict]:
             if item.get("node_type") != "assessment_gap":
                 continue
             seed = {"source_issue_type": "assessment_gap", "source_issue_id": item["node_id"], "criterion_id": item.get("criterion_id"), "requirement_id": None, "journey_ids": []}
-            records.append({**seed, "issue_classification": "model_reviewed_recommendation", "issue_authority": "model_reviewed", "evidence_refs": [{"kind": "assessment_gap", "id": item["node_id"], "authority": "model_reviewed"}], "automation_class": None})
+            policy = _policy_decision(blocker=False, criterion_authority="model_reviewed", evidence_class="model_reviewed", open_state="open", owner_required=False, fresh=True)
+            records.append({**seed, **policy, "issue_authority": "model_reviewed", "evidence_refs": [{"kind": "assessment_gap", "id": item["node_id"], "authority": "model_reviewed"}], "automation_class": None})
     measurement = _optional_measurement(ctx)
     if measurement:
         _, artifacts = measurement
@@ -105,7 +131,9 @@ def _issue_records(ctx: LocalExecutionContext, authority: dict) -> list[dict]:
             if check.get("status") != "gap":
                 continue
             seed = {"source_issue_type": "measurement_ai_check", "source_issue_id": check["check_id"], "criterion_id": None, "requirement_id": None, "journey_ids": []}
-            records.append({**seed, "issue_classification": "model_reviewed_recommendation", "issue_authority": "model_reviewed", "evidence_refs": [{"kind": "measurement_ai_check", "id": check["check_id"], "authority": check.get("check_authority", "model_reviewed")}], "automation_class": None})
+            evidence_class = check.get("check_authority", "model_reviewed")
+            policy = _policy_decision(blocker=False, criterion_authority=evidence_class, evidence_class=evidence_class, open_state="open", owner_required=False, fresh=True)
+            records.append({**seed, **policy, "issue_authority": evidence_class, "evidence_refs": [{"kind": "measurement_ai_check", "id": check["check_id"], "authority": evidence_class}], "automation_class": None})
     seen = set(); result = []
     for item in records:
         key = (item["source_issue_type"], item["source_issue_id"])
@@ -121,9 +149,12 @@ def _minimal_packet(issue: dict, planner: dict | None) -> dict:
     semantic.update({"assumptions": [], "limitations": ["No remediation planner result was supplied."]})
     if planner is not None:
         semantic = planner["records_by_issue"][issue["source_issue_id"]]
-    eligibility = "bounded_fix_available" if issue.get("automation_class") in AUTOMATION_CLASSES and issue["issue_classification"] == "verified_blocker" else "roadmap_only"
+    permitted = issue.get("permitted_automation_classes")
+    if permitted is None and issue.get("issue_classification") == "verified_blocker":
+        permitted = list(AUTOMATION_CLASSES)
+    eligibility = "bounded_fix_available" if issue.get("automation_class") in (permitted or []) else "roadmap_only"
     packet = {"remediation_id": remediation_id, **issue, "user_or_business_impact": {"authority": "not_inspected", "value": None}, "automation_eligibility": eligibility, "execution_modes": ["roadmap_only", "external_agent_handoff"], "verification_contract_id": closure_id, "protected_invariants": ["canonical_findings_unchanged", "canonical_verdict_unchanged", "no_automatic_merge"], "allowed_closure_evidence_classes": ["deterministically_established"], **semantic}
-    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "test_requirements": [], "instrumentation_requirements": [], "protected_invariants": packet["protected_invariants"], "allowed_repository_commit_or_branch": None, "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": packet["allowed_closure_evidence_classes"], "expiry_or_stale_bindings": {"release_commit": None}}
+    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "regression_checks": [], "test_requirements": [], "instrumentation_requirements": [], "protected_invariants": packet["protected_invariants"], "allowed_repository_commit": issue.get("release_commit_state", "current_commit"), "allowed_branch": issue.get("allowed_branch", "current_branch"), "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), "source_generation": issue.get("source_generation", "current"), "release_commit": issue.get("release_commit", "current"), "expiry_or_stale_bindings": {"release_commit": "current"}}
     return {"packet": packet, "contract": contract}
 
 
@@ -231,15 +262,45 @@ def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -
     return manifest, artifacts
 
 
-def closure_verify(ctx: LocalExecutionContext, closure_contract_id: str, evidence: dict) -> dict:
-    manifest, _ = load_generation(ctx); path = root(ctx) / "generations" / manifest["generation"] / "closure-contracts" / (closure_contract_id + ".json")
-    contract = json.loads(path.read_text(encoding="utf-8"))
-    if evidence.get("release_commit") != ctx.authority_binding["repository_commit"]:
-        return {"status": "stale", "closure_contract_id": closure_contract_id}
-    if evidence.get("executor_id") == evidence.get("fixer_id"):
+def _closure_inbox(ctx: LocalExecutionContext, closure_contract_id: str) -> tuple[dict, dict]:
+    inbox = root(ctx) / "closure-inbox" / closure_contract_id
+    evidence = read_json(ctx.repository_root, inbox / "evidence.json", label="closure_evidence")
+    receipt = read_json(ctx.repository_root, inbox / "verifier-receipt.json", label="closure_verifier_receipt")
+    if not isinstance(evidence, dict) or evidence.get("schema_version") != CLOSURE_EVIDENCE_SCHEMA:
+        raise ValueError("closure_evidence_contract_invalid")
+    if not isinstance(receipt, dict) or receipt.get("schema_version") != CLOSURE_RECEIPT_SCHEMA:
+        raise ValueError("closure_verifier_receipt_invalid")
+    raw = _json(evidence)
+    if receipt.get("closure_contract_id") != closure_contract_id or receipt.get("evidence_snapshot_hash") != _sha(raw):
+        raise ValueError("closure_evidence_receipt_binding_invalid")
+    return evidence, receipt
+
+
+def closure_verify(ctx: LocalExecutionContext, closure_contract_id: str, evidence: dict | None = None) -> dict:
+    """Validate only the portable closure inbox; arbitrary evidence objects are forbidden."""
+    manifest, _ = load_generation(ctx)
+    path = root(ctx) / "generations" / manifest["generation"] / "closure-contracts" / (closure_contract_id + ".json")
+    contract = read_json(ctx.repository_root, path, label="closure_contract")
+    if not isinstance(contract, dict) or contract.get("closure_contract_id") != closure_contract_id:
+        raise ValueError("closure_contract_invalid")
+    if evidence is not None:
+        raise ValueError("closure_evidence_must_use_inbox")
+    try:
+        submitted, receipt = _closure_inbox(ctx, closure_contract_id)
+    except ValueError as exc:
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "not_evaluated", "reason_codes": [str(exc)]}
+    if submitted.get("release_id") != ctx.release["release_id"] or submitted.get("release_commit") != ctx.authority_binding["repository_commit"]:
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "stale", "reason_codes": ["release_commit_mismatch"]}
+    if receipt.get("verifier_id") == submitted.get("fixer_id"):
         raise ValueError("closure_verifier_not_independent")
     expected = set(contract["exact_checks_to_rerun"])
-    actual = set(evidence.get("rerun_of", []))
-    if not expected.issubset(actual):
-        return {"status": "unsatisfied", "closure_contract_id": closure_contract_id}
-    return {"status": "satisfied_candidate", "closure_contract_id": closure_contract_id}
+    reruns = submitted.get("reruns")
+    if not isinstance(reruns, list) or {item.get("check_id") for item in reruns} != expected:
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["exact_rerun_identity_missing"]}
+    if any(not item.get("passed") or item.get("evidence_class") not in contract["evidence_classes_allowed_to_close"] for item in reruns):
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["closure_evidence_not_permitted"]}
+    if any(not item.get("passed") for item in submitted.get("protected_invariant_outcomes", [])):
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "unsatisfied", "reason_codes": ["protected_invariant_failed"]}
+    if contract.get("owner_decision_requirement"):
+        return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "owner_action_required", "reason_codes": ["owner_decision_required"]}
+    return {"schema_version": CLOSURE_VERIFICATION_SCHEMA, "closure_contract_id": closure_contract_id, "status": "satisfied_candidate", "reason_codes": ["independent_exact_rerun_passed"]}

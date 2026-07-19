@@ -104,8 +104,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.preparation or args.closure_contract or args.evidence: raise SystemExit("remediation-roadmap show accepts only --release")
             manifest,artifacts=load_remediation(context); print(json.dumps({"generation":manifest["generation"],"index":artifacts["remediation-index.json"]},indent=2))
         else:
-            if args.preparation or not args.closure_contract or not args.evidence: raise SystemExit("remediation-roadmap closure-verify requires --release --closure-contract --evidence")
-            print(json.dumps(verify_remediation_closure(context,args.closure_contract,json.loads(Path(args.evidence).read_text(encoding="utf-8"))),indent=2))
+            if args.preparation or not args.closure_contract or args.evidence: raise SystemExit("remediation-roadmap closure-verify requires --release --closure-contract; evidence is accepted only through the closure inbox")
+            print(json.dumps(verify_remediation_closure(context,args.closure_contract),indent=2))
     elif args.command == "review-plan":
         data=load(Path(args.release)); context=LocalExecutionContext.from_release(data)
         if args.action == "prepare":

@@ -1,0 +1,12 @@
+{
+  "schema_version": "remediation-issue-authority-policy.v1",
+  "rules": [
+    {"rule_id":"RIA_STALE","finding_state":"any","blocker":"any","criterion_authority":"any","evidence_class":"any","open_state":"any","owner_decision_state":"any","freshness":"stale","issue_class":"not_inspected","actionable":false,"automation_classes":[],"closure_evidence_classes":[]},
+    {"rule_id":"RIA_CLOSED","finding_state":"any","blocker":"any","criterion_authority":"any","evidence_class":"any","open_state":"closed","owner_decision_state":"any","freshness":"fresh","issue_class":"not_inspected","actionable":false,"automation_classes":[],"closure_evidence_classes":[]},
+    {"rule_id":"RIA_VERIFIED_BLOCKER","finding_state":"any","blocker":true,"criterion_authority":"deterministically_established","evidence_class":"deterministically_established","open_state":"open","owner_decision_state":"not_required","freshness":"fresh","issue_class":"verified_blocker","actionable":true,"automation_classes":["exact_route_mismatch","broken_internal_link","simple_configuration_mismatch","missing_narrow_regression_test","clearly_false_success_state_copy"],"closure_evidence_classes":["deterministically_established"]},
+    {"rule_id":"RIA_OWNER_DECISION","finding_state":"any","blocker":"any","criterion_authority":"any","evidence_class":"any","open_state":"open","owner_decision_state":"required","freshness":"fresh","issue_class":"owner_decision_required","actionable":true,"automation_classes":[],"closure_evidence_classes":["deterministically_established"]},
+    {"rule_id":"RIA_MODEL","finding_state":"any","blocker":"any","criterion_authority":"model_reviewed","evidence_class":"model_reviewed","open_state":"open","owner_decision_state":"not_required","freshness":"fresh","issue_class":"model_reviewed_recommendation","actionable":true,"automation_classes":[],"closure_evidence_classes":[]},
+    {"rule_id":"RIA_CANDIDATE","finding_state":"any","blocker":"any","criterion_authority":"model_mapped_candidate","evidence_class":"any","open_state":"open","owner_decision_state":"not_required","freshness":"fresh","issue_class":"roadmap_opportunity","actionable":true,"automation_classes":[],"closure_evidence_classes":[]},
+    {"rule_id":"RIA_CONDITION","finding_state":"any","blocker":"any","criterion_authority":"any","evidence_class":"any","open_state":"open","owner_decision_state":"not_required","freshness":"fresh","issue_class":"condition_candidate","actionable":true,"automation_classes":[],"closure_evidence_classes":["deterministically_established","source_verified"]}
+  ]
+}
