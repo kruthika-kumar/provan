@@ -75,10 +75,10 @@ def authority_policy() -> dict:
     return value
 
 
-def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class: str, open_state: str, owner_required: bool, fresh: bool) -> dict:
+def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class: str, open_state: str, owner_required: bool, fresh: bool, finding_state: str | None = None) -> dict:
     """Single authority policy evaluator; rules are intentionally ordered by specificity."""
     for rule in authority_policy()["rules"]:
-        expected = {"blocker": blocker, "criterion_authority": criterion_authority, "evidence_class": evidence_class,
+        expected = {"finding_state": finding_state or open_state, "blocker": blocker, "criterion_authority": criterion_authority, "evidence_class": evidence_class,
                     "open_state": open_state, "owner_decision_state": "required" if owner_required else "not_required",
                     "freshness": "fresh" if fresh else "stale"}
         if all(rule[key] == "any" or rule[key] == value for key, value in expected.items()):
@@ -123,7 +123,7 @@ def _issue_records(ctx: LocalExecutionContext, authority: dict) -> list[dict]:
         criterion_authority = finding.get("criterion_authority", evidence_class)
         policy = _policy_decision(blocker=bool(finding.get("blocker")), criterion_authority=criterion_authority,
                                   evidence_class=evidence_class, open_state=state,
-                                  owner_required=bool(finding.get("owner_decision_required")), fresh=True)
+                                  owner_required=bool(finding.get("owner_decision_required")), fresh=True, finding_state=state)
         evidence = [{"kind": "canonical_finding", "id": finding.get("id"), "authority": evidence_class}]
         seed = {"source_issue_type": "finding", "source_issue_id": finding.get("id"), "criterion_id": finding.get("criterion_id"), "requirement_id": finding.get("requirement_id"), "journey_ids": finding.get("journey_ids", [])}
         records.append({**seed, **policy, "issue_authority": evidence_class, "evidence_refs": evidence,
