@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -14,6 +15,19 @@ def _sha(raw: bytes) -> str:
 
 def _load(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _junit_passed_ids(raw: bytes) -> set[str]:
+    root = ET.fromstring(raw)
+    passed = set()
+    for case in root.iter("testcase"):
+        if any(child.tag in {"failure", "error", "skipped"} for child in case):
+            continue
+        name = case.attrib.get("name", "")
+        classname = case.attrib.get("classname", "")
+        passed.add(name)
+        passed.add(classname + "::" + name)
+    return passed
 
 
 def main() -> int:
@@ -29,6 +43,7 @@ def main() -> int:
     proofs = _load(validation / "session6-8-proof-manifest.json")["proofs"]
     claims = _load(validation / "session6-8-claim-registry.json")["claims"]
     junit = args.junit.read_bytes()
+    passed_tests = _junit_passed_ids(junit)
     workflow = _load(args.workflow_receipt)
     behavioral = _load(args.behavioral_receipt)
     proof_ids = {item["proof_id"] for item in proofs}
@@ -37,7 +52,7 @@ def main() -> int:
     workflow_cases = workflow.get("cases", [])
     prerequisites = {
         "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered,
-        "all_proofs_verified": all(item["status"] == "verified" for item in proofs),
+        "all_proofs_verified": all(item["status"] == "verified" and item["test_id"] in passed_tests for item in proofs),
         "all_requirements_verified": all(item["status"] == "verified" for item in completion),
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
         "junit_present": bool(junit),
