@@ -173,7 +173,7 @@ def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple
         return {"domain": "measurement_ai", "role_id": role, "preparation_id": preparation["manifest"]["preparation_id"],
                 "preparation_semantic_hash": preparation["manifest"]["preparation_semantic_hash"],
                 "work_order_id": work["work_order_id"], "work_order_hash": work["work_order_hash"],
-                "context_hash": preparation["contexts"][role]["context_hash"],
+                "context_hash": preparation["contexts"][role]["packet_hash"],
                 "result_schema": work["required_output"]["schema_version"]}, None
     if specialist_id == "product_intent":
         # The native Product Intent workflow has a proposal packet but no
@@ -241,15 +241,30 @@ def _validate_consumed_dependencies(ctx: LocalExecutionContext, vector: dict) ->
     assessment_dependency = vector["assessment"]
     if assessment_dependency["state"] == "required_present":
         from shiproom import assessment
-        preparation = assessment.load_preparation(ctx, assessment_dependency["generation"])
-        if preparation["manifest"]["preparation_semantic_hash"] != assessment_dependency["semantic_hash"]:
+        preparation = assessment.load_preparation(ctx)
+        if (preparation["manifest"]["preparation_id"] != assessment_dependency["generation"] or
+                preparation["manifest"]["preparation_semantic_hash"] != assessment_dependency["semantic_hash"]):
             raise ValueError("stale_consumed_assessment_dependency")
     measurement_dependency = vector["measurement_ai"]
     if measurement_dependency["state"] == "required_present":
         from shiproom.measurement_ai.preparation import load_preparation
-        preparation = load_preparation(ctx, measurement_dependency["generation"])
-        if preparation["manifest"]["preparation_semantic_hash"] != measurement_dependency["semantic_hash"]:
+        preparation = load_preparation(ctx)
+        if (preparation["manifest"]["preparation_id"] != measurement_dependency["generation"] or
+                preparation["manifest"]["preparation_semantic_hash"] != measurement_dependency["semantic_hash"]):
             raise ValueError("stale_consumed_measurement_ai_dependency")
+
+
+def _validate_plan_native_bindings(ctx: LocalExecutionContext, plan: dict) -> None:
+    """Re-resolve every selected native boundary from current trusted inputs."""
+    for item in plan.get("specialists", []):
+        if item.get("state") != "selected":
+            continue
+        binding = item.get("native_binding")
+        if not isinstance(binding, dict):
+            raise ValueError("review_plan_native_binding_tampered")
+        resolved, reason = _native_preparation(ctx, item.get("specialist_id"))
+        if reason is not None or resolved != binding:
+            raise ValueError("stale_native_specialist_boundary")
 
 
 def prepare(ctx:LocalExecutionContext)->dict:
@@ -286,6 +301,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     plan = artifacts["review-plan.json"]
     if plan.get("input_vector") != manifest["input_vector"] or any(item.get("state") == "selected" and not isinstance(item.get("native_binding"), dict) for item in plan.get("specialists", [])):
         raise ValueError("review_plan_native_binding_tampered")
+    _validate_plan_native_bindings(ctx, plan)
     return manifest,artifacts
 
 

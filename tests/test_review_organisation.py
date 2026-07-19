@@ -121,3 +121,24 @@ def test_later_unused_native_preparation_does_not_stale_prior_plan(tmp_path):
     prepare_assessment(context)
     loaded, _ = domain.load(context)
     assert loaded["generation"] == first["generation"]
+
+
+def test_changed_consumed_native_preparation_stales_review_plan(tmp_path, monkeypatch):
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle
+    from shiproom.assessment import prepare as prepare_assessment
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path)
+    compile_bundle(context)
+    prepare_assessment(context)
+    original_vector = domain._vector
+    def with_python_surface(value):
+        vector = original_vector(value)
+        vector["language_framework_signals"]["python"] = True
+        return vector
+    monkeypatch.setattr(domain, "_vector", with_python_surface)
+    domain.prepare(context)
+    prepare_assessment(context)
+    with pytest.raises(ValueError, match="stale_consumed_assessment_dependency"):
+        domain.load(context)
