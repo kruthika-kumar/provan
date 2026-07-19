@@ -86,7 +86,9 @@ def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext
     assessment = loaded["assessment"] or {}
     measurement = loaded["measurement"] or {}
     remediation = loaded["remediation"] or {}
+    review = loaded["review"] or {}
     contest = loaded["contest"] or {}
+    activation = getattr(ctx, "activation", {}) or {}
     sources = {
         "requirements": requirements, "criteria": criteria, "critical_journeys": journeys,
         "repository_map": [ctx.release.get("repository", {})] if ctx.release.get("repository") else [],
@@ -104,14 +106,60 @@ def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext
         "contestation": contest.get("contestation-ledger.json", {}).get("actions", []),
         "owner_decisions": ctx.release.get("owner_decisions", []),
         "verified_blockers": [item for item in ctx.release.get("findings", []) if item.get("blocker")],
+        "recommendation": [{"record_id": "derived_recommendation", "source": "release_recommendation_policy"}],
+        "what_was_promised": requirements + criteria + journeys,
+        "what_was_proven": graph_nodes,
+        "unknowns": [{"dependency": key, **value} for key, value in vector.items() if isinstance(value, dict) and value.get("state") in {"not_used", "unavailable"}],
+        "accepted_conditions": contest.get("contestation-effects.json", {}).get("named_risk_effects", []),
+        "residual_risk": [item for item in ctx.release.get("findings", []) if item.get("state") != "CLOSED"],
+        "post_release_watch": measurement.get("launch-measurement-plan.json", {}).get("recommendations", []),
+        "execution_substrate": [activation.get("contract", {}).get("execution_policy", {})],
+        "execution_mode": review.get("execution-summary.json", {}).get("execution_modes", []),
+        "independence_limitations": [item.get("independence_limitations", []) for item in review.get("review-plan.json", {}).get("specialists", []) if item.get("independence_limitations")],
+        "target_user": requirements, "outcomes": requirements, "scope": requirements,
+        "non_goals": [], "source_conflicts": intent.get("ambiguities.json", {}).get("ambiguities", []),
+        "product_decisions": ctx.release.get("owner_decisions", []),
+        "post_release_plan": measurement.get("launch-measurement-plan.json", {}).get("recommendations", []),
+        "requirement_criterion_matrix": [{"requirement_id": item.get("requirement_id"), "criterion_ids": item.get("criterion_ids", [])} for item in requirements],
+        "change_map": graph_nodes, "approved_commands": [activation.get("contract", {}).get("execution_policy", {}).get("approved_commands", [])],
+        "requirement_test_matrix": assessment.get("effective-assessment-view.json", {}).get("criteria", []),
+        "test_adequacy": assessment.get("test-adequacy.json", {}).get("payload", {}).get("criteria", []),
+        "negative_recovery": assessment.get("engineering-assessment.json", {}).get("payload", {}).get("criteria", []),
+        "runtime": assessment.get("effective-assessment-view.json", {}).get("criteria", []),
+        "rollback": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "migration": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "dependencies": graph_nodes, "remediation": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "closure_contracts": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "success_failure": measurement.get("measurement-contract.json", {}).get("contracts", []),
+        "definition_execution_accuracy": measurement.get("measurement-contract.json", {}).get("downstream_definitions", []),
+        "verifier_dispositions": measurement.get("measurement-ai-readiness.json", {}).get("verifier_dispositions", []),
+        "launch_monitoring": measurement.get("launch-measurement-plan.json", {}).get("recommendations", []),
+        "limitations": measurement.get("launch-measurement-plan.json", {}).get("limitations", []),
+        "automation_eligibility": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "owners": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "execution_modes": review.get("execution-summary.json", {}).get("execution_modes", []),
+        "state": remediation.get("remediation-plan.json", {}).get("packets", []),
+        "verification": remediation.get("closure-verifications.json", {}).get("verifications", []),
+        "dependency_vector": [{key: value for key, value in vector.items() if key != "schema_version"}],
+        "artifact_index": [{"artifact": value} for value in JSON_ARTIFACTS],
+        "source_generations": [{key: value for key, value in vector.items() if isinstance(value, dict) and "state" in value}],
     }
     result = []
     for spec in specs:
         records = sources.get(spec["section_id"], [])
         if not isinstance(records, list):
             records = [records]
-        unavailable = all(vector.get(dep, {}).get("state") in {"not_used", "unavailable", "not_applicable"} for dep in spec["source_dependencies"])
-        result.append({"section_id": spec["section_id"], "state": spec["typed_empty_state"] if unavailable and not records else "populated" if records else "empty_no_canonical_records", "records": records, "authority_passthrough": spec["authority_passthrough"]})
+        dependencies = ["contestability" if dep == "contestation" else dep for dep in spec["source_dependencies"]]
+        unavailable = all(vector.get(dep, {}).get("state") in {"not_used", "unavailable", "not_applicable"} for dep in dependencies)
+        if not records and not unavailable and spec["record_source"] == "canonical_dependency_vector":
+            # The vector itself is canonical and makes an honest, bounded
+            # status record for a section whose specialised upstream material
+            # has no records yet.  It is not a semantic finding.
+            records = [{"record_id": "dependency_" + dep, "source_dependency": dep, **vector[dep]} for dep in dependencies]
+        state = spec["typed_empty_state"] if unavailable and not records else "populated" if records else "empty_no_canonical_records"
+        if state != spec["typed_empty_state"] and len(records) < spec["minimum_records"]:
+            raise ValueError("management_section_minimum_records_missing:" + spec["section_id"])
+        result.append({"section_id": spec["section_id"], "state": state, "records": records, "authority_passthrough": spec["authority_passthrough"]})
     return result
 def _recommendation_policy() -> dict:
     value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text())
@@ -159,8 +207,12 @@ def compile(ctx:LocalExecutionContext)->dict:
     for name,value in artifacts.items():
         write_bytes(ctx.repository_root,directory/(name+".json"),_json(value),label="management_json")
         if name!="release-recommendation-view":write_bytes(ctx.repository_root,directory/(name+".html"),_html(name,value),label="management_html")
-    github={**base,"sections":_sections("github-summary-payload"),"recommendation":policy,"local_references":[name+".json" for name in JSON_ARTIFACTS]}
-    write_bytes(ctx.repository_root,directory/"github-summary-payload.json",_json(github),label="github_payload");write_bytes(ctx.repository_root,directory/"github-summary.md",("# Shiproom release summary\n\nRecommendation: `"+policy["status"]+"`\n").encode(),label="github_markdown")
+    github_contracts = _section_contracts("github-summary-payload")
+    github={**base,"sections":_sections("github-summary-payload"),"section_contracts":github_contracts,
+            "section_records":_section_records("github-summary-payload", github_contracts, ctx=ctx, loaded=loaded, vector=vector),
+            "recommendation":policy,"local_references":[name+".json" for name in JSON_ARTIFACTS]}
+    markdown_sections = "\n".join("- " + section["section_id"].replace("_", " ") + ": " + section["state"] for section in github["section_records"])
+    write_bytes(ctx.repository_root,directory/"github-summary-payload.json",_json(github),label="github_payload");write_bytes(ctx.repository_root,directory/"github-summary.md",("# Shiproom release summary\n\nRecommendation: `"+policy["status"]+"`\n\n"+markdown_sections+"\n").encode(),label="github_markdown")
     hashes={path.name:_hash(read_bytes(ctx.repository_root,path,label="management_generated_artifact",max_bytes=2*1024*1024)) for path in checked_children(ctx.repository_root,directory,label="management_generation") if path.is_file()};manifest={"schema_version":"management-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector,"artifact_hashes":hashes,"semantic_bundle_hash":content_hash(artifacts),"bundle_hash":""};manifest["bundle_hash"]=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"})
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="management_manifest");replace_bytes(ctx.repository_root,root(ctx)/"current-management-generation.json",_json({"schema_version":"current-management-generation.v1","generation":generation,"manifest_hash":_hash(_json(manifest)),"semantic_bundle_hash":manifest["semantic_bundle_hash"]}),label="management_pointer");return manifest
 

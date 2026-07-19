@@ -37,3 +37,21 @@ def test_management_loader_rejects_tampered_pointer_and_unexpected_file(tmp_path
     try: domain.load(context)
     except ValueError as error: assert str(error)=="management_generation_file_set_mismatch"
     else: raise AssertionError("unexpected management file accepted")
+
+
+def test_registered_sections_project_canonical_records_or_typed_empty(tmp_path):
+    from scripts.run_workflow_integration_evals import _fixture
+    from shiproom.management_artifacts.compiler import compile, load
+
+    context, _ = _fixture(tmp_path)
+    compile(context)
+    _, artifacts = load(context)
+    for artifact in artifacts.values():
+        if "section_records" not in artifact:
+            continue
+        contracts = {item["section_id"]: item for item in artifact["section_contracts"]}
+        for section in artifact["section_records"]:
+            contract = contracts[section["section_id"]]
+            assert section["state"] == contract["typed_empty_state"] or len(section["records"]) >= contract["minimum_records"]
+            if section["state"] == "populated":
+                assert section["authority_passthrough"] is True
