@@ -200,13 +200,15 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
     if not work:
         return None
     path = root(ctx) / "inbox" / manifest["preparation_id"] / work["work_order_id"] / "result.json"
-    if not path.exists():
+    try:
+        safe_entry(path, directory=False, label="remediation_planner_result")
+    except FileNotFoundError:
         return None
-    safe_entry(path, directory=False, label="remediation_planner_result")
     receipt_path = path.with_name("completion-receipt.json")
-    if not receipt_path.exists():
+    try:
+        safe_entry(receipt_path, directory=False, label="remediation_planner_receipt")
+    except FileNotFoundError:
         raise ValueError("planner_completion_receipt_missing")
-    safe_entry(receipt_path, directory=False, label="remediation_planner_receipt")
     value = read_json(ctx.repository_root, path, label="remediation_planner_result")
     receipt = read_json(ctx.repository_root, receipt_path, label="remediation_planner_receipt")
     fields = {"schema_version", "work_order_id", "preparation_id", "records", "assumptions", "limitations"}

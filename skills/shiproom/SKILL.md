@@ -233,7 +233,10 @@ shiproom trace record --release release-state/release.json --live-url <worker-ur
 Use remediation roadmaps only as packet-only recommendations. Do not edit the
 reviewed repository, create a PR, merge, deploy, or close a canonical finding
 from private-alpha output. Closure verification returns a candidate status only
-and requires an independent verifier.
+and requires an independent verifier. The optional remediation planner is
+separate from the review-plan catalogue: ordinary human work is
+`human_reviewed`, harness work is `model_reviewed`, and `owner_declared`
+requires an existing release-bound owner authority.
 
 Use the closed review-plan specialist catalogue and exact result schemas. A
 manual reviewer, Codex execution package, or Hermes adapter is transport
@@ -242,5 +245,7 @@ Data Engineering capability.
 
 Contestation appends actions without rewriting prior evidence. A named-risk
 action requires an existing release-bound owner authority reference. Management
-artifacts render canonical state locally; GitHub payloads are generated but are
-never posted. Preserve unknowns, candidate authority, and independence limits.
+artifacts render canonical state locally from one shared dependency vector;
+Measurement/AI authority is passed through rather than recomputed. GitHub JSON
+and Markdown are generated but never posted. Preserve unknowns, candidate
+authority, and independence limits.

@@ -234,11 +234,19 @@ Browser work is issued only for `browser_or_http` criteria with an exact release
 Remediation roadmaps and closure contracts are packet-only and read-only:
 `shiproom remediation-roadmap` can prepare, compile, show, and verify a closure
 candidate, but never edits a reviewed repository or closes a canonical finding.
+The optional planner is a separate `remediation_planner` work order: a normal
+human is `human_reviewed`, a harness result is `model_reviewed`, and only an
+existing release-bound owner authority can yield `owner_declared`. Every
+actionable issue has exactly one immutable packet and one closure contract.
+Closure evidence is accepted only from that contract's exact inbox and must be
+an independently verified, commit- and branch-bound rerun; its only successful
+private-alpha outcome is `satisfied_candidate`.
 Adaptive review plans use a closed specialist catalogue and generic manual,
 Codex-package, or Hermes adapter transport; transport does not affect semantic
 results. Contestability is append-only, preserves original evidence, and needs
-validated owner authority for named-risk acceptance. Management artifacts are
-local canonical JSON with escaped self-contained HTML persona views; GitHub
-output is JSON plus Markdown only and is never posted. Data Engineering,
+validated owner authority for named-risk acceptance. Management artifacts bind
+one exact dependency vector across every JSON, local HTML metadata block, and
+GitHub JSON/Markdown payload. Their recommendation is derived only by the
+packaged policy and never changes a canonical finding or verdict. Data Engineering,
 unrestricted remediation, automatic PR/merge/deployment, and hosted operation
 remain deferred. See `docs/pilots/` for disposable local pilot guidance.

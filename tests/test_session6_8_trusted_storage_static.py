@@ -10,7 +10,7 @@ from shiproom.workflow_trust import checked_children
 
 
 DOMAINS = ("remediation_roadmaps", "review_organisation", "contestability", "management_artifacts")
-FORBIDDEN = {"read_text", "read_bytes", "write_text", "write_bytes", "iterdir", "glob", "rglob", "mkdir", "replace"}
+FORBIDDEN = {"read_text", "read_bytes", "write_text", "write_bytes", "iterdir", "glob", "rglob", "mkdir", "replace", "exists"}
 PACKAGED_RESOURCE_MODULES = {
     "remediation_roadmaps/__init__.py": "shiproom.remediation_schemas",
     "review_organisation/__init__.py": "shiproom.review_organisation",
