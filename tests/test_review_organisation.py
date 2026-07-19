@@ -25,6 +25,21 @@ def test_optional_dependency_states_are_exactly_null_bound():
         raise AssertionError("optional dependency accepted bindings")
 
 
+def test_harness_declaration_does_not_replace_a_bound_execution_receipt():
+    import shiproom.review_organisation as domain
+    manifest = {"schema_version": "agent-harness-capability-manifest.v1", "execution_mode": "manual_external",
+                "declared_capability": "prepared_packet_only", "granted_permission": "read_only",
+                "observed_execution": "not_observed", "independence_limitation": "declaration is not isolation proof"}
+    assert domain.validate_harness_capability_manifest(manifest) == manifest
+    receipt = {"schema_version": "harness-execution-receipt.v1", "work_order_id": "wo_migration_and_rollback_" + "a" * 16,
+               "execution_mode": "manual_external", "declared_capability": "prepared_packet_only", "granted_permission": "read_only",
+               "observed_execution": "receipt_observed", "execution_receipt": "receipt-1", "independence_limitation": "declared capability is not proof of isolation"}
+    assert domain.validate_harness_execution_receipt(receipt, work_order_id=receipt["work_order_id"]) == receipt
+    receipt["work_order_id"] = "wo_migration_and_rollback_" + "b" * 16
+    with pytest.raises(ValueError, match="harness_execution_receipt_binding_invalid"):
+        domain.validate_harness_execution_receipt(receipt, work_order_id="wo_migration_and_rollback_" + "a" * 16)
+
+
 def test_browser_absence_is_explicit_not_applicable_not_omission():
     vector={"language_framework_signals":{"python":True,"typescript":False},"browser_applicability":{"authority":"explicitly_not_applicable","criterion_ids":[]},"ai_surface_signal":{"authority":"not_inspected","evidence_paths":[]},"migration_signal":{"authority":"not_inspected","evidence_paths":[]}}
     browser=next(item for item in _selection(vector) if item["specialist_id"]=="browser_journey")
@@ -75,7 +90,11 @@ def test_adaptation_requires_an_accepted_specialist_result(tmp_path):
     order_dir = domain.root(context) / "generations" / manifest["generation"] / "specialist-work-orders"
     work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
     result = {"schema_version": "migration-and-rollback-result.v1", "work_order_id": work["work_order_id"], "criterion_ids": [criterion_id], "evidence_refs": [], "rollback_required": False, "limitations": []}
-    accepted = domain.submit_result(context, "migration_and_rollback", result, {"work_order_id": work["work_order_id"]})
+    receipt = {"schema_version": "harness-execution-receipt.v1", "work_order_id": work["work_order_id"],
+               "execution_mode": "manual_external", "declared_capability": "prepared_packet_only",
+               "granted_permission": "read_only", "observed_execution": "receipt_observed",
+               "execution_receipt": "manual-receipt", "independence_limitation": "declared capability is not proof of isolation"}
+    accepted = domain.submit_result(context, "migration_and_rollback", result, receipt)
     adapted = domain.adapt(context, "migration_surface_discovered", "migration_and_rollback", criterion_id, accepted["result_id"])
     assert adapted["status"] == "accepted"
 

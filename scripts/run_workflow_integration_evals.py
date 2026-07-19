@@ -151,7 +151,8 @@ def main() -> int:
             order_dir = Path(ctx.repository_root) / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "review-organisation" / "generations" / manifest["generation"] / "specialist-work-orders"
             work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
             result = {"schema_version": "migration-and-rollback-result.v1", "work_order_id": work["work_order_id"], "criterion_ids": [cid], "evidence_refs": [], "rollback_required": False, "limitations": []}
-            accepted = submit_result(ctx, "migration_and_rollback", result, {"work_order_id": work["work_order_id"]})
+            receipt = {"schema_version": "harness-execution-receipt.v1", "work_order_id": work["work_order_id"], "execution_mode": "manual_external", "declared_capability": "prepared_packet_only", "granted_permission": "read_only", "observed_execution": "receipt_observed", "execution_receipt": "workflow-manual-receipt", "independence_limitation": "declared capability is not proof of isolation"}
+            accepted = submit_result(ctx, "migration_and_rollback", result, receipt)
             adapted = adapt(ctx, "migration_surface_discovered", "migration_and_rollback", cid, accepted["result_id"])
             return adapted["status"] == "accepted", ["shiproom.review_organisation.prepare", "shiproom.review_organisation.adapt"], {"generation": adapted["generation"]}
     run(CASES[7], adaptation)

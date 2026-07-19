@@ -12,7 +12,11 @@ from importlib import resources
 import jsonschema
 import pytest
 
-from shiproom.review_organisation import validate_migration_result
+from shiproom.review_organisation import (
+    validate_harness_capability_manifest,
+    validate_harness_execution_receipt,
+    validate_migration_result,
+)
 from shiproom.remediation_roadmaps import validate_planner_work_order
 
 
@@ -50,6 +54,29 @@ def test_migration_result_schema_and_python_boundary_reject_isolated_extra_field
         jsonschema.Draft202012Validator(schema).validate(invalid)
     with pytest.raises(ValueError, match="migration_result_shape_invalid"):
         validate_migration_result(invalid)
+
+
+@pytest.mark.parametrize(("filename", "validator", "valid", "error"), [
+    ("agent-harness-capability-manifest.v1.json", validate_harness_capability_manifest,
+     {"schema_version": "agent-harness-capability-manifest.v1", "execution_mode": "manual_external",
+      "declared_capability": "prepared_packet_only", "granted_permission": "read_only",
+      "observed_execution": "not_observed", "independence_limitation": "declaration is not isolation proof"},
+     "harness_capability_manifest_shape_invalid"),
+    ("harness-execution-receipt.v1.json", lambda value: validate_harness_execution_receipt(value, work_order_id="wo_migration_and_rollback_" + "a" * 16),
+     {"schema_version": "harness-execution-receipt.v1", "work_order_id": "wo_migration_and_rollback_" + "a" * 16,
+      "execution_mode": "manual_external", "declared_capability": "prepared_packet_only", "granted_permission": "read_only",
+      "observed_execution": "receipt_observed", "execution_receipt": "manual-receipt", "independence_limitation": "declaration is not isolation proof"},
+     "harness_execution_receipt_shape_invalid"),
+])
+def test_harness_contracts_have_independent_python_and_schema_boundaries(filename, validator, valid, error):
+    schema = json.loads(resources.files("shiproom.review_organisation").joinpath(filename).read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator(schema).validate(valid)
+    assert validator(valid) == valid
+    invalid = {**valid, "unexpected_nested_or_top_level_field": True}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator(schema).validate(invalid)
+    with pytest.raises(ValueError, match=error):
+        validator(invalid)
 
 
 def test_closure_evidence_schema_rejects_an_untyped_outcome_instead_of_a_generic_object():

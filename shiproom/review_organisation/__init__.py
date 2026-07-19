@@ -47,6 +47,60 @@ def surface_policy() -> dict:
     return json.loads(resources.files("shiproom.review_organisation").joinpath("review-surface-policy.v1.json").read_text(encoding="utf-8"))
 
 
+def harness_capability_manifest() -> dict:
+    """Return the closed transport declaration without upgrading its authority.
+
+    A harness declaration tells the planner what transport was requested; it is
+    deliberately not evidence that isolation, execution, or reviewer authority
+    was actually achieved.  Those remain receipt facts and semantic authority
+    stays in the native result boundary.
+    """
+    return json.loads(resources.files("shiproom.review_organisation").joinpath(
+        "agent-harness-capability-manifest.v1.json").read_text(encoding="utf-8"))
+
+
+def harness_receipt_contract() -> dict:
+    return json.loads(resources.files("shiproom.review_organisation").joinpath(
+        "harness-execution-receipt.v1.json").read_text(encoding="utf-8"))
+
+
+def validate_harness_capability_manifest(value: dict) -> dict:
+    fields = {"schema_version", "execution_mode", "declared_capability", "granted_permission", "observed_execution", "independence_limitation"}
+    modes = {"native_multi_agent", "isolated_sequential", "single_agent_degraded", "manual_external"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("harness_capability_manifest_shape_invalid")
+    if value["schema_version"] != "agent-harness-capability-manifest.v1" or value["execution_mode"] not in modes:
+        raise ValueError("harness_capability_manifest_mode_invalid")
+    if value["observed_execution"] not in {"not_observed", "receipt_observed"}:
+        raise ValueError("harness_capability_manifest_observation_invalid")
+    for name in ("declared_capability", "granted_permission", "independence_limitation"):
+        if not isinstance(value[name], str) or not value[name] or len(value[name]) > (1000 if name == "independence_limitation" else 200):
+            raise ValueError("harness_capability_manifest_value_invalid")
+    return value
+
+
+def validate_harness_execution_receipt(value: dict, *, work_order_id: str) -> dict:
+    """Independently validate the Session 7 closed harness receipt.
+
+    This is intentionally not a JSON-Schema delegation: transport receipts are
+    the production boundary for migration/rollback work and must remain exact
+    when the package is installed without a schema validator.
+    """
+    fields = {"schema_version", "work_order_id", "execution_mode", "declared_capability",
+              "granted_permission", "observed_execution", "execution_receipt", "independence_limitation"}
+    modes = {"native_multi_agent", "isolated_sequential", "single_agent_degraded", "manual_external"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("harness_execution_receipt_shape_invalid")
+    if value["schema_version"] != "harness-execution-receipt.v1" or value["work_order_id"] != work_order_id:
+        raise ValueError("harness_execution_receipt_binding_invalid")
+    if value["execution_mode"] not in modes or value["observed_execution"] not in {"not_observed", "receipt_observed"}:
+        raise ValueError("harness_execution_receipt_mode_invalid")
+    for name in ("declared_capability", "granted_permission", "execution_receipt", "independence_limitation"):
+        if not isinstance(value[name], str) or not value[name] or len(value[name]) > (1000 if name == "independence_limitation" else 512):
+            raise ValueError("harness_execution_receipt_value_invalid")
+    return value
+
+
 def _resolve_symbol(value: str) -> object:
     """Resolve a published native boundary without treating a prose name as proof.
 
@@ -129,7 +183,9 @@ def _vector(ctx:LocalExecutionContext)->dict:
     migration_candidates=[path for path in paths if "migration" in path.lower()]
     change_impact = ctx.release.get("change_impact", {})
     migration_confirmed = bool(change_impact.get("migration_surface"))
-    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":{"declared_capability":"manual_external","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}}
+    harness = {"schema_version":"agent-harness-capability-manifest.v1","execution_mode":"manual_external","declared_capability":"prepared_packet_only","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}
+    validate_harness_capability_manifest(harness)
+    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])]},"language_framework_signals":languages,"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates},"harness":harness}
 
 
 def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple[dict | None, str | None]:
@@ -385,8 +441,7 @@ def _validate_native_submission(ctx: LocalExecutionContext, specialist_id: str, 
     receipt = json.loads(receipt_raw.decode("utf-8"))
     if binding["domain"] == "review_organisation":
         validate_migration_result(result)
-        if receipt.get("work_order_id") != result["work_order_id"]:
-            raise ValueError("native_completion_receipt_binding_invalid")
+        validate_harness_execution_receipt(receipt, work_order_id=result["work_order_id"])
         return result, result["criterion_ids"], content_hash(result)
     if binding["domain"] == "assessment":
         from shiproom import assessment
