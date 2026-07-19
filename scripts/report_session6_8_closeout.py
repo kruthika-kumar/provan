@@ -1,16 +1,58 @@
+"""Generate a non-self-certifying Sessions 6--8 closeout report."""
 from __future__ import annotations
 
-import argparse, hashlib, json, subprocess
+import argparse
+import hashlib
+import json
+import subprocess
 from pathlib import Path
 
-def sha(path:Path)->str:return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
-def main()->int:
-    parser=argparse.ArgumentParser();parser.add_argument("--output",type=Path,required=True);args=parser.parse_args();root=Path(__file__).resolve().parents[1]
-    execution=root/"docs/validation/session6-8-execution-map.json";proofs=root/"docs/validation/session6-8-proof-manifest.json";e=json.loads(execution.read_text());p=json.loads(proofs.read_text());by_id={item["proof_id"]:item for item in p["proofs"]}
-    if len(by_id)!=len(p["proofs"]):raise SystemExit("duplicate proof id")
-    for row in e["requirements"]:
-        values=[by_id.get(pid) for pid in row["proof_ids"]]
-        if None in values or {item["fixture_class"] for item in values}!={"valid","near_valid","adversarial_invalid"}:raise SystemExit("closeout_proof_class_missing")
-    commit=subprocess.run(["git","rev-parse","HEAD"],cwd=root,text=True,capture_output=True,check=True).stdout.strip();report={"schema_version":"session6-8-closeout-report.v1","commit":commit,"execution_map_hash":sha(execution),"proof_manifest_hash":sha(proofs),"claims":[{"claim_id":row["requirement_id"],"status":"resolved","proof_ids":row["proof_ids"]} for row in e["requirements"]],"resolved":True,"report_self_hash":""}
-    report["report_self_hash"]="sha256:"+hashlib.sha256(json.dumps({**report,"report_self_hash":""},sort_keys=True,separators=(",",":")).encode()).hexdigest();args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8");return 0
-if __name__=="__main__":raise SystemExit(main())
+
+def _sha(raw: bytes) -> str:
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _load(path: Path) -> object:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--junit", type=Path, required=True)
+    parser.add_argument("--workflow-receipt", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    validation = root / "docs" / "validation"
+    completion = _load(validation / "session6-8-completion-map.json")["requirements"]
+    proofs = _load(validation / "session6-8-proof-manifest.json")["proofs"]
+    claims = _load(validation / "session6-8-claim-registry.json")["claims"]
+    junit = args.junit.read_bytes()
+    workflow = _load(args.workflow_receipt)
+    proof_ids = {item["proof_id"] for item in proofs}
+    requirements = {item["requirement_id"] for item in completion}
+    covered = {item for claim in claims for item in claim["requirement_ids"]}
+    workflow_cases = workflow.get("cases", [])
+    prerequisites = {
+        "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered,
+        "all_proofs_verified": all(item["status"] == "verified" for item in proofs),
+        "all_requirements_verified": all(item["status"] == "verified" for item in completion),
+        "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
+        "junit_present": bool(junit),
+        "workflow_receipt_complete": len(workflow_cases) == 18 and all(item.get("passed") for item in workflow_cases),
+    }
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+    report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
+              "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
+                         "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
+                         "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
+                         "junit_hash": _sha(junit), "workflow_receipt_hash": _sha(args.workflow_receipt.read_bytes())},
+              "prerequisites": prerequisites, "resolved": all(prerequisites.values()), "report_self_hash": ""}
+    report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return 0 if report["resolved"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
