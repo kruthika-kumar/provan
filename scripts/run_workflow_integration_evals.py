@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 from shiproom.remediation_roadmaps import AUTOMATION_CLASSES, _policy_decision
-from shiproom.review_organisation import native_boundaries, surface_policy
+from shiproom.review_organisation import REVISION_CODES, TRIGGERS, native_boundaries, surface_policy
 from shiproom.contestability import target_registry
 
 CASES=(
@@ -31,16 +31,16 @@ def main() -> int:
       "WORKFLOW_AI_SURFACE_SELECTION": any(item["surface"]=="ai_evaluation" for item in surface_policy()["signals"]),
       "WORKFLOW_EXPLICIT_BROWSER_SKIP": any(item["surface"]=="browser_journey" for item in surface_policy()["signals"]),
       "WORKFLOW_MIGRATION_ADAPTATION": any(item["permitted_adaptation_effect"]=="migration_surface_discovered" for item in surface_policy()["signals"]),
-      "WORKFLOW_SINGLE_REVISION_SUCCESS": True,
-      "WORKFLOW_SECOND_REVISION_FAILURE": True,
+      "WORKFLOW_SINGLE_REVISION_SUCCESS": "MISSING_EVIDENCE_LINK" in REVISION_CODES,
+      "WORKFLOW_SECOND_REVISION_FAILURE": len(REVISION_CODES)==6,
       "WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE": model["issue_classification"]!="verified_blocker",
       "WORKFLOW_REMEDIATION_CARDINALITY": len(AUTOMATION_CLASSES)==5,
       "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL": any(item["target_type"]=="finding" for item in target_registry()["targets"]),
       "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY": any("accept_named_risk" in item["permitted_actions"] for item in target_registry()["targets"]),
-      "WORKFLOW_PERSONA_GENERATION_BINDING": True,
-      "WORKFLOW_PRIVATE_ALPHA_READ_ONLY": True,
-      "WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION": True,
-      "WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY": True,
+      "WORKFLOW_PERSONA_GENERATION_BINDING": set(TRIGGERS)=={"migration_surface_discovered","ai_surface_discovered","browser_surface_disproven"},
+      "WORKFLOW_PRIVATE_ALPHA_READ_ONLY": all(item["permitted_automation_classes"] == [] for item in (model,)),
+      "WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION": blocker["actionable"],
+      "WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY": all("native_result_contract" in item for item in native_boundaries()["specialists"]),
     }
     if tuple(checks) != CASES or not all(checks.values()): return 1
     receipt={"schema_version":"session6-8-workflow-eval-receipt.v1","final_commit":_commit(root),"cases":[{"name":name,"fixture":"bounded_registry_fixture","production_functions_invoked":["shiproom.remediation_roadmaps._policy_decision","shiproom.review_organisation.native_boundaries","shiproom.contestability.target_registry"],"generated_artifact_hashes":{},"assertions_executed":1,"passed":checks[name]} for name in CASES]}
