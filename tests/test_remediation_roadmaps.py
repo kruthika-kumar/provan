@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from shiproom.remediation_roadmaps import _dependency, compile, prepare, closure_verify, root
+from shiproom.remediation_roadmaps import _dependency, _policy_decision, compile, prepare, closure_verify, root
 
 
 def _context(tmp_path):
@@ -19,6 +19,12 @@ def test_optional_dependency_states_require_null_bindings():
         assert str(error) == "optional_dependency_must_be_null"
     else:
         raise AssertionError("optional dependency accepted a non-null binding")
+
+
+def test_closed_or_stale_finding_cannot_remain_actionable():
+    closed=_policy_decision(blocker=True,criterion_authority="deterministically_established",evidence_class="deterministically_established",open_state="closed",owner_required=False,fresh=True,finding_state="closed")
+    stale=_policy_decision(blocker=True,criterion_authority="deterministically_established",evidence_class="deterministically_established",open_state="open",owner_required=False,fresh=False,finding_state="open")
+    assert closed["actionable"] is False and stale["actionable"] is False
 
 
 def test_remediation_prepare_compile_without_optional_planner(tmp_path, monkeypatch):
