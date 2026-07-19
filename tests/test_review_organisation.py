@@ -156,6 +156,23 @@ def test_selected_native_specialists_bind_an_existing_native_preparation(tmp_pat
     assert first["input_vector"]["assessment"]["state"] == "not_used"
 
 
+def test_product_intent_specialist_wraps_active_native_packet_without_compiling_intent(tmp_path):
+    from scripts.run_evals import _graph_context
+    from shiproom.graph import compile_bundle
+    import shiproom.review_organisation as domain
+
+    context = _graph_context(tmp_path)
+    compile_bundle(context)
+    domain.prepare(context)
+    _manifest, artifacts = domain.load(context)
+    product = next(item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"] == "product_intent")
+    assert product["state"] == "selected"
+    package = domain.render_package(context, "product_intent")
+    assert package["result_schema"] == "intent-proposal.v1"
+    assert package["completion_receipt_schema"] == "harness-execution-receipt.v1"
+    assert package["native_preparation_id"] == product["native_binding"]["preparation_id"]
+
+
 def test_later_unused_native_preparation_does_not_stale_prior_plan(tmp_path):
     from scripts.run_evals import _graph_context
     from shiproom.graph import compile_bundle
