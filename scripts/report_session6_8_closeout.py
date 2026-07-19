@@ -50,16 +50,18 @@ def main() -> int:
     requirements = {item["requirement_id"] for item in completion}
     covered = {item for claim in claims for item in claim["requirement_ids"]}
     workflow_cases = workflow.get("cases", [])
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+    valid_fixture_classes = {"valid", "near_valid", "adversarial_invalid"}
     prerequisites = {
         "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered,
-        "all_proofs_verified": all(item["status"] == "verified" and item["test_id"] in passed_tests for item in proofs),
+        "all_proofs_verified": all(item["status"] == "verified" and item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
         "all_requirements_verified": all(item["status"] == "verified" for item in completion),
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
         "junit_present": bool(junit),
         "workflow_receipt_complete": len(workflow_cases) == 18 and all(item.get("passed") for item in workflow_cases),
         "behavioral_receipt_complete": len(behavioral.get("cases", [])) == 35 and all(item.get("passed") for item in behavioral["cases"]),
+        "receipts_match_final_commit": workflow.get("final_commit") == commit and behavioral.get("final_commit") == commit,
     }
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
                          "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
