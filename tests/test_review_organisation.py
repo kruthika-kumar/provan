@@ -156,3 +156,27 @@ def test_selection_uses_closed_surface_policy_and_keeps_candidate_scope():
     # The registered migration signal caps the review at candidate scope even
     # when change impact names a migration surface.
     assert values["migration_and_rollback"]["applicability_authority"] == "candidate_surface"
+
+
+def test_review_wrapper_accepts_only_a_native_engineering_result(tmp_path, monkeypatch):
+    from test_assessment import assessment_context
+    from test_assessment_results import issue_results
+    from shiproom.assessment import prepare as prepare_assessment
+    import shiproom.review_organisation as domain
+
+    context = assessment_context(tmp_path)
+    prepare_assessment(context)
+    native = issue_results(context)
+    original_vector = domain._vector
+    def with_python_surface(value):
+        vector = original_vector(value)
+        vector["language_framework_signals"]["python"] = True
+        return vector
+    monkeypatch.setattr(domain, "_vector", with_python_surface)
+    domain.prepare(context)
+    work = native["work_orders"]["engineering_assessment"]
+    inbox = context.repository_root / ".shiproom" / "local" / "releases" / context.release["release_id"] / "assessment" / "inbox" / work["preparation_id"] / work["work_order_id"]
+    accepted = domain.submit_result_bytes(context, "python_engineering", (inbox / "result.json").read_bytes(), (inbox / "completion-receipt.json").read_bytes())
+    assert accepted["status"] == "accepted"
+    _, artifacts = domain.load(context)
+    assert any(item["specialist_id"] == "python_engineering" for item in artifacts["accepted-results.json"]["results"])

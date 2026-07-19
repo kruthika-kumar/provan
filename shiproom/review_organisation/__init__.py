@@ -396,9 +396,11 @@ def _validate_native_submission(ctx: LocalExecutionContext, specialist_id: str, 
         if role == "browser_journey":
             evidence_root = ctx.repository_root / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "assessment" / "inbox" / binding["preparation_id"] / binding["work_order_id"] / "evidence"
             normalized = assessment._validate_browser_result(raw, receipt_raw, evidence_root, preparation, definitions[role]["value"])
-            return result, list(preparation["contexts"][role]["assigned"]["criterion_ids"]), normalized["hashes"]["result_semantic_hash"]
+            criteria = [item["criterion_id"] for item in preparation["contexts"][role].get("assigned_criteria", [])]
+            return result, criteria, normalized["hashes"]["result_semantic_hash"]
         _submitted, _receipt, normalized = assessment._validate_role_result(raw, receipt_raw, role, preparation, definitions[role]["value"])
-        return result, list(preparation["contexts"][role]["assigned"]["criterion_ids"]), content_hash(normalized)
+        criteria = [item["criterion_id"] for item in preparation["contexts"][role].get("assigned_criteria", [])]
+        return result, criteria, content_hash(normalized)
     if binding["domain"] == "measurement_ai":
         from shiproom.measurement_ai.preparation import load_preparation
         from shiproom.measurement_ai.results import normalize_result
