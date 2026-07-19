@@ -24,3 +24,10 @@ def test_self_declared_owner_is_rejected(tmp_path):
     try: append_action(_ctx(tmp_path,owner=False),_action())
     except ValueError as error: assert str(error)=="owner_authority_invalid"
     else: raise AssertionError("self-declared owner was accepted")
+
+
+def test_contestation_rejects_unregistered_evidence_compiler(tmp_path):
+    action=_action(); action.update({"action":"dispute_with_evidence","owner_authority_ref":None,"owner_authority_snapshot_hash":None,"submitted_evidence":{"compiler":"prose","generation":"gen_1","record_id":"finding_1"}})
+    try: append_action(_ctx(tmp_path),action)
+    except ValueError as error: assert str(error)=="contestation_evidence_compiler_unregistered"
+    else: raise AssertionError("unregistered compiler evidence was accepted")

@@ -8,6 +8,8 @@ from importlib import resources
 from pathlib import Path
 
 from shiproom.authority import LocalExecutionContext
+from shiproom.remediation_roadmaps import load_generation as load_remediation
+from shiproom.review_organisation import load as load_review_plan
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import ensure_directory, read_json, replace_bytes, safe_entry, write_bytes
 
@@ -47,6 +49,29 @@ def _validate_target(ctx:LocalExecutionContext, action:dict)->dict:
     return definition
 
 
+def _accepted_evidence(ctx: LocalExecutionContext, reference: dict, target_type: str, target_id: str) -> None:
+    """Evidence is an already-accepted canonical record, never action prose."""
+    compiler = reference.get("compiler")
+    if compiler == "remediation":
+        manifest, artifacts = load_remediation(ctx)
+        if reference["generation"] != manifest["generation"]:
+            raise ValueError("contestation_evidence_generation_mismatch")
+        records = artifacts["remediation-plan.json"].get("packets", [])
+        if not any(item.get("remediation_id") == reference["record_id"] for item in records):
+            raise ValueError("contestation_evidence_record_not_found")
+        if target_type == "remediation" and reference["record_id"] != target_id:
+            raise ValueError("contestation_evidence_irrelevant")
+        return
+    if compiler == "review_plan":
+        manifest, artifacts = load_review_plan(ctx)
+        if reference["generation"] != manifest["generation"]:
+            raise ValueError("contestation_evidence_generation_mismatch")
+        if not any(item.get("specialist_id") == reference["record_id"] for item in artifacts["review-plan.json"].get("specialists", [])):
+            raise ValueError("contestation_evidence_record_not_found")
+        return
+    raise ValueError("contestation_evidence_compiler_unregistered")
+
+
 def _owner_authority(ctx:LocalExecutionContext, action:dict)->None:
     reference=action.get("owner_authority_ref"); snapshot=action.get("owner_authority_snapshot_hash")
     valid=[item for item in ctx.release.get("owner_authorities",[]) if item.get("authority_id")==reference and item.get("release_id")==ctx.release["release_id"] and item.get("snapshot_hash")==snapshot]
@@ -65,8 +90,10 @@ def _validate(ctx:LocalExecutionContext, action:dict)->dict:
     evidence=action["submitted_evidence"]
     if action["action"]=="add_evidence":
         if not isinstance(evidence,dict) or set(evidence)!={"compiler","generation","record_id"} or not all(isinstance(value,str) and value for value in evidence.values()):raise ValueError("unvalidated_evidence_payload")
+        _accepted_evidence(ctx, evidence, action["target_type"], action["target_id"])
     elif action["action"]=="dispute_with_evidence":
         if not isinstance(evidence,dict) or set(evidence)!={"compiler","generation","record_id"}:raise ValueError("counter_evidence_reference_required")
+        _accepted_evidence(ctx, evidence, action["target_type"], action["target_id"])
     elif evidence is not None:raise ValueError("unexpected_submitted_evidence")
     action["target_registry_materiality"] = definition["materiality_rule"]
     return action
