@@ -190,6 +190,24 @@ def _policy(ctx:LocalExecutionContext,vector:dict, contestation:dict | None)->di
 def _html(name:str,value:dict)->bytes:
     meta=html.escape(canonical_json(value["artifact_dependency_vector"]),quote=True);body=html.escape(json.dumps(value,ensure_ascii=False,indent=2));return ("<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"artifact-dependency-vector\" content=\""+meta+"\"><style>body{font-family:system-ui;margin:2rem}pre{white-space:pre-wrap}</style></head><body><h1>"+html.escape(name)+"</h1><pre>"+body+"</pre></body></html>").encode()
 
+
+def _verify_html_vector(raw: bytes, vector: dict) -> None:
+    """HTML is an escaped, local rendering; its metadata must match JSON."""
+    try:
+        rendered = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("management_html_utf8_invalid") from exc
+    prefix = '<meta name="artifact-dependency-vector" content="'
+    if not rendered.startswith("<!doctype html>") or "<script" in rendered.lower() or "<iframe" in rendered.lower() or "http://" in rendered.lower() or "https://" in rendered.lower() or prefix not in rendered:
+        raise ValueError("management_html_resource_policy_invalid")
+    encoded = rendered.split(prefix, 1)[1].split('">', 1)[0]
+    try:
+        parsed = json.loads(html.unescape(encoded))
+    except json.JSONDecodeError as exc:
+        raise ValueError("management_html_vector_invalid") from exc
+    if canonical_json(parsed) != canonical_json(vector):
+        raise ValueError("management_html_dependency_vector_mismatch")
+
 def compile(ctx:LocalExecutionContext)->dict:
     vector=dependency_vector(ctx); loaded=vector.pop("_loaded");policy=_policy(ctx,vector,loaded["contest"]);generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="management_generation")
     base={"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector}
@@ -229,6 +247,10 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     for name, digest in manifest["artifact_hashes"].items():
         if _hash(read_bytes(ctx.repository_root, directory / name, label="management_artifact_hash", max_bytes=2*1024*1024)) != digest:
             raise ValueError("management_artifact_tampered")
+    for name in JSON_ARTIFACTS:
+        if name == "release-recommendation-view":
+            continue
+        _verify_html_vector(read_bytes(ctx.repository_root, directory / (name + ".html"), label="management_html", max_bytes=2 * 1024 * 1024), manifest["artifact_dependency_vector"])
     current = dependency_vector(ctx); current.pop("_loaded")
     if canonical_json(current) != canonical_json(manifest["artifact_dependency_vector"]):
         raise ValueError("stale_dependency")

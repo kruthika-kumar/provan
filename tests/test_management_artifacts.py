@@ -55,3 +55,19 @@ def test_registered_sections_project_canonical_records_or_typed_empty(tmp_path):
             assert section["state"] == contract["typed_empty_state"] or len(section["records"]) >= contract["minimum_records"]
             if section["state"] == "populated":
                 assert section["authority_passthrough"] is True
+
+
+def test_management_loader_rejects_html_metadata_from_another_vector(tmp_path, monkeypatch):
+    import hashlib
+    import shiproom.management_artifacts.compiler as domain
+    context=SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel_html","findings":[]},authority_binding={"repository_commit":"a"*40})
+    vector={"schema_version":"artifact-dependency-vector.v1","release_id":"rel_html","release_commit":"a"*40,
+            **{name:{"state":"not_used","generation":None,"semantic_hash":None} for name in ("product_intent","graph","assessment","measurement_ai","remediation","review_plan","contestability")},"_loaded":{"assessment":None,"measurement":None,"remediation":None,"review":None,"contest":None}}
+    monkeypatch.setattr(domain,"dependency_vector",lambda ctx:dict(vector))
+    manifest=domain.compile(context); directory=domain.root(context)/"generations"/manifest["generation"]
+    page=directory/"executive-release-brief.html"; raw=page.read_bytes().replace(b"not_used",b"unavailable",1); page.write_bytes(raw)
+    manifest_path=directory/"manifest.json"; stored=json.loads(manifest_path.read_text()); stored["artifact_hashes"][page.name]="sha256:"+hashlib.sha256(raw).hexdigest(); stored["bundle_hash"]=domain.content_hash({key:value for key,value in stored.items() if key!="bundle_hash"}); manifest_path.write_text(json.dumps(stored,sort_keys=True,ensure_ascii=False,indent=2)+"\n")
+    pointer=domain.root(context)/"current-management-generation.json"; pointer.write_text(json.dumps({"schema_version":"current-management-generation.v1","generation":stored["generation"],"manifest_hash":domain._hash(domain._json(stored)),"semantic_bundle_hash":stored["semantic_bundle_hash"]}))
+    try: domain.load(context)
+    except ValueError as error: assert str(error)=="management_html_dependency_vector_mismatch"
+    else: raise AssertionError("mixed HTML dependency vector accepted")
