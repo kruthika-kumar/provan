@@ -11,7 +11,7 @@ from pathlib import Path
 from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.project import canonical_json, content_hash
-from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes
+from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 
 
 COMPILER_VERSION="portable-review-plan.v1"
@@ -23,6 +23,11 @@ REVISION_CODES={"MISSING_CRITERION_LINK","MISSING_EVIDENCE_LINK","AUTHORITY_UPGR
 
 def root(ctx:LocalExecutionContext)->Path:
     return ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]/"review-organisation"
+
+
+def guard_prohibited_operation(operation: str) -> None:
+    """Review-plan production boundary for private-alpha operation attempts."""
+    reject_private_alpha_operation(operation)
 
 
 def _json(value:object)->bytes:return (json.dumps(value,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode()

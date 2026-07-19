@@ -12,6 +12,23 @@ MAX_JSON_BYTES = 1024 * 1024
 MAX_RENDERED_BYTES = 2 * 1024 * 1024
 MAX_GENERATION_FILES = 256
 MAX_GENERATION_DEPTH = 8
+PROHIBITED_PRIVATE_ALPHA_OPERATIONS = {
+    "model", "project_command", "network_socket", "http_browser", "sql",
+    "warehouse_bi", "tracing_service", "external_eval", "github_publish",
+    "deployment", "out_of_root_write",
+}
+
+
+def reject_private_alpha_operation(operation: str) -> None:
+    """Production-facing guard for Sessions 6--8 read-only domains.
+
+    The operation is rejected before an adapter can be selected or reached; the
+    caller can therefore record a deterministic receipt without performing an
+    external action.
+    """
+    if operation not in PROHIBITED_PRIVATE_ALPHA_OPERATIONS:
+        raise ValueError("private_alpha_operation_unknown")
+    raise ValueError("private_alpha_operation_prohibited:" + operation)
 
 
 def _unsafe(path: Path, *, directory: bool) -> bool:
