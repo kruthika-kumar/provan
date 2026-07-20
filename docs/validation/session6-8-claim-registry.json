@@ -5,14 +5,20 @@
         "proof_s6_issue_authority_policy_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_ISSUE_AUTHORITY_POLICY"
+        }
       ],
       "claim_id": "claim_s6_issue_authority_policy",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s6_issue_authority_policy_near_valid"
@@ -20,119 +26,362 @@
       "positive_proof_ids": [
         "proof_s6_issue_authority_policy_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S6_ISSUE_AUTHORITY_POLICY"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s6_planner_authority_adversarial_invalid"
+        "proof_s6_model_review_not_blocker_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER"
+        }
       ],
-      "claim_id": "claim_s6_planner_authority",
+      "claim_id": "claim_s6_model_review_not_blocker",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s6_planner_authority_near_valid"
+        "proof_s6_model_review_not_blocker_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s6_planner_authority_valid"
+        "proof_s6_model_review_not_blocker_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S6_PLANNER_AUTHORITY"
-      ]
+        "S6_MODEL_REVIEW_NOT_BLOCKER"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s6_human_owner_authority_adversarial_invalid"
+        "proof_s6_planner_compiler_authority_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY"
+        }
       ],
-      "claim_id": "claim_s6_human_owner_authority",
+      "claim_id": "claim_s6_planner_compiler_authority",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s6_human_owner_authority_near_valid"
+        "proof_s6_planner_compiler_authority_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s6_human_owner_authority_valid"
+        "proof_s6_planner_compiler_authority_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S6_HUMAN_OWNER_AUTHORITY"
-      ]
+        "S6_PLANNER_COMPILER_AUTHORITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s6_automation_metadata_adversarial_invalid"
+        "proof_s6_human_owner_separation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_HUMAN_OWNER_SEPARATION"
+        }
       ],
-      "claim_id": "claim_s6_automation_metadata",
+      "claim_id": "claim_s6_human_owner_separation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s6_automation_metadata_near_valid"
+        "proof_s6_human_owner_separation_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s6_automation_metadata_valid"
+        "proof_s6_human_owner_separation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S6_AUTOMATION_METADATA"
-      ]
+        "S6_HUMAN_OWNER_SEPARATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s6_cardinality_links_adversarial_invalid"
+        "proof_s6_optional_planner_lifecycle_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE"
+        }
       ],
-      "claim_id": "claim_s6_cardinality_links",
+      "claim_id": "claim_s6_optional_planner_lifecycle",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s6_cardinality_links_near_valid"
+        "proof_s6_optional_planner_lifecycle_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s6_cardinality_links_valid"
+        "proof_s6_optional_planner_lifecycle_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S6_CARDINALITY_LINKS"
-      ]
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_automation_eligibility_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_AUTOMATION_ELIGIBILITY"
+        }
+      ],
+      "claim_id": "claim_s6_automation_eligibility",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_automation_eligibility_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_automation_eligibility_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_AUTOMATION_ELIGIBILITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_bounded_fix_metadata_only_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY"
+        }
+      ],
+      "claim_id": "claim_s6_bounded_fix_metadata_only",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_bounded_fix_metadata_only_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_bounded_fix_metadata_only_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_BOUNDED_FIX_METADATA_ONLY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_remediation_cardinality_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_REMEDIATION_CARDINALITY"
+        }
+      ],
+      "claim_id": "claim_s6_remediation_cardinality",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 3
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_remediation_cardinality_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_remediation_cardinality_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_REMEDIATION_CARDINALITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_packet_contract_links_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_PACKET_CONTRACT_LINKS"
+        }
+      ],
+      "claim_id": "claim_s6_packet_contract_links",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_packet_contract_links_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_packet_contract_links_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_PACKET_CONTRACT_LINKS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_packet_file_integrity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_PACKET_FILE_INTEGRITY"
+        }
+      ],
+      "claim_id": "claim_s6_packet_file_integrity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_packet_file_integrity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_packet_file_integrity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_PACKET_FILE_INTEGRITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_contract_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_contract_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_contract_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_contract_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_CONTRACT_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s6_closure_exact_rerun_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_EXACT_RERUN"
+        }
       ],
       "claim_id": "claim_s6_closure_exact_rerun",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s6_closure_exact_rerun_near_valid"
@@ -140,47 +389,362 @@
       "positive_proof_ids": [
         "proof_s6_closure_exact_rerun_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S6_CLOSURE_EXACT_RERUN"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s6_closure_nonmutation_adversarial_invalid"
+        "proof_s6_closure_pass_required_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "closure-contracts"
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_PASS_REQUIRED"
+        }
       ],
-      "claim_id": "claim_s6_closure_nonmutation",
+      "claim_id": "claim_s6_closure_pass_required",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "closure-contracts": 0
+        "remediation-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s6_closure_nonmutation_near_valid"
+        "proof_s6_closure_pass_required_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s6_closure_nonmutation_valid"
+        "proof_s6_closure_pass_required_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S6_CLOSURE_NONMUTATION"
-      ]
+        "S6_CLOSURE_PASS_REQUIRED"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_verifier_independence_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE"
+        }
+      ],
+      "claim_id": "claim_s6_closure_verifier_independence",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_verifier_independence_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_verifier_independence_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_VERIFIER_INDEPENDENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_commit_branch_freshness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_commit_branch_freshness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_commit_branch_freshness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_commit_branch_freshness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_evidence_class_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_evidence_class",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_evidence_class_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_evidence_class_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_EVIDENCE_CLASS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_regression_requirements_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_regression_requirements",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_regression_requirements_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_regression_requirements_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_REGRESSION_REQUIREMENTS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_test_requirements_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_test_requirements",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_test_requirements_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_test_requirements_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_TEST_REQUIREMENTS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_instrumentation_requirements_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_instrumentation_requirements",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_instrumentation_requirements_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_instrumentation_requirements_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_protected_invariants_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS"
+        }
+      ],
+      "claim_id": "claim_s6_closure_protected_invariants",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_protected_invariants_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_protected_invariants_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_PROTECTED_INVARIANTS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_closure_owner_decision_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_CLOSURE_OWNER_DECISION"
+        }
+      ],
+      "claim_id": "claim_s6_closure_owner_decision",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_closure_owner_decision_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_closure_owner_decision_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_CLOSURE_OWNER_DECISION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s6_private_alpha_non_mutation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "remediation-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION"
+        }
+      ],
+      "claim_id": "claim_s6_private_alpha_non_mutation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "remediation-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s6_private_alpha_non_mutation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s6_private_alpha_non_mutation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S6_PRIVATE_ALPHA_NON_MUTATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s7_specialist_catalogue_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_SPECIALIST_CATALOGUE"
+        }
       ],
       "claim_id": "claim_s7_specialist_catalogue",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s7_specialist_catalogue_near_valid"
@@ -188,95 +752,197 @@
       "positive_proof_ids": [
         "proof_s7_specialist_catalogue_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S7_SPECIALIST_CATALOGUE"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_product_intent_wrapper_adversarial_invalid"
+        "proof_s7_native_boundary_reuse_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_NATIVE_BOUNDARY_REUSE"
+        }
       ],
-      "claim_id": "claim_s7_product_intent_wrapper",
+      "claim_id": "claim_s7_native_boundary_reuse",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_product_intent_wrapper_near_valid"
+        "proof_s7_native_boundary_reuse_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_product_intent_wrapper_valid"
+        "proof_s7_native_boundary_reuse_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_PRODUCT_INTENT_WRAPPER"
-      ]
+        "S7_NATIVE_BOUNDARY_REUSE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_typed_selection_adversarial_invalid"
+        "proof_s7_typed_surface_policy_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_TYPED_SURFACE_POLICY"
+        }
       ],
-      "claim_id": "claim_s7_typed_selection",
+      "claim_id": "claim_s7_typed_surface_policy",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_typed_selection_near_valid"
+        "proof_s7_typed_surface_policy_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_typed_selection_valid"
+        "proof_s7_typed_surface_policy_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_TYPED_SELECTION"
-      ]
+        "S7_TYPED_SURFACE_POLICY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_language_selection_adversarial_invalid"
+        "proof_s7_selection_evidence_links_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_SELECTION_EVIDENCE_LINKS"
+        }
       ],
-      "claim_id": "claim_s7_language_selection",
+      "claim_id": "claim_s7_selection_evidence_links",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_language_selection_near_valid"
+        "proof_s7_selection_evidence_links_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_language_selection_valid"
+        "proof_s7_selection_evidence_links_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_LANGUAGE_SELECTION"
-      ]
+        "S7_SELECTION_EVIDENCE_LINKS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_python_selection_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_PYTHON_SELECTION"
+        }
+      ],
+      "claim_id": "claim_s7_python_selection",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_python_selection_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_python_selection_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_PYTHON_SELECTION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_typescript_selection_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_TYPESCRIPT_SELECTION"
+        }
+      ],
+      "claim_id": "claim_s7_typescript_selection",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_typescript_selection_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_typescript_selection_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_TYPESCRIPT_SELECTION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s7_ai_selection_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_AI_SELECTION"
+        }
       ],
       "claim_id": "claim_s7_ai_selection",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s7_ai_selection_near_valid"
@@ -284,119 +950,560 @@
       "positive_proof_ids": [
         "proof_s7_ai_selection_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S7_AI_SELECTION"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_browser_nonapplicability_adversarial_invalid"
+        "proof_s7_browser_explicit_skip_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_BROWSER_EXPLICIT_SKIP"
+        }
       ],
-      "claim_id": "claim_s7_browser_nonapplicability",
+      "claim_id": "claim_s7_browser_explicit_skip",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_browser_nonapplicability_near_valid"
+        "proof_s7_browser_explicit_skip_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_browser_nonapplicability_valid"
+        "proof_s7_browser_explicit_skip_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_BROWSER_NONAPPLICABILITY"
-      ]
+        "S7_BROWSER_EXPLICIT_SKIP"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_package_transport_adversarial_invalid"
+        "proof_s7_browser_absence_not_inspected_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED"
+        }
       ],
-      "claim_id": "claim_s7_package_transport",
+      "claim_id": "claim_s7_browser_absence_not_inspected",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_package_transport_near_valid"
+        "proof_s7_browser_absence_not_inspected_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_package_transport_valid"
+        "proof_s7_browser_absence_not_inspected_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_PACKAGE_TRANSPORT"
-      ]
+        "S7_BROWSER_ABSENCE_NOT_INSPECTED"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_revision_state_machine_adversarial_invalid"
+        "proof_s7_test_adequacy_applicability_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY"
+        }
       ],
-      "claim_id": "claim_s7_revision_state_machine",
+      "claim_id": "claim_s7_test_adequacy_applicability",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_revision_state_machine_near_valid"
+        "proof_s7_test_adequacy_applicability_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_revision_state_machine_valid"
+        "proof_s7_test_adequacy_applicability_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_REVISION_STATE_MACHINE"
-      ]
+        "S7_TEST_ADEQUACY_APPLICABILITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_submission_persistence_adversarial_invalid"
+        "proof_s7_instrumentation_applicability_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY"
+        }
       ],
-      "claim_id": "claim_s7_submission_persistence",
+      "claim_id": "claim_s7_instrumentation_applicability",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_submission_persistence_near_valid"
+        "proof_s7_instrumentation_applicability_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_submission_persistence_valid"
+        "proof_s7_instrumentation_applicability_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_SUBMISSION_PERSISTENCE"
-      ]
+        "S7_INSTRUMENTATION_APPLICABILITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_product_intent_wrapper_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_PRODUCT_INTENT_WRAPPER"
+        }
+      ],
+      "claim_id": "claim_s7_product_intent_wrapper",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_product_intent_wrapper_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_product_intent_wrapper_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_PRODUCT_INTENT_WRAPPER"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_native_work_order_integrity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY"
+        }
+      ],
+      "claim_id": "claim_s7_native_work_order_integrity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_native_work_order_integrity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_native_work_order_integrity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_NATIVE_WORK_ORDER_INTEGRITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_codex_package_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s7_codex_package_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_codex_package_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_codex_package_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_CODEX_PACKAGE_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_harness_declaration_honesty_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_HARNESS_DECLARATION_HONESTY"
+        }
+      ],
+      "claim_id": "claim_s7_harness_declaration_honesty",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_harness_declaration_honesty_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_harness_declaration_honesty_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_HARNESS_DECLARATION_HONESTY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_manual_codex_parity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_MANUAL_CODEX_PARITY"
+        }
+      ],
+      "claim_id": "claim_s7_manual_codex_parity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_manual_codex_parity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_manual_codex_parity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_MANUAL_CODEX_PARITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_trusted_submission_paths_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS"
+        }
+      ],
+      "claim_id": "claim_s7_trusted_submission_paths",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_trusted_submission_paths_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_trusted_submission_paths_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_TRUSTED_SUBMISSION_PATHS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_submission_byte_persistence_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE"
+        }
+      ],
+      "claim_id": "claim_s7_submission_byte_persistence",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_submission_byte_persistence_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_submission_byte_persistence_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_SUBMISSION_BYTE_PERSISTENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_revision_request_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_REVISION_REQUEST"
+        }
+      ],
+      "claim_id": "claim_s7_revision_request",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_revision_request_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_revision_request_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_REVISION_REQUEST"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_corrected_result_acceptance_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE"
+        }
+      ],
+      "claim_id": "claim_s7_corrected_result_acceptance",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_corrected_result_acceptance_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_corrected_result_acceptance_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_CORRECTED_RESULT_ACCEPTANCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_second_invalid_failure_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_SECOND_INVALID_FAILURE"
+        }
+      ],
+      "claim_id": "claim_s7_second_invalid_failure",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_second_invalid_failure_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_second_invalid_failure_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_SECOND_INVALID_FAILURE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_failed_result_no_adaptation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION"
+        }
+      ],
+      "claim_id": "claim_s7_failed_result_no_adaptation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_failed_result_no_adaptation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_failed_result_no_adaptation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_FAILED_RESULT_NO_ADAPTATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_trigger_specific_evidence_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE"
+        }
+      ],
+      "claim_id": "claim_s7_trigger_specific_evidence",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_trigger_specific_evidence_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_trigger_specific_evidence_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_TRIGGER_SPECIFIC_EVIDENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s7_migration_adaptation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_MIGRATION_ADAPTATION"
+        }
       ],
       "claim_id": "claim_s7_migration_adaptation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s7_migration_adaptation_near_valid"
@@ -404,23 +1511,32 @@
       "positive_proof_ids": [
         "proof_s7_migration_adaptation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S7_MIGRATION_ADAPTATION"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s7_ai_adaptation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_AI_ADAPTATION"
+        }
       ],
       "claim_id": "claim_s7_ai_adaptation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s7_ai_adaptation_near_valid"
@@ -428,23 +1544,32 @@
       "positive_proof_ids": [
         "proof_s7_ai_adaptation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S7_AI_ADAPTATION"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s7_browser_disproven_adaptation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION"
+        }
       ],
       "claim_id": "claim_s7_browser_disproven_adaptation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s7_browser_disproven_adaptation_near_valid"
@@ -452,191 +1577,1088 @@
       "positive_proof_ids": [
         "proof_s7_browser_disproven_adaptation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S7_BROWSER_DISPROVEN_ADAPTATION"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s7_harness_parity_adversarial_invalid"
+        "proof_s7_superseded_work_order_preservation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "review-plan.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
+        }
       ],
-      "claim_id": "claim_s7_harness_parity",
+      "claim_id": "claim_s7_superseded_work_order_preservation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.review_organisation.prepare"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "review-plan.json": 0
+        "review-plan.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s7_harness_parity_near_valid"
+        "proof_s7_superseded_work_order_preservation_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s7_harness_parity_valid"
+        "proof_s7_superseded_work_order_preservation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S7_HARNESS_PARITY"
-      ]
+        "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_target_resolution_adversarial_invalid"
+        "proof_s7_adaptation_idempotency_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "contestation-ledger.json"
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_ADAPTATION_IDEMPOTENCY"
+        }
       ],
-      "claim_id": "claim_s8_target_resolution",
+      "claim_id": "claim_s7_adaptation_idempotency",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_adaptation_idempotency_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_adaptation_idempotency_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_ADAPTATION_IDEMPOTENCY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_adaptation_cycle_depth_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH"
+        }
+      ],
+      "claim_id": "claim_s7_adaptation_cycle_depth",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_adaptation_cycle_depth_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_adaptation_cycle_depth_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_ADAPTATION_CYCLE_DEPTH"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s7_pointer_last_publication_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "review-plan.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S7_POINTER_LAST_PUBLICATION"
+        }
+      ],
+      "claim_id": "claim_s7_pointer_last_publication",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.review_organisation.prepare"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "review-plan.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s7_pointer_last_publication_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s7_pointer_last_publication_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S7_POINTER_LAST_PUBLICATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_target_registry_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_TARGET_REGISTRY"
+        }
+      ],
+      "claim_id": "claim_s8_contest_target_registry",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.contestability.append_action"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "contestation-ledger.json": 0
+        "contestation-ledger.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_target_resolution_near_valid"
+        "proof_s8_contest_target_registry_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_target_resolution_valid"
+        "proof_s8_contest_target_registry_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_TARGET_RESOLUTION"
-      ]
+        "S8_CONTEST_TARGET_REGISTRY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_append_only_contestation_adversarial_invalid"
+        "proof_s8_contest_source_generation_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "contestation-ledger.json"
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_SOURCE_GENERATION"
+        }
       ],
-      "claim_id": "claim_s8_append_only_contestation",
+      "claim_id": "claim_s8_contest_source_generation",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.contestability.append_action"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "contestation-ledger.json": 0
+        "contestation-ledger.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_append_only_contestation_near_valid"
+        "proof_s8_contest_source_generation_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_append_only_contestation_valid"
+        "proof_s8_contest_source_generation_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_APPEND_ONLY_CONTESTATION"
-      ]
+        "S8_CONTEST_SOURCE_GENERATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_owner_authority_adversarial_invalid"
+        "proof_s8_contest_target_existence_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "contestation-ledger.json"
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_TARGET_EXISTENCE"
+        }
       ],
-      "claim_id": "claim_s8_owner_authority",
+      "claim_id": "claim_s8_contest_target_existence",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.contestability.append_action"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "contestation-ledger.json": 0
+        "contestation-ledger.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_owner_authority_near_valid"
+        "proof_s8_contest_target_existence_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_owner_authority_valid"
+        "proof_s8_contest_target_existence_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_OWNER_AUTHORITY"
-      ]
+        "S8_CONTEST_TARGET_EXISTENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_decision_budget_adversarial_invalid"
+        "proof_s8_contest_evidence_existence_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "contestation-ledger.json"
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE"
+        }
       ],
-      "claim_id": "claim_s8_decision_budget",
+      "claim_id": "claim_s8_contest_evidence_existence",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.contestability.append_action"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "contestation-ledger.json": 0
+        "contestation-ledger.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_decision_budget_near_valid"
+        "proof_s8_contest_evidence_existence_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_decision_budget_valid"
+        "proof_s8_contest_evidence_existence_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_DECISION_BUDGET"
-      ]
+        "S8_CONTEST_EVIDENCE_EXISTENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_dependency_vector_adversarial_invalid"
+        "proof_s8_contest_evidence_relevance_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "release-packet-index.json"
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE"
+        }
       ],
-      "claim_id": "claim_s8_dependency_vector",
+      "claim_id": "claim_s8_contest_evidence_relevance",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_evidence_relevance_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_evidence_relevance_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_EVIDENCE_RELEVANCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_authority_preservation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION"
+        }
+      ],
+      "claim_id": "claim_s8_contest_authority_preservation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_authority_preservation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_authority_preservation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_AUTHORITY_PRESERVATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_append_sequence_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_APPEND_SEQUENCE"
+        }
+      ],
+      "claim_id": "claim_s8_contest_append_sequence",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_append_sequence_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_append_sequence_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_APPEND_SEQUENCE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_previous_hash_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_PREVIOUS_HASH"
+        }
+      ],
+      "claim_id": "claim_s8_contest_previous_hash",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_previous_hash_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_previous_hash_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_PREVIOUS_HASH"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_idempotent_replay_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY"
+        }
+      ],
+      "claim_id": "claim_s8_contest_idempotent_replay",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_idempotent_replay_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_idempotent_replay_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_IDEMPOTENT_REPLAY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_conflicting_duplicate_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE"
+        }
+      ],
+      "claim_id": "claim_s8_contest_conflicting_duplicate",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_conflicting_duplicate_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_conflicting_duplicate_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_CONFLICTING_DUPLICATE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contest_owner_authority_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTEST_OWNER_AUTHORITY"
+        }
+      ],
+      "claim_id": "claim_s8_contest_owner_authority",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contest_owner_authority_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contest_owner_authority_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTEST_OWNER_AUTHORITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_named_risk_fact_non_mutation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION"
+        }
+      ],
+      "claim_id": "claim_s8_named_risk_fact_non_mutation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_named_risk_fact_non_mutation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_named_risk_fact_non_mutation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_NAMED_RISK_FACT_NON_MUTATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_named_risk_decision_effect_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT"
+        }
+      ],
+      "claim_id": "claim_s8_named_risk_decision_effect",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_named_risk_decision_effect_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_named_risk_decision_effect_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_NAMED_RISK_DECISION_EFFECT"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_owner_decision_budget_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_OWNER_DECISION_BUDGET"
+        }
+      ],
+      "claim_id": "claim_s8_owner_decision_budget",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_owner_decision_budget_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_owner_decision_budget_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_OWNER_DECISION_BUDGET"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_owner_decision_priority_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_OWNER_DECISION_PRIORITY"
+        }
+      ],
+      "claim_id": "claim_s8_owner_decision_priority",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_owner_decision_priority_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_owner_decision_priority_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_OWNER_DECISION_PRIORITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_owner_decision_overflow_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_OWNER_DECISION_OVERFLOW"
+        }
+      ],
+      "claim_id": "claim_s8_owner_decision_overflow",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_owner_decision_overflow_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_owner_decision_overflow_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_OWNER_DECISION_OVERFLOW"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_future_remediation_no_cycle_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "contestation-ledger.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE"
+        }
+      ],
+      "claim_id": "claim_s8_future_remediation_no_cycle",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.contestability.append_action"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "contestation-ledger.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_future_remediation_no_cycle_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_future_remediation_no_cycle_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_FUTURE_REMEDIATION_NO_CYCLE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_management_dependency_discovery_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
+        }
+      ],
+      "claim_id": "claim_s8_management_dependency_discovery",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "release-packet-index.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_dependency_vector_near_valid"
+        "proof_s8_management_dependency_discovery_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_dependency_vector_valid"
+        "proof_s8_management_dependency_discovery_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_DEPENDENCY_VECTOR"
-      ]
+        "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_section_completeness_adversarial_invalid"
+        "proof_s8_management_dependency_states_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "release-packet-index.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES"
+        }
       ],
-      "claim_id": "claim_s8_section_completeness",
+      "claim_id": "claim_s8_management_dependency_states",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "release-packet-index.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_section_completeness_near_valid"
+        "proof_s8_management_dependency_states_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_section_completeness_valid"
+        "proof_s8_management_dependency_states_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_SECTION_COMPLETENESS"
-      ]
+        "S8_MANAGEMENT_DEPENDENCY_STATES"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_management_dependency_freshness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
+        }
+      ],
+      "claim_id": "claim_s8_management_dependency_freshness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_management_dependency_freshness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_management_dependency_freshness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_management_mixed_vector_rejection_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
+        }
+      ],
+      "claim_id": "claim_s8_management_mixed_vector_rejection",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_management_mixed_vector_rejection_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_management_mixed_vector_rejection_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_executive_section_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s8_executive_section_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_executive_section_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_executive_section_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_EXECUTIVE_SECTION_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_product_matrix_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s8_product_matrix_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_product_matrix_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_product_matrix_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_PRODUCT_MATRIX_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_engineering_section_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s8_engineering_section_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_engineering_section_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_engineering_section_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_ENGINEERING_SECTION_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_measurement_ai_passthrough_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH"
+        }
+      ],
+      "claim_id": "claim_s8_measurement_ai_passthrough",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_measurement_ai_passthrough_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_measurement_ai_passthrough_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_MEASUREMENT_AI_PASSTHROUGH"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_remediation_overview_completeness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
+        }
+      ],
+      "claim_id": "claim_s8_remediation_overview_completeness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_remediation_overview_completeness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_remediation_overview_completeness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_closure_contract_indexing_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING"
+        }
+      ],
+      "claim_id": "claim_s8_closure_contract_indexing",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_closure_contract_indexing_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_closure_contract_indexing_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CLOSURE_CONTRACT_INDEXING"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_contestability_inclusion_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_CONTESTABILITY_INCLUSION"
+        }
+      ],
+      "claim_id": "claim_s8_contestability_inclusion",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_contestability_inclusion_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_contestability_inclusion_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_CONTESTABILITY_INCLUSION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
         "proof_s8_recommendation_policy_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "release-packet-index.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_RECOMMENDATION_POLICY"
+        }
       ],
       "claim_id": "claim_s8_recommendation_policy",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "release-packet-index.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
         "proof_s8_recommendation_policy_near_valid"
@@ -644,179 +2666,838 @@
       "positive_proof_ids": [
         "proof_s8_recommendation_policy_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
         "S8_RECOMMENDATION_POLICY"
-      ]
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s8_safe_rendering_adversarial_invalid"
+        "proof_s8_accepted_condition_effect_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "release-packet-index.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT"
+        }
       ],
-      "claim_id": "claim_s8_safe_rendering",
+      "claim_id": "claim_s8_accepted_condition_effect",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "release-packet-index.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s8_safe_rendering_near_valid"
+        "proof_s8_accepted_condition_effect_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s8_safe_rendering_valid"
+        "proof_s8_accepted_condition_effect_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S8_SAFE_RENDERING"
-      ]
+        "S8_ACCEPTED_CONDITION_EFFECT"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_trusted_storage_adversarial_invalid"
+        "proof_s8_named_risk_recommendation_effect_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
+        }
       ],
-      "claim_id": "claim_s_shared_trusted_storage",
+      "claim_id": "claim_s8_named_risk_recommendation_effect",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_trusted_storage_near_valid"
+        "proof_s8_named_risk_recommendation_effect_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_trusted_storage_valid"
+        "proof_s8_named_risk_recommendation_effect_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_TRUSTED_STORAGE"
-      ]
+        "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_contract_parity_adversarial_invalid"
+        "proof_s8_insufficient_evidence_state_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE"
+        }
       ],
-      "claim_id": "claim_s_shared_contract_parity",
+      "claim_id": "claim_s8_insufficient_evidence_state",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_contract_parity_near_valid"
+        "proof_s8_insufficient_evidence_state_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_contract_parity_valid"
+        "proof_s8_insufficient_evidence_state_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_CONTRACT_PARITY"
-      ]
+        "S8_INSUFFICIENT_EVIDENCE_STATE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_security_adversarial_invalid"
+        "proof_s8_deterministic_json_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_DETERMINISTIC_JSON"
+        }
       ],
-      "claim_id": "claim_s_shared_security",
+      "claim_id": "claim_s8_deterministic_json",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_security_near_valid"
+        "proof_s8_deterministic_json_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_security_valid"
+        "proof_s8_deterministic_json_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_SECURITY"
-      ]
+        "S8_DETERMINISTIC_JSON"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_wheel_adversarial_invalid"
+        "proof_s8_safe_html_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_SAFE_HTML"
+        }
       ],
-      "claim_id": "claim_s_shared_wheel",
+      "claim_id": "claim_s8_safe_html",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_wheel_near_valid"
+        "proof_s8_safe_html_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_wheel_valid"
+        "proof_s8_safe_html_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_WHEEL"
-      ]
+        "S8_SAFE_HTML"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_proof_execution_adversarial_invalid"
+        "proof_s8_safe_markdown_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_SAFE_MARKDOWN"
+        }
       ],
-      "claim_id": "claim_s_shared_proof_execution",
+      "claim_id": "claim_s8_safe_markdown",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.management_artifacts.compile"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "release-packet-index.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_proof_execution_near_valid"
+        "proof_s8_safe_markdown_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_proof_execution_valid"
+        "proof_s8_safe_markdown_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_PROOF_EXECUTION"
-      ]
+        "S8_SAFE_MARKDOWN"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
-        "proof_s_shared_independent_closeout_adversarial_invalid"
+        "proof_s8_artifact_hash_integrity_adversarial_invalid"
       ],
       "artifact_assertions": [
-        "session6-8-workflow-eval-receipt.json"
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY"
+        }
       ],
-      "claim_id": "claim_s_shared_independent_closeout",
+      "claim_id": "claim_s8_artifact_hash_integrity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_artifact_hash_integrity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_artifact_hash_integrity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_ARTIFACT_HASH_INTEGRITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_artifact_file_set_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_ARTIFACT_FILE_SET"
+        }
+      ],
+      "claim_id": "claim_s8_artifact_file_set",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_artifact_file_set_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_artifact_file_set_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_ARTIFACT_FILE_SET"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_deterministic_rerender_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_DETERMINISTIC_RERENDER"
+        }
+      ],
+      "claim_id": "claim_s8_deterministic_rerender",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_deterministic_rerender_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_deterministic_rerender_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_DETERMINISTIC_RERENDER"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_s8_upstream_staleness_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "release-packet-index.json",
+          "assertion": "minimum_records",
+          "requirement_id": "S8_UPSTREAM_STALENESS"
+        }
+      ],
+      "claim_id": "claim_s8_upstream_staleness",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "shiproom.management_artifacts.compile"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "release-packet-index.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_s8_upstream_staleness_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_s8_upstream_staleness_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "S8_UPSTREAM_STALENESS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_trusted_reads_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_TRUSTED_READS"
+        }
+      ],
+      "claim_id": "claim_shared_trusted_reads",
+      "contract_parity_receipts": [],
       "implementation_symbols": [
         "scripts.run_workflow_integration_evals.main"
       ],
+      "installed_wheel_receipts": [],
       "minimum_record_counts": {
-        "session6-8-workflow-eval-receipt.json": 0
+        "session6-8-workflow-eval-receipt.json": 1
       },
       "near_valid_proof_ids": [
-        "proof_s_shared_independent_closeout_near_valid"
+        "proof_shared_trusted_reads_near_valid"
       ],
       "positive_proof_ids": [
-        "proof_s_shared_independent_closeout_valid"
+        "proof_shared_trusted_reads_valid"
       ],
+      "production_invocation_receipts": [],
       "requirement_ids": [
-        "S_SHARED_INDEPENDENT_CLOSEOUT"
-      ]
+        "SHARED_TRUSTED_READS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_trusted_writes_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_TRUSTED_WRITES"
+        }
+      ],
+      "claim_id": "claim_shared_trusted_writes",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_trusted_writes_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_trusted_writes_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_TRUSTED_WRITES"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_link_reparse_special_rejection_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
+        }
+      ],
+      "claim_id": "claim_shared_link_reparse_special_rejection",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_link_reparse_special_rejection_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_link_reparse_special_rejection_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_capacity_limits_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_CAPACITY_LIMITS"
+        }
+      ],
+      "claim_id": "claim_shared_capacity_limits",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_capacity_limits_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_capacity_limits_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_CAPACITY_LIMITS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_pointer_late_failure_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_POINTER_LATE_FAILURE"
+        }
+      ],
+      "claim_id": "claim_shared_pointer_late_failure",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_pointer_late_failure_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_pointer_late_failure_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_POINTER_LATE_FAILURE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS"
+        }
+      ],
+      "claim_id": "claim_shared_zero_prohibited_operations",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_zero_prohibited_operations_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_ZERO_PROHIBITED_OPERATIONS"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_contract_inventory_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_CONTRACT_INVENTORY"
+        }
+      ],
+      "claim_id": "claim_shared_contract_inventory",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_contract_inventory_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_contract_inventory_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_CONTRACT_INVENTORY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_executed_contract_parity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY"
+        }
+      ],
+      "claim_id": "claim_shared_executed_contract_parity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_executed_contract_parity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_executed_contract_parity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_EXECUTED_CONTRACT_PARITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_behavioral_eval_integrity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
+        }
+      ],
+      "claim_id": "claim_shared_behavioral_eval_integrity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_behavioral_eval_integrity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_behavioral_eval_integrity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_workflow_eval_integrity_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY"
+        }
+      ],
+      "claim_id": "claim_shared_workflow_eval_integrity",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_workflow_eval_integrity_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_workflow_eval_integrity_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_WORKFLOW_EVAL_INTEGRITY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_installed_wheel_lifecycle_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE"
+        }
+      ],
+      "claim_id": "claim_shared_installed_wheel_lifecycle",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_installed_wheel_lifecycle_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_installed_wheel_lifecycle_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_INSTALLED_WHEEL_LIFECYCLE"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_skill_pilot_consistency_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY"
+        }
+      ],
+      "claim_id": "claim_shared_skill_pilot_consistency",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_skill_pilot_consistency_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_skill_pilot_consistency_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_SKILL_PILOT_CONSISTENCY"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_proof_execution_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_PROOF_EXECUTION"
+        }
+      ],
+      "claim_id": "claim_shared_proof_execution",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_proof_execution_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_proof_execution_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_PROOF_EXECUTION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_closeout_generation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_CLOSEOUT_GENERATION"
+        }
+      ],
+      "claim_id": "claim_shared_closeout_generation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_closeout_generation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_closeout_generation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_CLOSEOUT_GENERATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
+    },
+    {
+      "adversarial_proof_ids": [
+        "proof_shared_independent_validation_adversarial_invalid"
+      ],
+      "artifact_assertions": [
+        {
+          "artifact": "session6-8-workflow-eval-receipt.json",
+          "assertion": "minimum_records",
+          "requirement_id": "SHARED_INDEPENDENT_VALIDATION"
+        }
+      ],
+      "claim_id": "claim_shared_independent_validation",
+      "contract_parity_receipts": [],
+      "implementation_symbols": [
+        "scripts.run_workflow_integration_evals.main"
+      ],
+      "installed_wheel_receipts": [],
+      "minimum_record_counts": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "near_valid_proof_ids": [
+        "proof_shared_independent_validation_near_valid"
+      ],
+      "positive_proof_ids": [
+        "proof_shared_independent_validation_valid"
+      ],
+      "production_invocation_receipts": [],
+      "requirement_ids": [
+        "SHARED_INDEPENDENT_VALIDATION"
+      ],
+      "security_receipts": [],
+      "status": "pending_execution"
     }
   ],
-  "requirement_inventory": "session6-8-requirement-inventory.json",
-  "schema_version": "shiproom.session6-8-claim-registry.v3"
+  "schema_version": "shiproom.session6-8-claim-registry.v4"
 }

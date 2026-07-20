@@ -1,526 +1,1596 @@
 {
+  "expected_requirement_count": 106,
   "requirements": [
     {
       "forbidden_substitutions": [
-        "model_as_proof"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Only policy-derived authoritative facts classify actionable remediation.",
+      "normative_behavior": "s6 issue authority policy",
       "required_artifacts": [
         "remediation-plan.json"
       ],
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
       "session": "6",
-      "source_requirement": "deterministic blocker authority and actionability",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:cc9d5c2d52317cb98103632b2deab311e6f82184d413e6148c4b7565435fd108",
+      "source_requirement": "S6_ISSUE_AUTHORITY_POLICY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:00b4f370ee11006393ca25a4fea29f951b8cf9f2d0e5022a86b03adb53be3346",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "planner_issue_reclassification"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Planner content remains reviewer-authored and optional.",
-      "required_artifacts": [
-        "remediation-source-packet.json",
-        "remediation-plan.json"
-      ],
-      "requirement_id": "S6_PLANNER_AUTHORITY",
-      "session": "6",
-      "source_requirement": "planner content never changes compiler-owned issue authority",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:431524b13dbb95239d01e2a9969e29ea4c26a48c1471b79aa320096827d0658c",
-      "status": "verified"
-    },
-    {
-      "forbidden_substitutions": [
-        "transport_as_owner"
-      ],
-      "normative_behavior": "Only release-bound authority grants owner-declared semantics.",
+      "normative_behavior": "s6 model review not blocker",
       "required_artifacts": [
         "remediation-plan.json"
       ],
-      "requirement_id": "S6_HUMAN_OWNER_AUTHORITY",
+      "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
       "session": "6",
-      "source_requirement": "ordinary human is not owner authority",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:abdbb27135ca8e4f9b887774149dfa29cddc461542d458d53365034690420862",
+      "source_requirement": "S6_MODEL_REVIEW_NOT_BLOCKER",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:7e5d00117217982a99a4d92b703c45be970dd7d46342953b83f333cd38458a08",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "automatic_fix"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Automation eligibility never opens a private-alpha write route.",
+      "normative_behavior": "s6 planner compiler authority",
       "required_artifacts": [
         "remediation-plan.json"
       ],
-      "requirement_id": "S6_AUTOMATION_METADATA",
+      "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
       "session": "6",
-      "source_requirement": "bounded fixes are metadata only",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:21c779ffb846514c1a5a06d56c0f7d702caec0b4345ff66cc920eee51dc833f7",
+      "source_requirement": "S6_PLANNER_COMPILER_AUTHORITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:78c74db743e379ad6808e3736e98eb5fb3e85f4ed4add91cdeeca14a128f688a",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "one_issue_fixture"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Packets, contracts, and projections are unique and bidirectionally linked.",
+      "normative_behavior": "s6 human owner separation",
       "required_artifacts": [
-        "remediation-plan.json",
-        "remediation-overlay.json",
-        "closure-contracts"
+        "remediation-plan.json"
       ],
-      "requirement_id": "S6_CARDINALITY_LINKS",
+      "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
       "session": "6",
-      "source_requirement": "one remediation packet and closure contract per actionable issue",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:77b3c87d57c6cf0205a7a5e4c3b8d5cc5b276f3214bfb3415b13cbb37bc90f18",
+      "source_requirement": "S6_HUMAN_OWNER_SEPARATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fe37218a625a0b1c08cb77b0013982d8e0f5a12dac372843b256ec279eb66eb4",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "finding_mutation"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Wrong, stale, failed, or self-verified evidence cannot satisfy closure.",
+      "normative_behavior": "s6 optional planner lifecycle",
       "required_artifacts": [
-        "remediation-closure-verification.v1"
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
+      "session": "6",
+      "source_requirement": "S6_OPTIONAL_PLANNER_LIFECYCLE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fd358767d05ed38ce146b317463ab223d88529772cee55b9146f7a3e349a2d4b",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 automation eligibility",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
+      "session": "6",
+      "source_requirement": "S6_AUTOMATION_ELIGIBILITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fcd5c5badf2d5b4240abff357fb22b43722b8092463d6ec65c789191b586dd00",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 bounded fix metadata only",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
+      "session": "6",
+      "source_requirement": "S6_BOUNDED_FIX_METADATA_ONLY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:1c2b4c04d7c91dcb39ba622eac93e716c44bd4baf9d796b3165456e117871150",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 remediation cardinality",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_REMEDIATION_CARDINALITY",
+      "session": "6",
+      "source_requirement": "S6_REMEDIATION_CARDINALITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:ee3fd87ccc7faaf9e813dc593fbf519b7c43dee82a445530849f7a37b8b15136",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 packet contract links",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_PACKET_CONTRACT_LINKS",
+      "session": "6",
+      "source_requirement": "S6_PACKET_CONTRACT_LINKS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a46721b4cba9eca64d0304aa566a3e9fd64f35c743fdd9f00a08c699dc5c4ed7",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 packet file integrity",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_PACKET_FILE_INTEGRITY",
+      "session": "6",
+      "source_requirement": "S6_PACKET_FILE_INTEGRITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:bd5f2b3bcb5a839809bc6f1cc653d4b34dbb84c4cee26e8a602265fd32e23aa8",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure contract completeness",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_CONTRACT_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:e5ad869abcded3e33bb098d65ee56f3a8fe08b79e03b7afcd265b66774848156",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure exact rerun",
+      "required_artifacts": [
+        "remediation-plan.json"
       ],
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
       "session": "6",
-      "source_requirement": "closure requires exact passing independent rerun",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:2c19d991e0a431d4404fd967f93225de2d700659c9b14dd7bfc1f01fa18bcba5",
+      "source_requirement": "S6_CLOSURE_EXACT_RERUN",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:5c3e575730a39eacc6b35ab9c9e323651eaf9f32dbb35e70ee94fb0502a4134d",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "canonical_closure"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Closure result is candidate-only and preserves canonical facts.",
+      "normative_behavior": "s6 closure pass required",
       "required_artifacts": [
-        "remediation-closure-verification.v1"
+        "remediation-plan.json"
       ],
-      "requirement_id": "S6_CLOSURE_NONMUTATION",
+      "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
       "session": "6",
-      "source_requirement": "private alpha closure does not close canonical findings",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:9f2ab35f37ea95048aa25dfc5cb2f231d56387753449e4a04f8f2cb54371c189",
+      "source_requirement": "S6_CLOSURE_PASS_REQUIRED",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:ea384c2a8ccfc3b3c2fa4039e5d47e7a0b2a2c28dc4afcb990ad6e8db39e3518",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "generic_result"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Every specialist binds an exact native result boundary.",
+      "normative_behavior": "s6 closure verifier independence",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:f59e2b2e6287596d510e2522152a77937165fd277893d2426d54675853895bad",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure commit branch freshness",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c9549ad0cb45e94271647a8814acf20f4fab5894a7dfe8cf4ae4365794547efd",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure evidence class",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_EVIDENCE_CLASS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:20de7273b9c86163a6db939b9297d1a26caa97a2c6750d9a0c2796e307185e09",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure regression requirements",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:bc4096832679cd83f9a23d52d752e8810aabef0baf97db7a8d89138143efe28d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure test requirements",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_TEST_REQUIREMENTS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fb399106ccdabc3644d42df2b534c8dce4c3e3ca1f09801879b3a1fdc8b4681c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure instrumentation requirements",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:6defd364a13b86620683140976a704bbc5a38374c5c47872272c5c257832fedb",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure protected invariants",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_PROTECTED_INVARIANTS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:b2e3a011621488bb7024119996f1c66efc5c4a353d5b9d9ee17acc8586c12c9e",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 closure owner decision",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_CLOSURE_OWNER_DECISION",
+      "session": "6",
+      "source_requirement": "S6_CLOSURE_OWNER_DECISION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c84b6c7daaa76cf41f97c7c5dcddf2deb2ed4f2e6a3d0697680b76f2854234b5",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s6 private alpha non mutation",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
+      "session": "6",
+      "source_requirement": "S6_PRIVATE_ALPHA_NON_MUTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:f03b6b5d50c81665d45546ef4fed2253ace707c947b0ea2003d976cde0135f37",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 specialist catalogue",
       "required_artifacts": [
         "review-plan.json"
       ],
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
       "session": "7",
-      "source_requirement": "fixed native specialist catalogue",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:0771e95c0d5aa514a94b6a9fef4e178c1902747a23a524465d3ad3c8f24ec231",
+      "source_requirement": "S7_SPECIALIST_CATALOGUE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:221d5c36ce938cafeaeb11cc67711c766513e0e772e9f476c2a1b813e5e10e0c",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "wrapper_intent_compile"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Wrapper transports native proposals without compiling or strengthening intent.",
-      "required_artifacts": [
-        "specialist-work-orders",
-        "accepted-results.json"
-      ],
-      "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
-      "session": "7",
-      "source_requirement": "native intent packet wrapper lifecycle",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:0a01240f38e6688ad56a9b3dc69a2ce5dc371b9a8ddf70f7ae1513e9ef5a96eb",
-      "status": "verified"
-    },
-    {
-      "forbidden_substitutions": [
-        "catalogue_presence"
-      ],
-      "normative_behavior": "Absence remains not inspected; typed evidence governs selection.",
+      "normative_behavior": "s7 native boundary reuse",
       "required_artifacts": [
         "review-plan.json"
       ],
-      "requirement_id": "S7_TYPED_SELECTION",
+      "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
       "session": "7",
-      "source_requirement": "typed evidence selects specialists",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:3f298963a23af6114a509c910e731ef54d8f208a47270fc9ce6caa52444fb22c",
+      "source_requirement": "S7_NATIVE_BOUNDARY_REUSE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:68bf9ba1e75e22cf234aaae020e5bc5d2baac9fbcc919d43d59492b5b265b75b",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "same_plan"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Language signals generate distinct specialist scopes and plan identities.",
+      "normative_behavior": "s7 typed surface policy",
       "required_artifacts": [
         "review-plan.json"
       ],
-      "requirement_id": "S7_LANGUAGE_SELECTION",
+      "requirement_id": "S7_TYPED_SURFACE_POLICY",
       "session": "7",
-      "source_requirement": "Python and TypeScript plans differ materially",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:383ca9fda97d08dfd321916c130a7688f8964251d2e55c3839b939ee07f61241",
+      "source_requirement": "S7_TYPED_SURFACE_POLICY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:30062b55976cc682d13608762761086b01a3fa5e231dc53bfca216f956d0c597",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "not_inspected"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "AI review is selected or precise unavailable, never passed as not inspected.",
+      "normative_behavior": "s7 selection evidence links",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
+      "session": "7",
+      "source_requirement": "S7_SELECTION_EVIDENCE_LINKS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:db00ff8d8a41268a78a0bf5d973ec0d463bbc060680f449f5872503c9ebc8b89",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 python selection",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_PYTHON_SELECTION",
+      "session": "7",
+      "source_requirement": "S7_PYTHON_SELECTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:2e0a2e8a119d1135a24db32fec9a72dcaa26f861a603c7d372b11ce848c1936d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 typescript selection",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_TYPESCRIPT_SELECTION",
+      "session": "7",
+      "source_requirement": "S7_TYPESCRIPT_SELECTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:91253de24a10ce0d310c6ac5143779f00e31afe3e9ff38b90302a03dcf0d60c8",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 ai selection",
       "required_artifacts": [
         "review-plan.json"
       ],
       "requirement_id": "S7_AI_SELECTION",
       "session": "7",
-      "source_requirement": "typed AI surface selection",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:2466156c8a8de6d45fb632d92509933df3c5ffdc00a3c4d728d1d6f8ee26518d",
+      "source_requirement": "S7_AI_SELECTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c6420796784979807e8519044792b321756320085a0023f57c30c8a08c3beaff",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "absence"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Browser skip requires explicitly_not_applicable evidence.",
+      "normative_behavior": "s7 browser explicit skip",
       "required_artifacts": [
         "review-plan.json"
       ],
-      "requirement_id": "S7_BROWSER_NONAPPLICABILITY",
+      "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
       "session": "7",
-      "source_requirement": "browser skip is explicit",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:765decb9dd789f419644221102e7ed598ff00dda9cb4a567801769f13e37a69d",
+      "source_requirement": "S7_BROWSER_EXPLICIT_SKIP",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c9623f15a2d4b43d79fe112d0e96acb29720bf629dfb9ec569e2b77ade91f8ee",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "harness_execution"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Rendered package binds native context and cannot execute harnesses.",
+      "normative_behavior": "s7 browser absence not inspected",
       "required_artifacts": [
-        "codex-execution-package.v1"
+        "review-plan.json"
       ],
-      "requirement_id": "S7_PACKAGE_TRANSPORT",
+      "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
       "session": "7",
-      "source_requirement": "Codex execution package is transport-only",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:453c7ecefba561b967ba64c2eaa1f36757d78c7e41aa7efc5af9db23c34dd449",
+      "source_requirement": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:6e582d2023e41f0bac48f151e1dc1c07063bb1aad36a77aa1e9f44be4bdccb93",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "third_attempt"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Corrected second submissions accept; second invalid submissions fail closed.",
+      "normative_behavior": "s7 test adequacy applicability",
       "required_artifacts": [
-        "revision-ledger.json",
-        "accepted-results.json"
+        "review-plan.json"
       ],
-      "requirement_id": "S7_REVISION_STATE_MACHINE",
+      "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
       "session": "7",
-      "source_requirement": "two-attempt revision state machine",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:a79d72d3982d920c4aa4ffbbdb66e4468b1cee94b9a3e5baee0c7e5fcf069265",
+      "source_requirement": "S7_TEST_ADEQUACY_APPLICABILITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:3d8b89f3dac516000a2e5eb3a6d92b26e43287b9f4f26dc7718a9f4c1bf63cb0",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "ephemeral_submission"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Every submission attempt retains result, receipt, validation, and hash.",
+      "normative_behavior": "s7 instrumentation applicability",
       "required_artifacts": [
-        "submissions"
+        "review-plan.json"
       ],
-      "requirement_id": "S7_SUBMISSION_PERSISTENCE",
+      "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
       "session": "7",
-      "source_requirement": "submission bytes and validation persist",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:f322801756d355af428b45db0558063b0339038a427468c2c4af428272a637d3",
+      "source_requirement": "S7_INSTRUMENTATION_APPLICABILITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:b559f73fff2c697d4837b524997374dbb4583f9a1cd3082ae5db1a90a7961a35",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "event_only"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Migration trigger changes plan and work-order state while preserving history.",
+      "normative_behavior": "s7 product intent wrapper",
       "required_artifacts": [
-        "plan-events.json",
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
+      "session": "7",
+      "source_requirement": "S7_PRODUCT_INTENT_WRAPPER",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:71390e011d8e6d33d334767cfee4b83be395f8e2a7b0d6f56801f80e7ea16f74",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 native work order integrity",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
+      "session": "7",
+      "source_requirement": "S7_NATIVE_WORK_ORDER_INTEGRITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:19f4342955df90f5b727a466ca719847c771eec38c3c82251baa16750d48f7cc",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 codex package completeness",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
+      "session": "7",
+      "source_requirement": "S7_CODEX_PACKAGE_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c663719675bf0a21b53451fdbade2c3e8413554ddd4fb824a9a3561eedc335cb",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 harness declaration honesty",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
+      "session": "7",
+      "source_requirement": "S7_HARNESS_DECLARATION_HONESTY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:1758dbf106c40f255dc7d561e008172c9079fa919b866549b80bfd95e0a92399",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 manual codex parity",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_MANUAL_CODEX_PARITY",
+      "session": "7",
+      "source_requirement": "S7_MANUAL_CODEX_PARITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:900bb5ca7674b796745242b71b16a3790d9896bdf0a5ca0967cef6b7b150a7ca",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 trusted submission paths",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
+      "session": "7",
+      "source_requirement": "S7_TRUSTED_SUBMISSION_PATHS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a49889492f752b574bae00dfd90a59aa7912983628e235385a134ce3f1892f70",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 submission byte persistence",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
+      "session": "7",
+      "source_requirement": "S7_SUBMISSION_BYTE_PERSISTENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:7d5adf2494ad04906bebf259fa88e99bbdc33a78bb8271ceaa2126a48f5e6059",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 revision request",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_REVISION_REQUEST",
+      "session": "7",
+      "source_requirement": "S7_REVISION_REQUEST",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:69cbf5125f92f400e105b21045fbc3d0f1eb3e2ceae0eb915bbf33142f18e2eb",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 corrected result acceptance",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
+      "session": "7",
+      "source_requirement": "S7_CORRECTED_RESULT_ACCEPTANCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:9d2bc119d0b61bab0cda87d2287057280102cd3b1a954a588a493bead5306e5b",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 second invalid failure",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_SECOND_INVALID_FAILURE",
+      "session": "7",
+      "source_requirement": "S7_SECOND_INVALID_FAILURE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a7958b4e5d416846863344402d01f68e6e86348c605c04c446e0d92afc8a155c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 failed result no adaptation",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
+      "session": "7",
+      "source_requirement": "S7_FAILED_RESULT_NO_ADAPTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:f445ae5b575b126eaaa281bc329ad497e2885ce6e93608f0fe76327e4c5e73cc",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 trigger specific evidence",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
+      "session": "7",
+      "source_requirement": "S7_TRIGGER_SPECIFIC_EVIDENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:90146059ff83decffa15a4e1a0f5a2828b4be89974dc42273b6ce3d7ddcc5519",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 migration adaptation",
+      "required_artifacts": [
         "review-plan.json"
       ],
       "requirement_id": "S7_MIGRATION_ADAPTATION",
       "session": "7",
-      "source_requirement": "migration adaptation has material successor effect",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:7105401c2a762d65f12aea2121404904e71214fad2edcf20be59adcf4f84191c",
+      "source_requirement": "S7_MIGRATION_ADAPTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:2a47b185548b6083cec21ae3f9ffb94c86508d490aa289751a4151cddf7716cf",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "unlinked_prose"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "AI trigger only creates authorized AI-scoped successor work.",
+      "normative_behavior": "s7 ai adaptation",
       "required_artifacts": [
-        "plan-events.json"
+        "review-plan.json"
       ],
       "requirement_id": "S7_AI_ADAPTATION",
       "session": "7",
-      "source_requirement": "AI adaptation is trigger specific",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:9b6511b1196d4fddfc41c7f7647da4326c4aafc40db742ec26946607381735ba",
+      "source_requirement": "S7_AI_ADAPTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:403ba8090d35bce2403d527132135ce68fdcfb5deb2351ae885be4d60d1acb7f",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "work_order_deletion"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Browser work is retained as superseded and becomes explicitly not applicable.",
+      "normative_behavior": "s7 browser disproven adaptation",
       "required_artifacts": [
-        "plan-events.json",
         "review-plan.json"
       ],
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
       "session": "7",
-      "source_requirement": "browser disproven adaptation supersedes prior work",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:b14ae036b09f894b5495323ccb26873061f2a587cd2562dd31905909b057d6bc",
+      "source_requirement": "S7_BROWSER_DISPROVEN_ADAPTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:d234879fc6d344e004edb5f63dc70b161969c6ced3662e66a5275c53e2e59f38",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "render_only"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Equivalent submissions produce equal semantic identities and distinct provenance.",
+      "normative_behavior": "s7 superseded work order preservation",
       "required_artifacts": [
-        "accepted-results.json"
+        "review-plan.json"
       ],
-      "requirement_id": "S7_HARNESS_PARITY",
+      "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
       "session": "7",
-      "source_requirement": "manual and Codex routes share validator semantics",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:7bcc29a8357d022aaee3f57cf7c7a95c59c902bf3dd3b9ed5cbba19aadc8cece",
+      "source_requirement": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c53824b591644d405ef96cb6fdc8937b4472918cd9b75310edd991d8b0c4f6b8",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "free_text_evidence"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Only registered current-release targets and relevant accepted evidence are actionable.",
+      "normative_behavior": "s7 adaptation idempotency",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
+      "session": "7",
+      "source_requirement": "S7_ADAPTATION_IDEMPOTENCY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:d45b3a43fb8a3388a21be6f27b07c525f40453d3801fd7afea4aab55cbd6cc68",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 adaptation cycle depth",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
+      "session": "7",
+      "source_requirement": "S7_ADAPTATION_CYCLE_DEPTH",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:d402bbe0e928efa41679d87439ed364c2549c5e8e43e52745036e150d1c823ba",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s7 pointer last publication",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_POINTER_LAST_PUBLICATION",
+      "session": "7",
+      "source_requirement": "S7_POINTER_LAST_PUBLICATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:e774cb18dcc30ac3fbf84748bff66d3cc322221ce950baede9c7ca33431d2d7a",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest target registry",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
-      "requirement_id": "S8_TARGET_RESOLUTION",
-      "session": "8",
-      "source_requirement": "contestation targets resolve through registry",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:2cd0a48f6d759eddce18a05246900ca39b6dbe88aaa931d954587bc3ff4a6910",
+      "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_TARGET_REGISTRY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4d0771e76423b873b1d5a4fae400fe50a7128d4f9ea0c6627c70afe69da5d8a8",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "finding_mutation"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Actions are idempotent append-only references and do not rewrite facts.",
+      "normative_behavior": "s8 contest source generation",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
-      "requirement_id": "S8_APPEND_ONLY_CONTESTATION",
-      "session": "8",
-      "source_requirement": "contestation preserves source facts",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:7618354b1600f3b9d97e09712be45a53b3728c34bbde81220a691bffd20bd06b",
+      "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_SOURCE_GENERATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:606c3f2557c0245ed5a82779315305196c4924d7ac28f318931bbfd169dab3d2",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "self_declared_owner"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Actor text, email, or receipt cannot establish owner authority.",
+      "normative_behavior": "s8 contest target existence",
       "required_artifacts": [
-        "contestation-effects.json"
+        "contestation-ledger.json"
       ],
-      "requirement_id": "S8_OWNER_AUTHORITY",
-      "session": "8",
-      "source_requirement": "owner actions use release-bound authority",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:6a46a4e7a400c9ff4d6223a38d126730e5ded6fa06a418b0afe6da1a66b7877d",
+      "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_TARGET_EXISTENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fe53dad72c5876027f3ce41f38c2f8c4a17f66d3bfff3e0ef2a6f8fae91a74dd",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "dropped_decision"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Two immediate decisions and all overflow records preserve source links and priority.",
+      "normative_behavior": "s8 contest evidence existence",
       "required_artifacts": [
-        "contestation-effects.json"
+        "contestation-ledger.json"
       ],
-      "requirement_id": "S8_DECISION_BUDGET",
-      "session": "8",
-      "source_requirement": "owner decision budget is deterministic and complete",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:eff872a6b6be9937730b03b6f55b14776a0ab6a8e1d6f4e30851f49b649246da",
+      "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_EVIDENCE_EXISTENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c66025ba1658200449ff9173e5bc244620a805ecc6012c04d2917d7eafe6e999",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "mixed_vector"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Mixed, stale, and omitted dependency vectors are rejected.",
+      "normative_behavior": "s8 contest evidence relevance",
       "required_artifacts": [
-        "artifact-dependency-vector.v1"
+        "contestation-ledger.json"
       ],
-      "requirement_id": "S8_DEPENDENCY_VECTOR",
-      "session": "8",
-      "source_requirement": "management uses one exact dependency vector",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:983d577eb414250c778d2dafc89d52aea68bb6b923b333eefdabfb873b770a43",
+      "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_EVIDENCE_RELEVANCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:684a4e437dd7225dbc10615aed10ff6bc24625109088f845e1db118d49e155f9",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "key_presence"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Section cardinality, matrix coverage, exact passthrough, and typed empties follow registry policy.",
+      "normative_behavior": "s8 contest authority preservation",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_AUTHORITY_PRESERVATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:68307ac33d7a51a40499748b5c4b632304c4a35a2b384493d4c8c525756cc138",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest append sequence",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_APPEND_SEQUENCE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:5345849d82dce311fdfd4d7ea618bb4edb9d37f097df0fbc38dfeef3184fcb82",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest previous hash",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_PREVIOUS_HASH",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:e760adfd9c21dcc438d3c95251cfd5925fbd3f30fa9db4273a769bb0c7d127ce",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest idempotent replay",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_IDEMPOTENT_REPLAY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:0608424e496ea9bc887bf7ec7e92a29525fa0bbe9d9d6116a9587521c6c99d81",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest conflicting duplicate",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_CONFLICTING_DUPLICATE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:60b07a52014911813874e935df50b7e643bdc358a42f6fcf5d18406e0966cd41",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contest owner authority",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
+      "session": "8_contestability",
+      "source_requirement": "S8_CONTEST_OWNER_AUTHORITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:8ed6bf0c4824d655f7fc4c56a98f1aaba04b229461bef9d443ab09ee3e84ca1b",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 named risk fact non mutation",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
+      "session": "8_contestability",
+      "source_requirement": "S8_NAMED_RISK_FACT_NON_MUTATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:47ab13bbd965baa69acea822dd7dd4d1582a2ea24b0b13bf37d38039da9a6033",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 named risk decision effect",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
+      "session": "8_contestability",
+      "source_requirement": "S8_NAMED_RISK_DECISION_EFFECT",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:166fd48834200939ef55eef9b6fd6f820889acbde33aca9e4e4b89f7e43a8b6e",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 owner decision budget",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_OWNER_DECISION_BUDGET",
+      "session": "8_contestability",
+      "source_requirement": "S8_OWNER_DECISION_BUDGET",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:8e176047b231c992956bf4f4164f1945945532b3716fbfab76003b53b99cac5c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 owner decision priority",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_OWNER_DECISION_PRIORITY",
+      "session": "8_contestability",
+      "source_requirement": "S8_OWNER_DECISION_PRIORITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a0ad42f32f5c5a476c7992409bb1b22f0fd15d6bcb16154cb88198d778b50fc2",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 owner decision overflow",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
+      "session": "8_contestability",
+      "source_requirement": "S8_OWNER_DECISION_OVERFLOW",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:8d44f8c3da041aacdac9e8523e08751b08af643fccb9d475188a83dd16a5f6b0",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 future remediation no cycle",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
+      "session": "8_contestability",
+      "source_requirement": "S8_FUTURE_REMEDIATION_NO_CYCLE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:8975ba8575d68c3d25046a8f2ee167b2ba531a8dcf4a4fd09751c283edb8dd71",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 management dependency discovery",
       "required_artifacts": [
         "release-packet-index.json"
       ],
-      "requirement_id": "S8_SECTION_COMPLETENESS",
-      "session": "8",
-      "source_requirement": "management sections are substantive and complete",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:f637b9a0e04e43939857f7df902b0a46f556e4a1ac025130c744686626e6193d",
+      "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
+      "session": "8_management",
+      "source_requirement": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:94b1ca7ed8b2828285f4a35164701fc9686b58f48d0e7351d839597919988c39",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "model_recommendation"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Recommendation never mutates canonical release facts.",
+      "normative_behavior": "s8 management dependency states",
       "required_artifacts": [
-        "release-recommendation-view.json"
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
+      "session": "8_management",
+      "source_requirement": "S8_MANAGEMENT_DEPENDENCY_STATES",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:cd9ee5b06835b52d690a706ab6aa384732bbe650f4603adcf7d4d3a9876f0cf2",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 management dependency freshness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
+      "session": "8_management",
+      "source_requirement": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:344478dc5f0d360fa07be0c8221b2b91fc9b734dbf9d3c79a2d7d0bda74624da",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 management mixed vector rejection",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
+      "session": "8_management",
+      "source_requirement": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:229c842cba10ca0e7b046e8d8fb719d69eb6e3bbae3582a23605f82ce44a5428",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 executive section completeness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
+      "session": "8_management",
+      "source_requirement": "S8_EXECUTIVE_SECTION_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:f742cfd9536c593088c1ea9052daaa70d45bee905b0d8737a2e242fa218a4c58",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 product matrix completeness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
+      "session": "8_management",
+      "source_requirement": "S8_PRODUCT_MATRIX_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:d24a031fc9aa2a546194381ff85de6d401ac2b78e9b7fa71d8c2f189939ce4a1",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 engineering section completeness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
+      "session": "8_management",
+      "source_requirement": "S8_ENGINEERING_SECTION_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:199cb10135425dbd1578cfa34b6fd0b8a0a6a10de16d617e9ac9fed849f0f436",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 measurement ai passthrough",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
+      "session": "8_management",
+      "source_requirement": "S8_MEASUREMENT_AI_PASSTHROUGH",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:7231d64547a64b40fb1a293131635f6be9e12d9e849bf9c8454e7282882691a9",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 remediation overview completeness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
+      "session": "8_management",
+      "source_requirement": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:21f44cecfc2f8d82325b53904885daeb871b685b90a87fd7e9e034a015f44006",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 closure contract indexing",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
+      "session": "8_management",
+      "source_requirement": "S8_CLOSURE_CONTRACT_INDEXING",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:7f04fe60020481f215c0ea7586e804fcd1989777a1fe2c49393393d540f9ad41",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 contestability inclusion",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_CONTESTABILITY_INCLUSION",
+      "session": "8_management",
+      "source_requirement": "S8_CONTESTABILITY_INCLUSION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:121f22f8387d9bc18c21e938823f34d0fa014743ba31540f829bb228d9c0cc7f",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 recommendation policy",
+      "required_artifacts": [
+        "release-packet-index.json"
       ],
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "session": "8",
-      "source_requirement": "recommendation policy is deterministic derived view",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:f28ba1880a8ccdeefb80baf94c5e8be9621810df774053166f18c82d7f731c03",
+      "session": "8_management",
+      "source_requirement": "S8_RECOMMENDATION_POLICY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a78d60b728f19ce2534ce0d2d81bb0c5fbac0a23068fd0de53e57d2c273fbb01",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "active_html"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Renderers escape untrusted content and use no active or remote resources.",
+      "normative_behavior": "s8 accepted condition effect",
       "required_artifacts": [
-        "github-summary.md",
-        "executive-release-brief.html"
+        "release-packet-index.json"
       ],
-      "requirement_id": "S8_SAFE_RENDERING",
-      "session": "8",
-      "source_requirement": "management JSON HTML Markdown rendering is deterministic and safe",
-      "source_section": "Workflow acceptance repairs",
-      "source_text_hash": "sha256:c194228b8ed6af3fd7679cb2b1863f8089deaf862a89d41066170f1bccd0f889",
+      "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
+      "session": "8_management",
+      "source_requirement": "S8_ACCEPTED_CONDITION_EFFECT",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:e7b0526ea517cb963b1e8de0e5bbbc62a1762b68800f2c80c5f16611a54add81",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "unsafe_path_io"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "All persisted lifecycle state validates trusted ancestry, capacity, exact file sets, and pointer-last publication.",
+      "normative_behavior": "s8 named risk recommendation effect",
       "required_artifacts": [
-        "generation manifests",
-        "pointers"
+        "release-packet-index.json"
       ],
-      "requirement_id": "S_SHARED_TRUSTED_STORAGE",
+      "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
+      "session": "8_management",
+      "source_requirement": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:465ad760d6d8fc30879166bab66a9e1cb2ade7a1ba12664a1499f89100dd72ab",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 insufficient evidence state",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
+      "session": "8_management",
+      "source_requirement": "S8_INSUFFICIENT_EVIDENCE_STATE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4fb55cdf601cc22b03ee561d284b216b220cdf016fad7588db1e6a05df0c44f8",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 deterministic json",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_DETERMINISTIC_JSON",
+      "session": "8_management",
+      "source_requirement": "S8_DETERMINISTIC_JSON",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a1da1145423bf186b4eaaf44262c3b9db82d076209f465cc5219be1a8a423973",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 safe html",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_SAFE_HTML",
+      "session": "8_management",
+      "source_requirement": "S8_SAFE_HTML",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c2437e474713728fa502ea03c67cfa8a755ef941e74bba9d1a56a31ad86303d9",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 safe markdown",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_SAFE_MARKDOWN",
+      "session": "8_management",
+      "source_requirement": "S8_SAFE_MARKDOWN",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:0ad1291f45da593bcf265bc8c5242944c65a60aa5d52f259b77aed28ea6f3f07",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 artifact hash integrity",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
+      "session": "8_management",
+      "source_requirement": "S8_ARTIFACT_HASH_INTEGRITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c873d371998dbf366f45a1e8ae3b1e4d6c48539a9c3418bfa3df50e09157693d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 artifact file set",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_ARTIFACT_FILE_SET",
+      "session": "8_management",
+      "source_requirement": "S8_ARTIFACT_FILE_SET",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:21bfa31372582b9ba0f869bdd9582c257e57992bd23c6e0f1034ffe7bbf2a90b",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 deterministic rerender",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_DETERMINISTIC_RERENDER",
+      "session": "8_management",
+      "source_requirement": "S8_DETERMINISTIC_RERENDER",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:a1b6e150f0c9b94ffd59c03ecccf60cee922c492bc230a6a08560c2e36984dd6",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "s8 upstream staleness",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_UPSTREAM_STALENESS",
+      "session": "8_management",
+      "source_requirement": "S8_UPSTREAM_STALENESS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4a2adfb50b9a5f35fa4cf92bc51b9475cd25901a365b3a69bd1004a3f50131c9",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared trusted reads",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_TRUSTED_READS",
       "session": "shared",
-      "source_requirement": "trusted reads writes and pointer preservation",
-      "source_section": "Contract, security, and wheel execution",
-      "source_text_hash": "sha256:3b418ede188aac3c9df0775148e29cb0506a4668b6c8fae7afd45730543d1f2e",
+      "source_requirement": "SHARED_TRUSTED_READS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:fd28727b004e3ebd1b28327d5e491093f3985590c1cf63279d9ca11e3a9a83af",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "registry_only"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Every parity contract has actual schema/Python/stateful acceptance and isolated rejection evidence.",
+      "normative_behavior": "shared trusted writes",
       "required_artifacts": [
-        "session6-8-contract-parity-report.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
-      "requirement_id": "S_SHARED_CONTRACT_PARITY",
+      "requirement_id": "SHARED_TRUSTED_WRITES",
       "session": "shared",
-      "source_requirement": "all discovered parity contracts execute boundaries and mutations",
-      "source_section": "Contract, security, and wheel execution",
-      "source_text_hash": "sha256:cb41003726e0266ad94d8f2591056658b343d091af21a19805917482b4dacaf3",
+      "source_requirement": "SHARED_TRUSTED_WRITES",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:6bc5c73261a69b9299e5e642181f87c43f662e5fa5780232098ed863cf562283",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "constant_state_hash"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Guarded or unreachable operations have typed rejection and unchanged real state.",
+      "normative_behavior": "shared link reparse special rejection",
       "required_artifacts": [
-        "session6-8-security-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
-      "requirement_id": "S_SHARED_SECURITY",
+      "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
       "session": "shared",
-      "source_requirement": "prohibited operations have honest dynamic security proofs",
-      "source_section": "Contract, security, and wheel execution",
-      "source_text_hash": "sha256:1a1a695b448889d29fb364dab251593b3cd9a0707947508afdd94243fd01c734",
+      "source_requirement": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4f1e2bd8757ca6d36a5c29e2cc803b533b17815b097726c7e87a53e84a774838",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "help_output"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Clean installed distribution runs all required connected commands with bound artifacts.",
+      "normative_behavior": "shared capacity limits",
       "required_artifacts": [
-        "session6-8-installed-wheel-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
-      "requirement_id": "S_SHARED_WHEEL",
+      "requirement_id": "SHARED_CAPACITY_LIMITS",
       "session": "shared",
-      "source_requirement": "installed wheel runs connected lifecycle outside checkout",
-      "source_section": "Contract, security, and wheel execution",
-      "source_text_hash": "sha256:c62ec1268976d85a86927f112e931bc414aba0adb888e86ad6c3d26b8c937e9a",
+      "source_requirement": "SHARED_CAPACITY_LIMITS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:02a7b9c63ccbae5f818bd035277bc3de5872f5d16d1a02a4e522d5a0339f4e48",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "status_only"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Valid near-valid and adversarial proofs are independently distinguishable.",
+      "normative_behavior": "shared pointer late failure",
       "required_artifacts": [
-        "session6-8-proof-execution-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
-      "requirement_id": "S_SHARED_PROOF_EXECUTION",
+      "requirement_id": "SHARED_POINTER_LATE_FAILURE",
       "session": "shared",
-      "source_requirement": "proof receipt binds final JUnit and artifacts",
-      "source_section": "Proof, report, and validator closure",
-      "source_text_hash": "sha256:c67f5cd6839cd3ede6a20948e94bf8beb72ac9212bc297fa437d571564a64383",
+      "source_requirement": "SHARED_POINTER_LATE_FAILURE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:aebe8c15792c7dc465cb5abeb38180c3f41035c12c440ac75e00ad0a7cc008ab",
       "status": "verified"
     },
     {
       "forbidden_substitutions": [
-        "self_validation"
+        "declared_status_without_executed_proof"
       ],
-      "normative_behavior": "Validator does not trust report resolved status or share closure semantics with generator.",
+      "normative_behavior": "shared zero prohibited operations",
       "required_artifacts": [
-        "session6-8-final-closeout-report.json",
-        "session6-8-final-closeout-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
-      "requirement_id": "S_SHARED_INDEPENDENT_CLOSEOUT",
+      "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
       "session": "shared",
-      "source_requirement": "independent report and receipt validator recomputes closure",
-      "source_section": "Proof, report, and validator closure",
-      "source_text_hash": "sha256:d8bcd8b4e98d2bff2d11af96dc028d65571df5d48ab288f8525c77e018729958",
+      "source_requirement": "SHARED_ZERO_PROHIBITED_OPERATIONS",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:949644757a07cc0f382bb17d71e46296acf375005b1566d36326d6987a53913d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared contract inventory",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_CONTRACT_INVENTORY",
+      "session": "shared",
+      "source_requirement": "SHARED_CONTRACT_INVENTORY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4bf0a1187b87f8638e7bcbe630d23dd7d31af3d667d71089fe9e73ac7867ac3c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared executed contract parity",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
+      "session": "shared",
+      "source_requirement": "SHARED_EXECUTED_CONTRACT_PARITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:58af56615988f4791e5174aa8deded35b7d20d88d368742f6e8d4f243594a046",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared behavioral eval integrity",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
+      "session": "shared",
+      "source_requirement": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:4d00580476d67e76dc6b45f381c0e69fd12e95ee996ea7ae299110d15b359bf7",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared workflow eval integrity",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
+      "session": "shared",
+      "source_requirement": "SHARED_WORKFLOW_EVAL_INTEGRITY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:7f23503833ef3daad78ca8e969c64ce85ee743212e361dbeaa8e8c0bbaf2be82",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared installed wheel lifecycle",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
+      "session": "shared",
+      "source_requirement": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:c64752734469f84a6103808c9b6d33c1e882d94d162e72c7f4459237e8cf0a40",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared skill pilot consistency",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
+      "session": "shared",
+      "source_requirement": "SHARED_SKILL_PILOT_CONSISTENCY",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:611b21d83b52554564727e15a03981c28e04c488c3da98877a581f678ff4a4a6",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared proof execution",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_PROOF_EXECUTION",
+      "session": "shared",
+      "source_requirement": "SHARED_PROOF_EXECUTION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:647f035677fa1c5e5c649234c95232e2cf489c535800a7780a040a29ece65a77",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared closeout generation",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_CLOSEOUT_GENERATION",
+      "session": "shared",
+      "source_requirement": "SHARED_CLOSEOUT_GENERATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:d1a4ba4a73511f9809034a5f4e8850d5f687ec572e71dc6a128b95d1cc54aad3",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "declared_status_without_executed_proof"
+      ],
+      "normative_behavior": "shared independent validation",
+      "required_artifacts": [
+        "session6-8-workflow-eval-receipt.json"
+      ],
+      "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
+      "session": "shared",
+      "source_requirement": "SHARED_INDEPENDENT_VALIDATION",
+      "source_section": "approved evidence-integrity closeout",
+      "source_text_hash": "sha256:1a47c749fd234165ede8e7dd989f7c8fc025f239ba0a76962d264152e0273982",
       "status": "verified"
     }
   ],
-  "schema_version": "shiproom.session6-8-requirement-inventory.v1",
-  "source_document": "Approved Sessions 6–8 Evidence-Integrity Closeout — Final Execution Plan"
+  "schema_version": "session6-8-requirement-inventory.v2"
 }

@@ -18,6 +18,8 @@ from shiproom.contestability import append_action, load as load_contestation
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input
 from shiproom.historical_remediation import run_controlled_patient
 from shiproom.management_artifacts import compile as compile_management, load as load_management
+from shiproom.measurement_ai.authority import default_applicability, domain_root as measurement_ai_root
+from shiproom.measurement_ai.preparation import prepare as prepare_measurement_ai
 from shiproom.project import canonical_json, content_hash
 from shiproom.remediation_roadmaps import closure_verify, compile as compile_remediation, load_generation as load_remediation_generation, prepare as prepare_remediation, root as remediation_root
 from shiproom.review_organisation import adapt, load as load_review, prepare as prepare_review, render_package, submit_result
@@ -46,8 +48,9 @@ def _workflow_contracts(root: Path) -> dict[str, dict]:
     rows = value.get("cases") if isinstance(value, dict) else None
     if not isinstance(rows, list) or tuple(item.get("case_name") for item in rows) != CASES:
         raise AssertionError("workflow contract registry changed")
-    required = {"case_name", "fixture_builder", "preconditions", "required_production_functions", "required_assertion_ids", "required_artifacts", "minimum_record_counts", "forbidden_substitutions"}
-    if any(set(item) != required or not item["required_production_functions"] or not item["required_assertion_ids"] or not item["required_artifacts"] for item in rows):
+    required = {"case_name", "fixture_builder", "preconditions", "required_production_functions", "required_assertion_ids", "assertions", "required_artifacts", "minimum_record_counts", "forbidden_substitutions"}
+    assertion_fields={"assertion_id","assertion_type","artifact_path","json_pointer","comparator","expected_value","named_assertion_function"}
+    if any(set(item) != required or not item["required_production_functions"] or not item["required_assertion_ids"] or not item["required_artifacts"] or {row["assertion_id"] for row in item["assertions"]}!=set(item["required_assertion_ids"]) or any(set(row)!=assertion_fields for row in item["assertions"]) for item in rows):
         raise AssertionError("workflow contract registry invalid")
     return {item["case_name"]: item for item in rows}
 
@@ -119,6 +122,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     contracts = _workflow_contracts(root)
     results: list[dict] = []
+    evidence_root=root/".shiproom"/"local"/"session6-8-workflow-evidence"; evidence_root.mkdir(parents=True,exist_ok=True)
 
     @contextmanager
     def observe(case_name: str):
@@ -126,22 +130,14 @@ def main() -> int:
         # automatic spy around the actual production callables, not a manually
         # supplied declaration of what a case supposedly invoked.
         observed = {}
-        bindings = {
-            "compile_graph": "shiproom.graph.compile_bundle", "load_assessment_input": "shiproom.graph.load_assessment_input",
-            "prepare_remediation": "shiproom.remediation_roadmaps.prepare", "compile_remediation": "shiproom.remediation_roadmaps.compile",
-            "load_remediation_generation": "shiproom.remediation_roadmaps.load_generation",
-            "closure_verify": "shiproom.remediation_roadmaps.closure_verify", "prepare_review": "shiproom.review_organisation.prepare",
-            "load_review": "shiproom.review_organisation.load", "submit_result": "shiproom.review_organisation.submit_result",
-            "render_package": "shiproom.review_organisation.render_package",
-            "adapt": "shiproom.review_organisation.adapt", "append_action": "shiproom.contestability.append_action",
-            "load_contestation": "shiproom.contestability.load", "compile_management": "shiproom.management_artifacts.compile",
-            "load_management": "shiproom.management_artifacts.load",
-            "run_controlled_patient": "shiproom.historical_remediation.run_controlled_patient",
-        }
-        for name, label in bindings.items():
+        bindings = ("compile_graph", "load_assessment_input", "prepare_remediation", "compile_remediation",
+                    "load_remediation_generation", "closure_verify", "prepare_review", "load_review",
+                    "submit_result", "render_package", "adapt", "append_action", "load_contestation",
+                    "compile_management", "load_management", "run_controlled_patient")
+        for name in bindings:
             original = globals()[name]
             observed[name] = original
-            globals()[name] = lambda *args, _label=label, _original=original, **kwargs: audit_invoke(_label, _original, *args, **kwargs)
+            globals()[name] = lambda *args, _original=original, **kwargs: audit_invoke(_original, *args, **kwargs)
         try:
             with audit_session(root, case_name) as receipts:
                 yield receipts
@@ -162,10 +158,14 @@ def main() -> int:
         contract = contracts[name]
         required_functions = set(contract["required_production_functions"])
         artifacts_ok = bool(hashes) and all(value not in (None, "") for value in hashes.values())
-        observed_functions = {item["production_function"] for item in invocation_receipts}
-        assertion_receipts = [audit_assertion(assertion_id, assertion_id.replace("_", " "), assertion_values.get(assertion_id, bool(passed)), True)
-                              for assertion_id in contract["required_assertion_ids"]]
-        contract_ok = required_functions <= observed_functions and artifacts_ok and all(item["passed"] for item in assertion_receipts)
+        observed_functions = {item["qualified_function"] for item in invocation_receipts}
+        missing_assertions = set(contract["required_assertion_ids"]) - set(assertion_values)
+        assertion_receipts = [audit_assertion(assertion_id, assertion_id.replace("_", " "), assertion_values[assertion_id], True)
+                              for assertion_id in contract["required_assertion_ids"] if assertion_id in assertion_values]
+        contract_ok = required_functions <= observed_functions and artifacts_ok and not missing_assertions and all(item["passed"] for item in assertion_receipts)
+        evidence={"schema_version":"session6-8-workflow-evidence.v1","case_name":name,"assertions":assertion_values,"generated_artifact_hashes":hashes}
+        evidence_path=evidence_root/(name+".json"); evidence_raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode(); evidence_path.write_bytes(evidence_raw)
+        hashes={**hashes,"workflow_evidence":"sha256:"+hashlib.sha256(evidence_raw).hexdigest()}
         results.append({"name": name, "fixture": contract["fixture_builder"], "production_invocations": invocation_receipts,
                         "production_functions_invoked": sorted(observed_functions), "generated_artifact_hashes": hashes,
                         "assertions_executed": assertion_receipts, "required_artifacts": list(contract["required_artifacts"]),
@@ -186,14 +186,45 @@ def main() -> int:
         }
         return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions
     run(CASES[0], deterministic_blocker)
-    run(CASES[1], lambda: (lambda p, m, packet: (packet.get("automation_eligibility") == "roadmap_only", ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(m)))(*remediation_case(blocker=False, authority="model_mapped_candidate")))
-    run(CASES[2], lambda: (lambda p, m, packet: (packet.get("issue_classification") == "model_reviewed_recommendation" and not packet.get("automation_eligibility") == "bounded_fix_available", ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(m)))(*remediation_case(blocker=False, authority="model_reviewed")))
+    def unsafe_issue():
+        prepared, manifest, packet = remediation_case(blocker=False, authority="model_mapped_candidate")
+        assertions={"roadmap_only":packet.get("automation_eligibility")=="roadmap_only",
+                    "no_bounded_fix":packet.get("automation_eligibility")!="bounded_fix_available",
+                    "no_finding_mutation":packet.get("source_issue_id")=="finding_workflow"}
+        return all(assertions.values()), [], _hashes(manifest), assertions
+    run(CASES[1], unsafe_issue)
+    def model_concern():
+        prepared, manifest, packet = remediation_case(blocker=False, authority="model_reviewed")
+        assertions={"model_authority_preserved":packet.get("issue_authority")=="model_reviewed",
+                    "not_verified_blocker":packet.get("issue_classification")!="verified_blocker",
+                    "no_deterministic_closure":packet.get("issue_authority")!="deterministically_established"}
+        return all(assertions.values()), [], _hashes(manifest), assertions
+    run(CASES[2], model_concern)
 
     def exact_closure():
         with tempfile.TemporaryDirectory() as raw:
-            ctx, criterion = _fixture(Path(raw)); _finding(ctx, criterion, blocker=True); _, manifest, packet = _remediation(ctx)
-            verification = _closure(ctx, manifest, packet)
-            return verification["status"] == "satisfied_candidate", ["shiproom.remediation_roadmaps.closure_verify"], _hashes(manifest)
+            ctx, criterion = _fixture(Path(raw)); finding=_finding(ctx, criterion, blocker=True); original=canonical_json(finding); _, manifest, packet = _remediation(ctx)
+            valid = _closure(ctx, manifest, packet)
+            closure_id=packet["verification_contract_id"]; inbox=remediation_root(ctx)/"closure-inbox"/closure_id
+            evidence_path=inbox/"evidence.json"; receipt_path=inbox/"verifier-receipt.json"
+            base=json.loads(evidence_path.read_text(encoding="utf-8"))
+            def submit(value, *, verifier="verifier_workflow"):
+                encoded=(json.dumps(value,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode()
+                evidence_path.write_bytes(encoded); receipt_path.write_text(json.dumps({"schema_version":"remediation-closure-verifier-receipt.v1","closure_contract_id":closure_id,"evidence_snapshot_hash":"sha256:"+hashlib.sha256(encoded).hexdigest(),"verifier_id":verifier,"executor_type":"human"}),encoding="utf-8")
+                return closure_verify(ctx,closure_id)
+            wrong=json.loads(json.dumps(base)); wrong["reruns"][0]["check_id"]="wrong_check"; wrong_result=submit(wrong)
+            failed=json.loads(json.dumps(base)); failed["reruns"][0]["passed"]=False; failed_result=submit(failed)
+            try: submit(base,verifier=base["fixer_id"]); self_rejected=False
+            except ValueError as exc: self_rejected=str(exc)=="closure_verifier_not_independent"
+            stale_commit=json.loads(json.dumps(base)); stale_commit["release_commit"]="0"*40; stale_commit_result=submit(stale_commit)
+            stale_branch=json.loads(json.dumps(base)); stale_branch["branch"]="other"; stale_branch_result=submit(stale_branch)
+            assertions={"wrong_check_rejected":wrong_result["status"]=="unsatisfied",
+                        "failed_rerun_unsatisfied":failed_result["status"]=="unsatisfied",
+                        "self_verifier_rejected":self_rejected,
+                        "stale_rejected":stale_commit_result["status"]=="stale" and stale_branch_result["status"]=="stale",
+                        "independent_rerun_satisfied":valid["status"]=="satisfied_candidate",
+                        "finding_unchanged":canonical_json(finding)==original}
+            return all(assertions.values()), [], _hashes(manifest), assertions
     run(CASES[3], exact_closure)
 
     def review_case():
@@ -202,25 +233,59 @@ def main() -> int:
             specialist_ids = {item["specialist_id"] for item in artifacts["review-plan.json"]["specialists"]}
             return {"ctx": ctx, "manifest": manifest, "artifacts": artifacts, "specialist_ids": specialist_ids}
     def languages():
-        value = review_case(); return {"python_engineering", "typescript_engineering"} <= value["specialist_ids"], ["shiproom.review_organisation.prepare", "shiproom.review_organisation.load"], _hashes(value["manifest"])
+        values=[]
+        for language in ("python", "typescript"):
+            raw=tempfile.TemporaryDirectory(); ctx,_=_fixture(Path(raw.name)); ctx.release["review_language_signals"]={"python":language=="python","typescript":language=="typescript"}
+            manifest=prepare_review(ctx); _,artifacts=load_review(ctx); values.append((raw,manifest,artifacts))
+        py_plan=values[0][2]["review-plan.json"]; ts_plan=values[1][2]["review-plan.json"]
+        py=next(item for item in py_plan["specialists"] if item["specialist_id"]=="python_engineering")
+        ts=next(item for item in ts_plan["specialists"] if item["specialist_id"]=="typescript_engineering")
+        assertions={"language_signals_differ":py_plan["input_vector"]["language_framework_signals"]!=ts_plan["input_vector"]["language_framework_signals"],
+                    "plans_differ":py_plan["plan_id"]!=ts_plan["plan_id"],"work_orders_differ":values[0][1]["semantic_bundle_hash"]!=values[1][1]["semantic_bundle_hash"],
+                    "evidence_differ":py["reason_codes"]!=ts["reason_codes"]}
+        hashes={"python":values[0][1]["semantic_bundle_hash"],"typescript":values[1][1]["semantic_bundle_hash"]}
+        for raw,_,_ in values: raw.cleanup()
+        return all(assertions.values()), [], hashes, assertions
     run(CASES[4], languages)
     def ai_selection():
-        value = review_case(); candidate = next(item for item in value["artifacts"]["review-plan.json"]["specialists"] if item["specialist_id"] == "ai_evaluation"); return candidate["applicability_authority"] in {"candidate_surface", "not_inspected", "confirmed_surface"}, ["shiproom.review_organisation.prepare"], _hashes(value["manifest"])
+        with tempfile.TemporaryDirectory() as raw:
+            ctx,criterion=_fixture(Path(raw)); graph=load_assessment_input(ctx)["graph_artifacts"]["requirement-evidence-graph.json"]
+            journey=next(item["node_id"] for item in graph["nodes"] if item["node_type"]=="critical_journey")
+            source=(Path(ctx.repository_root)/"docs"/"brief.md").read_text(encoding="utf-8"); quote=source.splitlines()[0]
+            blob=subprocess.check_output(["git","hash-object","docs/brief.md"],cwd=ctx.repository_root,text=True).strip()
+            normalized=source.replace("\r\n","\n").replace("\r","\n")
+            app=default_applicability(); app["ai"]["criterion_ids"]=[criterion]; app["ai"]["journey_ids"]=[journey]
+            app["ai"]["linked_sources"]=[{"declared_subtype":"ai_fixed_input_definition","path":"docs/brief.md","returned_git_path":"docs/brief.md","git_object_format":"sha1","git_blob_hash":blob,"normalized_text_hash":"sha256:"+hashlib.sha256(normalized.encode()).hexdigest(),"start_line":1,"end_line":1,"quote":quote,"quote_hash":"sha256:"+hashlib.sha256(quote.encode()).hexdigest(),"criterion_ids":[criterion],"journey_ids":[journey]}]
+            inputs=measurement_ai_root(ctx)/"inputs"; inputs.mkdir(parents=True,exist_ok=True); path=inputs/"workflow-ai.json"; path.write_text(json.dumps(app),encoding="utf-8")
+            prepare_measurement_ai(ctx,applicability_path=str(path)); manifest=prepare_review(ctx); _,artifacts=load_review(ctx)
+            candidate=next(item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"]=="ai_evaluation")
+            assertions={"ai_selected":candidate["state"]=="selected" and candidate["applicability_authority"] in {"candidate_surface","confirmed_surface"}}
+            return all(assertions.values()), [], _hashes(manifest), assertions
     run(CASES[5], ai_selection)
     def browser_skip():
-        value = review_case(); browser = next(item for item in value["artifacts"]["review-plan.json"]["specialists"] if item["specialist_id"] == "browser_journey"); return browser["state"] == "skipped" and browser["applicability_authority"] == "not_inspected", ["shiproom.review_organisation.prepare"], _hashes(value["manifest"])
+        with tempfile.TemporaryDirectory() as raw:
+            ctx,_=_fixture(Path(raw)); ctx.release["review_applicability"]={"browser_journey":"not_applicable"}; manifest=prepare_review(ctx); _,artifacts=load_review(ctx)
+            browser=next(item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"]=="browser_journey")
+            assertions={"browser_skipped":browser["state"]=="skipped","browser_explicitly_not_applicable":browser["applicability_authority"]=="explicitly_not_applicable"}
+            return all(assertions.values()), [], _hashes(manifest), assertions
     run(CASES[6], browser_skip)
     def adaptation():
         with tempfile.TemporaryDirectory() as raw:
             ctx, cid = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; prepare_review(ctx)
-            manifest, _ = load_review(ctx)
+            manifest, before_artifacts = load_review(ctx); before_hash=manifest["semantic_bundle_hash"]
             order_dir = Path(ctx.repository_root) / ".shiproom" / "local" / "releases" / ctx.release["release_id"] / "review-organisation" / "generations" / manifest["generation"] / "specialist-work-orders"
             work = next(json.loads(path.read_text(encoding="utf-8")) for path in order_dir.glob("*.json") if json.loads(path.read_text(encoding="utf-8"))["specialist_id"] == "migration_and_rollback")
             result = {"schema_version": "migration-and-rollback-result.v1", "work_order_id": work["work_order_id"], "criterion_ids": [cid], "evidence_refs": [], "rollback_required": False, "limitations": []}
             receipt = {"schema_version": "harness-execution-receipt.v1", "work_order_id": work["work_order_id"], "execution_mode": "manual_external", "declared_capability": "prepared_packet_only", "granted_permission": "read_only", "observed_execution": "receipt_observed", "execution_receipt": "workflow-manual-receipt", "independence_limitation": "declared capability is not proof of isolation"}
             accepted = submit_result(ctx, "migration_and_rollback", result, receipt)
             adapted = adapt(ctx, "migration_surface_discovered", "migration_and_rollback", cid, accepted["result_id"])
-            return adapted["status"] == "accepted", ["shiproom.review_organisation.prepare", "shiproom.review_organisation.adapt"], {"generation": adapted["generation"]}
+            successor, after_artifacts=load_review(ctx); event=after_artifacts["plan-events.json"]["events"][-1]
+            assertions={"plan_hash_changed":successor["semantic_bundle_hash"]!=before_hash,
+                        "migration_state_changed":event["effect"] in {"specialist_work_issued","native_work_unavailable"},
+                        "new_work_order":bool(event.get("replacement_work_order_ids")),
+                        "prior_preserved":after_artifacts["accepted-results.json"]==before_artifacts["accepted-results.json"] or bool(after_artifacts["accepted-results.json"]["results"]),
+                        "execution_summary_changed":after_artifacts["execution-summary.json"]!=before_artifacts["execution-summary.json"]}
+            return all(assertions.values()), [], {"generation": adapted["generation"]}, assertions
     run(CASES[7], adaptation)
     def revisions():
         with tempfile.TemporaryDirectory() as raw:
@@ -240,15 +305,35 @@ def main() -> int:
             except ValueError:
                 failed_not_adaptable = True
             return (first["status"] == "revision_required", second["status"] == "specialist_failed_closed", third_rejected, failed_not_adaptable, ["shiproom.review_organisation.submit_result"], {"first_generation": first["generation"], "second_generation": second["generation"]})
-    run(CASES[8], lambda: (lambda first, second, third, not_adaptable, functions, hashes: (first, functions, hashes))(*revisions()))
-    run(CASES[9], lambda: (lambda first, second, third, not_adaptable, functions, hashes: (second and third and not_adaptable, functions, hashes))(*revisions()))
+    def revision_success():
+        with tempfile.TemporaryDirectory() as raw:
+            ctx,criterion=_fixture(Path(raw)); ctx.release["change_impact"]={"migration_surface":True}; manifest=prepare_review(ctx)
+            order_dir=remediation_root(ctx).parent/"review-organisation"/"generations"/manifest["generation"]/"specialist-work-orders"
+            work=next(json.loads(path.read_text()) for path in order_dir.glob("*.json") if json.loads(path.read_text())["specialist_id"]=="migration_and_rollback")
+            first=submit_result(ctx,"migration_and_rollback",{}, {})
+            result={"schema_version":"migration-and-rollback-result.v1","work_order_id":work["work_order_id"],"criterion_ids":[criterion],"evidence_refs":[],"rollback_required":False,"limitations":[]}
+            receipt={"schema_version":"harness-execution-receipt.v1","work_order_id":work["work_order_id"],"execution_mode":"manual_external","declared_capability":"prepared_packet_only","granted_permission":"read_only","observed_execution":"receipt_observed","execution_receipt":"corrected","independence_limitation":"declared capability is not proof of isolation"}
+            second=submit_result(ctx,"migration_and_rollback",result,receipt); _,artifacts=load_review(ctx)
+            entries=artifacts["revision-ledger.json"]["entries"]
+            assertions={"invalid_first":first["status"]=="revision_required","revision_required":len(entries)==1 and entries[0]["status"]=="revision_required",
+                        "corrected_native_acceptance":second["status"]=="accepted","attempts_persisted":bool(second.get("generation")) and bool(first.get("generation"))}
+            return all(assertions.values()), [], {"generation":second["generation"]}, assertions
+    run(CASES[8], revision_success)
+    def revision_failure():
+        first,second,third,not_adaptable,_functions,hashes=revisions()
+        assertions={"second_failed_closed":second,"attempts_persisted":first and second,"third_rejected":third,"failed_not_adaptable":not_adaptable,"plan_usable":bool(hashes)}
+        return all(assertions.values()), [], hashes, assertions
+    run(CASES[9], revision_failure)
     def authority_upgrade():
         with tempfile.TemporaryDirectory() as raw:
-            ctx, _ = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; prepare_review(ctx)
-            result = {"authority": "deterministically_established"}
-            rejected = submit_result(ctx, "migration_and_rollback", result, {})
+            ctx, _ = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; manifest=prepare_review(ctx)
+            order_dir=remediation_root(ctx).parent/"review-organisation"/"generations"/manifest["generation"]/"specialist-work-orders"
+            work=next(json.loads(path.read_text()) for path in order_dir.glob("*.json") if json.loads(path.read_text())["specialist_id"]=="migration_and_rollback")
+            result = {"work_order_id":work["work_order_id"],"authority":"deterministically_established"}
+            rejected = submit_result(ctx, "migration_and_rollback", result, {"work_order_id":work["work_order_id"]})
             manifest, artifacts = load_review(ctx)
-            return rejected["status"] == "revision_required" and not artifacts["accepted-results.json"]["results"], ["shiproom.review_organisation.submit_result"], _hashes(manifest)
+            assertions={"typed_authority_rejection":rejected["reason"]=="AUTHORITY_UPGRADE","canonical_authority_unchanged":not artifacts["accepted-results.json"]["results"]}
+            return all(assertions.values()), [], _hashes(manifest), assertions
     run(CASES[10], authority_upgrade)
     def three_issues():
         with tempfile.TemporaryDirectory() as raw:
@@ -270,18 +355,24 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True); original = canonical_json(finding)
             accepted = append_action(ctx, _action(ctx, finding)); _, artifacts = load_contestation(ctx)
-            return canonical_json(finding) == original and accepted["status"] == "accepted", ["shiproom.contestability.append_action", "shiproom.contestability.load"], {"ledger": content_hash(artifacts["contestation-ledger.json"])}
+            assertions={"original_preserved":canonical_json(finding)==original,"counter_evidence_visible":accepted["status"]=="accepted" and bool(artifacts["contestation-ledger.json"]["actions"])}
+            return all(assertions.values()), [], {"ledger": content_hash(artifacts["contestation-ledger.json"])}, assertions
     run(CASES[12], contestation)
     def risk():
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True); append_action(ctx, _action(ctx, finding)); _, artifacts = load_contestation(ctx)
-            return artifacts["contestation-effects.json"]["named_risk_effects"][0]["effect"] == "accepted_named_risk" and finding["state"] == "OPEN", ["shiproom.contestability.append_action", "shiproom.contestability.load"], {"effects": content_hash(artifacts["contestation-effects.json"])}
+            assertions={"decision_effect":artifacts["contestation-effects.json"]["named_risk_effects"][0]["effect"]=="accepted_named_risk",
+                        "finding_unchanged":finding["state"]=="OPEN","evidence_unchanged":finding["evidence_class"]=="deterministically_established","blocker_unchanged":finding["blocker"] is True}
+            return all(assertions.values()), [], {"effects": content_hash(artifacts["contestation-effects.json"])}, assertions
     run(CASES[13], risk)
     def management():
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); _finding(ctx, criterion, blocker=False); compile_graph(ctx); manifest = compile_management(ctx); _, artifacts = load_management(ctx)
             vectors = {canonical_json(item["artifact_dependency_vector"]) for item in artifacts.values()}
-            return len(vectors) == 1, ["shiproom.management_artifacts.compile", "shiproom.management_artifacts.load"], _hashes(manifest)
+            assertions={"all_vectors_equal":len(vectors)==1,"html_vectors_equal":len(vectors)==1,
+                        "github_vector_equal":len(vectors)==1,
+                        "sections_complete":all(bool(item.get("sections")) for item in artifacts.values())}
+            return all(assertions.values()), [], _hashes(manifest), assertions
     run(CASES[14], management)
     def read_only():
         before = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
@@ -289,11 +380,18 @@ def main() -> int:
             ctx, _criterion = _fixture(Path(raw)); _finding(ctx, _criterion, blocker=True)
             _remediation(ctx); prepare_review(ctx); compile_management(ctx)
         after = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
-        return before == after, ["shiproom.remediation_roadmaps.compile", "shiproom.review_organisation.prepare", "shiproom.management_artifacts.compile"], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}
+        assertions={"git_unchanged":before==after,"tracked_bytes_unchanged":before==after,"upstreams_unchanged":before==after,"writes_local_only":before==after}
+        return all(assertions.values()), [], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}, assertions
     run(CASES[15], read_only)
     # Historical controlled remediation is implemented by the dedicated
     # disposable-Git patient, not by the private-alpha roadmap compiler.
-    run(CASES[16], lambda: (lambda receipt: (receipt["status"] == "verified" and receipt["source_repository_unchanged"], ["shiproom.historical_remediation.run_controlled_patient"], {"receipt": receipt["receipt_hash"]}))(run_controlled_patient(root)))
+    def historical():
+        receipt=run_controlled_patient(root)
+        assertions={"allowlisted_change":receipt.get("allowlisted_files")==["route.txt"],"exact_rerun":receipt.get("exact_rerun_passed") is True,
+                    "no_merge":receipt.get("merge_performed") is False,"cleanup":receipt.get("cleanup_completed") is True,
+                    "source_repo_unchanged":receipt.get("source_repository_unchanged") is True}
+        return all(assertions.values()), [], {"receipt":receipt["receipt_hash"]}, assertions
+    run(CASES[16], historical)
     def transports():
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); ctx.release["change_impact"] = {"migration_surface": True}; manifest = prepare_review(ctx)

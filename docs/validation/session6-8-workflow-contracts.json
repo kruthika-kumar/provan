@@ -1,20 +1,1126 @@
-{"schema_version":"session6-8-workflow-contracts.v2","cases":[
-{"case_name":"WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION","fixture_builder":"deterministic_blocker_fixture","preconditions":["deterministic_blocker"],"required_production_functions":["shiproom.remediation_roadmaps.prepare","shiproom.remediation_roadmaps.compile"],"required_assertion_ids":["deterministic_issue_authority","one_packet_one_contract","overlay_projection"],"required_artifacts":["remediation-plan.json","remediation-overlay.json"],"minimum_record_counts":{"remediation_packets":1,"closure_contracts":1,"overlay_nodes":1},"forbidden_substitutions":["catalogue_only"]},
-{"case_name":"WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY","fixture_builder":"unsafe_product_issue_fixture","preconditions":["candidate_issue"],"required_production_functions":["shiproom.remediation_roadmaps.prepare","shiproom.remediation_roadmaps.compile"],"required_assertion_ids":["roadmap_only","no_bounded_fix","no_finding_mutation"],"required_artifacts":["remediation-plan.json"],"minimum_record_counts":{"remediation_packets":1},"forbidden_substitutions":["repository_write"]},
-{"case_name":"WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER","fixture_builder":"model_reviewed_fixture","preconditions":["model_reviewed_issue"],"required_production_functions":["shiproom.remediation_roadmaps.compile"],"required_assertion_ids":["model_authority_preserved","not_verified_blocker","no_deterministic_closure"],"required_artifacts":["remediation-plan.json"],"minimum_record_counts":{"remediation_packets":1},"forbidden_substitutions":["model_as_proof"]},
-{"case_name":"WORKFLOW_EXACT_CLOSURE_RERUN","fixture_builder":"closure_matrix_fixture","preconditions":["closure_contract"],"required_production_functions":["shiproom.remediation_roadmaps.closure_verify"],"required_assertion_ids":["wrong_check_rejected","failed_rerun_unsatisfied","self_verifier_rejected","stale_rejected","independent_rerun_satisfied","finding_unchanged"],"required_artifacts":["closure-contracts"],"minimum_record_counts":{"closure_attempts":5},"forbidden_substitutions":["finding_mutation"]},
-{"case_name":"WORKFLOW_PYTHON_TYPESCRIPT_PLANNING","fixture_builder":"language_pair_fixture","preconditions":["python_fixture","typescript_fixture"],"required_production_functions":["shiproom.review_organisation.prepare"],"required_assertion_ids":["language_signals_differ","plans_differ","work_orders_differ","evidence_differ"],"required_artifacts":["review-plan.json"],"minimum_record_counts":{"plans":2},"forbidden_substitutions":["same_plan"]},
-{"case_name":"WORKFLOW_AI_SURFACE_SELECTION","fixture_builder":"typed_ai_surface_fixture","preconditions":["typed_ai_surface"],"required_production_functions":["shiproom.review_organisation.prepare"],"required_assertion_ids":["ai_selected"],"required_artifacts":["review-plan.json"],"minimum_record_counts":{"selected_specialists":1},"forbidden_substitutions":["not_inspected"]},
-{"case_name":"WORKFLOW_EXPLICIT_BROWSER_SKIP","fixture_builder":"explicit_browser_nonapplicable_fixture","preconditions":["canonical_browser_nonapplicability"],"required_production_functions":["shiproom.review_organisation.prepare"],"required_assertion_ids":["browser_skipped","browser_explicitly_not_applicable"],"required_artifacts":["review-plan.json"],"minimum_record_counts":{"skipped_specialists":1},"forbidden_substitutions":["absence"]},
-{"case_name":"WORKFLOW_MIGRATION_ADAPTATION","fixture_builder":"migration_adaptation_fixture","preconditions":["accepted_migration_result"],"required_production_functions":["shiproom.review_organisation.prepare","shiproom.review_organisation.submit_result","shiproom.review_organisation.adapt"],"required_assertion_ids":["plan_hash_changed","migration_state_changed","new_work_order","prior_preserved","execution_summary_changed"],"required_artifacts":["plan-events.json","review-plan.json"],"minimum_record_counts":{"adaptation_events":1},"forbidden_substitutions":["event_only"]},
-{"case_name":"WORKFLOW_SINGLE_REVISION_SUCCESS","fixture_builder":"revision_success_fixture","preconditions":["selected_native_specialist"],"required_production_functions":["shiproom.review_organisation.submit_result"],"required_assertion_ids":["invalid_first","revision_required","corrected_native_acceptance","attempts_persisted"],"required_artifacts":["revision-ledger.json","accepted-results.json"],"minimum_record_counts":{"submissions":2,"accepted_results":1},"forbidden_substitutions":["unvalidated_correction"]},
-{"case_name":"WORKFLOW_SECOND_REVISION_FAILURE","fixture_builder":"revision_failure_fixture","preconditions":["selected_native_specialist"],"required_production_functions":["shiproom.review_organisation.submit_result","shiproom.review_organisation.adapt"],"required_assertion_ids":["second_failed_closed","attempts_persisted","third_rejected","failed_not_adaptable","plan_usable"],"required_artifacts":["revision-ledger.json"],"minimum_record_counts":{"submissions":2},"forbidden_substitutions":["plan_failure"]},
-{"case_name":"WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE","fixture_builder":"authority_upgrade_fixture","preconditions":["reviewer_prose"],"required_production_functions":["shiproom.review_organisation.submit_result"],"required_assertion_ids":["typed_authority_rejection","canonical_authority_unchanged"],"required_artifacts":["revision-ledger.json"],"minimum_record_counts":{"revision_entries":1},"forbidden_substitutions":["prose_proof"]},
-{"case_name":"WORKFLOW_REMEDIATION_CARDINALITY","fixture_builder":"three_issue_fixture","preconditions":["three_actionable_issues"],"required_production_functions":["shiproom.remediation_roadmaps.prepare","shiproom.remediation_roadmaps.compile","shiproom.remediation_roadmaps.load_generation"],"required_assertion_ids":["three_records","three_packets","three_contracts","three_projections","bidirectional_unique_links"],"required_artifacts":["remediation-plan.json","remediation-overlay.json"],"minimum_record_counts":{"remediation_packets":3,"closure_contracts":3,"overlay_nodes":3},"forbidden_substitutions":["one_issue_fixture"]},
-{"case_name":"WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL","fixture_builder":"evidence_bound_dispute_fixture","preconditions":["accepted_counter_evidence"],"required_production_functions":["shiproom.contestability.append_action","shiproom.contestability.load"],"required_assertion_ids":["original_preserved","counter_evidence_visible"],"required_artifacts":["contestation-ledger.json"],"minimum_record_counts":{"actions":1},"forbidden_substitutions":["metadata_only"]},
-{"case_name":"WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY","fixture_builder":"owner_risk_fixture","preconditions":["release_bound_owner_authority"],"required_production_functions":["shiproom.contestability.append_action","shiproom.contestability.load"],"required_assertion_ids":["decision_effect","finding_unchanged","evidence_unchanged","blocker_unchanged"],"required_artifacts":["contestation-effects.json"],"minimum_record_counts":{"named_risk_effects":1},"forbidden_substitutions":["finding_closure"]},
-{"case_name":"WORKFLOW_PERSONA_GENERATION_BINDING","fixture_builder":"management_generation_fixture","preconditions":["consumed_dependencies"],"required_production_functions":["shiproom.management_artifacts.compile","shiproom.management_artifacts.load"],"required_assertion_ids":["all_vectors_equal","html_vectors_equal","github_vector_equal","sections_complete"],"required_artifacts":["release-packet-index.json","github-summary-payload.json","github-summary.md"],"minimum_record_counts":{"persona_artifacts":6},"forbidden_substitutions":["mixed_vector"]},
-{"case_name":"WORKFLOW_PRIVATE_ALPHA_READ_ONLY","fixture_builder":"read_only_snapshot_fixture","preconditions":["private_alpha"],"required_production_functions":["shiproom.remediation_roadmaps.compile","shiproom.review_organisation.prepare","shiproom.management_artifacts.compile"],"required_assertion_ids":["git_unchanged","tracked_bytes_unchanged","upstreams_unchanged","writes_local_only"],"required_artifacts":["remediation-plan.json","review-plan.json"],"minimum_record_counts":{"snapshots":2},"forbidden_substitutions":["metadata_only"]},
-{"case_name":"WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION","fixture_builder":"historical_controlled_patient_fixture","preconditions":["disposable_git_repository"],"required_production_functions":["shiproom.historical_remediation.run_controlled_patient"],"required_assertion_ids":["allowlisted_change","exact_rerun","no_merge","cleanup","source_repo_unchanged"],"required_artifacts":["historical-remediation-receipt.json"],"minimum_record_counts":{"changed_files":1},"forbidden_substitutions":["roadmap_substitute"]},
-{"case_name":"WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY","fixture_builder":"manual_codex_pair_fixture","preconditions":["manual_submission","codex_package_submission"],"required_production_functions":["shiproom.review_organisation.render_package","shiproom.review_organisation.submit_result"],"required_assertion_ids":["package_rendered","manual_submitted","codex_submitted","same_native_validator","semantic_identity_equal","transport_distinct"],"required_artifacts":["accepted-results.json"],"minimum_record_counts":{"accepted_results":2},"forbidden_substitutions":["render_only"]}
-]}
+{
+  "cases": [
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "assertion_id": "deterministic_issue_authority",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/deterministic_issue_authority",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "assertion_id": "one_packet_one_contract",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/one_packet_one_contract",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "assertion_id": "overlay_projection",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/overlay_projection",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION",
+      "fixture_builder": "deterministic_blocker_fixture",
+      "forbidden_substitutions": [
+        "catalogue_only"
+      ],
+      "minimum_record_counts": {
+        "closure_contracts": 1,
+        "overlay_nodes": 1,
+        "remediation_packets": 1
+      },
+      "preconditions": [
+        "deterministic_blocker"
+      ],
+      "required_artifacts": [
+        "remediation-plan.json",
+        "remediation-overlay.json"
+      ],
+      "required_assertion_ids": [
+        "deterministic_issue_authority",
+        "one_packet_one_contract",
+        "overlay_projection"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.prepare",
+        "shiproom.remediation_roadmaps.compile"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "assertion_id": "roadmap_only",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/roadmap_only",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "assertion_id": "no_bounded_fix",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/no_bounded_fix",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "assertion_id": "no_finding_mutation",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/no_finding_mutation",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY",
+      "fixture_builder": "unsafe_product_issue_fixture",
+      "forbidden_substitutions": [
+        "repository_write"
+      ],
+      "minimum_record_counts": {
+        "remediation_packets": 1
+      },
+      "preconditions": [
+        "candidate_issue"
+      ],
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "required_assertion_ids": [
+        "roadmap_only",
+        "no_bounded_fix",
+        "no_finding_mutation"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.prepare",
+        "shiproom.remediation_roadmaps.compile"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "assertion_id": "model_authority_preserved",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/model_authority_preserved",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "assertion_id": "not_verified_blocker",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/not_verified_blocker",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "assertion_id": "no_deterministic_closure",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/no_deterministic_closure",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER",
+      "fixture_builder": "model_reviewed_fixture",
+      "forbidden_substitutions": [
+        "model_as_proof"
+      ],
+      "minimum_record_counts": {
+        "remediation_packets": 1
+      },
+      "preconditions": [
+        "model_reviewed_issue"
+      ],
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "required_assertion_ids": [
+        "model_authority_preserved",
+        "not_verified_blocker",
+        "no_deterministic_closure"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.compile"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "wrong_check_rejected",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/wrong_check_rejected",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "failed_rerun_unsatisfied",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/failed_rerun_unsatisfied",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "self_verifier_rejected",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/self_verifier_rejected",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "stale_rejected",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/stale_rejected",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "independent_rerun_satisfied",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/independent_rerun_satisfied",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "assertion_id": "finding_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/finding_unchanged",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_EXACT_CLOSURE_RERUN",
+      "fixture_builder": "closure_matrix_fixture",
+      "forbidden_substitutions": [
+        "finding_mutation"
+      ],
+      "minimum_record_counts": {
+        "closure_attempts": 5
+      },
+      "preconditions": [
+        "closure_contract"
+      ],
+      "required_artifacts": [
+        "closure-contracts"
+      ],
+      "required_assertion_ids": [
+        "wrong_check_rejected",
+        "failed_rerun_unsatisfied",
+        "self_verifier_rejected",
+        "stale_rejected",
+        "independent_rerun_satisfied",
+        "finding_unchanged"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.closure_verify"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "assertion_id": "language_signals_differ",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/language_signals_differ",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "assertion_id": "plans_differ",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/plans_differ",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "assertion_id": "work_orders_differ",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/work_orders_differ",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "assertion_id": "evidence_differ",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/evidence_differ",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_PYTHON_TYPESCRIPT_PLANNING",
+      "fixture_builder": "language_pair_fixture",
+      "forbidden_substitutions": [
+        "same_plan"
+      ],
+      "minimum_record_counts": {
+        "plans": 2
+      },
+      "preconditions": [
+        "python_fixture",
+        "typescript_fixture"
+      ],
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "required_assertion_ids": [
+        "language_signals_differ",
+        "plans_differ",
+        "work_orders_differ",
+        "evidence_differ"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.prepare"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION.json",
+          "assertion_id": "ai_selected",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/ai_selected",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_AI_SURFACE_SELECTION",
+      "fixture_builder": "typed_ai_surface_fixture",
+      "forbidden_substitutions": [
+        "not_inspected"
+      ],
+      "minimum_record_counts": {
+        "selected_specialists": 1
+      },
+      "preconditions": [
+        "typed_ai_surface"
+      ],
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "required_assertion_ids": [
+        "ai_selected"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.prepare"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP.json",
+          "assertion_id": "browser_skipped",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/browser_skipped",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP.json",
+          "assertion_id": "browser_explicitly_not_applicable",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/browser_explicitly_not_applicable",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_EXPLICIT_BROWSER_SKIP",
+      "fixture_builder": "explicit_browser_nonapplicable_fixture",
+      "forbidden_substitutions": [
+        "absence"
+      ],
+      "minimum_record_counts": {
+        "skipped_specialists": 1
+      },
+      "preconditions": [
+        "canonical_browser_nonapplicability"
+      ],
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "required_assertion_ids": [
+        "browser_skipped",
+        "browser_explicitly_not_applicable"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.prepare"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "assertion_id": "plan_hash_changed",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/plan_hash_changed",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "assertion_id": "migration_state_changed",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/migration_state_changed",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "assertion_id": "new_work_order",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/new_work_order",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "assertion_id": "prior_preserved",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/prior_preserved",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "assertion_id": "execution_summary_changed",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/execution_summary_changed",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_MIGRATION_ADAPTATION",
+      "fixture_builder": "migration_adaptation_fixture",
+      "forbidden_substitutions": [
+        "event_only"
+      ],
+      "minimum_record_counts": {
+        "adaptation_events": 1
+      },
+      "preconditions": [
+        "accepted_migration_result"
+      ],
+      "required_artifacts": [
+        "plan-events.json",
+        "review-plan.json"
+      ],
+      "required_assertion_ids": [
+        "plan_hash_changed",
+        "migration_state_changed",
+        "new_work_order",
+        "prior_preserved",
+        "execution_summary_changed"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.prepare",
+        "shiproom.review_organisation.submit_result",
+        "shiproom.review_organisation.adapt"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "assertion_id": "invalid_first",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/invalid_first",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "assertion_id": "revision_required",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/revision_required",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "assertion_id": "corrected_native_acceptance",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/corrected_native_acceptance",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "assertion_id": "attempts_persisted",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/attempts_persisted",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_SINGLE_REVISION_SUCCESS",
+      "fixture_builder": "revision_success_fixture",
+      "forbidden_substitutions": [
+        "unvalidated_correction"
+      ],
+      "minimum_record_counts": {
+        "accepted_results": 1,
+        "submissions": 2
+      },
+      "preconditions": [
+        "selected_native_specialist"
+      ],
+      "required_artifacts": [
+        "revision-ledger.json",
+        "accepted-results.json"
+      ],
+      "required_assertion_ids": [
+        "invalid_first",
+        "revision_required",
+        "corrected_native_acceptance",
+        "attempts_persisted"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.submit_result"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "assertion_id": "second_failed_closed",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/second_failed_closed",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "assertion_id": "attempts_persisted",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/attempts_persisted",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "assertion_id": "third_rejected",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/third_rejected",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "assertion_id": "failed_not_adaptable",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/failed_not_adaptable",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "assertion_id": "plan_usable",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/plan_usable",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_SECOND_REVISION_FAILURE",
+      "fixture_builder": "revision_failure_fixture",
+      "forbidden_substitutions": [
+        "plan_failure"
+      ],
+      "minimum_record_counts": {
+        "submissions": 2
+      },
+      "preconditions": [
+        "selected_native_specialist"
+      ],
+      "required_artifacts": [
+        "revision-ledger.json"
+      ],
+      "required_assertion_ids": [
+        "second_failed_closed",
+        "attempts_persisted",
+        "third_rejected",
+        "failed_not_adaptable",
+        "plan_usable"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.submit_result",
+        "shiproom.review_organisation.adapt"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE.json",
+          "assertion_id": "typed_authority_rejection",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/typed_authority_rejection",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE.json",
+          "assertion_id": "canonical_authority_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/canonical_authority_unchanged",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE",
+      "fixture_builder": "authority_upgrade_fixture",
+      "forbidden_substitutions": [
+        "prose_proof"
+      ],
+      "minimum_record_counts": {
+        "revision_entries": 1
+      },
+      "preconditions": [
+        "reviewer_prose"
+      ],
+      "required_artifacts": [
+        "revision-ledger.json"
+      ],
+      "required_assertion_ids": [
+        "typed_authority_rejection",
+        "canonical_authority_unchanged"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.submit_result"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "assertion_id": "three_records",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/three_records",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "assertion_id": "three_packets",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/three_packets",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "assertion_id": "three_contracts",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/three_contracts",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "assertion_id": "three_projections",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/three_projections",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "assertion_id": "bidirectional_unique_links",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/bidirectional_unique_links",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_REMEDIATION_CARDINALITY",
+      "fixture_builder": "three_issue_fixture",
+      "forbidden_substitutions": [
+        "one_issue_fixture"
+      ],
+      "minimum_record_counts": {
+        "closure_contracts": 3,
+        "overlay_nodes": 3,
+        "remediation_packets": 3
+      },
+      "preconditions": [
+        "three_actionable_issues"
+      ],
+      "required_artifacts": [
+        "remediation-plan.json",
+        "remediation-overlay.json"
+      ],
+      "required_assertion_ids": [
+        "three_records",
+        "three_packets",
+        "three_contracts",
+        "three_projections",
+        "bidirectional_unique_links"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.prepare",
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.remediation_roadmaps.load_generation"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL.json",
+          "assertion_id": "original_preserved",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/original_preserved",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL.json",
+          "assertion_id": "counter_evidence_visible",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/counter_evidence_visible",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL",
+      "fixture_builder": "evidence_bound_dispute_fixture",
+      "forbidden_substitutions": [
+        "metadata_only"
+      ],
+      "minimum_record_counts": {
+        "actions": 1
+      },
+      "preconditions": [
+        "accepted_counter_evidence"
+      ],
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "required_assertion_ids": [
+        "original_preserved",
+        "counter_evidence_visible"
+      ],
+      "required_production_functions": [
+        "shiproom.contestability.append_action",
+        "shiproom.contestability.load"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "assertion_id": "decision_effect",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/decision_effect",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "assertion_id": "finding_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/finding_unchanged",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "assertion_id": "evidence_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/evidence_unchanged",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "assertion_id": "blocker_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/blocker_unchanged",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY",
+      "fixture_builder": "owner_risk_fixture",
+      "forbidden_substitutions": [
+        "finding_closure"
+      ],
+      "minimum_record_counts": {
+        "named_risk_effects": 1
+      },
+      "preconditions": [
+        "release_bound_owner_authority"
+      ],
+      "required_artifacts": [
+        "contestation-effects.json"
+      ],
+      "required_assertion_ids": [
+        "decision_effect",
+        "finding_unchanged",
+        "evidence_unchanged",
+        "blocker_unchanged"
+      ],
+      "required_production_functions": [
+        "shiproom.contestability.append_action",
+        "shiproom.contestability.load"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "assertion_id": "all_vectors_equal",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/all_vectors_equal",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "assertion_id": "html_vectors_equal",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/html_vectors_equal",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "assertion_id": "github_vector_equal",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/github_vector_equal",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "assertion_id": "sections_complete",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/sections_complete",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_PERSONA_GENERATION_BINDING",
+      "fixture_builder": "management_generation_fixture",
+      "forbidden_substitutions": [
+        "mixed_vector"
+      ],
+      "minimum_record_counts": {
+        "persona_artifacts": 6
+      },
+      "preconditions": [
+        "consumed_dependencies"
+      ],
+      "required_artifacts": [
+        "release-packet-index.json",
+        "github-summary-payload.json",
+        "github-summary.md"
+      ],
+      "required_assertion_ids": [
+        "all_vectors_equal",
+        "html_vectors_equal",
+        "github_vector_equal",
+        "sections_complete"
+      ],
+      "required_production_functions": [
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.management_artifacts.compiler.load"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "assertion_id": "git_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/git_unchanged",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "assertion_id": "tracked_bytes_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/tracked_bytes_unchanged",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "assertion_id": "upstreams_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/upstreams_unchanged",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "assertion_id": "writes_local_only",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/writes_local_only",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_PRIVATE_ALPHA_READ_ONLY",
+      "fixture_builder": "read_only_snapshot_fixture",
+      "forbidden_substitutions": [
+        "metadata_only"
+      ],
+      "minimum_record_counts": {
+        "snapshots": 2
+      },
+      "preconditions": [
+        "private_alpha"
+      ],
+      "required_artifacts": [
+        "remediation-plan.json",
+        "review-plan.json"
+      ],
+      "required_assertion_ids": [
+        "git_unchanged",
+        "tracked_bytes_unchanged",
+        "upstreams_unchanged",
+        "writes_local_only"
+      ],
+      "required_production_functions": [
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.review_organisation.prepare",
+        "shiproom.management_artifacts.compiler.compile"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "assertion_id": "allowlisted_change",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/allowlisted_change",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "assertion_id": "exact_rerun",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/exact_rerun",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "assertion_id": "no_merge",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/no_merge",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "assertion_id": "cleanup",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/cleanup",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "assertion_id": "source_repo_unchanged",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/source_repo_unchanged",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION",
+      "fixture_builder": "historical_controlled_patient_fixture",
+      "forbidden_substitutions": [
+        "roadmap_substitute"
+      ],
+      "minimum_record_counts": {
+        "changed_files": 1
+      },
+      "preconditions": [
+        "disposable_git_repository"
+      ],
+      "required_artifacts": [
+        "historical-remediation-receipt.json"
+      ],
+      "required_assertion_ids": [
+        "allowlisted_change",
+        "exact_rerun",
+        "no_merge",
+        "cleanup",
+        "source_repo_unchanged"
+      ],
+      "required_production_functions": [
+        "shiproom.historical_remediation.run_controlled_patient"
+      ]
+    },
+    {
+      "assertions": [
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "package_rendered",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/package_rendered",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "manual_submitted",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/manual_submitted",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "codex_submitted",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/codex_submitted",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "same_native_validator",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/same_native_validator",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "semantic_identity_equal",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/semantic_identity_equal",
+          "named_assertion_function": null
+        },
+        {
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "assertion_id": "transport_distinct",
+          "assertion_type": "artifact_pointer",
+          "comparator": "equals",
+          "expected_value": true,
+          "json_pointer": "/assertions/transport_distinct",
+          "named_assertion_function": null
+        }
+      ],
+      "case_name": "WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY",
+      "fixture_builder": "manual_codex_pair_fixture",
+      "forbidden_substitutions": [
+        "render_only"
+      ],
+      "minimum_record_counts": {
+        "accepted_results": 2
+      },
+      "preconditions": [
+        "manual_submission",
+        "codex_package_submission"
+      ],
+      "required_artifacts": [
+        "accepted-results.json"
+      ],
+      "required_assertion_ids": [
+        "package_rendered",
+        "manual_submitted",
+        "codex_submitted",
+        "same_native_validator",
+        "semantic_identity_equal",
+        "transport_distinct"
+      ],
+      "required_production_functions": [
+        "shiproom.review_organisation.render_package",
+        "shiproom.review_organisation.submit_result"
+      ]
+    }
+  ],
+  "schema_version": "session6-8-workflow-contracts.v2"
+}

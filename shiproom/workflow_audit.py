@@ -52,19 +52,28 @@ def session(root: Path, workflow_case: str) -> Iterator[list[dict[str, Any]]]:
         _ACTIVE.reset(token)
 
 
-def invoke(production_function: str, callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | None = None, **kwargs: Any) -> T:
+def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | None = None, **kwargs: Any) -> T:
+    """Invoke a real callable and derive its identity from the callable itself.
+
+    Harness code cannot supply an asserted function name.  This prevents a
+    workflow from claiming coverage for a boundary it never invoked.
+    """
     state = _ACTIVE.get()
     if state is None:
         return callable_(*args, **kwargs)
+    module = getattr(callable_, "__module__", None)
+    qualified = getattr(callable_, "__qualname__", None)
+    if not isinstance(module, str) or not module or not isinstance(qualified, str) or not qualified:
+        raise ValueError("workflow_audit_callable_identity_invalid")
     invocation_id = "inv_" + uuid.uuid4().hex
     record: dict[str, Any] = {
         "invocation_id": invocation_id,
         "workflow_case": state["workflow_case"],
-        "production_function": production_function,
+        "module": module,
+        "qualified_function": module + "." + qualified,
         "input_semantic_hash": _hash({"args": args, "kwargs": kwargs}),
-        "started": time.time_ns(),
-        "completed": None,
-        "outcome": None,
+        "output_semantic_hash": None,
+        "exception_type": None,
         "typed_status_or_error": None,
         "generated_artifact_paths": list(artifact_paths or []),
         "generated_artifact_hashes": {},
@@ -76,11 +85,11 @@ def invoke(production_function: str, callable_: Callable[..., T], *args: Any, ar
     try:
         value = callable_(*args, **kwargs)
     except Exception as exc:
-        record["outcome"] = "rejected"
+        record["exception_type"] = type(exc).__name__
         record["typed_status_or_error"] = str(exc)
         raise
     else:
-        record["outcome"] = "accepted"
+        record["output_semantic_hash"] = _hash(value)
         record["typed_status_or_error"] = value.get("status") if isinstance(value, dict) else "ok"
         for path in artifact_paths or []:
             candidate = Path(path)
@@ -88,7 +97,6 @@ def invoke(production_function: str, callable_: Callable[..., T], *args: Any, ar
                 record["generated_artifact_hashes"][path] = "sha256:" + hashlib.sha256(candidate.read_bytes()).hexdigest()
         return value
     finally:
-        record["completed"] = time.time_ns()
         state["stack"].pop()
 
 

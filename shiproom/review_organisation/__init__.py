@@ -248,18 +248,37 @@ def _vector(ctx:LocalExecutionContext)->dict:
     graph=load_assessment_input(ctx); nodes=graph["graph_artifacts"]["requirement-evidence-graph.json"].get("nodes",[])
     paths=sorted({node.get("path") for node in nodes if isinstance(node.get("path"),str)})
     languages={"python":any(path.endswith(".py") for path in paths),"typescript":any(path.endswith((".ts",".tsx")) for path in paths)}
+    declared_languages=ctx.release.get("review_language_signals")
+    if declared_languages is not None:
+        if not isinstance(declared_languages,dict) or set(declared_languages)!={"python","typescript"} or any(not isinstance(value,bool) for value in declared_languages.values()):
+            raise ValueError("review_language_signals_invalid")
+        languages=dict(declared_languages)
     criteria=graph["intent_artifacts"]["acceptance-criteria.json"].get("criteria",[])
     categories = {category for item in criteria for category in item.get("required_evidence_categories", [])}
     browser="browser_or_http" in categories
+    declared_review = ctx.release.get("review_applicability", {})
+    if declared_review and (not isinstance(declared_review, dict) or set(declared_review) - {"browser_journey"} or declared_review.get("browser_journey") != "not_applicable"):
+        raise ValueError("review_applicability_declaration_invalid")
+    browser_authority = "explicitly_not_applicable" if declared_review.get("browser_journey") == "not_applicable" else "confirmed_surface" if browser else "not_inspected"
     # A filename-like hint is a candidate surface only. It cannot establish selection.
     ai_candidates=[path for path in paths if "ai" in path.lower() or "prompt" in path.lower()]
+    ai_native=None
+    try:
+        from shiproom.measurement_ai.preparation import load_preparation as load_measurement_ai_preparation
+        current_measurement_ai=load_measurement_ai_preparation(ctx)
+        ai_work=current_measurement_ai["work_orders"].get("ai_evaluation")
+        if ai_work is not None:
+            ai_native={"preparation_id":current_measurement_ai["manifest"]["preparation_id"],"semantic_hash":current_measurement_ai["manifest"]["preparation_semantic_hash"],"work_order_id":ai_work["work_order_id"]}
+    except ValueError as exc:
+        if str(exc)!="active measurement AI preparation unavailable":
+            raise
     migration_candidates=[path for path in paths if "migration" in path.lower()]
     change_impact = ctx.release.get("change_impact", {})
     migration_confirmed = bool(change_impact.get("migration_surface"))
     harness = {"schema_version":"agent-harness-capability-manifest.v1","execution_mode":"manual_external","declared_capability":"prepared_packet_only","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}
     validate_harness_capability_manifest(harness)
     typed_refs = lambda category: [{"source_domain":"product_intent", "source_generation":graph["graph_generation"], "record_id":item["criterion_id"], "criterion_id":item["criterion_id"], "authority":"source_verified", "semantic_hash":graph["intent_manifest"]["semantic_bundle_hash"]} for item in criteria if category in item.get("required_evidence_categories", [])]
-    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":"confirmed_surface" if browser else "not_inspected","criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])],"evidence_refs":typed_refs("browser_or_http")},"language_framework_signals":languages,"test_signal":{"authority":"confirmed_surface" if "test" in categories else "not_inspected", "evidence_refs":typed_refs("test")},"instrumentation_signal":{"authority":"confirmed_surface" if "instrumentation" in categories else "not_inspected", "evidence_refs":typed_refs("instrumentation")},"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"evidence_refs":[{"source_domain":"release", "source_generation":"release_state", "record_id":"change_impact", "criterion_id":None, "authority":"source_verified" if migration_confirmed else "model_mapped_candidate", "semantic_hash":content_hash(change_impact)}] if (migration_confirmed or migration_candidates) else [],"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates,"evidence_refs":[{"source_domain":"graph", "source_generation":graph["graph_generation"], "record_id":path, "criterion_id":None, "authority":"model_mapped_candidate", "semantic_hash":graph["graph_manifest"]["semantic_bundle_hash"]} for path in ai_candidates]},"harness":harness}
+    return {"schema_version":"review-plan-input-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",graph["graph_generation"],graph["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",graph["graph_generation"],graph["graph_manifest"]["semantic_bundle_hash"]),"assessment":_dep("not_used"),"measurement_ai":_dep("not_used"),"remediation":_dep("not_used"),"browser_applicability":{"authority":browser_authority,"criterion_ids":[item["criterion_id"] for item in criteria if "browser_or_http" in item.get("required_evidence_categories",[])],"evidence_refs":typed_refs("browser_or_http")},"language_framework_signals":languages,"test_signal":{"authority":"confirmed_surface" if "test" in categories else "not_inspected", "evidence_refs":typed_refs("test")},"instrumentation_signal":{"authority":"confirmed_surface" if "instrumentation" in categories else "not_inspected", "evidence_refs":typed_refs("instrumentation")},"migration_signal":{"authority":"confirmed_surface" if migration_confirmed else "candidate_surface" if migration_candidates else "not_inspected","evidence_paths":migration_candidates,"evidence_refs":[{"source_domain":"release", "source_generation":"release_state", "record_id":"change_impact", "criterion_id":None, "authority":"source_verified" if migration_confirmed else "model_mapped_candidate", "semantic_hash":content_hash(change_impact)}] if (migration_confirmed or migration_candidates) else [],"change_impact_binding":"release_change_impact" if migration_confirmed else None},"ai_surface_signal":{"authority":"confirmed_surface" if ai_native else "candidate_surface" if ai_candidates else "not_inspected","evidence_paths":ai_candidates,"evidence_refs":[{"source_domain":"measurement_ai", "source_generation":ai_native["preparation_id"], "record_id":ai_native["work_order_id"], "criterion_id":None, "authority":"deterministically_established", "semantic_hash":ai_native["semantic_hash"]}] if ai_native else [{"source_domain":"graph", "source_generation":graph["graph_generation"], "record_id":path, "criterion_id":None, "authority":"model_mapped_candidate", "semantic_hash":graph["graph_manifest"]["semantic_bundle_hash"]} for path in ai_candidates]},"harness":harness}
 
 
 def _native_preparation(ctx: LocalExecutionContext, specialist_id: str) -> tuple[dict | None, str | None]:
@@ -334,7 +353,7 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
         "python_source": vector["language_framework_signals"]["python"],
         "typescript_source": vector["language_framework_signals"]["typescript"],
         "browser_requirement": vector["browser_applicability"]["authority"] == "confirmed_surface",
-        "ai_keyword_candidate": vector["ai_surface_signal"]["authority"] == "candidate_surface",
+        "ai_keyword_candidate": vector["ai_surface_signal"]["authority"] in {"candidate_surface", "confirmed_surface"},
         "migration_keyword_candidate": vector["migration_signal"]["authority"] in {"candidate_surface", "confirmed_surface"},
         # Product Intent's fixed evidence taxonomy is the only canonical
         # source for these specialist surfaces; implementation omissions do
@@ -361,6 +380,8 @@ def _selection(ctx: LocalExecutionContext | dict, vector:dict | None = None)->li
         if rule is not None:
             signal_active = active_signals.get(rule["signal_type"], False)
             authority = rule["maximum_applicability_authority"] if signal_active else "not_inspected"
+            if sid == "ai_evaluation" and signal_active:
+                authority = vector["ai_surface_signal"]["authority"]
             selected = signal_active and rule["permitted_selection_effect"] in {"select", "candidate_review"}
             reasons = [rule["signal_type"] if signal_active else "no_registered_surface_signal"]
             if sid == "browser_journey" and vector["browser_applicability"]["authority"] == "explicitly_not_applicable":

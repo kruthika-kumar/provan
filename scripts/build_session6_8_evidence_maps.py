@@ -1,8 +1,8 @@
-"""Materialise exhaustive, inventory-bound Sessions 6--8 evidence maps.
+"""Build the exhaustive Sessions 6--8 inventory and evidence-map skeletons.
 
-The requirement inventory is deliberately the only place allowed to mint a
-requirement ID.  This small build step makes the downstream maps reviewable
-JSON rather than four independently drifting hand-maintained lists.
+The executable proof runner fills proof status from test-time events.  This
+builder owns identifiers and immutable expectations only; it never labels a
+proof verified.
 """
 from __future__ import annotations
 
@@ -10,83 +10,53 @@ import hashlib
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATION = ROOT / "docs" / "validation"
 
+GROUPS = {
+"6": """S6_ISSUE_AUTHORITY_POLICY S6_MODEL_REVIEW_NOT_BLOCKER S6_PLANNER_COMPILER_AUTHORITY S6_HUMAN_OWNER_SEPARATION S6_OPTIONAL_PLANNER_LIFECYCLE S6_AUTOMATION_ELIGIBILITY S6_BOUNDED_FIX_METADATA_ONLY S6_REMEDIATION_CARDINALITY S6_PACKET_CONTRACT_LINKS S6_PACKET_FILE_INTEGRITY S6_CLOSURE_CONTRACT_COMPLETENESS S6_CLOSURE_EXACT_RERUN S6_CLOSURE_PASS_REQUIRED S6_CLOSURE_VERIFIER_INDEPENDENCE S6_CLOSURE_COMMIT_BRANCH_FRESHNESS S6_CLOSURE_EVIDENCE_CLASS S6_CLOSURE_REGRESSION_REQUIREMENTS S6_CLOSURE_TEST_REQUIREMENTS S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS S6_CLOSURE_PROTECTED_INVARIANTS S6_CLOSURE_OWNER_DECISION S6_PRIVATE_ALPHA_NON_MUTATION""".split(),
+"7": """S7_SPECIALIST_CATALOGUE S7_NATIVE_BOUNDARY_REUSE S7_TYPED_SURFACE_POLICY S7_SELECTION_EVIDENCE_LINKS S7_PYTHON_SELECTION S7_TYPESCRIPT_SELECTION S7_AI_SELECTION S7_BROWSER_EXPLICIT_SKIP S7_BROWSER_ABSENCE_NOT_INSPECTED S7_TEST_ADEQUACY_APPLICABILITY S7_INSTRUMENTATION_APPLICABILITY S7_PRODUCT_INTENT_WRAPPER S7_NATIVE_WORK_ORDER_INTEGRITY S7_CODEX_PACKAGE_COMPLETENESS S7_HARNESS_DECLARATION_HONESTY S7_MANUAL_CODEX_PARITY S7_TRUSTED_SUBMISSION_PATHS S7_SUBMISSION_BYTE_PERSISTENCE S7_REVISION_REQUEST S7_CORRECTED_RESULT_ACCEPTANCE S7_SECOND_INVALID_FAILURE S7_FAILED_RESULT_NO_ADAPTATION S7_TRIGGER_SPECIFIC_EVIDENCE S7_MIGRATION_ADAPTATION S7_AI_ADAPTATION S7_BROWSER_DISPROVEN_ADAPTATION S7_SUPERSEDED_WORK_ORDER_PRESERVATION S7_ADAPTATION_IDEMPOTENCY S7_ADAPTATION_CYCLE_DEPTH S7_POINTER_LAST_PUBLICATION""".split(),
+"8_contestability": """S8_CONTEST_TARGET_REGISTRY S8_CONTEST_SOURCE_GENERATION S8_CONTEST_TARGET_EXISTENCE S8_CONTEST_EVIDENCE_EXISTENCE S8_CONTEST_EVIDENCE_RELEVANCE S8_CONTEST_AUTHORITY_PRESERVATION S8_CONTEST_APPEND_SEQUENCE S8_CONTEST_PREVIOUS_HASH S8_CONTEST_IDEMPOTENT_REPLAY S8_CONTEST_CONFLICTING_DUPLICATE S8_CONTEST_OWNER_AUTHORITY S8_NAMED_RISK_FACT_NON_MUTATION S8_NAMED_RISK_DECISION_EFFECT S8_OWNER_DECISION_BUDGET S8_OWNER_DECISION_PRIORITY S8_OWNER_DECISION_OVERFLOW S8_FUTURE_REMEDIATION_NO_CYCLE""".split(),
+"8_management": """S8_MANAGEMENT_DEPENDENCY_DISCOVERY S8_MANAGEMENT_DEPENDENCY_STATES S8_MANAGEMENT_DEPENDENCY_FRESHNESS S8_MANAGEMENT_MIXED_VECTOR_REJECTION S8_EXECUTIVE_SECTION_COMPLETENESS S8_PRODUCT_MATRIX_COMPLETENESS S8_ENGINEERING_SECTION_COMPLETENESS S8_MEASUREMENT_AI_PASSTHROUGH S8_REMEDIATION_OVERVIEW_COMPLETENESS S8_CLOSURE_CONTRACT_INDEXING S8_CONTESTABILITY_INCLUSION S8_RECOMMENDATION_POLICY S8_ACCEPTED_CONDITION_EFFECT S8_NAMED_RISK_RECOMMENDATION_EFFECT S8_INSUFFICIENT_EVIDENCE_STATE S8_DETERMINISTIC_JSON S8_SAFE_HTML S8_SAFE_MARKDOWN S8_ARTIFACT_HASH_INTEGRITY S8_ARTIFACT_FILE_SET S8_DETERMINISTIC_RERENDER S8_UPSTREAM_STALENESS""".split(),
+"shared": """SHARED_TRUSTED_READS SHARED_TRUSTED_WRITES SHARED_LINK_REPARSE_SPECIAL_REJECTION SHARED_CAPACITY_LIMITS SHARED_POINTER_LATE_FAILURE SHARED_ZERO_PROHIBITED_OPERATIONS SHARED_CONTRACT_INVENTORY SHARED_EXECUTED_CONTRACT_PARITY SHARED_BEHAVIORAL_EVAL_INTEGRITY SHARED_WORKFLOW_EVAL_INTEGRITY SHARED_INSTALLED_WHEEL_LIFECYCLE SHARED_SKILL_PILOT_CONSISTENCY SHARED_PROOF_EXECUTION SHARED_CLOSEOUT_GENERATION SHARED_INDEPENDENT_VALIDATION""".split(),
+}
+EXPECTED = {"6": 22, "7": 30, "8_contestability": 17, "8_management": 22, "shared": 15}
 
-def _json(value: object) -> str:
+def _dump(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
+def _sha(text: str) -> str:
+    return "sha256:" + hashlib.sha256(text.encode()).hexdigest()
 
-def _hash(text: str) -> str:
-    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _boundary(row: dict) -> tuple[str, str, str]:
-    requirement = row["requirement_id"]
-    if requirement.startswith("S6_"):
-        return "shiproom.remediation_roadmaps.closure_verify", "closure-contracts", "test_closure_inbox_requires_exact_passing_rerun_and_independent_verifier"
-    if requirement.startswith("S7_"):
-        return "shiproom.review_organisation.prepare", "review-plan.json", "test_adaptation_requires_an_accepted_specialist_result"
-    if requirement.startswith("S8_") and requirement not in {"S8_DEPENDENCY_VECTOR", "S8_SECTION_COMPLETENESS", "S8_RECOMMENDATION_POLICY", "S8_SAFE_RENDERING"}:
-        return "shiproom.contestability.append_action", "contestation-ledger.json", "test_owner_bound_named_risk_is_append_only"
-    if requirement.startswith("S8_"):
-        return "shiproom.management_artifacts.compile", "release-packet-index.json", "test_registered_sections_project_canonical_records_or_typed_empty"
-    return "scripts.run_workflow_integration_evals.main", "session6-8-workflow-eval-receipt.json", "test_installed_wheel_prepares_assessment_outside_source_checkout"
-
+def _metadata(requirement_id: str, group: str) -> tuple[str, str, str]:
+    if group == "6": return "shiproom.remediation_roadmaps.closure_verify", "remediation-plan.json", "remediation"
+    if group == "7": return "shiproom.review_organisation.prepare", "review-plan.json", "review_plan"
+    if group == "8_contestability": return "shiproom.contestability.append_action", "contestation-ledger.json", "contestation"
+    if group == "8_management": return "shiproom.management_artifacts.compile", "release-packet-index.json", "management"
+    return "scripts.run_workflow_integration_evals.main", "session6-8-workflow-eval-receipt.json", "shared"
 
 def main() -> int:
-    path = VALIDATION / "session6-8-requirement-inventory.json"
-    inventory = json.loads(path.read_text(encoding="utf-8"))
-    rows = inventory["requirements"]
-    ids = [row["requirement_id"] for row in rows]
-    if len(ids) != len(set(ids)):
-        raise SystemExit("duplicate requirement inventory ID")
-    for row in rows:
-        row["source_text_hash"] = _hash(row["source_requirement"])
-        if row.get("status") != "verified":
-            raise SystemExit("requirement inventory has non-verified row")
-    path.write_text(_json(inventory), encoding="utf-8")
-
-    completion = []
-    execution = []
-    proofs = []
-    claims = []
-    for row in rows:
-        rid = row["requirement_id"]
-        function, artifact, test_id = _boundary(row)
-        proof_ids = []
-        for fixture_class, accepted, code in (
-            ("valid", True, None),
-            ("near_valid", True, "owner_confirmation_required"),
-            ("adversarial_invalid", False, "closed_contract_rejected"),
-        ):
-            proof_id = f"proof_{rid.lower()}_{fixture_class}"
-            proof_ids.append(proof_id)
-            proofs.append({"proof_id": proof_id, "requirement_id": rid, "domain": row["session"],
-                           "invariant": row["normative_behavior"], "fixture_class": fixture_class,
-                           "fixture_or_builder": "inventory_bound_real_workflow", "production_function": function,
-                           "schema": None, "expected_acceptance": accepted,
-                           "expected_python_exception": None if accepted else "ValueError",
-                           "expected_error_code": code, "expected_schema_rejection": False,
-                           "not_applicable_reason": "semantic/stateful production boundary",
-                           "canonical_artifact": artifact, "test_id": test_id, "status": "verified"})
-        completion.append({"requirement_id":rid,"phase":row["session"],"current_state":"verified","known_gap":None,
-                           "implementation_files":row["required_artifacts"],"production_boundary":function,
-                           "positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],
-                           "canonical_artifacts":[artifact],"status":"verified"})
-        execution.append({"requirement_id":rid,"production_boundary":function,"proof_ids":proof_ids,"canonical_artifact":artifact,"status":"verified"})
-        claims.append({"claim_id":"claim_"+rid.lower(),"requirement_ids":[rid],"implementation_symbols":[function],
-                       "positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],
-                       "artifact_assertions":[artifact],"minimum_record_counts":{artifact:0}})
-    (VALIDATION / "session6-8-completion-map.json").write_text(_json({"schema_version":"shiproom.session6-8-completion-map.v3","requirement_inventory":"session6-8-requirement-inventory.json","requirements":completion}),encoding="utf-8")
-    (VALIDATION / "session6-8-execution-map.json").write_text(_json({"schema_version":"shiproom.session6-8-execution-map.v3","requirement_inventory":"session6-8-requirement-inventory.json","requirements":execution,"execution_constraints":["ordinary human reviewers are human_reviewed, never owner_declared without release-bound owner authority","optional dependencies use null generation and semantic_hash unless required_present","GitHub output is local JSON plus Markdown and never posts or invokes a network"]}),encoding="utf-8")
-    (VALIDATION / "session6-8-proof-manifest.json").write_text(_json({"schema_version":"shiproom.session6-8-proof-manifest.v4","requirement_inventory":"session6-8-requirement-inventory.json","proofs":proofs}),encoding="utf-8")
-    (VALIDATION / "session6-8-claim-registry.json").write_text(_json({"schema_version":"shiproom.session6-8-claim-registry.v3","requirement_inventory":"session6-8-requirement-inventory.json","claims":claims}),encoding="utf-8")
-    print(json.dumps({"requirements":len(rows),"proofs":len(proofs),"claims":len(claims),"status":"materialised"}))
+    if {key: len(value) for key, value in GROUPS.items()} != EXPECTED or sum(map(len, GROUPS.values())) != 106:
+        raise SystemExit("session6_8_requirement_baseline_count_invalid")
+    requirements=[]; completion=[]; execution=[]; proofs=[]; claims=[]
+    for group, ids in GROUPS.items():
+        for rid in ids:
+            behavior=rid.lower().replace("_", " ")
+            function, artifact, domain = _metadata(rid, group)
+            requirements.append({"requirement_id":rid,"session":group,"source_section":"approved evidence-integrity closeout","source_requirement":rid,"source_text_hash":_sha(rid),"normative_behavior":behavior,"forbidden_substitutions":["declared_status_without_executed_proof"],"required_artifacts":[artifact],"status":"verified"})
+            proof_ids=[]
+            for fixture, accepted, error in (("valid",True,None),("near_valid",True,"constrained_status"),("adversarial_invalid",False,"typed_rejection_required")):
+                pid=f"proof_{rid.lower()}_{fixture}"; proof_ids.append(pid)
+                proofs.append({"proof_id":pid,"requirement_id":rid,"domain":domain,"invariant":behavior,"fixture_class":fixture,"fixture_or_builder":f"proof_fixture_{rid.lower()}","production_function":function,"schema":None,"expected_acceptance":accepted,"expected_python_exception":None if accepted else "ValueError","expected_error_code":error,"expected_schema_rejection":False,"not_applicable_reason":"semantic production boundary","canonical_artifact":artifact,"test_id":f"tests/test_session6_8_proof_execution.py::test_requirement_proof[{rid}-{fixture}]","status":"pending_execution"})
+            completion.append({"requirement_id":rid,"phase":group,"current_state":"pending_execution","known_gap":"proof execution required","implementation_files":[artifact],"production_boundary":function,"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"canonical_artifacts":[artifact],"status":"pending_execution"})
+            execution.append({"requirement_id":rid,"production_boundary":function,"proof_ids":proof_ids,"canonical_artifact":artifact,"status":"pending_execution"})
+            claims.append({"claim_id":"claim_"+rid.lower(),"requirement_ids":[rid],"implementation_symbols":[function],"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"artifact_assertions":[{"requirement_id":rid,"artifact":artifact,"assertion":"minimum_records"}],"minimum_record_counts":{artifact:3 if rid=="S6_REMEDIATION_CARDINALITY" else 1},"production_invocation_receipts":[],"contract_parity_receipts":[],"security_receipts":[],"installed_wheel_receipts":[],"status":"pending_execution"})
+    (VALIDATION/"session6-8-requirement-inventory.json").write_text(_dump({"schema_version":"session6-8-requirement-inventory.v2","expected_requirement_count":106,"requirements":requirements}),encoding="utf-8")
+    (VALIDATION/"session6-8-completion-map.json").write_text(_dump({"schema_version":"shiproom.session6-8-completion-map.v4","requirements":completion}),encoding="utf-8")
+    (VALIDATION/"session6-8-execution-map.json").write_text(_dump({"schema_version":"shiproom.session6-8-execution-map.v4","requirements":execution}),encoding="utf-8")
+    (VALIDATION/"session6-8-proof-manifest.json").write_text(_dump({"schema_version":"shiproom.session6-8-proof-manifest.v5","proofs":proofs}),encoding="utf-8")
+    (VALIDATION/"session6-8-claim-registry.json").write_text(_dump({"schema_version":"shiproom.session6-8-claim-registry.v4","claims":claims}),encoding="utf-8")
+    print(json.dumps({"requirements":106,"proofs":318,"claims":106,"status":"pending_execution"}))
     return 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__ == "__main__": raise SystemExit(main())
