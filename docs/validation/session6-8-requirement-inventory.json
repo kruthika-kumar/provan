@@ -1,36 +1,526 @@
-{"schema_version":"shiproom.session6-8-requirement-inventory.v1","source_document":"Approved Sessions 6–8 Evidence-Integrity Closeout — Final Execution Plan","requirements":[
-{"requirement_id":"S6_ISSUE_AUTHORITY_POLICY","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"deterministic blocker authority and actionability","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Only policy-derived authoritative facts classify actionable remediation.","forbidden_substitutions":["model_as_proof"],"required_artifacts":["remediation-plan.json"],"status":"verified"},
-{"requirement_id":"S6_PLANNER_AUTHORITY","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"planner content never changes compiler-owned issue authority","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Planner content remains reviewer-authored and optional.","forbidden_substitutions":["planner_issue_reclassification"],"required_artifacts":["remediation-source-packet.json","remediation-plan.json"],"status":"verified"},
-{"requirement_id":"S6_HUMAN_OWNER_AUTHORITY","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"ordinary human is not owner authority","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Only release-bound authority grants owner-declared semantics.","forbidden_substitutions":["transport_as_owner"],"required_artifacts":["remediation-plan.json"],"status":"verified"},
-{"requirement_id":"S6_AUTOMATION_METADATA","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"bounded fixes are metadata only","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Automation eligibility never opens a private-alpha write route.","forbidden_substitutions":["automatic_fix"],"required_artifacts":["remediation-plan.json"],"status":"verified"},
-{"requirement_id":"S6_CARDINALITY_LINKS","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"one remediation packet and closure contract per actionable issue","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Packets, contracts, and projections are unique and bidirectionally linked.","forbidden_substitutions":["one_issue_fixture"],"required_artifacts":["remediation-plan.json","remediation-overlay.json","closure-contracts"],"status":"verified"},
-{"requirement_id":"S6_CLOSURE_EXACT_RERUN","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"closure requires exact passing independent rerun","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Wrong, stale, failed, or self-verified evidence cannot satisfy closure.","forbidden_substitutions":["finding_mutation"],"required_artifacts":["remediation-closure-verification.v1"],"status":"verified"},
-{"requirement_id":"S6_CLOSURE_NONMUTATION","session":"6","source_section":"Workflow acceptance repairs","source_requirement":"private alpha closure does not close canonical findings","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Closure result is candidate-only and preserves canonical facts.","forbidden_substitutions":["canonical_closure"],"required_artifacts":["remediation-closure-verification.v1"],"status":"verified"},
-{"requirement_id":"S7_SPECIALIST_CATALOGUE","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"fixed native specialist catalogue","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Every specialist binds an exact native result boundary.","forbidden_substitutions":["generic_result"],"required_artifacts":["review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_PRODUCT_INTENT_WRAPPER","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"native intent packet wrapper lifecycle","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Wrapper transports native proposals without compiling or strengthening intent.","forbidden_substitutions":["wrapper_intent_compile"],"required_artifacts":["specialist-work-orders","accepted-results.json"],"status":"verified"},
-{"requirement_id":"S7_TYPED_SELECTION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"typed evidence selects specialists","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Absence remains not inspected; typed evidence governs selection.","forbidden_substitutions":["catalogue_presence"],"required_artifacts":["review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_LANGUAGE_SELECTION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"Python and TypeScript plans differ materially","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Language signals generate distinct specialist scopes and plan identities.","forbidden_substitutions":["same_plan"],"required_artifacts":["review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_AI_SELECTION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"typed AI surface selection","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"AI review is selected or precise unavailable, never passed as not inspected.","forbidden_substitutions":["not_inspected"],"required_artifacts":["review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_BROWSER_NONAPPLICABILITY","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"browser skip is explicit","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Browser skip requires explicitly_not_applicable evidence.","forbidden_substitutions":["absence"],"required_artifacts":["review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_PACKAGE_TRANSPORT","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"Codex execution package is transport-only","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Rendered package binds native context and cannot execute harnesses.","forbidden_substitutions":["harness_execution"],"required_artifacts":["codex-execution-package.v1"],"status":"verified"},
-{"requirement_id":"S7_REVISION_STATE_MACHINE","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"two-attempt revision state machine","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Corrected second submissions accept; second invalid submissions fail closed.","forbidden_substitutions":["third_attempt"],"required_artifacts":["revision-ledger.json","accepted-results.json"],"status":"verified"},
-{"requirement_id":"S7_SUBMISSION_PERSISTENCE","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"submission bytes and validation persist","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Every submission attempt retains result, receipt, validation, and hash.","forbidden_substitutions":["ephemeral_submission"],"required_artifacts":["submissions"],"status":"verified"},
-{"requirement_id":"S7_MIGRATION_ADAPTATION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"migration adaptation has material successor effect","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Migration trigger changes plan and work-order state while preserving history.","forbidden_substitutions":["event_only"],"required_artifacts":["plan-events.json","review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_AI_ADAPTATION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"AI adaptation is trigger specific","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"AI trigger only creates authorized AI-scoped successor work.","forbidden_substitutions":["unlinked_prose"],"required_artifacts":["plan-events.json"],"status":"verified"},
-{"requirement_id":"S7_BROWSER_DISPROVEN_ADAPTATION","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"browser disproven adaptation supersedes prior work","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Browser work is retained as superseded and becomes explicitly not applicable.","forbidden_substitutions":["work_order_deletion"],"required_artifacts":["plan-events.json","review-plan.json"],"status":"verified"},
-{"requirement_id":"S7_HARNESS_PARITY","session":"7","source_section":"Workflow acceptance repairs","source_requirement":"manual and Codex routes share validator semantics","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Equivalent submissions produce equal semantic identities and distinct provenance.","forbidden_substitutions":["render_only"],"required_artifacts":["accepted-results.json"],"status":"verified"},
-{"requirement_id":"S8_TARGET_RESOLUTION","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"contestation targets resolve through registry","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Only registered current-release targets and relevant accepted evidence are actionable.","forbidden_substitutions":["free_text_evidence"],"required_artifacts":["contestation-ledger.json"],"status":"verified"},
-{"requirement_id":"S8_APPEND_ONLY_CONTESTATION","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"contestation preserves source facts","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Actions are idempotent append-only references and do not rewrite facts.","forbidden_substitutions":["finding_mutation"],"required_artifacts":["contestation-ledger.json"],"status":"verified"},
-{"requirement_id":"S8_OWNER_AUTHORITY","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"owner actions use release-bound authority","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Actor text, email, or receipt cannot establish owner authority.","forbidden_substitutions":["self_declared_owner"],"required_artifacts":["contestation-effects.json"],"status":"verified"},
-{"requirement_id":"S8_DECISION_BUDGET","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"owner decision budget is deterministic and complete","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Two immediate decisions and all overflow records preserve source links and priority.","forbidden_substitutions":["dropped_decision"],"required_artifacts":["contestation-effects.json"],"status":"verified"},
-{"requirement_id":"S8_DEPENDENCY_VECTOR","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"management uses one exact dependency vector","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Mixed, stale, and omitted dependency vectors are rejected.","forbidden_substitutions":["mixed_vector"],"required_artifacts":["artifact-dependency-vector.v1"],"status":"verified"},
-{"requirement_id":"S8_SECTION_COMPLETENESS","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"management sections are substantive and complete","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Section cardinality, matrix coverage, exact passthrough, and typed empties follow registry policy.","forbidden_substitutions":["key_presence"],"required_artifacts":["release-packet-index.json"],"status":"verified"},
-{"requirement_id":"S8_RECOMMENDATION_POLICY","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"recommendation policy is deterministic derived view","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Recommendation never mutates canonical release facts.","forbidden_substitutions":["model_recommendation"],"required_artifacts":["release-recommendation-view.json"],"status":"verified"},
-{"requirement_id":"S8_SAFE_RENDERING","session":"8","source_section":"Workflow acceptance repairs","source_requirement":"management JSON HTML Markdown rendering is deterministic and safe","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Renderers escape untrusted content and use no active or remote resources.","forbidden_substitutions":["active_html"],"required_artifacts":["github-summary.md","executive-release-brief.html"],"status":"verified"},
-{"requirement_id":"S_SHARED_TRUSTED_STORAGE","session":"shared","source_section":"Contract, security, and wheel execution","source_requirement":"trusted reads writes and pointer preservation","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"All persisted lifecycle state validates trusted ancestry, capacity, exact file sets, and pointer-last publication.","forbidden_substitutions":["unsafe_path_io"],"required_artifacts":["generation manifests","pointers"],"status":"verified"},
-{"requirement_id":"S_SHARED_CONTRACT_PARITY","session":"shared","source_section":"Contract, security, and wheel execution","source_requirement":"all discovered parity contracts execute boundaries and mutations","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Every parity contract has actual schema/Python/stateful acceptance and isolated rejection evidence.","forbidden_substitutions":["registry_only"],"required_artifacts":["session6-8-contract-parity-report.json"],"status":"verified"},
-{"requirement_id":"S_SHARED_SECURITY","session":"shared","source_section":"Contract, security, and wheel execution","source_requirement":"prohibited operations have honest dynamic security proofs","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Guarded or unreachable operations have typed rejection and unchanged real state.","forbidden_substitutions":["constant_state_hash"],"required_artifacts":["session6-8-security-receipt.json"],"status":"verified"},
-{"requirement_id":"S_SHARED_WHEEL","session":"shared","source_section":"Contract, security, and wheel execution","source_requirement":"installed wheel runs connected lifecycle outside checkout","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Clean installed distribution runs all required connected commands with bound artifacts.","forbidden_substitutions":["help_output"],"required_artifacts":["session6-8-installed-wheel-receipt.json"],"status":"verified"},
-{"requirement_id":"S_SHARED_PROOF_EXECUTION","session":"shared","source_section":"Proof, report, and validator closure","source_requirement":"proof receipt binds final JUnit and artifacts","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Valid near-valid and adversarial proofs are independently distinguishable.","forbidden_substitutions":["status_only"],"required_artifacts":["session6-8-proof-execution-receipt.json"],"status":"verified"},
-{"requirement_id":"S_SHARED_INDEPENDENT_CLOSEOUT","session":"shared","source_section":"Proof, report, and validator closure","source_requirement":"independent report and receipt validator recomputes closure","source_text_hash":"sha256:b0270193b62d60997d56650946541e1e2a7fd135b7bd8ba65613b6bd7ce789e0","normative_behavior":"Validator does not trust report resolved status or share closure semantics with generator.","forbidden_substitutions":["self_validation"],"required_artifacts":["session6-8-final-closeout-report.json","session6-8-final-closeout-receipt.json"],"status":"verified"}
-]}
+{
+  "requirements": [
+    {
+      "forbidden_substitutions": [
+        "model_as_proof"
+      ],
+      "normative_behavior": "Only policy-derived authoritative facts classify actionable remediation.",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
+      "session": "6",
+      "source_requirement": "deterministic blocker authority and actionability",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:cc9d5c2d52317cb98103632b2deab311e6f82184d413e6148c4b7565435fd108",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "planner_issue_reclassification"
+      ],
+      "normative_behavior": "Planner content remains reviewer-authored and optional.",
+      "required_artifacts": [
+        "remediation-source-packet.json",
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_PLANNER_AUTHORITY",
+      "session": "6",
+      "source_requirement": "planner content never changes compiler-owned issue authority",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:431524b13dbb95239d01e2a9969e29ea4c26a48c1471b79aa320096827d0658c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "transport_as_owner"
+      ],
+      "normative_behavior": "Only release-bound authority grants owner-declared semantics.",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_HUMAN_OWNER_AUTHORITY",
+      "session": "6",
+      "source_requirement": "ordinary human is not owner authority",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:abdbb27135ca8e4f9b887774149dfa29cddc461542d458d53365034690420862",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "automatic_fix"
+      ],
+      "normative_behavior": "Automation eligibility never opens a private-alpha write route.",
+      "required_artifacts": [
+        "remediation-plan.json"
+      ],
+      "requirement_id": "S6_AUTOMATION_METADATA",
+      "session": "6",
+      "source_requirement": "bounded fixes are metadata only",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:21c779ffb846514c1a5a06d56c0f7d702caec0b4345ff66cc920eee51dc833f7",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "one_issue_fixture"
+      ],
+      "normative_behavior": "Packets, contracts, and projections are unique and bidirectionally linked.",
+      "required_artifacts": [
+        "remediation-plan.json",
+        "remediation-overlay.json",
+        "closure-contracts"
+      ],
+      "requirement_id": "S6_CARDINALITY_LINKS",
+      "session": "6",
+      "source_requirement": "one remediation packet and closure contract per actionable issue",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:77b3c87d57c6cf0205a7a5e4c3b8d5cc5b276f3214bfb3415b13cbb37bc90f18",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "finding_mutation"
+      ],
+      "normative_behavior": "Wrong, stale, failed, or self-verified evidence cannot satisfy closure.",
+      "required_artifacts": [
+        "remediation-closure-verification.v1"
+      ],
+      "requirement_id": "S6_CLOSURE_EXACT_RERUN",
+      "session": "6",
+      "source_requirement": "closure requires exact passing independent rerun",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:2c19d991e0a431d4404fd967f93225de2d700659c9b14dd7bfc1f01fa18bcba5",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "canonical_closure"
+      ],
+      "normative_behavior": "Closure result is candidate-only and preserves canonical facts.",
+      "required_artifacts": [
+        "remediation-closure-verification.v1"
+      ],
+      "requirement_id": "S6_CLOSURE_NONMUTATION",
+      "session": "6",
+      "source_requirement": "private alpha closure does not close canonical findings",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:9f2ab35f37ea95048aa25dfc5cb2f231d56387753449e4a04f8f2cb54371c189",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "generic_result"
+      ],
+      "normative_behavior": "Every specialist binds an exact native result boundary.",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_SPECIALIST_CATALOGUE",
+      "session": "7",
+      "source_requirement": "fixed native specialist catalogue",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:0771e95c0d5aa514a94b6a9fef4e178c1902747a23a524465d3ad3c8f24ec231",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "wrapper_intent_compile"
+      ],
+      "normative_behavior": "Wrapper transports native proposals without compiling or strengthening intent.",
+      "required_artifacts": [
+        "specialist-work-orders",
+        "accepted-results.json"
+      ],
+      "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
+      "session": "7",
+      "source_requirement": "native intent packet wrapper lifecycle",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:0a01240f38e6688ad56a9b3dc69a2ce5dc371b9a8ddf70f7ae1513e9ef5a96eb",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "catalogue_presence"
+      ],
+      "normative_behavior": "Absence remains not inspected; typed evidence governs selection.",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_TYPED_SELECTION",
+      "session": "7",
+      "source_requirement": "typed evidence selects specialists",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:3f298963a23af6114a509c910e731ef54d8f208a47270fc9ce6caa52444fb22c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "same_plan"
+      ],
+      "normative_behavior": "Language signals generate distinct specialist scopes and plan identities.",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_LANGUAGE_SELECTION",
+      "session": "7",
+      "source_requirement": "Python and TypeScript plans differ materially",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:383ca9fda97d08dfd321916c130a7688f8964251d2e55c3839b939ee07f61241",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "not_inspected"
+      ],
+      "normative_behavior": "AI review is selected or precise unavailable, never passed as not inspected.",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_AI_SELECTION",
+      "session": "7",
+      "source_requirement": "typed AI surface selection",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:2466156c8a8de6d45fb632d92509933df3c5ffdc00a3c4d728d1d6f8ee26518d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "absence"
+      ],
+      "normative_behavior": "Browser skip requires explicitly_not_applicable evidence.",
+      "required_artifacts": [
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_BROWSER_NONAPPLICABILITY",
+      "session": "7",
+      "source_requirement": "browser skip is explicit",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:765decb9dd789f419644221102e7ed598ff00dda9cb4a567801769f13e37a69d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "harness_execution"
+      ],
+      "normative_behavior": "Rendered package binds native context and cannot execute harnesses.",
+      "required_artifacts": [
+        "codex-execution-package.v1"
+      ],
+      "requirement_id": "S7_PACKAGE_TRANSPORT",
+      "session": "7",
+      "source_requirement": "Codex execution package is transport-only",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:453c7ecefba561b967ba64c2eaa1f36757d78c7e41aa7efc5af9db23c34dd449",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "third_attempt"
+      ],
+      "normative_behavior": "Corrected second submissions accept; second invalid submissions fail closed.",
+      "required_artifacts": [
+        "revision-ledger.json",
+        "accepted-results.json"
+      ],
+      "requirement_id": "S7_REVISION_STATE_MACHINE",
+      "session": "7",
+      "source_requirement": "two-attempt revision state machine",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:a79d72d3982d920c4aa4ffbbdb66e4468b1cee94b9a3e5baee0c7e5fcf069265",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "ephemeral_submission"
+      ],
+      "normative_behavior": "Every submission attempt retains result, receipt, validation, and hash.",
+      "required_artifacts": [
+        "submissions"
+      ],
+      "requirement_id": "S7_SUBMISSION_PERSISTENCE",
+      "session": "7",
+      "source_requirement": "submission bytes and validation persist",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:f322801756d355af428b45db0558063b0339038a427468c2c4af428272a637d3",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "event_only"
+      ],
+      "normative_behavior": "Migration trigger changes plan and work-order state while preserving history.",
+      "required_artifacts": [
+        "plan-events.json",
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_MIGRATION_ADAPTATION",
+      "session": "7",
+      "source_requirement": "migration adaptation has material successor effect",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:7105401c2a762d65f12aea2121404904e71214fad2edcf20be59adcf4f84191c",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "unlinked_prose"
+      ],
+      "normative_behavior": "AI trigger only creates authorized AI-scoped successor work.",
+      "required_artifacts": [
+        "plan-events.json"
+      ],
+      "requirement_id": "S7_AI_ADAPTATION",
+      "session": "7",
+      "source_requirement": "AI adaptation is trigger specific",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:9b6511b1196d4fddfc41c7f7647da4326c4aafc40db742ec26946607381735ba",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "work_order_deletion"
+      ],
+      "normative_behavior": "Browser work is retained as superseded and becomes explicitly not applicable.",
+      "required_artifacts": [
+        "plan-events.json",
+        "review-plan.json"
+      ],
+      "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
+      "session": "7",
+      "source_requirement": "browser disproven adaptation supersedes prior work",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:b14ae036b09f894b5495323ccb26873061f2a587cd2562dd31905909b057d6bc",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "render_only"
+      ],
+      "normative_behavior": "Equivalent submissions produce equal semantic identities and distinct provenance.",
+      "required_artifacts": [
+        "accepted-results.json"
+      ],
+      "requirement_id": "S7_HARNESS_PARITY",
+      "session": "7",
+      "source_requirement": "manual and Codex routes share validator semantics",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:7bcc29a8357d022aaee3f57cf7c7a95c59c902bf3dd3b9ed5cbba19aadc8cece",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "free_text_evidence"
+      ],
+      "normative_behavior": "Only registered current-release targets and relevant accepted evidence are actionable.",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_TARGET_RESOLUTION",
+      "session": "8",
+      "source_requirement": "contestation targets resolve through registry",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:2cd0a48f6d759eddce18a05246900ca39b6dbe88aaa931d954587bc3ff4a6910",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "finding_mutation"
+      ],
+      "normative_behavior": "Actions are idempotent append-only references and do not rewrite facts.",
+      "required_artifacts": [
+        "contestation-ledger.json"
+      ],
+      "requirement_id": "S8_APPEND_ONLY_CONTESTATION",
+      "session": "8",
+      "source_requirement": "contestation preserves source facts",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:7618354b1600f3b9d97e09712be45a53b3728c34bbde81220a691bffd20bd06b",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "self_declared_owner"
+      ],
+      "normative_behavior": "Actor text, email, or receipt cannot establish owner authority.",
+      "required_artifacts": [
+        "contestation-effects.json"
+      ],
+      "requirement_id": "S8_OWNER_AUTHORITY",
+      "session": "8",
+      "source_requirement": "owner actions use release-bound authority",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:6a46a4e7a400c9ff4d6223a38d126730e5ded6fa06a418b0afe6da1a66b7877d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "dropped_decision"
+      ],
+      "normative_behavior": "Two immediate decisions and all overflow records preserve source links and priority.",
+      "required_artifacts": [
+        "contestation-effects.json"
+      ],
+      "requirement_id": "S8_DECISION_BUDGET",
+      "session": "8",
+      "source_requirement": "owner decision budget is deterministic and complete",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:eff872a6b6be9937730b03b6f55b14776a0ab6a8e1d6f4e30851f49b649246da",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "mixed_vector"
+      ],
+      "normative_behavior": "Mixed, stale, and omitted dependency vectors are rejected.",
+      "required_artifacts": [
+        "artifact-dependency-vector.v1"
+      ],
+      "requirement_id": "S8_DEPENDENCY_VECTOR",
+      "session": "8",
+      "source_requirement": "management uses one exact dependency vector",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:983d577eb414250c778d2dafc89d52aea68bb6b923b333eefdabfb873b770a43",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "key_presence"
+      ],
+      "normative_behavior": "Section cardinality, matrix coverage, exact passthrough, and typed empties follow registry policy.",
+      "required_artifacts": [
+        "release-packet-index.json"
+      ],
+      "requirement_id": "S8_SECTION_COMPLETENESS",
+      "session": "8",
+      "source_requirement": "management sections are substantive and complete",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:f637b9a0e04e43939857f7df902b0a46f556e4a1ac025130c744686626e6193d",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "model_recommendation"
+      ],
+      "normative_behavior": "Recommendation never mutates canonical release facts.",
+      "required_artifacts": [
+        "release-recommendation-view.json"
+      ],
+      "requirement_id": "S8_RECOMMENDATION_POLICY",
+      "session": "8",
+      "source_requirement": "recommendation policy is deterministic derived view",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:f28ba1880a8ccdeefb80baf94c5e8be9621810df774053166f18c82d7f731c03",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "active_html"
+      ],
+      "normative_behavior": "Renderers escape untrusted content and use no active or remote resources.",
+      "required_artifacts": [
+        "github-summary.md",
+        "executive-release-brief.html"
+      ],
+      "requirement_id": "S8_SAFE_RENDERING",
+      "session": "8",
+      "source_requirement": "management JSON HTML Markdown rendering is deterministic and safe",
+      "source_section": "Workflow acceptance repairs",
+      "source_text_hash": "sha256:c194228b8ed6af3fd7679cb2b1863f8089deaf862a89d41066170f1bccd0f889",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "unsafe_path_io"
+      ],
+      "normative_behavior": "All persisted lifecycle state validates trusted ancestry, capacity, exact file sets, and pointer-last publication.",
+      "required_artifacts": [
+        "generation manifests",
+        "pointers"
+      ],
+      "requirement_id": "S_SHARED_TRUSTED_STORAGE",
+      "session": "shared",
+      "source_requirement": "trusted reads writes and pointer preservation",
+      "source_section": "Contract, security, and wheel execution",
+      "source_text_hash": "sha256:3b418ede188aac3c9df0775148e29cb0506a4668b6c8fae7afd45730543d1f2e",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "registry_only"
+      ],
+      "normative_behavior": "Every parity contract has actual schema/Python/stateful acceptance and isolated rejection evidence.",
+      "required_artifacts": [
+        "session6-8-contract-parity-report.json"
+      ],
+      "requirement_id": "S_SHARED_CONTRACT_PARITY",
+      "session": "shared",
+      "source_requirement": "all discovered parity contracts execute boundaries and mutations",
+      "source_section": "Contract, security, and wheel execution",
+      "source_text_hash": "sha256:cb41003726e0266ad94d8f2591056658b343d091af21a19805917482b4dacaf3",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "constant_state_hash"
+      ],
+      "normative_behavior": "Guarded or unreachable operations have typed rejection and unchanged real state.",
+      "required_artifacts": [
+        "session6-8-security-receipt.json"
+      ],
+      "requirement_id": "S_SHARED_SECURITY",
+      "session": "shared",
+      "source_requirement": "prohibited operations have honest dynamic security proofs",
+      "source_section": "Contract, security, and wheel execution",
+      "source_text_hash": "sha256:1a1a695b448889d29fb364dab251593b3cd9a0707947508afdd94243fd01c734",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "help_output"
+      ],
+      "normative_behavior": "Clean installed distribution runs all required connected commands with bound artifacts.",
+      "required_artifacts": [
+        "session6-8-installed-wheel-receipt.json"
+      ],
+      "requirement_id": "S_SHARED_WHEEL",
+      "session": "shared",
+      "source_requirement": "installed wheel runs connected lifecycle outside checkout",
+      "source_section": "Contract, security, and wheel execution",
+      "source_text_hash": "sha256:c62ec1268976d85a86927f112e931bc414aba0adb888e86ad6c3d26b8c937e9a",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "status_only"
+      ],
+      "normative_behavior": "Valid near-valid and adversarial proofs are independently distinguishable.",
+      "required_artifacts": [
+        "session6-8-proof-execution-receipt.json"
+      ],
+      "requirement_id": "S_SHARED_PROOF_EXECUTION",
+      "session": "shared",
+      "source_requirement": "proof receipt binds final JUnit and artifacts",
+      "source_section": "Proof, report, and validator closure",
+      "source_text_hash": "sha256:c67f5cd6839cd3ede6a20948e94bf8beb72ac9212bc297fa437d571564a64383",
+      "status": "verified"
+    },
+    {
+      "forbidden_substitutions": [
+        "self_validation"
+      ],
+      "normative_behavior": "Validator does not trust report resolved status or share closure semantics with generator.",
+      "required_artifacts": [
+        "session6-8-final-closeout-report.json",
+        "session6-8-final-closeout-receipt.json"
+      ],
+      "requirement_id": "S_SHARED_INDEPENDENT_CLOSEOUT",
+      "session": "shared",
+      "source_requirement": "independent report and receipt validator recomputes closure",
+      "source_section": "Proof, report, and validator closure",
+      "source_text_hash": "sha256:d8bcd8b4e98d2bff2d11af96dc028d65571df5d48ab288f8525c77e018729958",
+      "status": "verified"
+    }
+  ],
+  "schema_version": "shiproom.session6-8-requirement-inventory.v1",
+  "source_document": "Approved Sessions 6–8 Evidence-Integrity Closeout — Final Execution Plan"
+}

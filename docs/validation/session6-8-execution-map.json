@@ -1,17 +1,385 @@
 {
-  "schema_version": "shiproom.session6-8-execution-map.v2",
-  "baseline_minimum_ancestor": "99a1dfcc78fb8f1b90c71646cfc29bc557100b63",
-  "requirements": [
-    {"requirement_id":"S6_AUTHORITY_POLICY","production_boundary":"shiproom.remediation_roadmaps._policy_decision","proof_ids":["p_s6_authority_valid","p_s6_authority_near","p_s6_authority_invalid"],"canonical_artifact":"remediation-plan.json","status":"verified"},
-    {"requirement_id":"S6_CLOSURE_INBOX","production_boundary":"shiproom.remediation_roadmaps.closure_verify","proof_ids":["p_s6_closure_valid","p_s6_closure_near","p_s6_closure_invalid"],"canonical_artifact":"closure-contracts","status":"verified"},
-    {"requirement_id":"S7_NATIVE_BOUNDARIES","production_boundary":"shiproom.review_organisation.prepare","proof_ids":["p_s7_native_valid","p_s7_native_near","p_s7_native_invalid"],"canonical_artifact":"review-plan.json","status":"verified"},
-    {"requirement_id":"S7_ADAPTATION","production_boundary":"shiproom.review_organisation.adapt","proof_ids":["p_s7_adapt_valid","p_s7_adapt_near","p_s7_adapt_invalid"],"canonical_artifact":"plan-events.json","status":"verified"},
-    {"requirement_id":"S8_CONTESTABILITY","production_boundary":"shiproom.contestability.append_action","proof_ids":["p_s8_contest_valid","p_s8_contest_near","p_s8_contest_invalid"],"canonical_artifact":"contestation-ledger.json","status":"verified"},
-    {"requirement_id":"S8_MANAGEMENT_VECTOR","production_boundary":"shiproom.management_artifacts.compile","proof_ids":["p_s8_management_valid","p_s8_management_near","p_s8_management_invalid"],"canonical_artifact":"release-packet-index.json","status":"verified"}
-  ],
   "execution_constraints": [
     "ordinary human reviewers are human_reviewed, never owner_declared without release-bound owner authority",
     "optional dependencies use null generation and semantic_hash unless required_present",
     "GitHub output is local JSON plus Markdown and never posts or invokes a network"
-  ]
+  ],
+  "requirement_inventory": "session6-8-requirement-inventory.json",
+  "requirements": [
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_issue_authority_policy_valid",
+        "proof_s6_issue_authority_policy_near_valid",
+        "proof_s6_issue_authority_policy_adversarial_invalid"
+      ],
+      "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_planner_authority_valid",
+        "proof_s6_planner_authority_near_valid",
+        "proof_s6_planner_authority_adversarial_invalid"
+      ],
+      "requirement_id": "S6_PLANNER_AUTHORITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_human_owner_authority_valid",
+        "proof_s6_human_owner_authority_near_valid",
+        "proof_s6_human_owner_authority_adversarial_invalid"
+      ],
+      "requirement_id": "S6_HUMAN_OWNER_AUTHORITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_automation_metadata_valid",
+        "proof_s6_automation_metadata_near_valid",
+        "proof_s6_automation_metadata_adversarial_invalid"
+      ],
+      "requirement_id": "S6_AUTOMATION_METADATA",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_cardinality_links_valid",
+        "proof_s6_cardinality_links_near_valid",
+        "proof_s6_cardinality_links_adversarial_invalid"
+      ],
+      "requirement_id": "S6_CARDINALITY_LINKS",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_closure_exact_rerun_valid",
+        "proof_s6_closure_exact_rerun_near_valid",
+        "proof_s6_closure_exact_rerun_adversarial_invalid"
+      ],
+      "requirement_id": "S6_CLOSURE_EXACT_RERUN",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "closure-contracts",
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_s6_closure_nonmutation_valid",
+        "proof_s6_closure_nonmutation_near_valid",
+        "proof_s6_closure_nonmutation_adversarial_invalid"
+      ],
+      "requirement_id": "S6_CLOSURE_NONMUTATION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_specialist_catalogue_valid",
+        "proof_s7_specialist_catalogue_near_valid",
+        "proof_s7_specialist_catalogue_adversarial_invalid"
+      ],
+      "requirement_id": "S7_SPECIALIST_CATALOGUE",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_product_intent_wrapper_valid",
+        "proof_s7_product_intent_wrapper_near_valid",
+        "proof_s7_product_intent_wrapper_adversarial_invalid"
+      ],
+      "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_typed_selection_valid",
+        "proof_s7_typed_selection_near_valid",
+        "proof_s7_typed_selection_adversarial_invalid"
+      ],
+      "requirement_id": "S7_TYPED_SELECTION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_language_selection_valid",
+        "proof_s7_language_selection_near_valid",
+        "proof_s7_language_selection_adversarial_invalid"
+      ],
+      "requirement_id": "S7_LANGUAGE_SELECTION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_ai_selection_valid",
+        "proof_s7_ai_selection_near_valid",
+        "proof_s7_ai_selection_adversarial_invalid"
+      ],
+      "requirement_id": "S7_AI_SELECTION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_browser_nonapplicability_valid",
+        "proof_s7_browser_nonapplicability_near_valid",
+        "proof_s7_browser_nonapplicability_adversarial_invalid"
+      ],
+      "requirement_id": "S7_BROWSER_NONAPPLICABILITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_package_transport_valid",
+        "proof_s7_package_transport_near_valid",
+        "proof_s7_package_transport_adversarial_invalid"
+      ],
+      "requirement_id": "S7_PACKAGE_TRANSPORT",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_revision_state_machine_valid",
+        "proof_s7_revision_state_machine_near_valid",
+        "proof_s7_revision_state_machine_adversarial_invalid"
+      ],
+      "requirement_id": "S7_REVISION_STATE_MACHINE",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_submission_persistence_valid",
+        "proof_s7_submission_persistence_near_valid",
+        "proof_s7_submission_persistence_adversarial_invalid"
+      ],
+      "requirement_id": "S7_SUBMISSION_PERSISTENCE",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_migration_adaptation_valid",
+        "proof_s7_migration_adaptation_near_valid",
+        "proof_s7_migration_adaptation_adversarial_invalid"
+      ],
+      "requirement_id": "S7_MIGRATION_ADAPTATION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_ai_adaptation_valid",
+        "proof_s7_ai_adaptation_near_valid",
+        "proof_s7_ai_adaptation_adversarial_invalid"
+      ],
+      "requirement_id": "S7_AI_ADAPTATION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_browser_disproven_adaptation_valid",
+        "proof_s7_browser_disproven_adaptation_near_valid",
+        "proof_s7_browser_disproven_adaptation_adversarial_invalid"
+      ],
+      "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "review-plan.json",
+      "production_boundary": "shiproom.review_organisation.prepare",
+      "proof_ids": [
+        "proof_s7_harness_parity_valid",
+        "proof_s7_harness_parity_near_valid",
+        "proof_s7_harness_parity_adversarial_invalid"
+      ],
+      "requirement_id": "S7_HARNESS_PARITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "contestation-ledger.json",
+      "production_boundary": "shiproom.contestability.append_action",
+      "proof_ids": [
+        "proof_s8_target_resolution_valid",
+        "proof_s8_target_resolution_near_valid",
+        "proof_s8_target_resolution_adversarial_invalid"
+      ],
+      "requirement_id": "S8_TARGET_RESOLUTION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "contestation-ledger.json",
+      "production_boundary": "shiproom.contestability.append_action",
+      "proof_ids": [
+        "proof_s8_append_only_contestation_valid",
+        "proof_s8_append_only_contestation_near_valid",
+        "proof_s8_append_only_contestation_adversarial_invalid"
+      ],
+      "requirement_id": "S8_APPEND_ONLY_CONTESTATION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "contestation-ledger.json",
+      "production_boundary": "shiproom.contestability.append_action",
+      "proof_ids": [
+        "proof_s8_owner_authority_valid",
+        "proof_s8_owner_authority_near_valid",
+        "proof_s8_owner_authority_adversarial_invalid"
+      ],
+      "requirement_id": "S8_OWNER_AUTHORITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "contestation-ledger.json",
+      "production_boundary": "shiproom.contestability.append_action",
+      "proof_ids": [
+        "proof_s8_decision_budget_valid",
+        "proof_s8_decision_budget_near_valid",
+        "proof_s8_decision_budget_adversarial_invalid"
+      ],
+      "requirement_id": "S8_DECISION_BUDGET",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "release-packet-index.json",
+      "production_boundary": "shiproom.management_artifacts.compile",
+      "proof_ids": [
+        "proof_s8_dependency_vector_valid",
+        "proof_s8_dependency_vector_near_valid",
+        "proof_s8_dependency_vector_adversarial_invalid"
+      ],
+      "requirement_id": "S8_DEPENDENCY_VECTOR",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "release-packet-index.json",
+      "production_boundary": "shiproom.management_artifacts.compile",
+      "proof_ids": [
+        "proof_s8_section_completeness_valid",
+        "proof_s8_section_completeness_near_valid",
+        "proof_s8_section_completeness_adversarial_invalid"
+      ],
+      "requirement_id": "S8_SECTION_COMPLETENESS",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "release-packet-index.json",
+      "production_boundary": "shiproom.management_artifacts.compile",
+      "proof_ids": [
+        "proof_s8_recommendation_policy_valid",
+        "proof_s8_recommendation_policy_near_valid",
+        "proof_s8_recommendation_policy_adversarial_invalid"
+      ],
+      "requirement_id": "S8_RECOMMENDATION_POLICY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "release-packet-index.json",
+      "production_boundary": "shiproom.management_artifacts.compile",
+      "proof_ids": [
+        "proof_s8_safe_rendering_valid",
+        "proof_s8_safe_rendering_near_valid",
+        "proof_s8_safe_rendering_adversarial_invalid"
+      ],
+      "requirement_id": "S8_SAFE_RENDERING",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_trusted_storage_valid",
+        "proof_s_shared_trusted_storage_near_valid",
+        "proof_s_shared_trusted_storage_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_TRUSTED_STORAGE",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_contract_parity_valid",
+        "proof_s_shared_contract_parity_near_valid",
+        "proof_s_shared_contract_parity_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_CONTRACT_PARITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_security_valid",
+        "proof_s_shared_security_near_valid",
+        "proof_s_shared_security_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_SECURITY",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_wheel_valid",
+        "proof_s_shared_wheel_near_valid",
+        "proof_s_shared_wheel_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_WHEEL",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_proof_execution_valid",
+        "proof_s_shared_proof_execution_near_valid",
+        "proof_s_shared_proof_execution_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_PROOF_EXECUTION",
+      "status": "verified"
+    },
+    {
+      "canonical_artifact": "session6-8-workflow-eval-receipt.json",
+      "production_boundary": "scripts.run_workflow_integration_evals.main",
+      "proof_ids": [
+        "proof_s_shared_independent_closeout_valid",
+        "proof_s_shared_independent_closeout_near_valid",
+        "proof_s_shared_independent_closeout_adversarial_invalid"
+      ],
+      "requirement_id": "S_SHARED_INDEPENDENT_CLOSEOUT",
+      "status": "verified"
+    }
+  ],
+  "schema_version": "shiproom.session6-8-execution-map.v3"
 }

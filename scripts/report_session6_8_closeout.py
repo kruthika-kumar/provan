@@ -43,6 +43,7 @@ def main() -> int:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     validation = root / "docs" / "validation"
+    requirement_inventory = _load(validation / "session6-8-requirement-inventory.json")["requirements"]
     completion = _load(validation / "session6-8-completion-map.json")["requirements"]
     execution = _load(validation / "session6-8-execution-map.json")["requirements"]
     proofs = _load(validation / "session6-8-proof-manifest.json")["proofs"]
@@ -57,6 +58,7 @@ def main() -> int:
     parity = _load(args.contract_parity_report)
     wheel = _load(args.wheel_receipt)
     proof_ids = {item["proof_id"] for item in proofs}
+    inventory_requirements = {item["requirement_id"] for item in requirement_inventory}
     requirements = {item["requirement_id"] for item in completion}
     execution_requirements = {item["requirement_id"] for item in execution}
     covered = {item for claim in claims for item in claim["requirement_ids"]}
@@ -64,7 +66,8 @@ def main() -> int:
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     valid_fixture_classes = {"valid", "near_valid", "adversarial_invalid"}
     prerequisites = {
-        "completion_map_exhaustive": requirements == {item["requirement_id"] for item in proofs} == covered == execution_requirements,
+        "requirement_inventory_exhaustive": len(inventory_requirements) == len(requirement_inventory) and requirements == inventory_requirements == {item["requirement_id"] for item in proofs} == covered == execution_requirements,
+        "source_text_hashes_bound": all(item.get("source_text_hash") == _sha(item["source_requirement"].encode("utf-8")) for item in requirement_inventory),
         "execution_map_bound": all(item.get("status") == "verified" and item.get("production_boundary") and item.get("proof_ids") for item in execution),
         "all_proofs_verified": all(item["status"] == "verified" and item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
         "all_requirements_verified": all(item.get("status") == "verified" for item in completion),
@@ -79,7 +82,8 @@ def main() -> int:
         "wheel_receipt_complete": bool(wheel.get("passed")) and wheel.get("final_commit") == commit and wheel.get("exit_code") == 0,
     }
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
-              "inputs": {"completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
+              "inputs": {"requirement_inventory_hash": _sha((validation / "session6-8-requirement-inventory.json").read_bytes()),
+                         "completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
                          "execution_map_hash": _sha((validation / "session6-8-execution-map.json").read_bytes()),
                          "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
                          "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
