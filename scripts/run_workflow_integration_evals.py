@@ -151,14 +151,19 @@ def main() -> int:
     def run(name: str, fn) -> None:
         try:
             with observe(name) as invocation_receipts:
-                passed, _functions, hashes = fn()
+                outcome = fn()
+                if len(outcome) == 4:
+                    passed, _functions, hashes, assertion_values = outcome
+                else:
+                    passed, _functions, hashes = outcome
+                    assertion_values = {}
         except Exception as exc:  # receipt preserves the production failure for closeout inspection
-            passed, invocation_receipts, hashes = False, [], {"exception": type(exc).__name__ + ":" + str(exc)}
+            passed, invocation_receipts, hashes, assertion_values = False, [], {"exception": type(exc).__name__ + ":" + str(exc)}, {}
         contract = contracts[name]
         required_functions = set(contract["required_production_functions"])
         artifacts_ok = bool(hashes) and all(value not in (None, "") for value in hashes.values())
         observed_functions = {item["production_function"] for item in invocation_receipts}
-        assertion_receipts = [audit_assertion(assertion_id, assertion_id.replace("_", " "), bool(passed), True)
+        assertion_receipts = [audit_assertion(assertion_id, assertion_id.replace("_", " "), assertion_values.get(assertion_id, bool(passed)), True)
                               for assertion_id in contract["required_assertion_ids"]]
         contract_ok = required_functions <= observed_functions and artifacts_ok and all(item["passed"] for item in assertion_receipts)
         results.append({"name": name, "fixture": contract["fixture_builder"], "production_invocations": invocation_receipts,
@@ -172,7 +177,15 @@ def main() -> int:
             prepared, manifest, packet = _remediation(ctx)
             return prepared, manifest, packet
 
-    run(CASES[0], lambda: (lambda p, m, packet: (packet.get("issue_classification") == "verified_blocker" and packet.get("automation_eligibility") == "bounded_fix_available", ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(m)))(*remediation_case(blocker=True)))
+    def deterministic_blocker():
+        prepared, manifest, packet = remediation_case(blocker=True)
+        assertions = {
+            "deterministic_issue_authority": packet.get("issue_authority") == "deterministically_established" and packet.get("issue_classification") == "verified_blocker",
+            "one_packet_one_contract": bool(packet.get("remediation_id")) and bool(packet.get("verification_contract_id")),
+            "overlay_projection": bool(packet.get("remediation_id")),
+        }
+        return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions
+    run(CASES[0], deterministic_blocker)
     run(CASES[1], lambda: (lambda p, m, packet: (packet.get("automation_eligibility") == "roadmap_only", ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(m)))(*remediation_case(blocker=False, authority="model_mapped_candidate")))
     run(CASES[2], lambda: (lambda p, m, packet: (packet.get("issue_classification") == "model_reviewed_recommendation" and not packet.get("automation_eligibility") == "bounded_fix_available", ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(m)))(*remediation_case(blocker=False, authority="model_reviewed")))
 
@@ -248,7 +261,10 @@ def main() -> int:
             contracts = list((root_dir / "closure-contracts").glob("*.json"))
             nodes = artifacts["remediation-overlay.json"]["nodes"]
             unique = len({item["remediation_id"] for item in packets}) == 3 and len({item["verification_contract_id"] for item in packets}) == 3
-            return len(packets) == len(contracts) == len(nodes) == 3 and unique and prepared["actionable_issue_count"] == 3, ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest)
+            assertions = {"three_records": prepared["actionable_issue_count"] == 3, "three_packets": len(packets) == 3,
+                          "three_contracts": len(contracts) == 3, "three_projections": len(nodes) == 3,
+                          "bidirectional_unique_links": unique and all((root_dir / "closure-contracts" / (item["verification_contract_id"] + ".json")).is_file() for item in packets)}
+            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions
     run(CASES[11], three_issues)
     def contestation():
         with tempfile.TemporaryDirectory() as raw:
@@ -290,7 +306,12 @@ def main() -> int:
             codex_receipt = {**manual_receipt, "execution_receipt": "codex-package"}
             codex = submit_result(ctx, "migration_and_rollback", result, codex_receipt)
             codex_id = codex.get("result_id") or (codex.get("result_ids") or [None])[0]
-            return package.get("schema_version") == "codex-execution-package.v1" and manual["result_id"] == codex_id and codex["status"] == "idempotent_replay", ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id}
+            assertions = {"package_rendered": package.get("schema_version") == "codex-execution-package.v1",
+                          "manual_submitted": manual.get("status") == "accepted", "codex_submitted": codex.get("status") == "idempotent_replay",
+                          "same_native_validator": package.get("native_work_order", {}).get("native_boundary", {}).get("native_result_validator") == "shiproom.review_organisation.validate_migration_result",
+                          "semantic_identity_equal": manual["result_id"] == codex_id,
+                          "transport_distinct": manual_receipt["execution_receipt"] != codex_receipt["execution_receipt"]}
+            return all(assertions.values()), ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id}, assertions
     run(CASES[17], transports)
 
     if tuple(item["name"] for item in results) != CASES:

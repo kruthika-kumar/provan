@@ -34,7 +34,7 @@ from shiproom.assessment import (
 )
 from shiproom.cli import main
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input, mapping_prepare
-from shiproom.intent import compile_bundle as compile_intent, prepare as prepare_intent
+from shiproom.intent import _load_packet, compile_bundle as compile_intent, prepare as prepare_intent
 from test_intent import context_for, inbox, proposal
 from shiproom.project import content_hash
 
@@ -395,26 +395,84 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     environment=tmp_path/"installed"; venv.EnvBuilder(with_pip=True,system_site_packages=True).create(environment)
     python=environment/("Scripts/python.exe" if os.name=="nt" else "bin/python"); command=environment/("Scripts/shiproom.exe" if os.name=="nt" else "bin/shiproom")
     wheel=next(wheelhouse.glob("shiproom-*.whl")); subprocess.run([str(python),"-m","pip","install","--no-deps",str(wheel)],check=True,capture_output=True,text=True)
-    ctx=assessment_context(tmp_path/"external-repository"); release_path=ctx.repository_root/"release.json"; write_json(release_path,ctx.release)
+    ctx=assessment_context(tmp_path/"external-repository")
+    # This external-wheel patient has one canonical, actionable finding.  The
+    # installed commands below therefore exercise the connected Session 6--8
+    # lifecycle rather than merely the empty-generation happy path.
+    graph = load_assessment_input(ctx)
+    criterion = graph["intent_artifacts"]["acceptance-criteria.json"]["criteria"][0]["criterion_id"]
+    ctx.release["findings"] = [{"id":"finding_wheel","criterion_id":criterion,"requirement_id":"requirement_wheel","journey_ids":[],"blocker":True,"state":"OPEN","evidence_class":"deterministically_established","criterion_authority":"deterministically_established","owner_decision_required":False,"automation_class":"exact_route_mismatch"}]
+    compile_graph(ctx)
+    release_path=ctx.repository_root/"release.json"; write_json(release_path,ctx.release)
     env={key:value for key,value in os.environ.items() if key not in {"PYTHONPATH","PYTHONHOME"}}
-    imported=subprocess.run([str(python),"-c","import shiproom; print(shiproom.__file__)"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout.strip()
+    wheel_commands=[]
+    def installed(arguments, *, expect=0):
+        completed=subprocess.run(arguments,cwd=ctx.repository_root,env=env,check=False,capture_output=True,text=True)
+        wheel_commands.append({"command":arguments[1:] if len(arguments)>1 else arguments,"exit_code":completed.returncode,"stdout_hash":"sha256:"+hashlib.sha256(completed.stdout.encode()).hexdigest(),"stderr_hash":"sha256:"+hashlib.sha256(completed.stderr.encode()).hexdigest(),"status":"passed" if completed.returncode==expect else "unexpected"})
+        assert completed.returncode==expect, completed.stderr
+        return completed
+    imported=installed([str(python),"-c","import shiproom; print(shiproom.__file__)" ]).stdout.strip()
     assert str(project).lower() not in imported.lower() and "site-packages" in imported.lower()
-    subprocess.run([str(command),"assessment","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    subprocess.run([str(command),"measurement-ai","prepare","--release",str(release_path),"--review-mode","contract_only"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    subprocess.run([str(command),"measurement-ai","compile","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    shown=subprocess.run([str(command),"measurement-ai","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True).stdout
+    installed([str(command),"assessment","prepare","--release",str(release_path)])
+    installed([str(command),"measurement-ai","prepare","--release",str(release_path),"--review-mode","contract_only"])
+    installed([str(command),"measurement-ai","compile","--release",str(release_path)])
+    shown=installed([str(command),"measurement-ai","show","--release",str(release_path)]).stdout
     assert "Measurement & AI Readiness" in shown and "no_applicable_measurement_or_ai_surface" in shown
     # Sessions 6--8 must remain operable from the installed distribution, not
     # merely importable from it.  These commands consume the persisted native
     # Product Intent/graph state created above.
-    for action in ("prepare", "compile", "show"):
-        subprocess.run([str(command),"remediation-roadmap",action,"--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    subprocess.run([str(command),"review-plan","prepare","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    package=subprocess.run([str(command),"review-plan","render-package","--release",str(release_path),"--specialist","product_intent"],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    assert json.loads(package.stdout)["schema_version"] == "codex-execution-package.v1"
-    subprocess.run([str(command),"review-plan","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    subprocess.run([str(command),"management-artifacts","compile","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
-    subprocess.run([str(command),"management-artifacts","show","--release",str(release_path)],cwd=ctx.repository_root,env=env,check=True,capture_output=True,text=True)
+    installed([str(command),"remediation-roadmap","prepare","--release",str(release_path)])
+    installed([str(command),"remediation-roadmap","compile","--release",str(release_path)])
+    remediation_show = installed([str(command),"remediation-roadmap","show","--release",str(release_path)])
+    assert "remediation-index" in remediation_show.stdout
+    remediation_root = ctx.repository_root / ".shiproom/local/releases" / ctx.release["release_id"] / "remediation"
+    remediation_pointer = json.loads((remediation_root / "current-remediation-generation.json").read_text(encoding="utf-8"))
+    remediation_plan = json.loads((remediation_root / "generations" / remediation_pointer["generation"] / "remediation-plan.json").read_text(encoding="utf-8"))
+    packet = remediation_plan["packets"][0]; closure_id = packet["verification_contract_id"]
+    closure_dir = remediation_root / "closure-inbox" / closure_id; closure_dir.mkdir(parents=True)
+    branch = ctx.release.get("repository", {}).get("branch") or ctx.release.get("branch") or "owner_action_required"
+    evidence = {"schema_version":"remediation-closure-evidence.v1","closure_contract_id":closure_id,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"branch":branch,"fixer_id":"wheel_fixer","reruns":[{"check_id":packet["source_issue_id"],"passed":True,"evidence_class":"deterministically_established"}],"regression_results":[],"test_results":[],"instrumentation_results":[],"protected_invariant_outcomes":[{"invariant":"canonical_findings_unchanged","passed":True}]}
+    evidence_raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode("utf-8")
+    closure_receipt={"schema_version":"remediation-closure-verifier-receipt.v1","closure_contract_id":closure_id,"evidence_snapshot_hash":"sha256:"+hashlib.sha256(evidence_raw).hexdigest(),"verifier_id":"wheel_verifier","executor_type":"human"}
+    (closure_dir / "evidence.json").write_bytes(evidence_raw); write_json(closure_dir / "verifier-receipt.json", closure_receipt)
+    closure = installed([str(command),"remediation-roadmap","closure-verify","--release",str(release_path),"--closure-contract",closure_id])
+    assert json.loads(closure.stdout)["status"] == "satisfied_candidate"
+    installed([str(command),"review-plan","prepare","--release",str(release_path)])
+    package=installed([str(command),"review-plan","render-package","--release",str(release_path),"--specialist","product_intent"])
+    package_value=json.loads(package.stdout); assert package_value["schema_version"] == "codex-execution-package.v1"
+    work_order_id=package_value["native_work_order"]["work_order_id"]
+    review_inbox=ctx.repository_root / ".shiproom/local/releases" / ctx.release["release_id"] / "review-organisation" / "inbox" / work_order_id
+    review_inbox.mkdir(parents=True)
+    # Attempt one is structurally invalid and must create a compiler-owned
+    # revision record; no generic result path is accepted by the CLI.
+    write_json(review_inbox / "result.json", {}); write_json(review_inbox / "completion-receipt.json", {})
+    invalid_submit=installed([str(command),"review-plan","submit-result","--release",str(release_path),"--specialist","product_intent","--result",str(review_inbox / "result.json"),"--receipt",str(review_inbox / "completion-receipt.json")])
+    assert json.loads(invalid_submit.stdout)["status"] == "revision_required"
+    corrected_package=json.loads(installed([str(command),"review-plan","render-package","--release",str(release_path),"--specialist","product_intent"]).stdout)
+    corrected_order=corrected_package["native_work_order"]["work_order_id"]
+    corrected_inbox=ctx.repository_root / ".shiproom/local/releases" / ctx.release["release_id"] / "review-organisation" / "inbox" / corrected_order
+    corrected_inbox.mkdir(parents=True, exist_ok=True)
+    intent_packet, _ = _load_packet(ctx); corrected_result=proposal(intent_packet)
+    corrected_receipt={"schema_version":"harness-execution-receipt.v1","work_order_id":corrected_order,"execution_mode":"manual_external","declared_capability":"prepared_packet_only","granted_permission":"read_only","observed_execution":"receipt_observed","execution_receipt":"wheel-connected","independence_limitation":"declared capability is not proof of isolation"}
+    write_json(corrected_inbox / "result.json", corrected_result); write_json(corrected_inbox / "completion-receipt.json", corrected_receipt)
+    corrected_submit=installed([str(command),"review-plan","submit-result","--release",str(release_path),"--specialist","product_intent","--result",str(corrected_inbox / "result.json"),"--receipt",str(corrected_inbox / "completion-receipt.json")])
+    corrected_value=json.loads(corrected_submit.stdout); assert corrected_value["status"] == "accepted"
+    # A real accepted native result can drive a successor plan.  The CLI owns
+    # the trigger validation and publishes the successor pointer last.
+    adapted=installed([str(command),"review-plan","adapt","--release",str(release_path),"--trigger","migration_surface_discovered","--specialist","product_intent","--criterion",criterion,"--evidence-id",corrected_value["result_id"]])
+    assert json.loads(adapted.stdout)["status"] == "accepted"
+    installed([str(command),"review-plan","show","--release",str(release_path)])
+    # Contestation reads a release-bound owner authority; it never accepts an
+    # actor label as proof.  Use a non-owner defer action for the wheel route.
+    action_path=ctx.repository_root / ".shiproom/local/releases" / ctx.release["release_id"] / "contestation-action.json"
+    write_json(action_path,{"action_id":"wheel_defer","release_id":ctx.release["release_id"],"actor_type":"reviewer","actor_label":"wheel","action":"defer","target_type":"finding","target_id":"finding_wheel","source_generation":"release_state","submitted_evidence":None,"rationale":"connected wheel lifecycle","created_at":"2026-01-01T00:00:00+00:00","owner_authority_ref":None,"owner_authority_snapshot_hash":None})
+    installed([str(command),"contestation","add","--release",str(release_path),"--input",str(action_path)])
+    installed([str(command),"contestation","show","--release",str(release_path)])
+    installed([str(command),"management-artifacts","compile","--release",str(release_path)])
+    installed([str(command),"management-artifacts","show","--release",str(release_path)])
+    evidence=os.environ.get("SHIPROOM_WHEEL_SMOKE_EVIDENCE")
+    if evidence:
+        Path(evidence).write_text(json.dumps({"wheel_sha256":"sha256:"+hashlib.sha256(wheel.read_bytes()).hexdigest(),"installed_distribution":wheel.name,"shiproom_module_path":imported,"site_packages_root":str(environment/"Lib/site-packages"),"source_checkout_not_on_sys_path":str(project).lower() not in imported.lower(),"commands":wheel_commands},sort_keys=True,indent=2),encoding="utf-8")
 
 
 def test_browser_placeholders_are_criterion_specific():
