@@ -405,10 +405,11 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     compile_graph(ctx)
     release_path=ctx.repository_root/"release.json"; write_json(release_path,ctx.release)
     env={key:value for key,value in os.environ.items() if key not in {"PYTHONPATH","PYTHONHOME"}}
-    wheel_commands=[]
+    wheel_commands=[]; evidence_target=os.environ.get("SHIPROOM_WHEEL_SMOKE_EVIDENCE"); log_root=(Path(evidence_target).parent/"wheel-command-logs") if evidence_target else tmp_path/"wheel-command-logs"; log_root.mkdir(parents=True,exist_ok=True)
     def installed(arguments, *, expect=0):
         completed=subprocess.run(arguments,cwd=ctx.repository_root,env=env,check=False,capture_output=True,text=True)
-        wheel_commands.append({"command":arguments[1:] if len(arguments)>1 else arguments,"exit_code":completed.returncode,"stdout_hash":"sha256:"+hashlib.sha256(completed.stdout.encode()).hexdigest(),"stderr_hash":"sha256:"+hashlib.sha256(completed.stderr.encode()).hexdigest(),"status":"passed" if completed.returncode==expect else "unexpected"})
+        index=len(wheel_commands);stdout_path=log_root/f"{index:02d}.stdout.txt";stderr_path=log_root/f"{index:02d}.stderr.txt";stdout_path.write_bytes(completed.stdout.encode("utf-8"));stderr_path.write_bytes(completed.stderr.encode("utf-8"))
+        wheel_commands.append({"command":arguments[1:] if len(arguments)>1 else arguments,"exit_code":completed.returncode,"stdout_path":str(stdout_path),"stderr_path":str(stderr_path),"stdout_hash":"sha256:"+hashlib.sha256(completed.stdout.encode()).hexdigest(),"stderr_hash":"sha256:"+hashlib.sha256(completed.stderr.encode()).hexdigest(),"status":"passed" if completed.returncode==expect else "unexpected"})
         assert completed.returncode==expect, completed.stderr
         return completed
     imported=installed([str(python),"-c","import shiproom; print(shiproom.__file__)" ]).stdout.strip()
@@ -432,6 +433,9 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     closure_dir = remediation_root / "closure-inbox" / closure_id; closure_dir.mkdir(parents=True)
     branch = ctx.release.get("repository", {}).get("branch") or ctx.release.get("branch") or "owner_action_required"
     evidence = {"schema_version":"remediation-closure-evidence.v1","closure_contract_id":closure_id,"release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"branch":branch,"fixer_id":"wheel_fixer","reruns":[{"check_id":packet["source_issue_id"],"passed":True,"evidence_class":"deterministically_established"}],"regression_results":[],"test_results":[],"instrumentation_results":[],"protected_invariant_outcomes":[{"invariant":"canonical_findings_unchanged","passed":True}]}
+    invalid_evidence={**evidence,"reruns":[{"check_id":"wrong_check","passed":True,"evidence_class":"deterministically_established"}]};invalid_raw=(json.dumps(invalid_evidence,sort_keys=True,indent=2)+"\n").encode("utf-8")
+    (closure_dir/"evidence.json").write_bytes(invalid_raw);write_json(closure_dir/"verifier-receipt.json",{"schema_version":"remediation-closure-verifier-receipt.v1","closure_contract_id":closure_id,"evidence_snapshot_hash":"sha256:"+hashlib.sha256(invalid_raw).hexdigest(),"verifier_id":"wheel_verifier","executor_type":"human"})
+    rejected_closure=installed([str(command),"remediation-roadmap","closure-verify","--release",str(release_path),"--closure-contract",closure_id]);assert json.loads(rejected_closure.stdout)["status"]=="unsatisfied"
     evidence_raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode("utf-8")
     closure_receipt={"schema_version":"remediation-closure-verifier-receipt.v1","closure_contract_id":closure_id,"evidence_snapshot_hash":"sha256:"+hashlib.sha256(evidence_raw).hexdigest(),"verifier_id":"wheel_verifier","executor_type":"human"}
     (closure_dir / "evidence.json").write_bytes(evidence_raw); write_json(closure_dir / "verifier-receipt.json", closure_receipt)
@@ -470,9 +474,8 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     installed([str(command),"contestation","show","--release",str(release_path)])
     installed([str(command),"management-artifacts","compile","--release",str(release_path)])
     installed([str(command),"management-artifacts","show","--release",str(release_path)])
-    evidence=os.environ.get("SHIPROOM_WHEEL_SMOKE_EVIDENCE")
-    if evidence:
-        Path(evidence).write_text(json.dumps({"wheel_sha256":"sha256:"+hashlib.sha256(wheel.read_bytes()).hexdigest(),"installed_distribution":wheel.name,"shiproom_module_path":imported,"site_packages_root":str(environment/"Lib/site-packages"),"source_checkout_not_on_sys_path":str(project).lower() not in imported.lower(),"commands":wheel_commands},sort_keys=True,indent=2),encoding="utf-8")
+    if evidence_target:
+        Path(evidence_target).write_text(json.dumps({"wheel_sha256":"sha256:"+hashlib.sha256(wheel.read_bytes()).hexdigest(),"installed_distribution":wheel.name,"shiproom_executable":str(command),"shiproom_module_path":imported,"site_packages_root":str(environment/"Lib/site-packages"),"source_checkout_not_on_sys_path":str(project).lower() not in imported.lower(),"commands":wheel_commands},sort_keys=True,indent=2),encoding="utf-8")
 
 
 def test_browser_placeholders_are_criterion_specific():

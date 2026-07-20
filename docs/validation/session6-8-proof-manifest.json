@@ -15,7 +15,7 @@
       "proof_id": "proof_s6_issue_authority_policy_valid",
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_ISSUE_AUTHORITY_POLICY-valid]"
     },
     {
@@ -33,7 +33,7 @@
       "proof_id": "proof_s6_issue_authority_policy_near_valid",
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_ISSUE_AUTHORITY_POLICY-near_valid]"
     },
     {
@@ -51,7 +51,7 @@
       "proof_id": "proof_s6_issue_authority_policy_adversarial_invalid",
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_ISSUE_AUTHORITY_POLICY-adversarial_invalid]"
     },
     {
@@ -69,7 +69,7 @@
       "proof_id": "proof_s6_model_review_not_blocker_valid",
       "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_MODEL_REVIEW_NOT_BLOCKER-valid]"
     },
     {
@@ -87,7 +87,7 @@
       "proof_id": "proof_s6_model_review_not_blocker_near_valid",
       "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_MODEL_REVIEW_NOT_BLOCKER-near_valid]"
     },
     {
@@ -105,7 +105,7 @@
       "proof_id": "proof_s6_model_review_not_blocker_adversarial_invalid",
       "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_MODEL_REVIEW_NOT_BLOCKER-adversarial_invalid]"
     },
     {
@@ -123,7 +123,7 @@
       "proof_id": "proof_s6_planner_compiler_authority_valid",
       "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PLANNER_COMPILER_AUTHORITY-valid]"
     },
     {
@@ -141,7 +141,7 @@
       "proof_id": "proof_s6_planner_compiler_authority_near_valid",
       "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PLANNER_COMPILER_AUTHORITY-near_valid]"
     },
     {
@@ -159,7 +159,7 @@
       "proof_id": "proof_s6_planner_compiler_authority_adversarial_invalid",
       "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PLANNER_COMPILER_AUTHORITY-adversarial_invalid]"
     },
     {
@@ -177,7 +177,7 @@
       "proof_id": "proof_s6_human_owner_separation_valid",
       "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_HUMAN_OWNER_SEPARATION-valid]"
     },
     {
@@ -195,7 +195,7 @@
       "proof_id": "proof_s6_human_owner_separation_near_valid",
       "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_HUMAN_OWNER_SEPARATION-near_valid]"
     },
     {
@@ -213,7 +213,7 @@
       "proof_id": "proof_s6_human_owner_separation_adversarial_invalid",
       "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_HUMAN_OWNER_SEPARATION-adversarial_invalid]"
     },
     {
@@ -231,7 +231,7 @@
       "proof_id": "proof_s6_optional_planner_lifecycle_valid",
       "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_OPTIONAL_PLANNER_LIFECYCLE-valid]"
     },
     {
@@ -249,7 +249,7 @@
       "proof_id": "proof_s6_optional_planner_lifecycle_near_valid",
       "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_OPTIONAL_PLANNER_LIFECYCLE-near_valid]"
     },
     {
@@ -267,7 +267,7 @@
       "proof_id": "proof_s6_optional_planner_lifecycle_adversarial_invalid",
       "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_OPTIONAL_PLANNER_LIFECYCLE-adversarial_invalid]"
     },
     {
@@ -285,7 +285,7 @@
       "proof_id": "proof_s6_automation_eligibility_valid",
       "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_AUTOMATION_ELIGIBILITY-valid]"
     },
     {
@@ -303,7 +303,7 @@
       "proof_id": "proof_s6_automation_eligibility_near_valid",
       "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_AUTOMATION_ELIGIBILITY-near_valid]"
     },
     {
@@ -321,7 +321,7 @@
       "proof_id": "proof_s6_automation_eligibility_adversarial_invalid",
       "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_AUTOMATION_ELIGIBILITY-adversarial_invalid]"
     },
     {
@@ -339,7 +339,7 @@
       "proof_id": "proof_s6_bounded_fix_metadata_only_valid",
       "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_BOUNDED_FIX_METADATA_ONLY-valid]"
     },
     {
@@ -357,7 +357,7 @@
       "proof_id": "proof_s6_bounded_fix_metadata_only_near_valid",
       "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_BOUNDED_FIX_METADATA_ONLY-near_valid]"
     },
     {
@@ -375,7 +375,7 @@
       "proof_id": "proof_s6_bounded_fix_metadata_only_adversarial_invalid",
       "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_BOUNDED_FIX_METADATA_ONLY-adversarial_invalid]"
     },
     {
@@ -393,7 +393,7 @@
       "proof_id": "proof_s6_remediation_cardinality_valid",
       "requirement_id": "S6_REMEDIATION_CARDINALITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_REMEDIATION_CARDINALITY-valid]"
     },
     {
@@ -411,7 +411,7 @@
       "proof_id": "proof_s6_remediation_cardinality_near_valid",
       "requirement_id": "S6_REMEDIATION_CARDINALITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_REMEDIATION_CARDINALITY-near_valid]"
     },
     {
@@ -429,7 +429,7 @@
       "proof_id": "proof_s6_remediation_cardinality_adversarial_invalid",
       "requirement_id": "S6_REMEDIATION_CARDINALITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_REMEDIATION_CARDINALITY-adversarial_invalid]"
     },
     {
@@ -447,7 +447,7 @@
       "proof_id": "proof_s6_packet_contract_links_valid",
       "requirement_id": "S6_PACKET_CONTRACT_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_CONTRACT_LINKS-valid]"
     },
     {
@@ -465,7 +465,7 @@
       "proof_id": "proof_s6_packet_contract_links_near_valid",
       "requirement_id": "S6_PACKET_CONTRACT_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_CONTRACT_LINKS-near_valid]"
     },
     {
@@ -483,7 +483,7 @@
       "proof_id": "proof_s6_packet_contract_links_adversarial_invalid",
       "requirement_id": "S6_PACKET_CONTRACT_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_CONTRACT_LINKS-adversarial_invalid]"
     },
     {
@@ -501,7 +501,7 @@
       "proof_id": "proof_s6_packet_file_integrity_valid",
       "requirement_id": "S6_PACKET_FILE_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_FILE_INTEGRITY-valid]"
     },
     {
@@ -519,7 +519,7 @@
       "proof_id": "proof_s6_packet_file_integrity_near_valid",
       "requirement_id": "S6_PACKET_FILE_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_FILE_INTEGRITY-near_valid]"
     },
     {
@@ -537,7 +537,7 @@
       "proof_id": "proof_s6_packet_file_integrity_adversarial_invalid",
       "requirement_id": "S6_PACKET_FILE_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PACKET_FILE_INTEGRITY-adversarial_invalid]"
     },
     {
@@ -555,7 +555,7 @@
       "proof_id": "proof_s6_closure_contract_completeness_valid",
       "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_CONTRACT_COMPLETENESS-valid]"
     },
     {
@@ -573,7 +573,7 @@
       "proof_id": "proof_s6_closure_contract_completeness_near_valid",
       "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_CONTRACT_COMPLETENESS-near_valid]"
     },
     {
@@ -591,7 +591,7 @@
       "proof_id": "proof_s6_closure_contract_completeness_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_CONTRACT_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -609,7 +609,7 @@
       "proof_id": "proof_s6_closure_exact_rerun_valid",
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EXACT_RERUN-valid]"
     },
     {
@@ -627,7 +627,7 @@
       "proof_id": "proof_s6_closure_exact_rerun_near_valid",
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EXACT_RERUN-near_valid]"
     },
     {
@@ -645,7 +645,7 @@
       "proof_id": "proof_s6_closure_exact_rerun_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EXACT_RERUN-adversarial_invalid]"
     },
     {
@@ -663,7 +663,7 @@
       "proof_id": "proof_s6_closure_pass_required_valid",
       "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PASS_REQUIRED-valid]"
     },
     {
@@ -681,7 +681,7 @@
       "proof_id": "proof_s6_closure_pass_required_near_valid",
       "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PASS_REQUIRED-near_valid]"
     },
     {
@@ -699,7 +699,7 @@
       "proof_id": "proof_s6_closure_pass_required_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PASS_REQUIRED-adversarial_invalid]"
     },
     {
@@ -717,7 +717,7 @@
       "proof_id": "proof_s6_closure_verifier_independence_valid",
       "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_VERIFIER_INDEPENDENCE-valid]"
     },
     {
@@ -735,7 +735,7 @@
       "proof_id": "proof_s6_closure_verifier_independence_near_valid",
       "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_VERIFIER_INDEPENDENCE-near_valid]"
     },
     {
@@ -753,7 +753,7 @@
       "proof_id": "proof_s6_closure_verifier_independence_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_VERIFIER_INDEPENDENCE-adversarial_invalid]"
     },
     {
@@ -771,7 +771,7 @@
       "proof_id": "proof_s6_closure_commit_branch_freshness_valid",
       "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_COMMIT_BRANCH_FRESHNESS-valid]"
     },
     {
@@ -789,7 +789,7 @@
       "proof_id": "proof_s6_closure_commit_branch_freshness_near_valid",
       "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_COMMIT_BRANCH_FRESHNESS-near_valid]"
     },
     {
@@ -807,7 +807,7 @@
       "proof_id": "proof_s6_closure_commit_branch_freshness_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_COMMIT_BRANCH_FRESHNESS-adversarial_invalid]"
     },
     {
@@ -825,7 +825,7 @@
       "proof_id": "proof_s6_closure_evidence_class_valid",
       "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EVIDENCE_CLASS-valid]"
     },
     {
@@ -843,7 +843,7 @@
       "proof_id": "proof_s6_closure_evidence_class_near_valid",
       "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EVIDENCE_CLASS-near_valid]"
     },
     {
@@ -861,7 +861,7 @@
       "proof_id": "proof_s6_closure_evidence_class_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_EVIDENCE_CLASS-adversarial_invalid]"
     },
     {
@@ -879,7 +879,7 @@
       "proof_id": "proof_s6_closure_regression_requirements_valid",
       "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_REGRESSION_REQUIREMENTS-valid]"
     },
     {
@@ -897,7 +897,7 @@
       "proof_id": "proof_s6_closure_regression_requirements_near_valid",
       "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_REGRESSION_REQUIREMENTS-near_valid]"
     },
     {
@@ -915,7 +915,7 @@
       "proof_id": "proof_s6_closure_regression_requirements_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_REGRESSION_REQUIREMENTS-adversarial_invalid]"
     },
     {
@@ -933,7 +933,7 @@
       "proof_id": "proof_s6_closure_test_requirements_valid",
       "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_TEST_REQUIREMENTS-valid]"
     },
     {
@@ -951,7 +951,7 @@
       "proof_id": "proof_s6_closure_test_requirements_near_valid",
       "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_TEST_REQUIREMENTS-near_valid]"
     },
     {
@@ -969,7 +969,7 @@
       "proof_id": "proof_s6_closure_test_requirements_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_TEST_REQUIREMENTS-adversarial_invalid]"
     },
     {
@@ -987,7 +987,7 @@
       "proof_id": "proof_s6_closure_instrumentation_requirements_valid",
       "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS-valid]"
     },
     {
@@ -1005,7 +1005,7 @@
       "proof_id": "proof_s6_closure_instrumentation_requirements_near_valid",
       "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS-near_valid]"
     },
     {
@@ -1023,7 +1023,7 @@
       "proof_id": "proof_s6_closure_instrumentation_requirements_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS-adversarial_invalid]"
     },
     {
@@ -1041,7 +1041,7 @@
       "proof_id": "proof_s6_closure_protected_invariants_valid",
       "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PROTECTED_INVARIANTS-valid]"
     },
     {
@@ -1059,7 +1059,7 @@
       "proof_id": "proof_s6_closure_protected_invariants_near_valid",
       "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PROTECTED_INVARIANTS-near_valid]"
     },
     {
@@ -1077,7 +1077,7 @@
       "proof_id": "proof_s6_closure_protected_invariants_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_PROTECTED_INVARIANTS-adversarial_invalid]"
     },
     {
@@ -1095,7 +1095,7 @@
       "proof_id": "proof_s6_closure_owner_decision_valid",
       "requirement_id": "S6_CLOSURE_OWNER_DECISION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_OWNER_DECISION-valid]"
     },
     {
@@ -1113,7 +1113,7 @@
       "proof_id": "proof_s6_closure_owner_decision_near_valid",
       "requirement_id": "S6_CLOSURE_OWNER_DECISION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_OWNER_DECISION-near_valid]"
     },
     {
@@ -1131,7 +1131,7 @@
       "proof_id": "proof_s6_closure_owner_decision_adversarial_invalid",
       "requirement_id": "S6_CLOSURE_OWNER_DECISION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_CLOSURE_OWNER_DECISION-adversarial_invalid]"
     },
     {
@@ -1149,7 +1149,7 @@
       "proof_id": "proof_s6_private_alpha_non_mutation_valid",
       "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PRIVATE_ALPHA_NON_MUTATION-valid]"
     },
     {
@@ -1167,7 +1167,7 @@
       "proof_id": "proof_s6_private_alpha_non_mutation_near_valid",
       "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PRIVATE_ALPHA_NON_MUTATION-near_valid]"
     },
     {
@@ -1185,7 +1185,7 @@
       "proof_id": "proof_s6_private_alpha_non_mutation_adversarial_invalid",
       "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S6_PRIVATE_ALPHA_NON_MUTATION-adversarial_invalid]"
     },
     {
@@ -1203,7 +1203,7 @@
       "proof_id": "proof_s7_specialist_catalogue_valid",
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SPECIALIST_CATALOGUE-valid]"
     },
     {
@@ -1221,7 +1221,7 @@
       "proof_id": "proof_s7_specialist_catalogue_near_valid",
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SPECIALIST_CATALOGUE-near_valid]"
     },
     {
@@ -1239,7 +1239,7 @@
       "proof_id": "proof_s7_specialist_catalogue_adversarial_invalid",
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SPECIALIST_CATALOGUE-adversarial_invalid]"
     },
     {
@@ -1257,7 +1257,7 @@
       "proof_id": "proof_s7_native_boundary_reuse_valid",
       "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_BOUNDARY_REUSE-valid]"
     },
     {
@@ -1275,7 +1275,7 @@
       "proof_id": "proof_s7_native_boundary_reuse_near_valid",
       "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_BOUNDARY_REUSE-near_valid]"
     },
     {
@@ -1293,7 +1293,7 @@
       "proof_id": "proof_s7_native_boundary_reuse_adversarial_invalid",
       "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_BOUNDARY_REUSE-adversarial_invalid]"
     },
     {
@@ -1311,7 +1311,7 @@
       "proof_id": "proof_s7_typed_surface_policy_valid",
       "requirement_id": "S7_TYPED_SURFACE_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPED_SURFACE_POLICY-valid]"
     },
     {
@@ -1329,7 +1329,7 @@
       "proof_id": "proof_s7_typed_surface_policy_near_valid",
       "requirement_id": "S7_TYPED_SURFACE_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPED_SURFACE_POLICY-near_valid]"
     },
     {
@@ -1347,7 +1347,7 @@
       "proof_id": "proof_s7_typed_surface_policy_adversarial_invalid",
       "requirement_id": "S7_TYPED_SURFACE_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPED_SURFACE_POLICY-adversarial_invalid]"
     },
     {
@@ -1365,7 +1365,7 @@
       "proof_id": "proof_s7_selection_evidence_links_valid",
       "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SELECTION_EVIDENCE_LINKS-valid]"
     },
     {
@@ -1383,7 +1383,7 @@
       "proof_id": "proof_s7_selection_evidence_links_near_valid",
       "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SELECTION_EVIDENCE_LINKS-near_valid]"
     },
     {
@@ -1401,7 +1401,7 @@
       "proof_id": "proof_s7_selection_evidence_links_adversarial_invalid",
       "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SELECTION_EVIDENCE_LINKS-adversarial_invalid]"
     },
     {
@@ -1419,7 +1419,7 @@
       "proof_id": "proof_s7_python_selection_valid",
       "requirement_id": "S7_PYTHON_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PYTHON_SELECTION-valid]"
     },
     {
@@ -1437,7 +1437,7 @@
       "proof_id": "proof_s7_python_selection_near_valid",
       "requirement_id": "S7_PYTHON_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PYTHON_SELECTION-near_valid]"
     },
     {
@@ -1455,7 +1455,7 @@
       "proof_id": "proof_s7_python_selection_adversarial_invalid",
       "requirement_id": "S7_PYTHON_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PYTHON_SELECTION-adversarial_invalid]"
     },
     {
@@ -1473,7 +1473,7 @@
       "proof_id": "proof_s7_typescript_selection_valid",
       "requirement_id": "S7_TYPESCRIPT_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPESCRIPT_SELECTION-valid]"
     },
     {
@@ -1491,7 +1491,7 @@
       "proof_id": "proof_s7_typescript_selection_near_valid",
       "requirement_id": "S7_TYPESCRIPT_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPESCRIPT_SELECTION-near_valid]"
     },
     {
@@ -1509,7 +1509,7 @@
       "proof_id": "proof_s7_typescript_selection_adversarial_invalid",
       "requirement_id": "S7_TYPESCRIPT_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TYPESCRIPT_SELECTION-adversarial_invalid]"
     },
     {
@@ -1527,7 +1527,7 @@
       "proof_id": "proof_s7_ai_selection_valid",
       "requirement_id": "S7_AI_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_SELECTION-valid]"
     },
     {
@@ -1545,7 +1545,7 @@
       "proof_id": "proof_s7_ai_selection_near_valid",
       "requirement_id": "S7_AI_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_SELECTION-near_valid]"
     },
     {
@@ -1563,7 +1563,7 @@
       "proof_id": "proof_s7_ai_selection_adversarial_invalid",
       "requirement_id": "S7_AI_SELECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_SELECTION-adversarial_invalid]"
     },
     {
@@ -1581,7 +1581,7 @@
       "proof_id": "proof_s7_browser_explicit_skip_valid",
       "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_EXPLICIT_SKIP-valid]"
     },
     {
@@ -1599,7 +1599,7 @@
       "proof_id": "proof_s7_browser_explicit_skip_near_valid",
       "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_EXPLICIT_SKIP-near_valid]"
     },
     {
@@ -1617,7 +1617,7 @@
       "proof_id": "proof_s7_browser_explicit_skip_adversarial_invalid",
       "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_EXPLICIT_SKIP-adversarial_invalid]"
     },
     {
@@ -1635,7 +1635,7 @@
       "proof_id": "proof_s7_browser_absence_not_inspected_valid",
       "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_ABSENCE_NOT_INSPECTED-valid]"
     },
     {
@@ -1653,7 +1653,7 @@
       "proof_id": "proof_s7_browser_absence_not_inspected_near_valid",
       "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_ABSENCE_NOT_INSPECTED-near_valid]"
     },
     {
@@ -1671,7 +1671,7 @@
       "proof_id": "proof_s7_browser_absence_not_inspected_adversarial_invalid",
       "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_ABSENCE_NOT_INSPECTED-adversarial_invalid]"
     },
     {
@@ -1689,7 +1689,7 @@
       "proof_id": "proof_s7_test_adequacy_applicability_valid",
       "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TEST_ADEQUACY_APPLICABILITY-valid]"
     },
     {
@@ -1707,7 +1707,7 @@
       "proof_id": "proof_s7_test_adequacy_applicability_near_valid",
       "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TEST_ADEQUACY_APPLICABILITY-near_valid]"
     },
     {
@@ -1725,7 +1725,7 @@
       "proof_id": "proof_s7_test_adequacy_applicability_adversarial_invalid",
       "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TEST_ADEQUACY_APPLICABILITY-adversarial_invalid]"
     },
     {
@@ -1743,7 +1743,7 @@
       "proof_id": "proof_s7_instrumentation_applicability_valid",
       "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_INSTRUMENTATION_APPLICABILITY-valid]"
     },
     {
@@ -1761,7 +1761,7 @@
       "proof_id": "proof_s7_instrumentation_applicability_near_valid",
       "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_INSTRUMENTATION_APPLICABILITY-near_valid]"
     },
     {
@@ -1779,7 +1779,7 @@
       "proof_id": "proof_s7_instrumentation_applicability_adversarial_invalid",
       "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_INSTRUMENTATION_APPLICABILITY-adversarial_invalid]"
     },
     {
@@ -1797,7 +1797,7 @@
       "proof_id": "proof_s7_product_intent_wrapper_valid",
       "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PRODUCT_INTENT_WRAPPER-valid]"
     },
     {
@@ -1815,7 +1815,7 @@
       "proof_id": "proof_s7_product_intent_wrapper_near_valid",
       "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PRODUCT_INTENT_WRAPPER-near_valid]"
     },
     {
@@ -1833,7 +1833,7 @@
       "proof_id": "proof_s7_product_intent_wrapper_adversarial_invalid",
       "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_PRODUCT_INTENT_WRAPPER-adversarial_invalid]"
     },
     {
@@ -1851,7 +1851,7 @@
       "proof_id": "proof_s7_native_work_order_integrity_valid",
       "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_WORK_ORDER_INTEGRITY-valid]"
     },
     {
@@ -1869,7 +1869,7 @@
       "proof_id": "proof_s7_native_work_order_integrity_near_valid",
       "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_WORK_ORDER_INTEGRITY-near_valid]"
     },
     {
@@ -1887,7 +1887,7 @@
       "proof_id": "proof_s7_native_work_order_integrity_adversarial_invalid",
       "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_NATIVE_WORK_ORDER_INTEGRITY-adversarial_invalid]"
     },
     {
@@ -1905,7 +1905,7 @@
       "proof_id": "proof_s7_codex_package_completeness_valid",
       "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CODEX_PACKAGE_COMPLETENESS-valid]"
     },
     {
@@ -1923,7 +1923,7 @@
       "proof_id": "proof_s7_codex_package_completeness_near_valid",
       "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CODEX_PACKAGE_COMPLETENESS-near_valid]"
     },
     {
@@ -1941,7 +1941,7 @@
       "proof_id": "proof_s7_codex_package_completeness_adversarial_invalid",
       "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CODEX_PACKAGE_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -1959,7 +1959,7 @@
       "proof_id": "proof_s7_harness_declaration_honesty_valid",
       "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_HARNESS_DECLARATION_HONESTY-valid]"
     },
     {
@@ -1977,7 +1977,7 @@
       "proof_id": "proof_s7_harness_declaration_honesty_near_valid",
       "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_HARNESS_DECLARATION_HONESTY-near_valid]"
     },
     {
@@ -1995,7 +1995,7 @@
       "proof_id": "proof_s7_harness_declaration_honesty_adversarial_invalid",
       "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_HARNESS_DECLARATION_HONESTY-adversarial_invalid]"
     },
     {
@@ -2013,7 +2013,7 @@
       "proof_id": "proof_s7_manual_codex_parity_valid",
       "requirement_id": "S7_MANUAL_CODEX_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MANUAL_CODEX_PARITY-valid]"
     },
     {
@@ -2031,7 +2031,7 @@
       "proof_id": "proof_s7_manual_codex_parity_near_valid",
       "requirement_id": "S7_MANUAL_CODEX_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MANUAL_CODEX_PARITY-near_valid]"
     },
     {
@@ -2049,7 +2049,7 @@
       "proof_id": "proof_s7_manual_codex_parity_adversarial_invalid",
       "requirement_id": "S7_MANUAL_CODEX_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MANUAL_CODEX_PARITY-adversarial_invalid]"
     },
     {
@@ -2067,7 +2067,7 @@
       "proof_id": "proof_s7_trusted_submission_paths_valid",
       "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRUSTED_SUBMISSION_PATHS-valid]"
     },
     {
@@ -2085,7 +2085,7 @@
       "proof_id": "proof_s7_trusted_submission_paths_near_valid",
       "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRUSTED_SUBMISSION_PATHS-near_valid]"
     },
     {
@@ -2103,7 +2103,7 @@
       "proof_id": "proof_s7_trusted_submission_paths_adversarial_invalid",
       "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRUSTED_SUBMISSION_PATHS-adversarial_invalid]"
     },
     {
@@ -2121,7 +2121,7 @@
       "proof_id": "proof_s7_submission_byte_persistence_valid",
       "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUBMISSION_BYTE_PERSISTENCE-valid]"
     },
     {
@@ -2139,7 +2139,7 @@
       "proof_id": "proof_s7_submission_byte_persistence_near_valid",
       "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUBMISSION_BYTE_PERSISTENCE-near_valid]"
     },
     {
@@ -2157,7 +2157,7 @@
       "proof_id": "proof_s7_submission_byte_persistence_adversarial_invalid",
       "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUBMISSION_BYTE_PERSISTENCE-adversarial_invalid]"
     },
     {
@@ -2175,7 +2175,7 @@
       "proof_id": "proof_s7_revision_request_valid",
       "requirement_id": "S7_REVISION_REQUEST",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_REVISION_REQUEST-valid]"
     },
     {
@@ -2193,7 +2193,7 @@
       "proof_id": "proof_s7_revision_request_near_valid",
       "requirement_id": "S7_REVISION_REQUEST",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_REVISION_REQUEST-near_valid]"
     },
     {
@@ -2211,7 +2211,7 @@
       "proof_id": "proof_s7_revision_request_adversarial_invalid",
       "requirement_id": "S7_REVISION_REQUEST",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_REVISION_REQUEST-adversarial_invalid]"
     },
     {
@@ -2229,7 +2229,7 @@
       "proof_id": "proof_s7_corrected_result_acceptance_valid",
       "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CORRECTED_RESULT_ACCEPTANCE-valid]"
     },
     {
@@ -2247,7 +2247,7 @@
       "proof_id": "proof_s7_corrected_result_acceptance_near_valid",
       "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CORRECTED_RESULT_ACCEPTANCE-near_valid]"
     },
     {
@@ -2265,7 +2265,7 @@
       "proof_id": "proof_s7_corrected_result_acceptance_adversarial_invalid",
       "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_CORRECTED_RESULT_ACCEPTANCE-adversarial_invalid]"
     },
     {
@@ -2283,7 +2283,7 @@
       "proof_id": "proof_s7_second_invalid_failure_valid",
       "requirement_id": "S7_SECOND_INVALID_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SECOND_INVALID_FAILURE-valid]"
     },
     {
@@ -2301,7 +2301,7 @@
       "proof_id": "proof_s7_second_invalid_failure_near_valid",
       "requirement_id": "S7_SECOND_INVALID_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SECOND_INVALID_FAILURE-near_valid]"
     },
     {
@@ -2319,7 +2319,7 @@
       "proof_id": "proof_s7_second_invalid_failure_adversarial_invalid",
       "requirement_id": "S7_SECOND_INVALID_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SECOND_INVALID_FAILURE-adversarial_invalid]"
     },
     {
@@ -2337,7 +2337,7 @@
       "proof_id": "proof_s7_failed_result_no_adaptation_valid",
       "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_FAILED_RESULT_NO_ADAPTATION-valid]"
     },
     {
@@ -2355,7 +2355,7 @@
       "proof_id": "proof_s7_failed_result_no_adaptation_near_valid",
       "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_FAILED_RESULT_NO_ADAPTATION-near_valid]"
     },
     {
@@ -2373,7 +2373,7 @@
       "proof_id": "proof_s7_failed_result_no_adaptation_adversarial_invalid",
       "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_FAILED_RESULT_NO_ADAPTATION-adversarial_invalid]"
     },
     {
@@ -2391,7 +2391,7 @@
       "proof_id": "proof_s7_trigger_specific_evidence_valid",
       "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRIGGER_SPECIFIC_EVIDENCE-valid]"
     },
     {
@@ -2409,7 +2409,7 @@
       "proof_id": "proof_s7_trigger_specific_evidence_near_valid",
       "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRIGGER_SPECIFIC_EVIDENCE-near_valid]"
     },
     {
@@ -2427,7 +2427,7 @@
       "proof_id": "proof_s7_trigger_specific_evidence_adversarial_invalid",
       "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_TRIGGER_SPECIFIC_EVIDENCE-adversarial_invalid]"
     },
     {
@@ -2445,7 +2445,7 @@
       "proof_id": "proof_s7_migration_adaptation_valid",
       "requirement_id": "S7_MIGRATION_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MIGRATION_ADAPTATION-valid]"
     },
     {
@@ -2463,7 +2463,7 @@
       "proof_id": "proof_s7_migration_adaptation_near_valid",
       "requirement_id": "S7_MIGRATION_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MIGRATION_ADAPTATION-near_valid]"
     },
     {
@@ -2481,7 +2481,7 @@
       "proof_id": "proof_s7_migration_adaptation_adversarial_invalid",
       "requirement_id": "S7_MIGRATION_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_MIGRATION_ADAPTATION-adversarial_invalid]"
     },
     {
@@ -2499,7 +2499,7 @@
       "proof_id": "proof_s7_ai_adaptation_valid",
       "requirement_id": "S7_AI_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_ADAPTATION-valid]"
     },
     {
@@ -2517,7 +2517,7 @@
       "proof_id": "proof_s7_ai_adaptation_near_valid",
       "requirement_id": "S7_AI_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_ADAPTATION-near_valid]"
     },
     {
@@ -2535,7 +2535,7 @@
       "proof_id": "proof_s7_ai_adaptation_adversarial_invalid",
       "requirement_id": "S7_AI_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_AI_ADAPTATION-adversarial_invalid]"
     },
     {
@@ -2553,7 +2553,7 @@
       "proof_id": "proof_s7_browser_disproven_adaptation_valid",
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_DISPROVEN_ADAPTATION-valid]"
     },
     {
@@ -2571,7 +2571,7 @@
       "proof_id": "proof_s7_browser_disproven_adaptation_near_valid",
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_DISPROVEN_ADAPTATION-near_valid]"
     },
     {
@@ -2589,7 +2589,7 @@
       "proof_id": "proof_s7_browser_disproven_adaptation_adversarial_invalid",
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_BROWSER_DISPROVEN_ADAPTATION-adversarial_invalid]"
     },
     {
@@ -2607,7 +2607,7 @@
       "proof_id": "proof_s7_superseded_work_order_preservation_valid",
       "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUPERSEDED_WORK_ORDER_PRESERVATION-valid]"
     },
     {
@@ -2625,7 +2625,7 @@
       "proof_id": "proof_s7_superseded_work_order_preservation_near_valid",
       "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUPERSEDED_WORK_ORDER_PRESERVATION-near_valid]"
     },
     {
@@ -2643,7 +2643,7 @@
       "proof_id": "proof_s7_superseded_work_order_preservation_adversarial_invalid",
       "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_SUPERSEDED_WORK_ORDER_PRESERVATION-adversarial_invalid]"
     },
     {
@@ -2661,7 +2661,7 @@
       "proof_id": "proof_s7_adaptation_idempotency_valid",
       "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_IDEMPOTENCY-valid]"
     },
     {
@@ -2679,7 +2679,7 @@
       "proof_id": "proof_s7_adaptation_idempotency_near_valid",
       "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_IDEMPOTENCY-near_valid]"
     },
     {
@@ -2697,7 +2697,7 @@
       "proof_id": "proof_s7_adaptation_idempotency_adversarial_invalid",
       "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_IDEMPOTENCY-adversarial_invalid]"
     },
     {
@@ -2715,7 +2715,7 @@
       "proof_id": "proof_s7_adaptation_cycle_depth_valid",
       "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_CYCLE_DEPTH-valid]"
     },
     {
@@ -2733,7 +2733,7 @@
       "proof_id": "proof_s7_adaptation_cycle_depth_near_valid",
       "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_CYCLE_DEPTH-near_valid]"
     },
     {
@@ -2751,7 +2751,7 @@
       "proof_id": "proof_s7_adaptation_cycle_depth_adversarial_invalid",
       "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_ADAPTATION_CYCLE_DEPTH-adversarial_invalid]"
     },
     {
@@ -2769,7 +2769,7 @@
       "proof_id": "proof_s7_pointer_last_publication_valid",
       "requirement_id": "S7_POINTER_LAST_PUBLICATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_POINTER_LAST_PUBLICATION-valid]"
     },
     {
@@ -2787,7 +2787,7 @@
       "proof_id": "proof_s7_pointer_last_publication_near_valid",
       "requirement_id": "S7_POINTER_LAST_PUBLICATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_POINTER_LAST_PUBLICATION-near_valid]"
     },
     {
@@ -2805,7 +2805,7 @@
       "proof_id": "proof_s7_pointer_last_publication_adversarial_invalid",
       "requirement_id": "S7_POINTER_LAST_PUBLICATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S7_POINTER_LAST_PUBLICATION-adversarial_invalid]"
     },
     {
@@ -2823,7 +2823,7 @@
       "proof_id": "proof_s8_contest_target_registry_valid",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_REGISTRY-valid]"
     },
     {
@@ -2841,7 +2841,7 @@
       "proof_id": "proof_s8_contest_target_registry_near_valid",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_REGISTRY-near_valid]"
     },
     {
@@ -2859,7 +2859,7 @@
       "proof_id": "proof_s8_contest_target_registry_adversarial_invalid",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_REGISTRY-adversarial_invalid]"
     },
     {
@@ -2877,7 +2877,7 @@
       "proof_id": "proof_s8_contest_source_generation_valid",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_SOURCE_GENERATION-valid]"
     },
     {
@@ -2895,7 +2895,7 @@
       "proof_id": "proof_s8_contest_source_generation_near_valid",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_SOURCE_GENERATION-near_valid]"
     },
     {
@@ -2913,7 +2913,7 @@
       "proof_id": "proof_s8_contest_source_generation_adversarial_invalid",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_SOURCE_GENERATION-adversarial_invalid]"
     },
     {
@@ -2931,7 +2931,7 @@
       "proof_id": "proof_s8_contest_target_existence_valid",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_EXISTENCE-valid]"
     },
     {
@@ -2949,7 +2949,7 @@
       "proof_id": "proof_s8_contest_target_existence_near_valid",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_EXISTENCE-near_valid]"
     },
     {
@@ -2967,7 +2967,7 @@
       "proof_id": "proof_s8_contest_target_existence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_TARGET_EXISTENCE-adversarial_invalid]"
     },
     {
@@ -2985,7 +2985,7 @@
       "proof_id": "proof_s8_contest_evidence_existence_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_EXISTENCE-valid]"
     },
     {
@@ -3003,7 +3003,7 @@
       "proof_id": "proof_s8_contest_evidence_existence_near_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_EXISTENCE-near_valid]"
     },
     {
@@ -3021,7 +3021,7 @@
       "proof_id": "proof_s8_contest_evidence_existence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_EXISTENCE-adversarial_invalid]"
     },
     {
@@ -3039,7 +3039,7 @@
       "proof_id": "proof_s8_contest_evidence_relevance_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_RELEVANCE-valid]"
     },
     {
@@ -3057,7 +3057,7 @@
       "proof_id": "proof_s8_contest_evidence_relevance_near_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_RELEVANCE-near_valid]"
     },
     {
@@ -3075,7 +3075,7 @@
       "proof_id": "proof_s8_contest_evidence_relevance_adversarial_invalid",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_EVIDENCE_RELEVANCE-adversarial_invalid]"
     },
     {
@@ -3093,7 +3093,7 @@
       "proof_id": "proof_s8_contest_authority_preservation_valid",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_AUTHORITY_PRESERVATION-valid]"
     },
     {
@@ -3111,7 +3111,7 @@
       "proof_id": "proof_s8_contest_authority_preservation_near_valid",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_AUTHORITY_PRESERVATION-near_valid]"
     },
     {
@@ -3129,7 +3129,7 @@
       "proof_id": "proof_s8_contest_authority_preservation_adversarial_invalid",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_AUTHORITY_PRESERVATION-adversarial_invalid]"
     },
     {
@@ -3147,7 +3147,7 @@
       "proof_id": "proof_s8_contest_append_sequence_valid",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_APPEND_SEQUENCE-valid]"
     },
     {
@@ -3165,7 +3165,7 @@
       "proof_id": "proof_s8_contest_append_sequence_near_valid",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_APPEND_SEQUENCE-near_valid]"
     },
     {
@@ -3183,7 +3183,7 @@
       "proof_id": "proof_s8_contest_append_sequence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_APPEND_SEQUENCE-adversarial_invalid]"
     },
     {
@@ -3201,7 +3201,7 @@
       "proof_id": "proof_s8_contest_previous_hash_valid",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_PREVIOUS_HASH-valid]"
     },
     {
@@ -3219,7 +3219,7 @@
       "proof_id": "proof_s8_contest_previous_hash_near_valid",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_PREVIOUS_HASH-near_valid]"
     },
     {
@@ -3237,7 +3237,7 @@
       "proof_id": "proof_s8_contest_previous_hash_adversarial_invalid",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_PREVIOUS_HASH-adversarial_invalid]"
     },
     {
@@ -3255,7 +3255,7 @@
       "proof_id": "proof_s8_contest_idempotent_replay_valid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_IDEMPOTENT_REPLAY-valid]"
     },
     {
@@ -3273,7 +3273,7 @@
       "proof_id": "proof_s8_contest_idempotent_replay_near_valid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_IDEMPOTENT_REPLAY-near_valid]"
     },
     {
@@ -3291,7 +3291,7 @@
       "proof_id": "proof_s8_contest_idempotent_replay_adversarial_invalid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_IDEMPOTENT_REPLAY-adversarial_invalid]"
     },
     {
@@ -3309,7 +3309,7 @@
       "proof_id": "proof_s8_contest_conflicting_duplicate_valid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_CONFLICTING_DUPLICATE-valid]"
     },
     {
@@ -3327,7 +3327,7 @@
       "proof_id": "proof_s8_contest_conflicting_duplicate_near_valid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_CONFLICTING_DUPLICATE-near_valid]"
     },
     {
@@ -3345,7 +3345,7 @@
       "proof_id": "proof_s8_contest_conflicting_duplicate_adversarial_invalid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_CONFLICTING_DUPLICATE-adversarial_invalid]"
     },
     {
@@ -3363,7 +3363,7 @@
       "proof_id": "proof_s8_contest_owner_authority_valid",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_OWNER_AUTHORITY-valid]"
     },
     {
@@ -3381,7 +3381,7 @@
       "proof_id": "proof_s8_contest_owner_authority_near_valid",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_OWNER_AUTHORITY-near_valid]"
     },
     {
@@ -3399,7 +3399,7 @@
       "proof_id": "proof_s8_contest_owner_authority_adversarial_invalid",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTEST_OWNER_AUTHORITY-adversarial_invalid]"
     },
     {
@@ -3417,7 +3417,7 @@
       "proof_id": "proof_s8_named_risk_fact_non_mutation_valid",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_FACT_NON_MUTATION-valid]"
     },
     {
@@ -3435,7 +3435,7 @@
       "proof_id": "proof_s8_named_risk_fact_non_mutation_near_valid",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_FACT_NON_MUTATION-near_valid]"
     },
     {
@@ -3453,7 +3453,7 @@
       "proof_id": "proof_s8_named_risk_fact_non_mutation_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_FACT_NON_MUTATION-adversarial_invalid]"
     },
     {
@@ -3471,7 +3471,7 @@
       "proof_id": "proof_s8_named_risk_decision_effect_valid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_DECISION_EFFECT-valid]"
     },
     {
@@ -3489,7 +3489,7 @@
       "proof_id": "proof_s8_named_risk_decision_effect_near_valid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_DECISION_EFFECT-near_valid]"
     },
     {
@@ -3507,7 +3507,7 @@
       "proof_id": "proof_s8_named_risk_decision_effect_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_DECISION_EFFECT-adversarial_invalid]"
     },
     {
@@ -3525,7 +3525,7 @@
       "proof_id": "proof_s8_owner_decision_budget_valid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_BUDGET-valid]"
     },
     {
@@ -3543,7 +3543,7 @@
       "proof_id": "proof_s8_owner_decision_budget_near_valid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_BUDGET-near_valid]"
     },
     {
@@ -3561,7 +3561,7 @@
       "proof_id": "proof_s8_owner_decision_budget_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_BUDGET-adversarial_invalid]"
     },
     {
@@ -3579,7 +3579,7 @@
       "proof_id": "proof_s8_owner_decision_priority_valid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_PRIORITY-valid]"
     },
     {
@@ -3597,7 +3597,7 @@
       "proof_id": "proof_s8_owner_decision_priority_near_valid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_PRIORITY-near_valid]"
     },
     {
@@ -3615,7 +3615,7 @@
       "proof_id": "proof_s8_owner_decision_priority_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_PRIORITY-adversarial_invalid]"
     },
     {
@@ -3633,7 +3633,7 @@
       "proof_id": "proof_s8_owner_decision_overflow_valid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_OVERFLOW-valid]"
     },
     {
@@ -3651,7 +3651,7 @@
       "proof_id": "proof_s8_owner_decision_overflow_near_valid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_OVERFLOW-near_valid]"
     },
     {
@@ -3669,7 +3669,7 @@
       "proof_id": "proof_s8_owner_decision_overflow_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_OWNER_DECISION_OVERFLOW-adversarial_invalid]"
     },
     {
@@ -3687,7 +3687,7 @@
       "proof_id": "proof_s8_future_remediation_no_cycle_valid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_FUTURE_REMEDIATION_NO_CYCLE-valid]"
     },
     {
@@ -3705,7 +3705,7 @@
       "proof_id": "proof_s8_future_remediation_no_cycle_near_valid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_FUTURE_REMEDIATION_NO_CYCLE-near_valid]"
     },
     {
@@ -3723,7 +3723,7 @@
       "proof_id": "proof_s8_future_remediation_no_cycle_adversarial_invalid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_FUTURE_REMEDIATION_NO_CYCLE-adversarial_invalid]"
     },
     {
@@ -3741,7 +3741,7 @@
       "proof_id": "proof_s8_management_dependency_discovery_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_DISCOVERY-valid]"
     },
     {
@@ -3759,7 +3759,7 @@
       "proof_id": "proof_s8_management_dependency_discovery_near_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_DISCOVERY-near_valid]"
     },
     {
@@ -3777,7 +3777,7 @@
       "proof_id": "proof_s8_management_dependency_discovery_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_DISCOVERY-adversarial_invalid]"
     },
     {
@@ -3795,7 +3795,7 @@
       "proof_id": "proof_s8_management_dependency_states_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_STATES-valid]"
     },
     {
@@ -3813,7 +3813,7 @@
       "proof_id": "proof_s8_management_dependency_states_near_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_STATES-near_valid]"
     },
     {
@@ -3831,7 +3831,7 @@
       "proof_id": "proof_s8_management_dependency_states_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_STATES-adversarial_invalid]"
     },
     {
@@ -3849,7 +3849,7 @@
       "proof_id": "proof_s8_management_dependency_freshness_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_FRESHNESS-valid]"
     },
     {
@@ -3867,7 +3867,7 @@
       "proof_id": "proof_s8_management_dependency_freshness_near_valid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_FRESHNESS-near_valid]"
     },
     {
@@ -3885,7 +3885,7 @@
       "proof_id": "proof_s8_management_dependency_freshness_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_DEPENDENCY_FRESHNESS-adversarial_invalid]"
     },
     {
@@ -3903,7 +3903,7 @@
       "proof_id": "proof_s8_management_mixed_vector_rejection_valid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_MIXED_VECTOR_REJECTION-valid]"
     },
     {
@@ -3921,7 +3921,7 @@
       "proof_id": "proof_s8_management_mixed_vector_rejection_near_valid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_MIXED_VECTOR_REJECTION-near_valid]"
     },
     {
@@ -3939,7 +3939,7 @@
       "proof_id": "proof_s8_management_mixed_vector_rejection_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MANAGEMENT_MIXED_VECTOR_REJECTION-adversarial_invalid]"
     },
     {
@@ -3957,7 +3957,7 @@
       "proof_id": "proof_s8_executive_section_completeness_valid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_EXECUTIVE_SECTION_COMPLETENESS-valid]"
     },
     {
@@ -3975,7 +3975,7 @@
       "proof_id": "proof_s8_executive_section_completeness_near_valid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_EXECUTIVE_SECTION_COMPLETENESS-near_valid]"
     },
     {
@@ -3993,7 +3993,7 @@
       "proof_id": "proof_s8_executive_section_completeness_adversarial_invalid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_EXECUTIVE_SECTION_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -4011,7 +4011,7 @@
       "proof_id": "proof_s8_product_matrix_completeness_valid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_PRODUCT_MATRIX_COMPLETENESS-valid]"
     },
     {
@@ -4029,7 +4029,7 @@
       "proof_id": "proof_s8_product_matrix_completeness_near_valid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_PRODUCT_MATRIX_COMPLETENESS-near_valid]"
     },
     {
@@ -4047,7 +4047,7 @@
       "proof_id": "proof_s8_product_matrix_completeness_adversarial_invalid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_PRODUCT_MATRIX_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -4065,7 +4065,7 @@
       "proof_id": "proof_s8_engineering_section_completeness_valid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ENGINEERING_SECTION_COMPLETENESS-valid]"
     },
     {
@@ -4083,7 +4083,7 @@
       "proof_id": "proof_s8_engineering_section_completeness_near_valid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ENGINEERING_SECTION_COMPLETENESS-near_valid]"
     },
     {
@@ -4101,7 +4101,7 @@
       "proof_id": "proof_s8_engineering_section_completeness_adversarial_invalid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ENGINEERING_SECTION_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -4119,7 +4119,7 @@
       "proof_id": "proof_s8_measurement_ai_passthrough_valid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MEASUREMENT_AI_PASSTHROUGH-valid]"
     },
     {
@@ -4137,7 +4137,7 @@
       "proof_id": "proof_s8_measurement_ai_passthrough_near_valid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MEASUREMENT_AI_PASSTHROUGH-near_valid]"
     },
     {
@@ -4155,7 +4155,7 @@
       "proof_id": "proof_s8_measurement_ai_passthrough_adversarial_invalid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_MEASUREMENT_AI_PASSTHROUGH-adversarial_invalid]"
     },
     {
@@ -4173,7 +4173,7 @@
       "proof_id": "proof_s8_remediation_overview_completeness_valid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_REMEDIATION_OVERVIEW_COMPLETENESS-valid]"
     },
     {
@@ -4191,7 +4191,7 @@
       "proof_id": "proof_s8_remediation_overview_completeness_near_valid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_REMEDIATION_OVERVIEW_COMPLETENESS-near_valid]"
     },
     {
@@ -4209,7 +4209,7 @@
       "proof_id": "proof_s8_remediation_overview_completeness_adversarial_invalid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_REMEDIATION_OVERVIEW_COMPLETENESS-adversarial_invalid]"
     },
     {
@@ -4227,7 +4227,7 @@
       "proof_id": "proof_s8_closure_contract_indexing_valid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CLOSURE_CONTRACT_INDEXING-valid]"
     },
     {
@@ -4245,7 +4245,7 @@
       "proof_id": "proof_s8_closure_contract_indexing_near_valid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CLOSURE_CONTRACT_INDEXING-near_valid]"
     },
     {
@@ -4263,7 +4263,7 @@
       "proof_id": "proof_s8_closure_contract_indexing_adversarial_invalid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CLOSURE_CONTRACT_INDEXING-adversarial_invalid]"
     },
     {
@@ -4281,7 +4281,7 @@
       "proof_id": "proof_s8_contestability_inclusion_valid",
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTESTABILITY_INCLUSION-valid]"
     },
     {
@@ -4299,7 +4299,7 @@
       "proof_id": "proof_s8_contestability_inclusion_near_valid",
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTESTABILITY_INCLUSION-near_valid]"
     },
     {
@@ -4317,7 +4317,7 @@
       "proof_id": "proof_s8_contestability_inclusion_adversarial_invalid",
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_CONTESTABILITY_INCLUSION-adversarial_invalid]"
     },
     {
@@ -4335,7 +4335,7 @@
       "proof_id": "proof_s8_recommendation_policy_valid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_RECOMMENDATION_POLICY-valid]"
     },
     {
@@ -4353,7 +4353,7 @@
       "proof_id": "proof_s8_recommendation_policy_near_valid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_RECOMMENDATION_POLICY-near_valid]"
     },
     {
@@ -4371,7 +4371,7 @@
       "proof_id": "proof_s8_recommendation_policy_adversarial_invalid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_RECOMMENDATION_POLICY-adversarial_invalid]"
     },
     {
@@ -4389,7 +4389,7 @@
       "proof_id": "proof_s8_accepted_condition_effect_valid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ACCEPTED_CONDITION_EFFECT-valid]"
     },
     {
@@ -4407,7 +4407,7 @@
       "proof_id": "proof_s8_accepted_condition_effect_near_valid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ACCEPTED_CONDITION_EFFECT-near_valid]"
     },
     {
@@ -4425,7 +4425,7 @@
       "proof_id": "proof_s8_accepted_condition_effect_adversarial_invalid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ACCEPTED_CONDITION_EFFECT-adversarial_invalid]"
     },
     {
@@ -4443,7 +4443,7 @@
       "proof_id": "proof_s8_named_risk_recommendation_effect_valid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_RECOMMENDATION_EFFECT-valid]"
     },
     {
@@ -4461,7 +4461,7 @@
       "proof_id": "proof_s8_named_risk_recommendation_effect_near_valid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_RECOMMENDATION_EFFECT-near_valid]"
     },
     {
@@ -4479,7 +4479,7 @@
       "proof_id": "proof_s8_named_risk_recommendation_effect_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_NAMED_RISK_RECOMMENDATION_EFFECT-adversarial_invalid]"
     },
     {
@@ -4497,7 +4497,7 @@
       "proof_id": "proof_s8_insufficient_evidence_state_valid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_INSUFFICIENT_EVIDENCE_STATE-valid]"
     },
     {
@@ -4515,7 +4515,7 @@
       "proof_id": "proof_s8_insufficient_evidence_state_near_valid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_INSUFFICIENT_EVIDENCE_STATE-near_valid]"
     },
     {
@@ -4533,7 +4533,7 @@
       "proof_id": "proof_s8_insufficient_evidence_state_adversarial_invalid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_INSUFFICIENT_EVIDENCE_STATE-adversarial_invalid]"
     },
     {
@@ -4551,7 +4551,7 @@
       "proof_id": "proof_s8_deterministic_json_valid",
       "requirement_id": "S8_DETERMINISTIC_JSON",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_JSON-valid]"
     },
     {
@@ -4569,7 +4569,7 @@
       "proof_id": "proof_s8_deterministic_json_near_valid",
       "requirement_id": "S8_DETERMINISTIC_JSON",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_JSON-near_valid]"
     },
     {
@@ -4587,7 +4587,7 @@
       "proof_id": "proof_s8_deterministic_json_adversarial_invalid",
       "requirement_id": "S8_DETERMINISTIC_JSON",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_JSON-adversarial_invalid]"
     },
     {
@@ -4605,7 +4605,7 @@
       "proof_id": "proof_s8_safe_html_valid",
       "requirement_id": "S8_SAFE_HTML",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_HTML-valid]"
     },
     {
@@ -4623,7 +4623,7 @@
       "proof_id": "proof_s8_safe_html_near_valid",
       "requirement_id": "S8_SAFE_HTML",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_HTML-near_valid]"
     },
     {
@@ -4641,7 +4641,7 @@
       "proof_id": "proof_s8_safe_html_adversarial_invalid",
       "requirement_id": "S8_SAFE_HTML",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_HTML-adversarial_invalid]"
     },
     {
@@ -4659,7 +4659,7 @@
       "proof_id": "proof_s8_safe_markdown_valid",
       "requirement_id": "S8_SAFE_MARKDOWN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_MARKDOWN-valid]"
     },
     {
@@ -4677,7 +4677,7 @@
       "proof_id": "proof_s8_safe_markdown_near_valid",
       "requirement_id": "S8_SAFE_MARKDOWN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_MARKDOWN-near_valid]"
     },
     {
@@ -4695,7 +4695,7 @@
       "proof_id": "proof_s8_safe_markdown_adversarial_invalid",
       "requirement_id": "S8_SAFE_MARKDOWN",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_SAFE_MARKDOWN-adversarial_invalid]"
     },
     {
@@ -4713,7 +4713,7 @@
       "proof_id": "proof_s8_artifact_hash_integrity_valid",
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_HASH_INTEGRITY-valid]"
     },
     {
@@ -4731,7 +4731,7 @@
       "proof_id": "proof_s8_artifact_hash_integrity_near_valid",
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_HASH_INTEGRITY-near_valid]"
     },
     {
@@ -4749,7 +4749,7 @@
       "proof_id": "proof_s8_artifact_hash_integrity_adversarial_invalid",
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_HASH_INTEGRITY-adversarial_invalid]"
     },
     {
@@ -4767,7 +4767,7 @@
       "proof_id": "proof_s8_artifact_file_set_valid",
       "requirement_id": "S8_ARTIFACT_FILE_SET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_FILE_SET-valid]"
     },
     {
@@ -4785,7 +4785,7 @@
       "proof_id": "proof_s8_artifact_file_set_near_valid",
       "requirement_id": "S8_ARTIFACT_FILE_SET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_FILE_SET-near_valid]"
     },
     {
@@ -4803,7 +4803,7 @@
       "proof_id": "proof_s8_artifact_file_set_adversarial_invalid",
       "requirement_id": "S8_ARTIFACT_FILE_SET",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_ARTIFACT_FILE_SET-adversarial_invalid]"
     },
     {
@@ -4821,7 +4821,7 @@
       "proof_id": "proof_s8_deterministic_rerender_valid",
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_RERENDER-valid]"
     },
     {
@@ -4839,7 +4839,7 @@
       "proof_id": "proof_s8_deterministic_rerender_near_valid",
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_RERENDER-near_valid]"
     },
     {
@@ -4857,7 +4857,7 @@
       "proof_id": "proof_s8_deterministic_rerender_adversarial_invalid",
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_DETERMINISTIC_RERENDER-adversarial_invalid]"
     },
     {
@@ -4875,7 +4875,7 @@
       "proof_id": "proof_s8_upstream_staleness_valid",
       "requirement_id": "S8_UPSTREAM_STALENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_UPSTREAM_STALENESS-valid]"
     },
     {
@@ -4893,7 +4893,7 @@
       "proof_id": "proof_s8_upstream_staleness_near_valid",
       "requirement_id": "S8_UPSTREAM_STALENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_UPSTREAM_STALENESS-near_valid]"
     },
     {
@@ -4911,7 +4911,7 @@
       "proof_id": "proof_s8_upstream_staleness_adversarial_invalid",
       "requirement_id": "S8_UPSTREAM_STALENESS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[S8_UPSTREAM_STALENESS-adversarial_invalid]"
     },
     {
@@ -4929,7 +4929,7 @@
       "proof_id": "proof_shared_trusted_reads_valid",
       "requirement_id": "SHARED_TRUSTED_READS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_READS-valid]"
     },
     {
@@ -4947,7 +4947,7 @@
       "proof_id": "proof_shared_trusted_reads_near_valid",
       "requirement_id": "SHARED_TRUSTED_READS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_READS-near_valid]"
     },
     {
@@ -4965,7 +4965,7 @@
       "proof_id": "proof_shared_trusted_reads_adversarial_invalid",
       "requirement_id": "SHARED_TRUSTED_READS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_READS-adversarial_invalid]"
     },
     {
@@ -4983,7 +4983,7 @@
       "proof_id": "proof_shared_trusted_writes_valid",
       "requirement_id": "SHARED_TRUSTED_WRITES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_WRITES-valid]"
     },
     {
@@ -5001,7 +5001,7 @@
       "proof_id": "proof_shared_trusted_writes_near_valid",
       "requirement_id": "SHARED_TRUSTED_WRITES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_WRITES-near_valid]"
     },
     {
@@ -5019,7 +5019,7 @@
       "proof_id": "proof_shared_trusted_writes_adversarial_invalid",
       "requirement_id": "SHARED_TRUSTED_WRITES",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_TRUSTED_WRITES-adversarial_invalid]"
     },
     {
@@ -5037,7 +5037,7 @@
       "proof_id": "proof_shared_link_reparse_special_rejection_valid",
       "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_LINK_REPARSE_SPECIAL_REJECTION-valid]"
     },
     {
@@ -5055,7 +5055,7 @@
       "proof_id": "proof_shared_link_reparse_special_rejection_near_valid",
       "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_LINK_REPARSE_SPECIAL_REJECTION-near_valid]"
     },
     {
@@ -5073,7 +5073,7 @@
       "proof_id": "proof_shared_link_reparse_special_rejection_adversarial_invalid",
       "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_LINK_REPARSE_SPECIAL_REJECTION-adversarial_invalid]"
     },
     {
@@ -5091,7 +5091,7 @@
       "proof_id": "proof_shared_capacity_limits_valid",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CAPACITY_LIMITS-valid]"
     },
     {
@@ -5109,7 +5109,7 @@
       "proof_id": "proof_shared_capacity_limits_near_valid",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CAPACITY_LIMITS-near_valid]"
     },
     {
@@ -5127,7 +5127,7 @@
       "proof_id": "proof_shared_capacity_limits_adversarial_invalid",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CAPACITY_LIMITS-adversarial_invalid]"
     },
     {
@@ -5145,7 +5145,7 @@
       "proof_id": "proof_shared_pointer_late_failure_valid",
       "requirement_id": "SHARED_POINTER_LATE_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_POINTER_LATE_FAILURE-valid]"
     },
     {
@@ -5163,7 +5163,7 @@
       "proof_id": "proof_shared_pointer_late_failure_near_valid",
       "requirement_id": "SHARED_POINTER_LATE_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_POINTER_LATE_FAILURE-near_valid]"
     },
     {
@@ -5181,7 +5181,7 @@
       "proof_id": "proof_shared_pointer_late_failure_adversarial_invalid",
       "requirement_id": "SHARED_POINTER_LATE_FAILURE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_POINTER_LATE_FAILURE-adversarial_invalid]"
     },
     {
@@ -5199,7 +5199,7 @@
       "proof_id": "proof_shared_zero_prohibited_operations_valid",
       "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_ZERO_PROHIBITED_OPERATIONS-valid]"
     },
     {
@@ -5217,7 +5217,7 @@
       "proof_id": "proof_shared_zero_prohibited_operations_near_valid",
       "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_ZERO_PROHIBITED_OPERATIONS-near_valid]"
     },
     {
@@ -5235,7 +5235,7 @@
       "proof_id": "proof_shared_zero_prohibited_operations_adversarial_invalid",
       "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_ZERO_PROHIBITED_OPERATIONS-adversarial_invalid]"
     },
     {
@@ -5253,7 +5253,7 @@
       "proof_id": "proof_shared_contract_inventory_valid",
       "requirement_id": "SHARED_CONTRACT_INVENTORY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CONTRACT_INVENTORY-valid]"
     },
     {
@@ -5271,7 +5271,7 @@
       "proof_id": "proof_shared_contract_inventory_near_valid",
       "requirement_id": "SHARED_CONTRACT_INVENTORY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CONTRACT_INVENTORY-near_valid]"
     },
     {
@@ -5289,7 +5289,7 @@
       "proof_id": "proof_shared_contract_inventory_adversarial_invalid",
       "requirement_id": "SHARED_CONTRACT_INVENTORY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CONTRACT_INVENTORY-adversarial_invalid]"
     },
     {
@@ -5307,7 +5307,7 @@
       "proof_id": "proof_shared_executed_contract_parity_valid",
       "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_EXECUTED_CONTRACT_PARITY-valid]"
     },
     {
@@ -5325,7 +5325,7 @@
       "proof_id": "proof_shared_executed_contract_parity_near_valid",
       "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_EXECUTED_CONTRACT_PARITY-near_valid]"
     },
     {
@@ -5343,7 +5343,7 @@
       "proof_id": "proof_shared_executed_contract_parity_adversarial_invalid",
       "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_EXECUTED_CONTRACT_PARITY-adversarial_invalid]"
     },
     {
@@ -5361,7 +5361,7 @@
       "proof_id": "proof_shared_behavioral_eval_integrity_valid",
       "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_BEHAVIORAL_EVAL_INTEGRITY-valid]"
     },
     {
@@ -5379,7 +5379,7 @@
       "proof_id": "proof_shared_behavioral_eval_integrity_near_valid",
       "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_BEHAVIORAL_EVAL_INTEGRITY-near_valid]"
     },
     {
@@ -5397,7 +5397,7 @@
       "proof_id": "proof_shared_behavioral_eval_integrity_adversarial_invalid",
       "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_BEHAVIORAL_EVAL_INTEGRITY-adversarial_invalid]"
     },
     {
@@ -5415,7 +5415,7 @@
       "proof_id": "proof_shared_workflow_eval_integrity_valid",
       "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_WORKFLOW_EVAL_INTEGRITY-valid]"
     },
     {
@@ -5433,7 +5433,7 @@
       "proof_id": "proof_shared_workflow_eval_integrity_near_valid",
       "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_WORKFLOW_EVAL_INTEGRITY-near_valid]"
     },
     {
@@ -5451,7 +5451,7 @@
       "proof_id": "proof_shared_workflow_eval_integrity_adversarial_invalid",
       "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_WORKFLOW_EVAL_INTEGRITY-adversarial_invalid]"
     },
     {
@@ -5469,7 +5469,7 @@
       "proof_id": "proof_shared_installed_wheel_lifecycle_valid",
       "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INSTALLED_WHEEL_LIFECYCLE-valid]"
     },
     {
@@ -5487,7 +5487,7 @@
       "proof_id": "proof_shared_installed_wheel_lifecycle_near_valid",
       "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INSTALLED_WHEEL_LIFECYCLE-near_valid]"
     },
     {
@@ -5505,7 +5505,7 @@
       "proof_id": "proof_shared_installed_wheel_lifecycle_adversarial_invalid",
       "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INSTALLED_WHEEL_LIFECYCLE-adversarial_invalid]"
     },
     {
@@ -5523,7 +5523,7 @@
       "proof_id": "proof_shared_skill_pilot_consistency_valid",
       "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_SKILL_PILOT_CONSISTENCY-valid]"
     },
     {
@@ -5541,7 +5541,7 @@
       "proof_id": "proof_shared_skill_pilot_consistency_near_valid",
       "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_SKILL_PILOT_CONSISTENCY-near_valid]"
     },
     {
@@ -5559,7 +5559,7 @@
       "proof_id": "proof_shared_skill_pilot_consistency_adversarial_invalid",
       "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_SKILL_PILOT_CONSISTENCY-adversarial_invalid]"
     },
     {
@@ -5577,7 +5577,7 @@
       "proof_id": "proof_shared_proof_execution_valid",
       "requirement_id": "SHARED_PROOF_EXECUTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_PROOF_EXECUTION-valid]"
     },
     {
@@ -5595,7 +5595,7 @@
       "proof_id": "proof_shared_proof_execution_near_valid",
       "requirement_id": "SHARED_PROOF_EXECUTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_PROOF_EXECUTION-near_valid]"
     },
     {
@@ -5613,7 +5613,7 @@
       "proof_id": "proof_shared_proof_execution_adversarial_invalid",
       "requirement_id": "SHARED_PROOF_EXECUTION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_PROOF_EXECUTION-adversarial_invalid]"
     },
     {
@@ -5631,7 +5631,7 @@
       "proof_id": "proof_shared_closeout_generation_valid",
       "requirement_id": "SHARED_CLOSEOUT_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CLOSEOUT_GENERATION-valid]"
     },
     {
@@ -5649,7 +5649,7 @@
       "proof_id": "proof_shared_closeout_generation_near_valid",
       "requirement_id": "SHARED_CLOSEOUT_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CLOSEOUT_GENERATION-near_valid]"
     },
     {
@@ -5667,7 +5667,7 @@
       "proof_id": "proof_shared_closeout_generation_adversarial_invalid",
       "requirement_id": "SHARED_CLOSEOUT_GENERATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_CLOSEOUT_GENERATION-adversarial_invalid]"
     },
     {
@@ -5685,7 +5685,7 @@
       "proof_id": "proof_shared_independent_validation_valid",
       "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INDEPENDENT_VALIDATION-valid]"
     },
     {
@@ -5703,7 +5703,7 @@
       "proof_id": "proof_shared_independent_validation_near_valid",
       "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INDEPENDENT_VALIDATION-near_valid]"
     },
     {
@@ -5721,7 +5721,7 @@
       "proof_id": "proof_shared_independent_validation_adversarial_invalid",
       "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
       "schema": null,
-      "status": "pending_execution",
+      "status": "verified",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[SHARED_INDEPENDENT_VALIDATION-adversarial_invalid]"
     }
   ],

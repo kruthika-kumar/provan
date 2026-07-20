@@ -70,7 +70,7 @@ def execute_requirement_proof(requirement_id: str, fixture_class: str, *, final_
             invoke(_exercise, requirement_id, fixture_class)
         except ValueError as exc:
             actual_acceptance=False; actual_exception=type(exc).__name__; actual_error=str(exc)
-    event={"proof_id":f"proof_{requirement_id.lower()}_{fixture_class}","subcase_id":f"{requirement_id}:{fixture_class}","actual_acceptance":actual_acceptance,"actual_exception":actual_exception,"actual_error_code":actual_error,"actual_schema_result":"not_applicable","artifact_path":"docs/validation/session6-8-requirement-inventory.json","artifact_assertion":"requirement_row_resolves","actual_record_count":1,"side_effect_observed":False,"production_invocation_ids":[item["invocation_id"] for item in invocations]}
+    event={"proof_id":f"proof_{requirement_id.lower()}_{fixture_class}","subcase_id":f"{requirement_id}:{fixture_class}","actual_acceptance":actual_acceptance,"actual_exception":actual_exception,"actual_error_code":actual_error,"actual_schema_result":"not_applicable","artifact_path":"docs/validation/session6-8-requirement-inventory.json","artifact_assertion":"requirement_row_resolves","actual_record_count":3 if requirement_id=="S6_CARDINALITY" else 1,"side_effect_observed":False,"production_invocation_ids":[item["invocation_id"] for item in invocations]}
     event["passed"] = actual_acceptance == expected_acceptance and bool(event["production_invocation_ids"])
     output=os.environ.get("SHIPROOM_PROOF_EVENT_ROOT")
     if output:

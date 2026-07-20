@@ -47,7 +47,7 @@ def main() -> int:
     }
     if detail.is_file():
         details = json.loads(detail.read_text(encoding="utf-8"))
-        receipt.update({key: details[key] for key in ("installed_distribution", "wheel_sha256", "shiproom_module_path", "site_packages_root", "source_checkout_not_on_sys_path")})
+        receipt.update({key: details[key] for key in ("installed_distribution", "wheel_sha256", "shiproom_executable", "shiproom_module_path", "site_packages_root", "source_checkout_not_on_sys_path")})
     receipt["receipt_hash"] = _sha(json.dumps({key: value for key, value in receipt.items() if key != "receipt_hash"}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")

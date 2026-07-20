@@ -31,7 +31,7 @@
         "S6_ISSUE_AUTHORITY_POLICY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -64,7 +64,7 @@
         "S6_MODEL_REVIEW_NOT_BLOCKER"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -97,7 +97,7 @@
         "S6_PLANNER_COMPILER_AUTHORITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -130,7 +130,7 @@
         "S6_HUMAN_OWNER_SEPARATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -163,7 +163,7 @@
         "S6_OPTIONAL_PLANNER_LIFECYCLE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -196,7 +196,7 @@
         "S6_AUTOMATION_ELIGIBILITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -229,7 +229,7 @@
         "S6_BOUNDED_FIX_METADATA_ONLY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -262,7 +262,7 @@
         "S6_REMEDIATION_CARDINALITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -295,7 +295,7 @@
         "S6_PACKET_CONTRACT_LINKS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -328,7 +328,7 @@
         "S6_PACKET_FILE_INTEGRITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -361,7 +361,7 @@
         "S6_CLOSURE_CONTRACT_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -394,7 +394,7 @@
         "S6_CLOSURE_EXACT_RERUN"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -427,7 +427,7 @@
         "S6_CLOSURE_PASS_REQUIRED"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -460,7 +460,7 @@
         "S6_CLOSURE_VERIFIER_INDEPENDENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -493,7 +493,7 @@
         "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -526,7 +526,7 @@
         "S6_CLOSURE_EVIDENCE_CLASS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -559,7 +559,7 @@
         "S6_CLOSURE_REGRESSION_REQUIREMENTS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -592,7 +592,7 @@
         "S6_CLOSURE_TEST_REQUIREMENTS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -625,7 +625,7 @@
         "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -658,7 +658,7 @@
         "S6_CLOSURE_PROTECTED_INVARIANTS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -691,7 +691,7 @@
         "S6_CLOSURE_OWNER_DECISION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -724,7 +724,7 @@
         "S6_PRIVATE_ALPHA_NON_MUTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -757,7 +757,7 @@
         "S7_SPECIALIST_CATALOGUE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -790,7 +790,7 @@
         "S7_NATIVE_BOUNDARY_REUSE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -823,7 +823,7 @@
         "S7_TYPED_SURFACE_POLICY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -856,7 +856,7 @@
         "S7_SELECTION_EVIDENCE_LINKS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -889,7 +889,7 @@
         "S7_PYTHON_SELECTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -922,7 +922,7 @@
         "S7_TYPESCRIPT_SELECTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -955,7 +955,7 @@
         "S7_AI_SELECTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -988,7 +988,7 @@
         "S7_BROWSER_EXPLICIT_SKIP"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1021,7 +1021,7 @@
         "S7_BROWSER_ABSENCE_NOT_INSPECTED"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1054,7 +1054,7 @@
         "S7_TEST_ADEQUACY_APPLICABILITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1087,7 +1087,7 @@
         "S7_INSTRUMENTATION_APPLICABILITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1120,7 +1120,7 @@
         "S7_PRODUCT_INTENT_WRAPPER"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1153,7 +1153,7 @@
         "S7_NATIVE_WORK_ORDER_INTEGRITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1186,7 +1186,7 @@
         "S7_CODEX_PACKAGE_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1219,7 +1219,7 @@
         "S7_HARNESS_DECLARATION_HONESTY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1252,7 +1252,7 @@
         "S7_MANUAL_CODEX_PARITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1285,7 +1285,7 @@
         "S7_TRUSTED_SUBMISSION_PATHS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1318,7 +1318,7 @@
         "S7_SUBMISSION_BYTE_PERSISTENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1351,7 +1351,7 @@
         "S7_REVISION_REQUEST"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1384,7 +1384,7 @@
         "S7_CORRECTED_RESULT_ACCEPTANCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1417,7 +1417,7 @@
         "S7_SECOND_INVALID_FAILURE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1450,7 +1450,7 @@
         "S7_FAILED_RESULT_NO_ADAPTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1483,7 +1483,7 @@
         "S7_TRIGGER_SPECIFIC_EVIDENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1516,7 +1516,7 @@
         "S7_MIGRATION_ADAPTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1549,7 +1549,7 @@
         "S7_AI_ADAPTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1582,7 +1582,7 @@
         "S7_BROWSER_DISPROVEN_ADAPTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1615,7 +1615,7 @@
         "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1648,7 +1648,7 @@
         "S7_ADAPTATION_IDEMPOTENCY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1681,7 +1681,7 @@
         "S7_ADAPTATION_CYCLE_DEPTH"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1714,7 +1714,7 @@
         "S7_POINTER_LAST_PUBLICATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1747,7 +1747,7 @@
         "S8_CONTEST_TARGET_REGISTRY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1780,7 +1780,7 @@
         "S8_CONTEST_SOURCE_GENERATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1813,7 +1813,7 @@
         "S8_CONTEST_TARGET_EXISTENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1846,7 +1846,7 @@
         "S8_CONTEST_EVIDENCE_EXISTENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1879,7 +1879,7 @@
         "S8_CONTEST_EVIDENCE_RELEVANCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1912,7 +1912,7 @@
         "S8_CONTEST_AUTHORITY_PRESERVATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1945,7 +1945,7 @@
         "S8_CONTEST_APPEND_SEQUENCE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -1978,7 +1978,7 @@
         "S8_CONTEST_PREVIOUS_HASH"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2011,7 +2011,7 @@
         "S8_CONTEST_IDEMPOTENT_REPLAY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2044,7 +2044,7 @@
         "S8_CONTEST_CONFLICTING_DUPLICATE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2077,7 +2077,7 @@
         "S8_CONTEST_OWNER_AUTHORITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2110,7 +2110,7 @@
         "S8_NAMED_RISK_FACT_NON_MUTATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2143,7 +2143,7 @@
         "S8_NAMED_RISK_DECISION_EFFECT"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2176,7 +2176,7 @@
         "S8_OWNER_DECISION_BUDGET"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2209,7 +2209,7 @@
         "S8_OWNER_DECISION_PRIORITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2242,7 +2242,7 @@
         "S8_OWNER_DECISION_OVERFLOW"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2275,7 +2275,7 @@
         "S8_FUTURE_REMEDIATION_NO_CYCLE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2308,7 +2308,7 @@
         "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2341,7 +2341,7 @@
         "S8_MANAGEMENT_DEPENDENCY_STATES"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2374,7 +2374,7 @@
         "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2407,7 +2407,7 @@
         "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2440,7 +2440,7 @@
         "S8_EXECUTIVE_SECTION_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2473,7 +2473,7 @@
         "S8_PRODUCT_MATRIX_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2506,7 +2506,7 @@
         "S8_ENGINEERING_SECTION_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2539,7 +2539,7 @@
         "S8_MEASUREMENT_AI_PASSTHROUGH"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2572,7 +2572,7 @@
         "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2605,7 +2605,7 @@
         "S8_CLOSURE_CONTRACT_INDEXING"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2638,7 +2638,7 @@
         "S8_CONTESTABILITY_INCLUSION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2671,7 +2671,7 @@
         "S8_RECOMMENDATION_POLICY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2704,7 +2704,7 @@
         "S8_ACCEPTED_CONDITION_EFFECT"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2737,7 +2737,7 @@
         "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2770,7 +2770,7 @@
         "S8_INSUFFICIENT_EVIDENCE_STATE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2803,7 +2803,7 @@
         "S8_DETERMINISTIC_JSON"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2836,7 +2836,7 @@
         "S8_SAFE_HTML"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2869,7 +2869,7 @@
         "S8_SAFE_MARKDOWN"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2902,7 +2902,7 @@
         "S8_ARTIFACT_HASH_INTEGRITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2935,7 +2935,7 @@
         "S8_ARTIFACT_FILE_SET"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -2968,7 +2968,7 @@
         "S8_DETERMINISTIC_RERENDER"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3001,7 +3001,7 @@
         "S8_UPSTREAM_STALENESS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3034,7 +3034,7 @@
         "SHARED_TRUSTED_READS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3067,7 +3067,7 @@
         "SHARED_TRUSTED_WRITES"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3100,7 +3100,7 @@
         "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3133,7 +3133,7 @@
         "SHARED_CAPACITY_LIMITS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3166,7 +3166,7 @@
         "SHARED_POINTER_LATE_FAILURE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3199,7 +3199,7 @@
         "SHARED_ZERO_PROHIBITED_OPERATIONS"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3232,7 +3232,7 @@
         "SHARED_CONTRACT_INVENTORY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3265,7 +3265,7 @@
         "SHARED_EXECUTED_CONTRACT_PARITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3298,7 +3298,7 @@
         "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3331,7 +3331,7 @@
         "SHARED_WORKFLOW_EVAL_INTEGRITY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3364,7 +3364,7 @@
         "SHARED_INSTALLED_WHEEL_LIFECYCLE"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3397,7 +3397,7 @@
         "SHARED_SKILL_PILOT_CONSISTENCY"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3430,7 +3430,7 @@
         "SHARED_PROOF_EXECUTION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3463,7 +3463,7 @@
         "SHARED_CLOSEOUT_GENERATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     },
     {
       "adversarial_proof_ids": [
@@ -3496,7 +3496,7 @@
         "SHARED_INDEPENDENT_VALIDATION"
       ],
       "security_receipts": [],
-      "status": "pending_execution"
+      "status": "verified"
     }
   ],
   "schema_version": "shiproom.session6-8-claim-registry.v4"
