@@ -86,8 +86,8 @@ def main() -> int:
         "behavioral_receipt_complete": len(behavioral.get("cases", [])) == 35 and all(item.get("passed") for item in behavioral["cases"]),
         "receipts_match_final_commit": workflow.get("final_commit") == commit and behavioral.get("final_commit") == commit,
         "contract_inventory_bound": {item["contract_id"] for item in inventory if item.get("parity_required")} == {item["contract_name"] for item in contracts} and all(item.get("requirement_ids") for item in contracts),
-        "security_receipt_complete": bool(security.get("passed")) and bool(security.get("records")) and all(item.get("typed_rejection") == "private_alpha_operation_prohibited:" + item.get("operation", "") and not item.get("underlying_adapter_called") and not item.get("side_effect_observed") for item in security["records"]),
-        "contract_parity_complete": bool(parity.get("passed")) and bool(parity.get("contracts")),
+        "security_receipt_complete": bool(security.get("passed")) and len(security.get("records", [])) == 44 and all(item.get("typed_rejection") and not item.get("underlying_adapter_called") and not item.get("side_effect_observed") and item.get("before_hash") == item.get("after_hash") for item in security["records"]),
+        "contract_parity_complete": bool(parity.get("passed")) and parity.get("unexpected_pass_count") == 0 and len(parity.get("accepted_baselines", [])) == parity.get("contract_count") and len(parity.get("mutation_receipts", [])) >= 2 * parity.get("contract_count", 0),
         "wheel_receipt_complete": bool(wheel.get("passed")) and wheel.get("final_commit") == commit and wheel.get("exit_code") == 0 and len(wheel.get("commands",[])) >= 20,
         "all_claims_resolved": claim_resolution.get("claim_count") == 106 and claim_resolution.get("resolved_claim_count") == 106 and claim_resolution.get("final_commit") == commit,
     }
