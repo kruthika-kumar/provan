@@ -26,8 +26,14 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     command = ["pytest", "-q", "tests/test_assessment.py::test_installed_wheel_prepares_assessment_outside_source_checkout"]
     detail = args.output.with_suffix(".commands.json")
+    log_root = args.output.parent / "wheel-logs"
+    log_root.mkdir(parents=True, exist_ok=True)
     completed = subprocess.run(command, cwd=root, text=True, capture_output=True,
                                env={**os.environ, "SHIPROOM_WHEEL_SMOKE_EVIDENCE": str(detail)})
+    harness_stdout = log_root / "harness.stdout.txt"
+    harness_stderr = log_root / "harness.stderr.txt"
+    harness_stdout.write_text(completed.stdout, encoding="utf-8")
+    harness_stderr.write_text(completed.stderr, encoding="utf-8")
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     receipt = {
         "schema_version": "session6-8-installed-wheel-receipt.v1",
@@ -43,11 +49,13 @@ def main() -> int:
         "passed": completed.returncode == 0,
         "stdout_hash": _sha(completed.stdout.encode("utf-8")),
         "stderr_hash": _sha(completed.stderr.encode("utf-8")),
+        "harness_stdout_path": str(harness_stdout),
+        "harness_stderr_path": str(harness_stderr),
         "receipt_hash": "",
     }
     if detail.is_file():
         details = json.loads(detail.read_text(encoding="utf-8"))
-        receipt.update({key: details[key] for key in ("installed_distribution", "wheel_sha256", "shiproom_executable", "shiproom_module_path", "site_packages_root", "source_checkout_not_on_sys_path")})
+        receipt.update({key: details[key] for key in ("installed_distribution", "wheel_sha256", "shiproom_executable", "shiproom_module_path", "site_packages_root", "source_checkout_not_on_sys_path", "external_working_directory", "artifacts")})
     receipt["receipt_hash"] = _sha(json.dumps({key: value for key, value in receipt.items() if key != "receipt_hash"}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")

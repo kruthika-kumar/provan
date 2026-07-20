@@ -7,7 +7,7 @@ def main():
     p=argparse.ArgumentParser();p.add_argument("--junit",type=Path,required=True);p.add_argument("--events",type=Path,required=True);p.add_argument("--output",type=Path,required=True);a=p.parse_args()
     manifest=json.loads((ROOT/"docs/validation/session6-8-proof-manifest.json").read_text())["proofs"]
     events={}
-    for path in a.events.glob("*.json"):
+    for path in a.events.glob("*.event.*.json"):
         value=json.loads(path.read_text());events.setdefault(value["proof_id"],[]).append(value)
     junit=ET.parse(a.junit).getroot(); passed_names={case.attrib.get("name","") for case in junit.iter("testcase") if not any(child.tag in {"failure","error","skipped"} for child in case)}
     commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip();rows=[]

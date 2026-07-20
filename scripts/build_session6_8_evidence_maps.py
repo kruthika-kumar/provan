@@ -49,8 +49,8 @@ def _adversarial_error(requirement_id: str, group: str) -> str:
     if requirement_id in {"S6_ISSUE_AUTHORITY_POLICY","S6_MODEL_REVIEW_NOT_BLOCKER","S6_PLANNER_COMPILER_AUTHORITY","S6_HUMAN_OWNER_SEPARATION","S6_AUTOMATION_ELIGIBILITY","S6_BOUNDED_FIX_METADATA_ONLY"}:
         return "remediation_issue_authority_policy_invalid"
     if group in {"6","8_management","shared"}: return "optional_dependency_must_be_null"
-    if group == "7": return "harness_capability_manifest_invalid"
-    return "contestation_target_type_unregistered"
+    if group == "7": return "harness_capability_manifest_shape_invalid"
+    return "contestation_target_unregistered"
 
 def _approved_behavior(requirement_id: str) -> str:
     words = requirement_id.removeprefix("SHARED_").removeprefix("S8_MANAGEMENT_").removeprefix("S8_CONTEST_").removeprefix("S7_").removeprefix("S6_").lower().replace("_", " ")
