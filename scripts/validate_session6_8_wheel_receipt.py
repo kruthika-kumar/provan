@@ -7,11 +7,11 @@ def validate(path:Path):
     value=json.loads(path.read_text());commands=value.get("commands",[])
     required=("remediation-roadmap","closure-verify","review-plan","submit-result","adapt","contestation","management-artifacts")
     joined=[" ".join(map(str,row["command"])) for row in commands]
-    if len(commands)<20 or not value.get("source_checkout_not_on_sys_path"):raise ValueError("wheel_lifecycle_incomplete")
     module=Path(value.get("shiproom_module_path",""));site=Path(value.get("site_packages_root",""));executable=Path(value.get("shiproom_executable",""))
     try: module.resolve().relative_to(site.resolve())
     except (ValueError,OSError): raise ValueError("wheel_install_provenance_invalid")
     if "site-packages" not in str(module).lower() or not executable.is_file():raise ValueError("wheel_install_provenance_invalid")
+    if len(commands)<20 or not value.get("source_checkout_not_on_sys_path"):raise ValueError("wheel_lifecycle_incomplete")
     if any(not any(token in command for command in joined) for token in required):raise ValueError("wheel_required_command_missing")
     for row in commands:
         for stream in ("stdout","stderr"):

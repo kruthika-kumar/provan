@@ -1,93 +1,137 @@
-"""Independent integrity check for the final Sessions 6--8 closeout pair.
+"""Reconstruct Sessions 6--8 closure from a self-contained evidence bundle.
 
-This intentionally does not import the report generator.  It shares only
-canonical JSON parsing and SHA-256, so a defect in report prerequisite
-calculation cannot certify its own output.
+This module intentionally imports no closeout generator, claim resolver,
+workflow runner, proof runner, parity outcome logic, or security summary logic.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import subprocess
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-class CloseoutValidationError(ValueError):
-    pass
+class CloseoutValidationError(ValueError): pass
 
 
-def _sha(raw: bytes) -> str:
-    return "sha256:" + hashlib.sha256(raw).hexdigest()
+def _sha(raw: bytes) -> str: return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
 def _load(path: Path) -> dict:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:  # exact type is intentionally not a trusted input API
-        raise CloseoutValidationError("closeout_json_invalid") from exc
-    if not isinstance(value, dict):
-        raise CloseoutValidationError("closeout_object_invalid")
+    try: value=json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc: raise CloseoutValidationError("closeout_json_invalid") from exc
+    if not isinstance(value,dict): raise CloseoutValidationError("closeout_object_invalid")
     return value
 
 
+def _semantic_hash(row: dict) -> str:
+    fields={key:row[key] for key in ("requirement_id","normative_behavior","forbidden_substitutions","required_artifacts","minimum_cardinalities")}
+    return _sha(json.dumps(fields,sort_keys=True,ensure_ascii=False,separators=(",",":")).encode())
+
+
+def _workflow_hash(row: dict) -> str:
+    fields={key:row[key] for key in ("case_name","preconditions","required_production_functions","required_assertion_ids","required_artifacts","minimum_record_counts","forbidden_substitutions")}
+    return _sha(json.dumps(fields,sort_keys=True,ensure_ascii=False,separators=(",",":")).encode())
+
+
+def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash: str) -> dict:
+    manifest=_load(bundle/"session6-8-evidence-bundle-manifest.json")
+    if manifest.get("final_evidence_commit")!=expected_commit: raise CloseoutValidationError("closeout_final_commit_mismatch")
+    manifest_body={**manifest,"manifest_hash":""}
+    if manifest.get("manifest_hash")!=_sha(json.dumps(manifest_body,sort_keys=True,separators=(",",":")).encode()):raise CloseoutValidationError("closeout_bundle_manifest_hash_mismatch")
+    listed=set()
+    for row in manifest.get("files",[]):
+        relative=row.get("relative_path")
+        if not isinstance(relative,str) or relative.startswith("/") or ".." in Path(relative).parts or relative in listed:raise CloseoutValidationError("closeout_bundle_path_invalid")
+        listed.add(relative);path=bundle/relative
+        if not path.is_file() or _sha(path.read_bytes())!=row.get("sha256") or path.stat().st_size!=row.get("size_bytes") or row.get("final_evidence_commit")!=expected_commit:raise CloseoutValidationError("closeout_bundle_file_hash_mismatch")
+    actual={path.relative_to(bundle).as_posix() for path in bundle.rglob("*") if path.is_file()}-{"session6-8-evidence-bundle-manifest.json"}
+    if listed!=actual:raise CloseoutValidationError("closeout_bundle_file_set_mismatch")
+    report_path=bundle/"session6-8-final-closeout-report.json";receipt_path=bundle/"session6-8-final-closeout-receipt.json"
+    report=_load(report_path);receipt=_load(receipt_path)
+    if _sha(receipt_path.read_bytes())!=expected_receipt_hash:raise CloseoutValidationError("closeout_detached_receipt_hash_mismatch")
+    if receipt.get("report_hash")!=_sha(report_path.read_bytes()):raise CloseoutValidationError("closeout_report_hash_mismatch")
+    expected_receipt={key:value for key,value in receipt.items() if key!="receipt_hash"}
+    if receipt.get("receipt_hash")!=_sha(json.dumps(expected_receipt,sort_keys=True,separators=(",",":")).encode()):raise CloseoutValidationError("closeout_receipt_hash_mismatch")
+    if report.get("final_commit")!=expected_commit or receipt.get("final_commit")!=expected_commit:raise CloseoutValidationError("closeout_report_commit_mismatch")
+    expected_report={**report,"report_self_hash":""}
+    if report.get("report_self_hash")!=_sha(json.dumps(expected_report,sort_keys=True,separators=(",",":")).encode()):raise CloseoutValidationError("closeout_report_self_hash_mismatch")
+    requirements=_load(bundle/"session6-8-requirement-inventory.json").get("requirements",[])
+    if len(requirements)!=106 or len({row.get("requirement_id") for row in requirements})!=106:raise CloseoutValidationError("closeout_requirement_cardinality_invalid")
+    if any(row.get("approved_semantic_hash")!=_semantic_hash(row) for row in requirements):raise CloseoutValidationError("closeout_requirement_semantics_tampered")
+    rid={row["requirement_id"] for row in requirements}
+    completion={row["requirement_id"] for row in _load(bundle/"session6-8-completion-map.json").get("requirements",[])}
+    execution={row["requirement_id"] for row in _load(bundle/"session6-8-execution-map.json").get("requirements",[])}
+    proof_manifest=_load(bundle/"session6-8-proof-manifest.json").get("proofs",[])
+    claims=_load(bundle/"session6-8-claim-registry.json").get("claims",[])
+    claim_rids=[tuple(row.get("requirement_ids",[])) for row in claims]
+    if rid!=completion or rid!=execution or rid!={row.get("requirement_id") for row in proof_manifest} or set(claim_rids)!={(x,) for x in rid} or len(claims)!=106:raise CloseoutValidationError("closeout_requirement_coverage_mismatch")
+    workflows=_load(bundle/"session6-8-workflow-contracts.json").get("cases",[])
+    if len(workflows)!=18 or any(row.get("approved_semantic_hash")!=_workflow_hash(row) for row in workflows):raise CloseoutValidationError("closeout_workflow_semantics_tampered")
+    junit=ET.parse(bundle/"final-session6-8-junit.xml").getroot()
+    if any(child.tag in {"failure","error","skipped"} for case in junit.iter("testcase") for child in case):raise CloseoutValidationError("closeout_junit_not_clean")
+    behavioral=_load(bundle/"behavioral-eval-receipt.json").get("cases",[])
+    workflow_receipt=_load(bundle/"session6-8-workflow-eval-receipt.json").get("cases",[])
+    if len(behavioral)!=35 or not all(row.get("passed") for row in behavioral):raise CloseoutValidationError("closeout_behavioral_evidence_incomplete")
+    if len(workflow_receipt)!=18:raise CloseoutValidationError("closeout_workflow_evidence_incomplete")
+    by_workflow={row["name"]:row for row in workflow_receipt}
+    for contract in workflows:
+        case=by_workflow.get(contract["case_name"])
+        if case is None:raise CloseoutValidationError("closeout_workflow_case_missing")
+        observed={row.get("qualified_function") for row in case.get("production_invocations",[])}
+        if not set(contract["required_production_functions"]).issubset(observed):raise CloseoutValidationError("closeout_workflow_invocation_missing")
+        artifact=bundle/"canonical-artifacts/workflow-evidence"/(contract["case_name"]+".json")
+        evidence=_load(artifact)
+        for assertion in contract["assertions"]:
+            actual=evidence.get("assertions",{}).get(assertion["assertion_id"])
+            if assertion["comparator"]!="equals" or actual!=assertion["expected_value"]:raise CloseoutValidationError("closeout_workflow_assertion_failed")
+    proof_receipt=_load(bundle/"session6-8-proof-execution-receipt.json")
+    proof_rows=proof_receipt.get("proofs",[]);manifest_by={row["proof_id"]:row for row in proof_manifest}
+    if len(proof_rows)<318 or len({row.get("proof_id") for row in proof_rows})!=len(proof_manifest):raise CloseoutValidationError("closeout_proof_execution_incomplete")
+    for row in proof_rows:
+        expected=manifest_by.get(row["proof_id"])
+        if expected is None or row.get("requirement_id")!=expected["requirement_id"] or row.get("fixture_class")!=expected["fixture_class"]:raise CloseoutValidationError("closeout_proof_binding_invalid")
+        if row.get("actual_acceptance")!=expected["expected_acceptance"] or row.get("actual_record_count",0)<row.get("minimum_record_count",1) or not row.get("production_invocation_ids"):raise CloseoutValidationError("closeout_proof_outcome_invalid")
+        if expected["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=expected["expected_python_exception"] or row.get("actual_error_code")!=expected["expected_error_code"]):raise CloseoutValidationError("closeout_proof_rejection_mismatch")
+        artifact=bundle/"canonical-artifacts/proof-events"/(row["proof_id"]+".artifact.json")
+        if not artifact.is_file() or _sha(artifact.read_bytes()) not in row.get("artifact_hashes",{}).values():raise CloseoutValidationError("closeout_proof_artifact_mismatch")
+    parity=_load(bundle/"session6-8-contract-parity-report.json")
+    if len(parity.get("contracts",[]))<1 or len(parity.get("mutation_receipts",[]))<42:raise CloseoutValidationError("closeout_parity_incomplete")
+    for row in parity["mutation_receipts"]:
+        valid=bundle/"parity-fixtures"/Path(row["valid_fixture_path"]).name;mutated=bundle/"parity-fixtures"/Path(row["mutated_fixture_path"]).name
+        if not valid.is_file() or _sha(valid.read_bytes())!=row["valid_fixture_hash"]:raise CloseoutValidationError("closeout_parity_baseline_invalid")
+        if not mutated.is_file() or _sha(mutated.read_bytes())!=row["mutated_fixture_hash"]:raise CloseoutValidationError("closeout_parity_mutation_invalid")
+        if row.get("actual_python_result")!="rejected" or row.get("unexpected_pass"):raise CloseoutValidationError("closeout_parity_unexpected_pass")
+    security_registry=_load(bundle/"session6-8-security-surface-registry.json").get("records",[])
+    security=_load(bundle/"session6-8-security-receipt.json").get("records",[])
+    if len(security_registry)!=44 or len(security)!=44:raise CloseoutValidationError("closeout_security_cardinality_invalid")
+    for row in security:
+        raw=bundle/"security-evidence"/Path(row["raw_evidence_path"]).name
+        if not raw.is_file() or _sha(raw.read_bytes())!=row["raw_evidence_hash"]:raise CloseoutValidationError("closeout_security_raw_evidence_invalid")
+        evidence=_load(raw)
+        if evidence.get("adapter_spy",{}).get("called") or evidence.get("before_hash")!=evidence.get("after_hash"):raise CloseoutValidationError("closeout_security_side_effect")
+    wheel=_load(bundle/"session6-8-installed-wheel-receipt.json")
+    if wheel.get("final_commit")!=expected_commit or len(wheel.get("commands",[]))<20 or not wheel.get("source_checkout_not_on_sys_path"):raise CloseoutValidationError("closeout_wheel_lifecycle_incomplete")
+    for index,row in enumerate(wheel["commands"]):
+        for stream in ("stdout","stderr"):
+            raw=bundle/"wheel-logs"/(f"{index:02d}.{stream}.txt")
+            if not raw.is_file() or _sha(raw.read_bytes())!=row[stream+"_hash"]:raise CloseoutValidationError("closeout_wheel_log_invalid")
+        if row.get("exit_code")!=0:raise CloseoutValidationError("closeout_wheel_command_failed")
+    for row in wheel.get("artifacts",[]):
+        artifact=bundle/"canonical-artifacts/wheel"/row["relative_path"]
+        if not artifact.is_file() or _sha(artifact.read_bytes())!=row["sha256"]:raise CloseoutValidationError("closeout_wheel_artifact_invalid")
+    resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")
+    if resolution.get("claim_count")!=106 or resolution.get("resolved_claim_count")!=106 or resolution.get("final_commit")!=expected_commit:raise CloseoutValidationError("closeout_claim_resolution_incomplete")
+    if report.get("resolved") is not True or not isinstance(report.get("prerequisites"),dict) or not all(report["prerequisites"].values()):raise CloseoutValidationError("closeout_report_not_resolved")
+    return {"status":"verified","final_commit":expected_commit,"requirement_count":106,"claim_count":106,"proof_count":len(proof_rows),"workflow_count":18,"security_count":44,"parity_mutation_count":len(parity["mutation_receipts"]),"wheel_command_count":len(wheel["commands"]),"bundle_manifest_hash":manifest["manifest_hash"]}
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--report", type=Path, required=True)
-    parser.add_argument("--receipt", type=Path, required=True)
-    parser.add_argument("--validation-root", type=Path, required=True)
-    parser.add_argument("--junit", type=Path, required=True)
-    parser.add_argument("--workflow-receipt", type=Path, required=True)
-    parser.add_argument("--behavioral-receipt", type=Path, required=True)
-    parser.add_argument("--proof-receipt", type=Path, required=True)
-    parser.add_argument("--parity-report", type=Path, required=True)
-    parser.add_argument("--security-receipt", type=Path, required=True)
-    parser.add_argument("--wheel-receipt", type=Path, required=True)
-    parser.add_argument("--workflow-validation", type=Path, required=True)
-    args = parser.parse_args()
-    report_raw = args.report.read_bytes(); receipt_raw = args.receipt.read_bytes()
-    report = _load(args.report); receipt = _load(args.receipt)
-    root = Path(__file__).resolve().parents[1]
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True, text=True, capture_output=True).stdout.strip()
-    if report.get("final_commit") != commit or receipt.get("final_commit") != commit:
-        raise CloseoutValidationError("closeout_final_commit_mismatch")
-    if receipt.get("report_hash") != _sha(report_raw):
-        raise CloseoutValidationError("closeout_report_hash_mismatch")
-    expected_receipt = {key: value for key, value in receipt.items() if key != "receipt_hash"}
-    if receipt.get("receipt_hash") != _sha(json.dumps(expected_receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")):
-        raise CloseoutValidationError("closeout_receipt_hash_mismatch")
-    inventory = _load(args.validation_root / "session6-8-requirement-inventory.json").get("requirements")
-    if not isinstance(inventory, list) or not inventory:
-        raise CloseoutValidationError("closeout_requirement_inventory_invalid")
-    inventory_hash = _sha((args.validation_root / "session6-8-requirement-inventory.json").read_bytes())
-    if report.get("inputs", {}).get("requirement_inventory_hash") != inventory_hash:
-        raise CloseoutValidationError("closeout_requirement_inventory_hash_mismatch")
-    inputs=report.get("inputs",{})
-    expected_inputs={"junit_hash":args.junit,"workflow_receipt_hash":args.workflow_receipt,"behavioral_receipt_hash":args.behavioral_receipt,"proof_execution_receipt_hash":args.proof_receipt,"contract_parity_report_hash":args.parity_report,"security_receipt_hash":args.security_receipt,"wheel_receipt_hash":args.wheel_receipt,"workflow_validation_hash":args.workflow_validation,"workflow_contracts_hash":args.validation_root/"session6-8-workflow-contracts.json","security_surface_registry_hash":args.validation_root/"session6-8-security-surface-registry.json"}
-    for key,path in expected_inputs.items():
-        if inputs.get(key)!=_sha(path.read_bytes()):raise CloseoutValidationError("closeout_input_hash_mismatch:"+key)
-    workflow=_load(args.workflow_receipt);behavioral=_load(args.behavioral_receipt);proof=_load(args.proof_receipt);parity=_load(args.parity_report);security=_load(args.security_receipt);wheel=_load(args.wheel_receipt);workflow_validation=_load(args.workflow_validation)
-    if len(workflow.get("cases",[]))!=18 or not all(row.get("passed") for row in workflow["cases"]) or workflow_validation.get("status")!="passed":raise CloseoutValidationError("closeout_workflow_evidence_incomplete")
-    if len(behavioral.get("cases",[]))!=35 or not all(row.get("passed") for row in behavioral["cases"]):raise CloseoutValidationError("closeout_behavioral_evidence_incomplete")
-    if proof.get("proof_count",0)<318 or not proof.get("passed"):raise CloseoutValidationError("closeout_proof_execution_incomplete")
-    if not parity.get("passed") or len(parity.get("mutation_receipts",[]))<42:raise CloseoutValidationError("closeout_parity_incomplete")
-    if not security.get("passed") or not security.get("records") or any(row.get("side_effect_observed") or row.get("underlying_adapter_called") for row in security["records"]):raise CloseoutValidationError("closeout_security_incomplete")
-    if not wheel.get("passed") or len(wheel.get("commands",[]))<20 or wheel.get("final_commit")!=commit:raise CloseoutValidationError("closeout_wheel_lifecycle_incomplete")
-    prerequisites = report.get("prerequisites")
-    if not isinstance(prerequisites, dict) or not prerequisites or not all(value is True for value in prerequisites.values()):
-        raise CloseoutValidationError("closeout_prerequisites_unresolved")
-    if report.get("resolved") is not True:
-        raise CloseoutValidationError("closeout_report_not_resolved")
-    expected_report = dict(report); expected_report["report_self_hash"] = ""
-    if report.get("report_self_hash") != _sha(json.dumps(expected_report, sort_keys=True, separators=(",", ":")).encode("utf-8")):
-        raise CloseoutValidationError("closeout_report_self_hash_mismatch")
-    print(json.dumps({"status":"verified","final_commit":commit,"report_hash":_sha(report_raw),"receipt_hash":_sha(receipt_raw),"requirement_count":len(inventory)}))
-    return 0
+    parser=argparse.ArgumentParser();parser.add_argument("--bundle",type=Path,required=True);parser.add_argument("--expected-commit",required=True);parser.add_argument("--expected-receipt-hash",required=True);args=parser.parse_args()
+    try: result=validate_bundle(args.bundle,expected_commit=args.expected_commit,expected_receipt_hash=args.expected_receipt_hash)
+    except CloseoutValidationError as exc: print(str(exc));return 2
+    print(json.dumps(result,sort_keys=True));return 0
 
 
-if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except CloseoutValidationError as exc:
-        print(str(exc))
-        raise SystemExit(2)
+if __name__=="__main__":raise SystemExit(main())

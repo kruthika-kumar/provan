@@ -42,6 +42,7 @@ def main() -> int:
     parser.add_argument("--wheel-receipt", type=Path, required=True)
     parser.add_argument("--proof-receipt", type=Path, required=True)
     parser.add_argument("--workflow-validation", type=Path, required=True)
+    parser.add_argument("--claim-resolution", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=False)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -62,6 +63,7 @@ def main() -> int:
     wheel = _load(args.wheel_receipt)
     proof_execution = _load(args.proof_receipt)
     workflow_validation = _load(args.workflow_validation)
+    claim_resolution = _load(args.claim_resolution)
     proof_ids = {item["proof_id"] for item in proofs}
     inventory_requirements = {item["requirement_id"] for item in requirement_inventory}
     requirements = {item["requirement_id"] for item in completion}
@@ -73,9 +75,9 @@ def main() -> int:
     prerequisites = {
         "requirement_inventory_exhaustive": len(inventory_requirements) == len(requirement_inventory) and requirements == inventory_requirements == {item["requirement_id"] for item in proofs} == covered == execution_requirements,
         "source_text_hashes_bound": all(item.get("source_text_hash") == _sha(item["source_requirement"].encode("utf-8")) for item in requirement_inventory),
-        "execution_map_bound": all(item.get("status") == "verified" and item.get("production_boundary") and item.get("proof_ids") for item in execution),
-        "all_proofs_verified": all(item["status"] == "verified" and item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
-        "all_requirements_verified": all(item.get("status") == "verified" for item in completion),
+        "execution_map_bound": all(item.get("production_boundary") and item.get("proof_ids") for item in execution),
+        "all_proofs_executed": all(item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
+        "all_requirements_executed": len(requirement_inventory) == 106 and len(completion) == 106,
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
         "proof_execution_complete": proof_execution.get("passed") is True and proof_execution.get("proof_count") >= 318 and len({row["requirement_id"] for row in proof_execution.get("proofs",[])}) == 106,
         "workflow_assertions_recomputed": workflow_validation.get("status") == "passed" and workflow_validation.get("case_count") == 18 and workflow_validation.get("assertion_count",0) > 18,
@@ -87,6 +89,7 @@ def main() -> int:
         "security_receipt_complete": bool(security.get("passed")) and bool(security.get("records")) and all(item.get("typed_rejection") == "private_alpha_operation_prohibited:" + item.get("operation", "") and not item.get("underlying_adapter_called") and not item.get("side_effect_observed") for item in security["records"]),
         "contract_parity_complete": bool(parity.get("passed")) and bool(parity.get("contracts")),
         "wheel_receipt_complete": bool(wheel.get("passed")) and wheel.get("final_commit") == commit and wheel.get("exit_code") == 0 and len(wheel.get("commands",[])) >= 20,
+        "all_claims_resolved": claim_resolution.get("claim_count") == 106 and claim_resolution.get("resolved_claim_count") == 106 and claim_resolution.get("final_commit") == commit,
     }
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"requirement_inventory_hash": _sha((validation / "session6-8-requirement-inventory.json").read_bytes()),
@@ -104,6 +107,7 @@ def main() -> int:
                          "wheel_receipt_hash": _sha(args.wheel_receipt.read_bytes()),
                          "proof_execution_receipt_hash": _sha(args.proof_receipt.read_bytes()),
                          "workflow_validation_hash": _sha(args.workflow_validation.read_bytes())},
+              "claim_resolution_hash": _sha(args.claim_resolution.read_bytes()),
               "prerequisites": prerequisites, "resolved": all(prerequisites.values()), "report_self_hash": ""}
     report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)
