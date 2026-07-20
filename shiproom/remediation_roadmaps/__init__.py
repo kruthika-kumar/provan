@@ -102,6 +102,11 @@ def _dependency(state: str, generation: str | None = None, semantic_hash: str | 
 
 def authority_policy() -> dict:
     value = json.loads(resources.files("shiproom.remediation_schemas").joinpath("remediation-issue-authority-policy.v1.json").read_text(encoding="utf-8"))
+    return validate_authority_policy(value)
+
+
+def validate_authority_policy(value: dict) -> dict:
+    """Validate the complete packaged authority policy without Schema delegation."""
     required = {"rule_id", "finding_state", "blocker", "criterion_authority", "evidence_class", "open_state", "owner_decision_state", "freshness", "issue_class", "actionable", "automation_classes", "closure_evidence_classes"}
     if value.get("schema_version") != "remediation-issue-authority-policy.v1" or not isinstance(value.get("rules"), list):
         raise ValueError("remediation_issue_authority_policy_invalid")

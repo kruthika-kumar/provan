@@ -21,7 +21,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -44,7 +44,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -67,7 +67,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -90,7 +90,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -113,7 +113,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -136,7 +136,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -159,7 +159,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -182,7 +182,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_REMEDIATION_CARDINALITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -205,7 +205,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_PACKET_CONTRACT_LINKS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -228,7 +228,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_PACKET_FILE_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -251,7 +251,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -274,7 +274,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -297,7 +297,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -320,7 +320,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -343,7 +343,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -366,7 +366,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -389,7 +389,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -412,7 +412,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -435,7 +435,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -458,7 +458,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -481,7 +481,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_CLOSURE_OWNER_DECISION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -504,7 +504,7 @@
       ],
       "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -527,7 +527,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -550,7 +550,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -573,7 +573,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_TYPED_SURFACE_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -596,7 +596,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -619,7 +619,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_PYTHON_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -642,7 +642,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_TYPESCRIPT_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -665,7 +665,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_AI_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -688,7 +688,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -711,7 +711,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -734,7 +734,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -757,7 +757,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -780,7 +780,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -803,7 +803,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -826,7 +826,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -849,7 +849,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -872,7 +872,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_MANUAL_CODEX_PARITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -895,7 +895,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -918,7 +918,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -941,7 +941,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_REVISION_REQUEST",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -964,7 +964,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -987,7 +987,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_SECOND_INVALID_FAILURE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1010,7 +1010,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1033,7 +1033,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1056,7 +1056,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_MIGRATION_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1079,7 +1079,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_AI_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1102,7 +1102,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1125,7 +1125,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1148,7 +1148,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1171,7 +1171,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1194,7 +1194,7 @@
       ],
       "production_boundary": "shiproom.review_organisation.prepare",
       "requirement_id": "S7_POINTER_LAST_PUBLICATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1217,7 +1217,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1240,7 +1240,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1263,7 +1263,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1286,7 +1286,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1309,7 +1309,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1332,7 +1332,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1355,7 +1355,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1378,7 +1378,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1401,7 +1401,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1424,7 +1424,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1447,7 +1447,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1470,7 +1470,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1493,7 +1493,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1516,7 +1516,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1539,7 +1539,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1562,7 +1562,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1585,7 +1585,7 @@
       ],
       "production_boundary": "shiproom.contestability.append_action",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1608,7 +1608,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1631,7 +1631,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1654,7 +1654,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1677,7 +1677,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1700,7 +1700,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1723,7 +1723,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1746,7 +1746,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1769,7 +1769,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1792,7 +1792,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1815,7 +1815,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1838,7 +1838,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1861,7 +1861,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1884,7 +1884,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1907,7 +1907,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1930,7 +1930,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1953,7 +1953,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_DETERMINISTIC_JSON",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1976,7 +1976,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_SAFE_HTML",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -1999,7 +1999,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_SAFE_MARKDOWN",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2022,7 +2022,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2045,7 +2045,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_ARTIFACT_FILE_SET",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2068,7 +2068,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2091,7 +2091,7 @@
       ],
       "production_boundary": "shiproom.management_artifacts.compile",
       "requirement_id": "S8_UPSTREAM_STALENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2114,7 +2114,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_TRUSTED_READS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2137,7 +2137,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_TRUSTED_WRITES",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2160,7 +2160,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2183,7 +2183,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2206,7 +2206,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_POINTER_LATE_FAILURE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2229,7 +2229,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2252,7 +2252,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_CONTRACT_INVENTORY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2275,7 +2275,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2298,7 +2298,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2321,7 +2321,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2344,7 +2344,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2367,7 +2367,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2390,7 +2390,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_PROOF_EXECUTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2413,7 +2413,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_CLOSEOUT_GENERATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "adversarial_proof_ids": [
@@ -2436,7 +2436,7 @@
       ],
       "production_boundary": "scripts.run_workflow_integration_evals.main",
       "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
-      "status": "verified"
+      "status": "pending_execution"
     }
   ],
   "schema_version": "shiproom.session6-8-completion-map.v4"

@@ -9,7 +9,7 @@
         "proof_s6_issue_authority_policy_adversarial_invalid"
       ],
       "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -20,7 +20,7 @@
         "proof_s6_model_review_not_blocker_adversarial_invalid"
       ],
       "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -31,7 +31,7 @@
         "proof_s6_planner_compiler_authority_adversarial_invalid"
       ],
       "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -42,7 +42,7 @@
         "proof_s6_human_owner_separation_adversarial_invalid"
       ],
       "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -53,7 +53,7 @@
         "proof_s6_optional_planner_lifecycle_adversarial_invalid"
       ],
       "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -64,7 +64,7 @@
         "proof_s6_automation_eligibility_adversarial_invalid"
       ],
       "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -75,7 +75,7 @@
         "proof_s6_bounded_fix_metadata_only_adversarial_invalid"
       ],
       "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -86,7 +86,7 @@
         "proof_s6_remediation_cardinality_adversarial_invalid"
       ],
       "requirement_id": "S6_REMEDIATION_CARDINALITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -97,7 +97,7 @@
         "proof_s6_packet_contract_links_adversarial_invalid"
       ],
       "requirement_id": "S6_PACKET_CONTRACT_LINKS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -108,7 +108,7 @@
         "proof_s6_packet_file_integrity_adversarial_invalid"
       ],
       "requirement_id": "S6_PACKET_FILE_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -119,7 +119,7 @@
         "proof_s6_closure_contract_completeness_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -130,7 +130,7 @@
         "proof_s6_closure_exact_rerun_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_EXACT_RERUN",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -141,7 +141,7 @@
         "proof_s6_closure_pass_required_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -152,7 +152,7 @@
         "proof_s6_closure_verifier_independence_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -163,7 +163,7 @@
         "proof_s6_closure_commit_branch_freshness_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -174,7 +174,7 @@
         "proof_s6_closure_evidence_class_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -185,7 +185,7 @@
         "proof_s6_closure_regression_requirements_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -196,7 +196,7 @@
         "proof_s6_closure_test_requirements_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -207,7 +207,7 @@
         "proof_s6_closure_instrumentation_requirements_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -218,7 +218,7 @@
         "proof_s6_closure_protected_invariants_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -229,7 +229,7 @@
         "proof_s6_closure_owner_decision_adversarial_invalid"
       ],
       "requirement_id": "S6_CLOSURE_OWNER_DECISION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "remediation-plan.json",
@@ -240,7 +240,7 @@
         "proof_s6_private_alpha_non_mutation_adversarial_invalid"
       ],
       "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -251,7 +251,7 @@
         "proof_s7_specialist_catalogue_adversarial_invalid"
       ],
       "requirement_id": "S7_SPECIALIST_CATALOGUE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -262,7 +262,7 @@
         "proof_s7_native_boundary_reuse_adversarial_invalid"
       ],
       "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -273,7 +273,7 @@
         "proof_s7_typed_surface_policy_adversarial_invalid"
       ],
       "requirement_id": "S7_TYPED_SURFACE_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -284,7 +284,7 @@
         "proof_s7_selection_evidence_links_adversarial_invalid"
       ],
       "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -295,7 +295,7 @@
         "proof_s7_python_selection_adversarial_invalid"
       ],
       "requirement_id": "S7_PYTHON_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -306,7 +306,7 @@
         "proof_s7_typescript_selection_adversarial_invalid"
       ],
       "requirement_id": "S7_TYPESCRIPT_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -317,7 +317,7 @@
         "proof_s7_ai_selection_adversarial_invalid"
       ],
       "requirement_id": "S7_AI_SELECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -328,7 +328,7 @@
         "proof_s7_browser_explicit_skip_adversarial_invalid"
       ],
       "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -339,7 +339,7 @@
         "proof_s7_browser_absence_not_inspected_adversarial_invalid"
       ],
       "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -350,7 +350,7 @@
         "proof_s7_test_adequacy_applicability_adversarial_invalid"
       ],
       "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -361,7 +361,7 @@
         "proof_s7_instrumentation_applicability_adversarial_invalid"
       ],
       "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -372,7 +372,7 @@
         "proof_s7_product_intent_wrapper_adversarial_invalid"
       ],
       "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -383,7 +383,7 @@
         "proof_s7_native_work_order_integrity_adversarial_invalid"
       ],
       "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -394,7 +394,7 @@
         "proof_s7_codex_package_completeness_adversarial_invalid"
       ],
       "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -405,7 +405,7 @@
         "proof_s7_harness_declaration_honesty_adversarial_invalid"
       ],
       "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -416,7 +416,7 @@
         "proof_s7_manual_codex_parity_adversarial_invalid"
       ],
       "requirement_id": "S7_MANUAL_CODEX_PARITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -427,7 +427,7 @@
         "proof_s7_trusted_submission_paths_adversarial_invalid"
       ],
       "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -438,7 +438,7 @@
         "proof_s7_submission_byte_persistence_adversarial_invalid"
       ],
       "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -449,7 +449,7 @@
         "proof_s7_revision_request_adversarial_invalid"
       ],
       "requirement_id": "S7_REVISION_REQUEST",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -460,7 +460,7 @@
         "proof_s7_corrected_result_acceptance_adversarial_invalid"
       ],
       "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -471,7 +471,7 @@
         "proof_s7_second_invalid_failure_adversarial_invalid"
       ],
       "requirement_id": "S7_SECOND_INVALID_FAILURE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -482,7 +482,7 @@
         "proof_s7_failed_result_no_adaptation_adversarial_invalid"
       ],
       "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -493,7 +493,7 @@
         "proof_s7_trigger_specific_evidence_adversarial_invalid"
       ],
       "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -504,7 +504,7 @@
         "proof_s7_migration_adaptation_adversarial_invalid"
       ],
       "requirement_id": "S7_MIGRATION_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -515,7 +515,7 @@
         "proof_s7_ai_adaptation_adversarial_invalid"
       ],
       "requirement_id": "S7_AI_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -526,7 +526,7 @@
         "proof_s7_browser_disproven_adaptation_adversarial_invalid"
       ],
       "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -537,7 +537,7 @@
         "proof_s7_superseded_work_order_preservation_adversarial_invalid"
       ],
       "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -548,7 +548,7 @@
         "proof_s7_adaptation_idempotency_adversarial_invalid"
       ],
       "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -559,7 +559,7 @@
         "proof_s7_adaptation_cycle_depth_adversarial_invalid"
       ],
       "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "review-plan.json",
@@ -570,7 +570,7 @@
         "proof_s7_pointer_last_publication_adversarial_invalid"
       ],
       "requirement_id": "S7_POINTER_LAST_PUBLICATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -581,7 +581,7 @@
         "proof_s8_contest_target_registry_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -592,7 +592,7 @@
         "proof_s8_contest_source_generation_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -603,7 +603,7 @@
         "proof_s8_contest_target_existence_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -614,7 +614,7 @@
         "proof_s8_contest_evidence_existence_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -625,7 +625,7 @@
         "proof_s8_contest_evidence_relevance_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -636,7 +636,7 @@
         "proof_s8_contest_authority_preservation_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -647,7 +647,7 @@
         "proof_s8_contest_append_sequence_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -658,7 +658,7 @@
         "proof_s8_contest_previous_hash_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -669,7 +669,7 @@
         "proof_s8_contest_idempotent_replay_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -680,7 +680,7 @@
         "proof_s8_contest_conflicting_duplicate_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -691,7 +691,7 @@
         "proof_s8_contest_owner_authority_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -702,7 +702,7 @@
         "proof_s8_named_risk_fact_non_mutation_adversarial_invalid"
       ],
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -713,7 +713,7 @@
         "proof_s8_named_risk_decision_effect_adversarial_invalid"
       ],
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -724,7 +724,7 @@
         "proof_s8_owner_decision_budget_adversarial_invalid"
       ],
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -735,7 +735,7 @@
         "proof_s8_owner_decision_priority_adversarial_invalid"
       ],
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -746,7 +746,7 @@
         "proof_s8_owner_decision_overflow_adversarial_invalid"
       ],
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "contestation-ledger.json",
@@ -757,7 +757,7 @@
         "proof_s8_future_remediation_no_cycle_adversarial_invalid"
       ],
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -768,7 +768,7 @@
         "proof_s8_management_dependency_discovery_adversarial_invalid"
       ],
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -779,7 +779,7 @@
         "proof_s8_management_dependency_states_adversarial_invalid"
       ],
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -790,7 +790,7 @@
         "proof_s8_management_dependency_freshness_adversarial_invalid"
       ],
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -801,7 +801,7 @@
         "proof_s8_management_mixed_vector_rejection_adversarial_invalid"
       ],
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -812,7 +812,7 @@
         "proof_s8_executive_section_completeness_adversarial_invalid"
       ],
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -823,7 +823,7 @@
         "proof_s8_product_matrix_completeness_adversarial_invalid"
       ],
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -834,7 +834,7 @@
         "proof_s8_engineering_section_completeness_adversarial_invalid"
       ],
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -845,7 +845,7 @@
         "proof_s8_measurement_ai_passthrough_adversarial_invalid"
       ],
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -856,7 +856,7 @@
         "proof_s8_remediation_overview_completeness_adversarial_invalid"
       ],
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -867,7 +867,7 @@
         "proof_s8_closure_contract_indexing_adversarial_invalid"
       ],
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -878,7 +878,7 @@
         "proof_s8_contestability_inclusion_adversarial_invalid"
       ],
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -889,7 +889,7 @@
         "proof_s8_recommendation_policy_adversarial_invalid"
       ],
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -900,7 +900,7 @@
         "proof_s8_accepted_condition_effect_adversarial_invalid"
       ],
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -911,7 +911,7 @@
         "proof_s8_named_risk_recommendation_effect_adversarial_invalid"
       ],
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -922,7 +922,7 @@
         "proof_s8_insufficient_evidence_state_adversarial_invalid"
       ],
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -933,7 +933,7 @@
         "proof_s8_deterministic_json_adversarial_invalid"
       ],
       "requirement_id": "S8_DETERMINISTIC_JSON",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -944,7 +944,7 @@
         "proof_s8_safe_html_adversarial_invalid"
       ],
       "requirement_id": "S8_SAFE_HTML",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -955,7 +955,7 @@
         "proof_s8_safe_markdown_adversarial_invalid"
       ],
       "requirement_id": "S8_SAFE_MARKDOWN",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -966,7 +966,7 @@
         "proof_s8_artifact_hash_integrity_adversarial_invalid"
       ],
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -977,7 +977,7 @@
         "proof_s8_artifact_file_set_adversarial_invalid"
       ],
       "requirement_id": "S8_ARTIFACT_FILE_SET",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -988,7 +988,7 @@
         "proof_s8_deterministic_rerender_adversarial_invalid"
       ],
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "release-packet-index.json",
@@ -999,7 +999,7 @@
         "proof_s8_upstream_staleness_adversarial_invalid"
       ],
       "requirement_id": "S8_UPSTREAM_STALENESS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1010,7 +1010,7 @@
         "proof_shared_trusted_reads_adversarial_invalid"
       ],
       "requirement_id": "SHARED_TRUSTED_READS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1021,7 +1021,7 @@
         "proof_shared_trusted_writes_adversarial_invalid"
       ],
       "requirement_id": "SHARED_TRUSTED_WRITES",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1032,7 +1032,7 @@
         "proof_shared_link_reparse_special_rejection_adversarial_invalid"
       ],
       "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1043,7 +1043,7 @@
         "proof_shared_capacity_limits_adversarial_invalid"
       ],
       "requirement_id": "SHARED_CAPACITY_LIMITS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1054,7 +1054,7 @@
         "proof_shared_pointer_late_failure_adversarial_invalid"
       ],
       "requirement_id": "SHARED_POINTER_LATE_FAILURE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1065,7 +1065,7 @@
         "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ],
       "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1076,7 +1076,7 @@
         "proof_shared_contract_inventory_adversarial_invalid"
       ],
       "requirement_id": "SHARED_CONTRACT_INVENTORY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1087,7 +1087,7 @@
         "proof_shared_executed_contract_parity_adversarial_invalid"
       ],
       "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1098,7 +1098,7 @@
         "proof_shared_behavioral_eval_integrity_adversarial_invalid"
       ],
       "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1109,7 +1109,7 @@
         "proof_shared_workflow_eval_integrity_adversarial_invalid"
       ],
       "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1120,7 +1120,7 @@
         "proof_shared_installed_wheel_lifecycle_adversarial_invalid"
       ],
       "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1131,7 +1131,7 @@
         "proof_shared_skill_pilot_consistency_adversarial_invalid"
       ],
       "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1142,7 +1142,7 @@
         "proof_shared_proof_execution_adversarial_invalid"
       ],
       "requirement_id": "SHARED_PROOF_EXECUTION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1153,7 +1153,7 @@
         "proof_shared_closeout_generation_adversarial_invalid"
       ],
       "requirement_id": "SHARED_CLOSEOUT_GENERATION",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
       "canonical_artifact": "session6-8-workflow-eval-receipt.json",
@@ -1164,7 +1164,7 @@
         "proof_shared_independent_validation_adversarial_invalid"
       ],
       "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
-      "status": "verified"
+      "status": "pending_execution"
     }
   ],
   "schema_version": "shiproom.session6-8-execution-map.v4"

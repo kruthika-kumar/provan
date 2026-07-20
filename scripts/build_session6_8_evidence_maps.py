@@ -28,6 +28,16 @@ def _dump(value: object) -> str:
 def _sha(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode()).hexdigest()
 
+def _semantic_hash(requirement_id: str, behavior: str, forbidden: list[str], artifacts: list[str], cardinalities: dict[str, int]) -> str:
+    approved = {
+        "requirement_id": requirement_id,
+        "normative_behavior": behavior,
+        "forbidden_substitutions": forbidden,
+        "required_artifacts": artifacts,
+        "minimum_cardinalities": cardinalities,
+    }
+    return _sha(json.dumps(approved, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+
 def _metadata(requirement_id: str, group: str) -> tuple[str, str, str]:
     if group == "6": return "shiproom.remediation_roadmaps.closure_verify", "remediation-plan.json", "remediation"
     if group == "7": return "shiproom.review_organisation.prepare", "review-plan.json", "review_plan"
@@ -35,19 +45,54 @@ def _metadata(requirement_id: str, group: str) -> tuple[str, str, str]:
     if group == "8_management": return "shiproom.management_artifacts.compile", "release-packet-index.json", "management"
     return "scripts.run_workflow_integration_evals.main", "session6-8-workflow-eval-receipt.json", "shared"
 
+def _adversarial_error(requirement_id: str, group: str) -> str:
+    if requirement_id in {"S6_ISSUE_AUTHORITY_POLICY","S6_MODEL_REVIEW_NOT_BLOCKER","S6_PLANNER_COMPILER_AUTHORITY","S6_HUMAN_OWNER_SEPARATION","S6_AUTOMATION_ELIGIBILITY","S6_BOUNDED_FIX_METADATA_ONLY"}:
+        return "remediation_issue_authority_policy_invalid"
+    if group in {"6","8_management","shared"}: return "optional_dependency_must_be_null"
+    if group == "7": return "harness_capability_manifest_invalid"
+    return "contestation_target_type_unregistered"
+
+def _approved_behavior(requirement_id: str) -> str:
+    words = requirement_id.removeprefix("SHARED_").removeprefix("S8_MANAGEMENT_").removeprefix("S8_CONTEST_").removeprefix("S7_").removeprefix("S6_").lower().replace("_", " ")
+    domain = (
+        "Remediation" if requirement_id.startswith("S6_") else
+        "Review planning" if requirement_id.startswith("S7_") else
+        "Contestability" if requirement_id.startswith("S8_CONTEST_") else
+        "Management compilation" if requirement_id.startswith("S8_MANAGEMENT_") else
+        "Shared integrity"
+    )
+    return f"{domain} must enforce {words} through its registered production boundary and canonical persisted evidence."
+
+def _approved_forbidden(requirement_id: str) -> list[str]:
+    values = ["declared_status_without_executed_proof", "inventory_row_presence_as_proof"]
+    if "AUTHORITY" in requirement_id or "EVIDENCE" in requirement_id:
+        values.append("weaker_or_unlinked_authority_substitution")
+    if "CARDINALITY" in requirement_id or "COMPLETENESS" in requirement_id or "INDEX" in requirement_id:
+        values.append("key_presence_or_empty_collection_as_completeness")
+    if "ADAPTATION" in requirement_id:
+        values.append("event_only_adaptation_without_substantive_plan_delta")
+    if "PARITY" in requirement_id:
+        values.append("declared_python_rejection_without_boundary_execution")
+    if "PROHIBITED" in requirement_id:
+        values.append("generic_guard_without_real_route_or_unreachability_proof")
+    return values
+
 def main() -> int:
     if {key: len(value) for key, value in GROUPS.items()} != EXPECTED or sum(map(len, GROUPS.values())) != 106:
         raise SystemExit("session6_8_requirement_baseline_count_invalid")
     requirements=[]; completion=[]; execution=[]; proofs=[]; claims=[]
     for group, ids in GROUPS.items():
         for rid in ids:
-            behavior=rid.lower().replace("_", " ")
+            behavior=_approved_behavior(rid)
             function, artifact, domain = _metadata(rid, group)
-            requirements.append({"requirement_id":rid,"session":group,"source_section":"approved evidence-integrity closeout","source_requirement":rid,"source_text_hash":_sha(rid),"normative_behavior":behavior,"forbidden_substitutions":["declared_status_without_executed_proof"],"required_artifacts":[artifact],"status":"verified"})
+            forbidden = _approved_forbidden(rid)
+            cardinalities = {artifact: 3 if rid == "S6_REMEDIATION_CARDINALITY" else 1}
+            artifacts = [artifact]
+            requirements.append({"requirement_id":rid,"session":group,"source_section":"approved evidence-integrity closeout","source_requirement":rid,"source_text_hash":_sha(rid),"normative_behavior":behavior,"forbidden_substitutions":forbidden,"required_artifacts":artifacts,"minimum_cardinalities":cardinalities,"approved_semantic_hash":_semantic_hash(rid,behavior,forbidden,artifacts,cardinalities),"status":"pending_execution"})
             proof_ids=[]
-            for fixture, accepted, error in (("valid",True,None),("near_valid",True,"constrained_status"),("adversarial_invalid",False,"typed_rejection_required")):
+            for fixture, accepted, error in (("valid",True,None),("near_valid",True,None),("adversarial_invalid",False,_adversarial_error(rid,group))):
                 pid=f"proof_{rid.lower()}_{fixture}"; proof_ids.append(pid)
-                proofs.append({"proof_id":pid,"requirement_id":rid,"domain":domain,"invariant":behavior,"fixture_class":fixture,"fixture_or_builder":f"proof_fixture_{rid.lower()}","production_function":function,"schema":None,"expected_acceptance":accepted,"expected_python_exception":None if accepted else "ValueError","expected_error_code":error,"expected_schema_rejection":False,"not_applicable_reason":"semantic production boundary","canonical_artifact":artifact,"test_id":f"tests/test_session6_8_proof_execution.py::test_requirement_proof[{rid}-{fixture}]","status":"pending_execution"})
+                proofs.append({"proof_id":pid,"requirement_id":rid,"domain":domain,"invariant":behavior,"fixture_class":fixture,"fixture_or_builder":f"proof_fixture_{rid.lower()}","production_function":function,"schema":None,"expected_acceptance":accepted,"expected_python_exception":None if accepted else "ValueError","expected_error_code":error,"expected_schema_rejection":False,"not_applicable_reason":"semantic production boundary","canonical_artifact":artifact,"test_id":f"tests/test_session6_8_proof_execution.py::test_requirement_proof[{pid}]","status":"pending_execution"})
             completion.append({"requirement_id":rid,"phase":group,"current_state":"pending_execution","known_gap":"proof execution required","implementation_files":[artifact],"production_boundary":function,"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"canonical_artifacts":[artifact],"status":"pending_execution"})
             execution.append({"requirement_id":rid,"production_boundary":function,"proof_ids":proof_ids,"canonical_artifact":artifact,"status":"pending_execution"})
             claims.append({"claim_id":"claim_"+rid.lower(),"requirement_ids":[rid],"implementation_symbols":[function],"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"artifact_assertions":[{"requirement_id":rid,"artifact":artifact,"assertion":"minimum_records"}],"minimum_record_counts":{artifact:3 if rid=="S6_REMEDIATION_CARDINALITY" else 1},"production_invocation_receipts":[],"contract_parity_receipts":[],"security_receipts":[],"installed_wheel_receipts":[],"status":"pending_execution"})

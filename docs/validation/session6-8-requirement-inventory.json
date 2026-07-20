@@ -2,10 +2,16 @@
   "expected_requirement_count": 106,
   "requirements": [
     {
+      "approved_semantic_hash": "sha256:fecaff75352027aa43cb0f67dfbf7d8addd01997af545993aaee19cb1d86d888",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s6 issue authority policy",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce issue authority policy through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -14,13 +20,18 @@
       "source_requirement": "S6_ISSUE_AUTHORITY_POLICY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:00b4f370ee11006393ca25a4fea29f951b8cf9f2d0e5022a86b03adb53be3346",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:aba7734633e0e3cea4dc5bb2390cf534f67739285ce6ebac2f279c0e5fd13c01",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 model review not blocker",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce model review not blocker through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -29,13 +40,19 @@
       "source_requirement": "S6_MODEL_REVIEW_NOT_BLOCKER",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:7e5d00117217982a99a4d92b703c45be970dd7d46342953b83f333cd38458a08",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e7016416c8c3048c7a629839cf3e58891c68b44452efab5e6fa1a1d45681c765",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s6 planner compiler authority",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce planner compiler authority through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -44,13 +61,18 @@
       "source_requirement": "S6_PLANNER_COMPILER_AUTHORITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:78c74db743e379ad6808e3736e98eb5fb3e85f4ed4add91cdeeca14a128f688a",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:54d27bad3514acc2b928ad841c90c79962ee65e4643a1851577fcb760951d058",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 human owner separation",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce human owner separation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -59,13 +81,18 @@
       "source_requirement": "S6_HUMAN_OWNER_SEPARATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fe37218a625a0b1c08cb77b0013982d8e0f5a12dac372843b256ec279eb66eb4",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:7d9fc9880d926714926a39b87d24579158304b4b7d88f5d85ecbe0ff933797d0",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 optional planner lifecycle",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce optional planner lifecycle through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -74,13 +101,18 @@
       "source_requirement": "S6_OPTIONAL_PLANNER_LIFECYCLE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fd358767d05ed38ce146b317463ab223d88529772cee55b9146f7a3e349a2d4b",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e91663b746735ffb1b313c16927b192e79b2a1bb3fddffd15ca85b842f11d101",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 automation eligibility",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce automation eligibility through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -89,13 +121,18 @@
       "source_requirement": "S6_AUTOMATION_ELIGIBILITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fcd5c5badf2d5b4240abff357fb22b43722b8092463d6ec65c789191b586dd00",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:76fa106b99dcfa15e61ef724d77f9e4fe295175f6b47eabfae89a5eee4f6605f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 bounded fix metadata only",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce bounded fix metadata only through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -104,13 +141,19 @@
       "source_requirement": "S6_BOUNDED_FIX_METADATA_ONLY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:1c2b4c04d7c91dcb39ba622eac93e716c44bd4baf9d796b3165456e117871150",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:a6aa35ecb9dae387dcd0133fee05f5d15824c58b7af606736463b5c161234828",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s6 remediation cardinality",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 3
+      },
+      "normative_behavior": "Remediation must enforce remediation cardinality through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -119,13 +162,18 @@
       "source_requirement": "S6_REMEDIATION_CARDINALITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:ee3fd87ccc7faaf9e813dc593fbf519b7c43dee82a445530849f7a37b8b15136",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:7a0309e7412d4342d423e162920cd32864ebb3f41ddcd9d7f429adceb6d2b56c",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 packet contract links",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce packet contract links through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -134,13 +182,18 @@
       "source_requirement": "S6_PACKET_CONTRACT_LINKS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a46721b4cba9eca64d0304aa566a3e9fd64f35c743fdd9f00a08c699dc5c4ed7",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:14f5bffccee88662c15c9b1bbab8f5ff305a4cb1b33ada42679a714414015822",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 packet file integrity",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce packet file integrity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -149,13 +202,19 @@
       "source_requirement": "S6_PACKET_FILE_INTEGRITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:bd5f2b3bcb5a839809bc6f1cc653d4b34dbb84c4cee26e8a602265fd32e23aa8",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e90ecfb411802473bccdb50bf6851c4200ed70ba965f157fddd63d4ed82d51da",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s6 closure contract completeness",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure contract completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -164,13 +223,18 @@
       "source_requirement": "S6_CLOSURE_CONTRACT_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:e5ad869abcded3e33bb098d65ee56f3a8fe08b79e03b7afcd265b66774848156",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:42d63b035df5b2aea6a4f4810e6edef218ee8c4e831709a3b89016e99d3e72a6",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure exact rerun",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure exact rerun through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -179,13 +243,18 @@
       "source_requirement": "S6_CLOSURE_EXACT_RERUN",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:5c3e575730a39eacc6b35ab9c9e323651eaf9f32dbb35e70ee94fb0502a4134d",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d7054b26ee69e853b7ca4d02bdf16cc7ceda4f87614696af08d89653ab755a37",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure pass required",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure pass required through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -194,13 +263,18 @@
       "source_requirement": "S6_CLOSURE_PASS_REQUIRED",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:ea384c2a8ccfc3b3c2fa4039e5d47e7a0b2a2c28dc4afcb990ad6e8db39e3518",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:f2f10fe09ce7c0bef1f7c8c7fd821f265879d123eaef8b70e9060069c712da3c",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure verifier independence",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure verifier independence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -209,13 +283,18 @@
       "source_requirement": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:f59e2b2e6287596d510e2522152a77937165fd277893d2426d54675853895bad",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:a4c77984dab70dad56db12e2f4a2b3b98664b85a67deb6643f4cbef5d15a2115",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure commit branch freshness",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure commit branch freshness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -224,13 +303,19 @@
       "source_requirement": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c9549ad0cb45e94271647a8814acf20f4fab5894a7dfe8cf4ae4365794547efd",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:f76daa93ba3a0d2579b9258cdf9690bd074bf18924daae769e3cef63c0fb9bf8",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s6 closure evidence class",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure evidence class through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -239,13 +324,18 @@
       "source_requirement": "S6_CLOSURE_EVIDENCE_CLASS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:20de7273b9c86163a6db939b9297d1a26caa97a2c6750d9a0c2796e307185e09",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:96973f241778ddb6eb7c8ce2e317f32f9d9b0d89950b1ac39a93f3df67b9daae",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure regression requirements",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure regression requirements through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -254,13 +344,18 @@
       "source_requirement": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:bc4096832679cd83f9a23d52d752e8810aabef0baf97db7a8d89138143efe28d",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:61f889d3f8afde63820808e37b3923dcfe9b634ecce66351c8afce0f7c6f9c04",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure test requirements",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure test requirements through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -269,13 +364,18 @@
       "source_requirement": "S6_CLOSURE_TEST_REQUIREMENTS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fb399106ccdabc3644d42df2b534c8dce4c3e3ca1f09801879b3a1fdc8b4681c",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:3517cb5b6013b06e82204325a6360ae81124b5b6d8bf3e30c05aee7c1f2cb5d2",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure instrumentation requirements",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure instrumentation requirements through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -284,13 +384,18 @@
       "source_requirement": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:6defd364a13b86620683140976a704bbc5a38374c5c47872272c5c257832fedb",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:6926fcdc440791038687063ee20db9e5826821924059ffaa8f9d00642129e393",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure protected invariants",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure protected invariants through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -299,13 +404,18 @@
       "source_requirement": "S6_CLOSURE_PROTECTED_INVARIANTS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:b2e3a011621488bb7024119996f1c66efc5c4a353d5b9d9ee17acc8586c12c9e",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d83c62f85e46f41574850b444bebd8f500af74115940cfad99864d9e464ca61f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 closure owner decision",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce closure owner decision through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -314,13 +424,18 @@
       "source_requirement": "S6_CLOSURE_OWNER_DECISION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c84b6c7daaa76cf41f97c7c5dcddf2deb2ed4f2e6a3d0697680b76f2854234b5",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d09b549e9c3632d2aeefb23514a9a162393b5f42362b37b833f56a5f07e2659f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s6 private alpha non mutation",
+      "minimum_cardinalities": {
+        "remediation-plan.json": 1
+      },
+      "normative_behavior": "Remediation must enforce private alpha non mutation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "remediation-plan.json"
       ],
@@ -329,13 +444,18 @@
       "source_requirement": "S6_PRIVATE_ALPHA_NON_MUTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:f03b6b5d50c81665d45546ef4fed2253ace707c947b0ea2003d976cde0135f37",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:1b9b8eebe3e634e9082fe8ab2962c4947ec6a1e96d13e76a5d8f345b9a06e24e",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 specialist catalogue",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce specialist catalogue through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -344,13 +464,18 @@
       "source_requirement": "S7_SPECIALIST_CATALOGUE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:221d5c36ce938cafeaeb11cc67711c766513e0e772e9f476c2a1b813e5e10e0c",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:551a2f90e074721b63cd3fc6047e8823164e4e1f909ac2d27f9d3a810c433700",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 native boundary reuse",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce native boundary reuse through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -359,13 +484,18 @@
       "source_requirement": "S7_NATIVE_BOUNDARY_REUSE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:68bf9ba1e75e22cf234aaae020e5bc5d2baac9fbcc919d43d59492b5b265b75b",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e805b20a2ef6deee148109b42bea036d608a978f885a98daf5b7e8659f1e713a",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 typed surface policy",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce typed surface policy through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -374,13 +504,19 @@
       "source_requirement": "S7_TYPED_SURFACE_POLICY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:30062b55976cc682d13608762761086b01a3fa5e231dc53bfca216f956d0c597",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:4a7dd0de940ab786e7e2c146e47e6e3ad2ef6168b346ba24e9143b94361b0d32",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s7 selection evidence links",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce selection evidence links through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -389,13 +525,18 @@
       "source_requirement": "S7_SELECTION_EVIDENCE_LINKS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:db00ff8d8a41268a78a0bf5d973ec0d463bbc060680f449f5872503c9ebc8b89",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:0ae2f5556ed6055ae784cdb0235969c804827a48a90eff38c217a0a68e56d7ea",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 python selection",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce python selection through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -404,13 +545,18 @@
       "source_requirement": "S7_PYTHON_SELECTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:2e0a2e8a119d1135a24db32fec9a72dcaa26f861a603c7d372b11ce848c1936d",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:c4b99b5f2141e2b05a8ab09d5d55fa34c39ed377e8af6294ec9f57868f9e51f7",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 typescript selection",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce typescript selection through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -419,13 +565,18 @@
       "source_requirement": "S7_TYPESCRIPT_SELECTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:91253de24a10ce0d310c6ac5143779f00e31afe3e9ff38b90302a03dcf0d60c8",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e55af6af8b6aefa6731713d7451e444f628e36c334dea5e5f9c34c857785bf5a",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 ai selection",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce ai selection through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -434,13 +585,18 @@
       "source_requirement": "S7_AI_SELECTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c6420796784979807e8519044792b321756320085a0023f57c30c8a08c3beaff",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:f85e4532c988d1f561146be92ad7cbfd7cbdc96c936516de33a87b94ccc700bd",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 browser explicit skip",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce browser explicit skip through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -449,13 +605,18 @@
       "source_requirement": "S7_BROWSER_EXPLICIT_SKIP",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c9623f15a2d4b43d79fe112d0e96acb29720bf629dfb9ec569e2b77ade91f8ee",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:3851a36c59b269f2f83897b6a370ae518eb7fd66814e5cfbcb70c46c547f7824",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 browser absence not inspected",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce browser absence not inspected through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -464,13 +625,18 @@
       "source_requirement": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:6e582d2023e41f0bac48f151e1dc1c07063bb1aad36a77aa1e9f44be4bdccb93",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:6d8941946c07fdbe9eaabec422a66255087956c1e2429acc21769adc70a907e0",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 test adequacy applicability",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce test adequacy applicability through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -479,13 +645,18 @@
       "source_requirement": "S7_TEST_ADEQUACY_APPLICABILITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:3d8b89f3dac516000a2e5eb3a6d92b26e43287b9f4f26dc7718a9f4c1bf63cb0",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:9b2e950b5204ea8aae855d2e851a1c93fdd9df9529af31638608f7a7ce4aa874",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 instrumentation applicability",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce instrumentation applicability through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -494,13 +665,18 @@
       "source_requirement": "S7_INSTRUMENTATION_APPLICABILITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:b559f73fff2c697d4837b524997374dbb4583f9a1cd3082ae5db1a90a7961a35",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:7d84eb40cf26f8b7b7f83ba8570f369735e46a37e71052262f174882c68032fa",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 product intent wrapper",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce product intent wrapper through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -509,13 +685,18 @@
       "source_requirement": "S7_PRODUCT_INTENT_WRAPPER",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:71390e011d8e6d33d334767cfee4b83be395f8e2a7b0d6f56801f80e7ea16f74",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:30d2cc23e9be54d378b51a7a9abad4d0f6c1d45e8cdba4fb692d2dcf914ea350",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 native work order integrity",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce native work order integrity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -524,13 +705,19 @@
       "source_requirement": "S7_NATIVE_WORK_ORDER_INTEGRITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:19f4342955df90f5b727a466ca719847c771eec38c3c82251baa16750d48f7cc",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:975f8c0bb1a8cca140e1a65486331f93931b3dcd99a407b6c371763bd417eeaf",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s7 codex package completeness",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce codex package completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -539,13 +726,18 @@
       "source_requirement": "S7_CODEX_PACKAGE_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c663719675bf0a21b53451fdbade2c3e8413554ddd4fb824a9a3561eedc335cb",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:73c6aac0889022c7346b88ba6e59d2ef50de6f54947a9d0e7dc7a42ab262b01f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 harness declaration honesty",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce harness declaration honesty through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -554,13 +746,19 @@
       "source_requirement": "S7_HARNESS_DECLARATION_HONESTY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:1758dbf106c40f255dc7d561e008172c9079fa919b866549b80bfd95e0a92399",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2fc7d5b56ba7f735a273f6afa4c830f37f9bbcc273082eb8b937fd98b05aab4c",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "declared_python_rejection_without_boundary_execution"
       ],
-      "normative_behavior": "s7 manual codex parity",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce manual codex parity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -569,13 +767,18 @@
       "source_requirement": "S7_MANUAL_CODEX_PARITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:900bb5ca7674b796745242b71b16a3790d9896bdf0a5ca0967cef6b7b150a7ca",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:26c362edf1850b62fcebb61a5593d9f849dd152c13d3c7b9034be696248fb27f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 trusted submission paths",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce trusted submission paths through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -584,13 +787,18 @@
       "source_requirement": "S7_TRUSTED_SUBMISSION_PATHS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a49889492f752b574bae00dfd90a59aa7912983628e235385a134ce3f1892f70",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:5a26366039c6648a74596ce51d2f6b45c003fc6be1af0114864834d52815c8ff",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 submission byte persistence",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce submission byte persistence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -599,13 +807,18 @@
       "source_requirement": "S7_SUBMISSION_BYTE_PERSISTENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:7d5adf2494ad04906bebf259fa88e99bbdc33a78bb8271ceaa2126a48f5e6059",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:dd64fc86268525a24bebe608f87e2af4695de55ce487fd4763961a0e8db965ee",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 revision request",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce revision request through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -614,13 +827,18 @@
       "source_requirement": "S7_REVISION_REQUEST",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:69cbf5125f92f400e105b21045fbc3d0f1eb3e2ceae0eb915bbf33142f18e2eb",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:946d12fd2355de818bc2ac88474d3d549c31144934e20aea5ddd3be42aea402b",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 corrected result acceptance",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce corrected result acceptance through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -629,13 +847,18 @@
       "source_requirement": "S7_CORRECTED_RESULT_ACCEPTANCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:9d2bc119d0b61bab0cda87d2287057280102cd3b1a954a588a493bead5306e5b",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2ce454248cc3650b18d16d953a31593c328afcc4dcee3ffe363f9b1c11be4557",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 second invalid failure",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce second invalid failure through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -644,13 +867,19 @@
       "source_requirement": "S7_SECOND_INVALID_FAILURE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a7958b4e5d416846863344402d01f68e6e86348c605c04c446e0d92afc8a155c",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e6938ae20364140b81a648d52735bbe62fdab1feb00bf0ebfdaafab8efe69c36",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 failed result no adaptation",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce failed result no adaptation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -659,13 +888,19 @@
       "source_requirement": "S7_FAILED_RESULT_NO_ADAPTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:f445ae5b575b126eaaa281bc329ad497e2885ce6e93608f0fe76327e4c5e73cc",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:75c3e99b91fded240a8c7cb116c8bf251eb5ba3f39835b9435dd4a0a1260c95e",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s7 trigger specific evidence",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce trigger specific evidence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -674,13 +909,19 @@
       "source_requirement": "S7_TRIGGER_SPECIFIC_EVIDENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:90146059ff83decffa15a4e1a0f5a2828b4be89974dc42273b6ce3d7ddcc5519",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:1c18e790929041a5232f170920593c933ebb548052cde003a5b2f5e6df54f9a1",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 migration adaptation",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce migration adaptation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -689,13 +930,19 @@
       "source_requirement": "S7_MIGRATION_ADAPTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:2a47b185548b6083cec21ae3f9ffb94c86508d490aa289751a4151cddf7716cf",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2208fad2a465938271555905780f2fdc948d108ebaf40480abfa42c89bb5ad67",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 ai adaptation",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce ai adaptation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -704,13 +951,19 @@
       "source_requirement": "S7_AI_ADAPTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:403ba8090d35bce2403d527132135ce68fdcfb5deb2351ae885be4d60d1acb7f",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:05e93c8b6a924a4e31967478e536cce26faa820824c19ed3cbcb737b6c9b1983",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 browser disproven adaptation",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce browser disproven adaptation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -719,13 +972,18 @@
       "source_requirement": "S7_BROWSER_DISPROVEN_ADAPTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:d234879fc6d344e004edb5f63dc70b161969c6ced3662e66a5275c53e2e59f38",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e5524724aa21b999b4edc325ff8cf6b85cd386a88932e1d820f7c96533e1c75f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 superseded work order preservation",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce superseded work order preservation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -734,13 +992,19 @@
       "source_requirement": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c53824b591644d405ef96cb6fdc8937b4472918cd9b75310edd991d8b0c4f6b8",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:b6e427d0a004cc7f77e8b974d55b959c7dcbc7f45e17652930d74a6578dd88da",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 adaptation idempotency",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce adaptation idempotency through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -749,13 +1013,19 @@
       "source_requirement": "S7_ADAPTATION_IDEMPOTENCY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:d45b3a43fb8a3388a21be6f27b07c525f40453d3801fd7afea4aab55cbd6cc68",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:82915935ad96dd924476ee29948370735407c5cb5b08f567c086d5a5085d07b7",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "event_only_adaptation_without_substantive_plan_delta"
       ],
-      "normative_behavior": "s7 adaptation cycle depth",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce adaptation cycle depth through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -764,13 +1034,18 @@
       "source_requirement": "S7_ADAPTATION_CYCLE_DEPTH",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:d402bbe0e928efa41679d87439ed364c2549c5e8e43e52745036e150d1c823ba",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d5a8d4066aa203b28786a15569744a565ff60823b26fdcf04b845abcd5023ba4",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s7 pointer last publication",
+      "minimum_cardinalities": {
+        "review-plan.json": 1
+      },
+      "normative_behavior": "Review planning must enforce pointer last publication through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "review-plan.json"
       ],
@@ -779,13 +1054,18 @@
       "source_requirement": "S7_POINTER_LAST_PUBLICATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:e774cb18dcc30ac3fbf84748bff66d3cc322221ce950baede9c7ca33431d2d7a",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:640bc6feba9fe1004d1f8d8446b114849dbd732bfd9993873cc6da3b1090c01e",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest target registry",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce target registry through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -794,13 +1074,18 @@
       "source_requirement": "S8_CONTEST_TARGET_REGISTRY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4d0771e76423b873b1d5a4fae400fe50a7128d4f9ea0c6627c70afe69da5d8a8",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:f894f4ec8a44d8795fcde9d13a2d620f534ba1c1090b24e6e220ef9790586394",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest source generation",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce source generation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -809,13 +1094,18 @@
       "source_requirement": "S8_CONTEST_SOURCE_GENERATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:606c3f2557c0245ed5a82779315305196c4924d7ac28f318931bbfd169dab3d2",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:fcd7a2a4ba6a507779c8095e6cfe6b5d140b348a10e4f76319974a28b934cb2c",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest target existence",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce target existence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -824,13 +1114,19 @@
       "source_requirement": "S8_CONTEST_TARGET_EXISTENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fe53dad72c5876027f3ce41f38c2f8c4a17f66d3bfff3e0ef2a6f8fae91a74dd",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:005a54fe986a631cb4d8392d72704255dca87ee4548edd3d4295409fbd540c52",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s8 contest evidence existence",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce evidence existence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -839,13 +1135,19 @@
       "source_requirement": "S8_CONTEST_EVIDENCE_EXISTENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c66025ba1658200449ff9173e5bc244620a805ecc6012c04d2917d7eafe6e999",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:673dc9ed8dceae45a2d0c9a78daf91d331322daa4c21ca030abc23680873e2bc",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s8 contest evidence relevance",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce evidence relevance through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -854,13 +1156,19 @@
       "source_requirement": "S8_CONTEST_EVIDENCE_RELEVANCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:684a4e437dd7225dbc10615aed10ff6bc24625109088f845e1db118d49e155f9",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:ff3900b4baa15b952a89208db3bf2862426456bf8889898541a1a62c97faec71",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s8 contest authority preservation",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce authority preservation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -869,13 +1177,18 @@
       "source_requirement": "S8_CONTEST_AUTHORITY_PRESERVATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:68307ac33d7a51a40499748b5c4b632304c4a35a2b384493d4c8c525756cc138",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:061365cd8a75124567687075cb807dd1794c4bcfb0834c64d1fce4670f6a90f5",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest append sequence",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce append sequence through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -884,13 +1197,18 @@
       "source_requirement": "S8_CONTEST_APPEND_SEQUENCE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:5345849d82dce311fdfd4d7ea618bb4edb9d37f097df0fbc38dfeef3184fcb82",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:82609107492dd422eb03224b43ba4baf26b1b681032e3b6ea9173e5267e1f77b",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest previous hash",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce previous hash through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -899,13 +1217,18 @@
       "source_requirement": "S8_CONTEST_PREVIOUS_HASH",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:e760adfd9c21dcc438d3c95251cfd5925fbd3f30fa9db4273a769bb0c7d127ce",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:795c123e2b3e4c33154e10b5362c7caaec66bef90c0b357fb429e86d78238f30",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest idempotent replay",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce idempotent replay through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -914,13 +1237,18 @@
       "source_requirement": "S8_CONTEST_IDEMPOTENT_REPLAY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:0608424e496ea9bc887bf7ec7e92a29525fa0bbe9d9d6116a9587521c6c99d81",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:28d431cef788a381dcfdb94b7500e99af43c93cf0f566c646aa733ce2f80c902",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contest conflicting duplicate",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce conflicting duplicate through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -929,13 +1257,19 @@
       "source_requirement": "S8_CONTEST_CONFLICTING_DUPLICATE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:60b07a52014911813874e935df50b7e643bdc358a42f6fcf5d18406e0966cd41",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:22062c5fb291f05be65447f4d613e68d888c3047c7fd664b0338ed90e68d999a",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s8 contest owner authority",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Contestability must enforce owner authority through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -944,13 +1278,18 @@
       "source_requirement": "S8_CONTEST_OWNER_AUTHORITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:8ed6bf0c4824d655f7fc4c56a98f1aaba04b229461bef9d443ab09ee3e84ca1b",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:360912c42cf58b5a9ffe6ab2edd1132aad988adf0e212c436c1cefcf88df832b",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 named risk fact non mutation",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 named risk fact non mutation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -959,13 +1298,18 @@
       "source_requirement": "S8_NAMED_RISK_FACT_NON_MUTATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:47ab13bbd965baa69acea822dd7dd4d1582a2ea24b0b13bf37d38039da9a6033",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:966018f428a23a5df74c19ec6c86253245029a6c1962a957f36c31802261c0cd",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 named risk decision effect",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 named risk decision effect through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -974,13 +1318,18 @@
       "source_requirement": "S8_NAMED_RISK_DECISION_EFFECT",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:166fd48834200939ef55eef9b6fd6f820889acbde33aca9e4e4b89f7e43a8b6e",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:00da07814c2bfbee1897470d73c440395e0ee060ddbbcbf6c84fb9634f0e711a",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 owner decision budget",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 owner decision budget through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -989,13 +1338,18 @@
       "source_requirement": "S8_OWNER_DECISION_BUDGET",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:8e176047b231c992956bf4f4164f1945945532b3716fbfab76003b53b99cac5c",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:1c925655c10957f467a0eb0acd9a5a95caf2c9eef09109881c9399d64fcdf9c8",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 owner decision priority",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 owner decision priority through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -1004,13 +1358,18 @@
       "source_requirement": "S8_OWNER_DECISION_PRIORITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a0ad42f32f5c5a476c7992409bb1b22f0fd15d6bcb16154cb88198d778b50fc2",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:e293683a8e65bdb94303e68f67618cd3cef46560f5cc2c97f56700b5a6a3d6ec",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 owner decision overflow",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 owner decision overflow through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -1019,13 +1378,18 @@
       "source_requirement": "S8_OWNER_DECISION_OVERFLOW",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:8d44f8c3da041aacdac9e8523e08751b08af643fccb9d475188a83dd16a5f6b0",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:6a20aadd53b5524115dd24ed8c028fcb7af76675c3ec31c11852018d23815a3f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 future remediation no cycle",
+      "minimum_cardinalities": {
+        "contestation-ledger.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 future remediation no cycle through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "contestation-ledger.json"
       ],
@@ -1034,13 +1398,18 @@
       "source_requirement": "S8_FUTURE_REMEDIATION_NO_CYCLE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:8975ba8575d68c3d25046a8f2ee167b2ba531a8dcf4a4fd09751c283edb8dd71",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:971e23a6e94cf0f77af1f9325dbbff95157d7a788db06568e3a3764cb7be2677",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 management dependency discovery",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Management compilation must enforce dependency discovery through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1049,13 +1418,18 @@
       "source_requirement": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:94b1ca7ed8b2828285f4a35164701fc9686b58f48d0e7351d839597919988c39",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:c520615cef6146cf433e1e7bf7fa321544a3a4fd69b3d01d392629a8763a72aa",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 management dependency states",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Management compilation must enforce dependency states through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1064,13 +1438,18 @@
       "source_requirement": "S8_MANAGEMENT_DEPENDENCY_STATES",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:cd9ee5b06835b52d690a706ab6aa384732bbe650f4603adcf7d4d3a9876f0cf2",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:6e623bac5ea979ef329570c6686f6ccd65e1e471d90f6f79a7ccbba23321fb3d",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 management dependency freshness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Management compilation must enforce dependency freshness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1079,13 +1458,18 @@
       "source_requirement": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:344478dc5f0d360fa07be0c8221b2b91fc9b734dbf9d3c79a2d7d0bda74624da",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:3314648dd0e0e8e2fc11a1725f34aa21a7fc859903fac7286e301b35182f0911",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 management mixed vector rejection",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Management compilation must enforce mixed vector rejection through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1094,13 +1478,19 @@
       "source_requirement": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:229c842cba10ca0e7b046e8d8fb719d69eb6e3bbae3582a23605f82ce44a5428",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d1871f0a3c377c60059fa83b8bcf249a3d21941505cf21ad1c0f1b9bda59fd9d",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s8 executive section completeness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 executive section completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1109,13 +1499,19 @@
       "source_requirement": "S8_EXECUTIVE_SECTION_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:f742cfd9536c593088c1ea9052daaa70d45bee905b0d8737a2e242fa218a4c58",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:899d405396cd1ff95bf13b2bbff4a4e60df182b3a47f34c6a1a29acf03dad8f2",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s8 product matrix completeness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 product matrix completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1124,13 +1520,19 @@
       "source_requirement": "S8_PRODUCT_MATRIX_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:d24a031fc9aa2a546194381ff85de6d401ac2b78e9b7fa71d8c2f189939ce4a1",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:37b1f9eb3cb05b9186e2c565add70781e74f09598a3a0d08ac2bf95f9b8a3e37",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s8 engineering section completeness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 engineering section completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1139,13 +1541,18 @@
       "source_requirement": "S8_ENGINEERING_SECTION_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:199cb10135425dbd1578cfa34b6fd0b8a0a6a10de16d617e9ac9fed849f0f436",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:363f7a20641d3513466f93ed81ca8e3bf88b4718d0225e25dd04265ba126c4ee",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 measurement ai passthrough",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 measurement ai passthrough through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1154,13 +1561,19 @@
       "source_requirement": "S8_MEASUREMENT_AI_PASSTHROUGH",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:7231d64547a64b40fb1a293131635f6be9e12d9e849bf9c8454e7282882691a9",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:c6e0b5b1c821fdb893d1b1b4005153b1e96ce2053fe0522e1df5cb9bf2c6fce4",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s8 remediation overview completeness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 remediation overview completeness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1169,13 +1582,19 @@
       "source_requirement": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:21f44cecfc2f8d82325b53904885daeb871b685b90a87fd7e9e034a015f44006",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:aa37ddeb4979131ea6736759add4027dea28338eca2edeb54e5681dac15cc300",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "key_presence_or_empty_collection_as_completeness"
       ],
-      "normative_behavior": "s8 closure contract indexing",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 closure contract indexing through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1184,13 +1603,18 @@
       "source_requirement": "S8_CLOSURE_CONTRACT_INDEXING",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:7f04fe60020481f215c0ea7586e804fcd1989777a1fe2c49393393d540f9ad41",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:1e1931d76f3f8c748f2253ddffefd87b332da41a94f24c9d2af46887e38c11f2",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 contestability inclusion",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 contestability inclusion through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1199,13 +1623,18 @@
       "source_requirement": "S8_CONTESTABILITY_INCLUSION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:121f22f8387d9bc18c21e938823f34d0fa014743ba31540f829bb228d9c0cc7f",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:8f036536a741bbfb8d3e23151552f4ae5e238552a4bb5b7e38b9c169d401f982",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 recommendation policy",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 recommendation policy through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1214,13 +1643,18 @@
       "source_requirement": "S8_RECOMMENDATION_POLICY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a78d60b728f19ce2534ce0d2d81bb0c5fbac0a23068fd0de53e57d2c273fbb01",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:fa2b243f7417bce9584954e00743720d3a1f02dcd5611ee0b66a4bfe70ce20bd",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 accepted condition effect",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 accepted condition effect through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1229,13 +1663,18 @@
       "source_requirement": "S8_ACCEPTED_CONDITION_EFFECT",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:e7b0526ea517cb963b1e8de0e5bbbc62a1762b68800f2c80c5f16611a54add81",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:178729e1eae10a52f26f4fe4debbc82fed8001e4ef3b25ae924695131fc1145d",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 named risk recommendation effect",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 named risk recommendation effect through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1244,13 +1683,19 @@
       "source_requirement": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:465ad760d6d8fc30879166bab66a9e1cb2ade7a1ba12664a1499f89100dd72ab",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2cd85800789e4cd8949d23feaea2538e585d5ccc3aa1d5b248e0792f71822b04",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "weaker_or_unlinked_authority_substitution"
       ],
-      "normative_behavior": "s8 insufficient evidence state",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 insufficient evidence state through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1259,13 +1704,18 @@
       "source_requirement": "S8_INSUFFICIENT_EVIDENCE_STATE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4fb55cdf601cc22b03ee561d284b216b220cdf016fad7588db1e6a05df0c44f8",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2859a5fbd245a29a3741ac982a719ccdfd4130c3c930ad91dc6f929d1ba24408",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 deterministic json",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 deterministic json through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1274,13 +1724,18 @@
       "source_requirement": "S8_DETERMINISTIC_JSON",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a1da1145423bf186b4eaaf44262c3b9db82d076209f465cc5219be1a8a423973",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:94a661e458abb332bd537e28eddc96b85ee8707dfeb89a66618a4877960da715",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 safe html",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 safe html through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1289,13 +1744,18 @@
       "source_requirement": "S8_SAFE_HTML",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c2437e474713728fa502ea03c67cfa8a755ef941e74bba9d1a56a31ad86303d9",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:c21b1b798d714ef72160f2d3e6fe2b7fef845d0d6056a801001c973ce7af5a02",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 safe markdown",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 safe markdown through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1304,13 +1764,18 @@
       "source_requirement": "S8_SAFE_MARKDOWN",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:0ad1291f45da593bcf265bc8c5242944c65a60aa5d52f259b77aed28ea6f3f07",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:d6497943bdcd7ebee79078cf4bea1bb0d1bf3a1cbadd772aeacf7b8d46c7be0d",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 artifact hash integrity",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 artifact hash integrity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1319,13 +1784,18 @@
       "source_requirement": "S8_ARTIFACT_HASH_INTEGRITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c873d371998dbf366f45a1e8ae3b1e4d6c48539a9c3418bfa3df50e09157693d",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:acba64c4cd30c1217b5b3f47b889dd77779f2956a550cbfc71b5e201d6c76e5f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 artifact file set",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 artifact file set through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1334,13 +1804,18 @@
       "source_requirement": "S8_ARTIFACT_FILE_SET",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:21bfa31372582b9ba0f869bdd9582c257e57992bd23c6e0f1034ffe7bbf2a90b",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:5ba62255e3bb302f0285d9f3e1849de7b6735fa8ce3a37ce20cac690e823dbb7",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 deterministic rerender",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 deterministic rerender through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1349,13 +1824,18 @@
       "source_requirement": "S8_DETERMINISTIC_RERENDER",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:a1b6e150f0c9b94ffd59c03ecccf60cee922c492bc230a6a08560c2e36984dd6",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:a7090a6885455cc76e5b743486e31631c978a42dd6ac5aaccd05b6680f48ecbe",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "s8 upstream staleness",
+      "minimum_cardinalities": {
+        "release-packet-index.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce s8 upstream staleness through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "release-packet-index.json"
       ],
@@ -1364,13 +1844,18 @@
       "source_requirement": "S8_UPSTREAM_STALENESS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4a2adfb50b9a5f35fa4cf92bc51b9475cd25901a365b3a69bd1004a3f50131c9",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:9e05f07d1188f823a46aa211b3dd0af97bc17724b61d8c892198b249dd55433a",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared trusted reads",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce trusted reads through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1379,13 +1864,18 @@
       "source_requirement": "SHARED_TRUSTED_READS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:fd28727b004e3ebd1b28327d5e491093f3985590c1cf63279d9ca11e3a9a83af",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:95d9108fe5694514967e5fc8b8ab6ab62457531f9648bbd216042ca991d0bfc8",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared trusted writes",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce trusted writes through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1394,13 +1884,18 @@
       "source_requirement": "SHARED_TRUSTED_WRITES",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:6bc5c73261a69b9299e5e642181f87c43f662e5fa5780232098ed863cf562283",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:a2ea4d9a0811ec802cabc11cdf0e388f4c05a099e2fc3fbff7158cf8b181e6ad",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared link reparse special rejection",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce link reparse special rejection through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1409,13 +1904,18 @@
       "source_requirement": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4f1e2bd8757ca6d36a5c29e2cc803b533b17815b097726c7e87a53e84a774838",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:eef91a161e90430b7cfb9a93e159fac96ac640ed19570ecde61584268171ae66",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared capacity limits",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce capacity limits through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1424,13 +1924,18 @@
       "source_requirement": "SHARED_CAPACITY_LIMITS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:02a7b9c63ccbae5f818bd035277bc3de5872f5d16d1a02a4e522d5a0339f4e48",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:457bdd9964b42666235c2e8342abf8e40ced4af159ffbcbc2757e2af33266f4c",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared pointer late failure",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce pointer late failure through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1439,13 +1944,19 @@
       "source_requirement": "SHARED_POINTER_LATE_FAILURE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:aebe8c15792c7dc465cb5abeb38180c3f41035c12c440ac75e00ad0a7cc008ab",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:3c7be4263c142e052e36a0ae283122f1ce3674267fcf0e2f160792a5ef510e96",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "generic_guard_without_real_route_or_unreachability_proof"
       ],
-      "normative_behavior": "shared zero prohibited operations",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce zero prohibited operations through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1454,13 +1965,18 @@
       "source_requirement": "SHARED_ZERO_PROHIBITED_OPERATIONS",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:949644757a07cc0f382bb17d71e46296acf375005b1566d36326d6987a53913d",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:fbba9e6236f1a07a1f65330da93781b41adde42a2efd61caa86ef3cc7a64572f",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared contract inventory",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce contract inventory through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1469,13 +1985,19 @@
       "source_requirement": "SHARED_CONTRACT_INVENTORY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4bf0a1187b87f8638e7bcbe630d23dd7d31af3d667d71089fe9e73ac7867ac3c",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:40d2b5ac7a5b67a1ab4304f8a1e458437a0846cf5cdf4cdf46bffa72e5bfe839",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof",
+        "declared_python_rejection_without_boundary_execution"
       ],
-      "normative_behavior": "shared executed contract parity",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce executed contract parity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1484,13 +2006,18 @@
       "source_requirement": "SHARED_EXECUTED_CONTRACT_PARITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:58af56615988f4791e5174aa8deded35b7d20d88d368742f6e8d4f243594a046",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2bbf83b975d8d406e91ed6cf730db8e70b51f0629f4a68b3f83b674332feed70",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared behavioral eval integrity",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce behavioral eval integrity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1499,13 +2026,18 @@
       "source_requirement": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:4d00580476d67e76dc6b45f381c0e69fd12e95ee996ea7ae299110d15b359bf7",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:5c954249df7736d78f6a03ea0a5a5f06e35d2933af6c9111bdc03b640aed2bf7",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared workflow eval integrity",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce workflow eval integrity through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1514,13 +2046,18 @@
       "source_requirement": "SHARED_WORKFLOW_EVAL_INTEGRITY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:7f23503833ef3daad78ca8e969c64ce85ee743212e361dbeaa8e8c0bbaf2be82",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:3b9617ed4fbf34e8e73c8a4865bd827dcc202c5994a4f5a32e6f3fb172f34360",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared installed wheel lifecycle",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce installed wheel lifecycle through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1529,13 +2066,18 @@
       "source_requirement": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:c64752734469f84a6103808c9b6d33c1e882d94d162e72c7f4459237e8cf0a40",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:8e58356d774328eb51d10469c0a44be209f44dd1730b8ddb3cbcbf8dc74a05ae",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared skill pilot consistency",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce skill pilot consistency through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1544,13 +2086,18 @@
       "source_requirement": "SHARED_SKILL_PILOT_CONSISTENCY",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:611b21d83b52554564727e15a03981c28e04c488c3da98877a581f678ff4a4a6",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:ac274f50bdc69b5412cb73fae63ea81bb4c9ea31b2b5e44622e2082faaaaa56e",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared proof execution",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce proof execution through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1559,13 +2106,18 @@
       "source_requirement": "SHARED_PROOF_EXECUTION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:647f035677fa1c5e5c649234c95232e2cf489c535800a7780a040a29ece65a77",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:7d15d97837f236f5376b950653203c8aebb4b905296df5779e1502f7563d73b7",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared closeout generation",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce closeout generation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1574,13 +2126,18 @@
       "source_requirement": "SHARED_CLOSEOUT_GENERATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:d1a4ba4a73511f9809034a5f4e8850d5f687ec572e71dc6a128b95d1cc54aad3",
-      "status": "verified"
+      "status": "pending_execution"
     },
     {
+      "approved_semantic_hash": "sha256:2fa75eaa7b20590751a7fcadcc2695444d7d10d6f12edaf7b7be539f0bc44ac0",
       "forbidden_substitutions": [
-        "declared_status_without_executed_proof"
+        "declared_status_without_executed_proof",
+        "inventory_row_presence_as_proof"
       ],
-      "normative_behavior": "shared independent validation",
+      "minimum_cardinalities": {
+        "session6-8-workflow-eval-receipt.json": 1
+      },
+      "normative_behavior": "Shared integrity must enforce independent validation through its registered production boundary and canonical persisted evidence.",
       "required_artifacts": [
         "session6-8-workflow-eval-receipt.json"
       ],
@@ -1589,7 +2146,7 @@
       "source_requirement": "SHARED_INDEPENDENT_VALIDATION",
       "source_section": "approved evidence-integrity closeout",
       "source_text_hash": "sha256:1a47c749fd234165ede8e7dd989f7c8fc025f239ba0a76962d264152e0273982",
-      "status": "verified"
+      "status": "pending_execution"
     }
   ],
   "schema_version": "session6-8-requirement-inventory.v2"

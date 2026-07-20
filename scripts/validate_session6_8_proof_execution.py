@@ -1,6 +1,6 @@
 """Independently validate proof execution coverage and joins."""
 from __future__ import annotations
-import argparse,json
+import argparse,hashlib,json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def validate(path:Path):
@@ -9,7 +9,17 @@ def validate(path:Path):
     if len(by_id)!=len(rows) or set(by_id)!={p["proof_id"] for p in manifest}:raise ValueError("proof_execution_id_mismatch")
     for proof in manifest:
         row=by_id[proof["proof_id"]]
-        if not row["passed"] or not row["production_invocation_ids"] or row["actual_record_count"]<row["minimum_record_count"] or row["side_effect_observed"]:raise ValueError("proof_execution_row_invalid")
+        if row.get("requirement_id")!=proof["requirement_id"] or row.get("fixture_class")!=proof["fixture_class"]:raise ValueError("proof_execution_binding_mismatch")
+        if not row["production_invocation_ids"] or row["actual_record_count"]<row["minimum_record_count"] or row["side_effect_observed"]:raise ValueError("proof_execution_row_invalid")
+        if row.get("actual_acceptance")!=proof["expected_acceptance"]:raise ValueError("proof_execution_acceptance_mismatch")
+        if proof["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=proof["expected_python_exception"] or row.get("actual_error_code")!=proof["expected_error_code"]):raise ValueError("proof_execution_typed_rejection_mismatch")
+        assertions=row.get("artifact_assertions")
+        if not isinstance(assertions,list) or not assertions or any(item.get("actual")!=item.get("expected") for item in assertions):raise ValueError("proof_execution_artifact_assertion_failed")
+        paths=row.get("artifact_paths");hashes=row.get("artifact_hashes")
+        if not isinstance(paths,list) or not paths or not isinstance(hashes,dict):raise ValueError("proof_execution_artifact_missing")
+        for artifact in paths:
+            artifact_path=Path(artifact)
+            if not artifact_path.is_file() or hashes.get(artifact)!="sha256:"+hashlib.sha256(artifact_path.read_bytes()).hexdigest():raise ValueError("proof_execution_artifact_hash_mismatch")
     for rid in requirements:
         if {r["fixture_class"] for r in rows if r["requirement_id"]==rid}!={"valid","near_valid","adversarial_invalid"}:raise ValueError("proof_execution_class_incomplete")
     return {"schema_version":"session6-8-proof-execution-validation.v1","requirement_count":len(requirements),"proof_count":len(rows),"status":"passed"}

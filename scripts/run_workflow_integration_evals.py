@@ -48,7 +48,7 @@ def _workflow_contracts(root: Path) -> dict[str, dict]:
     rows = value.get("cases") if isinstance(value, dict) else None
     if not isinstance(rows, list) or tuple(item.get("case_name") for item in rows) != CASES:
         raise AssertionError("workflow contract registry changed")
-    required = {"case_name", "fixture_builder", "preconditions", "required_production_functions", "required_assertion_ids", "assertions", "required_artifacts", "minimum_record_counts", "forbidden_substitutions"}
+    required = {"case_name", "fixture_builder", "preconditions", "required_production_functions", "required_assertion_ids", "assertions", "required_artifacts", "minimum_record_counts", "forbidden_substitutions", "approved_semantic_hash"}
     assertion_fields={"assertion_id","assertion_type","artifact_path","json_pointer","comparator","expected_value","named_assertion_function"}
     if any(set(item) != required or not item["required_production_functions"] or not item["required_assertion_ids"] or not item["required_artifacts"] or {row["assertion_id"] for row in item["assertions"]}!=set(item["required_assertion_ids"]) or any(set(row)!=assertion_fields for row in item["assertions"]) for item in rows):
         raise AssertionError("workflow contract registry invalid")

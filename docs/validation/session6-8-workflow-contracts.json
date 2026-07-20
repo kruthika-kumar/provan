@@ -1,6 +1,7 @@
 {
   "cases": [
     {
+      "approved_semantic_hash": "sha256:b3afa2fdbc574d3f4dd5c37a89935fba10080722e84672da1bb048dcf523e647",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
@@ -58,6 +59,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:b305e46958a0016b1fa3693dce7eef0befc623a85693efab0e1c3cd14e0ceb0a",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
@@ -112,6 +114,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:0fc827758de134cc852e72fc09bc6533df6f0c5d547e9d360093b43b21817c41",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
@@ -165,6 +168,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:8308e66591f554019366faed6390bbaa60442f3dfec032153706872e376ae689",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
@@ -248,6 +252,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:c29695909efbcac845185245d6dc05d9ed31470a30ed9838af4e651f675ca368",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
@@ -312,6 +317,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:f6289c349ebe518b5ddab9b53b371c523b3e7aedcc1f9069c9d56c8c9a1ef6e1",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION.json",
@@ -345,6 +351,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:7cfed9af6db102bc7edd115f26901d78d9b77d5091c9600831d406d93fd296a7",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP.json",
@@ -388,6 +395,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:0800b0e350b0c84bc5c67208bd5d72c7ede1c550b37f7883a8a0914d459ed5b5",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
@@ -464,6 +472,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:49615c713df7d391a63a64b3818c2843f497561298a7e2131566491273d15af6",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
@@ -529,6 +538,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:adc2af9cc5a28fba7cf0953f3008335a184f1e8ad168c313306b5292a91e6f18",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
@@ -603,6 +613,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:a1a04178243dfb652e563754923b5105b1dfdda95dcdea0c4ada95826a16b5e9",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE.json",
@@ -646,6 +657,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:f0d83d7f31c5ac4e81f9c808befc40d27c43fe7927cf52db7b6c40abc7f52cde",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
@@ -724,6 +736,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:cd8e2446c45a52788102c3e2158cf485676eb000da44a184367d80d8ffb7a2d2",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL.json",
@@ -768,6 +781,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:700b8fa44b968307d73796fca47c395a5ff42066ded3c2893ee96547b2cfbc8c",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
@@ -832,6 +846,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:a68be29615692a52e0d3c44de6db55399102aca15296aa9e65111e61169dcde0",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
@@ -898,6 +913,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:eca3d6411ef4a32aa7358c4cffa490709a33832b376224b621f3994712160c8e",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
@@ -964,6 +980,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:f7d5afb9d9012303349f4aa7edc1e3a7fa423e35fb3bac600ec65a9194263de1",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
@@ -1037,6 +1054,7 @@
       ]
     },
     {
+      "approved_semantic_hash": "sha256:115e38abbe021588062d95763c645fa7a9d27a14683ec881ee1fc51f5a2c1405",
       "assertions": [
         {
           "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
