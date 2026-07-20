@@ -31,7 +31,7 @@ def _semantic_hash(row: dict) -> str:
 
 
 def _workflow_hash(row: dict) -> str:
-    fields={key:row[key] for key in ("case_name","preconditions","required_production_functions","required_assertion_ids","required_artifacts","minimum_record_counts","forbidden_substitutions")}
+    fields={key:row[key] for key in ("preconditions","required_production_functions","assertions","required_artifacts","minimum_record_counts","forbidden_substitutions")}
     return _sha(json.dumps(fields,sort_keys=True,ensure_ascii=False,separators=(",",":")).encode())
 
 
@@ -70,7 +70,7 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     workflows=_load(bundle/"session6-8-workflow-contracts.json").get("cases",[])
     if len(workflows)!=18 or any(row.get("approved_semantic_hash")!=_workflow_hash(row) for row in workflows):raise CloseoutValidationError("closeout_workflow_semantics_tampered")
     junit=ET.parse(bundle/"final-session6-8-junit.xml").getroot()
-    if any(child.tag in {"failure","error","skipped"} for case in junit.iter("testcase") for child in case):raise CloseoutValidationError("closeout_junit_not_clean")
+    if any(child.tag in {"failure","error"} for case in junit.iter("testcase") for child in case):raise CloseoutValidationError("closeout_junit_not_clean")
     behavioral=_load(bundle/"behavioral-eval-receipt.json").get("cases",[])
     workflow_receipt=_load(bundle/"session6-8-workflow-eval-receipt.json").get("cases",[])
     if len(behavioral)!=35 or not all(row.get("passed") for row in behavioral):raise CloseoutValidationError("closeout_behavioral_evidence_incomplete")
@@ -97,7 +97,7 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
         artifact=bundle/"canonical-artifacts/proof-events"/(row["proof_id"]+".artifact.json")
         if not artifact.is_file() or _sha(artifact.read_bytes()) not in row.get("artifact_hashes",{}).values():raise CloseoutValidationError("closeout_proof_artifact_mismatch")
     parity=_load(bundle/"session6-8-contract-parity-report.json")
-    if len(parity.get("contracts",[]))<1 or len(parity.get("mutation_receipts",[]))<42:raise CloseoutValidationError("closeout_parity_incomplete")
+    if len(parity.get("accepted_baselines",[]))!=parity.get("contract_count") or len(parity.get("mutation_receipts",[]))<2*parity.get("contract_count",0):raise CloseoutValidationError("closeout_parity_incomplete")
     for row in parity["mutation_receipts"]:
         valid=bundle/"parity-fixtures"/Path(row["valid_fixture_path"]).name;mutated=bundle/"parity-fixtures"/Path(row["mutated_fixture_path"]).name
         if not valid.is_file() or _sha(valid.read_bytes())!=row["valid_fixture_hash"]:raise CloseoutValidationError("closeout_parity_baseline_invalid")

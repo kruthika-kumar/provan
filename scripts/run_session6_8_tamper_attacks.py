@@ -5,10 +5,15 @@ import argparse
 import hashlib
 import json
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
-from scripts.validate_session6_8_closeout_independently import CloseoutValidationError, validate_bundle
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+try:
+    from scripts.validate_session6_8_closeout_independently import CloseoutValidationError, validate_bundle
+except ModuleNotFoundError:
+    from validate_session6_8_closeout_independently import CloseoutValidationError, validate_bundle
 
 
 def _sha(raw: bytes) -> str: return "sha256:"+hashlib.sha256(raw).hexdigest()
