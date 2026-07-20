@@ -26,7 +26,11 @@
       "positive_proof_ids": [
         "proof_s6_issue_authority_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_issue_authority_policy_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_issue_authority_policy_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_issue_authority_policy_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_ISSUE_AUTHORITY_POLICY"
       ],
@@ -59,7 +63,11 @@
       "positive_proof_ids": [
         "proof_s6_model_review_not_blocker_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_model_review_not_blocker_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_model_review_not_blocker_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_model_review_not_blocker_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_MODEL_REVIEW_NOT_BLOCKER"
       ],
@@ -92,7 +100,11 @@
       "positive_proof_ids": [
         "proof_s6_planner_compiler_authority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_planner_compiler_authority_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_planner_compiler_authority_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_planner_compiler_authority_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_PLANNER_COMPILER_AUTHORITY"
       ],
@@ -125,7 +137,11 @@
       "positive_proof_ids": [
         "proof_s6_human_owner_separation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_human_owner_separation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_human_owner_separation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_human_owner_separation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_HUMAN_OWNER_SEPARATION"
       ],
@@ -158,7 +174,11 @@
       "positive_proof_ids": [
         "proof_s6_optional_planner_lifecycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_optional_planner_lifecycle_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_optional_planner_lifecycle_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_optional_planner_lifecycle_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_OPTIONAL_PLANNER_LIFECYCLE"
       ],
@@ -191,7 +211,11 @@
       "positive_proof_ids": [
         "proof_s6_automation_eligibility_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_automation_eligibility_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_automation_eligibility_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_automation_eligibility_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_AUTOMATION_ELIGIBILITY"
       ],
@@ -224,7 +248,11 @@
       "positive_proof_ids": [
         "proof_s6_bounded_fix_metadata_only_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_bounded_fix_metadata_only_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_bounded_fix_metadata_only_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_bounded_fix_metadata_only_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_BOUNDED_FIX_METADATA_ONLY"
       ],
@@ -257,7 +285,11 @@
       "positive_proof_ids": [
         "proof_s6_remediation_cardinality_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_remediation_cardinality_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_remediation_cardinality_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_remediation_cardinality_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_REMEDIATION_CARDINALITY"
       ],
@@ -290,7 +322,11 @@
       "positive_proof_ids": [
         "proof_s6_packet_contract_links_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_contract_links_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_contract_links_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_contract_links_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_PACKET_CONTRACT_LINKS"
       ],
@@ -323,7 +359,11 @@
       "positive_proof_ids": [
         "proof_s6_packet_file_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_file_integrity_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_file_integrity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_packet_file_integrity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_PACKET_FILE_INTEGRITY"
       ],
@@ -356,7 +396,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_contract_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_contract_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_contract_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_contract_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_CONTRACT_COMPLETENESS"
       ],
@@ -389,7 +433,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_exact_rerun_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_exact_rerun_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_exact_rerun_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_exact_rerun_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_EXACT_RERUN"
       ],
@@ -422,7 +470,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_pass_required_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_pass_required_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_pass_required_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_pass_required_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_PASS_REQUIRED"
       ],
@@ -455,7 +507,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_verifier_independence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_verifier_independence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_verifier_independence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_verifier_independence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_VERIFIER_INDEPENDENCE"
       ],
@@ -488,7 +544,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_commit_branch_freshness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_commit_branch_freshness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_commit_branch_freshness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_commit_branch_freshness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
       ],
@@ -521,7 +581,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_evidence_class_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_evidence_class_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_evidence_class_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_evidence_class_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_EVIDENCE_CLASS"
       ],
@@ -554,7 +618,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_regression_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_regression_requirements_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_regression_requirements_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_regression_requirements_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_REGRESSION_REQUIREMENTS"
       ],
@@ -587,7 +655,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_test_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_test_requirements_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_test_requirements_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_test_requirements_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_TEST_REQUIREMENTS"
       ],
@@ -620,7 +692,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_instrumentation_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_instrumentation_requirements_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_instrumentation_requirements_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_instrumentation_requirements_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
       ],
@@ -653,7 +729,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_protected_invariants_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_protected_invariants_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_protected_invariants_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_protected_invariants_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_PROTECTED_INVARIANTS"
       ],
@@ -686,7 +766,11 @@
       "positive_proof_ids": [
         "proof_s6_closure_owner_decision_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_owner_decision_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_owner_decision_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_closure_owner_decision_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_OWNER_DECISION"
       ],
@@ -719,7 +803,11 @@
       "positive_proof_ids": [
         "proof_s6_private_alpha_non_mutation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s6_private_alpha_non_mutation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_private_alpha_non_mutation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s6_private_alpha_non_mutation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S6_PRIVATE_ALPHA_NON_MUTATION"
       ],
@@ -752,7 +840,11 @@
       "positive_proof_ids": [
         "proof_s7_specialist_catalogue_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_specialist_catalogue_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_specialist_catalogue_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_specialist_catalogue_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_SPECIALIST_CATALOGUE"
       ],
@@ -785,7 +877,11 @@
       "positive_proof_ids": [
         "proof_s7_native_boundary_reuse_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_native_boundary_reuse_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_native_boundary_reuse_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_native_boundary_reuse_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_NATIVE_BOUNDARY_REUSE"
       ],
@@ -818,7 +914,11 @@
       "positive_proof_ids": [
         "proof_s7_typed_surface_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_typed_surface_policy_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_typed_surface_policy_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_typed_surface_policy_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_TYPED_SURFACE_POLICY"
       ],
@@ -851,7 +951,11 @@
       "positive_proof_ids": [
         "proof_s7_selection_evidence_links_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_selection_evidence_links_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_selection_evidence_links_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_selection_evidence_links_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_SELECTION_EVIDENCE_LINKS"
       ],
@@ -884,7 +988,11 @@
       "positive_proof_ids": [
         "proof_s7_python_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_python_selection_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_python_selection_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_python_selection_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_PYTHON_SELECTION"
       ],
@@ -917,7 +1025,11 @@
       "positive_proof_ids": [
         "proof_s7_typescript_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_typescript_selection_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_typescript_selection_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_typescript_selection_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_TYPESCRIPT_SELECTION"
       ],
@@ -950,7 +1062,11 @@
       "positive_proof_ids": [
         "proof_s7_ai_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_selection_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_selection_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_selection_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_AI_SELECTION"
       ],
@@ -983,7 +1099,11 @@
       "positive_proof_ids": [
         "proof_s7_browser_explicit_skip_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_explicit_skip_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_explicit_skip_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_explicit_skip_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_BROWSER_EXPLICIT_SKIP"
       ],
@@ -1016,7 +1136,11 @@
       "positive_proof_ids": [
         "proof_s7_browser_absence_not_inspected_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_absence_not_inspected_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_absence_not_inspected_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_absence_not_inspected_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_BROWSER_ABSENCE_NOT_INSPECTED"
       ],
@@ -1049,7 +1173,11 @@
       "positive_proof_ids": [
         "proof_s7_test_adequacy_applicability_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_test_adequacy_applicability_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_test_adequacy_applicability_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_test_adequacy_applicability_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_TEST_ADEQUACY_APPLICABILITY"
       ],
@@ -1082,7 +1210,11 @@
       "positive_proof_ids": [
         "proof_s7_instrumentation_applicability_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_instrumentation_applicability_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_instrumentation_applicability_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_instrumentation_applicability_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_INSTRUMENTATION_APPLICABILITY"
       ],
@@ -1115,7 +1247,11 @@
       "positive_proof_ids": [
         "proof_s7_product_intent_wrapper_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_product_intent_wrapper_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_product_intent_wrapper_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_product_intent_wrapper_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_PRODUCT_INTENT_WRAPPER"
       ],
@@ -1148,7 +1284,11 @@
       "positive_proof_ids": [
         "proof_s7_native_work_order_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_native_work_order_integrity_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_native_work_order_integrity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_native_work_order_integrity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_NATIVE_WORK_ORDER_INTEGRITY"
       ],
@@ -1181,7 +1321,11 @@
       "positive_proof_ids": [
         "proof_s7_codex_package_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_codex_package_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_codex_package_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_codex_package_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_CODEX_PACKAGE_COMPLETENESS"
       ],
@@ -1214,7 +1358,11 @@
       "positive_proof_ids": [
         "proof_s7_harness_declaration_honesty_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_harness_declaration_honesty_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_harness_declaration_honesty_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_harness_declaration_honesty_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_HARNESS_DECLARATION_HONESTY"
       ],
@@ -1247,7 +1395,11 @@
       "positive_proof_ids": [
         "proof_s7_manual_codex_parity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_manual_codex_parity_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_manual_codex_parity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_manual_codex_parity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_MANUAL_CODEX_PARITY"
       ],
@@ -1280,7 +1432,11 @@
       "positive_proof_ids": [
         "proof_s7_trusted_submission_paths_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_trusted_submission_paths_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_trusted_submission_paths_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_trusted_submission_paths_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_TRUSTED_SUBMISSION_PATHS"
       ],
@@ -1313,7 +1469,11 @@
       "positive_proof_ids": [
         "proof_s7_submission_byte_persistence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_submission_byte_persistence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_submission_byte_persistence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_submission_byte_persistence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_SUBMISSION_BYTE_PERSISTENCE"
       ],
@@ -1346,7 +1506,11 @@
       "positive_proof_ids": [
         "proof_s7_revision_request_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_revision_request_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_revision_request_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_revision_request_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_REVISION_REQUEST"
       ],
@@ -1379,7 +1543,11 @@
       "positive_proof_ids": [
         "proof_s7_corrected_result_acceptance_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_corrected_result_acceptance_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_corrected_result_acceptance_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_corrected_result_acceptance_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_CORRECTED_RESULT_ACCEPTANCE"
       ],
@@ -1412,7 +1580,11 @@
       "positive_proof_ids": [
         "proof_s7_second_invalid_failure_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_second_invalid_failure_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_second_invalid_failure_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_second_invalid_failure_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_SECOND_INVALID_FAILURE"
       ],
@@ -1445,7 +1617,11 @@
       "positive_proof_ids": [
         "proof_s7_failed_result_no_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_failed_result_no_adaptation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_failed_result_no_adaptation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_failed_result_no_adaptation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_FAILED_RESULT_NO_ADAPTATION"
       ],
@@ -1478,7 +1654,11 @@
       "positive_proof_ids": [
         "proof_s7_trigger_specific_evidence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_trigger_specific_evidence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_trigger_specific_evidence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_trigger_specific_evidence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_TRIGGER_SPECIFIC_EVIDENCE"
       ],
@@ -1511,7 +1691,11 @@
       "positive_proof_ids": [
         "proof_s7_migration_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_migration_adaptation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_migration_adaptation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_migration_adaptation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_MIGRATION_ADAPTATION"
       ],
@@ -1544,7 +1728,11 @@
       "positive_proof_ids": [
         "proof_s7_ai_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_adaptation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_adaptation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_ai_adaptation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_AI_ADAPTATION"
       ],
@@ -1577,7 +1765,11 @@
       "positive_proof_ids": [
         "proof_s7_browser_disproven_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_disproven_adaptation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_disproven_adaptation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_browser_disproven_adaptation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_BROWSER_DISPROVEN_ADAPTATION"
       ],
@@ -1610,7 +1802,11 @@
       "positive_proof_ids": [
         "proof_s7_superseded_work_order_preservation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_superseded_work_order_preservation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_superseded_work_order_preservation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_superseded_work_order_preservation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
       ],
@@ -1643,7 +1839,11 @@
       "positive_proof_ids": [
         "proof_s7_adaptation_idempotency_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_idempotency_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_idempotency_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_idempotency_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_ADAPTATION_IDEMPOTENCY"
       ],
@@ -1676,7 +1876,11 @@
       "positive_proof_ids": [
         "proof_s7_adaptation_cycle_depth_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_cycle_depth_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_cycle_depth_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_adaptation_cycle_depth_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_ADAPTATION_CYCLE_DEPTH"
       ],
@@ -1709,7 +1913,11 @@
       "positive_proof_ids": [
         "proof_s7_pointer_last_publication_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s7_pointer_last_publication_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_pointer_last_publication_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s7_pointer_last_publication_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S7_POINTER_LAST_PUBLICATION"
       ],
@@ -1742,7 +1950,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_target_registry_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_registry_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_registry_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_registry_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_TARGET_REGISTRY"
       ],
@@ -1775,7 +1987,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_source_generation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_source_generation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_source_generation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_source_generation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_SOURCE_GENERATION"
       ],
@@ -1808,7 +2024,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_target_existence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_existence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_existence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_target_existence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_TARGET_EXISTENCE"
       ],
@@ -1841,7 +2061,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_evidence_existence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_existence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_existence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_existence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_EVIDENCE_EXISTENCE"
       ],
@@ -1874,7 +2098,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_evidence_relevance_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_relevance_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_relevance_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_evidence_relevance_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_EVIDENCE_RELEVANCE"
       ],
@@ -1907,7 +2135,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_authority_preservation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_authority_preservation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_authority_preservation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_authority_preservation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_AUTHORITY_PRESERVATION"
       ],
@@ -1940,7 +2172,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_append_sequence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_append_sequence_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_append_sequence_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_append_sequence_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_APPEND_SEQUENCE"
       ],
@@ -1973,7 +2209,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_previous_hash_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_previous_hash_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_previous_hash_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_previous_hash_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_PREVIOUS_HASH"
       ],
@@ -2006,7 +2246,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_idempotent_replay_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_idempotent_replay_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_idempotent_replay_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_idempotent_replay_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_IDEMPOTENT_REPLAY"
       ],
@@ -2039,7 +2283,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_conflicting_duplicate_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_conflicting_duplicate_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_conflicting_duplicate_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_conflicting_duplicate_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_CONFLICTING_DUPLICATE"
       ],
@@ -2072,7 +2320,11 @@
       "positive_proof_ids": [
         "proof_s8_contest_owner_authority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_owner_authority_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_owner_authority_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contest_owner_authority_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTEST_OWNER_AUTHORITY"
       ],
@@ -2105,7 +2357,11 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_fact_non_mutation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_fact_non_mutation_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_fact_non_mutation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_fact_non_mutation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_FACT_NON_MUTATION"
       ],
@@ -2138,7 +2394,11 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_decision_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_decision_effect_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_decision_effect_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_decision_effect_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_DECISION_EFFECT"
       ],
@@ -2171,7 +2431,11 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_budget_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_budget_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_budget_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_budget_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_BUDGET"
       ],
@@ -2204,7 +2468,11 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_priority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_priority_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_priority_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_priority_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_PRIORITY"
       ],
@@ -2237,7 +2505,11 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_overflow_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_overflow_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_overflow_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_owner_decision_overflow_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_OVERFLOW"
       ],
@@ -2270,7 +2542,11 @@
       "positive_proof_ids": [
         "proof_s8_future_remediation_no_cycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_future_remediation_no_cycle_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_future_remediation_no_cycle_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_future_remediation_no_cycle_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_FUTURE_REMEDIATION_NO_CYCLE"
       ],
@@ -2303,7 +2579,11 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_discovery_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_discovery_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_discovery_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_discovery_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
       ],
@@ -2336,7 +2616,11 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_states_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_states_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_states_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_states_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_STATES"
       ],
@@ -2369,7 +2653,11 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_freshness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_freshness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_freshness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_dependency_freshness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
       ],
@@ -2402,7 +2690,11 @@
       "positive_proof_ids": [
         "proof_s8_management_mixed_vector_rejection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_management_mixed_vector_rejection_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_mixed_vector_rejection_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_management_mixed_vector_rejection_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
       ],
@@ -2435,7 +2727,11 @@
       "positive_proof_ids": [
         "proof_s8_executive_section_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_executive_section_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_executive_section_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_executive_section_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_EXECUTIVE_SECTION_COMPLETENESS"
       ],
@@ -2468,7 +2764,11 @@
       "positive_proof_ids": [
         "proof_s8_product_matrix_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_product_matrix_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_product_matrix_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_product_matrix_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_PRODUCT_MATRIX_COMPLETENESS"
       ],
@@ -2501,7 +2801,11 @@
       "positive_proof_ids": [
         "proof_s8_engineering_section_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_engineering_section_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_engineering_section_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_engineering_section_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_ENGINEERING_SECTION_COMPLETENESS"
       ],
@@ -2534,7 +2838,11 @@
       "positive_proof_ids": [
         "proof_s8_measurement_ai_passthrough_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_measurement_ai_passthrough_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_measurement_ai_passthrough_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_measurement_ai_passthrough_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_MEASUREMENT_AI_PASSTHROUGH"
       ],
@@ -2567,7 +2875,11 @@
       "positive_proof_ids": [
         "proof_s8_remediation_overview_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_remediation_overview_completeness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_remediation_overview_completeness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_remediation_overview_completeness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
       ],
@@ -2600,7 +2912,11 @@
       "positive_proof_ids": [
         "proof_s8_closure_contract_indexing_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_closure_contract_indexing_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_closure_contract_indexing_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_closure_contract_indexing_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CLOSURE_CONTRACT_INDEXING"
       ],
@@ -2633,7 +2949,11 @@
       "positive_proof_ids": [
         "proof_s8_contestability_inclusion_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_contestability_inclusion_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contestability_inclusion_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_contestability_inclusion_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_CONTESTABILITY_INCLUSION"
       ],
@@ -2666,7 +2986,11 @@
       "positive_proof_ids": [
         "proof_s8_recommendation_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_recommendation_policy_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_recommendation_policy_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_recommendation_policy_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_RECOMMENDATION_POLICY"
       ],
@@ -2699,7 +3023,11 @@
       "positive_proof_ids": [
         "proof_s8_accepted_condition_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_accepted_condition_effect_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_accepted_condition_effect_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_accepted_condition_effect_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_ACCEPTED_CONDITION_EFFECT"
       ],
@@ -2732,7 +3060,11 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_recommendation_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_recommendation_effect_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_recommendation_effect_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_named_risk_recommendation_effect_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
       ],
@@ -2765,7 +3097,11 @@
       "positive_proof_ids": [
         "proof_s8_insufficient_evidence_state_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_insufficient_evidence_state_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_insufficient_evidence_state_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_insufficient_evidence_state_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_INSUFFICIENT_EVIDENCE_STATE"
       ],
@@ -2798,7 +3134,11 @@
       "positive_proof_ids": [
         "proof_s8_deterministic_json_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_json_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_json_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_json_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_DETERMINISTIC_JSON"
       ],
@@ -2831,7 +3171,11 @@
       "positive_proof_ids": [
         "proof_s8_safe_html_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_html_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_html_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_html_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_SAFE_HTML"
       ],
@@ -2864,7 +3208,11 @@
       "positive_proof_ids": [
         "proof_s8_safe_markdown_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_markdown_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_markdown_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_safe_markdown_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_SAFE_MARKDOWN"
       ],
@@ -2897,7 +3245,11 @@
       "positive_proof_ids": [
         "proof_s8_artifact_hash_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_hash_integrity_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_hash_integrity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_hash_integrity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_ARTIFACT_HASH_INTEGRITY"
       ],
@@ -2930,7 +3282,11 @@
       "positive_proof_ids": [
         "proof_s8_artifact_file_set_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_file_set_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_file_set_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_artifact_file_set_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_ARTIFACT_FILE_SET"
       ],
@@ -2963,7 +3319,11 @@
       "positive_proof_ids": [
         "proof_s8_deterministic_rerender_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_rerender_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_rerender_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_deterministic_rerender_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_DETERMINISTIC_RERENDER"
       ],
@@ -2996,7 +3356,11 @@
       "positive_proof_ids": [
         "proof_s8_upstream_staleness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_s8_upstream_staleness_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_upstream_staleness_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_s8_upstream_staleness_adversarial_invalid"
+      ],
       "requirement_ids": [
         "S8_UPSTREAM_STALENESS"
       ],
@@ -3029,7 +3393,11 @@
       "positive_proof_ids": [
         "proof_shared_trusted_reads_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_reads_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_reads_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_reads_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_TRUSTED_READS"
       ],
@@ -3062,7 +3430,11 @@
       "positive_proof_ids": [
         "proof_shared_trusted_writes_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_writes_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_writes_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_trusted_writes_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_TRUSTED_WRITES"
       ],
@@ -3095,7 +3467,11 @@
       "positive_proof_ids": [
         "proof_shared_link_reparse_special_rejection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_link_reparse_special_rejection_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_link_reparse_special_rejection_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_link_reparse_special_rejection_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
       ],
@@ -3128,7 +3504,11 @@
       "positive_proof_ids": [
         "proof_shared_capacity_limits_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_capacity_limits_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_capacity_limits_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_capacity_limits_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_CAPACITY_LIMITS"
       ],
@@ -3161,7 +3541,11 @@
       "positive_proof_ids": [
         "proof_shared_pointer_late_failure_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_pointer_late_failure_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_pointer_late_failure_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_pointer_late_failure_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_POINTER_LATE_FAILURE"
       ],
@@ -3194,7 +3578,11 @@
       "positive_proof_ids": [
         "proof_shared_zero_prohibited_operations_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_zero_prohibited_operations_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_zero_prohibited_operations_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_ZERO_PROHIBITED_OPERATIONS"
       ],
@@ -3227,7 +3615,11 @@
       "positive_proof_ids": [
         "proof_shared_contract_inventory_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_contract_inventory_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_contract_inventory_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_contract_inventory_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_CONTRACT_INVENTORY"
       ],
@@ -3260,7 +3652,11 @@
       "positive_proof_ids": [
         "proof_shared_executed_contract_parity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_executed_contract_parity_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_executed_contract_parity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_executed_contract_parity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_EXECUTED_CONTRACT_PARITY"
       ],
@@ -3293,7 +3689,11 @@
       "positive_proof_ids": [
         "proof_shared_behavioral_eval_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_behavioral_eval_integrity_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_behavioral_eval_integrity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_behavioral_eval_integrity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
       ],
@@ -3326,7 +3726,11 @@
       "positive_proof_ids": [
         "proof_shared_workflow_eval_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_workflow_eval_integrity_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_workflow_eval_integrity_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_workflow_eval_integrity_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_WORKFLOW_EVAL_INTEGRITY"
       ],
@@ -3359,7 +3763,11 @@
       "positive_proof_ids": [
         "proof_shared_installed_wheel_lifecycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_installed_wheel_lifecycle_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_installed_wheel_lifecycle_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_installed_wheel_lifecycle_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_INSTALLED_WHEEL_LIFECYCLE"
       ],
@@ -3392,7 +3800,11 @@
       "positive_proof_ids": [
         "proof_shared_skill_pilot_consistency_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_skill_pilot_consistency_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_skill_pilot_consistency_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_skill_pilot_consistency_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_SKILL_PILOT_CONSISTENCY"
       ],
@@ -3425,7 +3837,11 @@
       "positive_proof_ids": [
         "proof_shared_proof_execution_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_proof_execution_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_proof_execution_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_proof_execution_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_PROOF_EXECUTION"
       ],
@@ -3458,7 +3874,11 @@
       "positive_proof_ids": [
         "proof_shared_closeout_generation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_closeout_generation_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_closeout_generation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_closeout_generation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_CLOSEOUT_GENERATION"
       ],
@@ -3491,7 +3911,11 @@
       "positive_proof_ids": [
         "proof_shared_independent_validation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "session6-8-proof-execution-receipt.json#proof_shared_independent_validation_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_independent_validation_near_valid",
+        "session6-8-proof-execution-receipt.json#proof_shared_independent_validation_adversarial_invalid"
+      ],
       "requirement_ids": [
         "SHARED_INDEPENDENT_VALIDATION"
       ],

@@ -11,6 +11,9 @@ def main():
     p=argparse.ArgumentParser();p.add_argument("--receipt",type=Path,required=True);a=p.parse_args();validate(a.receipt)
     for name,key in (("session6-8-requirement-inventory.json","requirements"),("session6-8-completion-map.json","requirements"),("session6-8-execution-map.json","requirements"),("session6-8-proof-manifest.json","proofs"),("session6-8-claim-registry.json","claims")):
         path=ROOT/"docs/validation"/name;value=json.loads(path.read_text());
-        for row in value[key]:row["status"]="verified"
+        for row in value[key]:
+            row["status"]="verified"
+            if key=="claims":
+                row["production_invocation_receipts"]=["session6-8-proof-execution-receipt.json#"+proof_id for proof_id in row["positive_proof_ids"]+row["near_valid_proof_ids"]+row["adversarial_proof_ids"]]
         path.write_text(json.dumps(value,sort_keys=True,indent=2)+"\n")
 if __name__=="__main__":main()
