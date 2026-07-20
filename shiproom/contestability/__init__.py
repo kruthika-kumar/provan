@@ -32,12 +32,12 @@ def _json(value:object)->bytes:return (json.dumps(value,sort_keys=True,ensure_as
 def _sha(raw:bytes)->str:return "sha256:"+hashlib.sha256(raw).hexdigest()
 def _semantic(value:dict)->dict:return {key:item for key,item in value.items() if key not in {"created_at","sequence","previous_action_hash","action_semantic_hash","target_registry_materiality"}}
 
-def target_registry()->dict:
-    value = json.loads(resources.files("shiproom.contestability_schemas").joinpath("contestation-target-registry.v1.json").read_text(encoding="utf-8"))
+def target_registry(value: dict | None = None)->dict:
+    value = json.loads(resources.files("shiproom.contestability_schemas").joinpath("contestation-target-registry.v1.json").read_text(encoding="utf-8")) if value is None else value
     required = {"target_type", "source_domain", "source_artifact", "record_id_field", "production_loader", "permitted_actions", "evidence_relevance_rule", "materiality_rule", "owner_decision_eligibility"}
     domains = {"release", "graph", "assessment", "measurement_ai", "remediation", "review_plan"}
     targets = value.get("targets")
-    if value.get("schema_version") != "contestation-target-registry.v1" or not isinstance(targets, list) or not targets:
+    if set(value)!={"schema_version","targets"} or value.get("schema_version") != "contestation-target-registry.v1" or not isinstance(targets, list) or not targets:
         raise ValueError("contestation_target_registry_invalid")
     ids = []
     for target in targets:
@@ -50,6 +50,17 @@ def target_registry()->dict:
     if len(ids) != len(set(ids)):
         raise ValueError("contestation_target_registry_invalid")
     return value
+
+
+def validate_action_contract(action: dict) -> dict:
+    required={"action_id","release_id","actor_type","actor_label","action","target_type","target_id","source_generation","submitted_evidence","rationale","created_at","owner_authority_ref","owner_authority_snapshot_hash"}
+    if not isinstance(action,dict) or set(action)!=required:
+        raise ValueError("contestation_action_contract_invalid")
+    if action.get("action") not in ACTIONS or not all(isinstance(action.get(name),str) and action[name] for name in ("action_id","release_id","actor_type","actor_label","target_type","target_id","source_generation","rationale","created_at")):
+        raise ValueError("contestation_action_contract_invalid")
+    if action["action"] in OWNER_ONLY and (not action.get("owner_authority_ref") or not action.get("owner_authority_snapshot_hash")):
+        raise ValueError("contestation_owner_authority_required")
+    return action
 
 def _target_definition(target_type:str)->dict:
     values=[item for item in target_registry()["targets"] if item["target_type"]==target_type]
@@ -200,7 +211,7 @@ def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
 
 
 def append_action(ctx:LocalExecutionContext, action:dict)->dict:
-    action=_validate(ctx,action); actions,_=_current(ctx); semantic=content_hash(_semantic(action))
+    action=validate_action_contract(action); action=_validate(ctx,action); actions,_=_current(ctx); semantic=content_hash(_semantic(action))
     same=[item for item in actions if item["action_id"]==action["action_id"]]
     if same:
         if content_hash(_semantic(same[0]))==semantic:return {"status":"idempotent_replay","action_id":action["action_id"]}

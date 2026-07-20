@@ -49,8 +49,8 @@ def dependency_vector(ctx:LocalExecutionContext)->dict:
     contest_state, contest=optional("contestability/current-contestation-generation.json",load_contestation)
     return {"schema_version":"artifact-dependency-vector.v1","release_id":ctx.release["release_id"],"release_commit":ctx.authority_binding["repository_commit"],"product_intent":_dep("required_present",upstream["graph_generation"],upstream["intent_manifest"]["semantic_bundle_hash"]),"graph":_dep("required_present",upstream["graph_generation"],upstream["graph_manifest"]["semantic_bundle_hash"]),"assessment":assessment_state,"measurement_ai":measurement_state,"remediation":remediation_state,"review_plan":review_state,"contestability":contest_state,"_loaded":{"upstream":upstream,"assessment":assessment,"measurement":measurement,"remediation":remediation,"review":review,"contest":contest}}
 
-def _section_specs(name: str) -> list[dict]:
-    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text())
+def _section_specs(name: str, registry_value: dict | None = None) -> list[dict]:
+    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("management-artifact-section-registry.v1.json").read_text()) if registry_value is None else registry_value
     specs = value.get("artifacts", {}).get(name)
     required = {"section_id", "source_dependencies", "required_when", "record_source", "minimum_records", "typed_empty_state", "authority_passthrough"}
     if value.get("schema_version") != "management-artifact-section-registry.v1" or not isinstance(specs, list) or not specs:
@@ -63,6 +63,19 @@ def _section_specs(name: str) -> list[dict]:
     if len(ids) != len(set(ids)):
         raise ValueError("management_section_registry_invalid")
     return specs
+
+
+def validate_section_registry(value: dict) -> dict:
+    artifacts=value.get("artifacts") if isinstance(value,dict) else None
+    if set(value)!={"schema_version","artifacts"} or value.get("schema_version")!="management-artifact-section-registry.v1" or not isinstance(artifacts,dict) or not artifacts:
+        raise ValueError("management_section_registry_invalid")
+    for name in artifacts:
+        _section_specs(name,value)
+    return value
+
+
+def validate_recommendation_policy(value: dict) -> dict:
+    return _recommendation_policy(value)
 
 
 def _sections(name: str) -> list[str]:
@@ -179,8 +192,8 @@ def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext
             raise ValueError("management_section_minimum_records_missing:" + spec["section_id"])
         result.append({"section_id": spec["section_id"], "state": state, "records": records, "authority_passthrough": spec["authority_passthrough"]})
     return result
-def _recommendation_policy() -> dict:
-    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text())
+def _recommendation_policy(value: dict | None = None) -> dict:
+    value = json.loads(resources.files("shiproom.management_artifacts").joinpath("release-recommendation-policy.v1.json").read_text()) if value is None else value
     required = {"schema_version", "statuses", "required_inputs", "rules", "unknown_dependency_states", "rule"}
     if set(value) != required or value["schema_version"] != "release-recommendation-policy.v1":
         raise ValueError("release_recommendation_policy_invalid")
@@ -189,6 +202,15 @@ def _recommendation_policy() -> dict:
             any(set(rule) != expected or rule["status"] not in value["statuses"] or not isinstance(rule["reason_codes"], list) or not rule["reason_codes"] for rule in value["rules"]) or
             [rule["precedence"] for rule in value["rules"]] != sorted(rule["precedence"] for rule in value["rules"])):
         raise ValueError("release_recommendation_policy_invalid")
+    return value
+
+
+def validate_generation_manifest(value: dict) -> dict:
+    required={"schema_version","compiler_version","generation","release_id","artifact_dependency_vector","artifact_hashes","semantic_bundle_hash","bundle_hash"}
+    if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!="management-generation-manifest.v1" or value.get("compiler_version")!="portable-management-artifacts.v1":
+        raise ValueError("management_generation_manifest_invalid")
+    if not isinstance(value.get("artifact_hashes"),dict) or not value["artifact_hashes"] or not all(isinstance(item,str) and item.startswith("sha256:") for item in value["artifact_hashes"].values()):
+        raise ValueError("management_generation_manifest_hashes_invalid")
     return value
 
 
@@ -254,6 +276,7 @@ def compile(ctx:LocalExecutionContext)->dict:
 
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
+    validate_generation_manifest(manifest)
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["release_id"]!=ctx.release["release_id"]:raise ValueError("stale_dependency")
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("management_pointer_tampered")

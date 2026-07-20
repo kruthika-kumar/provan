@@ -1,621 +1,623 @@
 {
+  "approved_semantic_hash": "sha256:ffd78fe25c8317422ccf59992875daf9677db8bdeffbf25d0b8402471cd60f7d",
   "records": [
     {
-      "adapter_or_side_effect_surface": "deployment",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "deployment",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "external_eval",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "external_eval",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "github_publish",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "github_publish",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "http_browser",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "http_browser",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
       "adapter_or_side_effect_surface": "model",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
       "operation": "model",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "project_command",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "project_command",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "network_socket",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
       "operation": "network_socket",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "http_browser",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "http_browser",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "sql",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "sql",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "warehouse_bi",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "warehouse_bi",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "tracing_service",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "tracing_service",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "external_eval",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "external_eval",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "github_publish",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "github_publish",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "deployment",
+      "classification": "unreachable_by_design",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
+      "operation": "deployment",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "out_of_root_write",
       "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
+      "closed_contract": "remediation-closure-evidence.v1",
+      "domain": "remediation_roadmaps",
       "operation": "out_of_root_write",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.remediation_roadmaps.closure_verify",
+      "production_gate": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "project_command",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "project_command",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "sql",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "sql",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "tracing_service",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "tracing_service",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "warehouse_bi",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "review_organisation",
-      "operation": "warehouse_bi",
-      "production_entrypoint": "shiproom.review_organisation.guard_prohibited_operation",
-      "production_gate": "shiproom.review_organisation.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "deployment",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "deployment",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "external_eval",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "external_eval",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "github_publish",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "github_publish",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "http_browser",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "http_browser",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "model",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
       "operation": "model",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "project_command",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "project_command",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "network_socket",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
       "operation": "network_socket",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "http_browser",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "http_browser",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "sql",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "sql",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "warehouse_bi",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "warehouse_bi",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "tracing_service",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "tracing_service",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "external_eval",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "external_eval",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "github_publish",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "github_publish",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "deployment",
+      "classification": "unreachable_by_design",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
+      "operation": "deployment",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "out_of_root_write",
       "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
+      "closed_contract": "harness-execution-receipt.v1",
+      "domain": "review_organisation",
       "operation": "out_of_root_write",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.review_organisation.assert_submission_path",
+      "production_gate": "shiproom.review_organisation.assert_submission_path",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "project_command",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "project_command",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "sql",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "sql",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "tracing_service",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "tracing_service",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "warehouse_bi",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "remediation",
-      "operation": "warehouse_bi",
-      "production_entrypoint": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "production_gate": "shiproom.remediation_roadmaps.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "deployment",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "deployment",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "external_eval",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "external_eval",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "github_publish",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "github_publish",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "http_browser",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "http_browser",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "model",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
       "operation": "model",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "network_socket",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "network_socket",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "out_of_root_write",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "out_of_root_write",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "project_command",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
       "operation": "project_command",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
-      "adapter_or_side_effect_surface": "sql",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "sql",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
+      "adapter_or_side_effect_surface": "network_socket",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "network_socket",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "tracing_service",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "tracing_service",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "warehouse_bi",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "contestation",
-      "operation": "warehouse_bi",
-      "production_entrypoint": "shiproom.contestability.guard_prohibited_operation",
-      "production_gate": "shiproom.contestability.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "deployment",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "deployment",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "external_eval",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "external_eval",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "github_publish",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "github_publish",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "http_browser",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
       "operation": "http_browser",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "model",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "model",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "network_socket",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "network_socket",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "out_of_root_write",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "out_of_root_write",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "project_command",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "project_command",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "sql",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
       "operation": "sql",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
-      ]
-    },
-    {
-      "adapter_or_side_effect_surface": "tracing_service",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
-      "operation": "tracing_service",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     },
     {
       "adapter_or_side_effect_surface": "warehouse_bi",
-      "classification": "reachable_guarded",
-      "closed_contract": "private-alpha-operation-policy.v1",
-      "domain": "management",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
       "operation": "warehouse_bi",
-      "production_entrypoint": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
-      "production_gate": "shiproom.management_artifacts.compiler.guard_prohibited_operation",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
       "proof_ids": [
-        "proof_shared_zero_external_operations_valid",
-        "proof_shared_zero_external_operations_near_valid",
-        "proof_shared_zero_external_operations_adversarial_invalid"
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "tracing_service",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "tracing_service",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "external_eval",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "external_eval",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "github_publish",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "github_publish",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "deployment",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "deployment",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "out_of_root_write",
+      "classification": "unreachable_by_design",
+      "closed_contract": "contestation-action.v1",
+      "domain": "contestability",
+      "operation": "out_of_root_write",
+      "production_entrypoint": "shiproom.contestability.validate_action_contract",
+      "production_gate": "shiproom.contestability.validate_action_contract",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "model",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "model",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "project_command",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "project_command",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "network_socket",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "network_socket",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "http_browser",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "http_browser",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "sql",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "sql",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "warehouse_bi",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "warehouse_bi",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "tracing_service",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "tracing_service",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "external_eval",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "external_eval",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "github_publish",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "github_publish",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "deployment",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "deployment",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
+      ]
+    },
+    {
+      "adapter_or_side_effect_surface": "out_of_root_write",
+      "classification": "unreachable_by_design",
+      "closed_contract": "release-recommendation-policy.v1",
+      "domain": "management_artifacts",
+      "operation": "out_of_root_write",
+      "production_entrypoint": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "production_gate": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "proof_ids": [
+        "proof_shared_zero_prohibited_operations_valid",
+        "proof_shared_zero_prohibited_operations_near_valid",
+        "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ]
     }
   ],
-  "schema_version": "session6-8-security-surface-registry.v1"
+  "row_count": 44,
+  "schema_version": "session6-8-security-surface-registry.v2"
 }

@@ -89,6 +89,65 @@ def validate_planner_work_order(value: dict) -> dict:
     return value
 
 
+def validate_planner_role(value: dict) -> dict:
+    required={"schema_version","role_id","version","allowed_fields","forbidden_fields"}
+    if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!=PLANNER_ROLE_SCHEMA or value.get("role_id")!="remediation_planner" or value.get("version")!="1.0.0":
+        raise ValueError("remediation_planner_role_invalid")
+    if not isinstance(value["allowed_fields"],list) or not value["allowed_fields"] or not isinstance(value["forbidden_fields"],list) or not value["forbidden_fields"]:
+        raise ValueError("remediation_planner_role_invalid")
+    return value
+
+
+def validate_planner_result(value: dict, *, work_order_id: str | None = None, preparation_id: str | None = None) -> dict:
+    required={"schema_version","work_order_id","preparation_id","records","assumptions","limitations"}
+    if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!=PLANNER_RESULT_SCHEMA:
+        raise ValueError("remediation_planner_result_invalid")
+    if (work_order_id is not None and value.get("work_order_id")!=work_order_id) or (preparation_id is not None and value.get("preparation_id")!=preparation_id):
+        raise ValueError("planner_result_binding_mismatch")
+    if not isinstance(value.get("records"),list) or not isinstance(value.get("assumptions"),list) or not isinstance(value.get("limitations"),list):
+        raise ValueError("remediation_planner_result_invalid")
+    allowed={"source_issue_id",*PLANNER_FIELDS}
+    if any(not isinstance(item,dict) or set(item)!=allowed for item in value["records"]):
+        raise ValueError("remediation_planner_result_invalid")
+    return value
+
+
+def validate_planner_receipt(value: dict, *, work_order_id: str | None = None) -> dict:
+    required={"schema_version","work_order_id","result_snapshot_hash","executor"}
+    if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!=PLANNER_RECEIPT_SCHEMA or (work_order_id is not None and value.get("work_order_id")!=work_order_id):
+        raise ValueError("remediation_planner_receipt_invalid")
+    if not isinstance(value.get("result_snapshot_hash"),str) or not re.fullmatch(r"sha256:[0-9a-f]{64}",value["result_snapshot_hash"]) or not isinstance(value.get("executor"),dict):
+        raise ValueError("remediation_planner_receipt_invalid")
+    return value
+
+
+def validate_closure_evidence(value: dict) -> dict:
+    fields={"schema_version","closure_contract_id","release_id","release_commit","branch","fixer_id","reruns","regression_results","test_results","instrumentation_results","protected_invariant_outcomes"}
+    if not isinstance(value,dict) or set(value)!=fields or value.get("schema_version")!=CLOSURE_EVIDENCE_SCHEMA:
+        raise ValueError("closure_evidence_contract_invalid")
+    for name in ("reruns","regression_results","test_results","instrumentation_results"):
+        if not isinstance(value.get(name),list) or (name=="reruns" and not value[name]) or any(not isinstance(item,dict) or set(item)!={"check_id","passed","evidence_class"} or not isinstance(item["check_id"],str) or not isinstance(item["passed"],bool) or item["evidence_class"] not in {"deterministically_established","source_verified"} for item in value[name]):
+            raise ValueError("closure_evidence_contract_invalid")
+    if not isinstance(value.get("protected_invariant_outcomes"),list) or any(not isinstance(item,dict) or set(item)!={"invariant","passed"} or not isinstance(item["passed"],bool) for item in value["protected_invariant_outcomes"]):
+        raise ValueError("closure_evidence_contract_invalid")
+    return value
+
+
+def validate_closure_verifier_receipt(value: dict, *, closure_contract_id: str | None = None) -> dict:
+    fields={"schema_version","closure_contract_id","evidence_snapshot_hash","verifier_id","executor_type"}
+    if not isinstance(value,dict) or set(value)!=fields or value.get("schema_version")!=CLOSURE_RECEIPT_SCHEMA or (closure_contract_id is not None and value.get("closure_contract_id")!=closure_contract_id):
+        raise ValueError("closure_verifier_receipt_invalid")
+    if value.get("executor_type") not in {"human","agent_harness"} or not isinstance(value.get("verifier_id"),str) or not isinstance(value.get("evidence_snapshot_hash"),str) or not re.fullmatch(r"sha256:[0-9a-f]{64}",value["evidence_snapshot_hash"]):
+        raise ValueError("closure_verifier_receipt_invalid")
+    return value
+
+
+def validate_closure_verification(value: dict) -> dict:
+    if not isinstance(value,dict) or set(value)!={"schema_version","closure_contract_id","status","reason_codes"} or value.get("schema_version")!=CLOSURE_VERIFICATION_SCHEMA or value.get("status") not in {"satisfied_candidate","unsatisfied","stale","owner_action_required","not_evaluated"} or not isinstance(value.get("reason_codes"),list):
+        raise ValueError("closure_verification_invalid")
+    return value
+
+
 def _dependency(state: str, generation: str | None = None, semantic_hash: str | None = None) -> dict:
     if state not in {"required_present", "not_applicable", "not_used", "unavailable"}:
         raise ValueError("invalid_dependency_state")
@@ -264,6 +323,8 @@ def _planner_result(ctx: LocalExecutionContext, preparation: Path, manifest: dic
         raise ValueError("planner_completion_receipt_missing")
     value = read_json(ctx.repository_root, path, label="remediation_planner_result")
     receipt = read_json(ctx.repository_root, receipt_path, label="remediation_planner_receipt")
+    validate_planner_result(value, work_order_id=work["work_order_id"], preparation_id=manifest["preparation_id"])
+    validate_planner_receipt(receipt, work_order_id=work["work_order_id"])
     fields = {"schema_version", "work_order_id", "preparation_id", "records", "assumptions", "limitations"}
     if set(value) != fields or value["schema_version"] != PLANNER_RESULT_SCHEMA or value["work_order_id"] != work["work_order_id"] or value["preparation_id"] != manifest["preparation_id"]:
         raise ValueError("planner_result_binding_mismatch")
@@ -393,6 +454,8 @@ def _closure_inbox(ctx: LocalExecutionContext, closure_contract_id: str) -> tupl
     exact_children(inbox, {"evidence.json", "verifier-receipt.json"}, label="closure_inbox")
     evidence = read_json(ctx.repository_root, inbox / "evidence.json", label="closure_evidence")
     receipt = read_json(ctx.repository_root, inbox / "verifier-receipt.json", label="closure_verifier_receipt")
+    validate_closure_evidence(evidence)
+    validate_closure_verifier_receipt(receipt, closure_contract_id=closure_contract_id)
     evidence_fields = {"schema_version", "closure_contract_id", "release_id", "release_commit", "branch", "fixer_id", "reruns", "regression_results", "test_results", "instrumentation_results", "protected_invariant_outcomes"}
     receipt_fields = {"schema_version", "closure_contract_id", "evidence_snapshot_hash", "verifier_id", "executor_type"}
     if not isinstance(evidence, dict) or set(evidence) != evidence_fields or evidence.get("schema_version") != CLOSURE_EVIDENCE_SCHEMA:

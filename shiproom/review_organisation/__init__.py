@@ -33,6 +33,7 @@ def guard_prohibited_operation(operation: str) -> None:
 def _json(value:object)->bytes:return (json.dumps(value,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode()
 def _hash(raw:bytes)->str:return "sha256:"+hashlib.sha256(raw).hexdigest()
 def _stable(prefix:str,value:object)->str:return prefix+"_"+hashlib.sha256(canonical_json(value).encode()).hexdigest()[:24]
+def _work_order_id(specialist_id:str,value:object)->str:return "wo_"+specialist_id+"_"+hashlib.sha256(canonical_json(value).encode()).hexdigest()[:16]
 def _dep(state:str,generation:str|None=None,semantic_hash:str|None=None)->dict:
     if state not in {"required_present","not_applicable","not_used","unavailable"}:raise ValueError("invalid_dependency_state")
     if state=="required_present" and (not generation or not semantic_hash):raise ValueError("required_dependency_missing_binding")
@@ -148,6 +149,8 @@ def validate_harness_capability_manifest(value: dict) -> dict:
     for name in ("declared_capability", "granted_permission", "independence_limitation"):
         if not isinstance(value[name], str) or not value[name] or len(value[name]) > (1000 if name == "independence_limitation" else 200):
             raise ValueError("harness_capability_manifest_value_invalid")
+    if value["declared_capability"] not in {"prepared_packet_only","native_preparation"} or value["granted_permission"] not in {"prepared_packet_only","read_only"}:
+        raise ValueError("harness_capability_manifest_permission_invalid")
     return value
 
 
@@ -190,15 +193,15 @@ def _resolve_symbol(value: str) -> object:
     return target
 
 
-def validate_specialist_registries() -> dict:
+def validate_specialist_registries(result: dict | None = None, boundaries: dict | None = None, policy: dict | None = None) -> dict:
     """Validate the fixed specialist/result/native/surface contract matrix."""
-    result = registry()
-    boundaries = native_boundaries()
-    policy = surface_policy()
+    result = registry() if result is None else result
+    boundaries = native_boundaries() if boundaries is None else boundaries
+    policy = surface_policy() if policy is None else policy
     specialists = result.get("specialists")
     native = boundaries.get("specialists")
     signals = policy.get("signals")
-    if not isinstance(specialists, list) or not isinstance(native, list) or not isinstance(signals, list):
+    if set(result)!={"schema_version","specialists"} or set(boundaries)!={"schema_version","specialists"} or set(policy)!={"schema_version","signals"} or not isinstance(specialists, list) or not isinstance(native, list) or not isinstance(signals, list):
         raise ValueError("specialist_registry_invalid")
     ids = [item.get("specialist_id") for item in specialists]
     native_ids = [item.get("specialist_id") for item in native]
@@ -222,7 +225,27 @@ def validate_specialist_registries() -> dict:
         seen_signals.add(signal["signal_type"])
         if signal["maximum_applicability_authority"] not in AUTHORITIES:
             raise ValueError("review_surface_policy_invalid")
+        if signal["permitted_selection_effect"] not in {"select","candidate_review"} or signal["permitted_adaptation_effect"] not in TRIGGERS|{"none"}:
+            raise ValueError("review_surface_policy_invalid")
     return {"registry": result, "native_boundaries": boundaries, "surface_policy": policy}
+
+
+def validate_review_plan_artifact(value: dict) -> dict:
+    """Independent Python boundary for the canonical review-plan artifact."""
+    required={"schema_version","plan_id","input_vector","specialists","adaptation_depth","supersedes"}
+    allowed=required|{"last_adaptation"}
+    if not isinstance(value,dict) or not required.issubset(value) or not set(value).issubset(allowed) or value.get("schema_version")!="review-plan.v1":
+        raise ValueError("review_plan_artifact_invalid")
+    if not isinstance(value.get("specialists"),list) or not value["specialists"]:
+        raise ValueError("review_plan_specialists_invalid")
+    ids=[]
+    for item in value["specialists"]:
+        if not isinstance(item,dict) or item.get("state") not in STATES or item.get("applicability_authority") not in AUTHORITIES or not isinstance(item.get("specialist_id"),str):
+            raise ValueError("review_plan_specialist_invalid")
+        ids.append(item["specialist_id"])
+    if len(ids)!=len(set(ids)):
+        raise ValueError("review_plan_specialist_duplicate")
+    return value
 
 
 def validate_migration_result(value: dict) -> dict:
@@ -467,7 +490,7 @@ def prepare(ctx:LocalExecutionContext)->dict:
     work_orders=[]
     for item in selected:
         if item["state"]!="selected":continue
-        work_order_id = _stable("wo",{"plan":plan_id,"specialist":item["specialist_id"]})
+        work_order_id = _work_order_id(item["specialist_id"],{"plan":plan_id,"specialist":item["specialist_id"]})
         binding = json.loads(canonical_json(item["native_binding"]))
         # Intent proposals intentionally have no work_order_id field.  The
         # wrapper receipt binds this generated ID while the proposal remains
@@ -501,6 +524,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     if any(_hash(_json(value)) != manifest["artifact_hashes"].get(name) for name,value in artifacts.items()):
         raise ValueError("review_plan_artifact_tampered")
     plan = artifacts["review-plan.json"]
+    validate_review_plan_artifact(plan)
     if plan.get("input_vector") != manifest["input_vector"] or any(item.get("state") == "selected" and not isinstance(item.get("native_binding"), dict) for item in plan.get("specialists", [])):
         raise ValueError("review_plan_native_binding_tampered")
     _validate_plan_native_bindings(ctx, plan)
@@ -599,14 +623,14 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
             effect = "specialist_work_issued"
     if prior_order is not None:
         replacement = json.loads(canonical_json(prior_order))
-        replacement["work_order_id"] = _stable("wo", {"prior": prior_order["work_order_id"], "event": identity})
+        replacement["work_order_id"] = _work_order_id(target, {"prior": prior_order["work_order_id"], "event": identity})
         replacement["supersedes_work_order_id"] = prior_order["work_order_id"]
         replacement["adaptation_event_id"] = identity
         if target_item.get("native_binding"):
             replacement["native_binding"] = target_item["native_binding"]
         additional.append(replacement)
     elif target_item["state"] == "selected":
-        work_id = _stable("wo", {"plan": plan["plan_id"], "specialist": target, "event": identity})
+        work_id = _work_order_id(target, {"plan": plan["plan_id"], "specialist": target, "event": identity})
         additional.append({"schema_version":"specialist-work-order.v1","work_order_id":work_id,"plan_id":plan["plan_id"],"specialist_id":target,"role_version":target_item["role_version"],"result_schema":target_item["result_schema"],"input_vector_hash":content_hash(manifest["input_vector"]),"allowed_files":[],"execution_mode":target_item["execution_mode"],"harness_capability_manifest":manifest["input_vector"]["harness"],"revision_policy":{"maximum_invalid_submissions":2,"codes":sorted(REVISION_CODES)},"native_boundary":target_item["native_boundary"],"native_binding":target_item["native_binding"],"adaptation_event_id":identity})
     plan["last_adaptation"] = {"event_id": identity, "effect": effect, "target_specialist": target, "superseded_work_order_id": prior_order.get("work_order_id") if prior_order else None, "replacement_work_order_ids": [item["work_order_id"] for item in additional]}
     if content_hash(plan) == content_hash(artifacts["review-plan.json"]):

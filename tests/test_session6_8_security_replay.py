@@ -9,5 +9,8 @@ def test_security_registry_is_frozen_and_receipt_replays(tmp_path):
     subprocess.run([sys.executable,"scripts/build_session6_8_security_registry.py"],cwd=ROOT,check=True)
     registry=json.loads((ROOT/"docs/validation/session6-8-security-surface-registry.json").read_text())
     assert len(registry["records"])==4*len(PROHIBITED_PRIVATE_ALPHA_OPERATIONS)
+    assert {row["domain"] for row in registry["records"]}=={"remediation_roadmaps","review_organisation","contestability","management_artifacts"}
+    assert sum(row["classification"]=="reachable_guarded" for row in registry["records"])==2
+    assert sum(row["classification"]=="unreachable_by_design" for row in registry["records"])==42
     output=tmp_path/"security.json"; subprocess.run([sys.executable,"scripts/run_session6_8_security_attacks.py","--output",str(output)],cwd=ROOT,check=True)
     result=validate(output); assert result["status"]=="passed" and result["record_count"]==len(registry["records"])
