@@ -58,6 +58,7 @@ def build(target: Path, *, final_commit: str) -> dict:
         "session6-8-final-closeout-receipt.json": local / "session6-8-final-closeout-receipt.json",
     }
     for relative, source in sources.items(): _copy(source, target / relative)
+    _copy(ROOT/"scripts/validate_session6_8_closeout_independently.py",target/"independent-validator-entrypoint.py")
     directories = {
         "parity-fixtures": local / "session6-8-parity-fixtures",
         "security-evidence": local / "session6-8-security-evidence",
@@ -70,6 +71,7 @@ def build(target: Path, *, final_commit: str) -> dict:
         for source in sorted(path for path in source_root.rglob("*") if path.is_file()):
             _copy(source, target / prefix / source.relative_to(source_root))
     wheel = json.loads((local / "session6-8-installed-wheel-receipt.json").read_text(encoding="utf-8"))
+    _copy(Path(wheel["bundled_wheel_path"]),target/"final-session6-8.whl")
     external = Path(wheel["external_working_directory"])
     for row in wheel["artifacts"]:
         _copy(external / row["relative_path"], target / "canonical-artifacts/wheel" / row["relative_path"])

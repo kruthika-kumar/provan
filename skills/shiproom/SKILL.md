@@ -230,6 +230,8 @@ shiproom trace record --release release-state/release.json --live-url <worker-ur
 
 ## Sessions 6–8 private-alpha extensions
 
+Treat the Sessions 6–8 closeout as valid only when all 106 frozen requirements have distinct valid, near-valid, and adversarial proof bindings, their measured canonical artifacts resolve, and the copied evidence bundle validates using its bundled wheel and independent validator outside the checkout.
+
 Use remediation roadmaps only as packet-only recommendations. Do not edit the
 reviewed repository, create a PR, merge, deploy, or close a canonical finding
 from private-alpha output. Closure verification returns a candidate status only

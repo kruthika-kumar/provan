@@ -475,11 +475,13 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     installed([str(command),"management-artifacts","compile","--release",str(release_path)])
     installed([str(command),"management-artifacts","show","--release",str(release_path)])
     if evidence_target:
+        bundled_wheel=Path(evidence_target).parent/"final-session6-8.whl"
+        shutil.copy2(wheel,bundled_wheel)
         artifact_root=ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]
         artifact_rows=[]
         for artifact in sorted(path for path in artifact_root.rglob("*") if path.is_file()):
             artifact_rows.append({"relative_path":artifact.relative_to(ctx.repository_root).as_posix(),"sha256":"sha256:"+hashlib.sha256(artifact.read_bytes()).hexdigest(),"size_bytes":artifact.stat().st_size})
-        Path(evidence_target).write_text(json.dumps({"wheel_sha256":"sha256:"+hashlib.sha256(wheel.read_bytes()).hexdigest(),"installed_distribution":wheel.name,"shiproom_executable":str(command),"shiproom_module_path":imported,"site_packages_root":str(environment/"Lib/site-packages"),"source_checkout_not_on_sys_path":str(project).lower() not in imported.lower(),"external_working_directory":str(ctx.repository_root),"artifacts":artifact_rows,"commands":wheel_commands},sort_keys=True,indent=2),encoding="utf-8")
+        Path(evidence_target).write_text(json.dumps({"wheel_sha256":"sha256:"+hashlib.sha256(wheel.read_bytes()).hexdigest(),"bundled_wheel_path":str(bundled_wheel),"installed_distribution":wheel.name,"shiproom_executable":str(command),"shiproom_module_path":imported,"site_packages_root":str(environment/"Lib/site-packages"),"source_checkout_not_on_sys_path":str(project).lower() not in imported.lower(),"external_working_directory":str(ctx.repository_root),"artifacts":artifact_rows,"commands":wheel_commands},sort_keys=True,indent=2),encoding="utf-8")
 
 
 def test_browser_placeholders_are_criterion_specific():

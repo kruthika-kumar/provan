@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -145,6 +146,10 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     for row in wheel.get("artifacts",[]):
         artifact=bundle/"canonical-artifacts/wheel"/row["relative_path"]
         if not artifact.is_file() or _sha(artifact.read_bytes())!=row["sha256"]:raise CloseoutValidationError("closeout_wheel_artifact_invalid")
+    bundled_wheel=bundle/"final-session6-8.whl"
+    if not bundled_wheel.is_file() or _sha(bundled_wheel.read_bytes())!=wheel.get("wheel_sha256"):raise CloseoutValidationError("closeout_bundled_wheel_invalid")
+    validator_source=bundle/"independent-validator-entrypoint.py"
+    if not validator_source.is_file():raise CloseoutValidationError("closeout_validator_source_missing")
     if len(claims)!=len({row.get("claim_id") for row in claims}):raise CloseoutValidationError("closeout_claim_duplicate")
     resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")
     if resolution.get("claim_count")!=106 or resolution.get("resolved_claim_count")!=106 or resolution.get("final_commit")!=expected_commit:raise CloseoutValidationError("closeout_claim_resolution_incomplete")
@@ -165,7 +170,15 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
 
 
 def main() -> int:
-    parser=argparse.ArgumentParser();parser.add_argument("--bundle",type=Path,required=True);parser.add_argument("--expected-commit",required=True);parser.add_argument("--expected-receipt-hash",required=True);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument("--bundle",type=Path,required=True);parser.add_argument("--expected-commit",required=True);parser.add_argument("--expected-receipt-hash",required=True);parser.add_argument("--require-installed-wheel",action="store_true");args=parser.parse_args()
+    if args.require_installed_wheel:
+        try:
+            import shiproom
+            module=Path(shiproom.__file__).resolve();prefix=Path(sys.prefix).resolve()
+            module.relative_to(prefix)
+        except Exception: print("closeout_external_wheel_origin_invalid");return 2
+        checkout=Path(__file__).resolve().parents[1]
+        if any(str(checkout).lower()==str(Path(item).resolve()).lower() for item in sys.path if item):print("closeout_source_checkout_on_sys_path");return 2
     try: result=validate_bundle(args.bundle,expected_commit=args.expected_commit,expected_receipt_hash=args.expected_receipt_hash)
     except CloseoutValidationError as exc: print(str(exc));return 2
     print(json.dumps(result,sort_keys=True));return 0

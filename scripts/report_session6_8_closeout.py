@@ -99,6 +99,8 @@ def main() -> int:
                          "completion_map_hash": _sha((validation / "session6-8-completion-map.json").read_bytes()),
                          "execution_map_hash": _sha((validation / "session6-8-execution-map.json").read_bytes()),
                          "proof_manifest_hash": _sha((validation / "session6-8-proof-manifest.json").read_bytes()),
+                         "requirement_proof_registry_hash": _sha((validation / "session6-8-requirement-proof-registry.json").read_bytes()),
+                         "proof_fingerprint_audit_hash": _sha((validation / "session6-8-proof-fingerprint-audit.json").read_bytes()),
                          "claim_registry_hash": _sha((validation / "session6-8-claim-registry.json").read_bytes()),
                          "contract_inventory_hash": _sha((validation / "session6-8-contract-inventory.json").read_bytes()),
                          "workflow_contracts_hash": _sha((validation / "session6-8-workflow-contracts.json").read_bytes()),

@@ -231,6 +231,8 @@ Browser work is issued only for `browser_or_http` criteria with an exact release
 
 ## Sessions 6–8 private-alpha workflow
 
+Closeout evidence is requirement-specific: 106 frozen requirements map one-to-one to 106 claims and to exactly three authoritative proof classes each. The final local bundle carries the frozen 318-proof registry, fingerprint audit, independently measured 106-row evidence matrix, installed wheel, and checkout-independent validator entrypoint.
+
 Remediation roadmaps and closure contracts are packet-only and read-only:
 `shiproom remediation-roadmap` can prepare, compile, show, and verify a closure
 candidate, but never edits a reviewed repository or closes a canonical finding.
