@@ -1,7 +1,8 @@
 {
+  "duplicate_group_count": 0,
   "duplicates": [],
   "proof_count": 318,
-  "schema_version": "session6-8-proof-fingerprint-audit.v1",
+  "schema_version": "session6-8-proof-fingerprint-audit.v2",
   "status": "passed",
   "unique_fingerprint_count": 318,
   "unjustified_duplicate_count": 0

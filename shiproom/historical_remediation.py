@@ -12,6 +12,7 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 
 
 def _run(directory: Path, *args: str) -> str:
@@ -22,6 +23,7 @@ def _sha(raw: bytes) -> str:
     return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
+@observed_boundary
 def run_controlled_patient(shiproom_root: Path) -> dict:
     before = _run(shiproom_root, "status", "--porcelain=v1")
     original_branch = _run(shiproom_root, "branch", "--show-current")

@@ -14,6 +14,7 @@ from shiproom.review_organisation import load as load_review_plan
 from shiproom.contestability import load as load_contestation
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
+from shiproom.workflow_audit import observed_boundary
 
 COMPILER_VERSION="portable-management-artifacts.v1"
 JSON_ARTIFACTS=("executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","release-recommendation-view")
@@ -248,6 +249,7 @@ def _verify_html_vector(raw: bytes, vector: dict) -> None:
     if canonical_json(parsed) != canonical_json(vector):
         raise ValueError("management_html_dependency_vector_mismatch")
 
+@observed_boundary
 def compile(ctx:LocalExecutionContext)->dict:
     vector=dependency_vector(ctx); loaded=vector.pop("_loaded");policy=_policy(ctx,vector,loaded["contest"]);generation="gen_"+uuid.uuid4().hex;directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="management_generation")
     base={"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector}
@@ -274,6 +276,7 @@ def compile(ctx:LocalExecutionContext)->dict:
     hashes={path.name:_hash(read_bytes(ctx.repository_root,path,label="management_generated_artifact",max_bytes=2*1024*1024)) for path in checked_children(ctx.repository_root,directory,label="management_generation") if path.is_file()};manifest={"schema_version":"management-generation-manifest.v1","compiler_version":COMPILER_VERSION,"generation":generation,"release_id":ctx.release["release_id"],"artifact_dependency_vector":vector,"artifact_hashes":hashes,"semantic_bundle_hash":content_hash(artifacts),"bundle_hash":""};manifest["bundle_hash"]=content_hash({k:v for k,v in manifest.items() if k!="bundle_hash"})
     write_bytes(ctx.repository_root,directory/"manifest.json",_json(manifest),label="management_manifest");replace_bytes(ctx.repository_root,root(ctx)/"current-management-generation.json",_json({"schema_version":"current-management-generation.v1","generation":generation,"manifest_hash":_hash(_json(manifest)),"semantic_bundle_hash":manifest["semantic_bundle_hash"]}),label="management_pointer");return manifest
 
+@observed_boundary
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
     validate_generation_manifest(manifest)

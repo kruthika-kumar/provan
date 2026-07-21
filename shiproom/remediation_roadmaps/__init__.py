@@ -14,6 +14,7 @@ from shiproom.graph import load_assessment_input
 from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import ensure_directory, exact_children, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
+from shiproom.workflow_audit import observed_boundary
 
 
 PREPARATION_VERSION = "remediation-roadmap-preparation.v1"
@@ -279,10 +280,13 @@ def _minimal_packet(issue: dict, planner: dict | None, ctx: LocalExecutionContex
     packet = {"remediation_id": remediation_id, **issue, "user_or_business_impact": {"authority": "not_inspected", "value": None}, "automation_eligibility": eligibility, "execution_modes": ["roadmap_only", "external_agent_handoff"], "verification_contract_id": closure_id, "protected_invariants": ["canonical_findings_unchanged", "canonical_verdict_unchanged", "no_automatic_merge"], "allowed_closure_evidence_classes": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), **semantic}
     commit = ctx.authority_binding["repository_commit"]
     branch = ctx.release.get("repository", {}).get("branch") or ctx.release.get("branch") or "owner_action_required"
-    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "regression_checks": [], "test_requirements": [], "instrumentation_requirements": [], "protected_invariants": packet["protected_invariants"], "allowed_repository_commit": commit, "allowed_branch": branch, "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), "source_generation": issue.get("source_generation", "current"), "release_commit": commit, "expiry_or_stale_bindings": {"release_commit": commit}}
+    deterministic_closure = issue["issue_classification"] == "verified_blocker"
+    exact_requirement = [issue["source_issue_id"]] if deterministic_closure else []
+    contract = {"closure_contract_id": closure_id, "remediation_id": remediation_id, "original_issue_id": issue["source_issue_id"], "original_criterion_id": issue["criterion_id"], "original_failure_evidence": issue["evidence_refs"], "required_before_state": "preserved", "required_after_evidence": "independent exact rerun bound to original issue", "exact_checks_to_rerun": [issue["source_issue_id"]], "regression_checks": exact_requirement, "test_requirements": exact_requirement, "instrumentation_requirements": exact_requirement, "protected_invariants": packet["protected_invariants"], "allowed_repository_commit": commit, "allowed_branch": branch, "independent_verifier_requirement": True, "owner_decision_requirement": issue["issue_classification"] == "owner_decision_required", "evidence_classes_allowed_to_close": issue.get("allowed_closure_evidence_classes", ["deterministically_established"]), "source_generation": issue.get("source_generation", "current"), "release_commit": commit, "expiry_or_stale_bindings": {"release_commit": commit}}
     return {"packet": packet, "contract": contract}
 
 
+@observed_boundary
 def prepare(ctx: LocalExecutionContext) -> dict:
     authority = _authority(ctx); issues = _issue_records(ctx, authority); preparation_id = "prep_" + uuid.uuid4().hex; contracts = _contract_snapshots()
     directory = ensure_directory(ctx.repository_root, root(ctx) / "preparations" / preparation_id, label="remediation_preparation")
@@ -377,6 +381,7 @@ def _validate_preparation_contract_snapshots(ctx: LocalExecutionContext, directo
             raise ValueError("remediation_work_order_contract_binding_invalid")
 
 
+@observed_boundary
 def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> dict:
     active = root(ctx) / "active-preparation.json"
     if preparation_id is None:
@@ -422,6 +427,7 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     return generated
 
 
+@observed_boundary
 def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -> tuple[dict, dict]:
     if directory is None:
         pointer = read_json(ctx.repository_root, root(ctx) / "current-remediation-generation.json", label="remediation_pointer"); directory = root(ctx) / "generations" / pointer["generation"]
@@ -475,6 +481,7 @@ def _closure_inbox(ctx: LocalExecutionContext, closure_contract_id: str) -> tupl
     return evidence, receipt
 
 
+@observed_boundary
 def closure_verify(ctx: LocalExecutionContext, closure_contract_id: str, evidence: dict | None = None) -> dict:
     """Validate only the portable closure inbox; arbitrary evidence objects are forbidden."""
     manifest, _ = load_generation(ctx)

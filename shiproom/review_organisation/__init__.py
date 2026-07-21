@@ -12,6 +12,7 @@ from shiproom.authority import LocalExecutionContext
 from shiproom.graph import load_assessment_input
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
+from shiproom.workflow_audit import observed_boundary
 
 
 COMPILER_VERSION="portable-review-plan.v1"
@@ -484,6 +485,7 @@ def _validate_plan_native_bindings(ctx: LocalExecutionContext, plan: dict) -> No
             raise ValueError("stale_native_specialist_boundary")
 
 
+@observed_boundary
 def prepare(ctx:LocalExecutionContext)->dict:
     validate_specialist_registries()
     vector=_vector(ctx); selected=_selection(ctx, vector); vector=_bind_consumed_dependencies(vector, selected); plan_id=_stable("review_plan",vector); generation="plan_"+uuid.uuid4().hex; directory=ensure_directory(ctx.repository_root,root(ctx)/"generations"/generation,label="review_plan_generation")
@@ -581,6 +583,7 @@ def _publish_successor(ctx: LocalExecutionContext, manifest: dict, artifacts: di
     return new_manifest
 
 
+@observed_boundary
 def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_id:str,evidence_id:str)->dict:
     if trigger not in TRIGGERS:raise ValueError("adaptation_trigger_invalid")
     manifest,artifacts=load(ctx);events=artifacts["plan-events.json"]["events"]
@@ -643,6 +646,7 @@ def adapt(ctx:LocalExecutionContext,trigger:str,source_specialist:str,criterion_
     return {"status":"accepted","event":event,"prior_generation":manifest["generation"],"generation":new_manifest["generation"]}
 
 
+@observed_boundary
 def render_package(ctx: LocalExecutionContext, specialist_id: str) -> dict:
     manifest, artifacts = load(ctx)
     directory = root(ctx) / "generations" / manifest["generation"] / "specialist-work-orders"
@@ -782,6 +786,7 @@ def _submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict,
     return {"status": "accepted", "specialist_id": specialist_id, "work_order_id": expected_work_order, "result_id": accepted_records[0]["result_id"], "result_ids": [item["result_id"] for item in accepted_records], "generation": new_manifest["generation"]}
 
 
+@observed_boundary
 def submit_result(ctx: LocalExecutionContext, specialist_id: str, result: dict, receipt: dict) -> dict:
     """Compatibility API for canonical in-memory manual submissions."""
     return _submit_result(ctx, specialist_id, result, receipt, _json(result), _json(receipt))

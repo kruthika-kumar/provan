@@ -28,6 +28,11 @@ OPERATORS = frozenset(
         "unchanged",
         "file_set_equals",
         "pointer_targets",
+        "equals_reference",
+        "count_equals_reference",
+        "field_set_equals_reference",
+        "text_contains",
+        "text_absent",
     }
 )
 
@@ -102,13 +107,24 @@ def evaluate(root: Path, query: dict[str, Any]) -> QueryResult:
     operator = query["operator"]
     if operator not in OPERATORS:
         raise EvidenceQueryError("evidence_query_operator_invalid")
-    document = load_json(root, query["artifact"])
-    actual = _pointer(document, query["selector"])
     expected = query["expected"]
+    if operator in {"text_contains", "text_absent"}:
+        candidate=(root/query["artifact"]).resolve()
+        if root.resolve() not in candidate.parents or not candidate.is_file() or candidate.is_symlink():
+            raise EvidenceQueryError("evidence_query_artifact_missing")
+        try: actual=candidate.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc: raise EvidenceQueryError("evidence_query_artifact_invalid") from exc
+    else:
+        document = load_json(root, query["artifact"])
+        actual = _pointer(document, query["selector"])
     if operator == "equals":
         passed = actual == expected
     elif operator == "not_equals":
         passed = actual != expected
+    elif operator == "text_contains":
+        passed = isinstance(expected,str) and expected in actual
+    elif operator == "text_absent":
+        passed = isinstance(expected,list) and all(isinstance(item,str) and item.lower() not in actual.lower() for item in expected)
     elif operator == "count_equals":
         passed = _cardinality(actual) == expected
     elif operator == "count_at_least":
@@ -137,6 +153,20 @@ def evaluate(root: Path, query: dict[str, Any]) -> QueryResult:
         passed = bool(source_field) and all(isinstance(row, dict) and row.get(source_field) in target_values for row in actual)
     elif operator == "pointer_targets":
         passed = isinstance(actual, str) and actual == expected
+    elif operator in {"equals_reference", "count_equals_reference", "field_set_equals_reference"}:
+        if not isinstance(expected, dict) or set(expected) - {"artifact", "selector", "field", "actual_field", "reference_field"} or not {"artifact", "selector"} <= set(expected):
+            raise EvidenceQueryError("evidence_query_reference_invalid")
+        reference = _pointer(load_json(root, expected["artifact"]), expected["selector"])
+        if operator == "equals_reference":
+            passed = actual == reference
+        elif operator == "count_equals_reference":
+            passed = _cardinality(actual) == _cardinality(reference)
+        else:
+            actual_field = expected.get("actual_field",expected.get("field"))
+            reference_field = expected.get("reference_field",expected.get("field"))
+            if not isinstance(actual, list) or not isinstance(reference, list) or not isinstance(actual_field, str) or not actual_field or not isinstance(reference_field,str) or not reference_field:
+                raise EvidenceQueryError("evidence_query_reference_invalid")
+            passed = {row.get(actual_field) for row in actual if isinstance(row, dict)} == {row.get(reference_field) for row in reference if isinstance(row, dict)}
     else:  # pragma: no cover - OPERATORS and branches are kept exhaustive.
         raise EvidenceQueryError("evidence_query_operator_invalid")
     return QueryResult(actual=actual, expected=expected, passed=passed, cardinality=_cardinality(actual))

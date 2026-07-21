@@ -15,6 +15,7 @@ from shiproom.assessment import load_assessment
 from shiproom.measurement_ai.persistence import load_generation as load_measurement_ai
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
+from shiproom.workflow_audit import observed_boundary
 
 
 ACTIONS={"accept_finding","dispute_with_evidence","clarify_requirement","add_evidence","accept_named_risk","defer","request_remediation"}
@@ -235,6 +236,7 @@ def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
     value=read_json(ctx.repository_root,pointer,label="contestation_pointer");directory=root(ctx)/"generations"/value["generation"];safe_entry(directory,directory=True,label="contestation_generation");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");return ledger["actions"],value
 
 
+@observed_boundary
 def append_action(ctx:LocalExecutionContext, action:dict)->dict:
     action=validate_action_contract(action); action=_validate(ctx,action); actions,_=_current(ctx); semantic=content_hash(_semantic(action))
     same=[item for item in actions if item["action_id"]==action["action_id"]]
@@ -252,6 +254,7 @@ def append_action(ctx:LocalExecutionContext, action:dict)->dict:
     return {"status":"accepted","generation":generation,"action_id":action["action_id"]}
 
 
+@observed_boundary
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     actions,pointer=_current(ctx)
     if pointer is None:raise ValueError("contestation_generation_unavailable")

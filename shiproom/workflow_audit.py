@@ -8,6 +8,7 @@ are deliberately excluded from every substantive domain identity.
 from __future__ import annotations
 
 import contextvars
+import functools
 import hashlib
 import json
 import subprocess
@@ -98,6 +99,17 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
         return value
     finally:
         state["stack"].pop()
+
+
+def observed_boundary(callable_: Callable[..., T]) -> Callable[..., T]:
+    """Record this real boundary only while an audit session is enabled."""
+    @functools.wraps(callable_)
+    def wrapper(*args: Any, **kwargs: Any) -> T:
+        if _ACTIVE.get() is None:
+            return callable_(*args, **kwargs)
+        return invoke(callable_, *args, **kwargs)
+
+    return wrapper
 
 
 def assertion(assertion_id: str, description: str, actual: Any, expected: Any) -> dict[str, Any]:
