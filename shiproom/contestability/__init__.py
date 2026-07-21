@@ -16,6 +16,7 @@ from shiproom.measurement_ai.persistence import load_generation as load_measurem
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 from shiproom.workflow_audit import observed_boundary
+from shiproom.session6_8_contract_validation import validate_canonical_contract
 
 
 ACTIONS={"accept_finding","dispute_with_evidence","clarify_requirement","add_evidence","accept_named_risk","defer","request_remediation"}
@@ -233,7 +234,7 @@ def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
         safe_entry(pointer, directory=False, label="contestation_pointer")
     except FileNotFoundError:
         return [],None
-    value=read_json(ctx.repository_root,pointer,label="contestation_pointer");directory=root(ctx)/"generations"/value["generation"];safe_entry(directory,directory=True,label="contestation_generation");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");return ledger["actions"],value
+    value=read_json(ctx.repository_root,pointer,label="contestation_pointer");validate_canonical_contract("contestation_current_pointer",value);directory=root(ctx)/"generations"/value["generation"];safe_entry(directory,directory=True,label="contestation_generation");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");return ledger["actions"],value
 
 
 @observed_boundary
@@ -259,6 +260,9 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     actions,pointer=_current(ctx)
     if pointer is None:raise ValueError("contestation_generation_unavailable")
     directory=root(ctx)/"generations"/pointer["generation"];manifest=read_json(ctx.repository_root,directory/"manifest.json",label="contestation_manifest");ledger=read_json(ctx.repository_root,directory/"contestation-ledger.json",label="contestation_ledger");effects=read_json(ctx.repository_root,directory/"contestation-effects.json",label="contestation_effects")
+    validate_canonical_contract("contestation_generation_manifest", manifest)
+    validate_canonical_contract("contestation_ledger", ledger)
+    validate_canonical_contract("contestation_effects", effects)
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["actions_hash"]!=content_hash([_semantic(item) for item in ledger["actions"]]):raise ValueError("contestation_generation_tampered")
     if pointer.get("manifest_hash") != _sha(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("contestation_pointer_tampered")

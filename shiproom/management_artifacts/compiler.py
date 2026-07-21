@@ -15,6 +15,7 @@ from shiproom.contestability import load as load_contestation
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 from shiproom.workflow_audit import observed_boundary
+from shiproom.session6_8_contract_validation import validate_canonical_contract
 
 COMPILER_VERSION="portable-management-artifacts.v1"
 JSON_ARTIFACTS=("executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","release-recommendation-view")
@@ -281,12 +282,25 @@ def compile(ctx:LocalExecutionContext)->dict:
 
 @observed_boundary
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
-    pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
+    pointer=read_json(ctx.repository_root,root(ctx)/"current-management-generation.json",label="management_pointer");validate_canonical_contract("management_current_pointer",pointer);directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="management_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="management_manifest")
+    validate_canonical_contract("management_generation_manifest", manifest)
     validate_generation_manifest(manifest)
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["release_id"]!=ctx.release["release_id"]:raise ValueError("stale_dependency")
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("management_pointer_tampered")
-    artifacts={name:read_json(ctx.repository_root,directory/(name+".json"),label="management_artifact") for name in JSON_ARTIFACTS};github=read_json(ctx.repository_root,directory/"github-summary-payload.json",label="github_payload");vectors=[canonical_json(v["artifact_dependency_vector"]) for v in artifacts.values()]+[canonical_json(github["artifact_dependency_vector"])]
+    artifacts={name:read_json(ctx.repository_root,directory/(name+".json"),label="management_artifact") for name in JSON_ARTIFACTS};github=read_json(ctx.repository_root,directory/"github-summary-payload.json",label="github_payload")
+    report_contracts={
+      "executive-release-brief":"management_executive_release_brief",
+      "product-release-review":"management_product_release_review",
+      "engineering-release-assessment":"management_engineering_release_assessment",
+      "measurement-ai-readiness":"management_measurement_ai_readiness",
+      "remediation-overview":"management_remediation_overview",
+      "release-packet-index":"management_release_packet_index",
+      "release-recommendation-view":"management_release_recommendation_view",
+    }
+    for name,value in artifacts.items(): validate_canonical_contract(report_contracts[name], value)
+    validate_canonical_contract("management_github_payload", github)
+    vectors=[canonical_json(v["artifact_dependency_vector"]) for v in artifacts.values()]+[canonical_json(github["artifact_dependency_vector"])]
     if len(set(vectors))!=1 or vectors[0]!=canonical_json(manifest["artifact_dependency_vector"]):raise ValueError("artifact_dependency_vector_mismatch")
     expected = {name + ".json" for name in JSON_ARTIFACTS} | {name + ".html" for name in JSON_ARTIFACTS if name != "release-recommendation-view"} | {"github-summary-payload.json", "github-summary.md", "manifest.json"}
     actual = {path.name for path in checked_children(ctx.repository_root, directory, label="management_generation")}

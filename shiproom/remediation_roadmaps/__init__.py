@@ -15,6 +15,7 @@ from shiproom.measurement_ai.persistence import load_generation as load_measurem
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import ensure_directory, exact_children, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 from shiproom.workflow_audit import observed_boundary
+from shiproom.session6_8_contract_validation import validate_canonical_contract
 
 
 PREPARATION_VERSION = "remediation-roadmap-preparation.v1"
@@ -389,9 +390,11 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
     directory = root(ctx) / "preparations" / preparation_id
     safe_entry(directory, directory=True, label="remediation_preparation")
     manifest = read_json(ctx.repository_root, directory / "remediation-work-orders.json", label="remediation_work_orders")
+    validate_canonical_contract("remediation_work_orders", manifest)
     if manifest["compiler_version"] != PREPARATION_VERSION or manifest["manifest_hash"] != content_hash({key: value for key, value in manifest.items() if key != "manifest_hash"}):
         raise ValueError("stale_remediation_preparation")
     source = read_json(ctx.repository_root, directory / "remediation-source-packet.json", label="remediation_source_packet")
+    validate_canonical_contract("remediation_source_packet", source)
     if content_hash(source) != manifest["source_packet_hash"]:
         raise ValueError("remediation_source_packet_tampered")
     _validate_preparation_contract_snapshots(ctx, directory, manifest, source)
@@ -430,12 +433,16 @@ def compile(ctx: LocalExecutionContext, preparation_id: str | None = None) -> di
 @observed_boundary
 def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -> tuple[dict, dict]:
     if directory is None:
-        pointer = read_json(ctx.repository_root, root(ctx) / "current-remediation-generation.json", label="remediation_pointer"); directory = root(ctx) / "generations" / pointer["generation"]
+        pointer = read_json(ctx.repository_root, root(ctx) / "current-remediation-generation.json", label="remediation_pointer"); validate_canonical_contract("remediation_current_pointer",pointer); directory = root(ctx) / "generations" / pointer["generation"]
     safe_entry(directory, directory=True, label="remediation_generation")
     manifest = read_json(ctx.repository_root, directory / "manifest.json", label="remediation_manifest")
+    validate_canonical_contract("remediation_generation_manifest", manifest)
     if manifest.get("compiler_version") != COMPILER_VERSION or manifest.get("release_commit") != ctx.authority_binding["repository_commit"]:
         raise ValueError("stale_dependency")
     artifacts = {name: read_json(ctx.repository_root, directory / name, label="remediation_artifact") for name in ("remediation-index.json", "remediation-plan.json", "remediation-overlay.json")}
+    validate_canonical_contract("remediation_index", artifacts["remediation-index.json"])
+    validate_canonical_contract("remediation_plan", artifacts["remediation-plan.json"])
+    validate_canonical_contract("remediation_overlay", artifacts["remediation-overlay.json"])
     if any(_sha(_json(artifacts[name])) != manifest["artifact_hashes"].get(name) for name in artifacts):
         raise ValueError("remediation_artifact_tampered")
     packets = artifacts["remediation-plan.json"].get("packets", [])
@@ -448,6 +455,8 @@ def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -
         contract_path = directory / "closure-contracts" / (item["verification_contract_id"] + ".json")
         packet = read_json(ctx.repository_root, packet_path, label="remediation_packet")
         contract = read_json(ctx.repository_root, contract_path, label="closure_contract")
+        validate_canonical_contract("remediation_packet", packet)
+        validate_canonical_contract("remediation_closure_contract", contract)
         if packet != item or contract.get("remediation_id") != item["remediation_id"]:
             raise ValueError("remediation_packet_contract_link_invalid")
         if _sha(_json(packet)) != manifest["artifact_hashes"].get("remediation-packets/" + item["remediation_id"] + ".json") or _sha(_json(contract)) != manifest["artifact_hashes"].get("closure-contracts/" + item["verification_contract_id"] + ".json"):

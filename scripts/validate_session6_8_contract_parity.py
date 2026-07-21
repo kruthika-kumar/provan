@@ -9,6 +9,7 @@ from shiproom.management_artifacts.compiler import validate_generation_manifest,
 from shiproom.remediation_roadmaps import validate_authority_policy,validate_closure_evidence,validate_closure_verification,validate_closure_verifier_receipt,validate_planner_receipt,validate_planner_result,validate_planner_role,validate_planner_work_order
 from shiproom.review_organisation import native_boundaries,registry
 from shiproom.review_organisation import surface_policy,validate_codex_execution_package,validate_harness_capability_manifest,validate_harness_execution_receipt,validate_migration_result,validate_review_plan_artifact,validate_specialist_registries
+from shiproom.session6_8_contract_validation import validate_canonical_contract
 
 ROOT=Path(__file__).resolve().parents[1]
 def _sha(path:Path)->str:return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
@@ -44,13 +45,14 @@ def _validate(cid:str,value:dict,valid:dict)->None:
     elif cid=="management_section_registry":validate_section_registry(value)
     elif cid=="release_recommendation_policy":validate_recommendation_policy(value)
     elif cid=="management_generation":validate_generation_manifest(value)
+    elif cid in {"remediation_source_packet","remediation_work_orders","remediation_active_pointer","remediation_current_pointer","remediation_generation_manifest","remediation_index","remediation_plan","remediation_overlay","remediation_packet","remediation_closure_contract","review_current_pointer","review_generation_manifest","review_plan_events","review_revision_ledger","review_accepted_results","review_execution_summary_initial","review_execution_summary_adapted","review_specialist_work_order","review_submission_validation","contestation_current_pointer","contestation_generation_manifest","contestation_ledger","contestation_effects","management_current_pointer","management_executive_release_brief","management_product_release_review","management_engineering_release_assessment","management_measurement_ai_readiness","management_remediation_overview","management_release_packet_index","management_release_recommendation_view","management_github_payload"}:validate_canonical_contract(cid,value)
     else:raise ValueError("contract_parity_boundary_unregistered:"+cid)
     if cid=="remediation_closure_evidence" and value["closure_contract_id"]!=valid["closure_contract_id"]:raise ValueError("closure_evidence_binding_invalid")
     if cid=="remediation_closure_verification" and value["closure_contract_id"]!=valid["closure_contract_id"]:raise ValueError("closure_verification_binding_invalid")
     if cid=="remediation_issue_authority_policy" and value!=valid:raise ValueError("remediation_issue_authority_policy_semantic_tamper")
 
 def validate(path:Path):
-    report=json.loads(path.read_text());inventory={r["contract_id"]:r for r in json.loads((ROOT/"docs/validation/session6-8-contract-inventory.json").read_text())["contracts"]};baselines={r["contract_id"]:r for r in report.get("accepted_baselines",[])};seen={}
+    report=json.loads(path.read_text());inventory={r["contract_id"]:r for r in json.loads((ROOT/"docs/validation/session6-8-contract-inventory.json").read_text())["contracts"] if r["parity_required"]};baselines={r["contract_id"]:r for r in report.get("accepted_baselines",[])};seen={}
     if set(baselines)!=set(inventory):raise ValueError("contract_parity_accepted_baseline_incomplete")
     for cid,row in baselines.items():
         valid_path=Path(row["valid_fixture_path"])

@@ -13,6 +13,7 @@ from shiproom.graph import load_assessment_input
 from shiproom.project import canonical_json, content_hash
 from shiproom.workflow_trust import checked_children, ensure_directory, read_bytes, read_json, replace_bytes, safe_entry, write_bytes, reject_private_alpha_operation
 from shiproom.workflow_audit import observed_boundary
+from shiproom.session6_8_contract_validation import validate_canonical_contract
 
 
 COMPILER_VERSION="portable-review-plan.v1"
@@ -513,7 +514,8 @@ def prepare(ctx:LocalExecutionContext)->dict:
 
 
 def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
-    pointer=read_json(ctx.repository_root, root(ctx)/"current-review-plan.json",label="review_plan_pointer");directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="review_plan_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="review_plan_manifest")
+    pointer=read_json(ctx.repository_root, root(ctx)/"current-review-plan.json",label="review_plan_pointer");validate_canonical_contract("review_current_pointer",pointer);directory=root(ctx)/"generations"/pointer["generation"];safe_entry(directory,directory=True,label="review_plan_generation");manifest=read_json(ctx.repository_root,directory/"manifest.json",label="review_plan_manifest")
+    validate_canonical_contract("review_generation_manifest", manifest)
     if manifest.get("compiler_version")!=COMPILER_VERSION or manifest["input_vector"]["release_commit"]!=ctx.authority_binding["repository_commit"]:raise ValueError("stale_dependency")
     _validate_consumed_dependencies(ctx, manifest["input_vector"])
     if pointer.get("manifest_hash") != _hash(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
@@ -523,6 +525,24 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     if {path.name for path in checked_children(ctx.repository_root,directory,label="review_plan_generation")} != expected:
         raise ValueError("review_plan_generation_file_set_mismatch")
     artifacts={name:read_json(ctx.repository_root,directory/name,label="review_plan_artifact") for name in names}
+    validate_canonical_contract("review_plan", artifacts["review-plan.json"])
+    validate_canonical_contract("review_plan_events", artifacts["plan-events.json"])
+    validate_canonical_contract("review_revision_ledger", artifacts["revision-ledger.json"])
+    validate_canonical_contract("review_accepted_results", artifacts["accepted-results.json"])
+    summary_kind = "review_execution_summary_adapted" if "active_specialists" in artifacts["execution-summary.json"] else "review_execution_summary_initial"
+    validate_canonical_contract(summary_kind, artifacts["execution-summary.json"])
+    order_root=directory/"specialist-work-orders"
+    for path in checked_children(ctx.repository_root,order_root,label="specialist_work_orders"):
+        if path.suffix!=".json": raise ValueError("specialist_work_order_file_invalid")
+        validate_canonical_contract("review_specialist_work_order",read_json(ctx.repository_root,path,label="specialist_work_order"))
+    submission_root=directory/"submissions"
+    for specialist_dir in checked_children(ctx.repository_root,submission_root,label="review_submissions"):
+        if not specialist_dir.is_dir(): raise ValueError("submission_file_set_invalid")
+        for attempt_dir in checked_children(ctx.repository_root,specialist_dir,label="review_submission_attempts"):
+            if not attempt_dir.is_dir(): raise ValueError("submission_file_set_invalid")
+            names={path.name for path in checked_children(ctx.repository_root,attempt_dir,label="review_submission_files")}
+            if names!={"result.json","completion-receipt.json","validation.json"}: raise ValueError("submission_file_set_invalid")
+            validate_canonical_contract("review_submission_validation",read_json(ctx.repository_root,attempt_dir/"validation.json",label="review_submission_validation"))
     if any(_hash(_json(value)) != manifest["artifact_hashes"].get(name) for name,value in artifacts.items()):
         raise ValueError("review_plan_artifact_tampered")
     plan = artifacts["review-plan.json"]

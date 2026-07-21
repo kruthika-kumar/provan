@@ -1,26 +1,608 @@
 {
-  "schema_version": "shiproom.session6-8-contract-inventory.v1",
   "contracts": [
-    {"contract_id":"remediation_closure_evidence","path":"shiproom/remediation_schemas/remediation-closure-evidence.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_closure_verifier_receipt","path":"shiproom/remediation_schemas/remediation-closure-verifier-receipt.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_closure_verification","path":"shiproom/remediation_schemas/remediation-closure-verification.v1.json","classification":"canonical_persisted","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_issue_authority_policy","path":"shiproom/remediation_schemas/remediation-issue-authority-policy.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_planner_result","path":"shiproom/remediation_schemas/remediation-planner-result.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_planner_role","path":"shiproom/remediation_schemas/remediation-planner-role.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_planner_work_order","path":"shiproom/remediation_schemas/remediation-planner-work-order.v1.json","classification":"canonical_persisted","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"remediation_planner_completion_receipt","path":"shiproom/remediation_schemas/remediation-planner-completion-receipt.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"review_plan","path":"review-plan.v1","classification":"canonical_persisted","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"agent_harness_capability_manifest","path":"shiproom/review_organisation/agent-harness-capability-manifest.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"harness_execution_receipt","path":"shiproom/review_organisation/harness-execution-receipt.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"codex_execution_package","path":"shiproom/review_organisation/codex-execution-package.v1.json","classification":"canonical_persisted","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"migration_result","path":"shiproom/review_organisation/migration-and-rollback-result.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"review_surface_policy","path":"shiproom/review_organisation/review-surface-policy.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"specialist_result_registry","path":"shiproom/review_organisation/specialist-result-registry.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"specialist_native_boundary_registry","path":"shiproom/review_organisation/specialist-native-boundary-registry.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"contestation_action","path":"shiproom/contestability_schemas/contestation-action.v1.json","classification":"externally_authored","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"contestation_target_registry","path":"shiproom/contestability_schemas/contestation-target-registry.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"management_section_registry","path":"shiproom/management_artifacts/management-artifact-section-registry.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"release_recommendation_policy","path":"shiproom/management_artifacts/release-recommendation-policy.v1.json","classification":"governing_resource","parity_required":true,"exclusion_reason":null},
-    {"contract_id":"management_generation","path":"management-generation-manifest.v1","classification":"canonical_persisted","parity_required":true,"exclusion_reason":null}
-  ]
+    {
+      "classification": "externally_authored",
+      "contract_id": "agent_harness_capability_manifest",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/agent-harness-capability-manifest.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "codex_execution_package",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/codex-execution-package.v1.json"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "contestation_action",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/contestability_schemas/contestation-action.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "contestation_current_pointer",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "current-contestation-generation.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "contestation_effects",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "contestation-effects.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "contestation_generation_manifest",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "contestation-generation-manifest.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "contestation_ledger",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "contestation-ledger.v1"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "contestation_target_registry",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/contestability_schemas/contestation-target-registry.v1.json"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "harness_execution_receipt",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/harness-execution-receipt.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_current_pointer",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "current-management-generation.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_engineering_release_assessment",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "engineering-release-assessment.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_executive_release_brief",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "executive-release-brief.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_generation",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "management-generation-manifest.v1"
+    },
+    {
+      "classification": "presentation_only",
+      "contract_id": "management_github_markdown",
+      "discovery_sources": [
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": "Deterministic presentation bytes are validated by management rendering and wheel lifecycles; they are not externally authored semantic contracts.",
+      "parity_required": false,
+      "path": "management-generation/github-summary.md"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_github_payload",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "github-summary-payload.v1"
+    },
+    {
+      "classification": "presentation_only",
+      "contract_id": "management_html_reports",
+      "discovery_sources": [
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": "Deterministic presentation bytes are validated by management rendering and wheel lifecycles; they are not externally authored semantic contracts.",
+      "parity_required": false,
+      "path": "management-generation/*.html"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_measurement_ai_readiness",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "measurement-ai-readiness-report.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_product_release_review",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "product-release-review.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_release_packet_index",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "release-packet-index.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_release_recommendation_view",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "release-recommendation-view.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "management_remediation_overview",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-overview.v1"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "management_section_registry",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/management_artifacts/management-artifact-section-registry.v1.json"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "migration_result",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/migration-and-rollback-result.v1.json"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "release_recommendation_policy",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/management_artifacts/release-recommendation-policy.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_active_pointer",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "active-remediation-preparation.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_closure_contract",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-closure-contract.v1"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "remediation_closure_evidence",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-closure-evidence.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_closure_verification",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-closure-verification.v1.json"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "remediation_closure_verifier_receipt",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-closure-verifier-receipt.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_current_pointer",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "current-remediation-generation.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_generation_manifest",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-generation-manifest.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_index",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-index.v1"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "remediation_issue_authority_policy",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-issue-authority-policy.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_overlay",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-overlay.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_packet",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-packet.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_plan",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-plan.v1"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "remediation_planner_completion_receipt",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-planner-completion-receipt.v1.json"
+    },
+    {
+      "classification": "externally_authored",
+      "contract_id": "remediation_planner_result",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-planner-result.v1.json"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "remediation_planner_role",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-planner-role.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_planner_work_order",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/remediation_schemas/remediation-planner-work-order.v1.json"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_source_packet",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-source-packet.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "remediation_work_orders",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "remediation-work-orders.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_accepted_results",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "accepted-specialist-results.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_current_pointer",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "current-review-plan.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_execution_summary_adapted",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "execution-summary.v1:adapted"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_execution_summary_initial",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "execution-summary.v1:initial"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_generation_manifest",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "review-plan-generation-manifest.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_plan",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "review-plan.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_plan_events",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "plan-events.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_revision_ledger",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "revision-ledger.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_specialist_work_order",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "specialist-work-order.v1"
+    },
+    {
+      "classification": "canonical_persisted",
+      "contract_id": "review_submission_validation",
+      "discovery_sources": [
+        "python_contract_identifier",
+        "golden_workflow_output"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "specialist-submission-validation.v1"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "review_surface_policy",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/review-surface-policy.v1.json"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "specialist_native_boundary_registry",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/specialist-native-boundary-registry.v1.json"
+    },
+    {
+      "classification": "governing_resource",
+      "contract_id": "specialist_result_registry",
+      "discovery_sources": [
+        "packaged_json_resource",
+        "python_contract_identifier"
+      ],
+      "exclusion_reason": null,
+      "parity_required": true,
+      "path": "shiproom/review_organisation/specialist-result-registry.v1.json"
+    }
+  ],
+  "schema_version": "shiproom.session6-8-contract-inventory.v2"
 }

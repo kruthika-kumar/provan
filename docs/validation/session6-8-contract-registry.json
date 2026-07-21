@@ -1,23 +1,1016 @@
-{"schema_version":"shiproom.session6-8-contract-registry.v1","contracts":[
- {"contract_name":"remediation_closure_evidence","schema":"shiproom/remediation_schemas/remediation-closure-evidence.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_closure_evidence","stateful_fixture_builder":"closure_inbox","structural_mutations":["nested_extra"],"semantic_mutations":["closure_contract_binding_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_CLOSURE_INBOX"]},
- {"contract_name":"review_plan","schema":"review-plan.v1","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.review_organisation.validate_review_plan_artifact","stateful_fixture_builder":"review_plan_prepare","structural_mutations":["nested_extra"],"semantic_mutations":["plan_id_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S7_ADAPTATION"]},
- {"contract_name":"contestation_action","schema":"shiproom/contestability_schemas/contestation-action.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.contestability.validate_action_contract","stateful_fixture_builder":"contestation_add","structural_mutations":["nested_extra"],"semantic_mutations":["action_id_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S8_CONTESTABILITY"]},
- {"contract_name":"management_generation","schema":"management-generation-manifest.v1","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.management_artifacts.compiler.validate_generation_manifest","stateful_fixture_builder":"management_compile","structural_mutations":["nested_extra"],"semantic_mutations":["generation_hash_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S8_MANAGEMENT_VECTOR"]}
- ,{"contract_name":"agent_harness_capability_manifest","schema":"shiproom/review_organisation/agent-harness-capability-manifest.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_harness_capability_manifest","stateful_fixture_builder":"review_plan_prepare","structural_mutations":["nested_extra","wrong_execution_mode"],"semantic_mutations":["declaration_is_not_execution_proof"],"integration_test_ids":["test_harness_declaration_does_not_replace_a_bound_execution_receipt","test_selected_work_order_snapshots_the_closed_harness_declaration"],"requirement_ids":["S7_HARNESS_HONESTY"]}
- ,{"contract_name":"harness_execution_receipt","schema":"shiproom/review_organisation/harness-execution-receipt.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_harness_execution_receipt","stateful_fixture_builder":"review_plan_submit_result","structural_mutations":["nested_extra","wrong_execution_mode"],"semantic_mutations":["wrong_work_order_binding"],"integration_test_ids":["test_harness_declaration_does_not_replace_a_bound_execution_receipt","test_adaptation_requires_an_accepted_specialist_result"],"requirement_ids":["S7_WORK_ORDER_INTEGRITY"]}
- ,{"contract_name":"remediation_closure_verifier_receipt","schema":"shiproom/remediation_schemas/remediation-closure-verifier-receipt.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_closure_verifier_receipt","stateful_fixture_builder":"closure_inbox","structural_mutations":["nested_extra"],"semantic_mutations":["closure_contract_binding_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_VERIFIER_INDEPENDENCE"]}
- ,{"contract_name":"remediation_closure_verification","schema":"shiproom/remediation_schemas/remediation-closure-verification.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_closure_verification","stateful_fixture_builder":"closure_inbox","structural_mutations":["nested_extra"],"semantic_mutations":["closure_contract_binding_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_EXACT_CLOSURE_RERUN"]}
- ,{"contract_name":"remediation_issue_authority_policy","schema":"shiproom/remediation_schemas/remediation-issue-authority-policy.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_authority_policy","stateful_fixture_builder":"remediation_prepare","structural_mutations":["nested_extra"],"semantic_mutations":["policy_effect_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_AUTHORITY_POLICY"]}
- ,{"contract_name":"remediation_planner_result","schema":"shiproom/remediation_schemas/remediation-planner-result.v1.json","realistic_builder":"tests.test_remediation_roadmaps","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_planner_result","stateful_fixture_builder":"planner_inbox","structural_mutations":["missing_issue"],"semantic_mutations":["authority_upgrade"],"integration_test_ids":["test_missing_planner_result_produces_minimal_packet"],"requirement_ids":["S6_OPTIONAL_PLANNER"]}
- ,{"contract_name":"remediation_planner_role","schema":"shiproom/remediation_schemas/remediation-planner-role.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_planner_role","stateful_fixture_builder":"planner_prepare","structural_mutations":["nested_extra"],"semantic_mutations":["role_id_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_OPTIONAL_PLANNER"]}
- ,{"contract_name":"remediation_planner_work_order","schema":"shiproom/remediation_schemas/remediation-planner-work-order.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_planner_work_order","stateful_fixture_builder":"planner_prepare","structural_mutations":["nested_extra"],"semantic_mutations":["work_order_id_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S6_OPTIONAL_PLANNER"]}
- ,{"contract_name":"remediation_planner_completion_receipt","schema":"shiproom/remediation_schemas/remediation-planner-completion-receipt.v1.json","realistic_builder":"tests.test_remediation_roadmaps","production_validator_or_loader":"shiproom.remediation_roadmaps.validate_planner_receipt","stateful_fixture_builder":"planner_inbox","structural_mutations":["missing_work_order"],"semantic_mutations":["receipt_hash_tamper"],"integration_test_ids":["test_missing_planner_result_produces_minimal_packet"],"requirement_ids":["S6_OPTIONAL_PLANNER"]}
- ,{"contract_name":"codex_execution_package","schema":"shiproom/review_organisation/codex-execution-package.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_codex_execution_package","stateful_fixture_builder":"render_package","structural_mutations":["missing_native_context"],"semantic_mutations":["wrong_semantic_hash"],"integration_test_ids":["test_codex_package_is_closed"],"requirement_ids":["S7_PACKAGE_COMPLETENESS"]}
- ,{"contract_name":"migration_result","schema":"shiproom/review_organisation/migration-and-rollback-result.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_migration_result","stateful_fixture_builder":"review_plan_submit_result","structural_mutations":["missing_criteria"],"semantic_mutations":["wrong_work_order"],"integration_test_ids":["test_adaptation_requires_an_accepted_specialist_result"],"requirement_ids":["S7_REVISION_LIFECYCLE"]}
- ,{"contract_name":"review_surface_policy","schema":"shiproom/review_organisation/review-surface-policy.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_specialist_registries","stateful_fixture_builder":"review_plan_prepare","structural_mutations":["unknown_signal"],"semantic_mutations":["candidate_removal"],"integration_test_ids":["test_selection_uses_closed_surface_policy_and_keeps_candidate_scope"],"requirement_ids":["S7_TYPED_SELECTION"]}
- ,{"contract_name":"specialist_result_registry","schema":"shiproom/review_organisation/specialist-result-registry.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_specialist_registries","stateful_fixture_builder":"review_plan_prepare","structural_mutations":["cross_role"],"semantic_mutations":["wrong_validator"],"integration_test_ids":["test_specialist_registry_is_closed_and_exact"],"requirement_ids":["S7_NATIVE_BOUNDARIES"]}
- ,{"contract_name":"specialist_native_boundary_registry","schema":"shiproom/review_organisation/specialist-native-boundary-registry.v1.json","realistic_builder":"tests.test_review_organisation","production_validator_or_loader":"shiproom.review_organisation.validate_specialist_registries","stateful_fixture_builder":"review_plan_prepare","structural_mutations":["missing_validator"],"semantic_mutations":["weaker_contract"],"integration_test_ids":["test_registry_symbols_and_contract_pairings_resolve"],"requirement_ids":["S7_NATIVE_BOUNDARIES"]}
- ,{"contract_name":"contestation_target_registry","schema":"shiproom/contestability_schemas/contestation-target-registry.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.contestability.target_registry","stateful_fixture_builder":"contestation_add","structural_mutations":["nested_extra"],"semantic_mutations":["target_type_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S8_TARGET_RESOLUTION"]}
- ,{"contract_name":"management_section_registry","schema":"shiproom/management_artifacts/management-artifact-section-registry.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.management_artifacts.compiler.validate_section_registry","stateful_fixture_builder":"management_compile","structural_mutations":["nested_extra"],"semantic_mutations":["minimum_records_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S8_SECTION_COMPLETENESS"]}
- ,{"contract_name":"release_recommendation_policy","schema":"shiproom/management_artifacts/release-recommendation-policy.v1.json","realistic_builder":"scripts.run_session6_8_contract_parity._baselines","production_validator_or_loader":"shiproom.management_artifacts.compiler.validate_recommendation_policy","stateful_fixture_builder":"management_compile","structural_mutations":["nested_extra"],"semantic_mutations":["recommendation_status_tamper"],"integration_test_ids":["test_replayable_contract_parity"],"requirement_ids":["S8_RECOMMENDATION_POLICY"]}
-]}
+{
+  "contracts": [
+    {
+      "contract_name": "agent_harness_capability_manifest",
+      "integration_test_ids": [
+        "test_harness_declaration_does_not_replace_a_bound_execution_receipt",
+        "test_selected_work_order_snapshots_the_closed_harness_declaration"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_harness_capability_manifest",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_HARNESS_DECLARATION_HONESTY"
+      ],
+      "schema": "shiproom/review_organisation/agent-harness-capability-manifest.v1.json",
+      "semantic_mutations": [
+        "declaration_is_not_execution_proof"
+      ],
+      "stateful_fixture_builder": "review_plan_prepare",
+      "structural_mutations": [
+        "nested_extra",
+        "wrong_execution_mode"
+      ]
+    },
+    {
+      "contract_name": "codex_execution_package",
+      "integration_test_ids": [
+        "test_codex_package_is_closed"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_codex_execution_package",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_CODEX_PACKAGE_COMPLETENESS"
+      ],
+      "schema": "shiproom/review_organisation/codex-execution-package.v1.json",
+      "semantic_mutations": [
+        "wrong_semantic_hash"
+      ],
+      "stateful_fixture_builder": "render_package",
+      "structural_mutations": [
+        "missing_native_context"
+      ]
+    },
+    {
+      "contract_name": "contestation_action",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.contestability.validate_action_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_CONTEST_TARGET_REGISTRY"
+      ],
+      "schema": "shiproom/contestability_schemas/contestation-action.v1.json",
+      "semantic_mutations": [
+        "action_id_tamper"
+      ],
+      "stateful_fixture_builder": "contestation_add",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "contestation_current_pointer",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_CONTEST_APPEND_SEQUENCE"
+      ],
+      "schema": "current-contestation-generation.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "contestation_effects",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_OWNER_DECISION_BUDGET"
+      ],
+      "schema": "contestation-effects.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "contestation_generation_manifest",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_CONTEST_PREVIOUS_HASH"
+      ],
+      "schema": "contestation-generation-manifest.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "contestation_ledger",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_CONTEST_PREVIOUS_HASH"
+      ],
+      "schema": "contestation-ledger.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "contestation_target_registry",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.contestability.target_registry",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_CONTEST_TARGET_REGISTRY"
+      ],
+      "schema": "shiproom/contestability_schemas/contestation-target-registry.v1.json",
+      "semantic_mutations": [
+        "target_type_tamper"
+      ],
+      "stateful_fixture_builder": "contestation_add",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "harness_execution_receipt",
+      "integration_test_ids": [
+        "test_harness_declaration_does_not_replace_a_bound_execution_receipt",
+        "test_adaptation_requires_an_accepted_specialist_result"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_harness_execution_receipt",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_NATIVE_WORK_ORDER_INTEGRITY"
+      ],
+      "schema": "shiproom/review_organisation/harness-execution-receipt.v1.json",
+      "semantic_mutations": [
+        "wrong_work_order_binding"
+      ],
+      "stateful_fixture_builder": "review_plan_submit_result",
+      "structural_mutations": [
+        "nested_extra",
+        "wrong_execution_mode"
+      ]
+    },
+    {
+      "contract_name": "management_current_pointer",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "SHARED_POINTER_LATE_FAILURE"
+      ],
+      "schema": "current-management-generation.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_engineering_release_assessment",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_ENGINEERING_SECTION_COMPLETENESS"
+      ],
+      "schema": "engineering-release-assessment.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_executive_release_brief",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_EXECUTIVE_SECTION_COMPLETENESS"
+      ],
+      "schema": "executive-release-brief.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_generation",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.management_artifacts.compiler.validate_generation_manifest",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_MANAGEMENT_DEPENDENCY_STATES"
+      ],
+      "schema": "management-generation-manifest.v1",
+      "semantic_mutations": [
+        "generation_hash_tamper"
+      ],
+      "stateful_fixture_builder": "management_compile",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "management_github_payload",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_SAFE_MARKDOWN"
+      ],
+      "schema": "github-summary-payload.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_measurement_ai_readiness",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_MEASUREMENT_AI_PASSTHROUGH"
+      ],
+      "schema": "measurement-ai-readiness-report.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_product_release_review",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_PRODUCT_MATRIX_COMPLETENESS"
+      ],
+      "schema": "product-release-review.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_release_packet_index",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_ARTIFACT_FILE_SET"
+      ],
+      "schema": "release-packet-index.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_release_recommendation_view",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_RECOMMENDATION_POLICY"
+      ],
+      "schema": "release-recommendation-view.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_remediation_overview",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
+      ],
+      "schema": "remediation-overview.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "management_section_registry",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.management_artifacts.compiler.validate_section_registry",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_EXECUTIVE_SECTION_COMPLETENESS"
+      ],
+      "schema": "shiproom/management_artifacts/management-artifact-section-registry.v1.json",
+      "semantic_mutations": [
+        "minimum_records_tamper"
+      ],
+      "stateful_fixture_builder": "management_compile",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "migration_result",
+      "integration_test_ids": [
+        "test_adaptation_requires_an_accepted_specialist_result"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_migration_result",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_CORRECTED_RESULT_ACCEPTANCE"
+      ],
+      "schema": "shiproom/review_organisation/migration-and-rollback-result.v1.json",
+      "semantic_mutations": [
+        "wrong_work_order"
+      ],
+      "stateful_fixture_builder": "review_plan_submit_result",
+      "structural_mutations": [
+        "missing_criteria"
+      ]
+    },
+    {
+      "contract_name": "release_recommendation_policy",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.management_artifacts.compiler.validate_recommendation_policy",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S8_RECOMMENDATION_POLICY"
+      ],
+      "schema": "shiproom/management_artifacts/release-recommendation-policy.v1.json",
+      "semantic_mutations": [
+        "recommendation_status_tamper"
+      ],
+      "stateful_fixture_builder": "management_compile",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_active_pointer",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "SHARED_POINTER_LATE_FAILURE"
+      ],
+      "schema": "active-remediation-preparation.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_closure_contract",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_CLOSURE_CONTRACT_COMPLETENESS"
+      ],
+      "schema": "remediation-closure-contract.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_closure_evidence",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_closure_evidence",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_CLOSURE_EXACT_RERUN"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-closure-evidence.v1.json",
+      "semantic_mutations": [
+        "closure_contract_binding_tamper"
+      ],
+      "stateful_fixture_builder": "closure_inbox",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_closure_verification",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_closure_verification",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_CLOSURE_EXACT_RERUN"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-closure-verification.v1.json",
+      "semantic_mutations": [
+        "closure_contract_binding_tamper"
+      ],
+      "stateful_fixture_builder": "closure_inbox",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_closure_verifier_receipt",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_closure_verifier_receipt",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_CLOSURE_VERIFIER_INDEPENDENCE"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-closure-verifier-receipt.v1.json",
+      "semantic_mutations": [
+        "closure_contract_binding_tamper"
+      ],
+      "stateful_fixture_builder": "closure_inbox",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_current_pointer",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "SHARED_POINTER_LATE_FAILURE"
+      ],
+      "schema": "current-remediation-generation.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_generation_manifest",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_PACKET_FILE_INTEGRITY"
+      ],
+      "schema": "remediation-generation-manifest.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_index",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_REMEDIATION_CARDINALITY"
+      ],
+      "schema": "remediation-index.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_issue_authority_policy",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_authority_policy",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_ISSUE_AUTHORITY_POLICY"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-issue-authority-policy.v1.json",
+      "semantic_mutations": [
+        "policy_effect_tamper"
+      ],
+      "stateful_fixture_builder": "remediation_prepare",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_overlay",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_REMEDIATION_CARDINALITY"
+      ],
+      "schema": "remediation-overlay.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_packet",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_REMEDIATION_CARDINALITY"
+      ],
+      "schema": "remediation-packet.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_plan",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_REMEDIATION_CARDINALITY"
+      ],
+      "schema": "remediation-plan.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_planner_completion_receipt",
+      "integration_test_ids": [
+        "test_missing_planner_result_produces_minimal_packet"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_planner_receipt",
+      "realistic_builder": "tests.test_remediation_roadmaps",
+      "requirement_ids": [
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-planner-completion-receipt.v1.json",
+      "semantic_mutations": [
+        "receipt_hash_tamper"
+      ],
+      "stateful_fixture_builder": "planner_inbox",
+      "structural_mutations": [
+        "missing_work_order"
+      ]
+    },
+    {
+      "contract_name": "remediation_planner_result",
+      "integration_test_ids": [
+        "test_missing_planner_result_produces_minimal_packet"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_planner_result",
+      "realistic_builder": "tests.test_remediation_roadmaps",
+      "requirement_ids": [
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-planner-result.v1.json",
+      "semantic_mutations": [
+        "authority_upgrade"
+      ],
+      "stateful_fixture_builder": "planner_inbox",
+      "structural_mutations": [
+        "missing_issue"
+      ]
+    },
+    {
+      "contract_name": "remediation_planner_role",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_planner_role",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-planner-role.v1.json",
+      "semantic_mutations": [
+        "role_id_tamper"
+      ],
+      "stateful_fixture_builder": "planner_prepare",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_planner_work_order",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.remediation_roadmaps.validate_planner_work_order",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "schema": "shiproom/remediation_schemas/remediation-planner-work-order.v1.json",
+      "semantic_mutations": [
+        "work_order_id_tamper"
+      ],
+      "stateful_fixture_builder": "planner_prepare",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_source_packet",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_PLANNER_COMPILER_AUTHORITY"
+      ],
+      "schema": "remediation-source-packet.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "remediation_work_orders",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S6_OPTIONAL_PLANNER_LIFECYCLE"
+      ],
+      "schema": "remediation-work-orders.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_accepted_results",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_CORRECTED_RESULT_ACCEPTANCE"
+      ],
+      "schema": "accepted-specialist-results.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_current_pointer",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_POINTER_LAST_PUBLICATION"
+      ],
+      "schema": "current-review-plan.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_execution_summary_adapted",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_MIGRATION_ADAPTATION"
+      ],
+      "schema": "execution-summary.v1:adapted",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_execution_summary_initial",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_PYTHON_SELECTION"
+      ],
+      "schema": "execution-summary.v1:initial",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_generation_manifest",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_POINTER_LAST_PUBLICATION"
+      ],
+      "schema": "review-plan-generation-manifest.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_plan",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_review_plan_artifact",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_MIGRATION_ADAPTATION"
+      ],
+      "schema": "review-plan.v1",
+      "semantic_mutations": [
+        "plan_id_tamper"
+      ],
+      "stateful_fixture_builder": "review_plan_prepare",
+      "structural_mutations": [
+        "nested_extra"
+      ]
+    },
+    {
+      "contract_name": "review_plan_events",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_TRIGGER_SPECIFIC_EVIDENCE"
+      ],
+      "schema": "plan-events.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_revision_ledger",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_REVISION_REQUEST"
+      ],
+      "schema": "revision-ledger.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_specialist_work_order",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_NATIVE_WORK_ORDER_INTEGRITY"
+      ],
+      "schema": "specialist-work-order.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_submission_validation",
+      "integration_test_ids": [
+        "test_replayable_contract_parity"
+      ],
+      "production_validator_or_loader": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+      "realistic_builder": "scripts.run_session6_8_contract_parity._baselines",
+      "requirement_ids": [
+        "S7_CORRECTED_RESULT_ACCEPTANCE"
+      ],
+      "schema": "specialist-submission-validation.v1",
+      "semantic_mutations": [
+        "contract_specific_binding_tamper"
+      ],
+      "stateful_fixture_builder": "golden_workflow_generation_and_loader",
+      "structural_mutations": [
+        "top_level_extra"
+      ]
+    },
+    {
+      "contract_name": "review_surface_policy",
+      "integration_test_ids": [
+        "test_selection_uses_closed_surface_policy_and_keeps_candidate_scope"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_specialist_registries",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_TYPED_SURFACE_POLICY"
+      ],
+      "schema": "shiproom/review_organisation/review-surface-policy.v1.json",
+      "semantic_mutations": [
+        "candidate_removal"
+      ],
+      "stateful_fixture_builder": "review_plan_prepare",
+      "structural_mutations": [
+        "unknown_signal"
+      ]
+    },
+    {
+      "contract_name": "specialist_native_boundary_registry",
+      "integration_test_ids": [
+        "test_registry_symbols_and_contract_pairings_resolve"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_specialist_registries",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_NATIVE_BOUNDARY_REUSE"
+      ],
+      "schema": "shiproom/review_organisation/specialist-native-boundary-registry.v1.json",
+      "semantic_mutations": [
+        "weaker_contract"
+      ],
+      "stateful_fixture_builder": "review_plan_prepare",
+      "structural_mutations": [
+        "missing_validator"
+      ]
+    },
+    {
+      "contract_name": "specialist_result_registry",
+      "integration_test_ids": [
+        "test_specialist_registry_is_closed_and_exact"
+      ],
+      "production_validator_or_loader": "shiproom.review_organisation.validate_specialist_registries",
+      "realistic_builder": "tests.test_review_organisation",
+      "requirement_ids": [
+        "S7_NATIVE_BOUNDARY_REUSE"
+      ],
+      "schema": "shiproom/review_organisation/specialist-result-registry.v1.json",
+      "semantic_mutations": [
+        "wrong_validator"
+      ],
+      "stateful_fixture_builder": "review_plan_prepare",
+      "structural_mutations": [
+        "cross_role"
+      ]
+    }
+  ],
+  "schema_version": "shiproom.session6-8-contract-registry.v2"
+}
