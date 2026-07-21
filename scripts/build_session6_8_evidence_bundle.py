@@ -22,7 +22,7 @@ def _copy(source: Path, target: Path) -> None:
     shutil.copy2(source, target)
 
 
-def build(target: Path, *, final_commit: str) -> dict:
+def build(target: Path, *, final_commit: str, include_tamper: bool = True) -> dict:
     if target.exists():
         for path in sorted(target.rglob("*"), key=lambda item: len(item.parts), reverse=True):
             if path.is_file(): path.unlink()
@@ -57,6 +57,8 @@ def build(target: Path, *, final_commit: str) -> dict:
         "session6-8-final-closeout-report.json": local / "session6-8-final-closeout-report.json",
         "session6-8-final-closeout-receipt.json": local / "session6-8-final-closeout-receipt.json",
     }
+    if include_tamper:
+        sources["session6-8-tamper-receipt.json"]=local/"session6-8-tamper-receipt.json"
     for relative, source in sources.items(): _copy(source, target / relative)
     _copy(ROOT/"scripts/validate_session6_8_closeout_independently.py",target/"independent-validator-entrypoint.py")
     directories = {
@@ -92,8 +94,8 @@ def build(target: Path, *, final_commit: str) -> dict:
 
 
 def main() -> int:
-    parser=argparse.ArgumentParser();parser.add_argument("--output",type=Path,required=True);parser.add_argument("--final-commit",required=True);args=parser.parse_args()
-    value=build(args.output,final_commit=args.final_commit);print(json.dumps({"file_count":value["file_count"],"manifest_hash":value["manifest_hash"]},sort_keys=True));return 0
+    parser=argparse.ArgumentParser();parser.add_argument("--output",type=Path,required=True);parser.add_argument("--final-commit",required=True);parser.add_argument("--seed-without-tamper",action="store_true");args=parser.parse_args()
+    value=build(args.output,final_commit=args.final_commit,include_tamper=not args.seed_without_tamper);print(json.dumps({"file_count":value["file_count"],"manifest_hash":value["manifest_hash"]},sort_keys=True));return 0
 
 
 if __name__=="__main__":raise SystemExit(main())

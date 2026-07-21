@@ -231,6 +231,10 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
     if not wheel_file.is_file() or _sha(wheel_file.read_bytes())!=wheel.get("wheel_sha256"):raise CloseoutValidationError("closeout_bundled_wheel_invalid")
     if not (bundle/"independent-validator-entrypoint.py").is_file():raise CloseoutValidationError("closeout_validator_source_missing")
 
+    tamper=_load(bundle/"session6-8-tamper-receipt.json");attacks=tamper.get("attacks",[])
+    if tamper.get("final_commit")!=expected_commit or tamper.get("attack_count")!=31 or len(attacks)!=31 or len({row.get("attack_id") for row in attacks})!=31:raise CloseoutValidationError("closeout_tamper_evidence_incomplete")
+    if any(not row.get("expected_error") or row.get("actual_error")!=row.get("expected_error") for row in attacks):raise CloseoutValidationError("closeout_tamper_rejection_mismatch")
+
     if len(claims)!=len({row.get("claim_id") for row in claims}):raise CloseoutValidationError("closeout_claim_duplicate")
     resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")
     if resolution.get("final_commit")!=expected_commit or resolution.get("claim_count")!=106 or resolution.get("resolved_claim_count")!=106:raise CloseoutValidationError("closeout_claim_resolution_incomplete")

@@ -93,6 +93,7 @@ def _mutate(root: Path, attack: str) -> str | None:
 
 
 def run(bundle: Path, *, expected_commit: str) -> dict:
+    source_manifest=json.loads((bundle/"session6-8-evidence-bundle-manifest.json").read_text(encoding="utf-8"))
     rows=[]
     for attack,expected in ATTACKS:
         with tempfile.TemporaryDirectory() as raw:
@@ -101,7 +102,7 @@ def run(bundle: Path, *, expected_commit: str) -> dict:
             try:validate_bundle(target,expected_commit=expected_commit,expected_receipt_hash=receipt_hash);actual=None
             except CloseoutValidationError as exc:actual=str(exc)
             rows.append({"attack_id":attack,"expected_error":expected,"actual_error":actual,"passed":actual==expected})
-    return {"schema_version":"session6-8-tamper-receipt.v1","attack_count":len(rows),"attacks":rows,"passed":all(row["passed"] for row in rows)}
+    return {"schema_version":"session6-8-tamper-receipt.v1","final_commit":expected_commit,"source_bundle_manifest_hash":source_manifest["manifest_hash"],"attack_count":len(rows),"attacks":rows,"passed":all(row["passed"] for row in rows)}
 
 
 def main()->int:
