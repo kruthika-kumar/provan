@@ -2840,7 +2840,7 @@
     {
       "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-contract-parity-report.json at /contract_count using equals, while preserving every authoritative pointer and source artifact.",
       "adversarial_error_code": "rejected_contract_count",
-      "approved_semantic_hash": "sha256:802e541c2f18681cc603182a020a4bdb1b9f6c7373f6c92699d040aee2712faa",
+      "approved_semantic_hash": "sha256:d3bea7b09559dc4dc599bd74461d5c8fa83cde5f408854cf920c6c6e6516a8e8",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2851,7 +2851,7 @@
         "session6-8-contract-registry.json": 1
       },
       "near_valid_behavior": "the real boundary records a constrained accepted state without claiming full closure",
-      "normative_behavior": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "normative_behavior": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "owning_production_entrypoint": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "required_artifacts": [
         "session6-8-contract-inventory.json",

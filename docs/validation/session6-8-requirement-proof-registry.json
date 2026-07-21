@@ -10810,7 +10810,7 @@
       "expected_error": null,
       "expected_exception": null,
       "fixture_class": "valid",
-      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_cardinality": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",
@@ -10841,7 +10841,7 @@
       "expected_error": null,
       "expected_exception": null,
       "fixture_class": "near_valid",
-      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_cardinality": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",
@@ -10872,7 +10872,7 @@
       "expected_error": "rejected_contract_count",
       "expected_exception": null,
       "fixture_class": "adversarial_invalid",
-      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "independent_requirement_assertion": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_cardinality": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",

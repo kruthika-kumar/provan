@@ -4981,7 +4981,7 @@
       "adversarial_proof_ids": [
         "proof_shared_contract_inventory_adversarial_invalid"
       ],
-      "approved_semantic_hash": "sha256:802e541c2f18681cc603182a020a4bdb1b9f6c7373f6c92699d040aee2712faa",
+      "approved_semantic_hash": "sha256:d3bea7b09559dc4dc599bd74461d5c8fa83cde5f408854cf920c6c6e6516a8e8",
       "artifact_assertions": [
         {
           "artifact": "session6-8-contract-parity-report.json",

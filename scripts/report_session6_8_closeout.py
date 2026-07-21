@@ -76,12 +76,12 @@ def main() -> int:
     valid_fixture_classes = {"valid", "near_valid", "adversarial_invalid"}
     prerequisites = {
         "requirement_inventory_exhaustive": len(inventory_requirements) == len(requirement_inventory) and requirements == inventory_requirements == {item["requirement_id"] for item in proofs} == covered == execution_requirements,
-        "source_text_hashes_bound": all(item.get("source_text_hash") == _sha(item["source_requirement"].encode("utf-8")) for item in requirement_inventory),
+        "source_text_hashes_bound": all(item.get("source_text_hash") == _sha(item["normative_behavior"].encode("utf-8")) for item in requirement_inventory),
         "execution_map_bound": all(item.get("production_boundary") and item.get("proof_ids") for item in execution),
-        "all_proofs_executed": all(item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_function")) and bool(item.get("canonical_artifact")) for item in proofs),
+        "all_proofs_executed": all(item["fixture_class"] in valid_fixture_classes and item["test_id"] in passed_tests and bool(item.get("production_functions")) and bool(item.get("canonical_artifacts")) and bool(item.get("artifact_queries")) for item in proofs),
         "all_requirements_executed": len(requirement_inventory) == 106 and len(completion) == 106,
         "all_claims_bound": all(set(claim["positive_proof_ids"] + claim["near_valid_proof_ids"] + claim["adversarial_proof_ids"]) <= proof_ids for claim in claims),
-        "proof_execution_complete": proof_execution.get("passed") is True and proof_execution.get("proof_count") >= 318 and len({row["requirement_id"] for row in proof_execution.get("proofs",[])}) == 106,
+        "proof_execution_complete": proof_execution.get("proof_count") == 318 and len({row["requirement_id"] for row in proof_execution.get("proofs",[])}) == 106 and all(row.get("actual_acceptance")==row.get("expected_acceptance") for row in proof_execution.get("proofs",[])),
         "workflow_assertions_recomputed": workflow_validation.get("status") == "passed" and workflow_validation.get("case_count") == 18 and workflow_validation.get("assertion_count",0) > 18,
         "junit_present": bool(junit),
         "workflow_receipt_complete": len(workflow_cases) == 18 and all(item.get("passed") for item in workflow_cases),

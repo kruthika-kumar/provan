@@ -232,11 +232,11 @@ def _observed_code(query: dict) -> str:
 
 
 def main() -> int:
-    inventory=json.loads((VALIDATION/"session6-8-requirement-inventory.json").read_text())
+    inventory=json.loads((VALIDATION/"session6-8-requirement-inventory.json").read_text(encoding="utf-8"))
     requirements=inventory["requirements"]
     if len(requirements)!=106 or set(VALID)!={row["requirement_id"] for row in requirements}:
         raise SystemExit("authentic_proof_source_coverage_invalid")
-    workflow_contracts={row["case_name"]:row for row in json.loads((VALIDATION/"session6-8-workflow-contracts.json").read_text())["cases"]}
+    workflow_contracts={row["case_name"]:row for row in json.loads((VALIDATION/"session6-8-workflow-contracts.json").read_text(encoding="utf-8"))["cases"]}
     rows=[]
     for ordinal,requirement in enumerate(requirements,1):
         rid=requirement["requirement_id"]
@@ -248,6 +248,7 @@ def main() -> int:
             f"{rejected['operator']}, while preserving every authoritative pointer and source artifact."
         )
         requirement["adversarial_error_code"]=_observed_code(rejected)
+        requirement["source_text_hash"]="sha256:"+hashlib.sha256(requirement["normative_behavior"].encode("utf-8")).hexdigest()
         requirement["approved_semantic_hash"]=requirement_semantic_hash(requirement)
         for fixture_class in CLASSES:
             source=variants[fixture_class]; case=source["workflow_case"]

@@ -5,6 +5,7 @@ import argparse
 import copy
 import hashlib
 import json
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -262,7 +263,8 @@ def main() -> int:
                 before=args.fixtures/(cid+"."+kind+".state-before.json");after=args.fixtures/(cid+"."+kind+".state-after.json");_dump(before,state);_dump(after,_tree_state(state_roots[cid]) if cid in state_roots else state)
                 receipts.append({"contract_id":cid,"valid_fixture_path":str(valid_path),"valid_fixture_hash":_sha(valid_path),"mutated_fixture_path":str(mutated_path),"mutated_fixture_hash":_sha(mutated_path),"mutation_operation":kind+"_mutation","mutation_target":mutation_target,"expected_schema_result":schema_result,"actual_schema_result":schema_result,"expected_python_result":"rejected","actual_python_result":python_result,"expected_typed_error":typed_error,"actual_typed_error":typed_error,"production_boundary":registry[cid]["production_validator_or_loader"],"state_snapshot_before_path":str(before),"state_snapshot_before_hash":_sha(before),"state_snapshot_after_path":str(after),"state_snapshot_after_hash":_sha(after)})
     passed=all(row["python_result"]=="accepted" for row in baselines) and all(row["actual_python_result"]=="rejected" and row["state_snapshot_before_hash"]==row["state_snapshot_after_hash"] for row in receipts)
-    report={"schema_version":"session6-8-contract-parity-report.v3","contract_count":len(inventory),"accepted_baselines":baselines,"mutation_receipts":receipts,"unexpected_pass_count":sum(row["actual_python_result"]!="rejected" for row in receipts),"passed":passed}
+    commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+    report={"schema_version":"session6-8-contract-parity-report.v3","final_commit":commit,"contract_count":len(inventory),"accepted_baselines":baselines,"mutation_receipts":receipts,"unexpected_pass_count":sum(row["actual_python_result"]!="rejected" for row in receipts),"passed":passed}
     args.output.parent.mkdir(parents=True,exist_ok=True);_dump(args.output,report);return 0 if passed else 2
 
 

@@ -63,13 +63,17 @@ def build(target: Path, *, final_commit: str) -> dict:
         "parity-fixtures": local / "session6-8-parity-fixtures",
         "security-evidence": local / "session6-8-security-evidence",
         "wheel-logs": local / "wheel-command-logs",
-        "canonical-artifacts/workflow-evidence": local / "session6-8-workflow-evidence",
-        "canonical-artifacts/proof-events": local / "session6-8-proof-events",
+        "session6-8-workflow-evidence": local / "session6-8-workflow-evidence",
+        "proof-events": local / "proof-events",
     }
     for prefix, source_root in directories.items():
         if not source_root.is_dir(): raise ValueError("evidence_bundle_directory_missing:" + prefix)
         for source in sorted(path for path in source_root.rglob("*") if path.is_file()):
             _copy(source, target / prefix / source.relative_to(source_root))
+    # The canonical-artifacts subtree is a browseable, hash-identical mirror;
+    # proof and workflow validation continues to use the original relative paths.
+    for source in sorted(path for path in (local/"session6-8-workflow-evidence").rglob("*") if path.is_file()):
+        _copy(source,target/"canonical-artifacts/workflow-evidence"/source.relative_to(local/"session6-8-workflow-evidence"))
     wheel = json.loads((local / "session6-8-installed-wheel-receipt.json").read_text(encoding="utf-8"))
     _copy(Path(wheel["bundled_wheel_path"]),target/"final-session6-8.whl")
     external = Path(wheel["external_working_directory"])

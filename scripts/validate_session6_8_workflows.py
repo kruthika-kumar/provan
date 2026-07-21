@@ -58,8 +58,13 @@ def validate(receipt_path: Path, *, root: Path = ROOT) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--receipt", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    print(json.dumps(validate(args.receipt), sort_keys=True))
+    result=validate(args.receipt)
+    if args.output:
+        args.output.parent.mkdir(parents=True,exist_ok=True)
+        args.output.write_text(json.dumps(result,sort_keys=True,indent=2)+"\n",encoding="utf-8")
+    print(json.dumps(result, sort_keys=True))
     return 0
 
 

@@ -10906,7 +10906,7 @@
       "expected_python_exception": null,
       "expected_schema_rejection": false,
       "fixture_class": "valid",
-      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_record_count": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",
@@ -10939,7 +10939,7 @@
       "expected_python_exception": null,
       "expected_schema_rejection": false,
       "fixture_class": "near_valid",
-      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_record_count": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",
@@ -10972,7 +10972,7 @@
       "expected_python_exception": null,
       "expected_schema_rejection": false,
       "fixture_class": "adversarial_invalid",
-      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
+      "invariant": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
       "minimum_record_count": 1,
       "production_functions": [
         "shiproom.review_organisation.render_package",
