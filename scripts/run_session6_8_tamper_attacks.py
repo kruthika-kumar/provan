@@ -7,6 +7,7 @@ import json
 import shutil
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -34,7 +35,7 @@ ATTACKS=(
  ("modified_manifest","closeout_bundle_manifest_hash_mismatch"),("unlisted_file","closeout_bundle_file_set_mismatch"),
  ("requirement_removed","closeout_requirement_cardinality_invalid"),("requirement_semantics","closeout_requirement_semantics_tampered"),
  ("completion_removed","closeout_requirement_coverage_mismatch"),("workflow_semantics","closeout_workflow_semantics_tampered"),
- ("junit_failure","closeout_junit_not_clean"),("behavioral_removed","closeout_behavioral_evidence_incomplete"),
+ ("junit_failure","closeout_junit_not_clean"),("authoritative_proof_skipped","closeout_authoritative_proof_skipped"),("behavioral_removed","closeout_behavioral_evidence_incomplete"),
  ("workflow_removed","closeout_workflow_evidence_incomplete"),("workflow_invocation_removed","closeout_workflow_invocation_missing"),
  ("workflow_assertion_changed","closeout_workflow_assertion_failed"),("proof_removed","closeout_proof_execution_incomplete"),
  ("proof_binding_changed","closeout_proof_binding_invalid"),("proof_outcome_changed","closeout_proof_outcome_invalid"),
@@ -63,6 +64,8 @@ def _mutate(root: Path, attack: str) -> str | None:
     elif attack=="completion_removed":row=value("session6-8-completion-map.json");row["requirements"].pop();_write(root/"session6-8-completion-map.json",row)
     elif attack=="workflow_semantics":row=value("session6-8-workflow-contracts.json");row["cases"][0]["preconditions"].append("weakened");_write(root/"session6-8-workflow-contracts.json",row)
     elif attack=="junit_failure":(root/"final-session6-8-junit.xml").write_text('<testsuite><testcase name="x"><failure/></testcase></testsuite>')
+    elif attack=="authoritative_proof_skipped":
+        path=root/"final-session6-8-junit.xml";tree=ET.parse(path);case=next(item for item in tree.getroot().iter("testcase") if item.attrib.get("name","").startswith("test_requirement_proof["));ET.SubElement(case,"skipped");tree.write(path,encoding="utf-8",xml_declaration=True)
     elif attack=="behavioral_removed":row=value("behavioral-eval-receipt.json");row["cases"].pop();_write(root/"behavioral-eval-receipt.json",row)
     elif attack=="workflow_removed":row=value("session6-8-workflow-eval-receipt.json");row["cases"].pop();_write(root/"session6-8-workflow-eval-receipt.json",row)
     elif attack=="workflow_invocation_removed":row=value("session6-8-workflow-eval-receipt.json");row["cases"][0]["production_invocations"]=[];_write(root/"session6-8-workflow-eval-receipt.json",row)

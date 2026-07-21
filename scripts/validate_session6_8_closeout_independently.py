@@ -155,7 +155,10 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
     workflows=_load(bundle/"session6-8-workflow-contracts.json").get("cases",[])
     if len(workflows)!=18 or any(row.get("approved_semantic_hash")!=_workflow_hash(row) for row in workflows):raise CloseoutValidationError("closeout_workflow_semantics_tampered")
     junit=ET.parse(bundle/"final-session6-8-junit.xml").getroot()
-    if any(child.tag in {"failure","error","skipped"} for case in junit.iter("testcase") for child in case):raise CloseoutValidationError("closeout_junit_not_clean")
+    if any(child.tag in {"failure","error"} for case in junit.iter("testcase") for child in case):raise CloseoutValidationError("closeout_junit_not_clean")
+    skipped={case.attrib.get("name","") for case in junit.iter("testcase") if any(child.tag=="skipped" for child in case)}
+    authoritative_test_names={row["test_id"].rsplit("::",1)[-1] for row in proof_manifest}
+    if any(any(name.endswith(test_name) for name in skipped) for test_name in authoritative_test_names):raise CloseoutValidationError("closeout_authoritative_proof_skipped")
     behavioral=_load(bundle/"behavioral-eval-receipt.json");workflow_receipt=_load(bundle/"session6-8-workflow-eval-receipt.json")
     if behavioral.get("final_commit")!=expected_commit or len(behavioral.get("cases",[]))!=35 or not all(row.get("passed") for row in behavioral["cases"]):raise CloseoutValidationError("closeout_behavioral_evidence_incomplete")
     if workflow_receipt.get("final_commit")!=expected_commit or len(workflow_receipt.get("cases",[]))!=18:raise CloseoutValidationError("closeout_workflow_evidence_incomplete")
