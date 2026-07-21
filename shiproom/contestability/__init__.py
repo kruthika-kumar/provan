@@ -191,14 +191,39 @@ def _owner_decision_budget(ctx: LocalExecutionContext, actions: list[dict]) -> d
     for action in actions:
         if action["action"] not in {"accept_named_risk", "defer"}:
             continue
-        target = _target_definition(action["target_type"])
-        if not target["owner_decision_eligibility"]:
+        definition = _target_definition(action["target_type"])
+        if not definition["owner_decision_eligibility"]:
             continue
-        priority = 1 if target["materiality_rule"] == "canonical_blocker_or_condition" else 3
-        candidates.append({"action_id": action["action_id"], "target_id": action["target_id"], "priority": priority,
-                           "reason_code": target["materiality_rule"]})
+        target = _release_target(ctx, action["target_id"]) if action["target_type"] == "finding" else None
+        if target is None:
+            continue
+        deterministic = target.get("evidence_class") in {"deterministically_established", "source_verified"}
+        if target.get("blocker") is True and target.get("owner_decision_required") is True and deterministic:
+            priority, reason = 1, "verified_blocker_requires_owner_action"
+        elif target.get("condition") is True or target.get("state") == "MATERIAL_CONDITION":
+            priority, reason = 2, "canonical_material_condition"
+        elif target.get("risk") in {"high", "critical"} or action["action"] in {"accept_named_risk", "defer"}:
+            priority, reason = 3, "high_risk_unresolved_decision"
+        else:
+            continue
+        candidates.append({
+            "action_id": action["action_id"],
+            "target_id": action["target_id"],
+            "priority": priority,
+            "priority_reason_code": reason,
+            "source_reference": {
+                "target_type": action["target_type"],
+                "target_id": action["target_id"],
+                "source_generation": action["source_generation"],
+            },
+        })
     ordered = sorted(candidates, key=lambda item: (item["priority"], item["action_id"]))
-    return {"immediate_owner_decisions": ordered[:2], "overflow_owner_decisions": ordered[2:]}
+    return {
+        "immediate_owner_decisions": ordered[:2],
+        "overflow_owner_decisions": ordered[2:],
+        "priority_reason_codes": [item["priority_reason_code"] for item in ordered],
+        "source_references": [item["source_reference"] for item in ordered],
+    }
 
 
 def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:

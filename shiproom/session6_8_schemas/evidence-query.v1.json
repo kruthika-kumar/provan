@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shiproom.session6-8-evidence-query.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact", "selector", "operator", "expected"],
+  "properties": {
+    "artifact": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?![A-Za-z]:|/|\\\\|.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "selector": {"type": "string", "maxLength": 1024, "pattern": "^$|^/"},
+    "operator": {
+      "enum": ["equals", "not_equals", "count_equals", "count_at_least", "set_equals", "unique", "ordered_equals", "foreign_keys_complete", "hash_equals", "unchanged", "file_set_equals", "pointer_targets"]
+    },
+    "expected": {}
+  }
+}

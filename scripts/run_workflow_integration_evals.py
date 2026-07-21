@@ -104,10 +104,10 @@ def _closure(ctx, manifest: dict, packet: dict) -> dict:
     return closure_verify(ctx, closure_id)
 
 
-def _action(ctx, finding: dict, action: str = "accept_named_risk") -> dict:
+def _action(ctx, finding: dict, action: str = "accept_named_risk", *, action_id: str = "action_workflow") -> dict:
     authority = {"authority_id": "owner_workflow", "release_id": ctx.release["release_id"], "snapshot_hash": "sha256:" + "1" * 64}
     ctx.release["owner_authorities"] = [authority]
-    return {"action_id": "action_workflow", "release_id": ctx.release["release_id"], "actor_type": "owner",
+    return {"action_id": action_id, "release_id": ctx.release["release_id"], "actor_type": "owner",
             "actor_label": "release owner", "action": action, "target_type": "finding", "target_id": finding["id"],
             "source_generation": "release_state", "submitted_evidence": None, "rationale": "bounded workflow decision",
             "created_at": "2026-01-01T00:00:00+00:00", "owner_authority_ref": authority["authority_id"] if action == "accept_named_risk" else None,
@@ -148,13 +148,17 @@ def main() -> int:
         try:
             with observe(name) as invocation_receipts:
                 outcome = fn()
-                if len(outcome) == 4:
+                if len(outcome) == 5:
+                    passed, _functions, hashes, assertion_values, canonical_artifacts = outcome
+                elif len(outcome) == 4:
                     passed, _functions, hashes, assertion_values = outcome
+                    canonical_artifacts = {}
                 else:
                     passed, _functions, hashes = outcome
                     assertion_values = {}
+                    canonical_artifacts = {}
         except Exception as exc:  # receipt preserves the production failure for closeout inspection
-            passed, invocation_receipts, hashes, assertion_values = False, [], {"exception": type(exc).__name__ + ":" + str(exc)}, {}
+            passed, invocation_receipts, hashes, assertion_values, canonical_artifacts = False, [], {"exception": type(exc).__name__ + ":" + str(exc)}, {}, {}
         contract = contracts[name]
         required_functions = set(contract["required_production_functions"])
         artifacts_ok = bool(hashes) and all(value not in (None, "") for value in hashes.values())
@@ -163,12 +167,22 @@ def main() -> int:
         assertion_receipts = [audit_assertion(assertion_id, assertion_id.replace("_", " "), assertion_values[assertion_id], True)
                               for assertion_id in contract["required_assertion_ids"] if assertion_id in assertion_values]
         contract_ok = required_functions <= observed_functions and artifacts_ok and not missing_assertions and all(item["passed"] for item in assertion_receipts)
-        evidence={"schema_version":"session6-8-workflow-evidence.v1","case_name":name,"assertions":assertion_values,"generated_artifact_hashes":hashes}
-        evidence_path=evidence_root/(name+".json"); evidence_raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode(); evidence_path.write_bytes(evidence_raw)
+        case_root=evidence_root/name; case_root.mkdir(parents=True,exist_ok=True)
+        canonical_paths={}
+        for artifact_name, artifact_value in sorted(canonical_artifacts.items()):
+            artifact_path=case_root/artifact_name
+            artifact_path.parent.mkdir(parents=True,exist_ok=True)
+            artifact_raw=(json.dumps(artifact_value,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode()
+            artifact_path.write_bytes(artifact_raw)
+            relative=artifact_path.relative_to(root).as_posix()
+            canonical_paths[relative]="sha256:"+hashlib.sha256(artifact_raw).hexdigest()
+        evidence={"schema_version":"session6-8-workflow-evidence.v2","case_name":name,"diagnostic_assertions":assertion_values,"canonical_artifact_hashes":canonical_paths,"generated_artifact_hashes":hashes}
+        evidence_path=case_root/"workflow-evidence.json"; evidence_raw=(json.dumps(evidence,sort_keys=True,indent=2)+"\n").encode(); evidence_path.write_bytes(evidence_raw)
         hashes={**hashes,"workflow_evidence":"sha256:"+hashlib.sha256(evidence_raw).hexdigest()}
         results.append({"name": name, "fixture": contract["fixture_builder"], "production_invocations": invocation_receipts,
                         "production_functions_invoked": sorted(observed_functions), "generated_artifact_hashes": hashes,
                         "assertions_executed": assertion_receipts, "required_artifacts": list(contract["required_artifacts"]),
+                        "canonical_artifact_hashes": canonical_paths,
                         "forbidden_substitutions": list(contract["forbidden_substitutions"]), "passed": bool(passed and contract_ok)})
 
     def remediation_case(*, blocker: bool, authority: str = "deterministically_established"):
@@ -184,21 +198,21 @@ def main() -> int:
             "one_packet_one_contract": bool(packet.get("remediation_id")) and bool(packet.get("verification_contract_id")),
             "overlay_projection": bool(packet.get("remediation_id")),
         }
-        return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions
+        return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
     run(CASES[0], deterministic_blocker)
     def unsafe_issue():
         prepared, manifest, packet = remediation_case(blocker=False, authority="model_mapped_candidate")
         assertions={"roadmap_only":packet.get("automation_eligibility")=="roadmap_only",
                     "no_bounded_fix":packet.get("automation_eligibility")!="bounded_fix_available",
                     "no_finding_mutation":packet.get("source_issue_id")=="finding_workflow"}
-        return all(assertions.values()), [], _hashes(manifest), assertions
+        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
     run(CASES[1], unsafe_issue)
     def model_concern():
         prepared, manifest, packet = remediation_case(blocker=False, authority="model_reviewed")
         assertions={"model_authority_preserved":packet.get("issue_authority")=="model_reviewed",
                     "not_verified_blocker":packet.get("issue_classification")!="verified_blocker",
                     "no_deterministic_closure":packet.get("issue_authority")!="deterministically_established"}
-        return all(assertions.values()), [], _hashes(manifest), assertions
+        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
     run(CASES[2], model_concern)
 
     def exact_closure():
@@ -224,7 +238,8 @@ def main() -> int:
                         "stale_rejected":stale_commit_result["status"]=="stale" and stale_branch_result["status"]=="stale",
                         "independent_rerun_satisfied":valid["status"]=="satisfied_candidate",
                         "finding_unchanged":canonical_json(finding)==original}
-            return all(assertions.values()), [], _hashes(manifest), assertions
+            outcomes={"valid":valid,"wrong_check":wrong_result,"failed_rerun":failed_result,"self_verifier_rejected":self_rejected,"stale_commit":stale_commit_result,"stale_branch":stale_branch_result}
+            return all(assertions.values()), [], _hashes(manifest), assertions, {"generation-manifest.json":manifest,"remediation-packet.json":packet,"closure-contract.json":json.loads((remediation_root(ctx)/"generations"/manifest["generation"] / "closure-contracts" / (closure_id+".json")).read_text(encoding="utf-8")),"closure-outcomes.json":outcomes,"source-finding.json":finding}
     run(CASES[3], exact_closure)
 
     def review_case():
@@ -245,7 +260,7 @@ def main() -> int:
                     "evidence_differ":py["reason_codes"]!=ts["reason_codes"]}
         hashes={"python":values[0][1]["semantic_bundle_hash"],"typescript":values[1][1]["semantic_bundle_hash"]}
         for raw,_,_ in values: raw.cleanup()
-        return all(assertions.values()), [], hashes, assertions
+        return all(assertions.values()), [], hashes, assertions, {"python-review-plan.json":py_plan,"typescript-review-plan.json":ts_plan,"python-generation-manifest.json":values[0][1],"typescript-generation-manifest.json":values[1][1]}
     run(CASES[4], languages)
     def ai_selection():
         with tempfile.TemporaryDirectory() as raw:
@@ -260,14 +275,14 @@ def main() -> int:
             prepare_measurement_ai(ctx,applicability_path=str(path)); manifest=prepare_review(ctx); _,artifacts=load_review(ctx)
             candidate=next(item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"]=="ai_evaluation")
             assertions={"ai_selected":candidate["state"]=="selected" and candidate["applicability_authority"] in {"candidate_surface","confirmed_surface"}}
-            return all(assertions.values()), [], _hashes(manifest), assertions
+            return all(assertions.values()), [], _hashes(manifest), assertions, {"review-plan.json":artifacts["review-plan.json"],"ai-specialist.json":candidate,"generation-manifest.json":manifest}
     run(CASES[5], ai_selection)
     def browser_skip():
         with tempfile.TemporaryDirectory() as raw:
             ctx,_=_fixture(Path(raw)); ctx.release["review_applicability"]={"browser_journey":"not_applicable"}; manifest=prepare_review(ctx); _,artifacts=load_review(ctx)
             browser=next(item for item in artifacts["review-plan.json"]["specialists"] if item["specialist_id"]=="browser_journey")
             assertions={"browser_skipped":browser["state"]=="skipped","browser_explicitly_not_applicable":browser["applicability_authority"]=="explicitly_not_applicable"}
-            return all(assertions.values()), [], _hashes(manifest), assertions
+            return all(assertions.values()), [], _hashes(manifest), assertions, {"review-plan.json":artifacts["review-plan.json"],"browser-specialist.json":browser,"generation-manifest.json":manifest}
     run(CASES[6], browser_skip)
     def adaptation():
         with tempfile.TemporaryDirectory() as raw:
@@ -285,7 +300,7 @@ def main() -> int:
                         "new_work_order":bool(event.get("replacement_work_order_ids")),
                         "prior_preserved":after_artifacts["accepted-results.json"]==before_artifacts["accepted-results.json"] or bool(after_artifacts["accepted-results.json"]["results"]),
                         "execution_summary_changed":after_artifacts["execution-summary.json"]!=before_artifacts["execution-summary.json"]}
-            return all(assertions.values()), [], {"generation": adapted["generation"]}, assertions
+            return all(assertions.values()), [], {"generation": adapted["generation"]}, assertions, {"before-review-plan.json":before_artifacts["review-plan.json"],"after-review-plan.json":after_artifacts["review-plan.json"],"plan-event.json":event,"before-execution-summary.json":before_artifacts["execution-summary.json"],"after-execution-summary.json":after_artifacts["execution-summary.json"],"accepted-result.json":accepted,"successor-manifest.json":successor}
     run(CASES[7], adaptation)
     def revisions():
         with tempfile.TemporaryDirectory() as raw:
@@ -317,12 +332,12 @@ def main() -> int:
             entries=artifacts["revision-ledger.json"]["entries"]
             assertions={"invalid_first":first["status"]=="revision_required","revision_required":len(entries)==1 and entries[0]["status"]=="revision_required",
                         "corrected_native_acceptance":second["status"]=="accepted","attempts_persisted":bool(second.get("generation")) and bool(first.get("generation"))}
-            return all(assertions.values()), [], {"generation":second["generation"]}, assertions
+            return all(assertions.values()), [], {"generation":second["generation"]}, assertions, {"first-submission.json":first,"second-submission.json":second,"revision-ledger.json":artifacts["revision-ledger.json"],"accepted-results.json":artifacts["accepted-results.json"]}
     run(CASES[8], revision_success)
     def revision_failure():
         first,second,third,not_adaptable,_functions,hashes=revisions()
         assertions={"second_failed_closed":second,"attempts_persisted":first and second,"third_rejected":third,"failed_not_adaptable":not_adaptable,"plan_usable":bool(hashes)}
-        return all(assertions.values()), [], hashes, assertions
+        return all(assertions.values()), [], hashes, assertions, {"revision-outcomes.json":{"first_revision_required":first,"second_failed_closed":second,"third_rejected":third,"failed_not_adaptable":not_adaptable}}
     run(CASES[9], revision_failure)
     def authority_upgrade():
         with tempfile.TemporaryDirectory() as raw:
@@ -333,7 +348,7 @@ def main() -> int:
             rejected = submit_result(ctx, "migration_and_rollback", result, {"work_order_id":work["work_order_id"]})
             manifest, artifacts = load_review(ctx)
             assertions={"typed_authority_rejection":rejected["reason"]=="AUTHORITY_UPGRADE","canonical_authority_unchanged":not artifacts["accepted-results.json"]["results"]}
-            return all(assertions.values()), [], _hashes(manifest), assertions
+            return all(assertions.values()), [], _hashes(manifest), assertions, {"submission-outcome.json":rejected,"accepted-results.json":artifacts["accepted-results.json"],"generation-manifest.json":manifest}
     run(CASES[10], authority_upgrade)
     def three_issues():
         with tempfile.TemporaryDirectory() as raw:
@@ -349,21 +364,38 @@ def main() -> int:
             assertions = {"three_records": prepared["actionable_issue_count"] == 3, "three_packets": len(packets) == 3,
                           "three_contracts": len(contracts) == 3, "three_projections": len(nodes) == 3,
                           "bidirectional_unique_links": unique and all((root_dir / "closure-contracts" / (item["verification_contract_id"] + ".json")).is_file() for item in packets)}
-            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions
+            contracts_by_id={path.stem:json.loads(path.read_text(encoding="utf-8")) for path in contracts}
+            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-plan.json":artifacts["remediation-plan.json"],"remediation-overlay.json":artifacts["remediation-overlay.json"],"closure-contracts.json":contracts_by_id}
     run(CASES[11], three_issues)
     def contestation():
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True); original = canonical_json(finding)
             accepted = append_action(ctx, _action(ctx, finding)); _, artifacts = load_contestation(ctx)
             assertions={"original_preserved":canonical_json(finding)==original,"counter_evidence_visible":accepted["status"]=="accepted" and bool(artifacts["contestation-ledger.json"]["actions"])}
-            return all(assertions.values()), [], {"ledger": content_hash(artifacts["contestation-ledger.json"])}, assertions
+            return all(assertions.values()), [], {"ledger": content_hash(artifacts["contestation-ledger.json"])}, assertions, {"source-finding.json":finding,"accepted-action.json":accepted,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":artifacts["contestation-effects.json"]}
     run(CASES[12], contestation)
     def risk():
         with tempfile.TemporaryDirectory() as raw:
-            ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True); append_action(ctx, _action(ctx, finding)); _, artifacts = load_contestation(ctx)
+            ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True)
+            findings = [
+                {**finding, "id": "finding_blocker", "owner_decision_required": True},
+                {**finding, "id": "finding_condition", "blocker": False, "condition": True, "state": "MATERIAL_CONDITION"},
+                {**finding, "id": "finding_high_risk_a", "blocker": False, "risk": "high"},
+                {**finding, "id": "finding_high_risk_b", "blocker": False, "risk": "high"},
+            ]
+            ctx.release["findings"] = findings
+            for index, item in enumerate(findings):
+                append_action(ctx, _action(ctx, item, action_id=f"action_budget_{index}"))
+            _, artifacts = load_contestation(ctx)
+            effects=artifacts["contestation-effects.json"]
+            combined=effects["immediate_owner_decisions"]+effects["overflow_owner_decisions"]
             assertions={"decision_effect":artifacts["contestation-effects.json"]["named_risk_effects"][0]["effect"]=="accepted_named_risk",
-                        "finding_unchanged":finding["state"]=="OPEN","evidence_unchanged":finding["evidence_class"]=="deterministically_established","blocker_unchanged":finding["blocker"] is True}
-            return all(assertions.values()), [], {"effects": content_hash(artifacts["contestation-effects.json"])}, assertions
+                        "finding_unchanged":finding["state"]=="OPEN","evidence_unchanged":finding["evidence_class"]=="deterministically_established","blocker_unchanged":finding["blocker"] is True,
+                        "budget_exactly_two":len(effects["immediate_owner_decisions"])==2,
+                        "overflow_complete":len(effects["overflow_owner_decisions"])==2 and len({row["action_id"] for row in combined})==4,
+                        "priority_deterministic":[row["priority"] for row in combined]==[1,2,3,3],
+                        "source_links_complete":len(effects["source_references"])==4 and len(effects["priority_reason_codes"])==4}
+            return all(assertions.values()), [], {"effects": content_hash(effects)}, assertions, {"source-findings.json":findings,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":effects}
     run(CASES[13], risk)
     def management():
         with tempfile.TemporaryDirectory() as raw:
@@ -372,7 +404,9 @@ def main() -> int:
             assertions={"all_vectors_equal":len(vectors)==1,"html_vectors_equal":len(vectors)==1,
                         "github_vector_equal":len(vectors)==1,
                         "sections_complete":all(bool(item.get("sections")) for item in artifacts.values())}
-            return all(assertions.values()), [], _hashes(manifest), assertions
+            canonical={"generation-manifest.json":manifest}
+            canonical.update({"artifacts/"+name:value for name,value in artifacts.items()})
+            return all(assertions.values()), [], _hashes(manifest), assertions, canonical
     run(CASES[14], management)
     def read_only():
         before = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
@@ -381,7 +415,7 @@ def main() -> int:
             _remediation(ctx); prepare_review(ctx); compile_management(ctx)
         after = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
         assertions={"git_unchanged":before==after,"tracked_bytes_unchanged":before==after,"upstreams_unchanged":before==after,"writes_local_only":before==after}
-        return all(assertions.values()), [], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}, assertions
+        return all(assertions.values()), [], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}, assertions, {"repository-state.json":{"before_status":before,"after_status":after,"source_unchanged":before==after}}
     run(CASES[15], read_only)
     # Historical controlled remediation is implemented by the dedicated
     # disposable-Git patient, not by the private-alpha roadmap compiler.
@@ -390,7 +424,7 @@ def main() -> int:
         assertions={"allowlisted_change":receipt.get("allowlisted_files")==["route.txt"],"exact_rerun":receipt.get("exact_rerun_passed") is True,
                     "no_merge":receipt.get("merge_performed") is False,"cleanup":receipt.get("cleanup_completed") is True,
                     "source_repo_unchanged":receipt.get("source_repository_unchanged") is True}
-        return all(assertions.values()), [], {"receipt":receipt["receipt_hash"]}, assertions
+        return all(assertions.values()), [], {"receipt":receipt["receipt_hash"]}, assertions, {"historical-remediation-receipt.json":receipt}
     run(CASES[16], historical)
     def transports():
         with tempfile.TemporaryDirectory() as raw:
@@ -409,7 +443,7 @@ def main() -> int:
                           "same_native_validator": package.get("native_work_order", {}).get("native_boundary", {}).get("native_result_validator") == "shiproom.review_organisation.validate_migration_result",
                           "semantic_identity_equal": manual["result_id"] == codex_id,
                           "transport_distinct": manual_receipt["execution_receipt"] != codex_receipt["execution_receipt"]}
-            return all(assertions.values()), ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id}, assertions
+            return all(assertions.values()), ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id}, assertions, {"codex-execution-package.json":package,"manual-submission.json":manual,"codex-submission.json":codex,"native-result.json":result,"manual-receipt.json":manual_receipt,"codex-receipt.json":codex_receipt}
     run(CASES[17], transports)
 
     if tuple(item["name"] for item in results) != CASES:

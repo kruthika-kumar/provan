@@ -12,6 +12,10 @@ REQUIREMENT_FIELDS = (
     "forbidden_substitutions",
     "required_artifacts",
     "minimum_cardinalities",
+    "near_valid_behavior",
+    "adversarial_behavior",
+    "adversarial_error_code",
+    "owning_production_entrypoint",
 )
 WORKFLOW_FIELDS = (
     "preconditions",
@@ -42,6 +46,9 @@ def requirement_semantic_hash(row: dict[str, Any]) -> str:
         raise ValueError("approved_requirement_cardinality_scope_invalid")
     if any(not isinstance(value, int) or isinstance(value, bool) or value < 1 for value in cardinalities.values()):
         raise ValueError("approved_requirement_cardinality_reduced")
+    for field in ("near_valid_behavior", "adversarial_behavior", "adversarial_error_code", "owning_production_entrypoint"):
+        if not isinstance(row[field], str) or not row[field].strip():
+            raise ValueError("approved_requirement_semantics_incomplete")
     return canonical_hash({field: row[field] for field in REQUIREMENT_FIELDS})
 
 
