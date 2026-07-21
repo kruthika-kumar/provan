@@ -10,9 +10,13 @@ def validate(path:Path):
     for proof in manifest:
         row=by_id[proof["proof_id"]]
         if row.get("requirement_id")!=proof["requirement_id"] or row.get("fixture_class")!=proof["fixture_class"]:raise ValueError("proof_execution_binding_mismatch")
-        if not row["production_invocation_ids"] or row["actual_record_count"]<row["minimum_record_count"] or row["side_effect_observed"]:raise ValueError("proof_execution_row_invalid")
+        if not row["production_invocation_ids"] or row["side_effect_observed"]:raise ValueError("proof_execution_row_invalid")
+        if proof["expected_acceptance"] and row["actual_record_count"]<row["minimum_record_count"]:raise ValueError("proof_execution_cardinality_invalid")
         if row.get("actual_acceptance")!=proof["expected_acceptance"]:raise ValueError("proof_execution_acceptance_mismatch")
         if proof["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=proof["expected_python_exception"] or row.get("actual_error_code")!=proof["expected_error_code"]):raise ValueError("proof_execution_typed_rejection_mismatch")
+        if row.get("semantic_fingerprint")!=proof.get("semantic_fingerprint"):raise ValueError("proof_execution_fingerprint_mismatch")
+        invocations=row.get("production_invocations")
+        if not isinstance(invocations,list) or {item.get("invocation_id") for item in invocations}!={*row["production_invocation_ids"]}:raise ValueError("proof_execution_invocation_binding_invalid")
         assertions=row.get("artifact_assertions")
         if not isinstance(assertions,list) or not assertions or any(item.get("actual")!=item.get("expected") for item in assertions):raise ValueError("proof_execution_artifact_assertion_failed")
         paths=row.get("artifact_paths");hashes=row.get("artifact_hashes")

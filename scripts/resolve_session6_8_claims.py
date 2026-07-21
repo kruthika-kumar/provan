@@ -40,6 +40,13 @@ def _resolve_symbol(reference: str) -> None:
         raise ValueError("claim_implementation_symbol_missing")
 
 
+def _measured_count(value: object) -> int:
+    if isinstance(value,bool): return 1 if value else 0
+    if isinstance(value,int): return max(value,0)
+    if isinstance(value,(list,dict,str)): return len(value)
+    return 1 if value is not None else 0
+
+
 def resolve(*, proof_path: Path, workflow_path: Path, parity_path: Path,
             security_path: Path, wheel_path: Path, output: Path) -> dict:
     requirements = json.loads((ROOT / "docs/validation/session6-8-requirement-inventory.json").read_text(encoding="utf-8"))["requirements"]
@@ -70,7 +77,7 @@ def resolve(*, proof_path: Path, workflow_path: Path, parity_path: Path,
         if any(len(group) < 1 for group in groups):
             raise ValueError("claim_proof_class_missing")
         selected = [proof_rows[pid] for group in groups for pid in group]
-        if any(row["requirement_id"] != rid or not row["passed"] for row in selected):
+        if any(row["requirement_id"] != rid for row in selected):
             raise ValueError("claim_proof_binding_invalid")
         if {row["fixture_class"] for row in selected} != {"valid", "near_valid", "adversarial_invalid"}:
             raise ValueError("claim_proof_class_incomplete")
@@ -78,9 +85,37 @@ def resolve(*, proof_path: Path, workflow_path: Path, parity_path: Path,
         counts = claim.get("minimum_record_counts")
         if not assertions or not counts or any(value < 1 for value in counts.values()):
             raise ValueError("claim_evidence_assertion_vacuous")
+        measured=[]; invocation_ids=[]
+        for row in selected:
+            expected=row["fixture_class"]!="adversarial_invalid"
+            if row.get("actual_acceptance")!=expected:
+                raise ValueError("claim_proof_outcome_invalid")
+            if not expected and (row.get("actual_exception")!="ValueError" or not row.get("actual_error_code")):
+                raise ValueError("claim_proof_rejection_invalid")
+            paths=row.get("artifact_paths",[])
+            if len(paths)!=1:
+                raise ValueError("claim_proof_artifact_cardinality_invalid")
+            path=Path(paths[0])
+            if not path.is_file() or row.get("artifact_hashes",{}).get(str(path))!=_sha(path):
+                raise ValueError("claim_proof_artifact_hash_invalid")
+            artifact=json.loads(path.read_text(encoding="utf-8"))
+            if artifact.get("requirement_id")!=rid or artifact.get("proof_id")!=row["proof_id"]:
+                raise ValueError("claim_proof_artifact_binding_invalid")
+            count=_measured_count(artifact.get("measured_value"))
+            if expected and count<row["minimum_record_count"]:
+                raise ValueError("claim_measured_cardinality_invalid")
+            if count!=artifact.get("measured_cardinality") or count!=row.get("actual_record_count"):
+                raise ValueError("claim_configured_minimum_substitution")
+            measured.append({"proof_id":row["proof_id"],"artifact_hash":_sha(path),"selector":artifact["artifact_selector"],"measured_value":artifact["measured_value"],"measured_cardinality":count})
+            invocation_ids.extend(row.get("production_invocation_ids",[]))
+        expected_functions=set(claim.get("production_invocation_receipts",[]))
+        observed_functions={item.get("qualified_function") for row in selected for item in row.get("production_invocations",[])}
+        if expected_functions and not expected_functions.issubset(observed_functions):
+            raise ValueError("claim_production_invocation_missing")
         resolved.append({"claim_id": claim["claim_id"], "requirement_id": rid,
                          "proof_ids": [row["proof_id"] for row in selected],
                          "evidence_assertions": assertions, "minimum_record_counts": counts,
+                         "measured_evidence":measured,"production_invocation_ids":sorted(set(invocation_ids)),
                          "resolved": True})
     commit = proof_value["final_commit"]
     if json.loads(wheel_path.read_text(encoding="utf-8")).get("final_commit") != commit:

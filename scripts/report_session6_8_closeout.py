@@ -43,6 +43,7 @@ def main() -> int:
     parser.add_argument("--proof-receipt", type=Path, required=True)
     parser.add_argument("--workflow-validation", type=Path, required=True)
     parser.add_argument("--claim-resolution", type=Path, required=True)
+    parser.add_argument("--evidence-matrix", type=Path, required=False)
     parser.add_argument("--receipt", type=Path, required=False)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -64,6 +65,7 @@ def main() -> int:
     proof_execution = _load(args.proof_receipt)
     workflow_validation = _load(args.workflow_validation)
     claim_resolution = _load(args.claim_resolution)
+    evidence_matrix = _load(args.evidence_matrix) if args.evidence_matrix else None
     proof_ids = {item["proof_id"] for item in proofs}
     inventory_requirements = {item["requirement_id"] for item in requirement_inventory}
     requirements = {item["requirement_id"] for item in completion}
@@ -90,6 +92,7 @@ def main() -> int:
         "contract_parity_complete": bool(parity.get("passed")) and parity.get("unexpected_pass_count") == 0 and len(parity.get("accepted_baselines", [])) == parity.get("contract_count") and len(parity.get("mutation_receipts", [])) >= 2 * parity.get("contract_count", 0),
         "wheel_receipt_complete": bool(wheel.get("passed")) and wheel.get("final_commit") == commit and wheel.get("exit_code") == 0 and len(wheel.get("commands",[])) >= 20,
         "all_claims_resolved": claim_resolution.get("claim_count") == 106 and claim_resolution.get("resolved_claim_count") == 106 and claim_resolution.get("final_commit") == commit,
+        "requirement_evidence_matrix_complete": isinstance(evidence_matrix,dict) and evidence_matrix.get("requirement_count")==106 and len(evidence_matrix.get("rows",[]))==106,
     }
     report = {"schema_version": "session6-8-closeout-report.v2", "final_commit": commit,
               "inputs": {"requirement_inventory_hash": _sha((validation / "session6-8-requirement-inventory.json").read_bytes()),
@@ -108,6 +111,7 @@ def main() -> int:
                          "proof_execution_receipt_hash": _sha(args.proof_receipt.read_bytes()),
                          "workflow_validation_hash": _sha(args.workflow_validation.read_bytes())},
               "claim_resolution_hash": _sha(args.claim_resolution.read_bytes()),
+              "requirement_evidence_matrix_hash": _sha(args.evidence_matrix.read_bytes()) if args.evidence_matrix else None,
               "prerequisites": prerequisites, "resolved": all(prerequisites.values()), "report_self_hash": ""}
     report["report_self_hash"] = _sha(json.dumps({**report, "report_self_hash": ""}, sort_keys=True, separators=(",", ":")).encode())
     args.output.parent.mkdir(parents=True, exist_ok=True)

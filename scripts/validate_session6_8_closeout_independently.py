@@ -64,9 +64,19 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     completion={row["requirement_id"] for row in _load(bundle/"session6-8-completion-map.json").get("requirements",[])}
     execution={row["requirement_id"] for row in _load(bundle/"session6-8-execution-map.json").get("requirements",[])}
     proof_manifest=_load(bundle/"session6-8-proof-manifest.json").get("proofs",[])
+    proof_registry=_load(bundle/"session6-8-requirement-proof-registry.json").get("proofs",[])
+    fingerprint_audit=_load(bundle/"session6-8-proof-fingerprint-audit.json")
     claims=_load(bundle/"session6-8-claim-registry.json").get("claims",[])
     claim_rids=[tuple(row.get("requirement_ids",[])) for row in claims]
     if rid!=completion or rid!=execution or rid!={row.get("requirement_id") for row in proof_manifest} or set(claim_rids)!={(x,) for x in rid} or len(claims)!=106:raise CloseoutValidationError("closeout_requirement_coverage_mismatch")
+    if len(proof_manifest)!=318 or len(proof_registry)!=318 or {row["proof_id"] for row in proof_manifest}!={row["proof_id"] for row in proof_registry}:raise CloseoutValidationError("closeout_proof_registry_mismatch")
+    recomputed=[]
+    for row in proof_registry:
+        fields={key:row[key] for key in ("production_functions","fixture_builder","fixture_mutation","artifact_selectors","comparators","expected_acceptance","expected_error","expected_schema_result","side_effect_assertions")}
+        fingerprint=_sha(json.dumps(fields,sort_keys=True,ensure_ascii=False,separators=(",",":")).encode())
+        if row.get("semantic_fingerprint")!=fingerprint:raise CloseoutValidationError("closeout_proof_fingerprint_tampered")
+        recomputed.append(fingerprint)
+    if len(set(recomputed))!=318 or fingerprint_audit.get("unjustified_duplicate_count")!=0 or fingerprint_audit.get("unique_fingerprint_count")!=318:raise CloseoutValidationError("closeout_proof_fingerprint_duplicate")
     workflows=_load(bundle/"session6-8-workflow-contracts.json").get("cases",[])
     if len(workflows)!=18 or any(row.get("approved_semantic_hash")!=_workflow_hash(row) for row in workflows):raise CloseoutValidationError("closeout_workflow_semantics_tampered")
     junit=ET.parse(bundle/"final-session6-8-junit.xml").getroot()
@@ -92,7 +102,8 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     for row in proof_rows:
         expected=manifest_by.get(row["proof_id"])
         if expected is None or row.get("requirement_id")!=expected["requirement_id"] or row.get("fixture_class")!=expected["fixture_class"]:raise CloseoutValidationError("closeout_proof_binding_invalid")
-        if row.get("actual_acceptance")!=expected["expected_acceptance"] or row.get("actual_record_count",0)<row.get("minimum_record_count",1) or not row.get("production_invocation_ids"):raise CloseoutValidationError("closeout_proof_outcome_invalid")
+        if row.get("actual_acceptance")!=expected["expected_acceptance"] or not row.get("production_invocation_ids"):raise CloseoutValidationError("closeout_proof_outcome_invalid")
+        if expected["expected_acceptance"] and row.get("actual_record_count",0)<row.get("minimum_record_count",1):raise CloseoutValidationError("closeout_proof_cardinality_invalid")
         if expected["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=expected["expected_python_exception"] or row.get("actual_error_code")!=expected["expected_error_code"]):raise CloseoutValidationError("closeout_proof_rejection_mismatch")
         artifact=bundle/"canonical-artifacts/proof-events"/(row["proof_id"]+".artifact.json")
         if not artifact.is_file() or _sha(artifact.read_bytes()) not in row.get("artifact_hashes",{}).values():raise CloseoutValidationError("closeout_proof_artifact_mismatch")
@@ -123,6 +134,10 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
         if not artifact.is_file() or _sha(artifact.read_bytes())!=row["sha256"]:raise CloseoutValidationError("closeout_wheel_artifact_invalid")
     resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")
     if resolution.get("claim_count")!=106 or resolution.get("resolved_claim_count")!=106 or resolution.get("final_commit")!=expected_commit:raise CloseoutValidationError("closeout_claim_resolution_incomplete")
+    matrix=_load(bundle/"session6-8-requirement-evidence-matrix.json")
+    matrix_rows=matrix.get("rows",[])
+    if matrix.get("requirement_count")!=106 or len(matrix_rows)!=106 or {row.get("requirement_id") for row in matrix_rows}!=rid:raise CloseoutValidationError("closeout_evidence_matrix_incomplete")
+    if any(row.get("claim_status")!="resolved" or not row.get("production_invocations") or any(value<0 for value in row.get("measured_cardinalities",{}).values()) for row in matrix_rows):raise CloseoutValidationError("closeout_evidence_matrix_invalid")
     if report.get("resolved") is not True or not isinstance(report.get("prerequisites"),dict) or not all(report["prerequisites"].values()):raise CloseoutValidationError("closeout_report_not_resolved")
     return {"status":"verified","final_commit":expected_commit,"requirement_count":106,"claim_count":106,"proof_count":len(proof_rows),"workflow_count":18,"security_count":44,"parity_mutation_count":len(parity["mutation_receipts"]),"wheel_command_count":len(wheel["commands"]),"bundle_manifest_hash":manifest["manifest_hash"]}
 

@@ -170,7 +170,7 @@ def execute_proof(proof_id: str, *, final_commit: str) -> dict:
             {"assertion_id": case.assertion_id, "selector": case.artifact_selector, "comparator": "equals", "expected": expected_acceptance, "actual": actual_acceptance},
             {"assertion_id": case.assertion_id + "_source_unchanged", "selector": "/source_unchanged", "comparator": "equals", "expected": True, "actual": source_unchanged},
         ],
-        "actual_record_count": actual_count if actual_acceptance else case.minimum_record_count,
+        "actual_record_count": actual_count,
         "measured_record_count": actual_count,
         "minimum_record_count": case.minimum_record_count,
         "side_effect_observed": not source_unchanged,
