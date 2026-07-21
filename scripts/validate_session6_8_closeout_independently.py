@@ -69,7 +69,10 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     claims=_load(bundle/"session6-8-claim-registry.json").get("claims",[])
     claim_rids=[tuple(row.get("requirement_ids",[])) for row in claims]
     if rid!=completion or rid!=execution or rid!={row.get("requirement_id") for row in proof_manifest} or set(claim_rids)!={(x,) for x in rid} or len(claims)!=106:raise CloseoutValidationError("closeout_requirement_coverage_mismatch")
-    if len(proof_manifest)!=318 or len(proof_registry)!=318 or {row["proof_id"] for row in proof_manifest}!={row["proof_id"] for row in proof_registry}:raise CloseoutValidationError("closeout_proof_registry_mismatch")
+    if len(proof_manifest)!=318 or len(proof_registry)!=318 or len({row.get("proof_id") for row in proof_registry})!=318:raise CloseoutValidationError("closeout_proof_registry_cardinality_invalid")
+    if {row["proof_id"] for row in proof_manifest}!={row["proof_id"] for row in proof_registry}:raise CloseoutValidationError("closeout_proof_registry_mismatch")
+    classes={requirement:{row.get("fixture_class") for row in proof_registry if row.get("requirement_id")==requirement} for requirement in rid}
+    if any(value!={"valid","near_valid","adversarial_invalid"} for value in classes.values()):raise CloseoutValidationError("closeout_proof_fixture_class_reuse")
     recomputed=[]
     for row in proof_registry:
         fields={key:row[key] for key in ("production_functions","fixture_builder","fixture_mutation","artifact_selectors","comparators","expected_acceptance","expected_error","expected_schema_result","side_effect_assertions")}
@@ -96,6 +99,7 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
         for assertion in contract["assertions"]:
             actual=evidence.get("assertions",{}).get(assertion["assertion_id"])
             if assertion["comparator"]!="equals" or actual!=assertion["expected_value"]:raise CloseoutValidationError("closeout_workflow_assertion_failed")
+    registry_by={row["proof_id"]:row for row in proof_registry}
     proof_receipt=_load(bundle/"session6-8-proof-execution-receipt.json")
     proof_rows=proof_receipt.get("proofs",[]);manifest_by={row["proof_id"]:row for row in proof_manifest}
     if len(proof_rows)<318 or len({row.get("proof_id") for row in proof_rows})!=len(proof_manifest):raise CloseoutValidationError("closeout_proof_execution_incomplete")
@@ -105,8 +109,17 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
         if row.get("actual_acceptance")!=expected["expected_acceptance"] or not row.get("production_invocation_ids"):raise CloseoutValidationError("closeout_proof_outcome_invalid")
         if expected["expected_acceptance"] and row.get("actual_record_count",0)<row.get("minimum_record_count",1):raise CloseoutValidationError("closeout_proof_cardinality_invalid")
         if expected["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=expected["expected_python_exception"] or row.get("actual_error_code")!=expected["expected_error_code"]):raise CloseoutValidationError("closeout_proof_rejection_mismatch")
+        registered=registry_by[row["proof_id"]]
+        if row.get("semantic_fingerprint")!=registered.get("semantic_fingerprint"):raise CloseoutValidationError("closeout_proof_receipt_fingerprint_mismatch")
+        invocations=row.get("production_invocations",[])
+        if not invocations or {item.get("invocation_id") for item in invocations}!={*row.get("production_invocation_ids",[])}:raise CloseoutValidationError("closeout_proof_invocation_missing")
         artifact=bundle/"canonical-artifacts/proof-events"/(row["proof_id"]+".artifact.json")
         if not artifact.is_file() or _sha(artifact.read_bytes()) not in row.get("artifact_hashes",{}).values():raise CloseoutValidationError("closeout_proof_artifact_mismatch")
+        artifact_value=_load(artifact)
+        if artifact_value.get("artifact_selector")!=registered["artifact_selectors"][0]:raise CloseoutValidationError("closeout_proof_selector_mismatch")
+        measured=artifact_value.get("measured_value")
+        measured_count=(1 if measured else 0) if isinstance(measured,bool) else (max(measured,0) if isinstance(measured,int) else len(measured) if isinstance(measured,(list,dict,str)) else 1 if measured is not None else 0)
+        if artifact_value.get("measured_cardinality")!=measured_count or row.get("actual_record_count")!=measured_count:raise CloseoutValidationError("closeout_proof_configured_minimum_substitution")
     parity=_load(bundle/"session6-8-contract-parity-report.json")
     if len(parity.get("accepted_baselines",[]))!=parity.get("contract_count") or len(parity.get("mutation_receipts",[]))<2*parity.get("contract_count",0):raise CloseoutValidationError("closeout_parity_incomplete")
     for row in parity["mutation_receipts"]:
@@ -132,8 +145,17 @@ def validate_bundle(bundle: Path, *, expected_commit: str, expected_receipt_hash
     for row in wheel.get("artifacts",[]):
         artifact=bundle/"canonical-artifacts/wheel"/row["relative_path"]
         if not artifact.is_file() or _sha(artifact.read_bytes())!=row["sha256"]:raise CloseoutValidationError("closeout_wheel_artifact_invalid")
+    if len(claims)!=len({row.get("claim_id") for row in claims}):raise CloseoutValidationError("closeout_claim_duplicate")
     resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")
     if resolution.get("claim_count")!=106 or resolution.get("resolved_claim_count")!=106 or resolution.get("final_commit")!=expected_commit:raise CloseoutValidationError("closeout_claim_resolution_incomplete")
+    resolved_by={row.get("requirement_id"):row for row in resolution.get("claims",[])}
+    if len(resolved_by)!=106 or set(resolved_by)!=rid:raise CloseoutValidationError("closeout_claim_resolution_binding_invalid")
+    for claim in claims:
+        requirement=claim["requirement_ids"][0];resolved=resolved_by[requirement]
+        expected_ids=set(claim["positive_proof_ids"]+claim["near_valid_proof_ids"]+claim["adversarial_proof_ids"])
+        if set(resolved.get("proof_ids",[]))!=expected_ids:raise CloseoutValidationError("closeout_claim_proof_substitution")
+        measured=resolved.get("measured_evidence",[])
+        if len(measured)!=3 or {row.get("proof_id") for row in measured}!=expected_ids:raise CloseoutValidationError("closeout_claim_measured_evidence_incomplete")
     matrix=_load(bundle/"session6-8-requirement-evidence-matrix.json")
     matrix_rows=matrix.get("rows",[])
     if matrix.get("requirement_count")!=106 or len(matrix_rows)!=106 or {row.get("requirement_id") for row in matrix_rows}!=rid:raise CloseoutValidationError("closeout_evidence_matrix_incomplete")

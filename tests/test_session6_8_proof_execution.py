@@ -29,6 +29,10 @@ def test_proof_registry_has_no_prefix_dispatch_or_inventory_resolution():
     assert "session6-8-requirement-inventory" not in source
     assert len(PROOF_CASES)==318
     assert len({case.assertion_id for case in PROOF_CASES.values()})==106
+    boundary=(ROOT/"shiproom/session6_8_requirement_boundaries.py").read_text(encoding="utf-8")
+    assert "_bind_assertion" not in boundary
+    assert "globals()[\"assert_\"" not in boundary
+    assert boundary.count("def assert_")==106
 
 
 def test_requirement_proof_registry_is_exact_and_fingerprint_unique():

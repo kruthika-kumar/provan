@@ -41,6 +41,10 @@ ATTACKS=(
  ("parity_mutations_removed","closeout_parity_incomplete"),("parity_fixture_changed","closeout_parity_mutation_invalid"),
  ("security_removed","closeout_security_cardinality_invalid"),("security_raw_changed","closeout_security_raw_evidence_invalid"),
  ("wheel_commands_removed","closeout_wheel_lifecycle_incomplete"),("claim_resolution_changed","closeout_claim_resolution_incomplete"),
+ ("proof_registry_substitution","closeout_proof_fingerprint_tampered"),("proof_fixture_class_reuse","closeout_proof_fixture_class_reuse"),
+ ("proof_invocation_removed","closeout_proof_invocation_missing"),("proof_selector_changed","closeout_proof_selector_mismatch"),
+ ("proof_configured_minimum","closeout_proof_configured_minimum_substitution"),("claim_duplicate","closeout_claim_duplicate"),
+ ("claim_proof_substitution","closeout_claim_proof_substitution"),("evidence_matrix_removed","closeout_evidence_matrix_incomplete"),
 )
 
 
@@ -73,6 +77,15 @@ def _mutate(root: Path, attack: str) -> str | None:
     elif attack=="security_raw_changed":row=value("session6-8-security-receipt.json")["records"][0];path=root/"security-evidence"/Path(row["raw_evidence_path"]).name;path.write_text("{}")
     elif attack=="wheel_commands_removed":row=value("session6-8-installed-wheel-receipt.json");row["commands"]=[];_write(root/"session6-8-installed-wheel-receipt.json",row)
     elif attack=="claim_resolution_changed":row=value("session6-8-claim-resolution-receipt.json");row["resolved_claim_count"]=105;_write(root/"session6-8-claim-resolution-receipt.json",row)
+    elif attack=="proof_registry_substitution":row=value("session6-8-requirement-proof-registry.json");row["proofs"][0]["artifact_selectors"]=["/substituted"];_write(root/"session6-8-requirement-proof-registry.json",row)
+    elif attack=="proof_fixture_class_reuse":row=value("session6-8-requirement-proof-registry.json");row["proofs"][1]["fixture_class"]="valid";_write(root/"session6-8-requirement-proof-registry.json",row)
+    elif attack=="proof_invocation_removed":row=value("session6-8-proof-execution-receipt.json");row["proofs"][0]["production_invocations"]=[];_write(root/"session6-8-proof-execution-receipt.json",row)
+    elif attack=="proof_selector_changed":
+        receipt=value("session6-8-proof-execution-receipt.json");proof=receipt["proofs"][0];path=root/"canonical-artifacts/proof-events"/(proof["proof_id"]+".artifact.json");artifact=json.loads(path.read_text());artifact["artifact_selector"]="/changed";_write(path,artifact);proof["artifact_hashes"]={key:_sha(path.read_bytes()) for key in proof["artifact_hashes"]};_write(root/"session6-8-proof-execution-receipt.json",receipt)
+    elif attack=="proof_configured_minimum":row=value("session6-8-proof-execution-receipt.json");row["proofs"][0]["actual_record_count"]=row["proofs"][0]["minimum_record_count"]+7;_write(root/"session6-8-proof-execution-receipt.json",row)
+    elif attack=="claim_duplicate":row=value("session6-8-claim-registry.json");row["claims"][1]["claim_id"]=row["claims"][0]["claim_id"];_write(root/"session6-8-claim-registry.json",row)
+    elif attack=="claim_proof_substitution":row=value("session6-8-claim-resolution-receipt.json");row["claims"][0]["proof_ids"][0]=row["claims"][1]["proof_ids"][0];_write(root/"session6-8-claim-resolution-receipt.json",row)
+    elif attack=="evidence_matrix_removed":row=value("session6-8-requirement-evidence-matrix.json");row["rows"].pop();_write(root/"session6-8-requirement-evidence-matrix.json",row)
     _refresh(root);return receipt_hash
 
 

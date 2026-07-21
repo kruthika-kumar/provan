@@ -5,10 +5,10 @@ from pathlib import Path
 from scripts.run_session6_8_tamper_attacks import ATTACKS
 
 
-def test_independent_closeout_validator_has_22_distinct_tamper_rejections():
-    assert len(ATTACKS)==22
-    assert len({attack for attack,_error in ATTACKS})==22
-    assert len({error for _attack,error in ATTACKS})==22
+def test_independent_closeout_validator_has_at_least_22_distinct_tamper_rejections():
+    assert len(ATTACKS)>=22
+    assert len({attack for attack,_error in ATTACKS})==len(ATTACKS)
+    assert len({error for _attack,error in ATTACKS})==len(ATTACKS)
 
 
 def test_independent_closeout_validator_import_boundary():
