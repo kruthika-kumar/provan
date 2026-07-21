@@ -80,6 +80,13 @@ def _approved_forbidden(requirement_id: str) -> list[str]:
 def main() -> int:
     if {key: len(value) for key, value in GROUPS.items()} != EXPECTED or sum(map(len, GROUPS.values())) != 106:
         raise SystemExit("session6_8_requirement_baseline_count_invalid")
+    proof_registry_path=VALIDATION/"session6-8-requirement-proof-registry.json"
+    if not proof_registry_path.is_file():
+        raise SystemExit("requirement_proof_registry_missing")
+    proof_registry=json.loads(proof_registry_path.read_text(encoding="utf-8"))["proofs"]
+    registered={row["proof_id"]:row for row in proof_registry}
+    if len(registered)!=318:
+        raise SystemExit("requirement_proof_registry_cardinality_invalid")
     requirements=[]; completion=[]; execution=[]; proofs=[]; claims=[]
     for group, ids in GROUPS.items():
         for rid in ids:
@@ -90,12 +97,18 @@ def main() -> int:
             artifacts = [artifact]
             requirements.append({"requirement_id":rid,"session":group,"source_section":"approved evidence-integrity closeout","source_requirement":rid,"source_text_hash":_sha(rid),"normative_behavior":behavior,"forbidden_substitutions":forbidden,"required_artifacts":artifacts,"minimum_cardinalities":cardinalities,"approved_semantic_hash":_semantic_hash(rid,behavior,forbidden,artifacts,cardinalities),"status":"pending_execution"})
             proof_ids=[]
-            for fixture, accepted, error in (("valid",True,None),("near_valid",True,None),("adversarial_invalid",False,_adversarial_error(rid,group))):
+            selected=[]
+            for fixture in ("valid","near_valid","adversarial_invalid"):
                 pid=f"proof_{rid.lower()}_{fixture}"; proof_ids.append(pid)
-                proofs.append({"proof_id":pid,"requirement_id":rid,"domain":domain,"invariant":behavior,"fixture_class":fixture,"fixture_or_builder":f"proof_fixture_{rid.lower()}","production_function":function,"schema":None,"expected_acceptance":accepted,"expected_python_exception":None if accepted else "ValueError","expected_error_code":error,"expected_schema_rejection":False,"not_applicable_reason":"semantic production boundary","canonical_artifact":artifact,"test_id":f"tests/test_session6_8_proof_execution.py::test_requirement_proof[{pid}]","status":"pending_execution"})
+                row=registered.get(pid)
+                if row is None or row["requirement_id"]!=rid or row["fixture_class"]!=fixture:
+                    raise SystemExit("requirement_proof_registry_binding_invalid:"+pid)
+                selected.append(row)
+                accepted=row["expected_acceptance"]
+                proofs.append({"proof_id":pid,"requirement_id":rid,"domain":domain,"invariant":behavior,"fixture_class":fixture,"fixture_or_builder":row["fixture_builder"],"fixture_mutation":row["fixture_mutation"],"production_function":row["production_functions"][0],"proof_callable":row["proof_callable"],"artifact_selectors":row["artifact_selectors"],"comparators":row["comparators"],"semantic_fingerprint":row["semantic_fingerprint"],"schema":None,"expected_acceptance":accepted,"expected_python_exception":None if accepted else "ValueError","expected_error_code":row["expected_error"],"expected_schema_rejection":False,"not_applicable_reason":"semantic production boundary","canonical_artifact":artifact,"minimum_record_count":row["minimum_cardinality"],"test_id":f"tests/test_session6_8_proof_execution.py::test_requirement_proof[{pid}]","status":"pending_execution"})
             completion.append({"requirement_id":rid,"phase":group,"current_state":"pending_execution","known_gap":"proof execution required","implementation_files":[artifact],"production_boundary":function,"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"canonical_artifacts":[artifact],"status":"pending_execution"})
             execution.append({"requirement_id":rid,"production_boundary":function,"proof_ids":proof_ids,"canonical_artifact":artifact,"status":"pending_execution"})
-            claims.append({"claim_id":"claim_"+rid.lower(),"requirement_ids":[rid],"implementation_symbols":[function],"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"artifact_assertions":[{"requirement_id":rid,"artifact":artifact,"assertion":"minimum_records"}],"minimum_record_counts":{artifact:3 if rid=="S6_REMEDIATION_CARDINALITY" else 1},"production_invocation_receipts":[],"contract_parity_receipts":[],"security_receipts":[],"installed_wheel_receipts":[],"status":"pending_execution"})
+            claims.append({"claim_id":"claim_"+rid.lower(),"requirement_ids":[rid],"implementation_symbols":[selected[0]["proof_callable"],selected[0]["production_functions"][0]],"positive_proof_ids":[proof_ids[0]],"near_valid_proof_ids":[proof_ids[1]],"adversarial_proof_ids":[proof_ids[2]],"artifact_assertions":[{"requirement_id":rid,"artifact":artifact,"selector":selected[0]["artifact_selectors"][0],"comparator":selected[0]["comparators"][0],"assertion":"measured_requirement_value"}],"minimum_record_counts":{artifact:selected[0]["minimum_cardinality"]},"production_invocation_receipts":[selected[0]["production_functions"][0]],"contract_parity_receipts":[],"security_receipts":[],"installed_wheel_receipts":[],"status":"pending_execution"})
     (VALIDATION/"session6-8-requirement-inventory.json").write_text(_dump({"schema_version":"session6-8-requirement-inventory.v2","expected_requirement_count":106,"requirements":requirements}),encoding="utf-8")
     (VALIDATION/"session6-8-completion-map.json").write_text(_dump({"schema_version":"shiproom.session6-8-completion-map.v4","requirements":completion}),encoding="utf-8")
     (VALIDATION/"session6-8-execution-map.json").write_text(_dump({"schema_version":"shiproom.session6-8-execution-map.v4","requirements":execution}),encoding="utf-8")

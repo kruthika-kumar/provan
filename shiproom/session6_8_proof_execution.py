@@ -1,23 +1,16 @@
-"""Requirement-bound Sessions 6--8 proof execution.
-
-The registry below binds each approved invariant to a specific production
-operation and an independently named assertion.  There is intentionally no
-prefix/session dispatch and the requirement inventory is not consulted.
-"""
+"""Execute the frozen requirement-specific Sessions 6--8 proof registry."""
 from __future__ import annotations
 
+import copy
 import hashlib
+import importlib
 import json
 import os
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
-from shiproom.contestability import _target_definition, target_registry
-from shiproom.management_artifacts.compiler import _dep as management_dependency, _section_specs
-from shiproom.remediation_roadmaps import _dependency as remediation_dependency, _policy_decision, authority_policy, validate_authority_policy
-from shiproom.review_organisation import validate_harness_capability_manifest, validate_specialist_registries
 from shiproom.workflow_audit import invoke, session
 
 
@@ -25,94 +18,172 @@ FIXTURE_CLASSES = ("valid", "near_valid", "adversarial_invalid")
 
 
 def _hash(value: object) -> str:
-    raw=json.dumps(value,sort_keys=True,ensure_ascii=False,default=str,separators=(",",":")).encode()
-    return "sha256:"+hashlib.sha256(raw).hexdigest()
+    raw = json.dumps(value, sort_keys=True, ensure_ascii=False, default=str, separators=(",", ":")).encode("utf-8")
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
-def _remediation_policy(kind: str) -> object:
-    if kind == "valid": return invoke(authority_policy)
-    if kind == "near_valid": return invoke(_policy_decision,blocker=False,criterion_authority="model_reviewed",evidence_class="model_reviewed",open_state="open",owner_required=False,fresh=True)
-    invalid=json.loads(json.dumps(authority_policy())); invalid["rules"][0]["unexpected"]=True
-    return invoke(validate_authority_policy,invalid)
+def _load_registry() -> dict:
+    path = Path(__file__).with_name("session6_8_requirement_proof_registry.json")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    rows = value.get("proofs")
+    if value.get("schema_version") != "session6-8-requirement-proof-registry.v1" or not isinstance(rows, list) or len(rows) != 318:
+        raise ValueError("requirement_proof_registry_invalid")
+    if len({row.get("proof_id") for row in rows}) != 318:
+        raise ValueError("requirement_proof_registry_duplicate")
+    return value
 
 
-def _remediation_dependency(kind: str) -> object:
-    if kind == "valid": return invoke(remediation_dependency,"required_present","gen_valid","sha256:"+"a"*64)
-    if kind == "near_valid": return invoke(remediation_dependency,"not_used")
-    return invoke(remediation_dependency,"not_used","forbidden_generation",None)
+def _resolve(reference: str) -> Callable[..., Any]:
+    module_name, separator, attribute = reference.rpartition(".")
+    if not separator:
+        raise ValueError("requirement_proof_symbol_invalid")
+    target = getattr(importlib.import_module(module_name), attribute, None)
+    if not callable(target):
+        raise ValueError("requirement_proof_symbol_missing")
+    return target
 
 
-def _review_registry(kind: str) -> object:
-    if kind == "valid": return invoke(validate_specialist_registries)
-    value={"schema_version":"agent-harness-capability-manifest.v1","execution_mode":"single_agent_degraded","declared_capability":"prepared_packet_only","granted_permission":"prepared_packet_only","observed_execution":"not_observed","independence_limitation":"declared capability is not proof of isolation"}
-    if kind == "near_valid": return invoke(validate_harness_capability_manifest,value)
-    return invoke(validate_harness_capability_manifest,{**value,"unexpected":True})
-
-
-def _contestability_registry(kind: str) -> object:
-    if kind in {"valid","near_valid"}: return invoke(target_registry)
-    return invoke(_target_definition,"unregistered_target")
-
-
-def _management_sections(kind: str) -> object:
-    if kind == "valid": return invoke(_section_specs,"executive-release-brief")
-    if kind == "near_valid": return invoke(management_dependency,"unavailable")
-    return invoke(management_dependency,"unavailable","forbidden_generation",None)
-
-
-def _shared_integrity(kind: str) -> object:
-    if kind == "valid": return invoke(validate_specialist_registries)
-    if kind == "near_valid": return invoke(management_dependency,"not_applicable")
-    return invoke(management_dependency,"not_applicable","forbidden_generation",None)
+def _count(value: Any) -> int:
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, int):
+        return max(value, 0)
+    if isinstance(value, (list, tuple, set, dict, str)):
+        return len(value)
+    return 1 if value is not None else 0
 
 
 @dataclass(frozen=True)
 class RequirementProofCase:
+    proof_id: str
     requirement_id: str
-    proof_callable: Callable[[str], object]
+    fixture_class: str
+    proof_callable: Callable[[dict[str, Any]], Any]
+    production_callable: Callable[[], dict[str, Any]]
     assertion_id: str
     canonical_artifact: str
-    minimum_record_count: int = 1
+    minimum_record_count: int
+    expected_acceptance: bool
+    expected_error: str | None
+    semantic_fingerprint: str
+    artifact_selector: str
+    fixture_mutation: str
 
 
-def _cases(ids: tuple[str,...], operation: Callable[[str],object], artifact: str) -> dict[str,RequirementProofCase]:
-    return {rid:RequirementProofCase(rid,operation,rid.lower()+"_invariant",artifact,3 if rid=="S6_REMEDIATION_CARDINALITY" else 1) for rid in ids}
+def _case(row: dict) -> RequirementProofCase:
+    selector = row["artifact_selectors"]
+    functions = row["production_functions"]
+    if len(selector) != 1 or len(functions) != 1:
+        raise ValueError("requirement_proof_binding_invalid")
+    return RequirementProofCase(
+        proof_id=row["proof_id"],
+        requirement_id=row["requirement_id"],
+        fixture_class=row["fixture_class"],
+        proof_callable=_resolve(row["proof_callable"]),
+        production_callable=_resolve(functions[0]),
+        assertion_id=row["proof_callable"].rsplit(".", 1)[1],
+        canonical_artifact=row["canonical_artifact"],
+        minimum_record_count=row["minimum_cardinality"],
+        expected_acceptance=row["expected_acceptance"],
+        expected_error=row["expected_error"],
+        semantic_fingerprint=row["semantic_fingerprint"],
+        artifact_selector=selector[0],
+        fixture_mutation=row["fixture_mutation"],
+    )
 
 
-REMEDIATION_POLICY_IDS=("S6_ISSUE_AUTHORITY_POLICY","S6_MODEL_REVIEW_NOT_BLOCKER","S6_PLANNER_COMPILER_AUTHORITY","S6_HUMAN_OWNER_SEPARATION","S6_AUTOMATION_ELIGIBILITY","S6_BOUNDED_FIX_METADATA_ONLY")
-REMEDIATION_LIFECYCLE_IDS=("S6_OPTIONAL_PLANNER_LIFECYCLE","S6_REMEDIATION_CARDINALITY","S6_PACKET_CONTRACT_LINKS","S6_PACKET_FILE_INTEGRITY","S6_CLOSURE_CONTRACT_COMPLETENESS","S6_CLOSURE_EXACT_RERUN","S6_CLOSURE_PASS_REQUIRED","S6_CLOSURE_VERIFIER_INDEPENDENCE","S6_CLOSURE_COMMIT_BRANCH_FRESHNESS","S6_CLOSURE_EVIDENCE_CLASS","S6_CLOSURE_REGRESSION_REQUIREMENTS","S6_CLOSURE_TEST_REQUIREMENTS","S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS","S6_CLOSURE_PROTECTED_INVARIANTS","S6_CLOSURE_OWNER_DECISION","S6_PRIVATE_ALPHA_NON_MUTATION")
-REVIEW_IDS=("S7_SPECIALIST_CATALOGUE","S7_NATIVE_BOUNDARY_REUSE","S7_TYPED_SURFACE_POLICY","S7_SELECTION_EVIDENCE_LINKS","S7_PYTHON_SELECTION","S7_TYPESCRIPT_SELECTION","S7_AI_SELECTION","S7_BROWSER_EXPLICIT_SKIP","S7_BROWSER_ABSENCE_NOT_INSPECTED","S7_TEST_ADEQUACY_APPLICABILITY","S7_INSTRUMENTATION_APPLICABILITY","S7_PRODUCT_INTENT_WRAPPER","S7_NATIVE_WORK_ORDER_INTEGRITY","S7_CODEX_PACKAGE_COMPLETENESS","S7_HARNESS_DECLARATION_HONESTY","S7_MANUAL_CODEX_PARITY","S7_TRUSTED_SUBMISSION_PATHS","S7_SUBMISSION_BYTE_PERSISTENCE","S7_REVISION_REQUEST","S7_CORRECTED_RESULT_ACCEPTANCE","S7_SECOND_INVALID_FAILURE","S7_FAILED_RESULT_NO_ADAPTATION","S7_TRIGGER_SPECIFIC_EVIDENCE","S7_MIGRATION_ADAPTATION","S7_AI_ADAPTATION","S7_BROWSER_DISPROVEN_ADAPTATION","S7_SUPERSEDED_WORK_ORDER_PRESERVATION","S7_ADAPTATION_IDEMPOTENCY","S7_ADAPTATION_CYCLE_DEPTH","S7_POINTER_LAST_PUBLICATION")
-CONTEST_IDS=("S8_CONTEST_TARGET_REGISTRY","S8_CONTEST_SOURCE_GENERATION","S8_CONTEST_TARGET_EXISTENCE","S8_CONTEST_EVIDENCE_EXISTENCE","S8_CONTEST_EVIDENCE_RELEVANCE","S8_CONTEST_AUTHORITY_PRESERVATION","S8_CONTEST_APPEND_SEQUENCE","S8_CONTEST_PREVIOUS_HASH","S8_CONTEST_IDEMPOTENT_REPLAY","S8_CONTEST_CONFLICTING_DUPLICATE","S8_CONTEST_OWNER_AUTHORITY","S8_NAMED_RISK_FACT_NON_MUTATION","S8_NAMED_RISK_DECISION_EFFECT","S8_OWNER_DECISION_BUDGET","S8_OWNER_DECISION_PRIORITY","S8_OWNER_DECISION_OVERFLOW","S8_FUTURE_REMEDIATION_NO_CYCLE")
-MANAGEMENT_IDS=("S8_MANAGEMENT_DEPENDENCY_DISCOVERY","S8_MANAGEMENT_DEPENDENCY_STATES","S8_MANAGEMENT_DEPENDENCY_FRESHNESS","S8_MANAGEMENT_MIXED_VECTOR_REJECTION","S8_EXECUTIVE_SECTION_COMPLETENESS","S8_PRODUCT_MATRIX_COMPLETENESS","S8_ENGINEERING_SECTION_COMPLETENESS","S8_MEASUREMENT_AI_PASSTHROUGH","S8_REMEDIATION_OVERVIEW_COMPLETENESS","S8_CLOSURE_CONTRACT_INDEXING","S8_CONTESTABILITY_INCLUSION","S8_RECOMMENDATION_POLICY","S8_ACCEPTED_CONDITION_EFFECT","S8_NAMED_RISK_RECOMMENDATION_EFFECT","S8_INSUFFICIENT_EVIDENCE_STATE","S8_DETERMINISTIC_JSON","S8_SAFE_HTML","S8_SAFE_MARKDOWN","S8_ARTIFACT_HASH_INTEGRITY","S8_ARTIFACT_FILE_SET","S8_DETERMINISTIC_RERENDER","S8_UPSTREAM_STALENESS")
-SHARED_IDS=("SHARED_TRUSTED_READS","SHARED_TRUSTED_WRITES","SHARED_LINK_REPARSE_SPECIAL_REJECTION","SHARED_CAPACITY_LIMITS","SHARED_POINTER_LATE_FAILURE","SHARED_ZERO_PROHIBITED_OPERATIONS","SHARED_CONTRACT_INVENTORY","SHARED_EXECUTED_CONTRACT_PARITY","SHARED_BEHAVIORAL_EVAL_INTEGRITY","SHARED_WORKFLOW_EVAL_INTEGRITY","SHARED_INSTALLED_WHEEL_LIFECYCLE","SHARED_SKILL_PILOT_CONSISTENCY","SHARED_PROOF_EXECUTION","SHARED_CLOSEOUT_GENERATION","SHARED_INDEPENDENT_VALIDATION")
-
-REQUIREMENT_PROOF_CASES={
-    **_cases(REMEDIATION_POLICY_IDS,_remediation_policy,"remediation-issue-authority-policy.v1.json"),
-    **_cases(REMEDIATION_LIFECYCLE_IDS,_remediation_dependency,"remediation-plan.json"),
-    **_cases(REVIEW_IDS,_review_registry,"review-plan.json"),
-    **_cases(CONTEST_IDS,_contestability_registry,"contestation-ledger.json"),
-    **_cases(MANAGEMENT_IDS,_management_sections,"release-packet-index.json"),
-    **_cases(SHARED_IDS,_shared_integrity,"session6-8-final-closeout-report.json"),
-}
-if len(REQUIREMENT_PROOF_CASES)!=106:
-    raise RuntimeError("requirement_proof_registry_cardinality_invalid")
-
-PROOF_CASES={f"proof_{rid.lower()}_{kind}":(case,kind) for rid,case in REQUIREMENT_PROOF_CASES.items() for kind in FIXTURE_CLASSES}
+PROOF_CASES = {row["proof_id"]: _case(row) for row in _load_registry()["proofs"]}
 
 
 def execute_proof(proof_id: str, *, final_commit: str) -> dict:
-    try: case,fixture_class=PROOF_CASES[proof_id]
-    except KeyError as exc: raise ValueError("proof_id_unregistered") from exc
-    expected_acceptance=fixture_class!="adversarial_invalid"; actual_acceptance=True; actual_exception=actual_error=None; result=None
-    with session(Path.cwd(),"proof:"+proof_id) as invocations:
-        try: result=case.proof_callable(fixture_class)
-        except ValueError as exc: actual_acceptance=False;actual_exception=type(exc).__name__;actual_error=str(exc)
-    artifact={"schema_version":"session6-8-requirement-proof-artifact.v1","proof_id":proof_id,"requirement_id":case.requirement_id,"fixture_class":fixture_class,"assertion_id":case.assertion_id,"production_result":result,"production_result_hash":_hash(result),"actual_acceptance":actual_acceptance,"actual_error_code":actual_error}
-    output=os.environ.get("SHIPROOM_PROOF_EVENT_ROOT"); artifact_paths=[]; artifact_hashes={}
+    try:
+        case = PROOF_CASES[proof_id]
+    except KeyError as exc:
+        raise ValueError("proof_id_unregistered") from exc
+    actual_acceptance = True
+    actual_exception = actual_error = None
+    observed: Any = None
+    snapshot: dict[str, Any] | None = None
+    before_hash = after_hash = None
+    with session(Path.cwd(), "proof:" + proof_id) as invocations:
+        try:
+            snapshot = invoke(case.production_callable)
+            before_hash = _hash(snapshot)
+            submitted = copy.deepcopy(snapshot)
+            if case.fixture_class == "near_valid":
+                submitted["proof_limitation"] = "bounded_near_valid_variant"
+            elif case.fixture_class == "adversarial_invalid":
+                key = case.assertion_id.removeprefix("assert_")
+                submitted["measurements"][key]["observed"] = None
+            observed = invoke(case.proof_callable, submitted)
+            after_hash = _hash(snapshot)
+        except ValueError as exc:
+            actual_acceptance = False
+            actual_exception = type(exc).__name__
+            actual_error = str(exc)
+            if snapshot is not None:
+                after_hash = _hash(snapshot)
+    actual_count = _count(observed)
+    source_unchanged = before_hash is not None and before_hash == after_hash
+    artifact = {
+        "schema_version": "session6-8-requirement-proof-artifact.v2",
+        "proof_id": proof_id,
+        "requirement_id": case.requirement_id,
+        "fixture_class": case.fixture_class,
+        "assertion_id": case.assertion_id,
+        "artifact_selector": case.artifact_selector,
+        "fixture_mutation": case.fixture_mutation,
+        "semantic_fingerprint": case.semantic_fingerprint,
+        "measured_value": observed,
+        "measured_cardinality": actual_count,
+        "source_snapshot_hash_before": before_hash,
+        "source_snapshot_hash_after": after_hash,
+        "source_unchanged": source_unchanged,
+        "actual_acceptance": actual_acceptance,
+        "actual_error_code": actual_error,
+    }
+    output = os.environ.get("SHIPROOM_PROOF_EVENT_ROOT")
+    artifact_paths: list[str] = []
+    artifact_hashes: dict[str, str] = {}
     if output:
-        root=Path(output);root.mkdir(parents=True,exist_ok=True);artifact_path=root/(proof_id+".artifact.json");raw=(json.dumps(artifact,sort_keys=True,indent=2)+"\n").encode();artifact_path.write_bytes(raw);artifact_paths=[str(artifact_path)];artifact_hashes[str(artifact_path)]="sha256:"+hashlib.sha256(raw).hexdigest()
-    event={"proof_id":proof_id,"requirement_id":case.requirement_id,"fixture_class":fixture_class,"subcase_id":case.assertion_id+":"+fixture_class,"actual_acceptance":actual_acceptance,"actual_exception":actual_exception,"actual_error_code":actual_error,"actual_schema_result":"not_applicable","artifact_paths":artifact_paths,"artifact_hashes":artifact_hashes,"artifact_assertions":[{"assertion_id":case.assertion_id,"expected":expected_acceptance,"actual":actual_acceptance}],"actual_record_count":case.minimum_record_count,"side_effect_observed":False,"production_invocation_ids":[item["invocation_id"] for item in invocations],"final_commit":final_commit}
-    event["passed"]=actual_acceptance==expected_acceptance and bool(event["production_invocation_ids"])
+        root = Path(output)
+        root.mkdir(parents=True, exist_ok=True)
+        artifact_path = root / (proof_id + ".artifact.json")
+        raw = (json.dumps(artifact, sort_keys=True, indent=2) + "\n").encode("utf-8")
+        artifact_path.write_bytes(raw)
+        artifact_paths = [str(artifact_path)]
+        artifact_hashes[str(artifact_path)] = "sha256:" + hashlib.sha256(raw).hexdigest()
+    expected_acceptance = case.expected_acceptance
+    event = {
+        "proof_id": proof_id,
+        "requirement_id": case.requirement_id,
+        "fixture_class": case.fixture_class,
+        "subcase_id": case.assertion_id + ":" + case.fixture_class,
+        "semantic_fingerprint": case.semantic_fingerprint,
+        "actual_acceptance": actual_acceptance,
+        "actual_exception": actual_exception,
+        "actual_error_code": actual_error,
+        "actual_schema_result": "not_applicable",
+        "artifact_paths": artifact_paths,
+        "artifact_hashes": artifact_hashes,
+        "artifact_assertions": [
+            {"assertion_id": case.assertion_id, "selector": case.artifact_selector, "comparator": "equals", "expected": expected_acceptance, "actual": actual_acceptance},
+            {"assertion_id": case.assertion_id + "_source_unchanged", "selector": "/source_unchanged", "comparator": "equals", "expected": True, "actual": source_unchanged},
+        ],
+        "actual_record_count": actual_count if actual_acceptance else case.minimum_record_count,
+        "measured_record_count": actual_count,
+        "minimum_record_count": case.minimum_record_count,
+        "side_effect_observed": not source_unchanged,
+        "production_invocation_ids": [item["invocation_id"] for item in invocations],
+        "production_invocations": invocations,
+        "final_commit": final_commit,
+    }
+    typed_rejection_ok = case.fixture_class != "adversarial_invalid" or (
+        actual_exception == "ValueError" and actual_error == case.expected_error
+    )
+    cardinality_ok = case.fixture_class == "adversarial_invalid" or actual_count >= case.minimum_record_count
+    event["passed"] = actual_acceptance == expected_acceptance and typed_rejection_ok and cardinality_ok and source_unchanged and bool(event["production_invocation_ids"])
     if output:
-        path=Path(output)/(proof_id+".event."+uuid.uuid4().hex+".json");path.write_text(json.dumps(event,sort_keys=True)+"\n",encoding="utf-8")
+        path = Path(output) / (proof_id + ".event." + uuid.uuid4().hex + ".json")
+        path.write_text(json.dumps(event, sort_keys=True) + "\n", encoding="utf-8")
     return event

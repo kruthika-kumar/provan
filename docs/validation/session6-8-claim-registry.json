@@ -7,14 +7,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_ISSUE_AUTHORITY_POLICY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_ISSUE_AUTHORITY_POLICY",
+          "selector": "/measurements/s6_issue_authority_policy/observed"
         }
       ],
       "claim_id": "claim_s6_issue_authority_policy",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_issue_authority_policy",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -26,7 +29,9 @@
       "positive_proof_ids": [
         "proof_s6_issue_authority_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_ISSUE_AUTHORITY_POLICY"
       ],
@@ -40,14 +45,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_MODEL_REVIEW_NOT_BLOCKER",
+          "selector": "/measurements/s6_model_review_not_blocker/observed"
         }
       ],
       "claim_id": "claim_s6_model_review_not_blocker",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_model_review_not_blocker",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -59,7 +67,9 @@
       "positive_proof_ids": [
         "proof_s6_model_review_not_blocker_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_MODEL_REVIEW_NOT_BLOCKER"
       ],
@@ -73,14 +83,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_PLANNER_COMPILER_AUTHORITY",
+          "selector": "/measurements/s6_planner_compiler_authority/observed"
         }
       ],
       "claim_id": "claim_s6_planner_compiler_authority",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_planner_compiler_authority",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -92,7 +105,9 @@
       "positive_proof_ids": [
         "proof_s6_planner_compiler_authority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_PLANNER_COMPILER_AUTHORITY"
       ],
@@ -106,14 +121,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_HUMAN_OWNER_SEPARATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_HUMAN_OWNER_SEPARATION",
+          "selector": "/measurements/s6_human_owner_separation/observed"
         }
       ],
       "claim_id": "claim_s6_human_owner_separation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_human_owner_separation",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -125,7 +143,9 @@
       "positive_proof_ids": [
         "proof_s6_human_owner_separation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_HUMAN_OWNER_SEPARATION"
       ],
@@ -139,14 +159,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_OPTIONAL_PLANNER_LIFECYCLE",
+          "selector": "/measurements/s6_optional_planner_lifecycle/observed"
         }
       ],
       "claim_id": "claim_s6_optional_planner_lifecycle",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_optional_planner_lifecycle",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -158,7 +181,9 @@
       "positive_proof_ids": [
         "proof_s6_optional_planner_lifecycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_OPTIONAL_PLANNER_LIFECYCLE"
       ],
@@ -172,14 +197,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_AUTOMATION_ELIGIBILITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_AUTOMATION_ELIGIBILITY",
+          "selector": "/measurements/s6_automation_eligibility/observed"
         }
       ],
       "claim_id": "claim_s6_automation_eligibility",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_automation_eligibility",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -191,7 +219,9 @@
       "positive_proof_ids": [
         "proof_s6_automation_eligibility_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_AUTOMATION_ELIGIBILITY"
       ],
@@ -205,14 +235,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_BOUNDED_FIX_METADATA_ONLY",
+          "selector": "/measurements/s6_bounded_fix_metadata_only/observed"
         }
       ],
       "claim_id": "claim_s6_bounded_fix_metadata_only",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_bounded_fix_metadata_only",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -224,7 +257,9 @@
       "positive_proof_ids": [
         "proof_s6_bounded_fix_metadata_only_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_BOUNDED_FIX_METADATA_ONLY"
       ],
@@ -238,14 +273,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_REMEDIATION_CARDINALITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_REMEDIATION_CARDINALITY",
+          "selector": "/measurements/s6_remediation_cardinality/observed"
         }
       ],
       "claim_id": "claim_s6_remediation_cardinality",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_remediation_cardinality",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -257,7 +295,9 @@
       "positive_proof_ids": [
         "proof_s6_remediation_cardinality_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_REMEDIATION_CARDINALITY"
       ],
@@ -271,14 +311,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_PACKET_CONTRACT_LINKS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_PACKET_CONTRACT_LINKS",
+          "selector": "/measurements/s6_packet_contract_links/observed"
         }
       ],
       "claim_id": "claim_s6_packet_contract_links",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_packet_contract_links",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -290,7 +333,9 @@
       "positive_proof_ids": [
         "proof_s6_packet_contract_links_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_PACKET_CONTRACT_LINKS"
       ],
@@ -304,14 +349,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_PACKET_FILE_INTEGRITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_PACKET_FILE_INTEGRITY",
+          "selector": "/measurements/s6_packet_file_integrity/observed"
         }
       ],
       "claim_id": "claim_s6_packet_file_integrity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_packet_file_integrity",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -323,7 +371,9 @@
       "positive_proof_ids": [
         "proof_s6_packet_file_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_PACKET_FILE_INTEGRITY"
       ],
@@ -337,14 +387,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_CONTRACT_COMPLETENESS",
+          "selector": "/measurements/s6_closure_contract_completeness/observed"
         }
       ],
       "claim_id": "claim_s6_closure_contract_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_contract_completeness",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -356,7 +409,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_contract_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_CONTRACT_COMPLETENESS"
       ],
@@ -370,14 +425,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_EXACT_RERUN"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_EXACT_RERUN",
+          "selector": "/measurements/s6_closure_exact_rerun/observed"
         }
       ],
       "claim_id": "claim_s6_closure_exact_rerun",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_exact_rerun",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -389,7 +447,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_exact_rerun_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_EXACT_RERUN"
       ],
@@ -403,14 +463,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_PASS_REQUIRED"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_PASS_REQUIRED",
+          "selector": "/measurements/s6_closure_pass_required/observed"
         }
       ],
       "claim_id": "claim_s6_closure_pass_required",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_pass_required",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -422,7 +485,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_pass_required_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_PASS_REQUIRED"
       ],
@@ -436,14 +501,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_VERIFIER_INDEPENDENCE",
+          "selector": "/measurements/s6_closure_verifier_independence/observed"
         }
       ],
       "claim_id": "claim_s6_closure_verifier_independence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_verifier_independence",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -455,7 +523,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_verifier_independence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_VERIFIER_INDEPENDENCE"
       ],
@@ -469,14 +539,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS",
+          "selector": "/measurements/s6_closure_commit_branch_freshness/observed"
         }
       ],
       "claim_id": "claim_s6_closure_commit_branch_freshness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_commit_branch_freshness",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -488,7 +561,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_commit_branch_freshness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS"
       ],
@@ -502,14 +577,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_EVIDENCE_CLASS",
+          "selector": "/measurements/s6_closure_evidence_class/observed"
         }
       ],
       "claim_id": "claim_s6_closure_evidence_class",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_evidence_class",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -521,7 +599,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_evidence_class_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_EVIDENCE_CLASS"
       ],
@@ -535,14 +615,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_REGRESSION_REQUIREMENTS",
+          "selector": "/measurements/s6_closure_regression_requirements/observed"
         }
       ],
       "claim_id": "claim_s6_closure_regression_requirements",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_regression_requirements",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -554,7 +637,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_regression_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_REGRESSION_REQUIREMENTS"
       ],
@@ -568,14 +653,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_TEST_REQUIREMENTS",
+          "selector": "/measurements/s6_closure_test_requirements/observed"
         }
       ],
       "claim_id": "claim_s6_closure_test_requirements",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_test_requirements",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -587,7 +675,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_test_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_TEST_REQUIREMENTS"
       ],
@@ -601,14 +691,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS",
+          "selector": "/measurements/s6_closure_instrumentation_requirements/observed"
         }
       ],
       "claim_id": "claim_s6_closure_instrumentation_requirements",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_instrumentation_requirements",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -620,7 +713,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_instrumentation_requirements_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS"
       ],
@@ -634,14 +729,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_PROTECTED_INVARIANTS",
+          "selector": "/measurements/s6_closure_protected_invariants/observed"
         }
       ],
       "claim_id": "claim_s6_closure_protected_invariants",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_protected_invariants",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -653,7 +751,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_protected_invariants_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_PROTECTED_INVARIANTS"
       ],
@@ -667,14 +767,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_CLOSURE_OWNER_DECISION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_CLOSURE_OWNER_DECISION",
+          "selector": "/measurements/s6_closure_owner_decision/observed"
         }
       ],
       "claim_id": "claim_s6_closure_owner_decision",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_closure_owner_decision",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -686,7 +789,9 @@
       "positive_proof_ids": [
         "proof_s6_closure_owner_decision_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_CLOSURE_OWNER_DECISION"
       ],
@@ -700,14 +805,17 @@
       "artifact_assertions": [
         {
           "artifact": "remediation-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S6_PRIVATE_ALPHA_NON_MUTATION",
+          "selector": "/measurements/s6_private_alpha_non_mutation/observed"
         }
       ],
       "claim_id": "claim_s6_private_alpha_non_mutation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.remediation_roadmaps.closure_verify"
+        "shiproom.session6_8_requirement_boundaries.assert_s6_private_alpha_non_mutation",
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -719,7 +827,9 @@
       "positive_proof_ids": [
         "proof_s6_private_alpha_non_mutation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.remediation_evidence"
+      ],
       "requirement_ids": [
         "S6_PRIVATE_ALPHA_NON_MUTATION"
       ],
@@ -733,14 +843,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_SPECIALIST_CATALOGUE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_SPECIALIST_CATALOGUE",
+          "selector": "/measurements/s7_specialist_catalogue/observed"
         }
       ],
       "claim_id": "claim_s7_specialist_catalogue",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_specialist_catalogue",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -752,7 +865,9 @@
       "positive_proof_ids": [
         "proof_s7_specialist_catalogue_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_SPECIALIST_CATALOGUE"
       ],
@@ -766,14 +881,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_NATIVE_BOUNDARY_REUSE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_NATIVE_BOUNDARY_REUSE",
+          "selector": "/measurements/s7_native_boundary_reuse/observed"
         }
       ],
       "claim_id": "claim_s7_native_boundary_reuse",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_native_boundary_reuse",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -785,7 +903,9 @@
       "positive_proof_ids": [
         "proof_s7_native_boundary_reuse_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_NATIVE_BOUNDARY_REUSE"
       ],
@@ -799,14 +919,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_TYPED_SURFACE_POLICY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_TYPED_SURFACE_POLICY",
+          "selector": "/measurements/s7_typed_surface_policy/observed"
         }
       ],
       "claim_id": "claim_s7_typed_surface_policy",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_typed_surface_policy",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -818,7 +941,9 @@
       "positive_proof_ids": [
         "proof_s7_typed_surface_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_TYPED_SURFACE_POLICY"
       ],
@@ -832,14 +957,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_SELECTION_EVIDENCE_LINKS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_SELECTION_EVIDENCE_LINKS",
+          "selector": "/measurements/s7_selection_evidence_links/observed"
         }
       ],
       "claim_id": "claim_s7_selection_evidence_links",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_selection_evidence_links",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -851,7 +979,9 @@
       "positive_proof_ids": [
         "proof_s7_selection_evidence_links_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_SELECTION_EVIDENCE_LINKS"
       ],
@@ -865,14 +995,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_PYTHON_SELECTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_PYTHON_SELECTION",
+          "selector": "/measurements/s7_python_selection/observed"
         }
       ],
       "claim_id": "claim_s7_python_selection",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_python_selection",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -884,7 +1017,9 @@
       "positive_proof_ids": [
         "proof_s7_python_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_PYTHON_SELECTION"
       ],
@@ -898,14 +1033,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_TYPESCRIPT_SELECTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_TYPESCRIPT_SELECTION",
+          "selector": "/measurements/s7_typescript_selection/observed"
         }
       ],
       "claim_id": "claim_s7_typescript_selection",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_typescript_selection",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -917,7 +1055,9 @@
       "positive_proof_ids": [
         "proof_s7_typescript_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_TYPESCRIPT_SELECTION"
       ],
@@ -931,14 +1071,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_AI_SELECTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_AI_SELECTION",
+          "selector": "/measurements/s7_ai_selection/observed"
         }
       ],
       "claim_id": "claim_s7_ai_selection",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_ai_selection",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -950,7 +1093,9 @@
       "positive_proof_ids": [
         "proof_s7_ai_selection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_AI_SELECTION"
       ],
@@ -964,14 +1109,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_BROWSER_EXPLICIT_SKIP"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_BROWSER_EXPLICIT_SKIP",
+          "selector": "/measurements/s7_browser_explicit_skip/observed"
         }
       ],
       "claim_id": "claim_s7_browser_explicit_skip",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_browser_explicit_skip",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -983,7 +1131,9 @@
       "positive_proof_ids": [
         "proof_s7_browser_explicit_skip_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_BROWSER_EXPLICIT_SKIP"
       ],
@@ -997,14 +1147,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_BROWSER_ABSENCE_NOT_INSPECTED",
+          "selector": "/measurements/s7_browser_absence_not_inspected/observed"
         }
       ],
       "claim_id": "claim_s7_browser_absence_not_inspected",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_browser_absence_not_inspected",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1016,7 +1169,9 @@
       "positive_proof_ids": [
         "proof_s7_browser_absence_not_inspected_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_BROWSER_ABSENCE_NOT_INSPECTED"
       ],
@@ -1030,14 +1185,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_TEST_ADEQUACY_APPLICABILITY",
+          "selector": "/measurements/s7_test_adequacy_applicability/observed"
         }
       ],
       "claim_id": "claim_s7_test_adequacy_applicability",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_test_adequacy_applicability",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1049,7 +1207,9 @@
       "positive_proof_ids": [
         "proof_s7_test_adequacy_applicability_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_TEST_ADEQUACY_APPLICABILITY"
       ],
@@ -1063,14 +1223,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_INSTRUMENTATION_APPLICABILITY",
+          "selector": "/measurements/s7_instrumentation_applicability/observed"
         }
       ],
       "claim_id": "claim_s7_instrumentation_applicability",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_instrumentation_applicability",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1082,7 +1245,9 @@
       "positive_proof_ids": [
         "proof_s7_instrumentation_applicability_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_INSTRUMENTATION_APPLICABILITY"
       ],
@@ -1096,14 +1261,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_PRODUCT_INTENT_WRAPPER"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_PRODUCT_INTENT_WRAPPER",
+          "selector": "/measurements/s7_product_intent_wrapper/observed"
         }
       ],
       "claim_id": "claim_s7_product_intent_wrapper",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_product_intent_wrapper",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1115,7 +1283,9 @@
       "positive_proof_ids": [
         "proof_s7_product_intent_wrapper_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_PRODUCT_INTENT_WRAPPER"
       ],
@@ -1129,14 +1299,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_NATIVE_WORK_ORDER_INTEGRITY",
+          "selector": "/measurements/s7_native_work_order_integrity/observed"
         }
       ],
       "claim_id": "claim_s7_native_work_order_integrity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_native_work_order_integrity",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1148,7 +1321,9 @@
       "positive_proof_ids": [
         "proof_s7_native_work_order_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_NATIVE_WORK_ORDER_INTEGRITY"
       ],
@@ -1162,14 +1337,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_CODEX_PACKAGE_COMPLETENESS",
+          "selector": "/measurements/s7_codex_package_completeness/observed"
         }
       ],
       "claim_id": "claim_s7_codex_package_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_codex_package_completeness",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1181,7 +1359,9 @@
       "positive_proof_ids": [
         "proof_s7_codex_package_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_CODEX_PACKAGE_COMPLETENESS"
       ],
@@ -1195,14 +1375,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_HARNESS_DECLARATION_HONESTY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_HARNESS_DECLARATION_HONESTY",
+          "selector": "/measurements/s7_harness_declaration_honesty/observed"
         }
       ],
       "claim_id": "claim_s7_harness_declaration_honesty",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_harness_declaration_honesty",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1214,7 +1397,9 @@
       "positive_proof_ids": [
         "proof_s7_harness_declaration_honesty_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_HARNESS_DECLARATION_HONESTY"
       ],
@@ -1228,14 +1413,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_MANUAL_CODEX_PARITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_MANUAL_CODEX_PARITY",
+          "selector": "/measurements/s7_manual_codex_parity/observed"
         }
       ],
       "claim_id": "claim_s7_manual_codex_parity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_manual_codex_parity",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1247,7 +1435,9 @@
       "positive_proof_ids": [
         "proof_s7_manual_codex_parity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_MANUAL_CODEX_PARITY"
       ],
@@ -1261,14 +1451,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_TRUSTED_SUBMISSION_PATHS",
+          "selector": "/measurements/s7_trusted_submission_paths/observed"
         }
       ],
       "claim_id": "claim_s7_trusted_submission_paths",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_trusted_submission_paths",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1280,7 +1473,9 @@
       "positive_proof_ids": [
         "proof_s7_trusted_submission_paths_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_TRUSTED_SUBMISSION_PATHS"
       ],
@@ -1294,14 +1489,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_SUBMISSION_BYTE_PERSISTENCE",
+          "selector": "/measurements/s7_submission_byte_persistence/observed"
         }
       ],
       "claim_id": "claim_s7_submission_byte_persistence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_submission_byte_persistence",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1313,7 +1511,9 @@
       "positive_proof_ids": [
         "proof_s7_submission_byte_persistence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_SUBMISSION_BYTE_PERSISTENCE"
       ],
@@ -1327,14 +1527,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_REVISION_REQUEST"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_REVISION_REQUEST",
+          "selector": "/measurements/s7_revision_request/observed"
         }
       ],
       "claim_id": "claim_s7_revision_request",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_revision_request",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1346,7 +1549,9 @@
       "positive_proof_ids": [
         "proof_s7_revision_request_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_REVISION_REQUEST"
       ],
@@ -1360,14 +1565,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_CORRECTED_RESULT_ACCEPTANCE",
+          "selector": "/measurements/s7_corrected_result_acceptance/observed"
         }
       ],
       "claim_id": "claim_s7_corrected_result_acceptance",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_corrected_result_acceptance",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1379,7 +1587,9 @@
       "positive_proof_ids": [
         "proof_s7_corrected_result_acceptance_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_CORRECTED_RESULT_ACCEPTANCE"
       ],
@@ -1393,14 +1603,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_SECOND_INVALID_FAILURE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_SECOND_INVALID_FAILURE",
+          "selector": "/measurements/s7_second_invalid_failure/observed"
         }
       ],
       "claim_id": "claim_s7_second_invalid_failure",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_second_invalid_failure",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1412,7 +1625,9 @@
       "positive_proof_ids": [
         "proof_s7_second_invalid_failure_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_SECOND_INVALID_FAILURE"
       ],
@@ -1426,14 +1641,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_FAILED_RESULT_NO_ADAPTATION",
+          "selector": "/measurements/s7_failed_result_no_adaptation/observed"
         }
       ],
       "claim_id": "claim_s7_failed_result_no_adaptation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_failed_result_no_adaptation",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1445,7 +1663,9 @@
       "positive_proof_ids": [
         "proof_s7_failed_result_no_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_FAILED_RESULT_NO_ADAPTATION"
       ],
@@ -1459,14 +1679,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_TRIGGER_SPECIFIC_EVIDENCE",
+          "selector": "/measurements/s7_trigger_specific_evidence/observed"
         }
       ],
       "claim_id": "claim_s7_trigger_specific_evidence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_trigger_specific_evidence",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1478,7 +1701,9 @@
       "positive_proof_ids": [
         "proof_s7_trigger_specific_evidence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_TRIGGER_SPECIFIC_EVIDENCE"
       ],
@@ -1492,14 +1717,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_MIGRATION_ADAPTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_MIGRATION_ADAPTATION",
+          "selector": "/measurements/s7_migration_adaptation/observed"
         }
       ],
       "claim_id": "claim_s7_migration_adaptation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_migration_adaptation",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1511,7 +1739,9 @@
       "positive_proof_ids": [
         "proof_s7_migration_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_MIGRATION_ADAPTATION"
       ],
@@ -1525,14 +1755,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_AI_ADAPTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_AI_ADAPTATION",
+          "selector": "/measurements/s7_ai_adaptation/observed"
         }
       ],
       "claim_id": "claim_s7_ai_adaptation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_ai_adaptation",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1544,7 +1777,9 @@
       "positive_proof_ids": [
         "proof_s7_ai_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_AI_ADAPTATION"
       ],
@@ -1558,14 +1793,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_BROWSER_DISPROVEN_ADAPTATION",
+          "selector": "/measurements/s7_browser_disproven_adaptation/observed"
         }
       ],
       "claim_id": "claim_s7_browser_disproven_adaptation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_browser_disproven_adaptation",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1577,7 +1815,9 @@
       "positive_proof_ids": [
         "proof_s7_browser_disproven_adaptation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_BROWSER_DISPROVEN_ADAPTATION"
       ],
@@ -1591,14 +1831,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_SUPERSEDED_WORK_ORDER_PRESERVATION",
+          "selector": "/measurements/s7_superseded_work_order_preservation/observed"
         }
       ],
       "claim_id": "claim_s7_superseded_work_order_preservation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_superseded_work_order_preservation",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1610,7 +1853,9 @@
       "positive_proof_ids": [
         "proof_s7_superseded_work_order_preservation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_SUPERSEDED_WORK_ORDER_PRESERVATION"
       ],
@@ -1624,14 +1869,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_ADAPTATION_IDEMPOTENCY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_ADAPTATION_IDEMPOTENCY",
+          "selector": "/measurements/s7_adaptation_idempotency/observed"
         }
       ],
       "claim_id": "claim_s7_adaptation_idempotency",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_adaptation_idempotency",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1643,7 +1891,9 @@
       "positive_proof_ids": [
         "proof_s7_adaptation_idempotency_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_ADAPTATION_IDEMPOTENCY"
       ],
@@ -1657,14 +1907,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_ADAPTATION_CYCLE_DEPTH",
+          "selector": "/measurements/s7_adaptation_cycle_depth/observed"
         }
       ],
       "claim_id": "claim_s7_adaptation_cycle_depth",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_adaptation_cycle_depth",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1676,7 +1929,9 @@
       "positive_proof_ids": [
         "proof_s7_adaptation_cycle_depth_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_ADAPTATION_CYCLE_DEPTH"
       ],
@@ -1690,14 +1945,17 @@
       "artifact_assertions": [
         {
           "artifact": "review-plan.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S7_POINTER_LAST_PUBLICATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S7_POINTER_LAST_PUBLICATION",
+          "selector": "/measurements/s7_pointer_last_publication/observed"
         }
       ],
       "claim_id": "claim_s7_pointer_last_publication",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.review_organisation.prepare"
+        "shiproom.session6_8_requirement_boundaries.assert_s7_pointer_last_publication",
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1709,7 +1967,9 @@
       "positive_proof_ids": [
         "proof_s7_pointer_last_publication_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.review_plan_evidence"
+      ],
       "requirement_ids": [
         "S7_POINTER_LAST_PUBLICATION"
       ],
@@ -1723,14 +1983,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_TARGET_REGISTRY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
+          "selector": "/measurements/s8_contest_target_registry/observed"
         }
       ],
       "claim_id": "claim_s8_contest_target_registry",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_target_registry",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1742,7 +2005,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_target_registry_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_TARGET_REGISTRY"
       ],
@@ -1756,14 +2021,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_SOURCE_GENERATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
+          "selector": "/measurements/s8_contest_source_generation/observed"
         }
       ],
       "claim_id": "claim_s8_contest_source_generation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_source_generation",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1775,7 +2043,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_source_generation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_SOURCE_GENERATION"
       ],
@@ -1789,14 +2059,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_TARGET_EXISTENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
+          "selector": "/measurements/s8_contest_target_existence/observed"
         }
       ],
       "claim_id": "claim_s8_contest_target_existence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_target_existence",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1808,7 +2081,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_target_existence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_TARGET_EXISTENCE"
       ],
@@ -1822,14 +2097,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
+          "selector": "/measurements/s8_contest_evidence_existence/observed"
         }
       ],
       "claim_id": "claim_s8_contest_evidence_existence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_evidence_existence",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1841,7 +2119,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_evidence_existence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_EVIDENCE_EXISTENCE"
       ],
@@ -1855,14 +2135,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
+          "selector": "/measurements/s8_contest_evidence_relevance/observed"
         }
       ],
       "claim_id": "claim_s8_contest_evidence_relevance",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_evidence_relevance",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1874,7 +2157,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_evidence_relevance_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_EVIDENCE_RELEVANCE"
       ],
@@ -1888,14 +2173,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
+          "selector": "/measurements/s8_contest_authority_preservation/observed"
         }
       ],
       "claim_id": "claim_s8_contest_authority_preservation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_authority_preservation",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1907,7 +2195,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_authority_preservation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_AUTHORITY_PRESERVATION"
       ],
@@ -1921,14 +2211,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_APPEND_SEQUENCE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
+          "selector": "/measurements/s8_contest_append_sequence/observed"
         }
       ],
       "claim_id": "claim_s8_contest_append_sequence",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_append_sequence",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1940,7 +2233,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_append_sequence_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_APPEND_SEQUENCE"
       ],
@@ -1954,14 +2249,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_PREVIOUS_HASH"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
+          "selector": "/measurements/s8_contest_previous_hash/observed"
         }
       ],
       "claim_id": "claim_s8_contest_previous_hash",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_previous_hash",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -1973,7 +2271,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_previous_hash_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_PREVIOUS_HASH"
       ],
@@ -1987,14 +2287,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
+          "selector": "/measurements/s8_contest_idempotent_replay/observed"
         }
       ],
       "claim_id": "claim_s8_contest_idempotent_replay",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_idempotent_replay",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2006,7 +2309,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_idempotent_replay_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_IDEMPOTENT_REPLAY"
       ],
@@ -2020,14 +2325,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
+          "selector": "/measurements/s8_contest_conflicting_duplicate/observed"
         }
       ],
       "claim_id": "claim_s8_contest_conflicting_duplicate",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_conflicting_duplicate",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2039,7 +2347,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_conflicting_duplicate_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_CONFLICTING_DUPLICATE"
       ],
@@ -2053,14 +2363,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTEST_OWNER_AUTHORITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
+          "selector": "/measurements/s8_contest_owner_authority/observed"
         }
       ],
       "claim_id": "claim_s8_contest_owner_authority",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contest_owner_authority",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2072,7 +2385,9 @@
       "positive_proof_ids": [
         "proof_s8_contest_owner_authority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTEST_OWNER_AUTHORITY"
       ],
@@ -2086,14 +2401,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
+          "selector": "/measurements/s8_named_risk_fact_non_mutation/observed"
         }
       ],
       "claim_id": "claim_s8_named_risk_fact_non_mutation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_named_risk_fact_non_mutation",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2105,7 +2423,9 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_fact_non_mutation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_FACT_NON_MUTATION"
       ],
@@ -2119,14 +2439,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
+          "selector": "/measurements/s8_named_risk_decision_effect/observed"
         }
       ],
       "claim_id": "claim_s8_named_risk_decision_effect",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_named_risk_decision_effect",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2138,7 +2461,9 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_decision_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_DECISION_EFFECT"
       ],
@@ -2152,14 +2477,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_OWNER_DECISION_BUDGET"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_OWNER_DECISION_BUDGET",
+          "selector": "/measurements/s8_owner_decision_budget/observed"
         }
       ],
       "claim_id": "claim_s8_owner_decision_budget",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_owner_decision_budget",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2171,7 +2499,9 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_budget_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_BUDGET"
       ],
@@ -2185,14 +2515,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_OWNER_DECISION_PRIORITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_OWNER_DECISION_PRIORITY",
+          "selector": "/measurements/s8_owner_decision_priority/observed"
         }
       ],
       "claim_id": "claim_s8_owner_decision_priority",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_owner_decision_priority",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2204,7 +2537,9 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_priority_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_PRIORITY"
       ],
@@ -2218,14 +2553,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_OWNER_DECISION_OVERFLOW"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
+          "selector": "/measurements/s8_owner_decision_overflow/observed"
         }
       ],
       "claim_id": "claim_s8_owner_decision_overflow",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_owner_decision_overflow",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2237,7 +2575,9 @@
       "positive_proof_ids": [
         "proof_s8_owner_decision_overflow_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_OWNER_DECISION_OVERFLOW"
       ],
@@ -2251,14 +2591,17 @@
       "artifact_assertions": [
         {
           "artifact": "contestation-ledger.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
+          "selector": "/measurements/s8_future_remediation_no_cycle/observed"
         }
       ],
       "claim_id": "claim_s8_future_remediation_no_cycle",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.contestability.append_action"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_future_remediation_no_cycle",
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2270,7 +2613,9 @@
       "positive_proof_ids": [
         "proof_s8_future_remediation_no_cycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.contestability_evidence"
+      ],
       "requirement_ids": [
         "S8_FUTURE_REMEDIATION_NO_CYCLE"
       ],
@@ -2284,14 +2629,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
+          "selector": "/measurements/s8_management_dependency_discovery/observed"
         }
       ],
       "claim_id": "claim_s8_management_dependency_discovery",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_management_dependency_discovery",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2303,7 +2651,9 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_discovery_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_DISCOVERY"
       ],
@@ -2317,14 +2667,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
+          "selector": "/measurements/s8_management_dependency_states/observed"
         }
       ],
       "claim_id": "claim_s8_management_dependency_states",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_management_dependency_states",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2336,7 +2689,9 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_states_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_STATES"
       ],
@@ -2350,14 +2705,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
+          "selector": "/measurements/s8_management_dependency_freshness/observed"
         }
       ],
       "claim_id": "claim_s8_management_dependency_freshness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_management_dependency_freshness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2369,7 +2727,9 @@
       "positive_proof_ids": [
         "proof_s8_management_dependency_freshness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_DEPENDENCY_FRESHNESS"
       ],
@@ -2383,14 +2743,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
+          "selector": "/measurements/s8_management_mixed_vector_rejection/observed"
         }
       ],
       "claim_id": "claim_s8_management_mixed_vector_rejection",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_management_mixed_vector_rejection",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2402,7 +2765,9 @@
       "positive_proof_ids": [
         "proof_s8_management_mixed_vector_rejection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_MANAGEMENT_MIXED_VECTOR_REJECTION"
       ],
@@ -2416,14 +2781,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
+          "selector": "/measurements/s8_executive_section_completeness/observed"
         }
       ],
       "claim_id": "claim_s8_executive_section_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_executive_section_completeness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2435,7 +2803,9 @@
       "positive_proof_ids": [
         "proof_s8_executive_section_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_EXECUTIVE_SECTION_COMPLETENESS"
       ],
@@ -2449,14 +2819,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
+          "selector": "/measurements/s8_product_matrix_completeness/observed"
         }
       ],
       "claim_id": "claim_s8_product_matrix_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_product_matrix_completeness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2468,7 +2841,9 @@
       "positive_proof_ids": [
         "proof_s8_product_matrix_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_PRODUCT_MATRIX_COMPLETENESS"
       ],
@@ -2482,14 +2857,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
+          "selector": "/measurements/s8_engineering_section_completeness/observed"
         }
       ],
       "claim_id": "claim_s8_engineering_section_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_engineering_section_completeness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2501,7 +2879,9 @@
       "positive_proof_ids": [
         "proof_s8_engineering_section_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_ENGINEERING_SECTION_COMPLETENESS"
       ],
@@ -2515,14 +2895,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
+          "selector": "/measurements/s8_measurement_ai_passthrough/observed"
         }
       ],
       "claim_id": "claim_s8_measurement_ai_passthrough",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_measurement_ai_passthrough",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2534,7 +2917,9 @@
       "positive_proof_ids": [
         "proof_s8_measurement_ai_passthrough_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_MEASUREMENT_AI_PASSTHROUGH"
       ],
@@ -2548,14 +2933,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
+          "selector": "/measurements/s8_remediation_overview_completeness/observed"
         }
       ],
       "claim_id": "claim_s8_remediation_overview_completeness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_remediation_overview_completeness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2567,7 +2955,9 @@
       "positive_proof_ids": [
         "proof_s8_remediation_overview_completeness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_REMEDIATION_OVERVIEW_COMPLETENESS"
       ],
@@ -2581,14 +2971,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
+          "selector": "/measurements/s8_closure_contract_indexing/observed"
         }
       ],
       "claim_id": "claim_s8_closure_contract_indexing",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_closure_contract_indexing",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2600,7 +2993,9 @@
       "positive_proof_ids": [
         "proof_s8_closure_contract_indexing_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_CLOSURE_CONTRACT_INDEXING"
       ],
@@ -2614,14 +3009,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_CONTESTABILITY_INCLUSION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_CONTESTABILITY_INCLUSION",
+          "selector": "/measurements/s8_contestability_inclusion/observed"
         }
       ],
       "claim_id": "claim_s8_contestability_inclusion",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_contestability_inclusion",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2633,7 +3031,9 @@
       "positive_proof_ids": [
         "proof_s8_contestability_inclusion_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_CONTESTABILITY_INCLUSION"
       ],
@@ -2647,14 +3047,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_RECOMMENDATION_POLICY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_RECOMMENDATION_POLICY",
+          "selector": "/measurements/s8_recommendation_policy/observed"
         }
       ],
       "claim_id": "claim_s8_recommendation_policy",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_recommendation_policy",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2666,7 +3069,9 @@
       "positive_proof_ids": [
         "proof_s8_recommendation_policy_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_RECOMMENDATION_POLICY"
       ],
@@ -2680,14 +3085,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
+          "selector": "/measurements/s8_accepted_condition_effect/observed"
         }
       ],
       "claim_id": "claim_s8_accepted_condition_effect",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_accepted_condition_effect",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2699,7 +3107,9 @@
       "positive_proof_ids": [
         "proof_s8_accepted_condition_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_ACCEPTED_CONDITION_EFFECT"
       ],
@@ -2713,14 +3123,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
+          "selector": "/measurements/s8_named_risk_recommendation_effect/observed"
         }
       ],
       "claim_id": "claim_s8_named_risk_recommendation_effect",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_named_risk_recommendation_effect",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2732,7 +3145,9 @@
       "positive_proof_ids": [
         "proof_s8_named_risk_recommendation_effect_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_NAMED_RISK_RECOMMENDATION_EFFECT"
       ],
@@ -2746,14 +3161,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
+          "selector": "/measurements/s8_insufficient_evidence_state/observed"
         }
       ],
       "claim_id": "claim_s8_insufficient_evidence_state",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_insufficient_evidence_state",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2765,7 +3183,9 @@
       "positive_proof_ids": [
         "proof_s8_insufficient_evidence_state_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_INSUFFICIENT_EVIDENCE_STATE"
       ],
@@ -2779,14 +3199,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_DETERMINISTIC_JSON"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_DETERMINISTIC_JSON",
+          "selector": "/measurements/s8_deterministic_json/observed"
         }
       ],
       "claim_id": "claim_s8_deterministic_json",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_deterministic_json",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2798,7 +3221,9 @@
       "positive_proof_ids": [
         "proof_s8_deterministic_json_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_DETERMINISTIC_JSON"
       ],
@@ -2812,14 +3237,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_SAFE_HTML"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_SAFE_HTML",
+          "selector": "/measurements/s8_safe_html/observed"
         }
       ],
       "claim_id": "claim_s8_safe_html",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_safe_html",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2831,7 +3259,9 @@
       "positive_proof_ids": [
         "proof_s8_safe_html_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_SAFE_HTML"
       ],
@@ -2845,14 +3275,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_SAFE_MARKDOWN"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_SAFE_MARKDOWN",
+          "selector": "/measurements/s8_safe_markdown/observed"
         }
       ],
       "claim_id": "claim_s8_safe_markdown",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_safe_markdown",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2864,7 +3297,9 @@
       "positive_proof_ids": [
         "proof_s8_safe_markdown_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_SAFE_MARKDOWN"
       ],
@@ -2878,14 +3313,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
+          "selector": "/measurements/s8_artifact_hash_integrity/observed"
         }
       ],
       "claim_id": "claim_s8_artifact_hash_integrity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_artifact_hash_integrity",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2897,7 +3335,9 @@
       "positive_proof_ids": [
         "proof_s8_artifact_hash_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_ARTIFACT_HASH_INTEGRITY"
       ],
@@ -2911,14 +3351,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_ARTIFACT_FILE_SET"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_ARTIFACT_FILE_SET",
+          "selector": "/measurements/s8_artifact_file_set/observed"
         }
       ],
       "claim_id": "claim_s8_artifact_file_set",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_artifact_file_set",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2930,7 +3373,9 @@
       "positive_proof_ids": [
         "proof_s8_artifact_file_set_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_ARTIFACT_FILE_SET"
       ],
@@ -2944,14 +3389,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_DETERMINISTIC_RERENDER"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_DETERMINISTIC_RERENDER",
+          "selector": "/measurements/s8_deterministic_rerender/observed"
         }
       ],
       "claim_id": "claim_s8_deterministic_rerender",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_deterministic_rerender",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2963,7 +3411,9 @@
       "positive_proof_ids": [
         "proof_s8_deterministic_rerender_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_DETERMINISTIC_RERENDER"
       ],
@@ -2977,14 +3427,17 @@
       "artifact_assertions": [
         {
           "artifact": "release-packet-index.json",
-          "assertion": "minimum_records",
-          "requirement_id": "S8_UPSTREAM_STALENESS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "S8_UPSTREAM_STALENESS",
+          "selector": "/measurements/s8_upstream_staleness/observed"
         }
       ],
       "claim_id": "claim_s8_upstream_staleness",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "shiproom.management_artifacts.compile"
+        "shiproom.session6_8_requirement_boundaries.assert_s8_upstream_staleness",
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -2996,7 +3449,9 @@
       "positive_proof_ids": [
         "proof_s8_upstream_staleness_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.management_evidence"
+      ],
       "requirement_ids": [
         "S8_UPSTREAM_STALENESS"
       ],
@@ -3010,14 +3465,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_TRUSTED_READS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_TRUSTED_READS",
+          "selector": "/measurements/shared_trusted_reads/observed"
         }
       ],
       "claim_id": "claim_shared_trusted_reads",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_trusted_reads",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3029,7 +3487,9 @@
       "positive_proof_ids": [
         "proof_shared_trusted_reads_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_TRUSTED_READS"
       ],
@@ -3043,14 +3503,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_TRUSTED_WRITES"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_TRUSTED_WRITES",
+          "selector": "/measurements/shared_trusted_writes/observed"
         }
       ],
       "claim_id": "claim_shared_trusted_writes",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_trusted_writes",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3062,7 +3525,9 @@
       "positive_proof_ids": [
         "proof_shared_trusted_writes_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_TRUSTED_WRITES"
       ],
@@ -3076,14 +3541,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_LINK_REPARSE_SPECIAL_REJECTION",
+          "selector": "/measurements/shared_link_reparse_special_rejection/observed"
         }
       ],
       "claim_id": "claim_shared_link_reparse_special_rejection",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_link_reparse_special_rejection",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3095,7 +3563,9 @@
       "positive_proof_ids": [
         "proof_shared_link_reparse_special_rejection_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_LINK_REPARSE_SPECIAL_REJECTION"
       ],
@@ -3109,14 +3579,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_CAPACITY_LIMITS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_CAPACITY_LIMITS",
+          "selector": "/measurements/shared_capacity_limits/observed"
         }
       ],
       "claim_id": "claim_shared_capacity_limits",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_capacity_limits",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3128,7 +3601,9 @@
       "positive_proof_ids": [
         "proof_shared_capacity_limits_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_CAPACITY_LIMITS"
       ],
@@ -3142,14 +3617,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_POINTER_LATE_FAILURE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_POINTER_LATE_FAILURE",
+          "selector": "/measurements/shared_pointer_late_failure/observed"
         }
       ],
       "claim_id": "claim_shared_pointer_late_failure",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_pointer_late_failure",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3161,7 +3639,9 @@
       "positive_proof_ids": [
         "proof_shared_pointer_late_failure_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_POINTER_LATE_FAILURE"
       ],
@@ -3175,14 +3655,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_ZERO_PROHIBITED_OPERATIONS",
+          "selector": "/measurements/shared_zero_prohibited_operations/observed"
         }
       ],
       "claim_id": "claim_shared_zero_prohibited_operations",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_zero_prohibited_operations",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3194,7 +3677,9 @@
       "positive_proof_ids": [
         "proof_shared_zero_prohibited_operations_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_ZERO_PROHIBITED_OPERATIONS"
       ],
@@ -3208,14 +3693,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_CONTRACT_INVENTORY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_CONTRACT_INVENTORY",
+          "selector": "/measurements/shared_contract_inventory/observed"
         }
       ],
       "claim_id": "claim_shared_contract_inventory",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_contract_inventory",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3227,7 +3715,9 @@
       "positive_proof_ids": [
         "proof_shared_contract_inventory_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_CONTRACT_INVENTORY"
       ],
@@ -3241,14 +3731,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_EXECUTED_CONTRACT_PARITY",
+          "selector": "/measurements/shared_executed_contract_parity/observed"
         }
       ],
       "claim_id": "claim_shared_executed_contract_parity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_executed_contract_parity",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3260,7 +3753,9 @@
       "positive_proof_ids": [
         "proof_shared_executed_contract_parity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_EXECUTED_CONTRACT_PARITY"
       ],
@@ -3274,14 +3769,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_BEHAVIORAL_EVAL_INTEGRITY",
+          "selector": "/measurements/shared_behavioral_eval_integrity/observed"
         }
       ],
       "claim_id": "claim_shared_behavioral_eval_integrity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_behavioral_eval_integrity",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3293,7 +3791,9 @@
       "positive_proof_ids": [
         "proof_shared_behavioral_eval_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_BEHAVIORAL_EVAL_INTEGRITY"
       ],
@@ -3307,14 +3807,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_WORKFLOW_EVAL_INTEGRITY",
+          "selector": "/measurements/shared_workflow_eval_integrity/observed"
         }
       ],
       "claim_id": "claim_shared_workflow_eval_integrity",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_workflow_eval_integrity",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3326,7 +3829,9 @@
       "positive_proof_ids": [
         "proof_shared_workflow_eval_integrity_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_WORKFLOW_EVAL_INTEGRITY"
       ],
@@ -3340,14 +3845,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_INSTALLED_WHEEL_LIFECYCLE",
+          "selector": "/measurements/shared_installed_wheel_lifecycle/observed"
         }
       ],
       "claim_id": "claim_shared_installed_wheel_lifecycle",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_installed_wheel_lifecycle",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3359,7 +3867,9 @@
       "positive_proof_ids": [
         "proof_shared_installed_wheel_lifecycle_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_INSTALLED_WHEEL_LIFECYCLE"
       ],
@@ -3373,14 +3883,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_SKILL_PILOT_CONSISTENCY",
+          "selector": "/measurements/shared_skill_pilot_consistency/observed"
         }
       ],
       "claim_id": "claim_shared_skill_pilot_consistency",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_skill_pilot_consistency",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3392,7 +3905,9 @@
       "positive_proof_ids": [
         "proof_shared_skill_pilot_consistency_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_SKILL_PILOT_CONSISTENCY"
       ],
@@ -3406,14 +3921,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_PROOF_EXECUTION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_PROOF_EXECUTION",
+          "selector": "/measurements/shared_proof_execution/observed"
         }
       ],
       "claim_id": "claim_shared_proof_execution",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_proof_execution",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3425,7 +3943,9 @@
       "positive_proof_ids": [
         "proof_shared_proof_execution_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_PROOF_EXECUTION"
       ],
@@ -3439,14 +3959,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_CLOSEOUT_GENERATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_CLOSEOUT_GENERATION",
+          "selector": "/measurements/shared_closeout_generation/observed"
         }
       ],
       "claim_id": "claim_shared_closeout_generation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_closeout_generation",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3458,7 +3981,9 @@
       "positive_proof_ids": [
         "proof_shared_closeout_generation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_CLOSEOUT_GENERATION"
       ],
@@ -3472,14 +3997,17 @@
       "artifact_assertions": [
         {
           "artifact": "session6-8-workflow-eval-receipt.json",
-          "assertion": "minimum_records",
-          "requirement_id": "SHARED_INDEPENDENT_VALIDATION"
+          "assertion": "measured_requirement_value",
+          "comparator": "equals",
+          "requirement_id": "SHARED_INDEPENDENT_VALIDATION",
+          "selector": "/measurements/shared_independent_validation/observed"
         }
       ],
       "claim_id": "claim_shared_independent_validation",
       "contract_parity_receipts": [],
       "implementation_symbols": [
-        "scripts.run_workflow_integration_evals.main"
+        "shiproom.session6_8_requirement_boundaries.assert_shared_independent_validation",
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
       ],
       "installed_wheel_receipts": [],
       "minimum_record_counts": {
@@ -3491,7 +4019,9 @@
       "positive_proof_ids": [
         "proof_shared_independent_validation_valid"
       ],
-      "production_invocation_receipts": [],
+      "production_invocation_receipts": [
+        "shiproom.session6_8_requirement_boundaries.shared_integrity_evidence"
+      ],
       "requirement_ids": [
         "SHARED_INDEPENDENT_VALIDATION"
       ],

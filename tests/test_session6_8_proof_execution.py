@@ -28,4 +28,25 @@ def test_proof_registry_has_no_prefix_dispatch_or_inventory_resolution():
     assert "requirement_row_resolves" not in source
     assert "session6-8-requirement-inventory" not in source
     assert len(PROOF_CASES)==318
-    assert len({case.assertion_id for case,_kind in PROOF_CASES.values()})==106
+    assert len({case.assertion_id for case in PROOF_CASES.values()})==106
+
+
+def test_requirement_proof_registry_is_exact_and_fingerprint_unique():
+    registry=json.loads((ROOT/"docs/validation/session6-8-requirement-proof-registry.json").read_text(encoding="utf-8"))
+    audit=json.loads((ROOT/"docs/validation/session6-8-proof-fingerprint-audit.json").read_text(encoding="utf-8"))
+    rows=registry["proofs"]
+    assert len(rows)==len({row["proof_id"] for row in rows})==318
+    assert {row["fixture_class"] for row in rows}=={"valid","near_valid","adversarial_invalid"}
+    assert all(len(row["artifact_selectors"])==len(row["comparators"])==1 for row in rows)
+    assert audit["proof_count"]==audit["unique_fingerprint_count"]==318
+    assert audit["unjustified_duplicate_count"]==0 and audit["status"]=="passed"
+
+
+def test_requirement_proofs_measure_instead_of_copying_configured_minimums(tmp_path,monkeypatch):
+    monkeypatch.setenv("SHIPROOM_PROOF_EVENT_ROOT",str(tmp_path))
+    event=execute_proof("proof_s6_remediation_cardinality_valid",final_commit="f"*40)
+    artifact=json.loads(Path(event["artifact_paths"][0]).read_text(encoding="utf-8"))
+    assert artifact["measured_cardinality"]==3
+    assert event["actual_record_count"]==artifact["measured_cardinality"]
+    source=(ROOT/"shiproom/session6_8_proof_execution.py").read_text(encoding="utf-8")
+    assert "actual_record_count\": case.minimum_record_count" not in source

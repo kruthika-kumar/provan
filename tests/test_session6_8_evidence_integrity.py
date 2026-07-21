@@ -56,6 +56,10 @@ def test_requirement_maps_and_claims_are_exact_and_non_vacuous():
     assert all({row["fixture_class"] for row in proofs if row["requirement_id"] == rid} == {"valid","near_valid","adversarial_invalid"} for rid in ids)
     assert all(all(count >= 1 for count in claim["minimum_record_counts"].values()) for claim in claims)
     assert len(claims)==106 and all(len(claim["requirement_ids"])==1 for claim in claims)
+    registry=json.loads((ROOT/"docs/validation/session6-8-requirement-proof-registry.json").read_text())
+    assert len(registry["proofs"])==318
+    assert {row["proof_id"] for row in registry["proofs"]}=={row["proof_id"] for row in proofs}
+    assert all(claim["artifact_assertions"][0]["assertion"]=="measured_requirement_value" for claim in claims)
 
 
 def test_workflow_runner_has_no_case_boolean_assertion_fallback():

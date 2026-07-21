@@ -23,6 +23,7 @@ include = ["shiproom*", "demo_patient*"]
 exclude = ["skills*", "tests*"]
 
 [tool.setuptools.package-data]
+"shiproom" = ["*.json"]
 "shiproom.assessment_roles" = ["*.json"]
 "shiproom.assessment_schemas" = ["*.json"]
 "shiproom.measurement_ai_roles" = ["*.json"]
