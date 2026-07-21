@@ -5028,7 +5028,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5053,7 +5053,7 @@
       ],
       "proof_id": "proof_s8_contest_target_registry_near_valid",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
-      "semantic_fingerprint": "sha256:4d1f63e1fb62dcf78a6d79c53f408abf04209c537a575dbe3a47f40ff469dbc0",
+      "semantic_fingerprint": "sha256:20f32077a68e8074b6cc47ef69a49b99e50ba21f7510e732e925d4ad3a91e892",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_target_registry_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5061,10 +5061,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
@@ -5074,7 +5074,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5087,10 +5088,10 @@
       ],
       "proof_id": "proof_s8_contest_target_registry_adversarial_invalid",
       "requirement_id": "S8_CONTEST_TARGET_REGISTRY",
-      "semantic_fingerprint": "sha256:a7578dc7466b066b49e3dba5da2da96e96bafd493f4bf540c360ba45d69131f5",
+      "semantic_fingerprint": "sha256:9d41e6831ec307fc450197588fccc76285e36bb705061dd3c271c50047a45cc0",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_target_registry_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5124,7 +5125,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5149,7 +5150,7 @@
       ],
       "proof_id": "proof_s8_contest_source_generation_near_valid",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
-      "semantic_fingerprint": "sha256:ca4826d44ba14c1aa79e649d56044d35490e12ca3c673c118de268f9e064c6e8",
+      "semantic_fingerprint": "sha256:2667322797ec97dbc9d680a2ebd23a7b8b95965b8d86ad939ae7f3dd67a9a355",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_source_generation_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5157,10 +5158,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
@@ -5170,7 +5171,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5183,10 +5185,10 @@
       ],
       "proof_id": "proof_s8_contest_source_generation_adversarial_invalid",
       "requirement_id": "S8_CONTEST_SOURCE_GENERATION",
-      "semantic_fingerprint": "sha256:68da1e082c97e234eef4147da1ca244d5a96b1f780df967c15883292addfd4c6",
+      "semantic_fingerprint": "sha256:ce9bd4263c06b210cd449c66ad198ee9c334ceaf0ebe9296363c9c2049f7c663",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_source_generation_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5223,7 +5225,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5251,7 +5253,7 @@
       ],
       "proof_id": "proof_s8_contest_target_existence_near_valid",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
-      "semantic_fingerprint": "sha256:2bad4141cbfb28df6f41735240387fba0db6d080c064c374ef1f2fea7456e027",
+      "semantic_fingerprint": "sha256:4ae97fc8418e0287cd60740c6f9c3230db218f72117b0d4c0ca18e069f255ee1",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_target_existence_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5259,10 +5261,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
@@ -5275,7 +5277,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5288,10 +5291,10 @@
       ],
       "proof_id": "proof_s8_contest_target_existence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_TARGET_EXISTENCE",
-      "semantic_fingerprint": "sha256:6f3f45f0c6143248387c5eabf21c42e24c7835c65d768c0ab4022c7bb98f9d36",
+      "semantic_fingerprint": "sha256:9a830539cfd4af27060e4c252374ef3a55ead55655d760c8b2e5bd6728b91e30",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_target_existence_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5325,7 +5328,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5350,7 +5353,7 @@
       ],
       "proof_id": "proof_s8_contest_evidence_existence_near_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
-      "semantic_fingerprint": "sha256:cd9b707c4c05d6252df8273ee7ba148500462f54780abc274b75b695db78c841",
+      "semantic_fingerprint": "sha256:0b35118a3601888e3d95262926b7f7501b405890d94a900c0ac4855661d6c8b2",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_evidence_existence_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5358,10 +5361,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
@@ -5371,7 +5374,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5384,10 +5388,10 @@
       ],
       "proof_id": "proof_s8_contest_evidence_existence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_EVIDENCE_EXISTENCE",
-      "semantic_fingerprint": "sha256:fdd4f155b00ae939773b50bf37835c548a0d2a4d93a802befea30b11463aa4f2",
+      "semantic_fingerprint": "sha256:0c803906e91d39790d4f1e6be8c3b0b7c9c98a24953446f7087b99ea20a27826",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_evidence_existence_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5421,7 +5425,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5446,7 +5450,7 @@
       ],
       "proof_id": "proof_s8_contest_evidence_relevance_near_valid",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
-      "semantic_fingerprint": "sha256:ac6afe13ca29893321ff58972fd43c850f62143c9e17bf45ef9f78a32c3081a6",
+      "semantic_fingerprint": "sha256:27cd9e6b524c95e44edfe126ddca78f44cb97fbef809c6fcc9e82145aacfb2fd",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_evidence_relevance_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5454,10 +5458,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
@@ -5467,7 +5471,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5480,10 +5485,10 @@
       ],
       "proof_id": "proof_s8_contest_evidence_relevance_adversarial_invalid",
       "requirement_id": "S8_CONTEST_EVIDENCE_RELEVANCE",
-      "semantic_fingerprint": "sha256:282d491cffbccfb0edddee29d765a58a8d8ce52a126b3ae76d7a965c3d2b9b19",
+      "semantic_fingerprint": "sha256:fcd6dbe7c37fb1928c08075beac5f7d95e55c1e2d26d2c96ddf714dad14e9627",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_evidence_relevance_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5517,7 +5522,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5543,7 +5548,7 @@
       ],
       "proof_id": "proof_s8_contest_authority_preservation_near_valid",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
-      "semantic_fingerprint": "sha256:c0db23a85f22c64410d413703c79716df3582c161b5608639a14b158122ba334",
+      "semantic_fingerprint": "sha256:ddcc88c848153644bb83f92f382b84bca1dd059aedf90ea1cb612455a5e42964",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_authority_preservation_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5551,10 +5556,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
@@ -5564,8 +5569,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5578,10 +5583,10 @@
       ],
       "proof_id": "proof_s8_contest_authority_preservation_adversarial_invalid",
       "requirement_id": "S8_CONTEST_AUTHORITY_PRESERVATION",
-      "semantic_fingerprint": "sha256:dcf8e7c07b6c83be1b27092f829bda8d6eb25fabb0d31f565008c10893eff6c2",
+      "semantic_fingerprint": "sha256:84197c9a3186435ffcae942087b09ca5b82da8826be645c0597c63c34868c822",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_authority_preservation_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5615,7 +5620,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5641,7 +5646,7 @@
       ],
       "proof_id": "proof_s8_contest_append_sequence_near_valid",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
-      "semantic_fingerprint": "sha256:85dc6dc2f76b6e6691d04346a2fc9a42f76d3f8bd9decbfa379debcf43f91840",
+      "semantic_fingerprint": "sha256:a29cb5719c9c008355f15cd89b694fb0be4c69e3828bdff61a9dca623d8f2849",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_append_sequence_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5649,10 +5654,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
@@ -5662,8 +5667,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5676,10 +5681,10 @@
       ],
       "proof_id": "proof_s8_contest_append_sequence_adversarial_invalid",
       "requirement_id": "S8_CONTEST_APPEND_SEQUENCE",
-      "semantic_fingerprint": "sha256:1855f3b3c44a203c5c401dd6fdaa66ee4bfd605e42cee8a8379f66765a525818",
+      "semantic_fingerprint": "sha256:c0cc9fa27aab90b19838fc081bb79cca8c8dfbf916c565c2d87c76190abe40c9",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_append_sequence_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5713,7 +5718,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -5739,7 +5744,7 @@
       ],
       "proof_id": "proof_s8_contest_previous_hash_near_valid",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
-      "semantic_fingerprint": "sha256:b3d280c0cc400b7da4ac026da49964e9194f283120c593869e2c1041e1701e1a",
+      "semantic_fingerprint": "sha256:401cd41ddc30d04edcd31ff1dc48903747a069ab2b3e7d4de66f4928d7f369de",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_previous_hash_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5747,10 +5752,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
@@ -5760,8 +5765,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5774,22 +5779,22 @@
       ],
       "proof_id": "proof_s8_contest_previous_hash_adversarial_invalid",
       "requirement_id": "S8_CONTEST_PREVIOUS_HASH",
-      "semantic_fingerprint": "sha256:008df2f701c187ba5ca429404321486aa375bd257ef413c256deafd6dcbcb9ee",
+      "semantic_fingerprint": "sha256:095a0fcd68b62ff06e2df52e5e05d7b0a82fa48c691f19c488b8e30c1106b1db",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_previous_hash_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-          "expected": "accepted",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+          "expected": "idempotent_replay",
           "operator": "equals",
           "selector": "/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "accepted",
@@ -5802,7 +5807,7 @@
       ],
       "proof_id": "proof_s8_contest_idempotent_replay_valid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
-      "semantic_fingerprint": "sha256:75d2f137aa26c9b2d802964baeb9381a0452e83f2e3588c38497b665049d51b4",
+      "semantic_fingerprint": "sha256:4b361189770df12a9dd033d9c657de484f84d1f29e0bce96bc46b06b8bf873c3",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_idempotent_replay_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5811,20 +5816,20 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-          "expected": "accepted",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+          "expected": "idempotent_replay",
           "operator": "equals",
           "selector": "/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "bounded",
@@ -5837,7 +5842,7 @@
       ],
       "proof_id": "proof_s8_contest_idempotent_replay_near_valid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
-      "semantic_fingerprint": "sha256:4bd99a2ce761a8af120ee87d8376afa4a0723b3550983b99009db240847af945",
+      "semantic_fingerprint": "sha256:54dacd7662641ff2d45dca04f3a40d7c31a20a97b27b5ddce527c87622490bf5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_idempotent_replay_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5845,21 +5850,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-          "expected": "accepted",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+          "expected": "idempotent_replay",
           "operator": "equals",
           "selector": "/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5872,17 +5877,17 @@
       ],
       "proof_id": "proof_s8_contest_idempotent_replay_adversarial_invalid",
       "requirement_id": "S8_CONTEST_IDEMPOTENT_REPLAY",
-      "semantic_fingerprint": "sha256:a35d2fae8a27502abca8219200cb3f03892713bff2701b41e7d27be29f7da5be",
+      "semantic_fingerprint": "sha256:1c65d0e3f9f5a424a7daacfc1098b819c94bd21a80098182a95be5e6e252e7f4",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_idempotent_replay_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
+          "expected": true,
+          "operator": "unique",
           "selector": "/actions"
         }
       ],
@@ -5900,7 +5905,7 @@
       ],
       "proof_id": "proof_s8_contest_conflicting_duplicate_valid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
-      "semantic_fingerprint": "sha256:86e7642b6f8370d179badf9cd3fae189aaf1945e5272149b9151418c1376df81",
+      "semantic_fingerprint": "sha256:abbc4cae4ceb89aacfab8cdcd26e272a784be03e50af0bd3d34a92b8e9676ea6",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_conflicting_duplicate_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5909,8 +5914,14 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
+          "selector": "/actions"
+        },
+        {
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+          "expected": true,
+          "operator": "unique",
           "selector": "/actions"
         }
       ],
@@ -5928,7 +5939,7 @@
       ],
       "proof_id": "proof_s8_contest_conflicting_duplicate_near_valid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
-      "semantic_fingerprint": "sha256:7a1d5c58e6c8fed81229e8bb9f8f3c5270b5f7e4da7b5811e49453ac490bfdaa",
+      "semantic_fingerprint": "sha256:a74d67c6fbaeeba31a6939d2aded88d3760fc852587843d92df5625d062d8ba5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_conflicting_duplicate_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -5936,14 +5947,21 @@
     {
       "artifact_queries": [
         {
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
+        },
+        {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
+          "expected": true,
+          "operator": "unique",
           "selector": "/actions"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -5956,10 +5974,10 @@
       ],
       "proof_id": "proof_s8_contest_conflicting_duplicate_adversarial_invalid",
       "requirement_id": "S8_CONTEST_CONFLICTING_DUPLICATE",
-      "semantic_fingerprint": "sha256:99b323920d754087ce9df826dd769351b9eb3e04047d8168d26f41b373d96aea",
+      "semantic_fingerprint": "sha256:720bc9bd4ca698c96c2890ba0bad5914d8ad7d52cc0a9448f96ded051b7a8dee",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_conflicting_duplicate_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -5993,7 +6011,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -6019,7 +6037,7 @@
       ],
       "proof_id": "proof_s8_contest_owner_authority_near_valid",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
-      "semantic_fingerprint": "sha256:f67370ea0b305f92247d409f18455ad47ac154e8252ad488f0d57599471d0d32",
+      "semantic_fingerprint": "sha256:f4258b3b205a2f81a56869eb85474cd9bb0851de816bcb864b73f6ebfe9cd0ba",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_owner_authority_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6027,10 +6045,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
@@ -6040,8 +6058,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6054,10 +6072,10 @@
       ],
       "proof_id": "proof_s8_contest_owner_authority_adversarial_invalid",
       "requirement_id": "S8_CONTEST_OWNER_AUTHORITY",
-      "semantic_fingerprint": "sha256:bc810e68a19d2f9967d55cc180ad600973cdc125d620c7b7350c223eff592908",
+      "semantic_fingerprint": "sha256:8b996c408215cee89fd674af33b61bc0a4bac61a1dc90eba6411ba769a324a1f",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contest_owner_authority_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6091,7 +6109,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -6117,7 +6135,7 @@
       ],
       "proof_id": "proof_s8_named_risk_fact_non_mutation_near_valid",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
-      "semantic_fingerprint": "sha256:a0940703e8bd1c215e814b5d1b7e35d96c5dabe8dab5d6c5a7ecce69dda9019f",
+      "semantic_fingerprint": "sha256:9aca7ad1ae73c248fc792d71db442605e7c2286ec0a4eb76321c8dc71f145047",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_fact_non_mutation_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6125,10 +6143,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json",
@@ -6138,7 +6156,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json"
       ],
       "domain": "8_contestability",
@@ -6152,10 +6170,10 @@
       ],
       "proof_id": "proof_s8_named_risk_fact_non_mutation_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_FACT_NON_MUTATION",
-      "semantic_fingerprint": "sha256:6b2395b2a9e79a53ecb09b41f784dbd1bad87602f75a72877161d641408cb611",
+      "semantic_fingerprint": "sha256:cd37811071013417670049ac91c16df09e38d1d7dc3398b1501351ff5da1cf5a",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_fact_non_mutation_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6189,7 +6207,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -6215,7 +6233,7 @@
       ],
       "proof_id": "proof_s8_named_risk_decision_effect_near_valid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
-      "semantic_fingerprint": "sha256:a71dd9bad2a87130cc5fc5c371669773e42084e7d3c125d762dc4382de6b900e",
+      "semantic_fingerprint": "sha256:1c73e15f3cd69935c92ed22d0728a58125a6793ba50e422afb75f5d04ab51ae9",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_decision_effect_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6223,10 +6241,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
@@ -6236,8 +6254,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6250,10 +6268,10 @@
       ],
       "proof_id": "proof_s8_named_risk_decision_effect_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
-      "semantic_fingerprint": "sha256:2a836b694bc02a2376787d41111aae3fd79230d6bedd93c06092866535c70a3e",
+      "semantic_fingerprint": "sha256:d9528cc292033b3bf3c6d05ff08f435a96e7a9fc95613fe0d4e25d59fad23235",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_decision_effect_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6286,10 +6304,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/near-effects.json",
+          "expected": 2,
           "operator": "count_equals",
-          "selector": "/actions"
+          "selector": "/immediate_owner_decisions"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
@@ -6299,8 +6317,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/near-effects.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "bounded",
@@ -6313,18 +6331,18 @@
       ],
       "proof_id": "proof_s8_owner_decision_budget_near_valid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
-      "semantic_fingerprint": "sha256:36544f7ec5ef52d9ab536ef6ab2d1befae9e380ecacf037176ef318f8df933e2",
+      "semantic_fingerprint": "sha256:928bbacf3c34120b3276feb2da78194732d4a4175b89c19d190670f848e11911",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_budget_near_valid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
@@ -6334,8 +6352,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6348,10 +6366,10 @@
       ],
       "proof_id": "proof_s8_owner_decision_budget_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
-      "semantic_fingerprint": "sha256:22ed50686ea354ee5eb25ef40aaeedb058b9c8e8cfb4046b27c136dc5c304a6e",
+      "semantic_fingerprint": "sha256:7d7008e95e4c02e39ab03857e497c50cda270367c6f20a25758f183c386b1af9",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_budget_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6390,7 +6408,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -6421,7 +6439,7 @@
       ],
       "proof_id": "proof_s8_owner_decision_priority_near_valid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
-      "semantic_fingerprint": "sha256:8d2b3b85bd4578c4bc432212498fdaf5c469e6cab7eb2734d8134369abdb86d3",
+      "semantic_fingerprint": "sha256:a0bf9ddd1aaf9d70f525699a63eb2a1535a7e85a009c196115a17778fb7447e3",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_priority_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6429,10 +6447,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
@@ -6447,8 +6465,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6461,10 +6479,10 @@
       ],
       "proof_id": "proof_s8_owner_decision_priority_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
-      "semantic_fingerprint": "sha256:80116d302fbb5c6dfb5a8605b3172905961e485d0819b358d74ad52300801111",
+      "semantic_fingerprint": "sha256:df83fea8eea6216c44d210844b75f80ec57e5bebfc9f70678abc9b74d753c44c",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_priority_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6498,7 +6516,7 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
@@ -6524,7 +6542,7 @@
       ],
       "proof_id": "proof_s8_owner_decision_overflow_near_valid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
-      "semantic_fingerprint": "sha256:ca1a73434ad1e8b1427dae3b1f1f6f1321403763d35036ed3588f60c871287e7",
+      "semantic_fingerprint": "sha256:d70a0d7ea28ee3e389e4401cec059b821738266cbe8ae6f22558e0fe53f3366c",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_overflow_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6532,10 +6550,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
@@ -6545,8 +6563,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6559,22 +6577,25 @@
       ],
       "proof_id": "proof_s8_owner_decision_overflow_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
-      "semantic_fingerprint": "sha256:6da682060efd8cf18867cf22e6ef8b453a414f91b2a8dad0cbc32024f8bd2d5d",
+      "semantic_fingerprint": "sha256:6779559121afdadf3e8386d7f22667693bdfb4fb9b0c37fb6f7268c6c4d3d31d",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_owner_decision_overflow_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/remediation_requests"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+          "expected": {
+            "after": null,
+            "before": null
+          },
+          "operator": "equals",
+          "selector": ""
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "accepted",
@@ -6587,7 +6608,7 @@
       ],
       "proof_id": "proof_s8_future_remediation_no_cycle_valid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
-      "semantic_fingerprint": "sha256:5da503add0b2a8b3be64e19eec31c0595c5c814969e6c2713415ecbb8971352f",
+      "semantic_fingerprint": "sha256:111d3f4c89e9bf0f81d6b8f8c2db9a2c9f26ad41ce332ea7969e9dd4be83db04",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_future_remediation_no_cycle_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6596,20 +6617,23 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/remediation_requests"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+          "expected": {
+            "after": null,
+            "before": null
+          },
+          "operator": "equals",
+          "selector": ""
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "bounded",
@@ -6622,7 +6646,7 @@
       ],
       "proof_id": "proof_s8_future_remediation_no_cycle_near_valid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
-      "semantic_fingerprint": "sha256:7b7ed46b1b0b97e26ed4906eb61e8c27cc5f7afdcf062d0b49c12d6599ba9149",
+      "semantic_fingerprint": "sha256:c203cd2d4dfddb080a38ede098771a75462ad981f05bde5669b37035138a78b4",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_future_remediation_no_cycle_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -6630,21 +6654,24 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/remediation_requests"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+          "expected": {
+            "after": null,
+            "before": null
+          },
+          "operator": "equals",
+          "selector": ""
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_contestability",
       "expected_boundary_outcome": "rejected",
@@ -6657,10 +6684,10 @@
       ],
       "proof_id": "proof_s8_future_remediation_no_cycle_adversarial_invalid",
       "requirement_id": "S8_FUTURE_REMEDIATION_NO_CYCLE",
-      "semantic_fingerprint": "sha256:9140c241449b302c9106fd6804f4f7ed2bbce26e23cbe96353d9b62162f9d289",
+      "semantic_fingerprint": "sha256:37dc8d885c95e17ba25a044581b8a70f70602e50dd9adf9db992b41a08990251",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_future_remediation_no_cycle_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
@@ -6727,10 +6754,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -6740,7 +6767,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -6753,7 +6781,7 @@
       ],
       "proof_id": "proof_s8_management_dependency_discovery_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_DISCOVERY",
-      "semantic_fingerprint": "sha256:bd0047932c80fb2164b937849450c98d70ed100bd52fbf2766a43b0ab56daed7",
+      "semantic_fingerprint": "sha256:c868190c3c4a9da8163c71a50fceae4d146829a071a552622a83d663ad388244",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_dependency_discovery_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -6823,10 +6851,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -6836,7 +6864,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -6849,7 +6878,7 @@
       ],
       "proof_id": "proof_s8_management_dependency_states_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_STATES",
-      "semantic_fingerprint": "sha256:81cfb013e6906756a606853fb71d69cd3c89ce91a227cbbc8d5dafca1958c52a",
+      "semantic_fingerprint": "sha256:09b56feedbf16e109988936cd1f332a3666e9dc8e88d2d113709fc9b46469f81",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_dependency_states_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -6919,6 +6948,12 @@
     {
       "artifact_queries": [
         {
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
+          "operator": "equals",
+          "selector": "/error"
+        },
+        {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
           "expected": "required_present",
           "operator": "equals",
@@ -6926,7 +6961,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -6939,7 +6975,7 @@
       ],
       "proof_id": "proof_s8_management_dependency_freshness_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_DEPENDENCY_FRESHNESS",
-      "semantic_fingerprint": "sha256:2b7956f512fd776535a32fa905134d6290d210ea1af821e4da70f8d5e7da85da",
+      "semantic_fingerprint": "sha256:d001342c7a8d1b9be9a94e27b58d53e6f6292574d14995b52bcdf1b638e6cec7",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_dependency_freshness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -6947,9 +6983,9 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
           "expected": {
-            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
             "selector": "/artifact_dependency_vector"
           },
           "operator": "equals_reference",
@@ -6957,7 +6993,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -6970,7 +7006,7 @@
       ],
       "proof_id": "proof_s8_management_mixed_vector_rejection_valid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
-      "semantic_fingerprint": "sha256:ec4978c43d509c54a49264ecd8c01914b5e1f49b192035a8e5231c30514477d3",
+      "semantic_fingerprint": "sha256:99ec396f983bbd0d6038f429943ad0176977e539c9cd1bd0b2bf03908004e296",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_mixed_vector_rejection_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -6984,9 +7020,9 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
           "expected": {
-            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
             "selector": "/artifact_dependency_vector"
           },
           "operator": "equals_reference",
@@ -6994,7 +7030,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7008,7 +7044,7 @@
       ],
       "proof_id": "proof_s8_management_mixed_vector_rejection_near_valid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
-      "semantic_fingerprint": "sha256:d03a568ff875f0632318cb9917d30c1ce3df344b19eaf289433332bcf66b8181",
+      "semantic_fingerprint": "sha256:138b980875e00b3a52cd87984a564bffb3a73457109a9bf0adb439839cfc55c9",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_mixed_vector_rejection_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7016,15 +7052,15 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json",
+          "expected": "artifact_dependency_vector_mismatch",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
           "expected": {
-            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
             "selector": "/artifact_dependency_vector"
           },
           "operator": "equals_reference",
@@ -7032,8 +7068,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7046,7 +7082,7 @@
       ],
       "proof_id": "proof_s8_management_mixed_vector_rejection_adversarial_invalid",
       "requirement_id": "S8_MANAGEMENT_MIXED_VECTOR_REJECTION",
-      "semantic_fingerprint": "sha256:9d22518ef884907b1d92b9a7302c4f05c86f893c879ae505144d1f1cd1d463d2",
+      "semantic_fingerprint": "sha256:17e09120c21d45195171ce03ba7930f6f0d450d7201199acc694cf2c418db32c",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_management_mixed_vector_rejection_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7054,14 +7090,14 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7074,7 +7110,7 @@
       ],
       "proof_id": "proof_s8_executive_section_completeness_valid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:ec40e8cb2f73981e9635fb038b72d54031c16faaf4826b56bc496b14e30dcfec",
+      "semantic_fingerprint": "sha256:9d4a26e31e8122a0dfbf59116e74b5d1ccf6fae1501075f5e5a9dd5f148ca163",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_executive_section_completeness_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7088,14 +7124,14 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7109,7 +7145,7 @@
       ],
       "proof_id": "proof_s8_executive_section_completeness_near_valid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:016350bb4e2ceb3c71a256d17594eba7c4d642281ded5168d3276e642acdb784",
+      "semantic_fingerprint": "sha256:e55fb3b0880e46c6d65ff44adb5b49bd9aadd65dfa64a8cc5340ef655e32b5b5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_executive_section_completeness_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7117,21 +7153,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7144,7 +7180,7 @@
       ],
       "proof_id": "proof_s8_executive_section_completeness_adversarial_invalid",
       "requirement_id": "S8_EXECUTIVE_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:9ff7e5d78ae1ae7e37dfcbf4d90faa9d0930b5b2aae114c6e2f25def3c4043d8",
+      "semantic_fingerprint": "sha256:88212ef43e2f9378fde1a198091df074b0d207820115a9227a28024c707f1529",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_executive_section_completeness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7152,14 +7188,19 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-          "expected": 1,
-          "operator": "count_at_least",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+          "expected": {
+            "actual_field": "criterion_ids",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/product-intent/acceptance-criteria.json",
+            "reference_field": "criterion_id",
+            "selector": "/criteria"
+          },
+          "operator": "flattened_field_set_equals_reference",
           "selector": "/section_records/16/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7172,7 +7213,7 @@
       ],
       "proof_id": "proof_s8_product_matrix_completeness_valid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
-      "semantic_fingerprint": "sha256:ea6c80474258d7ce8a988bc6df0ccc2adf7b5d0fde8830b8af03cf0e242eae13",
+      "semantic_fingerprint": "sha256:981f2ea2c4818bf0d7c95e8fcdd27cc1e134d2885b7e90493c8e1f54517d3e51",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_product_matrix_completeness_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7186,14 +7227,19 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-          "expected": 1,
-          "operator": "count_at_least",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+          "expected": {
+            "actual_field": "criterion_ids",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/product-intent/acceptance-criteria.json",
+            "reference_field": "criterion_id",
+            "selector": "/criteria"
+          },
+          "operator": "flattened_field_set_equals_reference",
           "selector": "/section_records/16/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7207,7 +7253,7 @@
       ],
       "proof_id": "proof_s8_product_matrix_completeness_near_valid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
-      "semantic_fingerprint": "sha256:c464585a41a4bfc04e392f9e9430d8d2dddd90d6bc01777dc772375305478766",
+      "semantic_fingerprint": "sha256:85a57df62b2a07f700f71e2fd319673160b7c2adcc0931bce1964aa04e586d67",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_product_matrix_completeness_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7215,21 +7261,26 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-          "expected": 1,
-          "operator": "count_at_least",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+          "expected": {
+            "actual_field": "criterion_ids",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/product-intent/acceptance-criteria.json",
+            "reference_field": "criterion_id",
+            "selector": "/criteria"
+          },
+          "operator": "flattened_field_set_equals_reference",
           "selector": "/section_records/16/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7242,7 +7293,7 @@
       ],
       "proof_id": "proof_s8_product_matrix_completeness_adversarial_invalid",
       "requirement_id": "S8_PRODUCT_MATRIX_COMPLETENESS",
-      "semantic_fingerprint": "sha256:75c8ebe2f9b027c5fa0352e3e9f0defdde1103e9cccb9fdecc44245b3220934f",
+      "semantic_fingerprint": "sha256:d8722b24c56d0ba063d63aef4b071ccea568ebc25eb5e3f552d30f13e686e088",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_product_matrix_completeness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7250,14 +7301,14 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7270,7 +7321,7 @@
       ],
       "proof_id": "proof_s8_engineering_section_completeness_valid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:dfbf46789cd063fe572a6dfbb589bf50cd17bbc67407cc0730ab2c0c523339e2",
+      "semantic_fingerprint": "sha256:544243005c69f72593316978ac1cd7e0e6d6c9f468db32ef33759100b07df9c4",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_engineering_section_completeness_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7284,14 +7335,14 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7305,7 +7356,7 @@
       ],
       "proof_id": "proof_s8_engineering_section_completeness_near_valid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:0040dc6bc9e8c84de240be7b27518963dc53421110f9982f67cbf1af3df5772c",
+      "semantic_fingerprint": "sha256:2aa1aa2764dfd55b483debb500d9e4aa19ef526d98dcf7e11677436645996947",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_engineering_section_completeness_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7313,21 +7364,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7340,7 +7391,7 @@
       ],
       "proof_id": "proof_s8_engineering_section_completeness_adversarial_invalid",
       "requirement_id": "S8_ENGINEERING_SECTION_COMPLETENESS",
-      "semantic_fingerprint": "sha256:f267cb3d182f5868437ecd322b341ba0a1422d3bb3badbd4b7c52262c0f49a55",
+      "semantic_fingerprint": "sha256:48aa6c612a07bcd91294ee171cba140242335ae479197b6a181a923dd5fb1647",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_engineering_section_completeness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7348,18 +7399,17 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/measurement-ai/measurement-ai-readiness.json",
-            "field": "check_id",
             "selector": "/checks"
           },
-          "operator": "field_set_equals_reference",
+          "operator": "equals_reference",
           "selector": "/section_records/4/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7372,7 +7422,7 @@
       ],
       "proof_id": "proof_s8_measurement_ai_passthrough_valid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
-      "semantic_fingerprint": "sha256:bea671846879c8e649e404b71224eff802923c685b9003ec233f63fadc83e6e4",
+      "semantic_fingerprint": "sha256:1710dd7819cebbdcd38b1ea55a83306f807f63666329f35850bcfb06f61f48e5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_measurement_ai_passthrough_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7380,25 +7430,24 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "not_used",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/near-measurement-ai-readiness.json",
+          "expected": "not_used_or_unavailable",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/assessment/state"
+          "selector": "/section_records/4/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/measurement-ai/measurement-ai-readiness.json",
-            "field": "check_id",
             "selector": "/checks"
           },
-          "operator": "field_set_equals_reference",
+          "operator": "equals_reference",
           "selector": "/section_records/4/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/near-measurement-ai-readiness.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "bounded",
@@ -7411,7 +7460,7 @@
       ],
       "proof_id": "proof_s8_measurement_ai_passthrough_near_valid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
-      "semantic_fingerprint": "sha256:2a67c98fe30afd6132ceff6da4bcc9c7f00836368eba9815378c8039af97dbc3",
+      "semantic_fingerprint": "sha256:b7f14664416b0a402107f5d71c0218a5d614941da39434027caf4c06135d6c73",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_measurement_ai_passthrough_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7419,25 +7468,24 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/measurement-ai/measurement-ai-readiness.json",
-            "field": "check_id",
             "selector": "/checks"
           },
-          "operator": "field_set_equals_reference",
+          "operator": "equals_reference",
           "selector": "/section_records/4/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7450,7 +7498,7 @@
       ],
       "proof_id": "proof_s8_measurement_ai_passthrough_adversarial_invalid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
-      "semantic_fingerprint": "sha256:003d6c1968a4ecc48cf7caa8327b37cddad41543c3eb5d5ed8f33c30839ff0b2",
+      "semantic_fingerprint": "sha256:2d81f827edd302189982e6aab04526caed1be6808d7e89322bb54077f8fa2db4",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_measurement_ai_passthrough_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7458,7 +7506,7 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7468,7 +7516,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7481,7 +7529,7 @@
       ],
       "proof_id": "proof_s8_remediation_overview_completeness_valid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
-      "semantic_fingerprint": "sha256:4c9678769fae4f05ffd2519a31a2d39a88a9c83e58de308e256a7e9099fc6f61",
+      "semantic_fingerprint": "sha256:6a52ce18e0616180c1bb90a2d168c1bfa942fc0be3d29b6f09d0798451cceaa8",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_remediation_overview_completeness_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7495,7 +7543,7 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7505,7 +7553,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7519,7 +7567,7 @@
       ],
       "proof_id": "proof_s8_remediation_overview_completeness_near_valid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
-      "semantic_fingerprint": "sha256:101d75fb0106ee068cf840f5a1a52678285aab82bb06b86730e20bd04f722e1d",
+      "semantic_fingerprint": "sha256:f0d172b19b72ba7b757a4659d25de0abe0d5aaf743b69255363a5c812727da45",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_remediation_overview_completeness_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7527,13 +7575,13 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7543,8 +7591,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7557,7 +7605,7 @@
       ],
       "proof_id": "proof_s8_remediation_overview_completeness_adversarial_invalid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
-      "semantic_fingerprint": "sha256:e6b1533c2aedfd01516d7341102f2a116297908955c3d593cf51122fb1fb79b9",
+      "semantic_fingerprint": "sha256:4742f90ad53f884a0e89a36017866a9c3415953c8a3c38fdb0fbd4173ec4347b",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_remediation_overview_completeness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7565,7 +7613,7 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7575,7 +7623,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7588,7 +7636,7 @@
       ],
       "proof_id": "proof_s8_closure_contract_indexing_valid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
-      "semantic_fingerprint": "sha256:e02998875b34fc0c4e71a058202c279fbf2c60adb576f100737b78e8a2812e15",
+      "semantic_fingerprint": "sha256:1967e8e5ab09c5bbee283d7fca11836e834be6f953076b679addba395776987d",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_closure_contract_indexing_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7602,7 +7650,7 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7612,7 +7660,7 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7626,7 +7674,7 @@
       ],
       "proof_id": "proof_s8_closure_contract_indexing_near_valid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
-      "semantic_fingerprint": "sha256:879ff42695e6df25c3b516bb331cf9ac5e2f1e0bbef8dd08b9fb6e24a19c9326",
+      "semantic_fingerprint": "sha256:fbe88d888226e6fbabb5589a890122a48c90993e02be5da22f871205c1346176",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_closure_contract_indexing_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7634,13 +7682,13 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -7650,8 +7698,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7664,7 +7712,7 @@
       ],
       "proof_id": "proof_s8_closure_contract_indexing_adversarial_invalid",
       "requirement_id": "S8_CLOSURE_CONTRACT_INDEXING",
-      "semantic_fingerprint": "sha256:b050f09e4c86f96d64edc27f59fd255f127e1f9c7580897f0bc942998b63acb5",
+      "semantic_fingerprint": "sha256:b270036729d6fbf960b1758ff8919fa3c6a122445f6b6f36f2e44ae8c2d70c3c",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_closure_contract_indexing_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7735,10 +7783,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json",
@@ -7748,8 +7796,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7762,7 +7810,7 @@
       ],
       "proof_id": "proof_s8_contestability_inclusion_adversarial_invalid",
       "requirement_id": "S8_CONTESTABILITY_INCLUSION",
-      "semantic_fingerprint": "sha256:7caefc467ab8e2a55f6d24e9578273ee093a9cb97e3ebdc8ff35b9e9b12643db",
+      "semantic_fingerprint": "sha256:84bc0a08be070d9092943226185913456d4adb2d21521110405ebda2f8c76ad5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_contestability_inclusion_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7770,14 +7818,14 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": null,
           "operator": "not_equals",
           "selector": "/computed_recommendation/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7790,7 +7838,7 @@
       ],
       "proof_id": "proof_s8_recommendation_policy_valid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "semantic_fingerprint": "sha256:e2e4d31c8e45d1b66ac5bd1741ef263cedc13b5ad556d9a8e2ac6214d0416e0c",
+      "semantic_fingerprint": "sha256:97875a2ee06812107802f0c1702c3c4875714e36f9c1f7f0f341dadea5983a6f",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_recommendation_policy_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7804,14 +7852,14 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": null,
           "operator": "not_equals",
           "selector": "/computed_recommendation/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7825,7 +7873,7 @@
       ],
       "proof_id": "proof_s8_recommendation_policy_near_valid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "semantic_fingerprint": "sha256:e930fdda39eda77036b2bb8b60edaafd03f7f1096b84f2e62b0218ca3dd6f99a",
+      "semantic_fingerprint": "sha256:6a89f25ea0b72b0dace517dfe28632e7d6572fd7899ba7993d8476bdf0790820",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_recommendation_policy_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7833,21 +7881,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": null,
           "operator": "not_equals",
           "selector": "/computed_recommendation/status"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7860,7 +7908,7 @@
       ],
       "proof_id": "proof_s8_recommendation_policy_adversarial_invalid",
       "requirement_id": "S8_RECOMMENDATION_POLICY",
-      "semantic_fingerprint": "sha256:282069e96e3081b91aaa6acd31fd8951183238539fc52cb125595c82a864da54",
+      "semantic_fingerprint": "sha256:e953e888c857ab4c6e0fb6392639bee58a2d5bcaa0a7599c43e18509e0c056f3",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_recommendation_policy_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7868,14 +7916,14 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/5/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7888,7 +7936,7 @@
       ],
       "proof_id": "proof_s8_accepted_condition_effect_valid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
-      "semantic_fingerprint": "sha256:9649b40772008bb4260d80e6289631d900cf7f5c58ce2084cfaa03ea5a9e15d0",
+      "semantic_fingerprint": "sha256:1503254ea213b303e58d2a87d8cc7c56e12eb3715228441f82c001285bda1bae",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_accepted_condition_effect_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7902,14 +7950,14 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/5/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -7923,7 +7971,7 @@
       ],
       "proof_id": "proof_s8_accepted_condition_effect_near_valid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
-      "semantic_fingerprint": "sha256:12cd76de70b562b7d4e74c718cb0b717842af5849f0385a061e67a904d0fc22e",
+      "semantic_fingerprint": "sha256:722a6f53ace2f2fc6da74141914ca466fcb2b96473d32211e9df5fbd05abce5f",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_accepted_condition_effect_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7931,21 +7979,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/5/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -7958,7 +8006,7 @@
       ],
       "proof_id": "proof_s8_accepted_condition_effect_adversarial_invalid",
       "requirement_id": "S8_ACCEPTED_CONDITION_EFFECT",
-      "semantic_fingerprint": "sha256:c29998f4fb0d1363628ce11c75da6fa4f57d46b97005a6e2835bf0cb4a323a61",
+      "semantic_fingerprint": "sha256:4535ad7e219c29160b5cad40e7ec39a6cbe3764c9b11596e9142e6a6c68eb623",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_accepted_condition_effect_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7966,14 +8014,14 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/computed_recommendation/reason_codes"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -7986,7 +8034,7 @@
       ],
       "proof_id": "proof_s8_named_risk_recommendation_effect_valid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
-      "semantic_fingerprint": "sha256:67a34fb8d8b38b15226c88dce2a26dfb1ad141249b34f7e30f135e7cc6b44757",
+      "semantic_fingerprint": "sha256:f72d4a2848cc7920e393d761e506da4687b2d0c90d539b25514f903c01566675",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_recommendation_effect_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -7995,12 +8043,12 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
+          "expected": 2,
           "operator": "count_equals",
           "selector": "/actions"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/computed_recommendation/reason_codes"
@@ -8008,7 +8056,7 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "bounded",
@@ -8021,7 +8069,7 @@
       ],
       "proof_id": "proof_s8_named_risk_recommendation_effect_near_valid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
-      "semantic_fingerprint": "sha256:26a4c898a93bde584d1a27aeb7e902d5330546655a71e0e2589165ecfe87c128",
+      "semantic_fingerprint": "sha256:e5d2f84e65ae7503be167605a2e547e3e3b29c22f41f62ae2f26b6662f9ac2e5",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_recommendation_effect_near_valid]",
       "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
@@ -8029,21 +8077,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/actions"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+          "expected": "conflicting_duplicate_action",
+          "operator": "equals",
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/computed_recommendation/reason_codes"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8056,22 +8104,22 @@
       ],
       "proof_id": "proof_s8_named_risk_recommendation_effect_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_RECOMMENDATION_EFFECT",
-      "semantic_fingerprint": "sha256:cca19c37566977fe04b4db9433c53b38e9010973bfeab4a56df092bfa7cc637f",
+      "semantic_fingerprint": "sha256:6bf6d27d992791d00329b130532395eaefc6131b8d26f152ef78623e3595d524",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_named_risk_recommendation_effect_adversarial_invalid]",
-      "workflow_case": "WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL"
+      "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/3/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "accepted",
@@ -8084,7 +8132,7 @@
       ],
       "proof_id": "proof_s8_insufficient_evidence_state_valid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
-      "semantic_fingerprint": "sha256:eb69136856a94f805b86e6bcd63c1c9f4b1152f249b7dd15d27c118850275a8c",
+      "semantic_fingerprint": "sha256:55faa3cd8698720c1c9e41b4384b1e13f069565ae2e8a5fcd1d0482e899b6b63",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_insufficient_evidence_state_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8098,14 +8146,14 @@
           "selector": "/artifact_dependency_vector/assessment/state"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/3/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "domain": "8_management",
@@ -8119,7 +8167,7 @@
       ],
       "proof_id": "proof_s8_insufficient_evidence_state_near_valid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
-      "semantic_fingerprint": "sha256:08450b39b7f18510b8ec8bbc7dea440681172489defa8bd2ca94046b17a821b0",
+      "semantic_fingerprint": "sha256:f8c75889295d0192adfe5e16c0c14cbba54ca84fec6bd7e5da1f1be9ff6f7576",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_insufficient_evidence_state_near_valid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8127,21 +8175,21 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/3/records"
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8154,7 +8202,7 @@
       ],
       "proof_id": "proof_s8_insufficient_evidence_state_adversarial_invalid",
       "requirement_id": "S8_INSUFFICIENT_EVIDENCE_STATE",
-      "semantic_fingerprint": "sha256:1d63f2ef5ae7f9c2125800bcd5956e35c7ee486f0c780db692b8c3311d8e62c9",
+      "semantic_fingerprint": "sha256:71b0983d1ff22d21f4b5be58d3682f5d511f429039f89a352d41de81ed168644",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_insufficient_evidence_state_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8224,10 +8272,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -8237,7 +8285,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8250,7 +8299,7 @@
       ],
       "proof_id": "proof_s8_deterministic_json_adversarial_invalid",
       "requirement_id": "S8_DETERMINISTIC_JSON",
-      "semantic_fingerprint": "sha256:8634bf9fad21eb6a6fae1782952725215bc5afafd18150624c820ce66248dfe8",
+      "semantic_fingerprint": "sha256:ea29f8df26a5c504968d2c121ff5363c15b4eb2220de1ba71bd7f4d806b703ea",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_deterministic_json_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8331,10 +8380,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
@@ -8349,8 +8398,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8363,7 +8412,7 @@
       ],
       "proof_id": "proof_s8_safe_html_adversarial_invalid",
       "requirement_id": "S8_SAFE_HTML",
-      "semantic_fingerprint": "sha256:cca251b5b3b1ebf54321e46456759122f8290d80b59930e850616eea48385371",
+      "semantic_fingerprint": "sha256:eab8c19023ac00b822593430412ea81ac2895473b6360505dcc4afdc1f1bc680",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_safe_html_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8434,10 +8483,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md",
@@ -8447,8 +8496,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8461,7 +8510,7 @@
       ],
       "proof_id": "proof_s8_safe_markdown_adversarial_invalid",
       "requirement_id": "S8_SAFE_MARKDOWN",
-      "semantic_fingerprint": "sha256:aeb3a4d8f693c7f55a23929b2d46f11e467359e651eadd0a2821a91480a021bb",
+      "semantic_fingerprint": "sha256:1357b9cf332df687ac881eaec493218463ef1aaf1c5fada920406779becf4be0",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_safe_markdown_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8531,10 +8580,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -8544,7 +8593,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8557,7 +8607,7 @@
       ],
       "proof_id": "proof_s8_artifact_hash_integrity_adversarial_invalid",
       "requirement_id": "S8_ARTIFACT_HASH_INTEGRITY",
-      "semantic_fingerprint": "sha256:9338a68aff447e36650c6817fca7e80db533bbea4d7bcbe53f7c062b13fb8d49",
+      "semantic_fingerprint": "sha256:51368bc7c01766a00147a49a9913d2efe2ec6a1f8debbbaa9f9ecf1ab32adbe7",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_artifact_hash_integrity_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8627,10 +8677,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -8640,7 +8690,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8653,7 +8704,7 @@
       ],
       "proof_id": "proof_s8_artifact_file_set_adversarial_invalid",
       "requirement_id": "S8_ARTIFACT_FILE_SET",
-      "semantic_fingerprint": "sha256:e1eb75c3d8299b95410af7d486056a2219527e37e5c7a9785a00397fcac72d64",
+      "semantic_fingerprint": "sha256:5d0e33a6653bb3db9381addb9d52a9669d699cc321fde739124ce2c07779c4fc",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_artifact_file_set_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8723,10 +8774,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json",
+          "expected": "management_canonical_projection_tampered",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -8736,7 +8787,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8749,7 +8801,7 @@
       ],
       "proof_id": "proof_s8_deterministic_rerender_adversarial_invalid",
       "requirement_id": "S8_DETERMINISTIC_RERENDER",
-      "semantic_fingerprint": "sha256:7c916aa074ceea3de02c82b8eda95c8172aaedff06f14766a17a2ab6aee661b3",
+      "semantic_fingerprint": "sha256:af9d6704989773d51d94d19e18ad80ee12f9279f36ca0aa54a98da47d8c5d835",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_deterministic_rerender_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
@@ -8819,10 +8871,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-          "expected": "required_present",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json",
+          "expected": "stale_dependency",
           "operator": "equals",
-          "selector": "/artifact_dependency_vector/measurement_ai/state"
+          "selector": "/error"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
@@ -8832,7 +8884,8 @@
         }
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json"
       ],
       "domain": "8_management",
       "expected_boundary_outcome": "rejected",
@@ -8845,7 +8898,7 @@
       ],
       "proof_id": "proof_s8_upstream_staleness_adversarial_invalid",
       "requirement_id": "S8_UPSTREAM_STALENESS",
-      "semantic_fingerprint": "sha256:ab8df6354f84f225826bd30f57ad84c3250a49f37f8881a32e6d87aefb9334c0",
+      "semantic_fingerprint": "sha256:66686d79e55f492b695b3b39475f221bf41a6cf6f49e9a8d4408d1cbe2bf9f21",
       "status": "pending_authentic_execution",
       "test_id": "tests/test_session6_8_proof_execution.py::test_requirement_proof[proof_s8_upstream_staleness_adversarial_invalid]",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"

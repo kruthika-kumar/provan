@@ -38,6 +38,16 @@ def _commit(root: Path) -> str:
     return subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True, text=True, capture_output=True).stdout.strip()
 
 
+def _persisted_state(args: tuple[Any, ...]) -> dict[str,str]:
+    if not args or not hasattr(args[0],"repository_root"):
+        return {}
+    repository=Path(args[0].repository_root).resolve();local=repository/".shiproom"/"local"
+    if not local.is_dir():
+        return {}
+    return {path.relative_to(repository).as_posix():"sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted(local.rglob("*")) if path.is_file() and not path.is_symlink()}
+
+
 @contextmanager
 def session(root: Path, workflow_case: str) -> Iterator[list[dict[str, Any]]]:
     """Capture invocation records for one workflow case.
@@ -67,6 +77,7 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
     if not isinstance(module, str) or not module or not isinstance(qualified, str) or not qualified:
         raise ValueError("workflow_audit_callable_identity_invalid")
     invocation_id = "inv_" + uuid.uuid4().hex
+    persisted_before=_persisted_state(args)
     record: dict[str, Any] = {
         "invocation_id": invocation_id,
         "workflow_case": state["workflow_case"],
@@ -98,6 +109,11 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
                 record["generated_artifact_hashes"][path] = "sha256:" + hashlib.sha256(candidate.read_bytes()).hexdigest()
         return value
     finally:
+        persisted_after=_persisted_state(args)
+        changed={path:digest for path,digest in persisted_after.items() if persisted_before.get(path)!=digest}
+        if changed:
+            record["generated_artifact_paths"]=sorted(changed)
+            record["generated_artifact_hashes"]=changed
         state["stack"].pop()
 
 

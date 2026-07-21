@@ -8,7 +8,7 @@
     "artifact": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?![A-Za-z]:|/|\\\\|.*(?:^|/)\\.\\.(?:/|$)).+$"},
     "selector": {"type": "string", "maxLength": 1024, "pattern": "^$|^/"},
     "operator": {
-      "enum": ["equals", "not_equals", "count_equals", "count_at_least", "set_equals", "unique", "ordered_equals", "foreign_keys_complete", "hash_equals", "unchanged", "file_set_equals", "pointer_targets", "equals_reference", "count_equals_reference", "field_set_equals_reference", "text_contains", "text_absent"]
+      "enum": ["equals", "not_equals", "count_equals", "count_at_least", "set_equals", "unique", "ordered_equals", "foreign_keys_complete", "hash_equals", "unchanged", "file_set_equals", "pointer_targets", "equals_reference", "not_equals_reference", "count_equals_reference", "field_set_equals_reference", "flattened_field_set_equals_reference", "text_contains", "text_absent"]
     },
     "expected": {}
   }

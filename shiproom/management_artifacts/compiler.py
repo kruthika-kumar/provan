@@ -41,7 +41,10 @@ def dependency_vector(ctx:LocalExecutionContext)->dict:
             safe_entry(release_root / pointer, directory=False, label="optional_dependency_pointer")
         except FileNotFoundError:
             return _dep("not_used"), None
-        manifest, artifacts=loader(ctx)
+        try:
+            manifest, artifacts=loader(ctx)
+        except ValueError as exc:
+            raise ValueError("stale_dependency") from exc
         return _dep("required_present",manifest.get("generation"),manifest["semantic_bundle_hash"]), artifacts
     assessment_state, assessment=optional("assessment/current-assessment.json",load_assessment)
     measurement_state, measurement=optional("measurement-ai-readiness/current-generation.json",load_measurement_ai)
@@ -139,7 +142,7 @@ def _section_records(name: str, specs: list[dict], *, ctx: LocalExecutionContext
         "non_goals": [], "source_conflicts": intent.get("ambiguities.json", {}).get("ambiguities", []),
         "product_decisions": ctx.release.get("owner_decisions", []),
         "post_release_plan": measurement.get("launch-measurement-plan.json", {}).get("recommendations", []),
-        "requirement_criterion_matrix": [{"requirement_id": item.get("requirement_id"), "criterion_ids": item.get("criterion_ids", [])} for item in requirements],
+        "requirement_criterion_matrix": [{"requirement_id": item.get("requirement_id"), "criterion_ids": sorted({criterion.get("criterion_id") for criterion in criteria if criterion.get("requirement_id")==item.get("requirement_id")})} for item in requirements],
         "change_map": graph_nodes, "approved_commands": [activation.get("contract", {}).get("execution_policy", {}).get("approved_commands", [])],
         "requirement_test_matrix": assessment.get("effective-assessment-view.json", {}).get("criteria", []),
         "test_adequacy": assessment.get("test-adequacy.json", {}).get("payload", {}).get("criteria", []),
@@ -258,7 +261,7 @@ def compile(ctx:LocalExecutionContext)->dict:
         return {**base, "sections": _sections(name), "section_contracts": contracts, "section_records": _section_records(name, contracts, ctx=ctx, loaded=loaded, vector=vector), **extra}
     artifacts={
       "executive-release-brief":report("executive-release-brief",recommendation=policy,verified_blockers=[i for i in ctx.release.get("findings",[]) if i.get("blocker")],unknowns=policy["unknowns"]),
-      "product-release-review":report("product-release-review",matrix=[{"requirement_id": item.get("requirement_id"), "criterion_ids": item.get("criterion_ids", [])} for item in loaded.get("upstream", {"intent_artifacts": {}})["intent_artifacts"].get("requirements.json", {}).get("requirements", [])]),
+      "product-release-review":report("product-release-review",matrix=[{"requirement_id": item.get("requirement_id"), "criterion_ids": sorted({criterion.get("criterion_id") for criterion in loaded.get("upstream", {"intent_artifacts": {}})["intent_artifacts"].get("acceptance-criteria.json", {}).get("criteria", []) if criterion.get("requirement_id")==item.get("requirement_id")})} for item in loaded.get("upstream", {"intent_artifacts": {}})["intent_artifacts"].get("requirements.json", {}).get("requirements", [])]),
       "engineering-release-assessment":report("engineering-release-assessment",repository=ctx.release.get("repository",{})),
       "measurement-ai-readiness":report("measurement-ai-readiness",authority_note="Canonical Measurement & AI authority is not recalculated by reporting.",canonical_artifacts=loaded["measurement"] or {}),
       "remediation-overview":report("remediation-overview",remediation_dependency=vector["remediation"],canonical_artifacts=loaded["remediation"] or {}),
@@ -295,7 +298,24 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
         if name == "release-recommendation-view":
             continue
         _verify_html_vector(read_bytes(ctx.repository_root, directory / (name + ".html"), label="management_html", max_bytes=2 * 1024 * 1024), manifest["artifact_dependency_vector"])
-    current = dependency_vector(ctx); current.pop("_loaded")
+    current = dependency_vector(ctx); current_loaded=current.pop("_loaded")
     if canonical_json(current) != canonical_json(manifest["artifact_dependency_vector"]):
         raise ValueError("stale_dependency")
+    for name in JSON_ARTIFACTS:
+        if name == "release-recommendation-view":
+            continue
+        contracts=_section_contracts(name)
+        expected_records=_section_records(name,contracts,ctx=ctx,loaded=current_loaded,vector=current)
+        if canonical_json(artifacts[name].get("section_records")) != canonical_json(expected_records):
+            raise ValueError("management_canonical_projection_tampered")
+    if canonical_json(artifacts["measurement-ai-readiness"].get("canonical_artifacts")) != canonical_json(current_loaded["measurement"] or {}):
+        raise ValueError("management_measurement_ai_passthrough_tampered")
+    if canonical_json(artifacts["remediation-overview"].get("canonical_artifacts")) != canonical_json(current_loaded["remediation"] or {}):
+        raise ValueError("management_remediation_passthrough_tampered")
+    if canonical_json(artifacts["release-recommendation-view"].get("computed_recommendation")) != canonical_json(_policy(ctx,current,current_loaded["contest"])):
+        raise ValueError("management_recommendation_view_tampered")
+    github_contracts=_section_contracts("github-summary-payload")
+    expected_github_records=_section_records("github-summary-payload",github_contracts,ctx=ctx,loaded=current_loaded,vector=current)
+    if canonical_json(github.get("section_records")) != canonical_json(expected_github_records):
+        raise ValueError("management_github_projection_tampered")
     return manifest,artifacts

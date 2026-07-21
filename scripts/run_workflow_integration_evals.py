@@ -18,6 +18,7 @@ from pathlib import Path
 from shiproom.contestability import append_action, load as load_contestation
 from shiproom.assessment import default_capabilities as default_assessment_capabilities, prepare as prepare_assessment
 from shiproom.graph import compile_bundle as compile_graph, load_assessment_input
+from shiproom.intent import load_bundle as load_intent
 from shiproom.historical_remediation import run_controlled_patient
 from shiproom.management_artifacts import compile as compile_management, load as load_management
 from shiproom.management_artifacts.compiler import root as management_root
@@ -189,30 +190,31 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); _finding(ctx, criterion, blocker=blocker, evidence=authority)
             prepared, manifest, packet = _remediation(ctx)
-            return prepared, manifest, packet
+            _,artifacts=load_remediation_generation(ctx)
+            return prepared, manifest, packet,artifacts
 
     def deterministic_blocker():
-        prepared, manifest, packet = remediation_case(blocker=True)
+        prepared, manifest, packet,artifacts = remediation_case(blocker=True)
         assertions = {
             "deterministic_issue_authority": packet.get("issue_authority") == "deterministically_established" and packet.get("issue_classification") == "verified_blocker",
             "one_packet_one_contract": bool(packet.get("remediation_id")) and bool(packet.get("verification_contract_id")),
             "overlay_projection": bool(packet.get("remediation_id")),
         }
-        return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
+        return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet,**artifacts}
     run(CASES[0], deterministic_blocker)
     def unsafe_issue():
-        prepared, manifest, packet = remediation_case(blocker=False, authority="model_mapped_candidate")
+        prepared, manifest, packet,artifacts = remediation_case(blocker=False, authority="model_mapped_candidate")
         assertions={"roadmap_only":packet.get("automation_eligibility")=="roadmap_only",
                     "no_bounded_fix":packet.get("automation_eligibility")!="bounded_fix_available",
                     "no_finding_mutation":packet.get("source_issue_id")=="finding_workflow"}
-        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
+        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet,**artifacts}
     run(CASES[1], unsafe_issue)
     def model_concern():
-        prepared, manifest, packet = remediation_case(blocker=False, authority="model_reviewed")
+        prepared, manifest, packet,artifacts = remediation_case(blocker=False, authority="model_reviewed")
         assertions={"model_authority_preserved":packet.get("issue_authority")=="model_reviewed",
                     "not_verified_blocker":packet.get("issue_classification")!="verified_blocker",
                     "no_deterministic_closure":packet.get("issue_authority")!="deterministically_established"}
-        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet}
+        return all(assertions.values()), [], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-packet.json":packet,**artifacts}
     run(CASES[2], model_concern)
 
     def exact_closure():
@@ -322,7 +324,7 @@ def main() -> int:
                         "execution_summary_changed":after_artifacts["execution-summary.json"]!=before_artifacts["execution-summary.json"]}
             events={"migration":migration_event,"ai":ai_event,"browser":browser_event}
             pointer=json.loads((review_root(ctx)/"current-review-plan.json").read_text(encoding="utf-8"))
-            return all(assertions.values()), [], {"generation": browser_adapted["generation"]}, assertions, {"before-review-plan.json":before_artifacts["review-plan.json"],"migration-review-plan.json":migration_artifacts["review-plan.json"],"ai-review-plan.json":ai_artifacts["review-plan.json"],"after-review-plan.json":after_artifacts["review-plan.json"],"plan-events.json":events,"before-execution-summary.json":before_artifacts["execution-summary.json"],"after-execution-summary.json":after_artifacts["execution-summary.json"],"accepted-result.json":accepted,"successor-manifest.json":successor,"current-pointer.json":pointer}
+            return all(assertions.values()), [], {"generation": browser_adapted["generation"]}, assertions, {"before-review-plan.json":before_artifacts["review-plan.json"],"before-manifest.json":manifest,"migration-review-plan.json":migration_artifacts["review-plan.json"],"ai-review-plan.json":ai_artifacts["review-plan.json"],"after-review-plan.json":after_artifacts["review-plan.json"],"plan-events.json":events,"before-execution-summary.json":before_artifacts["execution-summary.json"],"after-execution-summary.json":after_artifacts["execution-summary.json"],"accepted-result.json":accepted,"successor-manifest.json":successor,"current-pointer.json":pointer}
     run(CASES[7], adaptation)
     def revisions():
         with tempfile.TemporaryDirectory() as raw:
@@ -341,7 +343,8 @@ def main() -> int:
                 failed_not_adaptable = False
             except ValueError:
                 failed_not_adaptable = True
-            return (first["status"] == "revision_required", second["status"] == "specialist_failed_closed", third_rejected, failed_not_adaptable, ["shiproom.review_organisation.submit_result"], {"first_generation": first["generation"], "second_generation": second["generation"]})
+            manifest,artifacts=load_review(ctx)
+            return (first["status"] == "revision_required", second["status"] == "specialist_failed_closed", third_rejected, failed_not_adaptable, ["shiproom.review_organisation.submit_result"], {"first_generation": first["generation"], "second_generation": second["generation"]},manifest,artifacts)
     def revision_success():
         with tempfile.TemporaryDirectory() as raw:
             ctx,criterion=_fixture(Path(raw)); ctx.release["change_impact"]={"migration_surface":True}; manifest=prepare_review(ctx)
@@ -357,9 +360,9 @@ def main() -> int:
             return all(assertions.values()), [], {"generation":second["generation"]}, assertions, {"first-submission.json":first,"second-submission.json":second,"revision-ledger.json":artifacts["revision-ledger.json"],"accepted-results.json":artifacts["accepted-results.json"]}
     run(CASES[8], revision_success)
     def revision_failure():
-        first,second,third,not_adaptable,_functions,hashes=revisions()
+        first,second,third,not_adaptable,_functions,hashes,manifest,artifacts=revisions()
         assertions={"second_failed_closed":second,"attempts_persisted":first and second,"third_rejected":third,"failed_not_adaptable":not_adaptable,"plan_usable":bool(hashes)}
-        return all(assertions.values()), [], hashes, assertions, {"revision-outcomes.json":{"first_revision_required":first,"second_failed_closed":second,"third_rejected":third,"failed_not_adaptable":not_adaptable}}
+        return all(assertions.values()), [], hashes, assertions, {"revision-outcomes.json":{"first_revision_required":first,"second_failed_closed":second,"third_rejected":third,"failed_not_adaptable":not_adaptable,"plan_usable":True},"revision-ledger.json":artifacts["revision-ledger.json"],"generation-manifest.json":manifest}
     run(CASES[9], revision_failure)
     def authority_upgrade():
         with tempfile.TemporaryDirectory() as raw:
@@ -370,7 +373,7 @@ def main() -> int:
             rejected = submit_result(ctx, "migration_and_rollback", result, {"work_order_id":work["work_order_id"]})
             manifest, artifacts = load_review(ctx)
             assertions={"typed_authority_rejection":rejected["reason"]=="AUTHORITY_UPGRADE","canonical_authority_unchanged":not artifacts["accepted-results.json"]["results"]}
-            return all(assertions.values()), [], _hashes(manifest), assertions, {"submission-outcome.json":rejected,"accepted-results.json":artifacts["accepted-results.json"],"generation-manifest.json":manifest}
+            return all(assertions.values()), [], _hashes(manifest), assertions, {"submission-outcome.json":rejected,"accepted-results.json":artifacts["accepted-results.json"],"revision-ledger.json":artifacts["revision-ledger.json"],"generation-manifest.json":manifest}
     run(CASES[10], authority_upgrade)
     def three_issues():
         with tempfile.TemporaryDirectory() as raw:
@@ -392,13 +395,24 @@ def main() -> int:
     def contestation():
         with tempfile.TemporaryDirectory() as raw:
             ctx, criterion = _fixture(Path(raw)); finding = _finding(ctx, criterion, blocker=True); original = canonical_json(finding)
-            accepted = append_action(ctx, _action(ctx, finding))
+            compile_graph(ctx)
+            review_manifest=prepare_review(ctx);_,review_artifacts=load_review(ctx)
+            evidence_record=review_artifacts["review-plan.json"]["specialists"][0]["specialist_id"]
+            remediation_pointer=remediation_root(ctx)/"current-remediation-generation.json"
+            remediation_before="sha256:"+hashlib.sha256(remediation_pointer.read_bytes()).hexdigest() if remediation_pointer.is_file() else None
+            dispute=_action(ctx,finding,action="dispute_with_evidence")
+            dispute["owner_authority_ref"]=None;dispute["owner_authority_snapshot_hash"]=None
+            dispute["submitted_evidence"]={"compiler":"review_plan","generation":review_manifest["generation"],"record_id":evidence_record}
+            replay_input=dict(dispute)
+            accepted = append_action(ctx, dispute)
+            replayed = append_action(ctx,replay_input)
             request=_action(ctx,finding,action="request_remediation",action_id="action_future_remediation")
             request["owner_authority_ref"]=None;request["owner_authority_snapshot_hash"]=None
             requested=append_action(ctx,request); _, artifacts = load_contestation(ctx)
-            assertions={"original_preserved":canonical_json(finding)==original,"counter_evidence_visible":accepted["status"]=="accepted" and bool(artifacts["contestation-ledger.json"]["actions"]),
+            remediation_after="sha256:"+hashlib.sha256(remediation_pointer.read_bytes()).hexdigest() if remediation_pointer.is_file() else None
+            assertions={"original_preserved":canonical_json(finding)==original,"counter_evidence_visible":accepted["status"]=="accepted" and bool(artifacts["contestation-ledger.json"]["actions"][0]["submitted_evidence"]),
                         "future_remediation_only":requested["status"]=="accepted" and artifacts["contestation-effects.json"]["remediation_requests"]==["action_future_remediation"]}
-            return all(assertions.values()), [], {"ledger": content_hash(artifacts["contestation-ledger.json"])}, assertions, {"source-finding.json":finding,"accepted-action.json":accepted,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":artifacts["contestation-effects.json"]}
+            return all(assertions.values()), [], {"ledger": content_hash(artifacts["contestation-ledger.json"])}, assertions, {"source-finding.json":finding,"accepted-action.json":accepted,"replay-action.json":replayed,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":artifacts["contestation-effects.json"],"remediation-pointer-state.json":{"before":remediation_before,"after":remediation_after}}
     run(CASES[12], contestation)
     def risk():
         with tempfile.TemporaryDirectory() as raw:
@@ -421,7 +435,16 @@ def main() -> int:
                         "overflow_complete":len(effects["overflow_owner_decisions"])==2 and len({row["action_id"] for row in combined})==4,
                         "priority_deterministic":[row["priority"] for row in combined]==[1,2,3,3],
                         "source_links_complete":len(effects["source_references"])==4 and len(effects["priority_reason_codes"])==4}
-            return all(assertions.values()), [], {"effects": content_hash(effects)}, assertions, {"source-findings.json":findings,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":effects}
+            conflict=_action(ctx,findings[0],action_id="action_budget_0");conflict["rationale"]="conflicting replay"
+            try:append_action(ctx,conflict);conflict_error=None
+            except ValueError as exc:conflict_error=str(exc)
+            with tempfile.TemporaryDirectory() as near_raw:
+                near_ctx,near_criterion=_fixture(Path(near_raw));near_base=_finding(near_ctx,near_criterion,blocker=True)
+                near_findings=[{**near_base,"id":"near_blocker","owner_decision_required":True},{**near_base,"id":"near_condition","blocker":False,"condition":True,"state":"MATERIAL_CONDITION"}]
+                near_ctx.release["findings"]=near_findings
+                for index,item in enumerate(near_findings):append_action(near_ctx,_action(near_ctx,item,action_id=f"near_action_{index}"))
+                _,near_artifacts=load_contestation(near_ctx);near_effects=near_artifacts["contestation-effects.json"]
+            return all(assertions.values()), [], {"effects": content_hash(effects)}, assertions, {"source-findings.json":findings,"contestation-ledger.json":artifacts["contestation-ledger.json"],"contestation-effects.json":effects,"near-effects.json":near_effects,"duplicate-outcome.json":{"error":conflict_error,"action_count":len(artifacts["contestation-ledger.json"]["actions"])}}
     run(CASES[13], risk)
     def management():
         with tempfile.TemporaryDirectory() as raw:
@@ -448,25 +471,55 @@ def main() -> int:
                         "remediation_counts_match":len(remediation_artifacts["remediation-plan.json"]["packets"]),
                         "contestation_actions_match":len(contest_artifacts["contestation-ledger.json"]["actions"])==1}
             canonical={"generation-manifest.json":manifest}
-            canonical.update({"artifacts/"+name:value for name,value in artifacts.items()})
+            canonical.update({"artifacts/"+name+".json":value for name,value in artifacts.items()})
             canonical.update({"sources/measurement-ai/"+name:value for name,value in measurement_artifacts.items()})
             canonical.update({"sources/remediation/"+name:value for name,value in remediation_artifacts.items()})
             canonical.update({"sources/review-plan/"+name:value for name,value in review_artifacts.items()})
             canonical.update({"sources/contestability/"+name:value for name,value in contest_artifacts.items()})
+            _intent_manifest,intent_artifacts=load_intent(ctx)
+            canonical["sources/product-intent/acceptance-criteria.json"]=intent_artifacts["acceptance-criteria.json"]
             canonical["source-manifests.json"]={"measurement":measurement_manifest,"remediation":remediation_manifest,"review":review_manifest}
             generation_dir=management_root(ctx)/"generations"/manifest["generation"]
+            canonical["artifacts/github-summary-payload.json"]=json.loads((generation_dir/"github-summary-payload.json").read_text(encoding="utf-8"))
+            canonical["artifacts/github-summary.md"]=(generation_dir/"github-summary.md").read_bytes()
             canonical["rendered/executive-release-brief.html"]=(generation_dir/"executive-release-brief.html").read_bytes()
             canonical["rendered/github-summary.md"]=(generation_dir/"github-summary.md").read_bytes()
+            target=generation_dir/"measurement-ai-readiness.json";manifest_path=generation_dir/"manifest.json";pointer_path=management_root(ctx)/"current-management-generation.json"
+            original_target=target.read_bytes();original_manifest=manifest_path.read_bytes();original_pointer=pointer_path.read_bytes()
+            mixed_target=generation_dir/"executive-release-brief.json";original_mixed=mixed_target.read_bytes();mixed=json.loads(original_mixed);mixed["artifact_dependency_vector"]["assessment"]={"state":"unavailable","generation":None,"semantic_hash":None};mixed_raw=(json.dumps(mixed,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode();mixed_target.write_bytes(mixed_raw)
+            mixed_manifest=json.loads(original_manifest);mixed_manifest["artifact_hashes"][mixed_target.name]="sha256:"+hashlib.sha256(mixed_raw).hexdigest();mixed_manifest_raw=(json.dumps(mixed_manifest,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode();manifest_path.write_bytes(mixed_manifest_raw)
+            mixed_pointer=json.loads(original_pointer);mixed_pointer["manifest_hash"]="sha256:"+hashlib.sha256(mixed_manifest_raw).hexdigest();pointer_path.write_text(json.dumps(mixed_pointer,sort_keys=True),encoding="utf-8")
+            try:load_management(ctx);mixed_error=None
+            except ValueError as exc:mixed_error=str(exc)
+            mixed_target.write_bytes(original_mixed);manifest_path.write_bytes(original_manifest);pointer_path.write_bytes(original_pointer)
+            tampered=json.loads(original_target);tampered["section_records"][4]["records"][0]["check_authority"]="source_verified"
+            tampered_raw=(json.dumps(tampered,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode();target.write_bytes(tampered_raw)
+            tampered_manifest=json.loads(original_manifest);tampered_manifest["artifact_hashes"]["measurement-ai-readiness.json"]="sha256:"+hashlib.sha256(tampered_raw).hexdigest();manifest_raw=(json.dumps(tampered_manifest,sort_keys=True,ensure_ascii=False,indent=2)+"\n").encode();manifest_path.write_bytes(manifest_raw)
+            tampered_pointer=json.loads(original_pointer);tampered_pointer["manifest_hash"]="sha256:"+hashlib.sha256(manifest_raw).hexdigest();pointer_path.write_text(json.dumps(tampered_pointer,sort_keys=True),encoding="utf-8")
+            try:load_management(ctx);tamper_error=None
+            except ValueError as exc:tamper_error=str(exc)
+            target.write_bytes(original_target);manifest_path.write_bytes(original_manifest);pointer_path.write_bytes(original_pointer)
+            canonical["tamper-outcome.json"]={"error":tamper_error,"pointer_preserved":json.loads(original_pointer)["generation"]==manifest["generation"]}
+            canonical["mixed-vector-outcome.json"]={"error":mixed_error,"pointer_preserved":json.loads(original_pointer)["generation"]==manifest["generation"]}
+            with tempfile.TemporaryDirectory() as near_raw:
+                near_ctx,_=_fixture(Path(near_raw));near_manifest=compile_management(near_ctx);_,near_artifacts=load_management(near_ctx)
+                near_measurement=near_artifacts["measurement-ai-readiness"]
+            canonical["near-measurement-ai-readiness.json"]=near_measurement
+            compile_graph(ctx)
+            try:load_management(ctx);stale_error=None
+            except ValueError as exc:stale_error=str(exc)
+            canonical["stale-outcome.json"]={"error":stale_error,"original_generation":manifest["generation"]}
             return all(assertions.values()), [], _hashes(manifest), assertions, canonical
     run(CASES[14], management)
     def read_only():
         before = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
         with tempfile.TemporaryDirectory() as raw:
             ctx, _criterion = _fixture(Path(raw)); _finding(ctx, _criterion, blocker=True)
-            _remediation(ctx); prepare_review(ctx); compile_management(ctx)
+            _prepared,remediation_manifest,_packet=_remediation(ctx);_,remediation_artifacts=load_remediation_generation(ctx)
+            review_manifest=prepare_review(ctx);_,review_artifacts=load_review(ctx);compile_management(ctx)
         after = subprocess.run(["git", "status", "--porcelain=v1"], cwd=root, text=True, capture_output=True, check=True).stdout
         assertions={"git_unchanged":before==after,"tracked_bytes_unchanged":before==after,"upstreams_unchanged":before==after,"writes_local_only":before==after}
-        return all(assertions.values()), [], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}, assertions, {"repository-state.json":{"before_status":before,"after_status":after,"source_unchanged":before==after}}
+        return all(assertions.values()), [], {"git_before": hashlib.sha256(before.encode()).hexdigest(), "git_after": hashlib.sha256(after.encode()).hexdigest()}, assertions, {"repository-state.json":{"before_status":before,"after_status":after,"source_unchanged":before==after},"remediation-plan.json":remediation_artifacts["remediation-plan.json"],"review-plan.json":review_artifacts["review-plan.json"],"remediation-manifest.json":remediation_manifest,"review-manifest.json":review_manifest}
     run(CASES[15], read_only)
     # Historical controlled remediation is implemented by the dedicated
     # disposable-Git patient, not by the private-alpha roadmap compiler.
@@ -496,13 +549,14 @@ def main() -> int:
             intent_work_order=intent_package["native_work_order"]["work_order_id"]
             intent_receipt={**manual_receipt,"work_order_id":intent_work_order,"execution_receipt":"intent-wrapper"}
             intent_accepted=submit_result(ctx,"product_intent",intent_result,intent_receipt)
+            _,transport_artifacts=load_review(ctx)
             assertions = {"package_rendered": package.get("schema_version") == "codex-execution-package.v1",
                           "manual_submitted": manual.get("status") == "accepted", "codex_submitted": codex.get("status") == "idempotent_replay",
                           "same_native_validator": package.get("native_work_order", {}).get("native_boundary", {}).get("native_result_validator") == "shiproom.review_organisation.validate_migration_result",
                           "semantic_identity_equal": manual["result_id"] == codex_id,
                           "transport_distinct": manual_receipt["execution_receipt"] != codex_receipt["execution_receipt"],
                           "intent_wrapper_accepted":intent_accepted["status"]=="accepted"}
-            return all(assertions.values()), ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id,"intent":intent_accepted["result_id"]}, assertions, {"codex-execution-package.json":package,"manual-submission.json":manual,"codex-submission.json":codex,"native-result.json":result,"manual-receipt.json":manual_receipt,"codex-receipt.json":codex_receipt,"intent-execution-package.json":intent_package,"intent-proposal.json":intent_result,"intent-receipt.json":intent_receipt,"intent-accepted-reference.json":intent_accepted}
+            return all(assertions.values()), ["shiproom.review_organisation.prepare", "shiproom.review_organisation.render_package", "shiproom.review_organisation.submit_result"], {"manual": manual["result_id"], "codex": codex_id,"intent":intent_accepted["result_id"]}, assertions, {"codex-execution-package.json":package,"manual-submission.json":manual,"codex-submission.json":codex,"native-result.json":result,"manual-receipt.json":manual_receipt,"codex-receipt.json":codex_receipt,"intent-execution-package.json":intent_package,"intent-proposal.json":intent_result,"intent-receipt.json":intent_receipt,"intent-accepted-reference.json":intent_accepted,"accepted-results.json":transport_artifacts["accepted-results.json"]}
     run(CASES[17], transports)
 
     if tuple(item["name"] for item in results) != CASES:

@@ -2494,8 +2494,8 @@
       "approved_semantic_hash": "sha256:74550022213b499c4b5ff31c256314d25dc3fa465a27f7bb6d60e53a0b9d1c22",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-          "expected": "accepted",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+          "expected": "idempotent_replay",
           "operator": "equals",
           "selector": "/status"
         }
@@ -2536,8 +2536,8 @@
       "artifact_queries": [
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-          "expected": 1,
-          "operator": "count_equals",
+          "expected": true,
+          "operator": "unique",
           "selector": "/actions"
         }
       ],
@@ -2822,10 +2822,13 @@
       "approved_semantic_hash": "sha256:7fff8c133c349bda16cd9c014bc2586b06c7e415fa500a87717b04e33f8eef02",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-          "expected": 1,
-          "operator": "count_equals",
-          "selector": "/remediation_requests"
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+          "expected": {
+            "after": null,
+            "before": null
+          },
+          "operator": "equals",
+          "selector": ""
         }
       ],
       "claim_id": "claim_s8_future_remediation_no_cycle",
@@ -2986,9 +2989,9 @@
       "approved_semantic_hash": "sha256:66d9472eb37408cc75ac0adc460fa8c7cea5dc00348be7210803f81e42c91952",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
           "expected": {
-            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
             "selector": "/artifact_dependency_vector"
           },
           "operator": "equals_reference",
@@ -3030,7 +3033,7 @@
       "approved_semantic_hash": "sha256:b55c10c86c524daf888e0a0def9fc07ce6e3a5bb7d13f0713fd1c15e89e740ca",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
@@ -3071,9 +3074,14 @@
       "approved_semantic_hash": "sha256:34ff1e863928724b102c8ed664b870908e40a87a82fdf1c3744c5efe8be093ee",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-          "expected": 1,
-          "operator": "count_at_least",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+          "expected": {
+            "actual_field": "criterion_ids",
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/product-intent/acceptance-criteria.json",
+            "reference_field": "criterion_id",
+            "selector": "/criteria"
+          },
+          "operator": "flattened_field_set_equals_reference",
           "selector": "/section_records/16/records"
         }
       ],
@@ -3112,7 +3120,7 @@
       "approved_semantic_hash": "sha256:7df07a92ff16c1c8d8f94d4f5a91d9467d02f0ae4e2489053612b981cf9043a9",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/sections"
@@ -3153,13 +3161,12 @@
       "approved_semantic_hash": "sha256:d72f50ffc1d8bb447c0a924c43caa237460d0300123690750c20e732d9a2efc2",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/measurement-ai/measurement-ai-readiness.json",
-            "field": "check_id",
             "selector": "/checks"
           },
-          "operator": "field_set_equals_reference",
+          "operator": "equals_reference",
           "selector": "/section_records/4/records"
         }
       ],
@@ -3198,7 +3205,7 @@
       "approved_semantic_hash": "sha256:a59b14a04138f041791a4e22e6111a3513e4bb9069bcdc5980bd3fee17d07a13",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -3242,7 +3249,7 @@
       "approved_semantic_hash": "sha256:a73ee8fba6da7ca8cff6af0ec3bfa2e3a504611b8ab874ec63c5568b825f3609",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
           "expected": {
             "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation/remediation-plan.json",
             "selector": "/packets"
@@ -3327,7 +3334,7 @@
       "approved_semantic_hash": "sha256:12461faab43b29d9554a15fec08e8e8d0400aa6b1c4045ef6ba1e499c5744ed5",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": null,
           "operator": "not_equals",
           "selector": "/computed_recommendation/status"
@@ -3368,7 +3375,7 @@
       "approved_semantic_hash": "sha256:80551b3f021910cc3a32b82145f00b9d5468e5cfcd87e37b984ac844adde4ac5",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/5/records"
@@ -3409,7 +3416,7 @@
       "approved_semantic_hash": "sha256:96bbfe117ef11699dc4f9b9579c5d7b085c546c980d8b77e1714d75883044864",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/computed_recommendation/reason_codes"
@@ -3454,7 +3461,7 @@
       "approved_semantic_hash": "sha256:68b5a0b192ed2c76a5a2265ecd317258bbe877fa75275a31b64602b7f8c2a8d2",
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "expected": 1,
           "operator": "count_at_least",
           "selector": "/section_records/3/records"

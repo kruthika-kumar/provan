@@ -1,33 +1,33 @@
 {
   "cases": [
     {
-      "approved_semantic_hash": "sha256:b3afa2fdbc574d3f4dd5c37a89935fba10080722e84672da1bb048dcf523e647",
+      "approved_semantic_hash": "sha256:46dc88b795759e455157f6def8371526aae34f9ef9ae451bbd173e9bb12d5bc4",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
           "assertion_id": "deterministic_issue_authority",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/deterministic_issue_authority",
+          "expected_value": "deterministically_established",
+          "json_pointer": "/issue_authority",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
           "assertion_id": "one_packet_one_contract",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/one_packet_one_contract",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": null,
+          "json_pointer": "/verification_contract_id",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-overlay.json",
           "assertion_id": "overlay_projection",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/overlay_projection",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 1,
+          "json_pointer": "/nodes",
           "named_assertion_function": null
         }
       ],
@@ -59,33 +59,33 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:b305e46958a0016b1fa3693dce7eef0befc623a85693efab0e1c3cd14e0ceb0a",
+      "approved_semantic_hash": "sha256:5093f402b8ed33bf223cbf753f5ba2b0ec52e0dbbe56d47c743684049fb07713",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json",
           "assertion_id": "roadmap_only",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/roadmap_only",
+          "expected_value": "roadmap_only",
+          "json_pointer": "/automation_eligibility",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json",
           "assertion_id": "no_bounded_fix",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/no_bounded_fix",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": "bounded_fix_available",
+          "json_pointer": "/automation_eligibility",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json",
           "assertion_id": "no_finding_mutation",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/no_finding_mutation",
+          "expected_value": "finding_workflow",
+          "json_pointer": "/source_issue_id",
           "named_assertion_function": null
         }
       ],
@@ -114,33 +114,33 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:0fc827758de134cc852e72fc09bc6533df6f0c5d547e9d360093b43b21817c41",
+      "approved_semantic_hash": "sha256:453ed30e509321f0aca87c7faeff3669bf4fff0364ccd91b49fff78dfc3c3455",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
           "assertion_id": "model_authority_preserved",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/model_authority_preserved",
+          "expected_value": "model_reviewed",
+          "json_pointer": "/issue_authority",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
           "assertion_id": "not_verified_blocker",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/not_verified_blocker",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": "verified_blocker",
+          "json_pointer": "/issue_classification",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
           "assertion_id": "no_deterministic_closure",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/no_deterministic_closure",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 0,
+          "json_pointer": "/allowed_closure_evidence_classes",
           "named_assertion_function": null
         }
       ],
@@ -168,60 +168,60 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:8308e66591f554019366faed6390bbaa60442f3dfec032153706872e376ae689",
+      "approved_semantic_hash": "sha256:cd0376d673ef41a857b868da67b723bbc58b1c9d13941a2d59e9910c71fa61e2",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json",
           "assertion_id": "wrong_check_rejected",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/wrong_check_rejected",
+          "expected_value": "unsatisfied",
+          "json_pointer": "/wrong_check/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json",
           "assertion_id": "failed_rerun_unsatisfied",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/failed_rerun_unsatisfied",
+          "expected_value": "unsatisfied",
+          "json_pointer": "/failed_rerun/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json",
           "assertion_id": "self_verifier_rejected",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/self_verifier_rejected",
+          "json_pointer": "/self_verifier_rejected",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json",
           "assertion_id": "stale_rejected",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/stale_rejected",
+          "expected_value": "stale",
+          "json_pointer": "/stale_commit/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json",
           "assertion_id": "independent_rerun_satisfied",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/independent_rerun_satisfied",
+          "expected_value": "satisfied_candidate",
+          "json_pointer": "/valid/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/source-finding.json",
           "assertion_id": "finding_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/finding_unchanged",
+          "expected_value": "OPEN",
+          "json_pointer": "/state",
           "named_assertion_function": null
         }
       ],
@@ -252,42 +252,51 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:c29695909efbcac845185245d6dc05d9ed31470a30ed9838af4e651f675ca368",
+      "approved_semantic_hash": "sha256:26627de72dcad2cb437e6d4cda794b93f3f74521bfb19b25a2cc91a8416db1ab",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json",
           "assertion_id": "language_signals_differ",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/language_signals_differ",
+          "json_pointer": "/input_vector/language_framework_signals/python",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json",
           "assertion_id": "plans_differ",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/plans_differ",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/typescript-review-plan.json",
+            "selector": "/plan_id"
+          },
+          "json_pointer": "/plan_id",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-generation-manifest.json",
           "assertion_id": "work_orders_differ",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/work_orders_differ",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/typescript-generation-manifest.json",
+            "selector": "/semantic_bundle_hash"
+          },
+          "json_pointer": "/semantic_bundle_hash",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json",
           "assertion_id": "evidence_differ",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/evidence_differ",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/typescript-review-plan.json",
+            "selector": "/input_vector/language_framework_signals"
+          },
+          "json_pointer": "/input_vector/language_framework_signals",
           "named_assertion_function": null
         }
       ],
@@ -317,15 +326,15 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:f6289c349ebe518b5ddab9b53b371c523b3e7aedcc1f9069c9d56c8c9a1ef6e1",
+      "approved_semantic_hash": "sha256:a7b0facd18b7d9830b57f6fcb672038bfc55dd0d4c6c42d430dadce55e1e1cc9",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/ai-specialist.json",
           "assertion_id": "ai_selected",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/ai_selected",
+          "expected_value": "selected",
+          "json_pointer": "/state",
           "named_assertion_function": null
         }
       ],
@@ -351,24 +360,24 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:7cfed9af6db102bc7edd115f26901d78d9b77d5091c9600831d406d93fd296a7",
+      "approved_semantic_hash": "sha256:62d09b0741eacc11b7349220ff24487824e11404c36d0eae48d99b09cf474306",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-specialist.json",
           "assertion_id": "browser_skipped",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/browser_skipped",
+          "expected_value": "skipped",
+          "json_pointer": "/state",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-specialist.json",
           "assertion_id": "browser_explicitly_not_applicable",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/browser_explicitly_not_applicable",
+          "expected_value": "explicitly_not_applicable",
+          "json_pointer": "/applicability_authority",
           "named_assertion_function": null
         }
       ],
@@ -395,51 +404,57 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:0800b0e350b0c84bc5c67208bd5d72c7ede1c550b37f7883a8a0914d459ed5b5",
+      "approved_semantic_hash": "sha256:ef4c0d7c4dd13c88b2b5c2eebd037300e87c8bd5b3b49cdb8be62c0f2acb4ccf",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/before-manifest.json",
           "assertion_id": "plan_hash_changed",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/plan_hash_changed",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/successor-manifest.json",
+            "selector": "/semantic_bundle_hash"
+          },
+          "json_pointer": "/semantic_bundle_hash",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
           "assertion_id": "migration_state_changed",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/migration_state_changed",
+          "expected_value": "migration_surface_discovered",
+          "json_pointer": "/migration/trigger",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
           "assertion_id": "new_work_order",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/new_work_order",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/migration/replacement_work_order_ids",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/accepted-result.json",
           "assertion_id": "prior_preserved",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/prior_preserved",
+          "expected_value": "accepted",
+          "json_pointer": "/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/before-execution-summary.json",
           "assertion_id": "execution_summary_changed",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/execution_summary_changed",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/after-execution-summary.json",
+            "selector": ""
+          },
+          "json_pointer": "",
           "named_assertion_function": null
         }
       ],
@@ -472,42 +487,42 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:49615c713df7d391a63a64b3818c2843f497561298a7e2131566491273d15af6",
+      "approved_semantic_hash": "sha256:daf884ccc472ed32b1e9c805dbb0c9b2d7527c2a99e2b4f0d0587debce58fb18",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json",
           "assertion_id": "invalid_first",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/invalid_first",
+          "expected_value": "revision_required",
+          "json_pointer": "/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/revision-ledger.json",
           "assertion_id": "revision_required",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/revision_required",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/entries",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/second-submission.json",
           "assertion_id": "corrected_native_acceptance",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/corrected_native_acceptance",
+          "expected_value": "accepted",
+          "json_pointer": "/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/accepted-results.json",
           "assertion_id": "attempts_persisted",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/attempts_persisted",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/results",
           "named_assertion_function": null
         }
       ],
@@ -538,51 +553,51 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:adc2af9cc5a28fba7cf0953f3008335a184f1e8ad168c313306b5292a91e6f18",
+      "approved_semantic_hash": "sha256:6e6056ea0eee870245bfa2870b7495bdbfc287b924eddd30cda837bd17d843b1",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json",
           "assertion_id": "second_failed_closed",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/second_failed_closed",
+          "json_pointer": "/second_failed_closed",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-ledger.json",
           "assertion_id": "attempts_persisted",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/attempts_persisted",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/entries",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json",
           "assertion_id": "third_rejected",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/third_rejected",
+          "json_pointer": "/third_rejected",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json",
           "assertion_id": "failed_not_adaptable",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/failed_not_adaptable",
+          "json_pointer": "/failed_not_adaptable",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json",
           "assertion_id": "plan_usable",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/plan_usable",
+          "json_pointer": "/plan_usable",
           "named_assertion_function": null
         }
       ],
@@ -613,24 +628,24 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:a1a04178243dfb652e563754923b5105b1dfdda95dcdea0c4ada95826a16b5e9",
+      "approved_semantic_hash": "sha256:8160bac7a0148f35f94d643073ec31e1a1abc609cf0380e01fc2e260b4f8cca7",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
           "assertion_id": "typed_authority_rejection",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/typed_authority_rejection",
+          "expected_value": "AUTHORITY_UPGRADE",
+          "json_pointer": "/reason",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/accepted-results.json",
           "assertion_id": "canonical_authority_unchanged",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/canonical_authority_unchanged",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 0,
+          "json_pointer": "/results",
           "named_assertion_function": null
         }
       ],
@@ -657,51 +672,51 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:f0d83d7f31c5ac4e81f9c808befc40d27c43fe7927cf52db7b6c40abc7f52cde",
+      "approved_semantic_hash": "sha256:761eddec46e3d83528000eca74ae78fbf1b63e358bf7650cd08777b9c7a2d8ad",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/preparation.json",
           "assertion_id": "three_records",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/three_records",
+          "expected_value": 3,
+          "json_pointer": "/actionable_issue_count",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
           "assertion_id": "three_packets",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/three_packets",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 3,
+          "json_pointer": "/packets",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/closure-contracts.json",
           "assertion_id": "three_contracts",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/three_contracts",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 3,
+          "json_pointer": "",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-overlay.json",
           "assertion_id": "three_projections",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/three_projections",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 3,
+          "json_pointer": "/nodes",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
           "assertion_id": "bidirectional_unique_links",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
+          "assertion_type": "artifact_query",
+          "comparator": "unique",
           "expected_value": true,
-          "json_pointer": "/assertions/bidirectional_unique_links",
+          "json_pointer": "/packets",
           "named_assertion_function": null
         }
       ],
@@ -736,24 +751,24 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:cd8e2446c45a52788102c3e2158cf485676eb000da44a184367d80d8ffb7a2d2",
+      "approved_semantic_hash": "sha256:93d7aa2afea6009d1099acf35234c29f46abc24dfab3c5b98383f6b1cf10db31",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
           "assertion_id": "original_preserved",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/original_preserved",
+          "expected_value": "OPEN",
+          "json_pointer": "/state",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
           "assertion_id": "counter_evidence_visible",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/counter_evidence_visible",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": null,
+          "json_pointer": "/actions/0/submitted_evidence",
           "named_assertion_function": null
         }
       ],
@@ -781,42 +796,42 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:700b8fa44b968307d73796fca47c395a5ff42066ded3c2893ee96547b2cfbc8c",
+      "approved_semantic_hash": "sha256:eb671326a3cb9c900454674cfdbad4039a84cb28a468529d1f4f88a105a472d2",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
           "assertion_id": "decision_effect",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/decision_effect",
+          "assertion_type": "artifact_query",
+          "comparator": "count_equals",
+          "expected_value": 4,
+          "json_pointer": "/named_risk_effects",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json",
           "assertion_id": "finding_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/finding_unchanged",
+          "expected_value": "OPEN",
+          "json_pointer": "/0/state",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json",
           "assertion_id": "evidence_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/evidence_unchanged",
+          "expected_value": "deterministically_established",
+          "json_pointer": "/0/evidence_class",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json",
           "assertion_id": "blocker_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/blocker_unchanged",
+          "json_pointer": "/0/blocker",
           "named_assertion_function": null
         }
       ],
@@ -846,42 +861,53 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:a68be29615692a52e0d3c44de6db55399102aca15296aa9e65111e61169dcde0",
+      "approved_semantic_hash": "sha256:01b185c6fecbffa056f86354e00a405584d4e4acca80eb37e45da6452ef2d183",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
           "assertion_id": "all_vectors_equal",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/all_vectors_equal",
+          "assertion_type": "artifact_query",
+          "comparator": "equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+            "selector": "/artifact_dependency_vector"
+          },
+          "json_pointer": "/artifact_dependency_vector",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
           "assertion_id": "html_vectors_equal",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/html_vectors_equal",
+          "assertion_type": "artifact_query",
+          "comparator": "text_absent",
+          "expected_value": [
+            "<script",
+            "<iframe",
+            "http://",
+            "https://"
+          ],
+          "json_pointer": "",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/github-summary-payload.json",
           "assertion_id": "github_vector_equal",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/github_vector_equal",
+          "assertion_type": "artifact_query",
+          "comparator": "equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+            "selector": "/artifact_dependency_vector"
+          },
+          "json_pointer": "/artifact_dependency_vector",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
           "assertion_id": "sections_complete",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/sections_complete",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/section_records",
           "named_assertion_function": null
         }
       ],
@@ -913,42 +939,45 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:eca3d6411ef4a32aa7358c4cffa490709a33832b376224b621f3994712160c8e",
+      "approved_semantic_hash": "sha256:53d54b9eb2961eea0e459af616352bf4267bd4f519e75c8888ecde6728a8b35e",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json",
           "assertion_id": "git_unchanged",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/git_unchanged",
+          "assertion_type": "artifact_query",
+          "comparator": "equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json",
+            "selector": "/after_status"
+          },
+          "json_pointer": "/before_status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json",
           "assertion_id": "tracked_bytes_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/tracked_bytes_unchanged",
+          "json_pointer": "/source_unchanged",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/remediation-manifest.json",
           "assertion_id": "upstreams_unchanged",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/upstreams_unchanged",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": null,
+          "json_pointer": "/release_commit",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/review-manifest.json",
           "assertion_id": "writes_local_only",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/writes_local_only",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals",
+          "expected_value": null,
+          "json_pointer": "/generation",
           "named_assertion_function": null
         }
       ],
@@ -980,51 +1009,53 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:f7d5afb9d9012303349f4aa7edc1e3a7fa423e35fb3bac600ec65a9194263de1",
+      "approved_semantic_hash": "sha256:4df870dbdd5cd244f5a7b2fbf3824a16cf9ec6c622d23b90314231352bfac3f9",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json",
           "assertion_id": "allowlisted_change",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/allowlisted_change",
+          "assertion_type": "artifact_query",
+          "comparator": "set_equals",
+          "expected_value": [
+            "route.txt"
+          ],
+          "json_pointer": "/allowlisted_files",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json",
           "assertion_id": "exact_rerun",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/exact_rerun",
+          "json_pointer": "/exact_rerun_passed",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json",
           "assertion_id": "no_merge",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/no_merge",
+          "expected_value": false,
+          "json_pointer": "/merge_performed",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json",
           "assertion_id": "cleanup",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/cleanup",
+          "json_pointer": "/cleanup_completed",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json",
           "assertion_id": "source_repo_unchanged",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
           "expected_value": true,
-          "json_pointer": "/assertions/source_repo_unchanged",
+          "json_pointer": "/source_repository_unchanged",
           "named_assertion_function": null
         }
       ],
@@ -1054,60 +1085,66 @@
       ]
     },
     {
-      "approved_semantic_hash": "sha256:115e38abbe021588062d95763c645fa7a9d27a14683ec881ee1fc51f5a2c1405",
+      "approved_semantic_hash": "sha256:60e7d5f8a892a59765fe53aab1f7b5fd6c30b77a9286c7193f53be6792ff8d12",
       "assertions": [
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-execution-package.json",
           "assertion_id": "package_rendered",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/package_rendered",
+          "expected_value": "codex-execution-package.v1",
+          "json_pointer": "/schema_version",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-submission.json",
           "assertion_id": "manual_submitted",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/manual_submitted",
+          "expected_value": "accepted",
+          "json_pointer": "/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-submission.json",
           "assertion_id": "codex_submitted",
-          "assertion_type": "artifact_pointer",
+          "assertion_type": "artifact_query",
           "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/codex_submitted",
+          "expected_value": "idempotent_replay",
+          "json_pointer": "/status",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-submission.json",
           "assertion_id": "same_native_validator",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/same_native_validator",
+          "assertion_type": "artifact_query",
+          "comparator": "equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-submission.json",
+            "selector": "/result_ids/0"
+          },
+          "json_pointer": "/result_id",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/accepted-results.json",
           "assertion_id": "semantic_identity_equal",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/semantic_identity_equal",
+          "assertion_type": "artifact_query",
+          "comparator": "count_at_least",
+          "expected_value": 1,
+          "json_pointer": "/results",
           "named_assertion_function": null
         },
         {
-          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY.json",
+          "artifact_path": ".shiproom/local/session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-receipt.json",
           "assertion_id": "transport_distinct",
-          "assertion_type": "artifact_pointer",
-          "comparator": "equals",
-          "expected_value": true,
-          "json_pointer": "/assertions/transport_distinct",
+          "assertion_type": "artifact_query",
+          "comparator": "not_equals_reference",
+          "expected_value": {
+            "artifact": "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-receipt.json",
+            "selector": "/execution_receipt"
+          },
+          "json_pointer": "/execution_receipt",
           "named_assertion_function": null
         }
       ],

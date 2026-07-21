@@ -922,7 +922,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -938,7 +939,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -954,7 +956,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -970,7 +973,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -986,7 +990,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1003,7 +1008,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1020,7 +1026,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1037,7 +1044,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1053,8 +1061,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1070,7 +1079,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1087,7 +1097,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1104,6 +1115,7 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json"
       ],
       "production_boundaries": [
@@ -1121,7 +1133,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1137,8 +1150,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/near-effects.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1155,7 +1169,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1172,7 +1187,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1188,8 +1204,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1205,7 +1222,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1221,7 +1239,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1237,7 +1256,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1253,8 +1273,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1270,8 +1291,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1287,8 +1309,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1304,8 +1327,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1321,8 +1345,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/near-measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1338,8 +1363,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1355,8 +1381,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1373,7 +1400,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1389,8 +1417,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1406,8 +1435,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1424,7 +1454,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.contestability.append_action",
@@ -1442,8 +1473,9 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1459,7 +1491,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1476,7 +1509,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1493,7 +1527,8 @@
     {
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1509,7 +1544,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1525,7 +1561,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1541,7 +1578,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",
@@ -1557,7 +1595,8 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json"
       ],
       "production_boundaries": [
         "shiproom.management_artifacts.compiler.compile",

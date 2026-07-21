@@ -71,3 +71,19 @@ def test_management_loader_rejects_html_metadata_from_another_vector(tmp_path, m
     try: domain.load(context)
     except ValueError as error: assert str(error)=="management_html_dependency_vector_mismatch"
     else: raise AssertionError("mixed HTML dependency vector accepted")
+
+
+def test_management_loader_rederives_canonical_section_projection(tmp_path, monkeypatch):
+    import hashlib
+    import shiproom.management_artifacts.compiler as domain
+    context=SimpleNamespace(repository_root=tmp_path,release={"release_id":"rel_projection","findings":[]},authority_binding={"repository_commit":"a"*40})
+    vector={"schema_version":"artifact-dependency-vector.v1","release_id":"rel_projection","release_commit":"a"*40,
+            **{name:{"state":"not_used","generation":None,"semantic_hash":None} for name in ("product_intent","graph","assessment","measurement_ai","remediation","review_plan","contestability")},"_loaded":{"assessment":None,"measurement":None,"remediation":None,"review":None,"contest":None}}
+    monkeypatch.setattr(domain,"dependency_vector",lambda ctx:dict(vector))
+    manifest=domain.compile(context);directory=domain.root(context)/"generations"/manifest["generation"]
+    artifact=directory/"executive-release-brief.json";value=json.loads(artifact.read_text());value["section_records"][0]["state"]="fabricated";raw=domain._json(value);artifact.write_bytes(raw)
+    manifest_path=directory/"manifest.json";stored=json.loads(manifest_path.read_text());stored["artifact_hashes"][artifact.name]="sha256:"+hashlib.sha256(raw).hexdigest();manifest_path.write_bytes(domain._json(stored))
+    pointer=domain.root(context)/"current-management-generation.json";pointer.write_bytes(domain._json({"schema_version":"current-management-generation.v1","generation":stored["generation"],"manifest_hash":domain._hash(domain._json(stored)),"semantic_bundle_hash":stored["semantic_bundle_hash"]}))
+    try:domain.load(context)
+    except ValueError as error:assert str(error)=="management_canonical_projection_tampered"
+    else:raise AssertionError("forged canonical section accepted")

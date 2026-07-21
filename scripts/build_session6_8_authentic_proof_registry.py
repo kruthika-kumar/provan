@@ -113,31 +113,31 @@ VALID: dict[str, dict] = {
     "S8_CONTEST_AUTHORITY_PRESERVATION": q(CONTEST,"source-finding.json","/evidence_class","equals","deterministically_established"),
     "S8_CONTEST_APPEND_SEQUENCE": q(RISK,"contestation-ledger.json","/actions","count_equals",4),
     "S8_CONTEST_PREVIOUS_HASH": q(RISK,"contestation-ledger.json","/actions/1/previous_action_hash","not_equals",None),
-    "S8_CONTEST_IDEMPOTENT_REPLAY": q(CONTEST,"accepted-action.json","/status","equals","accepted"),
-    "S8_CONTEST_CONFLICTING_DUPLICATE": q(CONTEST,"contestation-ledger.json","/actions","count_equals",1),
+    "S8_CONTEST_IDEMPOTENT_REPLAY": q(CONTEST,"replay-action.json","/status","equals","idempotent_replay"),
+    "S8_CONTEST_CONFLICTING_DUPLICATE": q(CONTEST,"contestation-ledger.json","/actions","unique",True),
     "S8_CONTEST_OWNER_AUTHORITY": q(RISK,"contestation-ledger.json","/actions/0/owner_authority_ref","equals","owner_workflow"),
     "S8_NAMED_RISK_FACT_NON_MUTATION": q(RISK,"source-findings.json","/0/state","equals","OPEN"),
     "S8_NAMED_RISK_DECISION_EFFECT": q(RISK,"contestation-effects.json","/named_risk_effects","count_equals",4),
     "S8_OWNER_DECISION_BUDGET": q(RISK,"contestation-effects.json","/immediate_owner_decisions","count_equals",2),
     "S8_OWNER_DECISION_PRIORITY": q(RISK,"contestation-effects.json","/priority_reason_codes","ordered_equals",["verified_blocker_requires_owner_action","canonical_material_condition","high_risk_unresolved_decision","high_risk_unresolved_decision"]),
     "S8_OWNER_DECISION_OVERFLOW": q(RISK,"contestation-effects.json","/overflow_owner_decisions","count_equals",2),
-    "S8_FUTURE_REMEDIATION_NO_CYCLE": q(CONTEST,"contestation-effects.json","/remediation_requests","count_equals",1),
+    "S8_FUTURE_REMEDIATION_NO_CYCLE": q(CONTEST,"remediation-pointer-state.json","","equals",{"before":None,"after":None}),
 
     "S8_MANAGEMENT_DEPENDENCY_DISCOVERY": q(MANAGEMENT,"generation-manifest.json","/artifact_dependency_vector","count_at_least",8),
     "S8_MANAGEMENT_DEPENDENCY_STATES": q(MANAGEMENT,"generation-manifest.json","/artifact_dependency_vector/schema_version","equals","artifact-dependency-vector.v1"),
     "S8_MANAGEMENT_DEPENDENCY_FRESHNESS": q(MANAGEMENT,"generation-manifest.json","/artifact_dependency_vector/measurement_ai/state","equals","required_present"),
-    "S8_MANAGEMENT_MIXED_VECTOR_REJECTION": q(MANAGEMENT,"artifacts/release-packet-index","/artifact_dependency_vector","equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/artifacts/executive-release-brief","selector":"/artifact_dependency_vector"}),
-    "S8_EXECUTIVE_SECTION_COMPLETENESS": q(MANAGEMENT,"artifacts/executive-release-brief","/sections","count_at_least",1),
-    "S8_PRODUCT_MATRIX_COMPLETENESS": q(MANAGEMENT,"artifacts/product-release-review","/section_records/16/records","count_at_least",1),
-    "S8_ENGINEERING_SECTION_COMPLETENESS": q(MANAGEMENT,"artifacts/engineering-release-assessment","/sections","count_at_least",1),
-    "S8_MEASUREMENT_AI_PASSTHROUGH": q(MANAGEMENT,"artifacts/measurement-ai-readiness","/section_records/4/records","field_set_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/measurement-ai/measurement-ai-readiness.json","selector":"/checks","field":"check_id"}),
-    "S8_REMEDIATION_OVERVIEW_COMPLETENESS": q(MANAGEMENT,"artifacts/remediation-overview","/section_records/0/records","count_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/remediation/remediation-plan.json","selector":"/packets"}),
-    "S8_CLOSURE_CONTRACT_INDEXING": q(MANAGEMENT,"artifacts/remediation-overview","/section_records/2/records","count_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/remediation/remediation-plan.json","selector":"/packets"}),
+    "S8_MANAGEMENT_MIXED_VECTOR_REJECTION": q(MANAGEMENT,"artifacts/release-packet-index.json","/artifact_dependency_vector","equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/artifacts/executive-release-brief.json","selector":"/artifact_dependency_vector"}),
+    "S8_EXECUTIVE_SECTION_COMPLETENESS": q(MANAGEMENT,"artifacts/executive-release-brief.json","/sections","count_at_least",1),
+    "S8_PRODUCT_MATRIX_COMPLETENESS": q(MANAGEMENT,"artifacts/product-release-review.json","/section_records/16/records","flattened_field_set_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/product-intent/acceptance-criteria.json","selector":"/criteria","actual_field":"criterion_ids","reference_field":"criterion_id"}),
+    "S8_ENGINEERING_SECTION_COMPLETENESS": q(MANAGEMENT,"artifacts/engineering-release-assessment.json","/sections","count_at_least",1),
+    "S8_MEASUREMENT_AI_PASSTHROUGH": q(MANAGEMENT,"artifacts/measurement-ai-readiness.json","/section_records/4/records","equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/measurement-ai/measurement-ai-readiness.json","selector":"/checks"}),
+    "S8_REMEDIATION_OVERVIEW_COMPLETENESS": q(MANAGEMENT,"artifacts/remediation-overview.json","/section_records/0/records","count_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/remediation/remediation-plan.json","selector":"/packets"}),
+    "S8_CLOSURE_CONTRACT_INDEXING": q(MANAGEMENT,"artifacts/remediation-overview.json","/section_records/2/records","count_equals_reference",{"artifact":f"session6-8-workflow-evidence/{MANAGEMENT}/sources/remediation/remediation-plan.json","selector":"/packets"}),
     "S8_CONTESTABILITY_INCLUSION": q(MANAGEMENT,"sources/contestability/contestation-ledger.json","/actions","count_at_least",1),
-    "S8_RECOMMENDATION_POLICY": q(MANAGEMENT,"artifacts/release-recommendation-view","/computed_recommendation/status","not_equals",None),
-    "S8_ACCEPTED_CONDITION_EFFECT": q(MANAGEMENT,"artifacts/executive-release-brief","/section_records/5/records","count_at_least",1),
-    "S8_NAMED_RISK_RECOMMENDATION_EFFECT": q(MANAGEMENT,"artifacts/release-recommendation-view","/computed_recommendation/reason_codes","count_at_least",1),
-    "S8_INSUFFICIENT_EVIDENCE_STATE": q(MANAGEMENT,"artifacts/executive-release-brief","/section_records/3/records","count_at_least",1),
+    "S8_RECOMMENDATION_POLICY": q(MANAGEMENT,"artifacts/release-recommendation-view.json","/computed_recommendation/status","not_equals",None),
+    "S8_ACCEPTED_CONDITION_EFFECT": q(MANAGEMENT,"artifacts/executive-release-brief.json","/section_records/5/records","count_at_least",1),
+    "S8_NAMED_RISK_RECOMMENDATION_EFFECT": q(MANAGEMENT,"artifacts/release-recommendation-view.json","/computed_recommendation/reason_codes","count_at_least",1),
+    "S8_INSUFFICIENT_EVIDENCE_STATE": q(MANAGEMENT,"artifacts/executive-release-brief.json","/section_records/3/records","count_at_least",1),
     "S8_DETERMINISTIC_JSON": q(MANAGEMENT,"generation-manifest.json","/semantic_bundle_hash","not_equals",None),
     "S8_SAFE_HTML": q(MANAGEMENT,"rendered/executive-release-brief.html","","text_absent",["<script","<iframe","http://","https://"]),
     "S8_SAFE_MARKDOWN": q(MANAGEMENT,"rendered/github-summary.md","","text_contains","# Shiproom release summary"),
@@ -173,8 +173,12 @@ def _near(requirement_id: str) -> dict:
         if "REVISION" in requirement_id or "RESULT" in requirement_id or "SUBMISSION" in requirement_id:
             return q(REVISION,"first-submission.json","/status","equals","revision_required",outcome="bounded")
         return q(BROWSER,"browser-absence-specialist.json","/applicability_authority","equals","not_inspected",outcome="bounded")
+    if requirement_id == "S8_OWNER_DECISION_BUDGET":
+        return q(RISK,"near-effects.json","/immediate_owner_decisions","count_equals",2,outcome="bounded")
     if requirement_id.startswith("S8_CONTEST_") or requirement_id.startswith("S8_OWNER_") or requirement_id.startswith("S8_NAMED_") or requirement_id == "S8_FUTURE_REMEDIATION_NO_CYCLE":
-        return q(CONTEST,"contestation-ledger.json","/actions","count_equals",1,outcome="bounded")
+        return q(CONTEST,"contestation-ledger.json","/actions","count_equals",2,outcome="bounded")
+    if requirement_id == "S8_MEASUREMENT_AI_PASSTHROUGH":
+        return q(MANAGEMENT,"near-measurement-ai-readiness.json","/section_records/4/state","equals","not_used_or_unavailable",outcome="bounded")
     if requirement_id.startswith("S8_"):
         return q(MANAGEMENT,"generation-manifest.json","/artifact_dependency_vector/assessment/state","equals","not_used",outcome="bounded")
     return VALID[requirement_id] | {"expected_boundary_outcome":"bounded"}
@@ -192,9 +196,13 @@ def _adversarial(requirement_id: str) -> dict:
             return q(REVISION_FAIL,"revision-outcomes.json","/failed_not_adaptable","equals",True,outcome="rejected")
         return q(PROSE,"submission-outcome.json","/reason","equals","AUTHORITY_UPGRADE",outcome="rejected")
     if requirement_id.startswith("S8_CONTEST_") or requirement_id.startswith("S8_OWNER_") or requirement_id.startswith("S8_NAMED_") or requirement_id == "S8_FUTURE_REMEDIATION_NO_CYCLE":
-        return q(CONTEST,"contestation-ledger.json","/actions","count_equals",1,outcome="rejected")
+        return q(RISK,"duplicate-outcome.json","/error","equals","conflicting_duplicate_action",outcome="rejected")
+    if requirement_id == "S8_MANAGEMENT_MIXED_VECTOR_REJECTION":
+        return q(MANAGEMENT,"mixed-vector-outcome.json","/error","equals","artifact_dependency_vector_mismatch",outcome="rejected")
+    if requirement_id == "S8_UPSTREAM_STALENESS":
+        return q(MANAGEMENT,"stale-outcome.json","/error","equals","stale_dependency",outcome="rejected")
     if requirement_id.startswith("S8_"):
-        return q(MANAGEMENT,"generation-manifest.json","/artifact_dependency_vector/measurement_ai/state","equals","required_present",outcome="rejected")
+        return q(MANAGEMENT,"tamper-outcome.json","/error","equals","management_canonical_projection_tampered",outcome="rejected")
     return VALID[requirement_id] | {"expected_boundary_outcome":"rejected"}
 
 

@@ -1341,7 +1341,8 @@
         "proof_s8_contest_target_registry_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1365,7 +1366,8 @@
         "proof_s8_contest_source_generation_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1389,7 +1391,8 @@
         "proof_s8_contest_target_existence_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1413,7 +1416,8 @@
         "proof_s8_contest_evidence_existence_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1437,7 +1441,8 @@
         "proof_s8_contest_evidence_relevance_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1462,7 +1467,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1487,7 +1493,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1512,7 +1519,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1536,8 +1544,9 @@
         "proof_s8_contest_idempotent_replay_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/accepted-action.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1561,7 +1570,8 @@
         "proof_s8_contest_conflicting_duplicate_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1586,7 +1596,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1611,6 +1622,7 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json"
       ],
       "current_state": "pending_authentic_execution",
@@ -1636,7 +1648,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1660,8 +1673,9 @@
         "proof_s8_owner_decision_budget_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/near-effects.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1686,7 +1700,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1711,7 +1726,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json"
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1735,8 +1751,9 @@
         "proof_s8_future_remediation_no_cycle_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-effects.json",
-        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1760,7 +1777,8 @@
         "proof_s8_management_dependency_discovery_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1784,7 +1802,8 @@
         "proof_s8_management_dependency_states_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1808,7 +1827,8 @@
         "proof_s8_management_dependency_freshness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1832,8 +1852,9 @@
         "proof_s8_management_mixed_vector_rejection_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1857,8 +1878,9 @@
         "proof_s8_executive_section_completeness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1882,8 +1904,9 @@
         "proof_s8_product_matrix_completeness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1907,8 +1930,9 @@
         "proof_s8_engineering_section_completeness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1932,8 +1956,9 @@
         "proof_s8_measurement_ai_passthrough_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/near-measurement-ai-readiness.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1957,8 +1982,9 @@
         "proof_s8_remediation_overview_completeness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -1982,8 +2008,9 @@
         "proof_s8_closure_contract_indexing_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2008,7 +2035,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2032,8 +2060,9 @@
         "proof_s8_recommendation_policy_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2057,8 +2086,9 @@
         "proof_s8_accepted_condition_effect_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2083,7 +2113,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
+        "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2109,8 +2140,9 @@
         "proof_s8_insufficient_evidence_state_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2134,7 +2166,8 @@
         "proof_s8_deterministic_json_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2159,7 +2192,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2184,7 +2218,8 @@
       ],
       "canonical_artifacts": [
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2208,7 +2243,8 @@
         "proof_s8_artifact_hash_integrity_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2232,7 +2268,8 @@
         "proof_s8_artifact_file_set_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2256,7 +2293,8 @@
         "proof_s8_deterministic_rerender_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2280,7 +2318,8 @@
         "proof_s8_upstream_staleness_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [

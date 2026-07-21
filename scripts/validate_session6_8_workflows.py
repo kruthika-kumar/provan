@@ -2,43 +2,19 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
+
+from shiproom.session6_8_evidence_query import evaluate
+from shiproom.session6_8_semantics import validate_workflow_contracts
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _sha(raw: bytes) -> str:
-    return "sha256:" + hashlib.sha256(raw).hexdigest()
-
-
-def _pointer(value: object, pointer: str) -> object:
-    current = value
-    for raw in pointer.split("/")[1:]:
-        token = raw.replace("~1", "/").replace("~0", "~")
-        if isinstance(current, list):
-            current = current[int(token)]
-        elif isinstance(current, dict) and token in current:
-            current = current[token]
-        else:
-            raise ValueError("workflow_assertion_pointer_unresolved")
-    return current
-
-
-def _compare(actual: object, comparator: str, expected: object) -> bool:
-    if comparator == "equals":
-        return actual == expected
-    if comparator == "minimum":
-        return isinstance(actual, (int, float)) and actual >= expected
-    if comparator == "contains":
-        return expected in actual
-    raise ValueError("workflow_assertion_comparator_unregistered")
-
-
 def validate(receipt_path: Path, *, root: Path = ROOT) -> dict:
     contracts_value = json.loads((root / "docs/validation/session6-8-workflow-contracts.json").read_text(encoding="utf-8"))
+    validate_workflow_contracts(contracts_value)
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     cases = receipt.get("cases")
     contracts = contracts_value.get("cases")
@@ -54,19 +30,25 @@ def validate(receipt_path: Path, *, root: Path = ROOT) -> dict:
         if not set(contract["required_production_functions"]).issubset(observed):
             raise ValueError("workflow_required_invocation_missing")
         for assertion in contract["assertions"]:
-            if assertion["assertion_type"] != "artifact_pointer" or assertion["named_assertion_function"] is not None:
+            if assertion["assertion_type"] != "artifact_query" or assertion["named_assertion_function"] is not None:
                 raise ValueError("workflow_assertion_contract_invalid")
-            artifact = root / assertion["artifact_path"]
+            artifact = (root / assertion["artifact_path"]).resolve()
             if not artifact.is_file():
                 raise ValueError("workflow_assertion_artifact_missing")
-            value = json.loads(artifact.read_text(encoding="utf-8"))
-            actual = _pointer(value, assertion["json_pointer"])
-            if not _compare(actual, assertion["comparator"], assertion["expected_value"]):
+            relative=artifact.relative_to((root/".shiproom/local").resolve()).as_posix()
+            query={"artifact":relative,"selector":assertion["json_pointer"],"operator":assertion["comparator"],"expected":assertion["expected_value"]}
+            if not evaluate(root/".shiproom/local",query).passed:
                 raise ValueError("workflow_assertion_replay_failed")
-            expected_hash = case.get("generated_artifact_hashes", {}).get("workflow_evidence")
-            if expected_hash != _sha(artifact.read_bytes()):
+            declared=[digest for name,digest in case.get("canonical_artifact_hashes",{}).items() if name.replace("\\","/").endswith("/"+relative)]
+            import hashlib
+            if len(declared)!=1 or declared[0] != "sha256:"+hashlib.sha256(artifact.read_bytes()).hexdigest():
                 raise ValueError("workflow_assertion_artifact_hash_mismatch")
             assertion_count += 1
+        canonical_names=list(case.get("canonical_artifact_hashes",{}))
+        for required in contract["required_artifacts"]:
+            stem=Path(required).stem.rstrip("s")
+            if not any(stem in Path(name).stem.rstrip("s") or stem in name for name in canonical_names):
+                raise ValueError("workflow_required_artifact_missing")
         if not case.get("generated_artifact_hashes") or any(value in (None, "") for value in case["generated_artifact_hashes"].values()):
             raise ValueError("workflow_artifact_binding_missing")
     return {"schema_version": "session6-8-workflow-validation.v1", "case_count": 18,
