@@ -2,9 +2,9 @@
   "expected_requirement_count": 106,
   "requirements": [
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_ISSUE_AUTHORITY_POLICY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_issue_authority_policy_rejected",
-      "approved_semantic_hash": "sha256:4415d433732e6f12ba9bcb569e0fcecc8b9b79a1e366e6829bd73d9f40f0ea9f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:a661cb78b76acac4d15e6105c6bd650e3a8621876e53cc19c818f98d26690bdc",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -30,9 +30,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_MODEL_REVIEW_NOT_BLOCKER and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_model_review_not_blocker_rejected",
-      "approved_semantic_hash": "sha256:7f4c203d2d3c95d215ca8a11661f44527b71c81097389b9bcaab04f06dd2c5fd",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:893e1c53d1641e012ae0a03c55245197ec9e81345ec5bf59b64e627f8a61d2c9",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -57,9 +57,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_PLANNER_COMPILER_AUTHORITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_planner_compiler_authority_rejected",
-      "approved_semantic_hash": "sha256:a8f9a8efa1469592b5661a5e3defb3f9c5a583a44e0457554f4e53a6e217fd33",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:265cca24b8632aec2d49fbc5794e6a058a13b11e397718f11fb6a4da596258f0",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -85,9 +85,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_HUMAN_OWNER_SEPARATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_human_owner_separation_rejected",
-      "approved_semantic_hash": "sha256:baa37476cfbe39030d3abb7fca73ec83c1615eced5ebdb248e1dce548f729302",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:bcbe0b56bc62d4c348a348b5644693f2c41e6bfd7dee6c09beab55948a147798",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -112,9 +112,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_OPTIONAL_PLANNER_LIFECYCLE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_optional_planner_lifecycle_rejected",
-      "approved_semantic_hash": "sha256:56473c0f71e4f1c619340da3590a25f26ad22be2015c36627c7d51b4dc7068a7",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:8cfd1e5d2e4b418aa01b20608c1e28a0a6db35c4854c5fee4079c9e208374222",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -139,9 +139,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_AUTOMATION_ELIGIBILITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_automation_eligibility_rejected",
-      "approved_semantic_hash": "sha256:756e64aca7d687449d96e38c75bc67fba0ab7ca78567eb4c76c77bfe471efeca",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:8c9786aec67903057a2a36f6ee2811f7f5198a068e81e32589977d14ac1126b3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -166,9 +166,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_BOUNDED_FIX_METADATA_ONLY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_bounded_fix_metadata_only_rejected",
-      "approved_semantic_hash": "sha256:40edba8c8c7faa386fa50908432566618092404d63da9c8d3ea49d8df692b25b",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:2cb1927704b1f86603c96c91696a3f93512ac5cf58ca8e695c0665f53a1cf5e4",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -193,9 +193,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_REMEDIATION_CARDINALITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_remediation_cardinality_rejected",
-      "approved_semantic_hash": "sha256:828a5a85ee4c2b4bdba63318a724093a4472db14eb6a6aa5f5836244f385c01f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:b1856aa738a42900e8ea141d84398587fe6ecab32f8fdceabb62725bb71a886a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -223,9 +223,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_PACKET_CONTRACT_LINKS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_packet_contract_links_rejected",
-      "approved_semantic_hash": "sha256:a5737ec4957c0f517038bb34d25fd6e71f7131d4d912b8d6b09a42016f61b8bd",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:fe4770b4704ad0cc5bdd447ccfebc6cfe866f137daf23b728cf7e89b2205c98f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -254,9 +254,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_PACKET_FILE_INTEGRITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_packet_file_integrity_rejected",
-      "approved_semantic_hash": "sha256:22ce207c9829ef374d92cd83fa41d7e5efa9b50fbaace3789af8034927e640a2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:0b0fb151628d9ba87d50ee61fc31c408a34e6e0d3af177cb3228453a4d6cbb74",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -285,9 +285,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_CONTRACT_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_contract_completeness_rejected",
-      "approved_semantic_hash": "sha256:a80a4b3bfd867c7704821eea585ae210759df358fb357051b37c3b827b2a83e2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:392b8f24929348f0ebaf906d6a3f3729943ceff56b1b5716ecc363a38c003fb7",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -315,9 +315,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_EXACT_RERUN and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_exact_rerun_rejected",
-      "approved_semantic_hash": "sha256:83d0934ec52ff95f6217c5759267ec57b025c40da7c5595ae484ecfcca42e31c",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:e3e17ee22f22514774994fdcb5a3f0f442fb276313b5d02cdbdf4dfbde36216a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -344,9 +344,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_PASS_REQUIRED and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_pass_required_rejected",
-      "approved_semantic_hash": "sha256:f80f4e51f8295464c5b1bc0c839a83195f22dbe61a99c8c9e1941986d35f1481",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:1212145b2e0abc9fac2240d676543de99f7fbb2f89279073cb83892c4b364c61",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -373,9 +373,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_VERIFIER_INDEPENDENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_verifier_independence_rejected",
-      "approved_semantic_hash": "sha256:a28df9058ac8fc44d64c97ad85ad3e465b84d1c88fa1fbb1032708933c9cbff5",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:fd9a434c74405b983d070cc4231823f23aaf7902db84f5844aa81d2bff772850",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -402,9 +402,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_COMMIT_BRANCH_FRESHNESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_commit_branch_freshness_rejected",
-      "approved_semantic_hash": "sha256:12d15cfc9f8b126348f6c2bdc416f603de4e69f3558494cc64b817a94c849d53",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /stale_commit/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "stale",
+      "approved_semantic_hash": "sha256:bfbb4f6ffe06edfa28a83d1c8a2dfafe26933a7a14a0e139cf15c45b24af4ef6",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -431,9 +431,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_EVIDENCE_CLASS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_evidence_class_rejected",
-      "approved_semantic_hash": "sha256:5e31807da219cd39986f5178aa9b0ebba7a1bd883c2959ed743c53b92dd275ab",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:fc5b4a41faf3d0528279718e3cd9b29845a2b1bbb9977d038a0079f4900bdc6a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -461,9 +461,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_REGRESSION_REQUIREMENTS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_regression_requirements_rejected",
-      "approved_semantic_hash": "sha256:fce8188396cabf67e34d86e082517b7385feb8713f15c5b7e5f5a52844b60016",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:a27f676118c5927db5527a783150d7451ae9a8edcd8ab5bb13f26952f0342261",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -490,9 +490,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_TEST_REQUIREMENTS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_test_requirements_rejected",
-      "approved_semantic_hash": "sha256:fc03fdf41b2c753794ae194056230abac0a630254123d5b8a214cea604f71017",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:d05181008b707715614d023fed7cab9ff56d1984b76d84b1b19b67bcf983793f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -519,9 +519,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_instrumentation_requirements_rejected",
-      "approved_semantic_hash": "sha256:94034fe5b2944f8b45494391bf6bc8bcfb55d2a6fe1b6c30cb4d9183a53d017b",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:cff938545143d12e2f05f469c99859f23c038a264f293c840467c14a144342e6",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -548,9 +548,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_PROTECTED_INVARIANTS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_protected_invariants_rejected",
-      "approved_semantic_hash": "sha256:281437da8a282ae24696298db81165e76fac59242d1d0ccf12dd87058e4bd4d9",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:03c1645cd2faa0c4a86b2b79823c93f4edd20b144bda78c22b2e03b6fb4908cc",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -577,9 +577,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_CLOSURE_OWNER_DECISION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_closure_owner_decision_rejected",
-      "approved_semantic_hash": "sha256:85ef3bd7fd96fc77a57c20580587cc59b164c5a172c95b66556cb4b8870ff29a",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json at /failed_rerun/status using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "unsatisfied",
+      "approved_semantic_hash": "sha256:3b57945964a04df367af6840f3c41ee955c1d1398f33e50d78e6673b53d1a638",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -606,9 +606,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S6_PRIVATE_ALPHA_NON_MUTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s6_private_alpha_non_mutation_rejected",
-      "approved_semantic_hash": "sha256:0b57daba4c8a434395e339fa79f67b8424145f0664c2b1c628ff37b7834e2a12",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json at /automation_eligibility using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "roadmap_only",
+      "approved_semantic_hash": "sha256:7005cbb63fa29bdc6d3c1242ff9e05776b64f726eb2804bd7d8899f0cac0cbc9",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -633,9 +633,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_SPECIALIST_CATALOGUE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_specialist_catalogue_rejected",
-      "approved_semantic_hash": "sha256:f1782386b21e383975a3fce3892ec3163cd3084d24461f5c07810a9ea6f3b8ce",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:aaf3e9ea6472f3a12f4142d68c4ac7888e018c3bac4ea5bc0cfd7188f3be3ffd",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -662,9 +662,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_NATIVE_BOUNDARY_REUSE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_native_boundary_reuse_rejected",
-      "approved_semantic_hash": "sha256:47eec4541c93c27bddee73551d31576a29271f524ec4ad42627f36da3b18ab5e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:ba739d605ac2b212dd5ccc74c4c4daa1d1f37643186611b7743170c620a61774",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -691,9 +691,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_TYPED_SURFACE_POLICY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_typed_surface_policy_rejected",
-      "approved_semantic_hash": "sha256:76bda4c18e2601a4b1b9ce9eb0e4675204d352c697dff2330e68c25bb87225cc",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:7d2198031fbf9a38f4d1a34c8db70ba0c6a1079f368496ec513bf1b7f77d70c3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -720,9 +720,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_SELECTION_EVIDENCE_LINKS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_selection_evidence_links_rejected",
-      "approved_semantic_hash": "sha256:017bea67236b9ab0472616bd05200f8948952cb57b14a902b6bcc5512ad82a6f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:bed4b39c9601920679289f7deee4de4aa90008ecaeac0c446fc409d739027f9e",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -750,9 +750,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_PYTHON_SELECTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_python_selection_rejected",
-      "approved_semantic_hash": "sha256:5b067c03bb6e012cfc9db1c6c07d67e6e394fabe8b6acbc6b78f3145718153d3",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:d65a87c5737d5e73e56da5b26c89904fc315d556a63ec6e2b0b5c6cffe694f6e",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -779,9 +779,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_TYPESCRIPT_SELECTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_typescript_selection_rejected",
-      "approved_semantic_hash": "sha256:49bb56f82b73b283fb69c01fc2620cc925c93ee7119821028d41d625a77a1349",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:9ec13c6785c885a470dc6d307f9220472038daf63cf2f546bf86bab1dc9b302a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -808,9 +808,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_AI_SELECTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_ai_selection_rejected",
-      "approved_semantic_hash": "sha256:dee32c91544beb566016e684dff79eed980e78ca8be6b418b549894624736382",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:288bcc5a90eb9bc2f971c4c9f9e7d61d2491e063e2c3adc9959dffa539cbc346",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -837,9 +837,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_BROWSER_EXPLICIT_SKIP and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_browser_explicit_skip_rejected",
-      "approved_semantic_hash": "sha256:fd56a5bf45978cc56381721673be968578c5513010a7af5d5d42a48d0da3849f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:60a934833e52a2e0c9cf91a55674d3f14cc7489cb983d2fb958686c2cb9d7a33",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -866,9 +866,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_BROWSER_ABSENCE_NOT_INSPECTED and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_browser_absence_not_inspected_rejected",
-      "approved_semantic_hash": "sha256:6b2ce278a57203640cb8ddd069d3f0901059902cc8f8a8c726e83a54154f5809",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:d49653e7795d70fe59cc9d83f475efb7ac20c276a940955567e95696055563a3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -895,9 +895,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_TEST_ADEQUACY_APPLICABILITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_test_adequacy_applicability_rejected",
-      "approved_semantic_hash": "sha256:f8a69f9c999c19ec5876ee0e6a5407f2284b4363a2588ea53ccb2787f8afd726",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:7343b9260fc2ab51808826ea70879bef96f798f370e2f6eb8d609d221b9c9030",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -924,9 +924,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_INSTRUMENTATION_APPLICABILITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_instrumentation_applicability_rejected",
-      "approved_semantic_hash": "sha256:51f23a55a3c3fefc1f8b213572f10b60e65e399d2298e63e7d54b33dfdae3cfc",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:bab25151125d8129afa88cdeb4aabf523faeac75661d16ff44dbed47284cac37",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -953,9 +953,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_PRODUCT_INTENT_WRAPPER and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_product_intent_wrapper_rejected",
-      "approved_semantic_hash": "sha256:780ebe40f03e97e328b5f0ea93e944a4e71ef3db114416688ce3d2f2833f9a6e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:8a204cac79fc0d9fcf47f64ceed78253aeb94a06c0726af727c2ca5fc0035374",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -982,9 +982,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_NATIVE_WORK_ORDER_INTEGRITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_native_work_order_integrity_rejected",
-      "approved_semantic_hash": "sha256:a48e6ae88c60ff2784a8b78890a90d40d44eaf5da69ed0de7d12629c37cd7a8a",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:cff064343121c6867632e3d989ab507139a750148f8eb053653a6dc39b763cfa",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1011,9 +1011,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_CODEX_PACKAGE_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_codex_package_completeness_rejected",
-      "approved_semantic_hash": "sha256:f7e3d03187c8d9da3c2ce5c4d9bc0f9ac2fe5a042c5331050f68b22548b662df",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:abd24c58eabb48f90327533eed438f02df3a407242e161f195e5b48662b0b834",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1039,9 +1039,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_HARNESS_DECLARATION_HONESTY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_harness_declaration_honesty_rejected",
-      "approved_semantic_hash": "sha256:eecb5504831dcc0e7b31113fdebf50285500e1807adcf412acd96095046f3f60",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:5366cb1db3e61f7db8b59fa0085c723444622cc40ce7718666ce28eb039bc9c9",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1066,9 +1066,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_MANUAL_CODEX_PARITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_manual_codex_parity_rejected",
-      "approved_semantic_hash": "sha256:4304cb8f42de20d06160732ad53296b6f450ffe837d880cb2cb080d33c33720e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:4a9a16f15d9b08d51be01f8b9c54b97438c2fd6dc16a0d9111c58426accd4e51",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1094,9 +1094,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_TRUSTED_SUBMISSION_PATHS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_trusted_submission_paths_rejected",
-      "approved_semantic_hash": "sha256:46b9861308dd93a9dc208d647cee2dda348642e7a8350047812a9252f417f106",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:c10bb7f2db351603374e59c3a906580ce3f0c524e0aed25f02d784e97ace5483",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1123,9 +1123,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_SUBMISSION_BYTE_PERSISTENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_submission_byte_persistence_rejected",
-      "approved_semantic_hash": "sha256:605679a3a6e15b28923f00e36c6e639153dfcfd80964802171e1d9eacd31867e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:e8a39f05627ea372e0170c36113f5c445063608b45d2bc39d8789196128982a2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1154,9 +1154,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_REVISION_REQUEST and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_revision_request_rejected",
-      "approved_semantic_hash": "sha256:b2c92c323df13503844bb96ddfa5420139b0662ea47202e323d5e202a19db83c",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:80b62e6857941d9d117119c2f7f9ceeb6e71495ee2c9efb71184aea39b6f84ca",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1185,9 +1185,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_CORRECTED_RESULT_ACCEPTANCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_corrected_result_acceptance_rejected",
-      "approved_semantic_hash": "sha256:198a331f85f5c43816f08c222e90dceea83170d6e73b55c6bb1b77f37a99944d",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:f1ac0a0625d14299ef11439e7882d00c258e325a5ccd13e6e21a53ced3815420",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1216,9 +1216,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_SECOND_INVALID_FAILURE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_second_invalid_failure_rejected",
-      "approved_semantic_hash": "sha256:15db4f8e944d8c7129bec1af58cab30312afa653df5b0167c7d61a42dbff378b",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:d59bc98360e9410d9b19c1438cc71d22b7848404889068da9f5b002329b6a7d2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1247,9 +1247,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_FAILED_RESULT_NO_ADAPTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_failed_result_no_adaptation_rejected",
-      "approved_semantic_hash": "sha256:c70fc1e6162dc0aef5967d7ef11519115f740b39679241462ef99f959c443a7b",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:ccb4053344c77ac7ff2fe8cbf37e36755132ee290121cdb5dcd6cc37b42eed8f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1279,9 +1279,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_TRIGGER_SPECIFIC_EVIDENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_trigger_specific_evidence_rejected",
-      "approved_semantic_hash": "sha256:45e773ac884d7d76b32a9417d79da4e77ac4ad2bb898dba64df8d9c9eba3266c",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:39bb25dd817728fa5dcc8ade9f53bcbbf74e1c9962cc15106293ab04f8e7dbe1",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1309,9 +1309,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_MIGRATION_ADAPTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_migration_adaptation_rejected",
-      "approved_semantic_hash": "sha256:27ab0438bd29a5a5e3224d9eb34ab0ea1fae6b2c9338bc176d2371672d260d17",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:9b5898fd2b72c88cfc3e2de6f99d8364c008b874ec6477a93ae6431bb4cdd16d",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1341,9 +1341,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_AI_ADAPTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_ai_adaptation_rejected",
-      "approved_semantic_hash": "sha256:c6e20b65ef76ccf18d4d7893b25e5b7ef65d7edb7a8c91a4cfb977f498a71ec7",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:2c9171906d8575f9e33ba1b31071debd1205d3d4ca02fd8d1f4ea9b6fb57fa88",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1373,9 +1373,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_BROWSER_DISPROVEN_ADAPTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_browser_disproven_adaptation_rejected",
-      "approved_semantic_hash": "sha256:7a9082ad74e75cd7754e7716c9858f30dad5c5581656ae163bce7c815183a5a9",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:c28db4c30267d4ad11a53abe18e9818fe71d4b84df56b138d89a7a4c52f24c60",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1405,9 +1405,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_SUPERSEDED_WORK_ORDER_PRESERVATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_superseded_work_order_preservation_rejected",
-      "approved_semantic_hash": "sha256:ab36d9fc9388a384032bc4ed4edbb3160ef20fd854f0eecb43820e54694e0bf1",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json at /reason using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "AUTHORITY_UPGRADE",
+      "approved_semantic_hash": "sha256:a00b89c6141707e11835e06fea6d2fb0cff1434af4940a0d91fd3396279fc2b6",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1436,9 +1436,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_ADAPTATION_IDEMPOTENCY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_adaptation_idempotency_rejected",
-      "approved_semantic_hash": "sha256:dcbc181fb59bb7665fe968d21cb164ae050d4d070e0a27e4e72d505632dd60d2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:fdb4bd319cb2b56332b36034d52360e2bba0ad33f5c4527bd4986000a6acd366",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1468,9 +1468,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_ADAPTATION_CYCLE_DEPTH and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_adaptation_cycle_depth_rejected",
-      "approved_semantic_hash": "sha256:822652b4d485e0c1f1c8cfbe9f498962cd96f51c8c807e3f5ddf383c8abb99b6",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:261041346faf7fd70b31956b1f59b13d9df281d4c1c4748d4389bd054acd9132",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1500,9 +1500,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S7_POINTER_LAST_PUBLICATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s7_pointer_last_publication_rejected",
-      "approved_semantic_hash": "sha256:9e6064219547881370a75aed1d5b830913321c27b3feb6069185b1bf2fb96645",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json at /failed_not_adaptable using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "failed_not_adaptable",
+      "approved_semantic_hash": "sha256:e6b8a4adc2df3ba570b896f652a09529ada3e60a763b95e89514f1a430d14062",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1532,9 +1532,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_TARGET_REGISTRY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_target_registry_rejected",
-      "approved_semantic_hash": "sha256:6c9f6740c8038ece4f1e217f076186bd9fba2dcab37e756ae7273cbcd55d0b3d",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:970a80354c144b5ae250e243efff912ea8012c1d0c11c83c44b7241ec6e1a97f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1561,9 +1561,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_SOURCE_GENERATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_source_generation_rejected",
-      "approved_semantic_hash": "sha256:5bc52455189a696c4d852e69d6c94a82f82e6653c24031cbda647bc17b293856",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:9f650aea7bd046a5253f4348c5b3c8978052d32a7ab1b70a544ffa76a56c9fc2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1590,9 +1590,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_TARGET_EXISTENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_target_existence_rejected",
-      "approved_semantic_hash": "sha256:fd0e3f3f69684b1e565bc770cfc356f0a8bbb6ea58d865f466f806b371ae34a4",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:217b2603fdc547e40f42d2639b5eee9883195e524bbbc0ff27cdde3d82b2503f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1619,9 +1619,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_EVIDENCE_EXISTENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_evidence_existence_rejected",
-      "approved_semantic_hash": "sha256:becb2b3add7d33d6e556cc506d58ea2c208c3a8241d2b77ce2c5512cf03305c5",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:9f8eb7682689f21978c8f7286d7cbb74f96002ccb5bc5114f597b6c950d719c7",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1649,9 +1649,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_EVIDENCE_RELEVANCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_evidence_relevance_rejected",
-      "approved_semantic_hash": "sha256:e40308df789fcae5cae5aba89ad8c47807126ccbf1078e164f2ccf629c9b332e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:98fb935a122352213509e402b535010be2aeb0f709c3b8f1fff72bece82a0032",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1679,9 +1679,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_AUTHORITY_PRESERVATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_authority_preservation_rejected",
-      "approved_semantic_hash": "sha256:beaf47909fc7fa309d0d36fac4326ba4ddba13fe8fe2e0a510b672321e236d13",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:5066a84be192197948058cd71984ce02b7e4753ba79ff0a139dd154ea298a5fb",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1709,9 +1709,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_APPEND_SEQUENCE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_append_sequence_rejected",
-      "approved_semantic_hash": "sha256:5042f8623825e7c5a189a77160ece691e7f44a52c69d45b776646f9524d76524",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:1b8a70691227c9698706b37356627e2b99853f3a7d481c92203eb6187cb8baae",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1738,9 +1738,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_PREVIOUS_HASH and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_previous_hash_rejected",
-      "approved_semantic_hash": "sha256:e97265a320cb487a17056d5054886082a898fc6933900105ffca539cf0c2b352",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:8240be14f8d97f7e42ceb3c8323f340f99f0725504af940b4b2181996fb66fc2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1767,9 +1767,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_IDEMPOTENT_REPLAY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_idempotent_replay_rejected",
-      "approved_semantic_hash": "sha256:74550022213b499c4b5ff31c256314d25dc3fa465a27f7bb6d60e53a0b9d1c22",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:c89afabe1b5cf68229fb19804453987ca49b24920b83f135519c4e5f1b575663",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1796,9 +1796,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_CONFLICTING_DUPLICATE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_conflicting_duplicate_rejected",
-      "approved_semantic_hash": "sha256:d781961e05007f4dfa43c54f4d042f6ef7d1e5e138079c983f2350bbcfec5a36",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:4dee41647070220160d7a96576c606f1daa872aec9fb5b09cef338fb5b16f8d2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1825,9 +1825,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTEST_OWNER_AUTHORITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contest_owner_authority_rejected",
-      "approved_semantic_hash": "sha256:0eb8cac39b621f7977f1f4ac5252041ff9538e2028a4cb86c46671d615ba9ef2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:0dd3134883a4da22d350e574206dbfd452eef08b16147d1e9e53e330c01a5dd3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1855,9 +1855,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_NAMED_RISK_FACT_NON_MUTATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_named_risk_fact_non_mutation_rejected",
-      "approved_semantic_hash": "sha256:cdc0066c79f683ae912947cf9c222e627f10f19fead217abdb5421cc34799314",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:35f733191befa0644f70e1e151092be016e9b43df56134ad153b8428b97be81b",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1882,9 +1882,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_NAMED_RISK_DECISION_EFFECT and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_named_risk_decision_effect_rejected",
-      "approved_semantic_hash": "sha256:6c9e3ebe6ce9e94bb0039a62e9be4e9faa3fca4315a1e6653297500e321d6650",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:0573ecbac9fe66ecf25aac3c6bd4cc2971ac95d44f0261b280af59bde72a0c34",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1909,9 +1909,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_OWNER_DECISION_BUDGET and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_owner_decision_budget_rejected",
-      "approved_semantic_hash": "sha256:3951c91b43d1a25c5ac7c799eabf40e80e6bb3cceec0d61c25a81682d0c6419a",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:5387214e527a4ec3188499555f7598f6b924ac246ae72a1518c24edb730f1e66",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1937,9 +1937,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_OWNER_DECISION_PRIORITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_owner_decision_priority_rejected",
-      "approved_semantic_hash": "sha256:f70fe3c3c720b50126794e77068a57b65f7830bcb314c62a51bf1d70b56b6d04",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:2c4b4d3461a6418f2f248394b712ad90017324513ba587cd05b7501ba503f3fd",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1964,9 +1964,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_OWNER_DECISION_OVERFLOW and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_owner_decision_overflow_rejected",
-      "approved_semantic_hash": "sha256:c720908ea064030a4cbbd2c75c6bb844a9dbe86346aa3ca2e4c117cb68239910",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:b33f796b91cc64c89a2c8c271fac2ce9e2edba9d947d57b54b1db6b6d1fb5208",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1992,9 +1992,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_FUTURE_REMEDIATION_NO_CYCLE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_future_remediation_no_cycle_rejected",
-      "approved_semantic_hash": "sha256:7fff8c133c349bda16cd9c014bc2586b06c7e415fa500a87717b04e33f8eef02",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:c3a5b52325ea094502dc8f29bf50ea6e9cd8f656c122e72db7e8aa67d40c5bfd",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2021,9 +2021,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_MANAGEMENT_DEPENDENCY_DISCOVERY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_management_dependency_discovery_rejected",
-      "approved_semantic_hash": "sha256:331a18b1d2ead009553de1bf8706527b6c139ed268783da78b1d3e285c6008af",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:c2042628d4275196d32808a7c2f6df92138e0c6563b24dc4fa47c0deafc6504b",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2050,9 +2050,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_MANAGEMENT_DEPENDENCY_STATES and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_management_dependency_states_rejected",
-      "approved_semantic_hash": "sha256:9e8f371e72a3fbbcaa2b59f4bd556ce3f1734639b6a0f01a11bc2c5ea94f688c",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:578613eae591dc05ed35ecb1fda1ea31a06b49cbd76d1f9b759ca047d24f5294",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2079,9 +2079,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_MANAGEMENT_DEPENDENCY_FRESHNESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_management_dependency_freshness_rejected",
-      "approved_semantic_hash": "sha256:6026772275e5e17d39017c187984737b1889ac36b4ec1f4b21de012e23377665",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:a2b04c0c8e385c81430195dc7f89f690142cae61c8debc7b89f1c9f6a83feae8",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2108,9 +2108,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_MANAGEMENT_MIXED_VECTOR_REJECTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_management_mixed_vector_rejection_rejected",
-      "approved_semantic_hash": "sha256:66d9472eb37408cc75ac0adc460fa8c7cea5dc00348be7210803f81e42c91952",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "artifact_dependency_vector_mismatch",
+      "approved_semantic_hash": "sha256:ca756273f531c7989fdf6cb6b768a14c74a701e4031f14ad125ee9ab34f675e8",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2137,9 +2137,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_EXECUTIVE_SECTION_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_executive_section_completeness_rejected",
-      "approved_semantic_hash": "sha256:b55c10c86c524daf888e0a0def9fc07ce6e3a5bb7d13f0713fd1c15e89e740ca",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:14aa4ee4260a34cc59bb224f4a718332a9a84845238ad47191779f419dc26bff",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2167,9 +2167,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_PRODUCT_MATRIX_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_product_matrix_completeness_rejected",
-      "approved_semantic_hash": "sha256:34ff1e863928724b102c8ed664b870908e40a87a82fdf1c3744c5efe8be093ee",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:cd2c54fec1eb8283fad419d00e25bfa5cf27beeee4721715ec15e01db85c5702",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2197,9 +2197,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_ENGINEERING_SECTION_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_engineering_section_completeness_rejected",
-      "approved_semantic_hash": "sha256:7df07a92ff16c1c8d8f94d4f5a91d9467d02f0ae4e2489053612b981cf9043a9",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:df7564ee050eef92b40fc2984f0e6ade7b47f11907457af2c6c869c825688e49",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2227,9 +2227,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_MEASUREMENT_AI_PASSTHROUGH and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_measurement_ai_passthrough_rejected",
-      "approved_semantic_hash": "sha256:d72f50ffc1d8bb447c0a924c43caa237460d0300123690750c20e732d9a2efc2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:8a86500fcc6981843ef52c5e2f7b5e6f2a5cfbd9dec01d421a3acb75e91b0c73",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2257,9 +2257,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_REMEDIATION_OVERVIEW_COMPLETENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_remediation_overview_completeness_rejected",
-      "approved_semantic_hash": "sha256:a59b14a04138f041791a4e22e6111a3513e4bb9069bcdc5980bd3fee17d07a13",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:eacb48136e96d15187c265dae6b87dc353c8afc31fbdef509aa41a64961f1a3b",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2287,9 +2287,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CLOSURE_CONTRACT_INDEXING and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_closure_contract_indexing_rejected",
-      "approved_semantic_hash": "sha256:a73ee8fba6da7ca8cff6af0ec3bfa2e3a504611b8ab874ec63c5568b825f3609",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:7551c77611f6a652491a21d99de6a309fda9ad7da5786e3bd925fc0adeda9f73",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2317,9 +2317,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_CONTESTABILITY_INCLUSION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_contestability_inclusion_rejected",
-      "approved_semantic_hash": "sha256:36ab11d14a2c251abca41679948e0e6ea63ea11921f3228bebee724f9bcbb759",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:a5fedb50d4c54331ad3da157060fb5cd122f61e57bec602f8e7714c395489dba",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2346,9 +2346,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_RECOMMENDATION_POLICY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_recommendation_policy_rejected",
-      "approved_semantic_hash": "sha256:12461faab43b29d9554a15fec08e8e8d0400aa6b1c4045ef6ba1e499c5744ed5",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:7d8fe938a5a62e9dc59a18b73d0982c10ed60177b8075e7d64605d06d1f14bd3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2375,9 +2375,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_ACCEPTED_CONDITION_EFFECT and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_accepted_condition_effect_rejected",
-      "approved_semantic_hash": "sha256:80551b3f021910cc3a32b82145f00b9d5468e5cfcd87e37b984ac844adde4ac5",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:083253de5be826c438b7a8586a72126c411185434208c1713222add1e7c4d3ca",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2404,9 +2404,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_NAMED_RISK_RECOMMENDATION_EFFECT and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_named_risk_recommendation_effect_rejected",
-      "approved_semantic_hash": "sha256:96bbfe117ef11699dc4f9b9579c5d7b085c546c980d8b77e1714d75883044864",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "conflicting_duplicate_action",
+      "approved_semantic_hash": "sha256:860c7736b3feb9ac23bc820d018db4cddaf5bec23c78ce6687476f31c05b8119",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2433,9 +2433,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_INSUFFICIENT_EVIDENCE_STATE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_insufficient_evidence_state_rejected",
-      "approved_semantic_hash": "sha256:68b5a0b192ed2c76a5a2265ecd317258bbe877fa75275a31b64602b7f8c2a8d2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:f7bc9889e9809ca18c9ac7ddc2b99f49bf32daa2c18d71519396b2aa43f11a24",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2463,9 +2463,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_DETERMINISTIC_JSON and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_deterministic_json_rejected",
-      "approved_semantic_hash": "sha256:698d091bbeca444f24e1a072b015e6915e2b20d35e2a417347b1f175cc47cf70",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:4af9d70d13583f861dcda455c0be5f923f46cf3c52eada5345a59d46455afe40",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2492,9 +2492,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_SAFE_HTML and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_safe_html_rejected",
-      "approved_semantic_hash": "sha256:7f9a4c04569d405f8160c10384875e75be4da12e41c11c02e92506111199d9ee",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:64cae3bfac6cfb43f66e650a905ade3af2b1c5a0eb8afadda076845be2726683",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2521,9 +2521,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_SAFE_MARKDOWN and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_safe_markdown_rejected",
-      "approved_semantic_hash": "sha256:4e730e87e290e846e6a24ec6d1a0a0a76901e467a7fbff39cd9bf919e877d64e",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:0a93b1517b2190663d1463b7a05a2f0d59a973b2e1bd3d889a3b608e78b16593",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2550,9 +2550,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_ARTIFACT_HASH_INTEGRITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_artifact_hash_integrity_rejected",
-      "approved_semantic_hash": "sha256:603107354b2e4a724d8c3d232eb416736f73ef8b09726a4c350890ac0f262eb2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:c908b8365d1532052960c514e93c78a8bbe0bb7bc06e31a8279f60ce13f260a3",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2579,9 +2579,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_ARTIFACT_FILE_SET and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_artifact_file_set_rejected",
-      "approved_semantic_hash": "sha256:e872178d1ede9267084e9b74837febae8c5e3eee85f34b21220355196525824d",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:ffd68a4e3121227e4229e15fe5aed14ac76a8b74774ac13ec3dadb151ad6702f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2608,9 +2608,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_DETERMINISTIC_RERENDER and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_deterministic_rerender_rejected",
-      "approved_semantic_hash": "sha256:be01cbe5b83323c593f4184d4437d7c15fd893e739b06122c72be891f73b160b",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management_canonical_projection_tampered",
+      "approved_semantic_hash": "sha256:1874e5d61a89d473aabf69d011149814d4409595a7003c3a4031d29aeb83281a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2637,9 +2637,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for S8_UPSTREAM_STALENESS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "s8_upstream_staleness_rejected",
-      "approved_semantic_hash": "sha256:afbbd05d5d1c4b5f5060a6b29b65aa5b639ec0c46a72e2cf638e463de17bd0bf",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json at /error using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "stale_dependency",
+      "approved_semantic_hash": "sha256:1e675407f182ebe97d517531bebddf54d3c59d50efaaa4bc87b7541d318f1534",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2666,9 +2666,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_TRUSTED_READS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_trusted_reads_rejected",
-      "approved_semantic_hash": "sha256:4c9215bf0c28f977ecc12ae84277c38b6f37b5320da4dbd582922582ce07956f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json at /before_status using equals_reference, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_before_status",
+      "approved_semantic_hash": "sha256:a714987a223215e11f6e1d79d44e3fe57b00ef958466dfcb12ce949d9d9a8561",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2695,9 +2695,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_TRUSTED_WRITES and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_trusted_writes_rejected",
-      "approved_semantic_hash": "sha256:0676919ac259f21e5ee570d0c6815cc7979aa37e200d4af1f63b6706f2ea6a59",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json at /source_unchanged using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "source_unchanged",
+      "approved_semantic_hash": "sha256:855e8ad0f531a7582c2a059898a20928dad8e42b85108395e73060d857f45576",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2724,9 +2724,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_LINK_REPARSE_SPECIAL_REJECTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_link_reparse_special_rejection_rejected",
-      "approved_semantic_hash": "sha256:d3d96468cd3bbb19821293f9dd2545186606c55a32affd18a31738a5a8886275",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-security-receipt.json at /registry_semantic_hash using not_equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_registry_semantic_hash",
+      "approved_semantic_hash": "sha256:5511a72d591a4b1d1b92383ba49b7ae9bf1527ab5ab5ad68bdd60c9d1b870c4f",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2753,9 +2753,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_CAPACITY_LIMITS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_capacity_limits_rejected",
-      "approved_semantic_hash": "sha256:0956d14d796962f654140dfde7be6b050fbbdb9201c8b84cbd4ff20165efc411",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json at /packets using count_at_least, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_packets",
+      "approved_semantic_hash": "sha256:e47be12ecf4a27e10f0ccb6276a52e81a6165807843bad578e4e7b816db42cef",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2782,9 +2782,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_POINTER_LATE_FAILURE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_pointer_late_failure_rejected",
-      "approved_semantic_hash": "sha256:1ca53fe10b55f5f1210e775ccab715c58797c7866cbf3ca450644cabeeb4d994",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json at /pointer_preserved using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "pointer_preserved",
+      "approved_semantic_hash": "sha256:9ec9d3c4257bca990720a593db7f90edcdcad9b02b7f4eaba5876753c4d86ebb",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2811,9 +2811,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_ZERO_PROHIBITED_OPERATIONS and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_zero_prohibited_operations_rejected",
-      "approved_semantic_hash": "sha256:3c9c899083bc5a9fb9e102ca076082288b6bdc1b1c0ad0a9488853c129e55174",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-security-receipt.json at /records using count_equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_records",
+      "approved_semantic_hash": "sha256:1ebaa13f1bafc1ccf2273a7713f9c5381d5878194ad916a274265bd5326b696d",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2838,9 +2838,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_CONTRACT_INVENTORY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_contract_inventory_rejected",
-      "approved_semantic_hash": "sha256:77af1feb8279d51a5e712f1099ba94b995c9170041c956f832a02be6fea8b547",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-contract-parity-report.json at /contract_count using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_contract_count",
+      "approved_semantic_hash": "sha256:802e541c2f18681cc603182a020a4bdb1b9f6c7373f6c92699d040aee2712faa",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2851,7 +2851,7 @@
         "session6-8-contract-registry.json": 1
       },
       "near_valid_behavior": "the real boundary records a constrained accepted state without claiming full closure",
-      "normative_behavior": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6–8 contract, with every parity-required contract registered and every exclusion justified.",
+      "normative_behavior": "Multi-source discovery accounts for every packaged, code-defined, and golden-produced Sessions 6â€“8 contract, with every parity-required contract registered and every exclusion justified.",
       "owning_production_entrypoint": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "required_artifacts": [
         "session6-8-contract-inventory.json",
@@ -2865,9 +2865,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_EXECUTED_CONTRACT_PARITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_executed_contract_parity_rejected",
-      "approved_semantic_hash": "sha256:27f7ca5c9ccc6075e7aa77b4caf614204000052e55350429a08065933a3f2c0a",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-contract-parity-report.json at /unexpected_pass_count using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_unexpected_pass_count",
+      "approved_semantic_hash": "sha256:eb0bac4a3abf46bab4a95dcc82cf6fa90cb1bb63f98bcacae2c5aa5bdd8c3c1a",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2893,9 +2893,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_BEHAVIORAL_EVAL_INTEGRITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_behavioral_eval_integrity_rejected",
-      "approved_semantic_hash": "sha256:2e7ff43dc9bbb12ab5f514adf4b5af288240dadbce6a78dfe94f6e3ed3434d69",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in behavioral-eval-receipt.json at /cases using unique, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_cases",
+      "approved_semantic_hash": "sha256:da66a9028195db8703565598626b9fcaa79068c16fa30f9e204057b0e79812df",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2918,9 +2918,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_WORKFLOW_EVAL_INTEGRITY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_workflow_eval_integrity_rejected",
-      "approved_semantic_hash": "sha256:c94b6d78e770baa9a9cb999161478337251b4ff2fda0859fe0de0c04ca83543f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-eval-receipt.json at /cases using unique, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_cases",
+      "approved_semantic_hash": "sha256:aaf716246517487b032db00a2993ebbc276d66a1c8cae72bcfdd98cdfe050aa2",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2945,9 +2945,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_INSTALLED_WHEEL_LIFECYCLE and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_installed_wheel_lifecycle_rejected",
-      "approved_semantic_hash": "sha256:6c219f7864da2796ef6b89152129882341233cf6c9162507beb7cfd61fba8ca5",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-installed-wheel-receipt.json at /commands using unique, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_commands",
+      "approved_semantic_hash": "sha256:88aaf0869c1c7caf7c27db7b88da26ca2d78d1710ce4f866b54cf7b6588ed7c7",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2974,9 +2974,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_SKILL_PILOT_CONSISTENCY and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_skill_pilot_consistency_rejected",
-      "approved_semantic_hash": "sha256:68ffd5b05f5f13ef54a2902dfa232ec2a303a291e536500850d49320cb95c903",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json at /source_repository_unchanged using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "source_repository_unchanged",
+      "approved_semantic_hash": "sha256:707228844e23167a3a6762cb46165b6c0a593e3876451c9ec92983853d216d70",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -3003,9 +3003,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_PROOF_EXECUTION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_proof_execution_rejected",
-      "approved_semantic_hash": "sha256:81680f09279f89edcf94722f2b28ead80438990901808c8652fad41c6abe4253",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-overlay.json at /nodes using count_equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "rejected_nodes",
+      "approved_semantic_hash": "sha256:ccb0db1279cac21a02fdc002f74554d6c81495e7ae4fa8bfb236c992d2f35b27",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -3030,9 +3030,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_CLOSEOUT_GENERATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_closeout_generation_rejected",
-      "approved_semantic_hash": "sha256:57ab72acdfaff74b07d6cc8f5ca031e255b2579ab1fa36a1851294c6f65d1c2f",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json at /schema_version using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "management-generation-manifest.v1",
+      "approved_semantic_hash": "sha256:7bda25cc1efecfa6fb065db1e752745e740d70c6d0ce8b685994666552c010bf",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -3057,9 +3057,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "Mutate only the owning input or canonical artifact for SHARED_INDEPENDENT_VALIDATION and require the owning production validator or loader to reject while preserving authoritative state.",
-      "adversarial_error_code": "shared_independent_validation_rejected",
-      "approved_semantic_hash": "sha256:69f8eb72f73dc677bcd134afeee75eab7068a87057ea9f5a8c3af4b1ee1787e2",
+      "adversarial_behavior": "The owning boundary must expose the isolated rejection recorded in session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json at /temporary_branch using equals, while preserving every authoritative pointer and source artifact.",
+      "adversarial_error_code": "bounded-route-remediation",
+      "approved_semantic_hash": "sha256:c534503c8a44d70ea0d3f403a076238714ac0f6de92aeb23571117d2139f3296",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",

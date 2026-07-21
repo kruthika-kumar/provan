@@ -24,7 +24,7 @@ def build(*, claims_path: Path, registry_path: Path, output_json: Path, output_m
             "valid_proof":proofs[ordered[0]],
             "near_valid_proof":proofs[ordered[1]],
             "adversarial_proof":proofs[ordered[2]],
-            "measured_artifact_assertions":claim["artifact_assertions"],
+            "measured_artifact_assertions":resolved.get("evidence_assertions",resolved["measured_evidence"]),
             "measured_cardinalities":{item["proof_id"]:item["measured_cardinality"] for item in proofs.values()},
             "production_invocations":resolved["production_invocation_ids"],
             "claim_status":"resolved",

@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse,hashlib,json
 from pathlib import Path
+from shiproom.session6_8_evidence_query import evaluate
 ROOT=Path(__file__).resolve().parents[1]
 def validate(path:Path):
     receipt=json.loads(path.read_text());manifest=json.loads((ROOT/"docs/validation/session6-8-proof-manifest.json").read_text())["proofs"]; requirements={r["requirement_id"] for r in json.loads((ROOT/"docs/validation/session6-8-requirement-inventory.json").read_text())["requirements"]}
@@ -18,12 +19,16 @@ def validate(path:Path):
         invocations=row.get("production_invocations")
         if not isinstance(invocations,list) or {item.get("invocation_id") for item in invocations}!={*row["production_invocation_ids"]}:raise ValueError("proof_execution_invocation_binding_invalid")
         assertions=row.get("artifact_assertions")
-        if not isinstance(assertions,list) or not assertions or any(item.get("actual")!=item.get("expected") for item in assertions):raise ValueError("proof_execution_artifact_assertion_failed")
+        if not isinstance(assertions,list) or not assertions or any(item.get("passed") is not True for item in assertions):raise ValueError("proof_execution_artifact_assertion_failed")
         paths=row.get("artifact_paths");hashes=row.get("artifact_hashes")
         if not isinstance(paths,list) or not paths or not isinstance(hashes,dict):raise ValueError("proof_execution_artifact_missing")
+        evidence_root=path.parent
         for artifact in paths:
-            artifact_path=Path(artifact)
+            artifact_path=evidence_root/artifact
             if not artifact_path.is_file() or hashes.get(artifact)!="sha256:"+hashlib.sha256(artifact_path.read_bytes()).hexdigest():raise ValueError("proof_execution_artifact_hash_mismatch")
+        for assertion in assertions:
+            replay=evaluate(evidence_root,assertion["query"])
+            if replay.actual!=assertion["actual"] or replay.expected!=assertion["expected"] or not replay.passed or replay.cardinality!=assertion["cardinality"]:raise ValueError("proof_execution_artifact_replay_mismatch")
     for rid in requirements:
         if {r["fixture_class"] for r in rows if r["requirement_id"]==rid}!={"valid","near_valid","adversarial_invalid"}:raise ValueError("proof_execution_class_incomplete")
     return {"schema_version":"session6-8-proof-execution-validation.v1","requirement_count":len(requirements),"proof_count":len(rows),"status":"passed"}

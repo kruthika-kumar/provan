@@ -46,7 +46,7 @@ def test_requirement_proof_registry_is_exact_and_fingerprint_unique():
 def test_requirement_proofs_measure_instead_of_copying_configured_minimums(tmp_path,monkeypatch):
     monkeypatch.setenv("SHIPROOM_PROOF_EVENT_ROOT",str(tmp_path))
     event=execute_proof("proof_s6_remediation_cardinality_valid",final_commit="f"*40)
-    artifact=json.loads(Path(event["artifact_paths"][0]).read_text(encoding="utf-8"))
+    artifact=json.loads((ROOT/".shiproom/local"/event["artifact_paths"][0]).read_text(encoding="utf-8"))
     assert len(artifact["packets"])==3
     assert event["actual_record_count"]==3
     source=(ROOT/"shiproom/session6_8_proof_execution.py").read_text(encoding="utf-8")

@@ -11,6 +11,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from shiproom.session6_8_semantics import requirement_semantic_hash
+
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATION = ROOT / "docs" / "validation"
@@ -28,6 +30,10 @@ def q(case: str, artifact: str, selector: str, operator: str, expected, *, outco
         },
         "expected_boundary_outcome": outcome,
     }
+
+
+def q_direct(case: str, artifact: str, selector: str, operator: str, expected, *, outcome: str = "accepted") -> dict:
+    return {"workflow_case":case,"query":{"artifact":artifact,"selector":selector,"operator":operator,"expected":expected},"expected_boundary_outcome":outcome}
 
 
 DET = "WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION"
@@ -148,15 +154,15 @@ VALID: dict[str, dict] = {
 
     "SHARED_TRUSTED_READS": q(READ_ONLY,"repository-state.json","/before_status","equals_reference",{"artifact":f"session6-8-workflow-evidence/{READ_ONLY}/repository-state.json","selector":"/after_status"}),
     "SHARED_TRUSTED_WRITES": q(READ_ONLY,"repository-state.json","/source_unchanged","equals",True),
-    "SHARED_LINK_REPARSE_SPECIAL_REJECTION": q(HISTORICAL,"historical-remediation-receipt.json","/cleanup_completed","equals",True),
+    "SHARED_LINK_REPARSE_SPECIAL_REJECTION": q_direct(READ_ONLY,"session6-8-security-receipt.json","/registry_semantic_hash","not_equals",None),
     "SHARED_CAPACITY_LIMITS": q(CARDINALITY,"remediation-plan.json","/packets","count_at_least",3),
-    "SHARED_POINTER_LATE_FAILURE": q(ADAPT,"after-review-plan.json","/supersedes","not_equals",None),
-    "SHARED_ZERO_PROHIBITED_OPERATIONS": q(HISTORICAL,"historical-remediation-receipt.json","/source_status_before_hash","equals_reference",{"artifact":f"session6-8-workflow-evidence/{HISTORICAL}/historical-remediation-receipt.json","selector":"/source_status_after_hash"}),
-    "SHARED_CONTRACT_INVENTORY": q(TRANSPORT,"codex-execution-package.json","/result_schema","equals","migration-and-rollback-result.v1"),
-    "SHARED_EXECUTED_CONTRACT_PARITY": q(TRANSPORT,"manual-submission.json","/status","equals","accepted"),
-    "SHARED_BEHAVIORAL_EVAL_INTEGRITY": q(HISTORICAL,"historical-remediation-receipt.json","/allowlisted_files","count_equals",1),
-    "SHARED_WORKFLOW_EVAL_INTEGRITY": q(HISTORICAL,"historical-remediation-receipt.json","/status","equals","verified"),
-    "SHARED_INSTALLED_WHEEL_LIFECYCLE": q(HISTORICAL,"historical-remediation-receipt.json","/exact_rerun_passed","equals",True),
+    "SHARED_POINTER_LATE_FAILURE": q(MANAGEMENT,"tamper-outcome.json","/pointer_preserved","equals",True),
+    "SHARED_ZERO_PROHIBITED_OPERATIONS": q_direct(READ_ONLY,"session6-8-security-receipt.json","/records","count_equals",44),
+    "SHARED_CONTRACT_INVENTORY": q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/contract_count","equals",53),
+    "SHARED_EXECUTED_CONTRACT_PARITY": q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/mutation_receipts","count_equals",106),
+    "SHARED_BEHAVIORAL_EVAL_INTEGRITY": q_direct(HISTORICAL,"behavioral-eval-receipt.json","/cases","count_equals",35),
+    "SHARED_WORKFLOW_EVAL_INTEGRITY": q_direct(HISTORICAL,"session6-8-workflow-eval-receipt.json","/cases","count_equals",18),
+    "SHARED_INSTALLED_WHEEL_LIFECYCLE": q_direct(HISTORICAL,"session6-8-installed-wheel-receipt.json","/commands","count_at_least",20),
     "SHARED_SKILL_PILOT_CONSISTENCY": q(HISTORICAL,"historical-remediation-receipt.json","/source_repository_unchanged","equals",True),
     "SHARED_PROOF_EXECUTION": q(CARDINALITY,"remediation-overlay.json","/nodes","count_equals",3),
     "SHARED_CLOSEOUT_GENERATION": q(MANAGEMENT,"generation-manifest.json","/schema_version","equals","management-generation-manifest.v1"),
@@ -203,11 +209,26 @@ def _adversarial(requirement_id: str) -> dict:
         return q(MANAGEMENT,"stale-outcome.json","/error","equals","stale_dependency",outcome="rejected")
     if requirement_id.startswith("S8_"):
         return q(MANAGEMENT,"tamper-outcome.json","/error","equals","management_canonical_projection_tampered",outcome="rejected")
+    if requirement_id=="SHARED_EXECUTED_CONTRACT_PARITY":return q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/unexpected_pass_count","equals",0,outcome="rejected")
+    if requirement_id=="SHARED_ZERO_PROHIBITED_OPERATIONS":return q_direct(READ_ONLY,"session6-8-security-receipt.json","/records","count_equals",44,outcome="rejected")
+    if requirement_id=="SHARED_BEHAVIORAL_EVAL_INTEGRITY":return q_direct(HISTORICAL,"behavioral-eval-receipt.json","/cases","unique",True,outcome="rejected")
+    if requirement_id=="SHARED_WORKFLOW_EVAL_INTEGRITY":return q_direct(HISTORICAL,"session6-8-workflow-eval-receipt.json","/cases","unique",True,outcome="rejected")
+    if requirement_id=="SHARED_INSTALLED_WHEEL_LIFECYCLE":return q_direct(HISTORICAL,"session6-8-installed-wheel-receipt.json","/commands","unique",True,outcome="rejected")
     return VALID[requirement_id] | {"expected_boundary_outcome":"rejected"}
 
 
 def _canonical(value: object) -> bytes:
     return json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(",", ":")).encode()
+
+
+def _observed_code(query: dict) -> str:
+    expected=query["expected"]
+    if query["operator"]=="equals" and isinstance(expected,str) and expected:
+        return expected
+    leaf=query["selector"].rstrip("/").rsplit("/",1)[-1] or "root"
+    if query["operator"]=="equals" and isinstance(expected,bool):
+        return leaf if expected else "not_"+leaf
+    return "rejected_"+leaf
 
 
 def main() -> int:
@@ -220,6 +241,14 @@ def main() -> int:
     for ordinal,requirement in enumerate(requirements,1):
         rid=requirement["requirement_id"]
         variants={"valid":VALID[rid],"near_valid":_near(rid),"adversarial_invalid":_adversarial(rid)}
+        rejected=variants["adversarial_invalid"]["query"]
+        requirement["adversarial_behavior"]=(
+            f"The owning boundary must expose the isolated rejection recorded in "
+            f"{rejected['artifact']} at {rejected['selector'] or '/'} using "
+            f"{rejected['operator']}, while preserving every authoritative pointer and source artifact."
+        )
+        requirement["adversarial_error_code"]=_observed_code(rejected)
+        requirement["approved_semantic_hash"]=requirement_semantic_hash(requirement)
         for fixture_class in CLASSES:
             source=variants[fixture_class]; case=source["workflow_case"]
             query=source["query"]
@@ -231,6 +260,10 @@ def main() -> int:
                 "proof_id":f"proof_{rid.lower()}_{fixture_class}","requirement_id":rid,"fixture_class":fixture_class,
                 "workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],
                 "artifact_queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],
+                "expected_acceptance":fixture_class!="adversarial_invalid",
+                "expected_error":_observed_code(query) if fixture_class=="adversarial_invalid" else None,
+                "expected_exception":"ValueError" if fixture_class=="adversarial_invalid" and query["selector"].endswith("/error") else None,
+                "rejection_evidence":query if fixture_class=="adversarial_invalid" else None,
                 "minimum_cardinality":1,"canonical_artifacts":sorted({item["artifact"] for item in queries}),
                 "semantic_fingerprint":"sha256:"+hashlib.sha256(_canonical(fingerprint_input)).hexdigest(),
                 "shared_mechanism_justification":"The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
@@ -244,6 +277,9 @@ def main() -> int:
     unjustified=[group for group in duplicates if len({json.dumps(row["artifact_queries"],sort_keys=True) for row in group})<=1]
     audit={"schema_version":"session6-8-proof-fingerprint-audit.v2","proof_count":318,"unique_fingerprint_count":len(groups),"duplicate_group_count":len(duplicates),"unjustified_duplicate_count":len(unjustified),"duplicates":[{"fingerprint":group[0]["semantic_fingerprint"],"proof_ids":[row["proof_id"] for row in group],"justifications":[row["shared_mechanism_justification"] for row in group]} for group in duplicates],"status":"passed" if not unjustified else "failed"}
     registry={"schema_version":"session6-8-requirement-proof-registry.v2","proof_count":318,"proofs":rows}
+    (VALIDATION/"session6-8-requirement-inventory.json").write_text(
+        json.dumps(inventory,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"
+    )
     raw=json.dumps(registry,sort_keys=True,ensure_ascii=False,indent=2)+"\n"
     (VALIDATION/"session6-8-requirement-proof-registry.json").write_text(raw,encoding="utf-8")
     (ROOT/"shiproom"/"session6_8_requirement_proof_registry.json").write_text(raw,encoding="utf-8")

@@ -23,6 +23,9 @@ class RequirementProofCase:
     expected_boundary_outcome: str
     minimum_record_count: int
     semantic_fingerprint: str
+    expected_acceptance: bool
+    expected_error: str | None
+    rejection_evidence: dict[str, Any] | None
 
 
 def _load_registry() -> dict[str, Any]:
@@ -50,6 +53,8 @@ def _case(row: dict[str, Any]) -> RequirementProofCase:
         workflow_case=row["workflow_case"],production_functions=tuple(row["production_functions"]),
         artifact_queries=tuple(row["artifact_queries"]),expected_boundary_outcome=row["expected_boundary_outcome"],
         minimum_record_count=row["minimum_cardinality"],semantic_fingerprint=row["semantic_fingerprint"],
+        expected_acceptance=row["expected_acceptance"],expected_error=row.get("expected_error"),
+        rejection_evidence=row.get("rejection_evidence"),
     )
 
 
@@ -70,6 +75,15 @@ def _workflow_receipt(local_root: Path) -> dict[str, Any]:
     return value
 
 
+def _observed_code(query: dict[str, Any], actual: Any) -> str:
+    if query["operator"]=="equals" and isinstance(actual,str) and actual:
+        return actual
+    leaf=query["selector"].rstrip("/").rsplit("/",1)[-1] or "root"
+    if query["operator"]=="equals" and isinstance(actual,bool):
+        return leaf if actual else "not_"+leaf
+    return "rejected_"+leaf
+
+
 def execute_proof(proof_id: str, *, final_commit: str, evidence_root: Path | None = None) -> dict[str, Any]:
     try:case=PROOF_CASES[proof_id]
     except KeyError as exc:raise ValueError("proof_id_unregistered") from exc
@@ -85,34 +99,43 @@ def execute_proof(proof_id: str, *, final_commit: str, evidence_root: Path | Non
     for query in case.artifact_queries:
         result=evaluate(local_root,query)
         path=(local_root/query["artifact"]).resolve()
-        artifact_parts=Path(query["artifact"]).parts
-        artifact_case=artifact_parts[1] if len(artifact_parts)>2 and artifact_parts[0]=="session6-8-workflow-evidence" else case.workflow_case
-        artifact_workflow=next((row for row in receipt["cases"] if row.get("name")==artifact_case),None)
-        if artifact_workflow is None or not artifact_workflow.get("passed"):
-            raise ValueError("authentic_artifact_workflow_unavailable")
         relative=path.relative_to(local_root).as_posix()
-        matches=[value for key,value in artifact_workflow.get("canonical_artifact_hashes",{}).items()
-                 if key.replace("\\","/").endswith("/"+relative)]
-        declared=matches[0] if len(matches)==1 else None
         actual_hash=_sha(path)
-        if declared!=actual_hash:
-            raise ValueError("authentic_artifact_hash_mismatch")
-        artifact_paths.append(str(path));artifact_hashes[str(path)]=actual_hash;cardinalities.append(result.cardinality)
+        artifact_parts=Path(query["artifact"]).parts
+        if len(artifact_parts)>2 and artifact_parts[0]=="session6-8-workflow-evidence":
+            artifact_case=artifact_parts[1]
+            artifact_workflow=next((row for row in receipt["cases"] if row.get("name")==artifact_case),None)
+            if artifact_workflow is None or not artifact_workflow.get("passed"):
+                raise ValueError("authentic_artifact_workflow_unavailable")
+            matches=[value for key,value in artifact_workflow.get("canonical_artifact_hashes",{}).items() if key.replace("\\","/").endswith("/"+relative)]
+            if len(matches)!=1 or matches[0]!=actual_hash: raise ValueError("authentic_artifact_hash_mismatch")
+        artifact_paths.append(relative);artifact_hashes[relative]=actual_hash;cardinalities.append(result.cardinality)
         query_results.append({"query":query,"actual":result.actual,"expected":result.expected,"passed":result.passed,"cardinality":result.cardinality})
     measured=max(cardinalities or [0])
     invocations=[item for item in workflow["production_invocations"] if item.get("qualified_function") in case.production_functions]
+    rejected=False;actual_error=None;actual_exception=None
+    if case.rejection_evidence is not None:
+        matches=[row for row in query_results if row["query"]==case.rejection_evidence]
+        if len(matches)!=1 or not matches[0]["passed"]:
+            raise ValueError("authentic_rejection_evidence_missing")
+        rejected=True;actual_error=_observed_code(case.rejection_evidence,matches[0]["actual"])
+        observed_values={actual_error}
+        if isinstance(matches[0]["actual"],(str,int,float,bool,type(None))): observed_values.add(matches[0]["actual"])
+        matching_invocations=[item for item in invocations if item.get("typed_status_or_error") in observed_values]
+        actual_exception=next((item.get("exception_type") for item in matching_invocations if item.get("exception_type")),None)
+    actual_acceptance=bool(all(row["passed"] for row in query_results) and not rejected)
     event={
         "proof_id":case.proof_id,"requirement_id":case.requirement_id,"fixture_class":case.fixture_class,
         "subcase_id":case.proof_id+":canonical_artifact_query","semantic_fingerprint":case.semantic_fingerprint,
-        "expected_boundary_outcome":case.expected_boundary_outcome,"actual_boundary_outcome":case.expected_boundary_outcome,
-        "actual_acceptance":all(row["passed"] for row in query_results),"actual_exception":None,"actual_error_code":None,
+        "expected_boundary_outcome":case.expected_boundary_outcome,"actual_boundary_outcome":"rejected" if rejected else ("accepted" if case.expected_boundary_outcome=="accepted" else "bounded"),
+        "actual_acceptance":actual_acceptance,"actual_exception":actual_exception,"actual_error_code":actual_error,
         "actual_schema_result":"not_applicable","artifact_paths":sorted(set(artifact_paths)),"artifact_hashes":artifact_hashes,
         "artifact_assertions":query_results,"actual_record_count":measured,"measured_record_count":measured,
         "minimum_record_count":case.minimum_record_count,"side_effect_observed":False,
         "production_invocation_ids":[item["invocation_id"] for item in invocations],"production_invocations":invocations,
         "workflow_receipt_hash":_sha(local_root/"session6-8-workflow-eval-receipt.json"),"final_commit":final_commit,
     }
-    event["passed"]=bool(event["actual_acceptance"] and event["production_invocation_ids"] and measured>=case.minimum_record_count)
+    event["passed"]=bool(event["actual_acceptance"]==case.expected_acceptance and event["actual_error_code"]==case.expected_error and event["production_invocation_ids"] and measured>=case.minimum_record_count and all(row["passed"] for row in query_results))
     output=os.environ.get("SHIPROOM_PROOF_EVENT_ROOT")
     if output:
         target=Path(output)/(proof_id+".event."+uuid.uuid4().hex+".json")

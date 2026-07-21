@@ -10,6 +10,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_issue_authority_policy_valid",
         "proof_s6_issue_authority_policy_near_valid",
@@ -27,6 +28,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_model_review_not_blocker_valid",
         "proof_s6_model_review_not_blocker_near_valid",
@@ -45,6 +47,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_planner_compiler_authority_valid",
         "proof_s6_planner_compiler_authority_near_valid",
@@ -63,6 +66,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_human_owner_separation_valid",
         "proof_s6_human_owner_separation_near_valid",
@@ -81,6 +85,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_optional_planner_lifecycle_valid",
         "proof_s6_optional_planner_lifecycle_near_valid",
@@ -99,6 +104,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_automation_eligibility_valid",
         "proof_s6_automation_eligibility_near_valid",
@@ -117,6 +123,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_bounded_fix_metadata_only_valid",
         "proof_s6_bounded_fix_metadata_only_near_valid",
@@ -136,6 +143,7 @@
         "shiproom.remediation_roadmaps.load_generation",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_remediation_cardinality_valid",
         "proof_s6_remediation_cardinality_near_valid",
@@ -155,6 +163,7 @@
         "shiproom.remediation_roadmaps.load_generation",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_packet_contract_links_valid",
         "proof_s6_packet_contract_links_near_valid",
@@ -174,6 +183,7 @@
         "shiproom.remediation_roadmaps.load_generation",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_packet_file_integrity_valid",
         "proof_s6_packet_file_integrity_near_valid",
@@ -190,6 +200,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_contract_completeness_valid",
         "proof_s6_closure_contract_completeness_near_valid",
@@ -205,6 +216,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_exact_rerun_valid",
         "proof_s6_closure_exact_rerun_near_valid",
@@ -220,6 +232,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_pass_required_valid",
         "proof_s6_closure_pass_required_near_valid",
@@ -235,6 +248,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_verifier_independence_valid",
         "proof_s6_closure_verifier_independence_near_valid",
@@ -250,6 +264,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_commit_branch_freshness_valid",
         "proof_s6_closure_commit_branch_freshness_near_valid",
@@ -266,6 +281,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_evidence_class_valid",
         "proof_s6_closure_evidence_class_near_valid",
@@ -282,6 +298,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_regression_requirements_valid",
         "proof_s6_closure_regression_requirements_near_valid",
@@ -298,6 +315,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_test_requirements_valid",
         "proof_s6_closure_test_requirements_near_valid",
@@ -314,6 +332,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_instrumentation_requirements_valid",
         "proof_s6_closure_instrumentation_requirements_near_valid",
@@ -330,6 +349,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_protected_invariants_valid",
         "proof_s6_closure_protected_invariants_near_valid",
@@ -346,6 +366,7 @@
       "production_boundaries": [
         "shiproom.remediation_roadmaps.closure_verify"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.closure_verify",
       "proof_ids": [
         "proof_s6_closure_owner_decision_valid",
         "proof_s6_closure_owner_decision_near_valid",
@@ -365,6 +386,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "shiproom.remediation_roadmaps.compile",
       "proof_ids": [
         "proof_s6_private_alpha_non_mutation_valid",
         "proof_s6_private_alpha_non_mutation_near_valid",
@@ -383,6 +405,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_specialist_catalogue_valid",
         "proof_s7_specialist_catalogue_near_valid",
@@ -401,6 +424,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_native_boundary_reuse_valid",
         "proof_s7_native_boundary_reuse_near_valid",
@@ -419,6 +443,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_typed_surface_policy_valid",
         "proof_s7_typed_surface_policy_near_valid",
@@ -437,6 +462,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_selection_evidence_links_valid",
         "proof_s7_selection_evidence_links_near_valid",
@@ -455,6 +481,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_python_selection_valid",
         "proof_s7_python_selection_near_valid",
@@ -473,6 +500,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_typescript_selection_valid",
         "proof_s7_typescript_selection_near_valid",
@@ -491,6 +519,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_ai_selection_valid",
         "proof_s7_ai_selection_near_valid",
@@ -509,6 +538,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_browser_explicit_skip_valid",
         "proof_s7_browser_explicit_skip_near_valid",
@@ -526,6 +556,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_browser_absence_not_inspected_valid",
         "proof_s7_browser_absence_not_inspected_near_valid",
@@ -544,6 +575,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_test_adequacy_applicability_valid",
         "proof_s7_test_adequacy_applicability_near_valid",
@@ -562,6 +594,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_instrumentation_applicability_valid",
         "proof_s7_instrumentation_applicability_near_valid",
@@ -581,6 +614,7 @@
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_product_intent_wrapper_valid",
         "proof_s7_product_intent_wrapper_near_valid",
@@ -600,6 +634,7 @@
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_native_work_order_integrity_valid",
         "proof_s7_native_work_order_integrity_near_valid",
@@ -619,6 +654,7 @@
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.render_package",
       "proof_ids": [
         "proof_s7_codex_package_completeness_valid",
         "proof_s7_codex_package_completeness_near_valid",
@@ -638,6 +674,7 @@
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.render_package",
       "proof_ids": [
         "proof_s7_harness_declaration_honesty_valid",
         "proof_s7_harness_declaration_honesty_near_valid",
@@ -657,6 +694,7 @@
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.render_package",
       "proof_ids": [
         "proof_s7_manual_codex_parity_valid",
         "proof_s7_manual_codex_parity_near_valid",
@@ -674,6 +712,7 @@
       "production_boundaries": [
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_trusted_submission_paths_valid",
         "proof_s7_trusted_submission_paths_near_valid",
@@ -691,6 +730,7 @@
       "production_boundaries": [
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.submit_result",
       "proof_ids": [
         "proof_s7_submission_byte_persistence_valid",
         "proof_s7_submission_byte_persistence_near_valid",
@@ -707,6 +747,7 @@
       "production_boundaries": [
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.submit_result",
       "proof_ids": [
         "proof_s7_revision_request_valid",
         "proof_s7_revision_request_near_valid",
@@ -724,6 +765,7 @@
       "production_boundaries": [
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.submit_result",
       "proof_ids": [
         "proof_s7_corrected_result_acceptance_valid",
         "proof_s7_corrected_result_acceptance_near_valid",
@@ -743,6 +785,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.submit_result",
       "proof_ids": [
         "proof_s7_second_invalid_failure_valid",
         "proof_s7_second_invalid_failure_near_valid",
@@ -760,6 +803,7 @@
         "shiproom.review_organisation.adapt",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_failed_result_no_adaptation_valid",
         "proof_s7_failed_result_no_adaptation_near_valid",
@@ -779,6 +823,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.prepare",
       "proof_ids": [
         "proof_s7_trigger_specific_evidence_valid",
         "proof_s7_trigger_specific_evidence_near_valid",
@@ -798,6 +843,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_migration_adaptation_valid",
         "proof_s7_migration_adaptation_near_valid",
@@ -817,6 +863,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_ai_adaptation_valid",
         "proof_s7_ai_adaptation_near_valid",
@@ -836,6 +883,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_browser_disproven_adaptation_valid",
         "proof_s7_browser_disproven_adaptation_near_valid",
@@ -855,6 +903,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_superseded_work_order_preservation_valid",
         "proof_s7_superseded_work_order_preservation_near_valid",
@@ -874,6 +923,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_adaptation_idempotency_valid",
         "proof_s7_adaptation_idempotency_near_valid",
@@ -893,6 +943,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_adaptation_cycle_depth_valid",
         "proof_s7_adaptation_cycle_depth_near_valid",
@@ -912,6 +963,7 @@
         "shiproom.review_organisation.prepare",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "shiproom.review_organisation.adapt",
       "proof_ids": [
         "proof_s7_pointer_last_publication_valid",
         "proof_s7_pointer_last_publication_near_valid",
@@ -929,6 +981,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_target_registry_valid",
         "proof_s8_contest_target_registry_near_valid",
@@ -946,6 +999,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_source_generation_valid",
         "proof_s8_contest_source_generation_near_valid",
@@ -963,6 +1017,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_target_existence_valid",
         "proof_s8_contest_target_existence_near_valid",
@@ -980,6 +1035,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_evidence_existence_valid",
         "proof_s8_contest_evidence_existence_near_valid",
@@ -997,6 +1053,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_evidence_relevance_valid",
         "proof_s8_contest_evidence_relevance_near_valid",
@@ -1015,6 +1072,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_authority_preservation_valid",
         "proof_s8_contest_authority_preservation_near_valid",
@@ -1033,6 +1091,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_append_sequence_valid",
         "proof_s8_contest_append_sequence_near_valid",
@@ -1051,6 +1110,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_previous_hash_valid",
         "proof_s8_contest_previous_hash_near_valid",
@@ -1069,6 +1129,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_idempotent_replay_valid",
         "proof_s8_contest_idempotent_replay_near_valid",
@@ -1086,6 +1147,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_conflicting_duplicate_valid",
         "proof_s8_contest_conflicting_duplicate_near_valid",
@@ -1104,6 +1166,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_contest_owner_authority_valid",
         "proof_s8_contest_owner_authority_near_valid",
@@ -1122,6 +1185,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_named_risk_fact_non_mutation_valid",
         "proof_s8_named_risk_fact_non_mutation_near_valid",
@@ -1140,6 +1204,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_named_risk_decision_effect_valid",
         "proof_s8_named_risk_decision_effect_near_valid",
@@ -1158,6 +1223,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_owner_decision_budget_valid",
         "proof_s8_owner_decision_budget_near_valid",
@@ -1176,6 +1242,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_owner_decision_priority_valid",
         "proof_s8_owner_decision_priority_near_valid",
@@ -1194,6 +1261,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_owner_decision_overflow_valid",
         "proof_s8_owner_decision_overflow_near_valid",
@@ -1212,6 +1280,7 @@
         "shiproom.contestability.append_action",
         "shiproom.contestability.load"
       ],
+      "production_boundary": "shiproom.contestability.append_action",
       "proof_ids": [
         "proof_s8_future_remediation_no_cycle_valid",
         "proof_s8_future_remediation_no_cycle_near_valid",
@@ -1229,6 +1298,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_management_dependency_discovery_valid",
         "proof_s8_management_dependency_discovery_near_valid",
@@ -1246,6 +1316,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_management_dependency_states_valid",
         "proof_s8_management_dependency_states_near_valid",
@@ -1263,6 +1334,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_management_dependency_freshness_valid",
         "proof_s8_management_dependency_freshness_near_valid",
@@ -1281,6 +1353,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_management_mixed_vector_rejection_valid",
         "proof_s8_management_mixed_vector_rejection_near_valid",
@@ -1299,6 +1372,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_executive_section_completeness_valid",
         "proof_s8_executive_section_completeness_near_valid",
@@ -1317,6 +1391,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_product_matrix_completeness_valid",
         "proof_s8_product_matrix_completeness_near_valid",
@@ -1335,6 +1410,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_engineering_section_completeness_valid",
         "proof_s8_engineering_section_completeness_near_valid",
@@ -1353,6 +1429,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_measurement_ai_passthrough_valid",
         "proof_s8_measurement_ai_passthrough_near_valid",
@@ -1371,6 +1448,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_remediation_overview_completeness_valid",
         "proof_s8_remediation_overview_completeness_near_valid",
@@ -1389,6 +1467,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_closure_contract_indexing_valid",
         "proof_s8_closure_contract_indexing_near_valid",
@@ -1407,6 +1486,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_contestability_inclusion_valid",
         "proof_s8_contestability_inclusion_near_valid",
@@ -1425,6 +1505,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_recommendation_policy_valid",
         "proof_s8_recommendation_policy_near_valid",
@@ -1443,6 +1524,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_accepted_condition_effect_valid",
         "proof_s8_accepted_condition_effect_near_valid",
@@ -1463,6 +1545,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_named_risk_recommendation_effect_valid",
         "proof_s8_named_risk_recommendation_effect_near_valid",
@@ -1481,6 +1564,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_insufficient_evidence_state_valid",
         "proof_s8_insufficient_evidence_state_near_valid",
@@ -1498,6 +1582,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_deterministic_json_valid",
         "proof_s8_deterministic_json_near_valid",
@@ -1516,6 +1601,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_safe_html_valid",
         "proof_s8_safe_html_near_valid",
@@ -1534,6 +1620,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_safe_markdown_valid",
         "proof_s8_safe_markdown_near_valid",
@@ -1551,6 +1638,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_artifact_hash_integrity_valid",
         "proof_s8_artifact_hash_integrity_near_valid",
@@ -1568,6 +1656,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_artifact_file_set_valid",
         "proof_s8_artifact_file_set_near_valid",
@@ -1585,6 +1674,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_deterministic_rerender_valid",
         "proof_s8_deterministic_rerender_near_valid",
@@ -1602,6 +1692,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "shiproom.management_artifacts.compile",
       "proof_ids": [
         "proof_s8_upstream_staleness_valid",
         "proof_s8_upstream_staleness_near_valid",
@@ -1619,6 +1710,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.review_organisation.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_trusted_reads_valid",
         "proof_shared_trusted_reads_near_valid",
@@ -1636,6 +1728,7 @@
         "shiproom.remediation_roadmaps.compile",
         "shiproom.review_organisation.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_trusted_writes_valid",
         "proof_shared_trusted_writes_near_valid",
@@ -1646,11 +1739,14 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-security-receipt.json"
       ],
       "production_boundaries": [
-        "shiproom.historical_remediation.run_controlled_patient"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.review_organisation.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_link_reparse_special_rejection_valid",
         "proof_shared_link_reparse_special_rejection_near_valid",
@@ -1668,6 +1764,7 @@
         "shiproom.remediation_roadmaps.load_generation",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_capacity_limits_valid",
         "proof_shared_capacity_limits_near_valid",
@@ -1678,13 +1775,13 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/after-review-plan.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
-        "shiproom.review_organisation.adapt",
-        "shiproom.review_organisation.prepare",
-        "shiproom.review_organisation.submit_result"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_pointer_late_failure_valid",
         "proof_shared_pointer_late_failure_near_valid",
@@ -1695,11 +1792,14 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-security-receipt.json"
       ],
       "production_boundaries": [
-        "shiproom.historical_remediation.run_controlled_patient"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.review_organisation.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_security_receipt.validate",
       "proof_ids": [
         "proof_shared_zero_prohibited_operations_valid",
         "proof_shared_zero_prohibited_operations_near_valid",
@@ -1710,12 +1810,13 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-execution-package.json"
+        "session6-8-contract-parity-report.json"
       ],
       "production_boundaries": [
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_contract_inventory_valid",
         "proof_shared_contract_inventory_near_valid",
@@ -1726,12 +1827,13 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-submission.json"
+        "session6-8-contract-parity-report.json"
       ],
       "production_boundaries": [
         "shiproom.review_organisation.render_package",
         "shiproom.review_organisation.submit_result"
       ],
+      "production_boundary": "scripts.validate_session6_8_contract_parity.validate",
       "proof_ids": [
         "proof_shared_executed_contract_parity_valid",
         "proof_shared_executed_contract_parity_near_valid",
@@ -1742,11 +1844,12 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "behavioral-eval-receipt.json"
       ],
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_behavioral_eval_integrity_valid",
         "proof_shared_behavioral_eval_integrity_near_valid",
@@ -1757,11 +1860,12 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_workflow_eval_integrity_valid",
         "proof_shared_workflow_eval_integrity_near_valid",
@@ -1772,11 +1876,12 @@
     },
     {
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-installed-wheel-receipt.json"
       ],
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
       ],
+      "production_boundary": "scripts.validate_session6_8_wheel_receipt.validate",
       "proof_ids": [
         "proof_shared_installed_wheel_lifecycle_valid",
         "proof_shared_installed_wheel_lifecycle_near_valid",
@@ -1792,6 +1897,7 @@
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_skill_pilot_consistency_valid",
         "proof_shared_skill_pilot_consistency_near_valid",
@@ -1809,6 +1915,7 @@
         "shiproom.remediation_roadmaps.load_generation",
         "shiproom.remediation_roadmaps.prepare"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_proof_execution_valid",
         "proof_shared_proof_execution_near_valid",
@@ -1825,6 +1932,7 @@
         "shiproom.management_artifacts.compiler.compile",
         "shiproom.management_artifacts.compiler.load"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_closeout_generation_valid",
         "proof_shared_closeout_generation_near_valid",
@@ -1840,6 +1948,7 @@
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
       ],
+      "production_boundary": "scripts.validate_session6_8_closeout_independently.validate_bundle",
       "proof_ids": [
         "proof_shared_independent_validation_valid",
         "proof_shared_independent_validation_near_valid",

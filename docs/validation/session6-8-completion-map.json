@@ -2393,11 +2393,13 @@
         "proof_shared_link_reparse_special_rejection_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-security-receipt.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
-        "shiproom.historical_remediation.run_controlled_patient"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.review_organisation.prepare"
       ],
       "known_gap": "authentic proof execution required",
       "near_valid_proof_ids": [
@@ -2441,13 +2443,12 @@
         "proof_shared_pointer_late_failure_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/after-review-plan.json"
+        "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
-        "shiproom.review_organisation.adapt",
-        "shiproom.review_organisation.prepare",
-        "shiproom.review_organisation.submit_result"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.management_artifacts.compiler.load"
       ],
       "known_gap": "authentic proof execution required",
       "near_valid_proof_ids": [
@@ -2466,11 +2467,13 @@
         "proof_shared_zero_prohibited_operations_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-security-receipt.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
-        "shiproom.historical_remediation.run_controlled_patient"
+        "shiproom.management_artifacts.compiler.compile",
+        "shiproom.remediation_roadmaps.compile",
+        "shiproom.review_organisation.prepare"
       ],
       "known_gap": "authentic proof execution required",
       "near_valid_proof_ids": [
@@ -2489,7 +2492,7 @@
         "proof_shared_contract_inventory_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-execution-package.json"
+        "session6-8-contract-parity-report.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2513,7 +2516,7 @@
         "proof_shared_executed_contract_parity_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-submission.json"
+        "session6-8-contract-parity-report.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2537,7 +2540,7 @@
         "proof_shared_behavioral_eval_integrity_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "behavioral-eval-receipt.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2560,7 +2563,7 @@
         "proof_shared_workflow_eval_integrity_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-workflow-eval-receipt.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [
@@ -2583,7 +2586,7 @@
         "proof_shared_installed_wheel_lifecycle_adversarial_invalid"
       ],
       "canonical_artifacts": [
-        "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
+        "session6-8-installed-wheel-receipt.json"
       ],
       "current_state": "pending_authentic_execution",
       "implementation_symbols": [

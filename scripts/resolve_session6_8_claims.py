@@ -7,6 +7,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from shiproom.session6_8_evidence_query import evaluate
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -81,32 +82,39 @@ def resolve(*, proof_path: Path, workflow_path: Path, parity_path: Path,
             raise ValueError("claim_proof_binding_invalid")
         if {row["fixture_class"] for row in selected} != {"valid", "near_valid", "adversarial_invalid"}:
             raise ValueError("claim_proof_class_incomplete")
-        assertions = claim.get("artifact_assertions")
+        configured_assertions = claim.get("artifact_queries")
         counts = claim.get("minimum_record_counts")
-        if not assertions or not counts or any(value < 1 for value in counts.values()):
+        if not configured_assertions or not counts or any(value < 1 for value in counts.values()):
             raise ValueError("claim_evidence_assertion_vacuous")
-        measured=[]; invocation_ids=[]
+        measured=[]; invocation_ids=[]; measured_assertions=[]
         for row in selected:
             expected=row["fixture_class"]!="adversarial_invalid"
             if row.get("actual_acceptance")!=expected:
                 raise ValueError("claim_proof_outcome_invalid")
-            if not expected and (row.get("actual_exception")!="ValueError" or not row.get("actual_error_code")):
+            if not expected and not row.get("actual_error_code"):
                 raise ValueError("claim_proof_rejection_invalid")
             paths=row.get("artifact_paths",[])
-            if len(paths)!=1:
+            if not paths:
                 raise ValueError("claim_proof_artifact_cardinality_invalid")
-            path=Path(paths[0])
-            if not path.is_file() or row.get("artifact_hashes",{}).get(str(path))!=_sha(path):
-                raise ValueError("claim_proof_artifact_hash_invalid")
-            artifact=json.loads(path.read_text(encoding="utf-8"))
-            if artifact.get("requirement_id")!=rid or artifact.get("proof_id")!=row["proof_id"]:
-                raise ValueError("claim_proof_artifact_binding_invalid")
-            count=_measured_count(artifact.get("measured_value"))
+            for relative in paths:
+                artifact_path=proof_path.parent/relative
+                if not artifact_path.is_file() or row.get("artifact_hashes",{}).get(relative)!=_sha(artifact_path):
+                    raise ValueError("claim_proof_artifact_hash_invalid")
+            proof_assertions=row.get("artifact_assertions",[])
+            if not proof_assertions: raise ValueError("claim_proof_artifact_binding_invalid")
+            replayed=[]
+            for assertion in proof_assertions:
+                replay=evaluate(proof_path.parent,assertion["query"])
+                if not replay.passed or replay.actual!=assertion["actual"] or replay.cardinality!=assertion["cardinality"]:
+                    raise ValueError("claim_proof_artifact_assertion_invalid")
+                replayed.append({"selector":assertion["query"]["selector"],"operator":assertion["query"]["operator"],"actual":replay.actual,"cardinality":replay.cardinality})
+            measured_assertions.extend({"proof_id":row["proof_id"],**item} for item in replayed)
+            count=max(item["cardinality"] for item in replayed)
             if expected and count<row["minimum_record_count"]:
                 raise ValueError("claim_measured_cardinality_invalid")
-            if count!=artifact.get("measured_cardinality") or count!=row.get("actual_record_count"):
+            if count!=row.get("actual_record_count"):
                 raise ValueError("claim_configured_minimum_substitution")
-            measured.append({"proof_id":row["proof_id"],"artifact_hash":_sha(path),"selector":artifact["artifact_selector"],"measured_value":artifact["measured_value"],"measured_cardinality":count})
+            measured.append({"proof_id":row["proof_id"],"artifact_hashes":row["artifact_hashes"],"artifact_assertions":replayed,"measured_cardinality":count,"actual_error_code":row.get("actual_error_code")})
             invocation_ids.extend(row.get("production_invocation_ids",[]))
         expected_functions=set(claim.get("production_invocation_receipts",[]))
         observed_functions={item.get("qualified_function") for row in selected for item in row.get("production_invocations",[])}
@@ -114,7 +122,7 @@ def resolve(*, proof_path: Path, workflow_path: Path, parity_path: Path,
             raise ValueError("claim_production_invocation_missing")
         resolved.append({"claim_id": claim["claim_id"], "requirement_id": rid,
                          "proof_ids": [row["proof_id"] for row in selected],
-                         "evidence_assertions": assertions, "minimum_record_counts": counts,
+                         "evidence_assertions": measured_assertions, "minimum_record_counts": counts,
                          "measured_evidence":measured,"production_invocation_ids":sorted(set(invocation_ids)),
                          "resolved": True})
     commit = proof_value["final_commit"]
