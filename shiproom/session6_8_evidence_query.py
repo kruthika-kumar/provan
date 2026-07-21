@@ -97,8 +97,10 @@ def _cardinality(value: Any) -> int:
         return 0
     if isinstance(value, bool):
         return 1
-    if isinstance(value, (str, bytes, list, tuple, set, dict)):
+    if isinstance(value, (list, tuple, set, dict)):
         return len(value)
+    if isinstance(value,(str,bytes)):
+        return 1
     return 1
 
 

@@ -65,7 +65,8 @@ def _pointer(value:Any,pointer:str)->Any:
 def _count(value:Any)->int:
     if value is None:return 0
     if isinstance(value,bool):return 1
-    if isinstance(value,(str,list,dict)):return len(value)
+    if isinstance(value,(list,dict)):return len(value)
+    if isinstance(value,str):return 1
     if isinstance(value,int):return 1
     return 1
 

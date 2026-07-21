@@ -27,3 +27,9 @@ def test_evidence_query_rejects_configured_or_escaped_sources(tmp_path):
 def test_synthetic_measurement_selector_is_not_an_accepted_closeout_query():
     with pytest.raises(EvidenceQueryError, match="evidence_query_artifact_invalid"):
         validate_query({"artifact": "", "selector": "/measurements/x/observed", "operator": "equals", "expected": True})
+
+
+def test_selected_empty_scalar_is_one_measured_record(tmp_path):
+    artifact=tmp_path/"state.json";artifact.write_text('{"status":""}',encoding="utf-8")
+    result=evaluate(tmp_path,{"artifact":"state.json","selector":"/status","operator":"equals","expected":""})
+    assert result.passed and result.cardinality==1
