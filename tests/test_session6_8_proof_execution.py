@@ -18,7 +18,11 @@ def test_requirement_proof(proof_id):
     commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
     event=execute_proof(proof_id,final_commit=commit)
     assert event["passed"]
-    assert event["actual_record_count"] >= 1
+    if event["fixture_class"] != "adversarial_invalid":
+        assert event["actual_record_count"] >= event["minimum_record_count"]
+    else:
+        assert event["actual_record_count"] == 0
+        assert event["actual_error_code"]
     assert event["production_invocation_ids"]
 
 
