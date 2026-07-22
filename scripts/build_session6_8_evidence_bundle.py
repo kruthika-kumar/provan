@@ -78,7 +78,8 @@ def build(target: Path, *, final_commit: str, include_tamper: bool = True) -> di
     for source in sorted(path for path in (local/"session6-8-workflow-evidence").rglob("*") if path.is_file()):
         _copy(source,target/"canonical-artifacts/workflow-evidence"/source.relative_to(local/"session6-8-workflow-evidence"))
     wheel = json.loads((local / "session6-8-installed-wheel-receipt.json").read_text(encoding="utf-8"))
-    _copy(Path(wheel["bundled_wheel_path"]),target/"final-session6-8.whl")
+    wheel_source=Path(wheel["bundled_wheel_path"])
+    _copy(wheel_source,target/wheel_source.name)
     external = Path(wheel["external_working_directory"])
     for row in wheel["artifacts"]:
         _copy(external / row["relative_path"], target / "canonical-artifacts/wheel" / row["relative_path"])

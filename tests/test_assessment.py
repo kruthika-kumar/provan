@@ -477,7 +477,7 @@ def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: P
     installed([str(command),"management-artifacts","compile","--release",str(release_path)])
     installed([str(command),"management-artifacts","show","--release",str(release_path)])
     if evidence_target:
-        bundled_wheel=Path(evidence_target).parent/"final-session6-8.whl"
+        bundled_wheel=Path(evidence_target).parent/wheel.name
         shutil.copy2(wheel,bundled_wheel)
         artifact_root=ctx.repository_root/".shiproom"/"local"/"releases"/ctx.release["release_id"]
         artifact_rows=[]

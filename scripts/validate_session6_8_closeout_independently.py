@@ -261,8 +261,8 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str,
     for row in wheel.get("artifacts",[]):
         artifact=bundle/"canonical-artifacts/wheel"/row["relative_path"]
         if not artifact.is_file() or _sha(artifact.read_bytes())!=row["sha256"]:raise CloseoutValidationError("closeout_wheel_artifact_invalid")
-    wheel_file=bundle/"final-session6-8.whl"
-    if not wheel_file.is_file() or _sha(wheel_file.read_bytes())!=wheel.get("wheel_sha256"):raise CloseoutValidationError("closeout_bundled_wheel_invalid")
+    wheel_files=list(bundle.glob("*.whl"))
+    if len(wheel_files)!=1 or wheel_files[0].name!=Path(wheel.get("installed_distribution","")).name or _sha(wheel_files[0].read_bytes())!=wheel.get("wheel_sha256"):raise CloseoutValidationError("closeout_bundled_wheel_invalid")
     if not (bundle/"independent-validator-entrypoint.py").is_file():raise CloseoutValidationError("closeout_validator_source_missing")
 
     if require_tamper_evidence:
