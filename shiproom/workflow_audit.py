@@ -59,7 +59,7 @@ def session(root: Path, workflow_case: str) -> Iterator[list[dict[str, Any]]]:
     Nested calls receive the current invocation as their parent.  A disabled
     audit context is indistinguishable from a direct production invocation.
     """
-    state = {"root": root, "workflow_case": workflow_case, "records": [], "stack": [], "subcase": None}
+    state = {"root": root, "workflow_case": workflow_case, "records": [], "stack": [], "subcase": None, "final_commit": _commit(root)}
     token = _ACTIVE.set(state)
     try:
         yield state["records"]
@@ -116,7 +116,7 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
         "generated_artifact_paths": list(artifact_paths or []),
         "generated_artifact_hashes": {},
         "parent_invocation_id": state["stack"][-1] if state["stack"] else None,
-        "final_commit": _commit(state["root"]),
+        "final_commit": state["final_commit"],
         "persisted_state_before": persisted_before,
         "persisted_state_after": None,
     }

@@ -5,7 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "subcase_id", "mutation_id", "mutation_class", "target",
+    "schema_version", "subcase_id", "baseline_invocation_id", "mutation_id", "mutation_class", "target",
     "base_artifact", "base_hash", "base_semantic_hash", "mutated_artifact",
     "mutated_hash", "mutated_semantic_hash", "authoritative_state_before_hash",
     "authoritative_state_after_hash", "rejection_receipt_artifact", "rejection_receipt_hash"
@@ -13,6 +13,7 @@
   "properties": {
     "schema_version": {"const": "production-proof-subcase.v1"},
     "subcase_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "baseline_invocation_id": {"type": "string", "minLength": 1, "maxLength": 256},
     "mutation_id": {"type": "string", "minLength": 1, "maxLength": 320},
     "mutation_class": {"type": "string", "minLength": 1, "maxLength": 128},
     "target": {"type": "string", "pattern": "^/", "maxLength": 1024},

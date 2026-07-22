@@ -390,7 +390,7 @@ def main() -> int:
                           "three_contracts": len(contracts) == 3, "three_projections": len(nodes) == 3,
                           "bidirectional_unique_links": unique and all((root_dir / "closure-contracts" / (item["verification_contract_id"] + ".json")).is_file() for item in packets)}
             contracts_by_id={path.stem:json.loads(path.read_text(encoding="utf-8")) for path in contracts}
-            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-plan.json":artifacts["remediation-plan.json"],"remediation-overlay.json":artifacts["remediation-overlay.json"],"closure-contracts.json":contracts_by_id}
+            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-index.json":artifacts["remediation-index.json"],"remediation-plan.json":artifacts["remediation-plan.json"],"remediation-overlay.json":artifacts["remediation-overlay.json"],"closure-contracts.json":contracts_by_id}
     run(CASES[11], three_issues)
     def contestation():
         with tempfile.TemporaryDirectory() as raw:

@@ -10,6 +10,13 @@ def _semantic(value)->str:return "sha256:"+hashlib.sha256(json.dumps(value,sort_
 def _validate_rejection(row,registered,evidence_root):
     if row["fixture_class"]!="adversarial_invalid":
         if row.get("rejection_invocation_id") is not None or row.get("outcome_evidence") is not None:raise ValueError("proof_execution_spurious_rejection")
+        if row["fixture_class"]=="near_valid":
+            binding=row.get("fixture_binding")
+            if not isinstance(binding,dict):raise ValueError("proof_execution_near_binding_missing")
+            manifest_path=evidence_root/binding["manifest_artifact"];manifest=json.loads(manifest_path.read_text());base=evidence_root/manifest["base_artifact"];bounded=evidence_root/manifest["mutated_artifact"]
+            if manifest.get("mutation_class")!="bounded_production_state" or _sha(base)!=manifest.get("base_hash") or _sha(bounded)!=manifest.get("mutated_hash") or manifest.get("base_semantic_hash")==manifest.get("mutated_semantic_hash"):raise ValueError("proof_execution_near_binding_invalid")
+            baselines=[item for item in row.get("production_invocations",[]) if item.get("invocation_id")==manifest.get("baseline_invocation_id")]
+            if len(baselines)!=1 or baselines[0].get("exception_type") is not None:raise ValueError("proof_execution_near_invocation_missing")
         return
     outcome=row.get("outcome_evidence");binding=row.get("fixture_binding")
     if outcome!=registered.get("outcome_evidence") or not isinstance(binding,dict):raise ValueError("proof_execution_rejection_binding_missing")
@@ -27,6 +34,8 @@ def _validate_rejection(row,registered,evidence_root):
     if not base.is_file() or not mutated.is_file() or _sha(base)!=manifest["base_hash"] or _sha(mutated)!=manifest["mutated_hash"] or manifest["base_hash"]==manifest["mutated_hash"]:raise ValueError("proof_execution_mutation_hash_invalid")
     if _semantic(json.loads(base.read_text()))!=manifest["base_semantic_hash"] or _semantic(json.loads(mutated.read_text()))!=manifest["mutated_semantic_hash"]:raise ValueError("proof_execution_mutation_semantics_invalid")
     if manifest["mutated_semantic_hash"] not in set(invocation.get("input_component_hashes",[])):raise ValueError("proof_execution_mutation_invocation_unbound")
+    baselines=[item for item in invocations if item.get("invocation_id")==manifest.get("baseline_invocation_id") and item.get("subcase_id")==outcome["subcase_id"]+":baseline" and item.get("qualified_function")==outcome["production_function"]]
+    if len(baselines)!=1 or baselines[0].get("exception_type") is not None or manifest["base_semantic_hash"] not in set(baselines[0].get("input_component_hashes",[])):raise ValueError("proof_execution_valid_baseline_missing")
 @observed_boundary
 def validate(path:Path):
     receipt=json.loads(path.read_text());manifest=json.loads((ROOT/"docs/validation/session6-8-proof-manifest.json").read_text())["proofs"]; requirements={r["requirement_id"] for r in json.loads((ROOT/"docs/validation/session6-8-requirement-inventory.json").read_text())["requirements"]};registry={r["proof_id"]:r for r in json.loads((ROOT/"docs/validation/session6-8-requirement-proof-registry.json").read_text())["proofs"]}

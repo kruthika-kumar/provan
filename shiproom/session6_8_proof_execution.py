@@ -30,6 +30,7 @@ class RequirementProofCase:
     fixture_binding: dict[str, Any] | None
     outcome_evidence: dict[str, Any] | None
     attack_spec: dict[str, Any] | None
+    near_spec: dict[str, Any] | None
 
 
 def _load_registry() -> dict[str, Any]:
@@ -58,7 +59,7 @@ def _case(row: dict[str, Any]) -> RequirementProofCase:
         artifact_queries=tuple(row["artifact_queries"]),expected_boundary_outcome=row["expected_boundary_outcome"],
         minimum_record_count=row["minimum_cardinality"],semantic_fingerprint=row["semantic_fingerprint"],
         expected_acceptance=row["expected_acceptance"],expected_error=row.get("expected_error"),
-        fixture_binding=row.get("fixture_binding"),outcome_evidence=row.get("outcome_evidence"),attack_spec=row.get("attack_spec"),
+        fixture_binding=row.get("fixture_binding"),outcome_evidence=row.get("outcome_evidence"),attack_spec=row.get("attack_spec"),near_spec=row.get("near_spec"),
     )
 
 
@@ -136,32 +137,39 @@ def _execute_attack(case: RequirementProofCase, root: Path, final_commit: str) -
     base_copy=proof_root/"base.json";mutated_copy=proof_root/"mutated.json"
     base_copy.write_text(json.dumps(base,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     mutated_copy.write_text(json.dumps(mutated,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    callable_=_resolve_symbol(spec["production_function"]);arguments=[];keyword_arguments={}
-    for item in spec["arguments"]:
-        if item=="$mutated":arguments.append(mutated)
-        elif item=="$mutated_path":arguments.append(mutated_copy)
-        elif item=="$base_path":arguments.append(base_copy)
-        elif isinstance(item,str) and item.startswith("$artifact:"):
-            arguments.append(json.loads(_binding_path(root,item.removeprefix("$artifact:")).read_text(encoding="utf-8")))
-        elif isinstance(item,dict) and set(item)=={"$base_pointer"}:
-            current=base
-            for part in item["$base_pointer"].lstrip("/").split("/"):
-                current=current[int(part)] if isinstance(current,list) else current[part]
-            arguments.append(current)
-        elif isinstance(item,dict) and set(item)=={"$keyword"}:
-            definition=item["$keyword"]
-            if not isinstance(definition,dict) or set(definition)!={"name","base_pointer"}:raise ValueError("proof_attack_argument_invalid")
-            current=base
-            for part in definition["base_pointer"].lstrip("/").split("/"):
-                current=current[int(part)] if isinstance(current,list) else current[part]
-            keyword_arguments[definition["name"]]=current
-        else:arguments.append(item)
+    callable_=_resolve_symbol(spec["production_function"])
+    def arguments_for(primary,primary_path):
+        arguments=[];keyword_arguments={}
+        for item in spec["arguments"]:
+            if item=="$mutated":arguments.append(primary)
+            elif item=="$mutated_path":arguments.append(primary_path)
+            elif item=="$base_path":arguments.append(base_copy)
+            elif isinstance(item,str) and item.startswith("$artifact:"):
+                arguments.append(json.loads(_binding_path(root,item.removeprefix("$artifact:")).read_text(encoding="utf-8")))
+            elif isinstance(item,dict) and set(item)=={"$base_pointer"}:
+                current=base
+                for part in item["$base_pointer"].lstrip("/").split("/"):current=current[int(part)] if isinstance(current,list) else current[part]
+                arguments.append(current)
+            elif isinstance(item,dict) and set(item)=={"$keyword"}:
+                definition=item["$keyword"]
+                if not isinstance(definition,dict) or set(definition)!={"name","base_pointer"}:raise ValueError("proof_attack_argument_invalid")
+                current=base
+                for part in definition["base_pointer"].lstrip("/").split("/"):current=current[int(part)] if isinstance(current,list) else current[part]
+                keyword_arguments[definition["name"]]=current
+            else:arguments.append(item)
+        return arguments,keyword_arguments
+    baseline_args,baseline_kwargs=arguments_for(base,base_copy);arguments,keyword_arguments=arguments_for(mutated,mutated_copy)
     records=[];returned=None;caught=None
     with audit_session(Path.cwd(),case.workflow_case) as records:
+        with audit_subcase(spec["subcase_id"]+":baseline"):
+            try:callable_(*baseline_args,**baseline_kwargs)
+            except Exception as exc:raise ValueError("proof_attack_valid_baseline_rejected") from exc
         with audit_subcase(spec["subcase_id"]):
             try:returned=callable_(*arguments,**keyword_arguments)
             except Exception as exc:caught=exc
+    baselines=[row for row in records if row.get("subcase_id")==spec["subcase_id"]+":baseline" and row.get("qualified_function")==spec["production_function"]]
     matching=[row for row in records if row.get("subcase_id")==spec["subcase_id"] and row.get("qualified_function")==spec["production_function"]]
+    if len(baselines)!=1 or baselines[0].get("exception_type") is not None:raise ValueError("proof_attack_valid_baseline_missing")
     if len(matching)!=1:raise ValueError("proof_attack_invocation_missing")
     invocation=matching[0]
     if spec["channel"]=="exception":
@@ -174,9 +182,25 @@ def _execute_attack(case: RequirementProofCase, root: Path, final_commit: str) -
     before_hash="sha256:"+hashlib.sha256(json.dumps(invocation.get("persisted_state_before") or {},sort_keys=True,separators=(",",":")).encode()).hexdigest()
     after_hash="sha256:"+hashlib.sha256(json.dumps(invocation.get("persisted_state_after") or {},sort_keys=True,separators=(",",":")).encode()).hexdigest()
     relative=lambda path:path.relative_to(root).as_posix()
-    manifest={"schema_version":"production-proof-subcase.v1","subcase_id":spec["subcase_id"],"mutation_id":spec["mutation_id"],"mutation_class":spec["mutation_class"],"target":spec["target"],"base_artifact":relative(base_copy),"base_hash":_sha(base_copy),"base_semantic_hash":_semantic_hash(base),"mutated_artifact":relative(mutated_copy),"mutated_hash":_sha(mutated_copy),"mutated_semantic_hash":_semantic_hash(mutated),"authoritative_state_before_hash":before_hash,"authoritative_state_after_hash":after_hash,"rejection_receipt_artifact":None,"rejection_receipt_hash":None}
+    manifest={"schema_version":"production-proof-subcase.v1","subcase_id":spec["subcase_id"],"baseline_invocation_id":baselines[0]["invocation_id"],"mutation_id":spec["mutation_id"],"mutation_class":spec["mutation_class"],"target":spec["target"],"base_artifact":relative(base_copy),"base_hash":_sha(base_copy),"base_semantic_hash":_semantic_hash(base),"mutated_artifact":relative(mutated_copy),"mutated_hash":_sha(mutated_copy),"mutated_semantic_hash":_semantic_hash(mutated),"authoritative_state_before_hash":before_hash,"authoritative_state_after_hash":after_hash,"rejection_receipt_artifact":None,"rejection_receipt_hash":None}
     manifest_path=proof_root/"subcase-manifest.json";manifest_path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n",encoding="utf-8")
     return {"subcase_id":spec["subcase_id"],"manifest_artifact":relative(manifest_path)},records
+
+
+def _execute_near(case:RequirementProofCase,root:Path,query_results:list[dict[str,Any]],invocations:list[dict[str,Any]])->dict[str,str]:
+    spec=case.near_spec
+    if not isinstance(spec,dict) or set(spec)!={"schema_version","subcase_id","mutation_id","mutation_class","target"} or spec.get("schema_version")!="production-proof-near-binding.v1":raise ValueError("proof_near_spec_invalid")
+    if len(query_results)<2 or not invocations:raise ValueError("proof_near_controlled_state_missing")
+    near=query_results[0];valid=query_results[-1]
+    base={"query":valid["query"],"actual":valid["actual"]}
+    bounded={"query":near["query"],"actual":near["actual"]}
+    proof_root=root/"proof-artifacts"/case.proof_id;proof_root.mkdir(parents=True,exist_ok=True);base_path=proof_root/"base.json";bounded_path=proof_root/"bounded.json"
+    base_path.write_text(json.dumps(base,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");bounded_path.write_text(json.dumps(bounded,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    relative=lambda path:path.relative_to(root).as_posix();state_hash=_sha(root/"session6-8-workflow-eval-receipt.json")
+    manifest={"schema_version":"production-proof-subcase.v1","subcase_id":spec["subcase_id"],"baseline_invocation_id":invocations[0]["invocation_id"],"mutation_id":spec["mutation_id"],"mutation_class":spec["mutation_class"],"target":spec["target"],"base_artifact":relative(base_path),"base_hash":_sha(base_path),"base_semantic_hash":_semantic_hash(base),"mutated_artifact":relative(bounded_path),"mutated_hash":_sha(bounded_path),"mutated_semantic_hash":_semantic_hash(bounded),"authoritative_state_before_hash":state_hash,"authoritative_state_after_hash":state_hash,"rejection_receipt_artifact":None,"rejection_receipt_hash":None}
+    if manifest["base_semantic_hash"]==manifest["mutated_semantic_hash"]:raise ValueError("proof_near_controlled_state_not_distinct")
+    manifest_path=proof_root/"subcase-manifest.json";manifest_path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n",encoding="utf-8")
+    return {"subcase_id":spec["subcase_id"],"manifest_artifact":relative(manifest_path)}
 
 
 def _validate_fixture_binding(root: Path, binding: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -185,7 +209,7 @@ def _validate_fixture_binding(root: Path, binding: dict[str, Any] | None) -> dic
         raise ValueError("proof_fixture_binding_invalid")
     manifest_path=_binding_path(root,binding["manifest_artifact"])
     manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
-    required={"schema_version","subcase_id","mutation_id","mutation_class","target","base_artifact","base_hash","base_semantic_hash","mutated_artifact","mutated_hash","mutated_semantic_hash","authoritative_state_before_hash","authoritative_state_after_hash","rejection_receipt_artifact","rejection_receipt_hash"}
+    required={"schema_version","subcase_id","baseline_invocation_id","mutation_id","mutation_class","target","base_artifact","base_hash","base_semantic_hash","mutated_artifact","mutated_hash","mutated_semantic_hash","authoritative_state_before_hash","authoritative_state_after_hash","rejection_receipt_artifact","rejection_receipt_hash"}
     if set(manifest)!=required or manifest.get("schema_version")!="production-proof-subcase.v1" or manifest.get("subcase_id")!=binding["subcase_id"]:
         raise ValueError("proof_fixture_manifest_invalid")
     base=_binding_path(root,manifest["base_artifact"]);mutated=_binding_path(root,manifest["mutated_artifact"])
@@ -268,6 +292,7 @@ def execute_proof(proof_id: str, *, final_commit: str, evidence_root: Path | Non
     measured=max(cardinalities or [0])
     invocations=[item for item in workflow["production_invocations"] if item.get("qualified_function") in case.production_functions]
     invocations.extend(attack_invocations)
+    if case.fixture_class=="near_valid":runtime_binding=_execute_near(case,local_root,query_results,invocations)
     fixture=_validate_fixture_binding(local_root,runtime_binding)
     rejected,actual_error,actual_exception,rejection_invocation=_derive_rejection(local_root,case,invocations,fixture)
     if case.fixture_class=="adversarial_invalid" and not rejected:raise ValueError("proof_adversarial_rejection_missing")

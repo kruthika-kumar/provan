@@ -193,9 +193,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /packets with remediation_plan_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "remediation_plan_contract_invalid",
-      "approved_semantic_hash": "sha256:22b1927005a6afb9db9f32882bf9e685f2c2368569dd4ed1ee5eaa0f43f75484",
+      "adversarial_behavior": "The owning production boundary shiproom.remediation_roadmaps.validate_generation_projection must reject the isolated duplicate_packet mutation at /packets with remediation_packet_cardinality_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "remediation_packet_cardinality_invalid",
+      "approved_semantic_hash": "sha256:ff630d1b07c76462d3208e752af5ed00264ef74e048466737bc01f6301ca6e76",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -223,9 +223,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /verification_contract_id with remediation_packet_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "remediation_packet_contract_invalid",
-      "approved_semantic_hash": "sha256:b6be4e77cdab62643e32dd01b860b43954e5f696f4e55fdaf7ffab15a87bb9ba",
+      "adversarial_behavior": "The owning production boundary shiproom.remediation_roadmaps.validate_generation_projection must reject the isolated broken_contract_link mutation at /packets/0/verification_contract_id with remediation_closure_contract_cardinality_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "remediation_closure_contract_cardinality_invalid",
+      "approved_semantic_hash": "sha256:1ccd1be12b9caea57fdad01cc165665ba66f285977c6989c0bc820e261e9ef61",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -254,9 +254,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /remediation_id with remediation_packet_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "remediation_packet_contract_invalid",
-      "approved_semantic_hash": "sha256:f522464bb4e1e28a503bded350b8068008a15f24a82349f2f0d6d8ca7b058f37",
+      "adversarial_behavior": "The owning production boundary shiproom.remediation_roadmaps.validate_generation_projection must reject the isolated packet_identity_tamper mutation at /packets/0/remediation_id with remediation_index_packet_mismatch; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "remediation_index_packet_mismatch",
+      "approved_semantic_hash": "sha256:32e3e8a03d681f85056419d8e6a0f3613c6daadf74e761d4ed3cb55898a82264",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2838,9 +2838,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /results with review_plan_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "review_plan_contract_invalid",
-      "approved_semantic_hash": "sha256:28744d99561a27e52d171b85281677b59670502180fd573a85696576b8b2081b",
+      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /results with review_accepted_results_contract_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "review_accepted_results_contract_invalid",
+      "approved_semantic_hash": "sha256:c3b619e8c9794f2dfea0b689caaf16ff429483b4c0ce8cd4b5391c4fae6d9989",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2865,9 +2865,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /results with review_plan_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "review_plan_contract_invalid",
-      "approved_semantic_hash": "sha256:ca387a37e3c449faef91681e2c82b4675676fb04e413fa8b5b572b6844c8ccd7",
+      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /results with review_accepted_results_contract_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "review_accepted_results_contract_invalid",
+      "approved_semantic_hash": "sha256:46e7a57295cfc46b64bc3d8db5eb0ef91d075ad453af75f7852ef8f0fddea6ab",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",

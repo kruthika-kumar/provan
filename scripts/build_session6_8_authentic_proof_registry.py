@@ -171,6 +171,26 @@ VALID: dict[str, dict] = {
 
 
 def _near(requirement_id: str) -> dict:
+    exact={
+      "S7_BROWSER_ABSENCE_NOT_INSPECTED":q(BROWSER,"browser-specialist.json","/applicability_authority","equals","explicitly_not_applicable",outcome="bounded"),
+      "S7_REVISION_REQUEST":q(REVISION,"revision-ledger.json","/entries/0/status","equals","revision_required",outcome="bounded"),
+      "SHARED_TRUSTED_READS":q(READ_ONLY,"repository-state.json","/source_unchanged","equals",True,outcome="bounded"),
+      "SHARED_TRUSTED_WRITES":q(READ_ONLY,"repository-state.json","/after_status","equals_reference",{"artifact":f"session6-8-workflow-evidence/{READ_ONLY}/repository-state.json","selector":"/before_status"},outcome="bounded"),
+      "SHARED_LINK_REPARSE_SPECIAL_REJECTION":q_direct(READ_ONLY,"session6-8-security-receipt.json","/records","count_equals",44,outcome="bounded"),
+      "SHARED_CAPACITY_LIMITS":q(CARDINALITY,"remediation-plan.json","/schema_version","equals","remediation-plan.v1",outcome="bounded"),
+      "SHARED_POINTER_LATE_FAILURE":q(MANAGEMENT,"tamper-outcome.json","/error","equals","management_canonical_projection_tampered",outcome="bounded"),
+      "SHARED_ZERO_PROHIBITED_OPERATIONS":q_direct(READ_ONLY,"session6-8-security-receipt.json","/registry_semantic_hash","not_equals",None,outcome="bounded"),
+      "SHARED_CONTRACT_INVENTORY":q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/accepted_baselines","count_equals",53,outcome="bounded"),
+      "SHARED_EXECUTED_CONTRACT_PARITY":q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/unexpected_pass_count","equals",0,outcome="bounded"),
+      "SHARED_BEHAVIORAL_EVAL_INTEGRITY":q_direct(HISTORICAL,"behavioral-eval-receipt.json","/receipt_hash","not_equals",None,outcome="bounded"),
+      "SHARED_WORKFLOW_EVAL_INTEGRITY":q_direct(HISTORICAL,"session6-8-workflow-eval-receipt.json","/receipt_hash","not_equals",None,outcome="bounded"),
+      "SHARED_INSTALLED_WHEEL_LIFECYCLE":q_direct(HISTORICAL,"session6-8-installed-wheel-receipt.json","/source_checkout_not_on_sys_path","equals",True,outcome="bounded"),
+      "SHARED_SKILL_PILOT_CONSISTENCY":q(HISTORICAL,"historical-remediation-receipt.json","/cleanup_completed","equals",True,outcome="bounded"),
+      "SHARED_PROOF_EXECUTION":q(CARDINALITY,"remediation-overlay.json","/schema_version","equals","remediation-overlay.v1",outcome="bounded"),
+      "SHARED_CLOSEOUT_GENERATION":q(MANAGEMENT,"generation-manifest.json","/bundle_hash","not_equals",None,outcome="bounded"),
+      "SHARED_INDEPENDENT_VALIDATION":q(HISTORICAL,"historical-remediation-receipt.json","/receipt_hash","not_equals",None,outcome="bounded"),
+    }
+    if requirement_id in exact:return exact[requirement_id]
     if requirement_id.startswith("S6_CLOSURE_"):
         return q(CLOSURE,"closure-outcomes.json","/wrong_check/status","equals","unsatisfied",outcome="bounded")
     if requirement_id.startswith("S6_"):
@@ -307,8 +327,8 @@ def _canonical_attack(requirement_id: str) -> tuple[str,str,str]:
       "SHARED_CAPACITY_LIMITS":("remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"packets"),
       "SHARED_POINTER_LATE_FAILURE":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"bundle_hash"),
       "SHARED_ZERO_PROHIBITED_OPERATIONS":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"artifact_hashes"),
-      "SHARED_CONTRACT_INVENTORY":("review_plan",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
-      "SHARED_EXECUTED_CONTRACT_PARITY":("review_plan",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
+      "SHARED_CONTRACT_INVENTORY":("review_accepted_results",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
+      "SHARED_EXECUTED_CONTRACT_PARITY":("review_accepted_results",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
       "SHARED_BEHAVIORAL_EVAL_INTEGRITY":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"semantic_bundle_hash"),
       "SHARED_WORKFLOW_EVAL_INTEGRITY":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"schema_version"),
       "SHARED_INSTALLED_WHEEL_LIFECYCLE":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"release_id"),
@@ -322,6 +342,16 @@ def _canonical_attack(requirement_id: str) -> tuple[str,str,str]:
 
 def _attack_spec(requirement_id: str, proof_id: str) -> tuple[dict,dict,str]:
     contract,artifact,field=_canonical_attack(requirement_id)
+    if requirement_id in {"S6_REMEDIATION_CARDINALITY","S6_PACKET_CONTRACT_LINKS","S6_PACKET_FILE_INTEGRITY"}:
+        function="shiproom.remediation_roadmaps.validate_generation_projection"
+        artifact=_evidence_artifact(CARDINALITY,"remediation-plan.json")
+        args=["$artifact:"+_evidence_artifact(CARDINALITY,"remediation-index.json"),"$mutated","$artifact:"+_evidence_artifact(CARDINALITY,"remediation-overlay.json"),"$artifact:"+_evidence_artifact(CARDINALITY,"closure-contracts.json")]
+        if requirement_id=="S6_REMEDIATION_CARDINALITY":mutation={"operation":"duplicate","pointer":"/packets"};target="/packets";error="remediation_packet_cardinality_invalid";mutation_class="duplicate_packet"
+        elif requirement_id=="S6_PACKET_CONTRACT_LINKS":mutation={"operation":"remove","pointer":"/packets/0/verification_contract_id"};target="/packets/0/verification_contract_id";error="remediation_closure_contract_cardinality_invalid";mutation_class="broken_contract_link"
+        else:mutation={"operation":"replace","pointer":"/packets/0/remediation_id","value":"remediation_tampered"};target="/packets/0/remediation_id";error="remediation_index_packet_mismatch";mutation_class="packet_identity_tamper"
+        spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":mutation_class,"target":target,"base_artifact":artifact,"mutation":mutation,"production_function":function,"arguments":args,"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
+        outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
+        return spec,outcome,error
     special={
       "codex_execution_package":("shiproom.review_organisation.validate_codex_execution_package",["$mutated"],"codex_execution_package_shape_invalid"),
       "harness_execution_receipt":("shiproom.review_organisation.validate_harness_execution_receipt",["$mutated","$base_work_order_id"],"harness_execution_receipt_shape_invalid"),
@@ -367,7 +397,8 @@ def main() -> int:
             if fixture_class == "near_valid" and VALID[rid]["query"] != query:
                 queries.append(VALID[rid]["query"])
             active_attack=attack_spec if fixture_class=="adversarial_invalid" else None
-            fingerprint_input={"workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],"queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],"attack_spec":active_attack}
+            near_spec={"schema_version":"production-proof-near-binding.v1","subcase_id":proof_id,"mutation_id":"bounded_"+proof_id,"mutation_class":"bounded_production_state","target":query["selector"] or "/"} if fixture_class=="near_valid" else None
+            fingerprint_input={"workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],"queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],"attack_spec":active_attack,"near_spec":near_spec}
             rows.append({
                 "proof_id":proof_id,"requirement_id":rid,"fixture_class":fixture_class,
                 "workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],
@@ -376,7 +407,7 @@ def main() -> int:
                 "expected_error":attack_error if fixture_class=="adversarial_invalid" else None,
                 "expected_exception":"ValueError" if fixture_class=="adversarial_invalid" else None,
                 "fixture_binding":None,"outcome_evidence":outcome_evidence if fixture_class=="adversarial_invalid" else None,
-                "attack_spec":active_attack,
+                "attack_spec":active_attack,"near_spec":near_spec,
                 "minimum_cardinality":1,"canonical_artifacts":sorted({item["artifact"] for item in queries}),
                 "semantic_fingerprint":"sha256:"+hashlib.sha256(_canonical(fingerprint_input)).hexdigest(),
                 "shared_mechanism_justification":"The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",

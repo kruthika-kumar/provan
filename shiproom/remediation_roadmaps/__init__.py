@@ -188,6 +188,28 @@ def validate_authority_policy(value: dict) -> dict:
     return value
 
 
+@observed_boundary
+def validate_generation_projection(index: dict, plan: dict, overlay: dict, contracts: dict) -> dict:
+    """Validate one-packet/one-contract/one-projection generation semantics."""
+    validate_canonical_contract("remediation_index", index)
+    validate_canonical_contract("remediation_plan", plan)
+    validate_canonical_contract("remediation_overlay", overlay)
+    packets=plan["packets"];remediation_ids=[item.get("remediation_id") for item in packets]
+    closure_ids=[item.get("verification_contract_id") for item in packets]
+    if len(remediation_ids)!=len(set(remediation_ids)) or len(closure_ids)!=len(set(closure_ids)):
+        raise ValueError("remediation_packet_cardinality_invalid")
+    if set(remediation_ids)!=set(index["remediation_ids"]):raise ValueError("remediation_index_packet_mismatch")
+    nodes=overlay["nodes"]
+    if {item.get("node_id") for item in nodes}!=set(remediation_ids) or len(nodes)!=len(remediation_ids):raise ValueError("remediation_overlay_cardinality_invalid")
+    if not isinstance(contracts,dict) or set(contracts)!=set(closure_ids):raise ValueError("remediation_closure_contract_cardinality_invalid")
+    for packet in packets:
+        contract=contracts[packet["verification_contract_id"]]
+        validate_canonical_contract("remediation_packet",packet);validate_canonical_contract("remediation_closure_contract",contract)
+        if contract.get("remediation_id")!=packet["remediation_id"] or contract.get("original_issue_id")!=packet.get("source_issue_id"):
+            raise ValueError("remediation_packet_contract_link_invalid")
+    return {"packet_count":len(packets),"closure_contract_count":len(contracts),"projection_count":len(nodes)}
+
+
 def _policy_decision(*, blocker: bool, criterion_authority: str, evidence_class: str, open_state: str, owner_required: bool, fresh: bool, finding_state: str | None = None) -> dict:
     """Single authority policy evaluator; rules are intentionally ordered by specificity."""
     for rule in authority_policy()["rules"]:
@@ -455,17 +477,20 @@ def load_generation(ctx: LocalExecutionContext, directory: Path | None = None) -
     expected_contracts = {item["verification_contract_id"] + ".json" for item in packets}
     exact_children(directory / "remediation-packets", expected_packets, label="remediation_packets")
     exact_children(directory / "closure-contracts", expected_contracts, label="closure_contracts")
+    loaded_contracts={}
     for item in packets:
         packet_path = directory / "remediation-packets" / (item["remediation_id"] + ".json")
         contract_path = directory / "closure-contracts" / (item["verification_contract_id"] + ".json")
         packet = read_json(ctx.repository_root, packet_path, label="remediation_packet")
         contract = read_json(ctx.repository_root, contract_path, label="closure_contract")
+        loaded_contracts[item["verification_contract_id"]]=contract
         validate_canonical_contract("remediation_packet", packet)
         validate_canonical_contract("remediation_closure_contract", contract)
         if packet != item or contract.get("remediation_id") != item["remediation_id"]:
             raise ValueError("remediation_packet_contract_link_invalid")
         if _sha(_json(packet)) != manifest["artifact_hashes"].get("remediation-packets/" + item["remediation_id"] + ".json") or _sha(_json(contract)) != manifest["artifact_hashes"].get("closure-contracts/" + item["verification_contract_id"] + ".json"):
             raise ValueError("remediation_packet_contract_tampered")
+    validate_generation_projection(artifacts["remediation-index.json"],artifacts["remediation-plan.json"],artifacts["remediation-overlay.json"],loaded_contracts)
     return manifest, artifacts
 
 

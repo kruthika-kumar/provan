@@ -51,6 +51,13 @@ def _load_any(path:Path)->Any:
 def _validate_production_rejection(bundle:Path,row:dict,registered:dict)->None:
     if row.get("fixture_class")!="adversarial_invalid":
         if row.get("rejection_invocation_id") is not None or row.get("outcome_evidence") is not None:raise CloseoutValidationError("closeout_proof_spurious_rejection")
+        if row.get("fixture_class")=="near_valid":
+            binding=row.get("fixture_binding")
+            if not isinstance(binding,dict):raise CloseoutValidationError("closeout_proof_near_binding_missing")
+            manifest=_load(_safe(bundle,binding.get("manifest_artifact")));base=_safe(bundle,manifest.get("base_artifact"));bounded=_safe(bundle,manifest.get("mutated_artifact"))
+            if manifest.get("mutation_class")!="bounded_production_state" or _sha(base.read_bytes())!=manifest.get("base_hash") or _sha(bounded.read_bytes())!=manifest.get("mutated_hash") or manifest.get("base_semantic_hash")==manifest.get("mutated_semantic_hash"):raise CloseoutValidationError("closeout_proof_near_binding_invalid")
+            baselines=[item for item in row.get("production_invocations",[]) if item.get("invocation_id")==manifest.get("baseline_invocation_id")]
+            if len(baselines)!=1 or baselines[0].get("exception_type") is not None:raise CloseoutValidationError("closeout_proof_near_invocation_missing")
         return
     outcome=row.get("outcome_evidence");binding=row.get("fixture_binding")
     if outcome!=registered.get("outcome_evidence") or not isinstance(binding,dict):raise CloseoutValidationError("closeout_proof_rejection_binding_missing")
@@ -68,6 +75,8 @@ def _validate_production_rejection(bundle:Path,row:dict,registered:dict)->None:
     if not base.is_file() or not mutated.is_file() or _sha(base.read_bytes())!=manifest.get("base_hash") or _sha(mutated.read_bytes())!=manifest.get("mutated_hash") or manifest.get("base_hash")==manifest.get("mutated_hash"):raise CloseoutValidationError("closeout_proof_mutation_hash_invalid")
     if _sha(_canonical(_load_any(base)))!=manifest.get("base_semantic_hash") or _sha(_canonical(_load_any(mutated)))!=manifest.get("mutated_semantic_hash"):raise CloseoutValidationError("closeout_proof_mutation_semantics_invalid")
     if manifest.get("mutated_semantic_hash") not in set(invocation.get("input_component_hashes",[])):raise CloseoutValidationError("closeout_proof_mutation_invocation_unbound")
+    baselines=[item for item in row.get("production_invocations",[]) if item.get("invocation_id")==manifest.get("baseline_invocation_id") and item.get("subcase_id")==outcome.get("subcase_id")+":baseline" and item.get("qualified_function")==outcome.get("production_function")]
+    if len(baselines)!=1 or baselines[0].get("exception_type") is not None or manifest.get("base_semantic_hash") not in set(baselines[0].get("input_component_hashes",[])):raise CloseoutValidationError("closeout_proof_valid_baseline_missing")
 
 
 def _pointer(value:Any,pointer:str)->Any:
