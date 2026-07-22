@@ -209,6 +209,8 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
 
     proof_receipt=_load(bundle/"session6-8-proof-execution-receipt.json");proof_rows=proof_receipt.get("proofs",[])
     if proof_receipt.get("final_commit")!=expected_commit or len(proof_rows)!=318 or len({row.get("proof_id") for row in proof_rows})!=318:raise CloseoutValidationError("closeout_proof_execution_incomplete")
+    expected_rejection_audit={"adversarial_proof_count":106,"matching_production_rejection_count":106,"selector_or_value_derived_error_count":0,"missing_controlled_mutation_count":0,"unjustified_valid_near_duplicate_count":0,"unjustified_valid_adversarial_duplicate_count":0,"unexpected_adversarial_acceptance_count":0}
+    if proof_receipt.get("rejection_audit")!=expected_rejection_audit:raise CloseoutValidationError("closeout_proof_rejection_audit_invalid")
     measured_by={}
     for row in proof_rows:
         expected=manifest_by.get(row.get("proof_id"));registered=registry_by.get(row.get("proof_id"))

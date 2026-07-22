@@ -5,6 +5,7 @@ import os
 import json
 import stat
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 
 
 DOMAIN_NAMES = {"remediation", "review-organisation", "contestability", "management-artifacts"}
@@ -17,6 +18,19 @@ PROHIBITED_PRIVATE_ALPHA_OPERATIONS = {
     "warehouse_bi", "tracing_service", "external_eval", "github_publish",
     "deployment", "out_of_root_write",
 }
+
+
+@observed_boundary
+def validate_generation_file_count(file_count: int | dict) -> int:
+    if isinstance(file_count, dict):
+        if set(file_count) != {"schema_version", "file_count"} or file_count.get("schema_version") != "storage-capacity-observation.v1":
+            raise ValueError("bounded_capacity_invalid:file_count")
+        file_count = file_count["file_count"]
+    if not isinstance(file_count, int) or isinstance(file_count, bool) or file_count < 0:
+        raise ValueError("bounded_capacity_invalid:file_count")
+    if file_count > MAX_GENERATION_FILES:
+        raise ValueError("bounded_capacity_exceeded:file_count")
+    return file_count
 
 
 def reject_private_alpha_operation(operation: str) -> None:
@@ -80,8 +94,7 @@ def read_json(repository_root: Path, target: Path, *, label: str, max_bytes: int
 def checked_children(repository_root: Path, target: Path, *, label: str) -> list[Path]:
     directory = _trusted_path(repository_root, target, label=label, directory=True)
     entries = list(directory.iterdir())
-    if len(entries) > MAX_GENERATION_FILES:
-        raise ValueError("bounded_capacity_exceeded:file_count")
+    validate_generation_file_count(len(entries))
     names = [entry.name for entry in entries]
     if len({name.casefold() for name in names}) != len(names):
         raise ValueError(f"storage_casefold_collision:{label}")
@@ -136,8 +149,7 @@ def replace_bytes(repository_root: Path, target: Path, data: bytes, *, label: st
 def exact_children(path: Path, expected: set[str], *, label: str) -> None:
     safe_entry(path, directory=True, label=label)
     entries = list(path.iterdir())
-    if len(entries) > MAX_GENERATION_FILES:
-        raise ValueError("bounded_capacity_exceeded:file_count")
+    validate_generation_file_count(len(entries))
     names = [entry.name for entry in entries]
     if set(names) != expected or len({name.casefold() for name in names}) != len(names):
         raise ValueError(f"storage_file_set_mismatch:{label}")

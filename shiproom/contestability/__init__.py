@@ -229,6 +229,51 @@ def _owner_decision_budget(ctx: LocalExecutionContext, actions: list[dict]) -> d
     }
 
 
+@observed_boundary
+def validate_effect_projection(ledger: dict, effects: dict) -> dict:
+    """Validate persisted contestability effects against their action ledger.
+
+    This is intentionally independent of rendering. It is also the loader
+    boundary used to reject duplicate decisions, broken source links, and
+    fabricated named-risk/remediation effects.
+    """
+    validate_canonical_contract("contestation_ledger", ledger)
+    validate_canonical_contract("contestation_effects", effects)
+    actions = ledger["actions"]
+    action_ids = [item.get("action_id") for item in actions]
+    if len(action_ids) != len(set(action_ids)):
+        raise ValueError("contestation_action_ids_duplicate")
+    expected_named = [item["action_id"] for item in actions if item.get("action") == "accept_named_risk"]
+    actual_named = [item.get("action_id") for item in effects["named_risk_effects"]]
+    if actual_named != expected_named or any(item.get("effect") != "accepted_named_risk" for item in effects["named_risk_effects"]):
+        raise ValueError("contestation_named_risk_projection_invalid")
+    expected_remediation = [item["action_id"] for item in actions if item.get("action") == "request_remediation"]
+    if effects["remediation_requests"] != expected_remediation:
+        raise ValueError("contestation_remediation_projection_invalid")
+    decisions = effects["immediate_owner_decisions"] + effects["overflow_owner_decisions"]
+    decision_ids = [item.get("action_id") for item in decisions]
+    if len(effects["immediate_owner_decisions"]) > 2:
+        raise ValueError("owner_decision_budget_exceeded")
+    if len(decision_ids) != len(set(decision_ids)):
+        raise ValueError("owner_decision_duplicate")
+    if not set(decision_ids).issubset(set(action_ids)):
+        raise ValueError("owner_decision_action_link_invalid")
+    expected_reasons = [item.get("priority_reason_code") for item in decisions]
+    expected_sources = [item.get("source_reference") for item in decisions]
+    if effects["priority_reason_codes"] != expected_reasons:
+        raise ValueError("owner_decision_reason_codes_invalid")
+    if effects["source_references"] != expected_sources:
+        raise ValueError("owner_decision_source_links_invalid")
+    for item in decisions:
+        source = item.get("source_reference")
+        if not isinstance(source, dict) or set(source) != {"target_type", "target_id", "source_generation"}:
+            raise ValueError("owner_decision_source_link_invalid")
+        action = next((candidate for candidate in actions if candidate.get("action_id") == item.get("action_id")), None)
+        if action is None or source != {"target_type": action["target_type"], "target_id": action["target_id"], "source_generation": action["source_generation"]}:
+            raise ValueError("owner_decision_source_link_invalid")
+    return effects
+
+
 def _current(ctx:LocalExecutionContext)->tuple[list[dict],dict|None]:
     pointer=root(ctx)/"current-contestation-generation.json"
     try:
@@ -264,6 +309,7 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
     validate_canonical_contract("contestation_generation_manifest", manifest)
     validate_canonical_contract("contestation_ledger", ledger)
     validate_canonical_contract("contestation_effects", effects)
+    validate_effect_projection(ledger, effects)
     if manifest["compiler_version"]!=COMPILER_VERSION or manifest["actions_hash"]!=content_hash([_semantic(item) for item in ledger["actions"]]):raise ValueError("contestation_generation_tampered")
     if pointer.get("manifest_hash") != _sha(_json(manifest)) or pointer.get("semantic_bundle_hash") != manifest.get("semantic_bundle_hash"):
         raise ValueError("contestation_pointer_tampered")

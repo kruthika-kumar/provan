@@ -9630,23 +9630,23 @@
       ],
       "attack_spec": {
         "arguments": [
-          "contestation_effects",
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
           "$mutated"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
+        "expected_status_or_error": "contestation_named_risk_projection_invalid",
         "mutation": {
           "operation": "remove",
-          "pointer": "/named_risk_effects"
+          "pointer": "/named_risk_effects/0"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "missing_named_risk_effect",
         "mutation_id": "mutation_proof_s8_named_risk_decision_effect_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_named_risk_decision_effect_adversarial_invalid",
-        "target": "/named_risk_effects"
+        "target": "/named_risk_effects/0"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_s8_named_risk_decision_effect_adversarial_invalid/subcase-manifest.json",
@@ -9654,7 +9654,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "contestation_effects_contract_invalid",
+      "expected_error": "contestation_named_risk_projection_invalid",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -9664,8 +9664,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "contestation_named_risk_projection_invalid",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -9678,7 +9678,7 @@
       "proof_id": "proof_s8_named_risk_decision_effect_adversarial_invalid",
       "requirement_id": "S8_NAMED_RISK_DECISION_EFFECT",
       "requirement_ordinal": 65,
-      "semantic_fingerprint": "sha256:c5795a1718c2ddd84aaab9edf09c97a41359a882e5c2d89a45283bc24d8ba696",
+      "semantic_fingerprint": "sha256:4a707c19b974644e077ce7d8b2f1ff5e3f9549af67cb7f6d81be196efb00387a",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
@@ -9780,20 +9780,20 @@
       ],
       "attack_spec": {
         "arguments": [
-          "contestation_effects",
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
           "$mutated"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
+        "expected_status_or_error": "owner_decision_budget_exceeded",
         "mutation": {
-          "operation": "remove",
+          "operation": "duplicate",
           "pointer": "/immediate_owner_decisions"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "owner_budget_overflow",
         "mutation_id": "mutation_proof_s8_owner_decision_budget_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_owner_decision_budget_adversarial_invalid",
         "target": "/immediate_owner_decisions"
@@ -9804,7 +9804,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "contestation_effects_contract_invalid",
+      "expected_error": "owner_decision_budget_exceeded",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -9814,8 +9814,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "owner_decision_budget_exceeded",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -9828,7 +9828,7 @@
       "proof_id": "proof_s8_owner_decision_budget_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_BUDGET",
       "requirement_ordinal": 66,
-      "semantic_fingerprint": "sha256:703cdf3e22bc75927f300a958c00dfa97327b3c68a19f12554c3c32ea1503278",
+      "semantic_fingerprint": "sha256:1b4aeb71259f395bbf64c28d7c950a67b85d579229b2eb948b3626513c993346",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
@@ -9940,23 +9940,24 @@
       ],
       "attack_spec": {
         "arguments": [
-          "contestation_effects",
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
           "$mutated"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
+        "expected_status_or_error": "owner_decision_reason_codes_invalid",
         "mutation": {
-          "operation": "remove",
-          "pointer": "/priority_reason_codes"
+          "operation": "replace",
+          "pointer": "/priority_reason_codes/0",
+          "value": "fabricated_priority"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "priority_reason_tamper",
         "mutation_id": "mutation_proof_s8_owner_decision_priority_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_owner_decision_priority_adversarial_invalid",
-        "target": "/priority_reason_codes"
+        "target": "/priority_reason_codes/0"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_s8_owner_decision_priority_adversarial_invalid/subcase-manifest.json",
@@ -9964,7 +9965,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "contestation_effects_contract_invalid",
+      "expected_error": "owner_decision_reason_codes_invalid",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -9974,8 +9975,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "owner_decision_reason_codes_invalid",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -9988,7 +9989,7 @@
       "proof_id": "proof_s8_owner_decision_priority_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_PRIORITY",
       "requirement_ordinal": 67,
-      "semantic_fingerprint": "sha256:27e9780f5b8a7772b451c19ef3e3b67335af9cf79218d6bbebe9cbb606e5d01d",
+      "semantic_fingerprint": "sha256:48a53e03a8447fcc43d811aa2d82e41f895dd74df78839b300091e13b98b51e6",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
@@ -10090,23 +10091,24 @@
       ],
       "attack_spec": {
         "arguments": [
-          "contestation_effects",
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
           "$mutated"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
+        "expected_status_or_error": "owner_decision_source_links_invalid",
         "mutation": {
-          "operation": "remove",
-          "pointer": "/overflow_owner_decisions"
+          "operation": "replace",
+          "pointer": "/overflow_owner_decisions/0/source_reference/target_id",
+          "value": "finding_orphan"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "overflow_source_link_tamper",
         "mutation_id": "mutation_proof_s8_owner_decision_overflow_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_owner_decision_overflow_adversarial_invalid",
-        "target": "/overflow_owner_decisions"
+        "target": "/overflow_owner_decisions/0/source_reference/target_id"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_s8_owner_decision_overflow_adversarial_invalid/subcase-manifest.json",
@@ -10114,7 +10116,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "contestation_effects_contract_invalid",
+      "expected_error": "owner_decision_source_links_invalid",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -10124,8 +10126,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "contestation_effects_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "owner_decision_source_links_invalid",
+        "production_function": "shiproom.contestability.validate_effect_projection",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -10138,7 +10140,7 @@
       "proof_id": "proof_s8_owner_decision_overflow_adversarial_invalid",
       "requirement_id": "S8_OWNER_DECISION_OVERFLOW",
       "requirement_ordinal": 68,
-      "semantic_fingerprint": "sha256:9adda3c4aae20a0ee7a7fd6698f18064592d7ae0efac3971928ca20b1b40ad8d",
+      "semantic_fingerprint": "sha256:49007a806229ba57650b0adf547a210cf35ec31c7aff8a2f07d0aac1eb9582a1",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY"
     },
@@ -11465,23 +11467,25 @@
       ],
       "attack_spec": {
         "arguments": [
-          "management_measurement_ai_readiness",
-          "$mutated"
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/measurement-ai-bundle.json",
+          "$mutated",
+          "measurement_ai"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "management_measurement_ai_readiness_contract_invalid",
+        "expected_status_or_error": "management_measurement_ai_passthrough_tampered",
         "mutation": {
-          "operation": "remove",
-          "pointer": "/canonical_artifacts"
+          "operation": "replace",
+          "pointer": "/canonical_artifacts/measurement-ai-readiness.json/checks/0/check_authority",
+          "value": "fabricated_authority"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "measurement_authority_tamper",
         "mutation_id": "mutation_proof_s8_measurement_ai_passthrough_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.management_artifacts.compiler.validate_canonical_passthrough",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_measurement_ai_passthrough_adversarial_invalid",
-        "target": "/canonical_artifacts"
+        "target": "/canonical_artifacts/measurement-ai-readiness.json/checks/0/check_authority"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_s8_measurement_ai_passthrough_adversarial_invalid/subcase-manifest.json",
@@ -11489,7 +11493,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "management_measurement_ai_readiness_contract_invalid",
+      "expected_error": "management_measurement_ai_passthrough_tampered",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -11499,8 +11503,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "management_measurement_ai_readiness_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "management_measurement_ai_passthrough_tampered",
+        "production_function": "shiproom.management_artifacts.compiler.validate_canonical_passthrough",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -11513,7 +11517,7 @@
       "proof_id": "proof_s8_measurement_ai_passthrough_adversarial_invalid",
       "requirement_id": "S8_MEASUREMENT_AI_PASSTHROUGH",
       "requirement_ordinal": 77,
-      "semantic_fingerprint": "sha256:e1133fa5ad0dbfdafa9a9e17633cba6ab1912f1e8b37dd49eba329ad70e87872",
+      "semantic_fingerprint": "sha256:80cb4d0233b1245fa25cb69fd950562b723161d8d3ca4bfa17de363888433937",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
     },
@@ -11621,23 +11625,25 @@
       ],
       "attack_spec": {
         "arguments": [
-          "management_remediation_overview",
-          "$mutated"
+          "$artifact:session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/remediation-bundle.json",
+          "$mutated",
+          "remediation"
         ],
         "base_artifact": "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "management_remediation_overview_contract_invalid",
+        "expected_status_or_error": "management_remediation_passthrough_tampered",
         "mutation": {
-          "operation": "remove",
-          "pointer": "/canonical_artifacts"
+          "operation": "replace",
+          "pointer": "/canonical_artifacts/remediation-plan.json/packets/0/issue_authority",
+          "value": "fabricated_authority"
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "remediation_authority_tamper",
         "mutation_id": "mutation_proof_s8_remediation_overview_completeness_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.management_artifacts.compiler.validate_canonical_passthrough",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_s8_remediation_overview_completeness_adversarial_invalid",
-        "target": "/canonical_artifacts"
+        "target": "/canonical_artifacts/remediation-plan.json/packets/0/issue_authority"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_s8_remediation_overview_completeness_adversarial_invalid/subcase-manifest.json",
@@ -11645,7 +11651,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "management_remediation_overview_contract_invalid",
+      "expected_error": "management_remediation_passthrough_tampered",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -11655,8 +11661,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "management_remediation_overview_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "management_remediation_passthrough_tampered",
+        "production_function": "shiproom.management_artifacts.compiler.validate_canonical_passthrough",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -11669,7 +11675,7 @@
       "proof_id": "proof_s8_remediation_overview_completeness_adversarial_invalid",
       "requirement_id": "S8_REMEDIATION_OVERVIEW_COMPLETENESS",
       "requirement_ordinal": 78,
-      "semantic_fingerprint": "sha256:2b50eb5d565af7909ce3ee349f9a8444c35553a7ec8f9741b9500f5673d9c692",
+      "semantic_fingerprint": "sha256:842a23d72806f992db6976bb8675e942d8f60a6f3a6d9ef98e9fb44c314c5a0e",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_PERSONA_GENERATION_BINDING"
     },
@@ -14140,10 +14146,10 @@
     {
       "artifact_queries": [
         {
-          "artifact": "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
-          "expected": "remediation-plan.v1",
+          "artifact": "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/capacity-boundary.json",
+          "expected": 256,
           "operator": "equals",
-          "selector": "/schema_version"
+          "selector": "/file_count"
         },
         {
           "artifact": "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
@@ -14154,6 +14160,7 @@
       ],
       "attack_spec": null,
       "canonical_artifacts": [
+        "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/capacity-boundary.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json"
       ],
       "expected_acceptance": true,
@@ -14167,9 +14174,10 @@
       "near_spec": {
         "mutation_class": "bounded_production_state",
         "mutation_id": "bounded_proof_shared_capacity_limits_near_valid",
+        "production_function": "shiproom.workflow_trust.validate_generation_file_count",
         "schema_version": "production-proof-near-binding.v1",
         "subcase_id": "proof_shared_capacity_limits_near_valid",
-        "target": "/schema_version"
+        "target": "/file_count"
       },
       "outcome_evidence": null,
       "production_functions": [
@@ -14180,7 +14188,7 @@
       "proof_id": "proof_shared_capacity_limits_near_valid",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
       "requirement_ordinal": 95,
-      "semantic_fingerprint": "sha256:9577002affa475c06fbb4ef6bb9ab98638f8b119b5f9bfcc0853e272206cdda7",
+      "semantic_fingerprint": "sha256:e2d3bc19be490cfac0e1d937e188826221975b31a8d12b3b12cf7666dd454c50",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_REMEDIATION_CARDINALITY"
     },
@@ -14201,23 +14209,23 @@
       ],
       "attack_spec": {
         "arguments": [
-          "remediation_plan",
           "$mutated"
         ],
-        "base_artifact": "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
+        "base_artifact": "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/capacity-boundary.json",
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "remediation_plan_contract_invalid",
+        "expected_status_or_error": "bounded_capacity_exceeded:file_count",
         "mutation": {
-          "operation": "remove",
-          "pointer": "/packets"
+          "operation": "replace",
+          "pointer": "/file_count",
+          "value": 257
         },
-        "mutation_class": "required_binding_removed",
+        "mutation_class": "limit_plus_one",
         "mutation_id": "mutation_proof_shared_capacity_limits_adversarial_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "production_function": "shiproom.workflow_trust.validate_generation_file_count",
         "schema_version": "production-proof-attack.v1",
         "subcase_id": "proof_shared_capacity_limits_adversarial_invalid",
-        "target": "/packets"
+        "target": "/file_count"
       },
       "canonical_artifacts": [
         "proof-artifacts/proof_shared_capacity_limits_adversarial_invalid/subcase-manifest.json",
@@ -14225,7 +14233,7 @@
       ],
       "expected_acceptance": false,
       "expected_boundary_outcome": "rejected",
-      "expected_error": "remediation_plan_contract_invalid",
+      "expected_error": "bounded_capacity_exceeded:file_count",
       "expected_exception": "ValueError",
       "fixture_binding": null,
       "fixture_class": "adversarial_invalid",
@@ -14235,8 +14243,8 @@
       "outcome_evidence": {
         "channel": "exception",
         "expected_exception": "ValueError",
-        "expected_status_or_error": "remediation_plan_contract_invalid",
-        "production_function": "shiproom.session6_8_contract_validation.validate_canonical_contract",
+        "expected_status_or_error": "bounded_capacity_exceeded:file_count",
+        "production_function": "shiproom.workflow_trust.validate_generation_file_count",
         "receipt_artifact": null,
         "receipt_hash": null,
         "schema_version": "production-rejection-binding.v1",
@@ -14250,7 +14258,7 @@
       "proof_id": "proof_shared_capacity_limits_adversarial_invalid",
       "requirement_id": "SHARED_CAPACITY_LIMITS",
       "requirement_ordinal": 95,
-      "semantic_fingerprint": "sha256:e32c5ffab4949db969a5bcb323bb6f31b663e0f25dd91b4ceccdd38425752096",
+      "semantic_fingerprint": "sha256:5ded5938cfdf95dd270d6b5b2cd82c260b8f166edfa7b0300e78e00899948075",
       "shared_mechanism_justification": "The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",
       "workflow_case": "WORKFLOW_REMEDIATION_CARDINALITY"
     },

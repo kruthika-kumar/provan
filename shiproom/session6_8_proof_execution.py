@@ -150,6 +150,10 @@ def _execute_attack(case: RequirementProofCase, root: Path, final_commit: str) -
                 current=base
                 for part in item["$base_pointer"].lstrip("/").split("/"):current=current[int(part)] if isinstance(current,list) else current[part]
                 arguments.append(current)
+            elif isinstance(item,dict) and set(item)=={"$primary_pointer"}:
+                current=primary
+                for part in item["$primary_pointer"].lstrip("/").split("/"):current=current[int(part)] if isinstance(current,list) else current[part]
+                arguments.append(current)
             elif isinstance(item,dict) and set(item)=={"$keyword"}:
                 definition=item["$keyword"]
                 if not isinstance(definition,dict) or set(definition)!={"name","base_pointer"}:raise ValueError("proof_attack_argument_invalid")
@@ -187,9 +191,11 @@ def _execute_attack(case: RequirementProofCase, root: Path, final_commit: str) -
     return {"subcase_id":spec["subcase_id"],"manifest_artifact":relative(manifest_path)},records
 
 
-def _execute_near(case:RequirementProofCase,root:Path,query_results:list[dict[str,Any]],invocations:list[dict[str,Any]])->dict[str,str]:
+def _execute_near(case:RequirementProofCase,root:Path,query_results:list[dict[str,Any]],invocations:list[dict[str,Any]])->tuple[dict[str,str],list[dict[str,Any]]]:
     spec=case.near_spec
-    if not isinstance(spec,dict) or set(spec)!={"schema_version","subcase_id","mutation_id","mutation_class","target"} or spec.get("schema_version")!="production-proof-near-binding.v1":raise ValueError("proof_near_spec_invalid")
+    basic={"schema_version","subcase_id","mutation_id","mutation_class","target"}
+    extended=basic|{"production_function"}
+    if not isinstance(spec,dict) or set(spec) not in {frozenset(basic),frozenset(extended)} or spec.get("schema_version")!="production-proof-near-binding.v1":raise ValueError("proof_near_spec_invalid")
     if len(query_results)<2 or not invocations:raise ValueError("proof_near_controlled_state_missing")
     near=query_results[0];valid=query_results[-1]
     base={"query":valid["query"],"actual":valid["actual"]}
@@ -197,10 +203,18 @@ def _execute_near(case:RequirementProofCase,root:Path,query_results:list[dict[st
     proof_root=root/"proof-artifacts"/case.proof_id;proof_root.mkdir(parents=True,exist_ok=True);base_path=proof_root/"base.json";bounded_path=proof_root/"bounded.json"
     base_path.write_text(json.dumps(base,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");bounded_path.write_text(json.dumps(bounded,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     relative=lambda path:path.relative_to(root).as_posix();state_hash=_sha(root/"session6-8-workflow-eval-receipt.json")
-    manifest={"schema_version":"production-proof-subcase.v1","subcase_id":spec["subcase_id"],"baseline_invocation_id":invocations[0]["invocation_id"],"mutation_id":spec["mutation_id"],"mutation_class":spec["mutation_class"],"target":spec["target"],"base_artifact":relative(base_path),"base_hash":_sha(base_path),"base_semantic_hash":_semantic_hash(base),"mutated_artifact":relative(bounded_path),"mutated_hash":_sha(bounded_path),"mutated_semantic_hash":_semantic_hash(bounded),"authoritative_state_before_hash":state_hash,"authoritative_state_after_hash":state_hash,"rejection_receipt_artifact":None,"rejection_receipt_hash":None}
+    observed=[]
+    if "production_function" in spec:
+        callable_=_resolve_symbol(spec["production_function"])
+        with audit_session(Path.cwd(),case.workflow_case) as observed:
+            with audit_subcase(spec["subcase_id"]):
+                callable_(near["actual"])
+        if len(observed)!=1 or observed[0].get("exception_type") is not None:raise ValueError("proof_near_boundary_not_accepted")
+    baseline_invocation_id=(observed[0] if observed else invocations[0])["invocation_id"]
+    manifest={"schema_version":"production-proof-subcase.v1","subcase_id":spec["subcase_id"],"baseline_invocation_id":baseline_invocation_id,"mutation_id":spec["mutation_id"],"mutation_class":spec["mutation_class"],"target":spec["target"],"base_artifact":relative(base_path),"base_hash":_sha(base_path),"base_semantic_hash":_semantic_hash(base),"mutated_artifact":relative(bounded_path),"mutated_hash":_sha(bounded_path),"mutated_semantic_hash":_semantic_hash(bounded),"authoritative_state_before_hash":state_hash,"authoritative_state_after_hash":state_hash,"rejection_receipt_artifact":None,"rejection_receipt_hash":None}
     if manifest["base_semantic_hash"]==manifest["mutated_semantic_hash"]:raise ValueError("proof_near_controlled_state_not_distinct")
     manifest_path=proof_root/"subcase-manifest.json";manifest_path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n",encoding="utf-8")
-    return {"subcase_id":spec["subcase_id"],"manifest_artifact":relative(manifest_path)}
+    return {"subcase_id":spec["subcase_id"],"manifest_artifact":relative(manifest_path)},observed
 
 
 def _validate_fixture_binding(root: Path, binding: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -292,7 +306,9 @@ def execute_proof(proof_id: str, *, final_commit: str, evidence_root: Path | Non
     measured=max(cardinalities or [0])
     invocations=[item for item in workflow["production_invocations"] if item.get("qualified_function") in case.production_functions]
     invocations.extend(attack_invocations)
-    if case.fixture_class=="near_valid":runtime_binding=_execute_near(case,local_root,query_results,invocations)
+    if case.fixture_class=="near_valid":
+        runtime_binding,near_invocations=_execute_near(case,local_root,query_results,invocations)
+        invocations.extend(near_invocations)
     fixture=_validate_fixture_binding(local_root,runtime_binding)
     rejected,actual_error,actual_exception,rejection_invocation=_derive_rejection(local_root,case,invocations,fixture)
     if case.fixture_class=="adversarial_invalid" and not rejected:raise ValueError("proof_adversarial_rejection_missing")

@@ -1882,9 +1882,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /named_risk_effects with contestation_effects_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "contestation_effects_contract_invalid",
-      "approved_semantic_hash": "sha256:2f54f0b86dbad26f12ae738a6621e52ea796bdf98ec1f6dcc810c4cd49de83f8",
+      "adversarial_behavior": "The owning production boundary shiproom.contestability.validate_effect_projection must reject the isolated missing_named_risk_effect mutation at /named_risk_effects/0 with contestation_named_risk_projection_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "contestation_named_risk_projection_invalid",
+      "approved_semantic_hash": "sha256:f5ad21969a1e6ecf6770a612a751b36fe8b37aaa37c2f15ca6eef9ed4fdc4b97",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1909,9 +1909,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /immediate_owner_decisions with contestation_effects_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "contestation_effects_contract_invalid",
-      "approved_semantic_hash": "sha256:0aa10b4f90c7c928c4ceaccf3a5421c063272614231a64bd7d569b0637abc3d0",
+      "adversarial_behavior": "The owning production boundary shiproom.contestability.validate_effect_projection must reject the isolated owner_budget_overflow mutation at /immediate_owner_decisions with owner_decision_budget_exceeded; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "owner_decision_budget_exceeded",
+      "approved_semantic_hash": "sha256:78e1e3ab6f31c31b02e435945397685bb93cf204d6774517e1eebdc91bd776f4",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1937,9 +1937,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /priority_reason_codes with contestation_effects_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "contestation_effects_contract_invalid",
-      "approved_semantic_hash": "sha256:b46e9c3724f3d2ca897dc888630b7971ae248e1829de5bd69fbb1dedc8e3e3f7",
+      "adversarial_behavior": "The owning production boundary shiproom.contestability.validate_effect_projection must reject the isolated priority_reason_tamper mutation at /priority_reason_codes/0 with owner_decision_reason_codes_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "owner_decision_reason_codes_invalid",
+      "approved_semantic_hash": "sha256:9ca365a59d2842d8cfce5e87b41868f8667844c593979c6558f8deb10965c6e5",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -1964,9 +1964,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /overflow_owner_decisions with contestation_effects_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "contestation_effects_contract_invalid",
-      "approved_semantic_hash": "sha256:a2b8ccbd430c8f9745ef3b71393901b35d722e2aaa797eea2cd9021da228d264",
+      "adversarial_behavior": "The owning production boundary shiproom.contestability.validate_effect_projection must reject the isolated overflow_source_link_tamper mutation at /overflow_owner_decisions/0/source_reference/target_id with owner_decision_source_links_invalid; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "owner_decision_source_links_invalid",
+      "approved_semantic_hash": "sha256:0ae24342d49b872262f9beda39f09bc762c0c1254d7591ce14bed5a282c981ad",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2227,9 +2227,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /canonical_artifacts with management_measurement_ai_readiness_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "management_measurement_ai_readiness_contract_invalid",
-      "approved_semantic_hash": "sha256:96d730a0796b09515307bd6736e9d7393e4812434a806672fd97d754cd4b7c40",
+      "adversarial_behavior": "The owning production boundary shiproom.management_artifacts.compiler.validate_canonical_passthrough must reject the isolated measurement_authority_tamper mutation at /canonical_artifacts/measurement-ai-readiness.json/checks/0/check_authority with management_measurement_ai_passthrough_tampered; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "management_measurement_ai_passthrough_tampered",
+      "approved_semantic_hash": "sha256:54d04d1ec2779b8882f6baa9ac2a8e21b0b98789a99ef9866dd14cdc1e408478",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2257,9 +2257,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /canonical_artifacts with management_remediation_overview_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "management_remediation_overview_contract_invalid",
-      "approved_semantic_hash": "sha256:3b4e4a0b1ae05a0230e0fff68692156ec20c530fd8e76191b054672b9893e9e9",
+      "adversarial_behavior": "The owning production boundary shiproom.management_artifacts.compiler.validate_canonical_passthrough must reject the isolated remediation_authority_tamper mutation at /canonical_artifacts/remediation-plan.json/packets/0/issue_authority with management_remediation_passthrough_tampered; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "management_remediation_passthrough_tampered",
+      "approved_semantic_hash": "sha256:e73599daf105a31bf49f405ef0b1ede602a3150a0ba40e922e90d5f88b043037",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",
@@ -2753,9 +2753,9 @@
       "status": "pending_authentic_execution"
     },
     {
-      "adversarial_behavior": "The owning production boundary shiproom.session6_8_contract_validation.validate_canonical_contract must reject the isolated required_binding_removed mutation at /packets with remediation_plan_contract_invalid; a passing artifact query or configured label is never rejection authority.",
-      "adversarial_error_code": "remediation_plan_contract_invalid",
-      "approved_semantic_hash": "sha256:e7c5314ee68739176b8260914c38812363585f8a49d5a4fe7b034da837b0bbd5",
+      "adversarial_behavior": "The owning production boundary shiproom.workflow_trust.validate_generation_file_count must reject the isolated limit_plus_one mutation at /file_count with bounded_capacity_exceeded:file_count; a passing artifact query or configured label is never rejection authority.",
+      "adversarial_error_code": "bounded_capacity_exceeded:file_count",
+      "approved_semantic_hash": "sha256:f1ce4ea2d116f2c0b8bf348cd1134fa715e48ff3ffc41b868755cd36769f2abf",
       "forbidden_substitutions": [
         "registry_or_requirement_row_presence_as_proof",
         "synthetic_measurement_or_configured_expected_value_as_actual",

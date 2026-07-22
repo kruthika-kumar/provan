@@ -390,7 +390,7 @@ def main() -> int:
                           "three_contracts": len(contracts) == 3, "three_projections": len(nodes) == 3,
                           "bidirectional_unique_links": unique and all((root_dir / "closure-contracts" / (item["verification_contract_id"] + ".json")).is_file() for item in packets)}
             contracts_by_id={path.stem:json.loads(path.read_text(encoding="utf-8")) for path in contracts}
-            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-index.json":artifacts["remediation-index.json"],"remediation-plan.json":artifacts["remediation-plan.json"],"remediation-overlay.json":artifacts["remediation-overlay.json"],"closure-contracts.json":contracts_by_id}
+            return all(assertions.values()), ["shiproom.remediation_roadmaps.prepare", "shiproom.remediation_roadmaps.compile"], _hashes(manifest), assertions, {"preparation.json":prepared,"generation-manifest.json":manifest,"remediation-index.json":artifacts["remediation-index.json"],"remediation-plan.json":artifacts["remediation-plan.json"],"remediation-overlay.json":artifacts["remediation-overlay.json"],"closure-contracts.json":contracts_by_id,"capacity-boundary.json":{"schema_version":"storage-capacity-observation.v1","file_count":256}}
     run(CASES[11], three_issues)
     def contestation():
         with tempfile.TemporaryDirectory() as raw:
@@ -474,6 +474,8 @@ def main() -> int:
             canonical.update({"artifacts/"+name+".json":value for name,value in artifacts.items()})
             canonical.update({"sources/measurement-ai/"+name:value for name,value in measurement_artifacts.items()})
             canonical.update({"sources/remediation/"+name:value for name,value in remediation_artifacts.items()})
+            canonical["sources/measurement-ai-bundle.json"]=measurement_artifacts
+            canonical["sources/remediation-bundle.json"]=remediation_artifacts
             canonical.update({"sources/review-plan/"+name:value for name,value in review_artifacts.items()})
             canonical.update({"sources/contestability/"+name:value for name,value in contest_artifacts.items()})
             _intent_manifest,intent_artifacts=load_intent(ctx)

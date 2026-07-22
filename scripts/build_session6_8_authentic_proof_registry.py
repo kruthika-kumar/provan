@@ -177,7 +177,7 @@ def _near(requirement_id: str) -> dict:
       "SHARED_TRUSTED_READS":q(READ_ONLY,"repository-state.json","/source_unchanged","equals",True,outcome="bounded"),
       "SHARED_TRUSTED_WRITES":q(READ_ONLY,"repository-state.json","/after_status","equals_reference",{"artifact":f"session6-8-workflow-evidence/{READ_ONLY}/repository-state.json","selector":"/before_status"},outcome="bounded"),
       "SHARED_LINK_REPARSE_SPECIAL_REJECTION":q_direct(READ_ONLY,"session6-8-security-receipt.json","/records","count_equals",44,outcome="bounded"),
-      "SHARED_CAPACITY_LIMITS":q(CARDINALITY,"remediation-plan.json","/schema_version","equals","remediation-plan.v1",outcome="bounded"),
+      "SHARED_CAPACITY_LIMITS":q(CARDINALITY,"capacity-boundary.json","/file_count","equals",256,outcome="bounded"),
       "SHARED_POINTER_LATE_FAILURE":q(MANAGEMENT,"tamper-outcome.json","/error","equals","management_canonical_projection_tampered",outcome="bounded"),
       "SHARED_ZERO_PROHIBITED_OPERATIONS":q_direct(READ_ONLY,"session6-8-security-receipt.json","/registry_semantic_hash","not_equals",None,outcome="bounded"),
       "SHARED_CONTRACT_INVENTORY":q_direct(TRANSPORT,"session6-8-contract-parity-report.json","/accepted_baselines","count_equals",53,outcome="bounded"),
@@ -352,6 +352,46 @@ def _attack_spec(requirement_id: str, proof_id: str) -> tuple[dict,dict,str]:
         spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":mutation_class,"target":target,"base_artifact":artifact,"mutation":mutation,"production_function":function,"arguments":args,"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
         outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
         return spec,outcome,error
+    if requirement_id=="SHARED_CAPACITY_LIMITS":
+        function="shiproom.workflow_trust.validate_generation_file_count"
+        artifact=_evidence_artifact(CARDINALITY,"capacity-boundary.json")
+        mutation={"operation":"replace","pointer":"/file_count","value":257}
+        error="bounded_capacity_exceeded:file_count"
+        spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":"limit_plus_one","target":"/file_count","base_artifact":artifact,"mutation":mutation,"production_function":function,"arguments":["$mutated"],"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
+        outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
+        return spec,outcome,error
+    if requirement_id in {"S8_MEASUREMENT_AI_PASSTHROUGH","S8_REMEDIATION_OVERVIEW_COMPLETENESS"}:
+        function="shiproom.management_artifacts.compiler.validate_canonical_passthrough"
+        if requirement_id=="S8_MEASUREMENT_AI_PASSTHROUGH":
+            artifact=_evidence_artifact(MANAGEMENT,"artifacts/measurement-ai-readiness.json")
+            source=_evidence_artifact(MANAGEMENT,"sources/measurement-ai-bundle.json")
+            pointer="/canonical_artifacts/measurement-ai-readiness.json/checks/0/check_authority"
+            domain="measurement_ai";error="management_measurement_ai_passthrough_tampered";mutation_class="measurement_authority_tamper"
+        else:
+            artifact=_evidence_artifact(MANAGEMENT,"artifacts/remediation-overview.json")
+            source=_evidence_artifact(MANAGEMENT,"sources/remediation-bundle.json")
+            pointer="/canonical_artifacts/remediation-plan.json/packets/0/issue_authority"
+            domain="remediation";error="management_remediation_passthrough_tampered";mutation_class="remediation_authority_tamper"
+        mutation={"operation":"replace","pointer":pointer,"value":"fabricated_authority"}
+        args=["$artifact:"+source,"$mutated",domain]
+        spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":mutation_class,"target":pointer,"base_artifact":artifact,"mutation":mutation,"production_function":function,"arguments":args,"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
+        outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
+        return spec,outcome,error
+    if requirement_id in {"S8_NAMED_RISK_DECISION_EFFECT","S8_OWNER_DECISION_BUDGET","S8_OWNER_DECISION_PRIORITY","S8_OWNER_DECISION_OVERFLOW"}:
+        function="shiproom.contestability.validate_effect_projection"
+        artifact=_evidence_artifact(RISK,"contestation-effects.json")
+        args=["$artifact:"+_evidence_artifact(RISK,"contestation-ledger.json"),"$mutated"]
+        if requirement_id=="S8_NAMED_RISK_DECISION_EFFECT":
+            mutation={"operation":"remove","pointer":"/named_risk_effects/0"};target="/named_risk_effects/0";error="contestation_named_risk_projection_invalid";mutation_class="missing_named_risk_effect"
+        elif requirement_id=="S8_OWNER_DECISION_BUDGET":
+            mutation={"operation":"duplicate","pointer":"/immediate_owner_decisions"};target="/immediate_owner_decisions";error="owner_decision_budget_exceeded";mutation_class="owner_budget_overflow"
+        elif requirement_id=="S8_OWNER_DECISION_PRIORITY":
+            mutation={"operation":"replace","pointer":"/priority_reason_codes/0","value":"fabricated_priority"};target="/priority_reason_codes/0";error="owner_decision_reason_codes_invalid";mutation_class="priority_reason_tamper"
+        else:
+            mutation={"operation":"replace","pointer":"/overflow_owner_decisions/0/source_reference/target_id","value":"finding_orphan"};target="/overflow_owner_decisions/0/source_reference/target_id";error="owner_decision_source_links_invalid";mutation_class="overflow_source_link_tamper"
+        spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":mutation_class,"target":target,"base_artifact":artifact,"mutation":mutation,"production_function":function,"arguments":args,"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
+        outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
+        return spec,outcome,error
     special={
       "codex_execution_package":("shiproom.review_organisation.validate_codex_execution_package",["$mutated"],"codex_execution_package_shape_invalid"),
       "harness_execution_receipt":("shiproom.review_organisation.validate_harness_execution_receipt",["$mutated","$base_work_order_id"],"harness_execution_receipt_shape_invalid"),
@@ -398,6 +438,7 @@ def main() -> int:
                 queries.append(VALID[rid]["query"])
             active_attack=attack_spec if fixture_class=="adversarial_invalid" else None
             near_spec={"schema_version":"production-proof-near-binding.v1","subcase_id":proof_id,"mutation_id":"bounded_"+proof_id,"mutation_class":"bounded_production_state","target":query["selector"] or "/"} if fixture_class=="near_valid" else None
+            if fixture_class=="near_valid" and rid=="SHARED_CAPACITY_LIMITS":near_spec["production_function"]="shiproom.workflow_trust.validate_generation_file_count"
             fingerprint_input={"workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],"queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],"attack_spec":active_attack,"near_spec":near_spec}
             rows.append({
                 "proof_id":proof_id,"requirement_id":rid,"fixture_class":fixture_class,

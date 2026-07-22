@@ -6,11 +6,17 @@ from pathlib import Path
 
 import pytest
 
-from shiproom.session6_8_proof_execution import PROOF_CASES, execute_proof
+from shiproom.session6_8_proof_execution import PROOF_CASES, execute_proof, _derive_rejection
 
 
 ROOT=Path(__file__).resolve().parents[1]
 PROOF_IDS=tuple(PROOF_CASES)
+
+
+@pytest.fixture(scope="module")
+def capacity_rejection_event():
+    commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+    return execute_proof("proof_shared_capacity_limits_adversarial_invalid",final_commit=commit)
 
 
 @pytest.mark.parametrize("proof_id",PROOF_IDS,ids=PROOF_IDS)
@@ -87,3 +93,33 @@ def test_reported_false_rejection_examples_now_call_production(proof_id):
     assert invocation["typed_status_or_error"]==event["outcome_evidence"]["expected_status_or_error"]
     assert invocation["exception_type"]==event["outcome_evidence"]["expected_exception"]
     assert event["actual_acceptance"] is False
+
+
+def test_rejection_without_matching_invocation_is_rejected(capacity_rejection_event):
+    event=capacity_rejection_event;case=PROOF_CASES[event["proof_id"]]
+    with pytest.raises(ValueError,match="proof_rejection_invocation_missing"):
+        _derive_rejection(ROOT/".shiproom/local",case,[],event["fixture_binding"])
+
+
+def test_rejection_from_another_subcase_is_rejected(capacity_rejection_event):
+    event=json.loads(json.dumps(capacity_rejection_event));case=PROOF_CASES[event["proof_id"]]
+    for invocation in event["production_invocations"]:
+        if invocation["invocation_id"]==event["rejection_invocation_id"]:invocation["subcase_id"]="other_subcase"
+    with pytest.raises(ValueError,match="proof_rejection_invocation_missing"):
+        _derive_rejection(ROOT/".shiproom/local",case,event["production_invocations"],event["fixture_binding"])
+
+
+def test_rejection_status_mismatch_is_rejected(capacity_rejection_event):
+    event=json.loads(json.dumps(capacity_rejection_event));case=PROOF_CASES[event["proof_id"]]
+    for invocation in event["production_invocations"]:
+        if invocation["invocation_id"]==event["rejection_invocation_id"]:invocation["typed_status_or_error"]="successful_schema_version"
+    with pytest.raises(ValueError,match="proof_rejection_outcome_mismatch"):
+        _derive_rejection(ROOT/".shiproom/local",case,event["production_invocations"],event["fixture_binding"])
+
+
+def test_mutation_absent_from_invocation_input_is_rejected(capacity_rejection_event):
+    event=json.loads(json.dumps(capacity_rejection_event));case=PROOF_CASES[event["proof_id"]]
+    for invocation in event["production_invocations"]:
+        if invocation["invocation_id"]==event["rejection_invocation_id"]:invocation["input_component_hashes"]=[]
+    with pytest.raises(ValueError,match="proof_rejection_mutation_unbound"):
+        _derive_rejection(ROOT/".shiproom/local",case,event["production_invocations"],event["fixture_binding"])

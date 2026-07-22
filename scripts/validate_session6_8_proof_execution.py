@@ -65,6 +65,10 @@ def validate(path:Path):
             if replay.actual!=assertion["actual"] or replay.expected!=assertion["expected"] or not replay.passed or replay.cardinality!=assertion["cardinality"]:raise ValueError("proof_execution_artifact_replay_mismatch")
     for rid in requirements:
         if {r["fixture_class"] for r in rows if r["requirement_id"]==rid}!={"valid","near_valid","adversarial_invalid"}:raise ValueError("proof_execution_class_incomplete")
+    adversarial=[row for row in rows if row["fixture_class"]=="adversarial_invalid"]
+    audit=receipt.get("rejection_audit")
+    expected_audit={"adversarial_proof_count":106,"matching_production_rejection_count":106,"selector_or_value_derived_error_count":0,"missing_controlled_mutation_count":0,"unjustified_valid_near_duplicate_count":0,"unjustified_valid_adversarial_duplicate_count":0,"unexpected_adversarial_acceptance_count":0}
+    if len(adversarial)!=106 or audit!=expected_audit:raise ValueError("proof_execution_rejection_audit_invalid")
     return {"schema_version":"session6-8-proof-execution-validation.v1","requirement_count":len(requirements),"proof_count":len(rows),"status":"passed"}
 def main():
     p=argparse.ArgumentParser();p.add_argument("--receipt",type=Path,required=True);a=p.parse_args();print(json.dumps(validate(a.receipt),sort_keys=True))

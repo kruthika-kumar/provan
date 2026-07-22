@@ -21,6 +21,19 @@ COMPILER_VERSION="portable-management-artifacts.v1"
 JSON_ARTIFACTS=("executive-release-brief","product-release-review","engineering-release-assessment","measurement-ai-readiness","remediation-overview","release-packet-index","release-recommendation-view")
 
 
+@observed_boundary
+def validate_canonical_passthrough(source: dict, destination: dict, domain: str) -> dict:
+    if domain not in {"measurement_ai", "remediation"}:
+        raise ValueError("management_passthrough_domain_invalid")
+    if not isinstance(source, dict) or not isinstance(destination, dict):
+        raise ValueError("management_passthrough_contract_invalid")
+    if "canonical_artifacts" in destination:
+        destination = destination["canonical_artifacts"]
+    if canonical_json(source) != canonical_json(destination):
+        raise ValueError("management_" + domain + "_passthrough_tampered")
+    return destination
+
+
 def guard_prohibited_operation(operation: str) -> None:
     """Reporting is deterministic local rendering, never an adapter surface."""
     reject_private_alpha_operation(operation)
@@ -325,10 +338,8 @@ def load(ctx:LocalExecutionContext)->tuple[dict,dict]:
         expected_records=_section_records(name,contracts,ctx=ctx,loaded=current_loaded,vector=current)
         if canonical_json(artifacts[name].get("section_records")) != canonical_json(expected_records):
             raise ValueError("management_canonical_projection_tampered")
-    if canonical_json(artifacts["measurement-ai-readiness"].get("canonical_artifacts")) != canonical_json(current_loaded["measurement"] or {}):
-        raise ValueError("management_measurement_ai_passthrough_tampered")
-    if canonical_json(artifacts["remediation-overview"].get("canonical_artifacts")) != canonical_json(current_loaded["remediation"] or {}):
-        raise ValueError("management_remediation_passthrough_tampered")
+    validate_canonical_passthrough(current_loaded["measurement"] or {}, artifacts["measurement-ai-readiness"].get("canonical_artifacts"), domain="measurement_ai")
+    validate_canonical_passthrough(current_loaded["remediation"] or {}, artifacts["remediation-overview"].get("canonical_artifacts"), domain="remediation")
     if canonical_json(artifacts["release-recommendation-view"].get("computed_recommendation")) != canonical_json(_policy(ctx,current,current_loaded["contest"])):
         raise ValueError("management_recommendation_view_tampered")
     github_contracts=_section_contracts("github-summary-payload")
