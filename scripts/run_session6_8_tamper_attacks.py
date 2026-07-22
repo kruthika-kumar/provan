@@ -44,6 +44,8 @@ ATTACKS=(
  ("wheel_commands_removed","closeout_wheel_lifecycle_incomplete"),("claim_resolution_changed","closeout_claim_resolution_incomplete"),
  ("proof_registry_substitution","closeout_proof_fingerprint_tampered"),("proof_fixture_class_reuse","closeout_proof_fixture_class_reuse"),
  ("proof_invocation_removed","closeout_proof_invocation_missing"),("proof_selector_changed","closeout_selector_unresolved"),
+ ("proof_rejection_invocation_removed","closeout_proof_rejection_invocation_missing"),("proof_rejection_status_changed","closeout_proof_rejection_status_mismatch"),
+ ("proof_mutation_artifact_changed","closeout_proof_mutation_hash_invalid"),("proof_mutation_input_unbound","closeout_proof_mutation_invocation_unbound"),
  ("proof_configured_minimum","closeout_proof_configured_minimum_substitution"),("claim_duplicate","closeout_claim_duplicate"),
  ("claim_proof_substitution","closeout_claim_proof_substitution"),("evidence_matrix_removed","closeout_evidence_matrix_incomplete"),
 )
@@ -83,6 +85,15 @@ def _mutate(root: Path, attack: str) -> str | None:
     elif attack=="proof_registry_substitution":row=value("session6-8-requirement-proof-registry.json");row["proofs"][0]["artifact_queries"][0]["selector"]="/substituted";_write(root/"session6-8-requirement-proof-registry.json",row)
     elif attack=="proof_fixture_class_reuse":row=value("session6-8-requirement-proof-registry.json");row["proofs"][1]["fixture_class"]="valid";_write(root/"session6-8-requirement-proof-registry.json",row)
     elif attack=="proof_invocation_removed":row=value("session6-8-proof-execution-receipt.json");row["proofs"][0]["production_invocations"]=[];_write(root/"session6-8-proof-execution-receipt.json",row)
+    elif attack in {"proof_rejection_invocation_removed","proof_rejection_status_changed","proof_mutation_input_unbound"}:
+        receipt=value("session6-8-proof-execution-receipt.json");proof=next(item for item in receipt["proofs"] if item["fixture_class"]=="adversarial_invalid")
+        invocation=next(item for item in proof["production_invocations"] if item["invocation_id"]==proof["rejection_invocation_id"])
+        if attack=="proof_rejection_invocation_removed":proof["production_invocations"].remove(invocation)
+        elif attack=="proof_rejection_status_changed":invocation["typed_status_or_error"]="valid_schema_version"
+        else:invocation["input_component_hashes"]=[]
+        _write(root/"session6-8-proof-execution-receipt.json",receipt)
+    elif attack=="proof_mutation_artifact_changed":
+        receipt=value("session6-8-proof-execution-receipt.json");proof=next(item for item in receipt["proofs"] if item["fixture_class"]=="adversarial_invalid");manifest=value(proof["fixture_binding"]["manifest_artifact"]);path=root/manifest["mutated_artifact"];path.write_text("{}\n",encoding="utf-8")
     elif attack=="proof_selector_changed":
         receipt=value("session6-8-proof-execution-receipt.json");proof=receipt["proofs"][0];proof["artifact_assertions"][0]["query"]["selector"]="/changed";_write(root/"session6-8-proof-execution-receipt.json",receipt)
     elif attack=="proof_configured_minimum":row=value("session6-8-proof-execution-receipt.json");row["proofs"][0]["actual_record_count"]=row["proofs"][0]["minimum_record_count"]+7;_write(root/"session6-8-proof-execution-receipt.json",row)

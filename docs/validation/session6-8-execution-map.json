@@ -2,6 +2,7 @@
   "requirements": [
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_issue_authority_policy_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -21,6 +22,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_model_review_not_blocker_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
       ],
@@ -39,6 +41,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_planner_compiler_authority_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -58,6 +61,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_human_owner_separation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -77,6 +81,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_optional_planner_lifecycle_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -96,6 +101,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_automation_eligibility_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -115,6 +121,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_bounded_fix_metadata_only_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_DETERMINISTIC_BLOCKER_REMEDIATION/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -134,6 +141,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_remediation_cardinality_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -154,6 +162,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_packet_contract_links_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/closure-contracts.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -174,6 +183,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_packet_file_integrity_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -194,6 +204,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_contract_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -211,6 +222,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_exact_rerun_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
       "production_boundaries": [
@@ -227,6 +239,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_pass_required_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
       "production_boundaries": [
@@ -243,6 +256,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_verifier_independence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
       "production_boundaries": [
@@ -259,6 +273,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_commit_branch_freshness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
       "production_boundaries": [
@@ -275,6 +290,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_evidence_class_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -292,6 +308,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_regression_requirements_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -309,6 +326,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_test_requirements_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -326,6 +344,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_instrumentation_requirements_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -343,6 +362,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_protected_invariants_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -360,6 +380,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_closure_owner_decision_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-contract.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/closure-outcomes.json"
       ],
@@ -377,6 +398,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s6_private_alpha_non_mutation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXACT_CLOSURE_RERUN/source-finding.json",
         "session6-8-workflow-evidence/WORKFLOW_MODEL_REVIEWED_CONCERN_NOT_BLOCKER/remediation-packet.json",
         "session6-8-workflow-evidence/WORKFLOW_UNSAFE_PRODUCT_ISSUE_ROADMAP_ONLY/remediation-packet.json"
@@ -397,6 +419,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_specialist_catalogue_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json"
@@ -416,6 +439,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_native_boundary_reuse_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/ai-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -435,6 +459,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_typed_surface_policy_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/ai-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -454,6 +479,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_selection_evidence_links_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/ai-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -473,6 +499,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_python_selection_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json"
@@ -492,6 +519,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_typescript_selection_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/typescript-review-plan.json"
@@ -511,6 +539,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_ai_selection_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/ai-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -530,6 +559,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_browser_explicit_skip_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -549,7 +579,9 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_browser_absence_not_inspected_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
+        "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
       ],
       "production_boundaries": [
@@ -567,6 +599,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_test_adequacy_applicability_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_PYTHON_TYPESCRIPT_PLANNING/python-review-plan.json"
@@ -586,6 +619,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_instrumentation_applicability_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_AI_SURFACE_SELECTION/review-plan.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -605,6 +639,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_product_intent_wrapper_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/intent-accepted-reference.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -625,6 +660,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_native_work_order_integrity_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-execution-package.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -645,6 +681,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_codex_package_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/codex-execution-package.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -665,6 +702,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_harness_declaration_honesty_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-receipt.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -685,6 +723,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_manual_codex_parity_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MANUAL_CODEX_CONTRACT_PARITY/manual-submission.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -705,6 +744,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_trusted_submission_paths_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/accepted-results.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json"
@@ -723,6 +763,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_submission_byte_persistence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/revision-ledger.json"
@@ -741,8 +782,10 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_revision_request_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
-        "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json"
+        "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json",
+        "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/revision-ledger.json"
       ],
       "production_boundaries": [
         "shiproom.review_organisation.submit_result"
@@ -758,6 +801,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_corrected_result_acceptance_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/second-submission.json"
@@ -776,6 +820,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_second_invalid_failure_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -796,6 +841,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_failed_result_no_adaptation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json",
         "session6-8-workflow-evidence/WORKFLOW_SINGLE_REVISION_SUCCESS/first-submission.json"
       ],
@@ -814,6 +860,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_trigger_specific_evidence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -834,6 +881,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_migration_adaptation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -854,6 +902,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_ai_adaptation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -874,6 +923,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_browser_disproven_adaptation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -894,6 +944,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_superseded_work_order_preservation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_PROSE_CANNOT_UPGRADE_EVIDENCE/submission-outcome.json"
@@ -914,6 +965,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_adaptation_idempotency_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/plan-events.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -934,6 +986,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_adaptation_cycle_depth_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/after-review-plan.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -954,6 +1007,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s7_pointer_last_publication_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_EXPLICIT_BROWSER_SKIP/browser-absence-specialist.json",
         "session6-8-workflow-evidence/WORKFLOW_MIGRATION_ADAPTATION/successor-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_SECOND_REVISION_FAILURE/revision-outcomes.json"
@@ -974,6 +1028,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_target_registry_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -992,6 +1047,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_source_generation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -1010,6 +1066,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_target_existence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -1028,6 +1085,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_evidence_existence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -1046,6 +1104,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_evidence_relevance_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -1064,6 +1123,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_authority_preservation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/source-finding.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1083,6 +1143,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_append_sequence_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1102,6 +1163,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_previous_hash_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1121,6 +1183,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_idempotent_replay_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/replay-action.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1140,6 +1203,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_conflicting_duplicate_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
       ],
@@ -1158,6 +1222,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contest_owner_authority_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1177,6 +1242,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_named_risk_fact_non_mutation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/source-findings.json"
@@ -1196,6 +1262,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_named_risk_decision_effect_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1215,6 +1282,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_owner_decision_budget_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/near-effects.json"
@@ -1234,6 +1302,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_owner_decision_priority_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1253,6 +1322,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_owner_decision_overflow_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/contestation-effects.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1272,6 +1342,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_future_remediation_no_cycle_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/remediation-pointer-state.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1291,6 +1362,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_management_dependency_discovery_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1309,6 +1381,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_management_dependency_states_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1327,6 +1400,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_management_dependency_freshness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1345,6 +1419,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_management_mixed_vector_rejection_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-packet-index.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/mixed-vector-outcome.json"
@@ -1364,6 +1439,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_executive_section_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1383,6 +1459,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_product_matrix_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/product-release-review.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1402,6 +1479,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_engineering_section_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/engineering-release-assessment.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1421,6 +1499,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_measurement_ai_passthrough_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/measurement-ai-readiness.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/near-measurement-ai-readiness.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1440,6 +1519,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_remediation_overview_completeness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1459,6 +1539,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_closure_contract_indexing_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/remediation-overview.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1478,6 +1559,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_contestability_inclusion_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/sources/contestability/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1497,6 +1579,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_recommendation_policy_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1516,6 +1599,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_accepted_condition_effect_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1535,6 +1619,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_named_risk_recommendation_effect_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_CONTESTATION_PRESERVES_ORIGINAL/contestation-ledger.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/release-recommendation-view.json",
         "session6-8-workflow-evidence/WORKFLOW_RISK_ACCEPTANCE_DECISION_EFFECT_ONLY/duplicate-outcome.json"
@@ -1556,6 +1641,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_insufficient_evidence_state_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/artifacts/executive-release-brief.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1575,6 +1661,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_deterministic_json_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1593,6 +1680,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_safe_html_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/executive-release-brief.html",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1612,6 +1700,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_safe_markdown_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/rendered/github-summary.md",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
@@ -1631,6 +1720,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_artifact_hash_integrity_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1649,6 +1739,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_artifact_file_set_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1667,6 +1758,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_deterministic_rerender_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
@@ -1685,6 +1777,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_s8_upstream_staleness_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/stale-outcome.json"
       ],
@@ -1703,6 +1796,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_trusted_reads_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json"
       ],
       "production_boundaries": [
@@ -1721,6 +1815,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_trusted_writes_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PRIVATE_ALPHA_READ_ONLY/repository-state.json"
       ],
       "production_boundaries": [
@@ -1739,6 +1834,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_link_reparse_special_rejection_adversarial_invalid/subcase-manifest.json",
         "session6-8-security-receipt.json"
       ],
       "production_boundaries": [
@@ -1757,6 +1853,8 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_capacity_limits_adversarial_invalid/subcase-manifest.json",
+        "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/capacity-boundary.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-plan.json"
       ],
       "production_boundaries": [
@@ -1775,6 +1873,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_pointer_late_failure_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/tamper-outcome.json"
       ],
       "production_boundaries": [
@@ -1792,6 +1891,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_zero_prohibited_operations_adversarial_invalid/subcase-manifest.json",
         "session6-8-security-receipt.json"
       ],
       "production_boundaries": [
@@ -1810,6 +1910,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_contract_inventory_adversarial_invalid/subcase-manifest.json",
         "session6-8-contract-parity-report.json"
       ],
       "production_boundaries": [
@@ -1827,6 +1928,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_executed_contract_parity_adversarial_invalid/subcase-manifest.json",
         "session6-8-contract-parity-report.json"
       ],
       "production_boundaries": [
@@ -1844,7 +1946,8 @@
     },
     {
       "canonical_artifacts": [
-        "behavioral-eval-receipt.json"
+        "behavioral-eval-receipt.json",
+        "proof-artifacts/proof_shared_behavioral_eval_integrity_adversarial_invalid/subcase-manifest.json"
       ],
       "production_boundaries": [
         "shiproom.historical_remediation.run_controlled_patient"
@@ -1860,6 +1963,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_workflow_eval_integrity_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-eval-receipt.json"
       ],
       "production_boundaries": [
@@ -1876,6 +1980,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_installed_wheel_lifecycle_adversarial_invalid/subcase-manifest.json",
         "session6-8-installed-wheel-receipt.json"
       ],
       "production_boundaries": [
@@ -1892,6 +1997,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_skill_pilot_consistency_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
       ],
       "production_boundaries": [
@@ -1908,6 +2014,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_proof_execution_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_REMEDIATION_CARDINALITY/remediation-overlay.json"
       ],
       "production_boundaries": [
@@ -1926,6 +2033,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_closeout_generation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_PERSONA_GENERATION_BINDING/generation-manifest.json"
       ],
       "production_boundaries": [
@@ -1943,6 +2051,7 @@
     },
     {
       "canonical_artifacts": [
+        "proof-artifacts/proof_shared_independent_validation_adversarial_invalid/subcase-manifest.json",
         "session6-8-workflow-evidence/WORKFLOW_HISTORICAL_BOUNDED_REMEDIATION/historical-remediation-receipt.json"
       ],
       "production_boundaries": [
