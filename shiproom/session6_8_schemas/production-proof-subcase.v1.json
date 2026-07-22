@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shiproom://schemas/production-proof-subcase.v1",
+  "title": "Controlled production proof subcase",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "subcase_id", "mutation_id", "mutation_class", "target",
+    "base_artifact", "base_hash", "base_semantic_hash", "mutated_artifact",
+    "mutated_hash", "mutated_semantic_hash", "authoritative_state_before_hash",
+    "authoritative_state_after_hash", "rejection_receipt_artifact", "rejection_receipt_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "production-proof-subcase.v1"},
+    "subcase_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "mutation_id": {"type": "string", "minLength": 1, "maxLength": 320},
+    "mutation_class": {"type": "string", "minLength": 1, "maxLength": 128},
+    "target": {"type": "string", "pattern": "^/", "maxLength": 1024},
+    "base_artifact": {"type": "string", "minLength": 1, "maxLength": 1024},
+    "base_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "base_semantic_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "mutated_artifact": {"type": "string", "minLength": 1, "maxLength": 1024},
+    "mutated_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "mutated_semantic_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "authoritative_state_before_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "authoritative_state_after_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "rejection_receipt_artifact": {"type": ["string", "null"], "maxLength": 1024},
+    "rejection_receipt_hash": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}]}
+  }
+}

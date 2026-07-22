@@ -3,9 +3,33 @@ from __future__ import annotations
 import argparse,hashlib,json
 from pathlib import Path
 from shiproom.session6_8_evidence_query import evaluate
+from shiproom.workflow_audit import observed_boundary
 ROOT=Path(__file__).resolve().parents[1]
+def _sha(path:Path)->str:return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def _semantic(value)->str:return "sha256:"+hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(",",":")).encode()).hexdigest()
+def _validate_rejection(row,registered,evidence_root):
+    if row["fixture_class"]!="adversarial_invalid":
+        if row.get("rejection_invocation_id") is not None or row.get("outcome_evidence") is not None:raise ValueError("proof_execution_spurious_rejection")
+        return
+    outcome=row.get("outcome_evidence");binding=row.get("fixture_binding")
+    if outcome!=registered.get("outcome_evidence") or not isinstance(binding,dict):raise ValueError("proof_execution_rejection_binding_missing")
+    invocations=row.get("production_invocations",[]);matches=[item for item in invocations if item.get("invocation_id")==row.get("rejection_invocation_id") and item.get("subcase_id")==outcome["subcase_id"] and item.get("qualified_function")==outcome["production_function"]]
+    if len(matches)!=1:raise ValueError("proof_execution_rejection_invocation_missing")
+    invocation=matches[0]
+    if outcome["channel"]=="exception":
+        if invocation.get("exception_type")!=outcome["expected_exception"] or invocation.get("typed_status_or_error")!=outcome["expected_status_or_error"]:raise ValueError("proof_execution_rejection_status_mismatch")
+    elif outcome["channel"]=="returned_status":
+        if invocation.get("exception_type") is not None or invocation.get("typed_status_or_error")!=outcome["expected_status_or_error"]:raise ValueError("proof_execution_rejection_status_mismatch")
+    else:raise ValueError("proof_execution_rejection_channel_invalid")
+    manifest_path=evidence_root/binding["manifest_artifact"]
+    if not manifest_path.is_file():raise ValueError("proof_execution_mutation_manifest_missing")
+    manifest=json.loads(manifest_path.read_text());base=evidence_root/manifest["base_artifact"];mutated=evidence_root/manifest["mutated_artifact"]
+    if not base.is_file() or not mutated.is_file() or _sha(base)!=manifest["base_hash"] or _sha(mutated)!=manifest["mutated_hash"] or manifest["base_hash"]==manifest["mutated_hash"]:raise ValueError("proof_execution_mutation_hash_invalid")
+    if _semantic(json.loads(base.read_text()))!=manifest["base_semantic_hash"] or _semantic(json.loads(mutated.read_text()))!=manifest["mutated_semantic_hash"]:raise ValueError("proof_execution_mutation_semantics_invalid")
+    if manifest["mutated_semantic_hash"] not in set(invocation.get("input_component_hashes",[])):raise ValueError("proof_execution_mutation_invocation_unbound")
+@observed_boundary
 def validate(path:Path):
-    receipt=json.loads(path.read_text());manifest=json.loads((ROOT/"docs/validation/session6-8-proof-manifest.json").read_text())["proofs"]; requirements={r["requirement_id"] for r in json.loads((ROOT/"docs/validation/session6-8-requirement-inventory.json").read_text())["requirements"]}
+    receipt=json.loads(path.read_text());manifest=json.loads((ROOT/"docs/validation/session6-8-proof-manifest.json").read_text())["proofs"]; requirements={r["requirement_id"] for r in json.loads((ROOT/"docs/validation/session6-8-requirement-inventory.json").read_text())["requirements"]};registry={r["proof_id"]:r for r in json.loads((ROOT/"docs/validation/session6-8-requirement-proof-registry.json").read_text())["proofs"]}
     rows=receipt["proofs"]; by_id={r["proof_id"]:r for r in rows}
     if len(by_id)!=len(rows) or set(by_id)!={p["proof_id"] for p in manifest}:raise ValueError("proof_execution_id_mismatch")
     for proof in manifest:
@@ -15,6 +39,7 @@ def validate(path:Path):
         if proof["expected_acceptance"] and row["actual_record_count"]<row["minimum_record_count"]:raise ValueError("proof_execution_cardinality_invalid")
         if row.get("actual_acceptance")!=proof["expected_acceptance"]:raise ValueError("proof_execution_acceptance_mismatch")
         if proof["fixture_class"]=="adversarial_invalid" and (row.get("actual_exception")!=proof["expected_python_exception"] or row.get("actual_error_code")!=proof["expected_error_code"]):raise ValueError("proof_execution_typed_rejection_mismatch")
+        _validate_rejection(row,registry[proof["proof_id"]],path.parent)
         if row.get("semantic_fingerprint")!=proof.get("semantic_fingerprint"):raise ValueError("proof_execution_fingerprint_mismatch")
         invocations=row.get("production_invocations")
         if not isinstance(invocations,list) or {item.get("invocation_id") for item in invocations}!={*row["production_invocation_ids"]}:raise ValueError("proof_execution_invocation_binding_invalid")

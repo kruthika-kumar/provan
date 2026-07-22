@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse,hashlib,json
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 import jsonschema
 
 from shiproom.contestability import target_registry,validate_action_contract
@@ -51,6 +52,7 @@ def _validate(cid:str,value:dict,valid:dict)->None:
     if cid=="remediation_closure_verification" and value["closure_contract_id"]!=valid["closure_contract_id"]:raise ValueError("closure_verification_binding_invalid")
     if cid=="remediation_issue_authority_policy" and value!=valid:raise ValueError("remediation_issue_authority_policy_semantic_tamper")
 
+@observed_boundary
 def validate(path:Path):
     report=json.loads(path.read_text());inventory={r["contract_id"]:r for r in json.loads((ROOT/"docs/validation/session6-8-contract-inventory.json").read_text())["contracts"] if r["parity_required"]};baselines={r["contract_id"]:r for r in report.get("accepted_baselines",[])};seen={}
     if set(baselines)!=set(inventory):raise ValueError("contract_parity_accepted_baseline_incomplete")

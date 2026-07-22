@@ -10,6 +10,8 @@ from __future__ import annotations
 from typing import Any
 import re
 
+from shiproom.workflow_audit import observed_boundary
+
 
 SHAPES: dict[str, tuple[str | None, frozenset[str]]] = {
     "remediation_source_packet": ("remediation-source-packet.v1", frozenset({"schema_version","preparation_id","authority","issues","contract_schema_hashes"})),
@@ -49,6 +51,7 @@ SHAPES: dict[str, tuple[str | None, frozenset[str]]] = {
 }
 
 
+@observed_boundary
 def validate_canonical_contract(contract_id: str, value: Any) -> dict:
     """Validate an exact canonical artifact shape and its local invariants."""
     if contract_id not in SHAPES:

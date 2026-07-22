@@ -77,6 +77,7 @@ def codex_execution_package_contract() -> dict:
         "codex-execution-package.v1.json").read_text(encoding="utf-8"))
 
 
+@observed_boundary
 def validate_codex_execution_package(value: dict) -> dict:
     """Validate the closed handoff package independently of JSON Schema."""
     required = {
@@ -139,6 +140,7 @@ def assert_submission_path(ctx: LocalExecutionContext, specialist_id: str, candi
     return expected
 
 
+@observed_boundary
 def validate_harness_capability_manifest(value: dict) -> dict:
     fields = {"schema_version", "execution_mode", "declared_capability", "granted_permission", "observed_execution", "independence_limitation"}
     modes = {"native_multi_agent", "isolated_sequential", "single_agent_degraded", "manual_external"}
@@ -156,6 +158,7 @@ def validate_harness_capability_manifest(value: dict) -> dict:
     return value
 
 
+@observed_boundary
 def validate_harness_execution_receipt(value: dict, *, work_order_id: str) -> dict:
     """Independently validate the Session 7 closed harness receipt.
 
@@ -232,6 +235,7 @@ def validate_specialist_registries(result: dict | None = None, boundaries: dict 
     return {"registry": result, "native_boundaries": boundaries, "surface_policy": policy}
 
 
+@observed_boundary
 def validate_review_plan_artifact(value: dict) -> dict:
     """Independent Python boundary for the canonical review-plan artifact."""
     required={"schema_version","plan_id","input_vector","specialists","adaptation_depth","supersedes"}
@@ -250,6 +254,7 @@ def validate_review_plan_artifact(value: dict) -> dict:
     return value
 
 
+@observed_boundary
 def validate_migration_result(value: dict) -> dict:
     """Native closed validator for the only Session 7-specific specialist result.
 

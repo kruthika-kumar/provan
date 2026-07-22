@@ -48,6 +48,28 @@ def _load_any(path:Path)->Any:
     except Exception as exc:raise CloseoutValidationError("closeout_json_invalid") from exc
 
 
+def _validate_production_rejection(bundle:Path,row:dict,registered:dict)->None:
+    if row.get("fixture_class")!="adversarial_invalid":
+        if row.get("rejection_invocation_id") is not None or row.get("outcome_evidence") is not None:raise CloseoutValidationError("closeout_proof_spurious_rejection")
+        return
+    outcome=row.get("outcome_evidence");binding=row.get("fixture_binding")
+    if outcome!=registered.get("outcome_evidence") or not isinstance(binding,dict):raise CloseoutValidationError("closeout_proof_rejection_binding_missing")
+    matches=[item for item in row.get("production_invocations",[]) if item.get("invocation_id")==row.get("rejection_invocation_id") and item.get("subcase_id")==outcome.get("subcase_id") and item.get("qualified_function")==outcome.get("production_function")]
+    if len(matches)!=1:raise CloseoutValidationError("closeout_proof_rejection_invocation_missing")
+    invocation=matches[0]
+    if outcome.get("channel")=="exception":
+        if invocation.get("exception_type")!=outcome.get("expected_exception") or invocation.get("typed_status_or_error")!=outcome.get("expected_status_or_error"):raise CloseoutValidationError("closeout_proof_rejection_status_mismatch")
+    elif outcome.get("channel")=="returned_status":
+        if invocation.get("exception_type") is not None or invocation.get("typed_status_or_error")!=outcome.get("expected_status_or_error"):raise CloseoutValidationError("closeout_proof_rejection_status_mismatch")
+    else:raise CloseoutValidationError("closeout_proof_rejection_channel_invalid")
+    manifest_path=_safe(bundle,binding.get("manifest_artifact"));manifest=_load(manifest_path)
+    if manifest.get("subcase_id")!=outcome.get("subcase_id"):raise CloseoutValidationError("closeout_proof_mutation_binding_mismatch")
+    base=_safe(bundle,manifest.get("base_artifact"));mutated=_safe(bundle,manifest.get("mutated_artifact"))
+    if not base.is_file() or not mutated.is_file() or _sha(base.read_bytes())!=manifest.get("base_hash") or _sha(mutated.read_bytes())!=manifest.get("mutated_hash") or manifest.get("base_hash")==manifest.get("mutated_hash"):raise CloseoutValidationError("closeout_proof_mutation_hash_invalid")
+    if _sha(_canonical(_load_any(base)))!=manifest.get("base_semantic_hash") or _sha(_canonical(_load_any(mutated)))!=manifest.get("mutated_semantic_hash"):raise CloseoutValidationError("closeout_proof_mutation_semantics_invalid")
+    if manifest.get("mutated_semantic_hash") not in set(invocation.get("input_component_hashes",[])):raise CloseoutValidationError("closeout_proof_mutation_invocation_unbound")
+
+
 def _pointer(value:Any,pointer:str)->Any:
     if pointer=="":return value
     if not isinstance(pointer,str) or not pointer.startswith("/"):raise CloseoutValidationError("closeout_selector_invalid")
@@ -188,6 +210,7 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
         ids=set(row.get("production_invocation_ids",[]));invocations=row.get("production_invocations",[])
         if not ids or ids!={item.get("invocation_id") for item in invocations}:raise CloseoutValidationError("closeout_proof_invocation_missing")
         if not set(registered["production_functions"]).issubset({item.get("qualified_function") for item in invocations}):raise CloseoutValidationError("closeout_proof_invocation_missing")
+        _validate_production_rejection(bundle,row,registered)
         counts=[]
         for assertion in row.get("artifact_assertions",[]):
             passed,actual,count=_query(bundle,assertion["query"]);relative=assertion["query"]["artifact"]

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 
 from shiproom.session6_8_evidence_query import evaluate
 from shiproom.session6_8_semantics import validate_workflow_contracts
@@ -12,6 +13,7 @@ from shiproom.session6_8_semantics import validate_workflow_contracts
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@observed_boundary
 def validate(receipt_path: Path, *, root: Path = ROOT) -> dict:
     contracts_value = json.loads((root / "docs/validation/session6-8-workflow-contracts.json").read_text(encoding="utf-8"))
     validate_workflow_contracts(contracts_value)

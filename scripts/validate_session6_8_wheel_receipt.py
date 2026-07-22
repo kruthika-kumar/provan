@@ -2,7 +2,9 @@
 from __future__ import annotations
 import argparse,hashlib,json,os
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 def _sha(path):return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+@observed_boundary
 def validate(path:Path):
     value=json.loads(path.read_text());commands=value.get("commands",[])
     required=("remediation-roadmap","closure-verify","review-plan","submit-result","adapt","contestation","management-artifacts")

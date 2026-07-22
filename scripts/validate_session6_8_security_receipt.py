@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse,hashlib,json,tempfile
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 try:
     from scripts.run_workflow_integration_evals import _finding,_fixture,_remediation
 except ModuleNotFoundError:
@@ -18,6 +19,7 @@ def _replay_unreachable(domain:str,value:dict)->None:
     elif domain=="review_organisation":validate_harness_execution_receipt(value,work_order_id="wo_python_engineering_"+"a"*16)
     elif domain=="contestability":validate_action_contract(value)
     else:validate_recommendation_policy(value)
+@observed_boundary
 def validate(receipt_path:Path):
     registry=json.loads((ROOT/"docs/validation/session6-8-security-surface-registry.json").read_text());rows=registry["records"];receipt=json.loads(receipt_path.read_text());actual={(r["domain"],r["operation"]):r for r in receipt["records"]}
     expected_hash="sha256:"+hashlib.sha256(json.dumps(rows,sort_keys=True,separators=(",",":")).encode()).hexdigest()

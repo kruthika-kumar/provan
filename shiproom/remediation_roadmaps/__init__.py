@@ -100,6 +100,7 @@ def validate_planner_role(value: dict) -> dict:
     return value
 
 
+@observed_boundary
 def validate_planner_result(value: dict, *, work_order_id: str | None = None, preparation_id: str | None = None) -> dict:
     required={"schema_version","work_order_id","preparation_id","records","assumptions","limitations"}
     if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!=PLANNER_RESULT_SCHEMA:
@@ -123,6 +124,7 @@ def validate_planner_receipt(value: dict, *, work_order_id: str | None = None) -
     return value
 
 
+@observed_boundary
 def validate_closure_evidence(value: dict) -> dict:
     fields={"schema_version","closure_contract_id","release_id","release_commit","branch","fixer_id","reruns","regression_results","test_results","instrumentation_results","protected_invariant_outcomes"}
     if not isinstance(value,dict) or set(value)!=fields or value.get("schema_version")!=CLOSURE_EVIDENCE_SCHEMA:
@@ -135,6 +137,7 @@ def validate_closure_evidence(value: dict) -> dict:
     return value
 
 
+@observed_boundary
 def validate_closure_verifier_receipt(value: dict, *, closure_contract_id: str | None = None) -> dict:
     fields={"schema_version","closure_contract_id","evidence_snapshot_hash","verifier_id","executor_type"}
     if not isinstance(value,dict) or set(value)!=fields or value.get("schema_version")!=CLOSURE_RECEIPT_SCHEMA or (closure_contract_id is not None and value.get("closure_contract_id")!=closure_contract_id):
@@ -144,6 +147,7 @@ def validate_closure_verifier_receipt(value: dict, *, closure_contract_id: str |
     return value
 
 
+@observed_boundary
 def validate_closure_verification(value: dict) -> dict:
     if not isinstance(value,dict) or set(value)!={"schema_version","closure_contract_id","status","reason_codes"} or value.get("schema_version")!=CLOSURE_VERIFICATION_SCHEMA or value.get("status") not in {"satisfied_candidate","unsatisfied","stale","owner_action_required","not_evaluated"} or not isinstance(value.get("reason_codes"),list):
         raise ValueError("closure_verification_invalid")
@@ -166,6 +170,7 @@ def authority_policy() -> dict:
     return validate_authority_policy(value)
 
 
+@observed_boundary
 def validate_authority_policy(value: dict) -> dict:
     """Validate the complete packaged authority policy without Schema delegation."""
     required = {"rule_id", "finding_state", "blocker", "criterion_authority", "evidence_class", "open_state", "owner_decision_state", "freshness", "issue_class", "actionable", "automation_classes", "closure_evidence_classes"}

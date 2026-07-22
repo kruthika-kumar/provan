@@ -70,6 +70,7 @@ def _section_specs(name: str, registry_value: dict | None = None) -> list[dict]:
     return specs
 
 
+@observed_boundary
 def validate_section_registry(value: dict) -> dict:
     artifacts=value.get("artifacts") if isinstance(value,dict) else None
     if set(value)!={"schema_version","artifacts"} or value.get("schema_version")!="management-artifact-section-registry.v1" or not isinstance(artifacts,dict) or not artifacts:
@@ -79,6 +80,7 @@ def validate_section_registry(value: dict) -> dict:
     return value
 
 
+@observed_boundary
 def validate_recommendation_policy(value: dict) -> dict:
     return _recommendation_policy(value)
 
@@ -210,6 +212,7 @@ def _recommendation_policy(value: dict | None = None) -> dict:
     return value
 
 
+@observed_boundary
 def validate_generation_manifest(value: dict) -> dict:
     required={"schema_version","compiler_version","generation","release_id","artifact_dependency_vector","artifact_hashes","semantic_bundle_hash","bundle_hash"}
     if not isinstance(value,dict) or set(value)!=required or value.get("schema_version")!="management-generation-manifest.v1" or value.get("compiler_version")!="portable-management-artifacts.v1":

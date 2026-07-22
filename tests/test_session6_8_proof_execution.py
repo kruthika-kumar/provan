@@ -30,6 +30,8 @@ def test_proof_registry_has_no_prefix_dispatch_or_inventory_resolution():
     assert len(PROOF_CASES)==318
     assert "session6_8_requirement_boundaries" not in source
     assert "/measurements/" not in source
+    assert "_observed_code" not in source
+    assert "rejection_evidence" not in source
 
 
 def test_requirement_proof_registry_is_exact_and_fingerprint_unique():
@@ -51,3 +53,37 @@ def test_requirement_proofs_measure_instead_of_copying_configured_minimums(tmp_p
     assert event["actual_record_count"]==3
     source=(ROOT/"shiproom/session6_8_proof_execution.py").read_text(encoding="utf-8")
     assert "actual_record_count\": case.minimum_record_count" not in source
+
+
+def test_all_adversarial_proofs_bind_real_production_rejections():
+    commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+    rows=[]
+    for proof_id,case in PROOF_CASES.items():
+        if case.fixture_class!="adversarial_invalid":continue
+        event=execute_proof(proof_id,final_commit=commit)
+        matches=[item for item in event["production_invocations"] if item["invocation_id"]==event["rejection_invocation_id"]]
+        assert len(matches)==1
+        invocation=matches[0]
+        assert invocation["subcase_id"]==proof_id
+        assert invocation["qualified_function"]==event["outcome_evidence"]["production_function"]
+        assert invocation["typed_status_or_error"]==event["actual_error_code"]==case.expected_error
+        assert invocation["exception_type"]==event["actual_exception"]=="ValueError"
+        assert event["fixture_binding"]["base_hash"]!=event["fixture_binding"]["mutated_hash"]
+        assert event["fixture_binding"]["mutated_semantic_hash"] in invocation["input_component_hashes"]
+        rows.append(event)
+    assert len(rows)==106
+
+
+@pytest.mark.parametrize("proof_id",[
+    "proof_shared_capacity_limits_adversarial_invalid",
+    "proof_shared_closeout_generation_adversarial_invalid",
+    "proof_shared_independent_validation_adversarial_invalid",
+    "proof_s6_remediation_cardinality_adversarial_invalid",
+])
+def test_reported_false_rejection_examples_now_call_production(proof_id):
+    commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+    event=execute_proof(proof_id,final_commit=commit)
+    invocation=next(item for item in event["production_invocations"] if item["invocation_id"]==event["rejection_invocation_id"])
+    assert invocation["typed_status_or_error"]==event["outcome_evidence"]["expected_status_or_error"]
+    assert invocation["exception_type"]==event["outcome_evidence"]["expected_exception"]
+    assert event["actual_acceptance"] is False

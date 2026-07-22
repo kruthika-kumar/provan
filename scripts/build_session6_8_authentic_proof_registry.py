@@ -221,14 +221,120 @@ def _canonical(value: object) -> bytes:
     return json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(",", ":")).encode()
 
 
-def _observed_code(query: dict) -> str:
-    expected=query["expected"]
-    if query["operator"]=="equals" and isinstance(expected,str) and expected:
-        return expected
-    leaf=query["selector"].rstrip("/").rsplit("/",1)[-1] or "root"
-    if query["operator"]=="equals" and isinstance(expected,bool):
-        return leaf if expected else "not_"+leaf
-    return "rejected_"+leaf
+def _evidence_artifact(case: str, name: str) -> str:
+    return f"session6-8-workflow-evidence/{case}/{name}"
+
+
+def _canonical_attack(requirement_id: str) -> tuple[str,str,str]:
+    """Return an explicit production contract, artifact, and removed field.
+
+    The emitted row is complete; runtime proof execution never infers a
+    validator or mutation from a requirement prefix.
+    """
+    s6_packet={
+        "S6_ISSUE_AUTHORITY_POLICY":"issue_classification","S6_MODEL_REVIEW_NOT_BLOCKER":"issue_authority",
+        "S6_PLANNER_COMPILER_AUTHORITY":"root_cause_hypotheses","S6_HUMAN_OWNER_SEPARATION":"suggested_owner",
+        "S6_OPTIONAL_PLANNER_LIFECYCLE":"limitations","S6_AUTOMATION_ELIGIBILITY":"automation_eligibility",
+        "S6_BOUNDED_FIX_METADATA_ONLY":"execution_modes","S6_PACKET_CONTRACT_LINKS":"verification_contract_id",
+        "S6_PACKET_FILE_INTEGRITY":"remediation_id","S6_PRIVATE_ALPHA_NON_MUTATION":"protected_invariants",
+    }
+    if requirement_id in s6_packet:return "remediation_packet",_evidence_artifact(DET if requirement_id not in {"S6_MODEL_REVIEW_NOT_BLOCKER"} else MODEL,"remediation-packet.json"),s6_packet[requirement_id]
+    if requirement_id=="S6_REMEDIATION_CARDINALITY":return "remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"packets"
+    if requirement_id.startswith("S6_CLOSURE_"):
+        fields={
+          "S6_CLOSURE_CONTRACT_COMPLETENESS":"protected_invariants","S6_CLOSURE_EXACT_RERUN":"exact_checks_to_rerun",
+          "S6_CLOSURE_PASS_REQUIRED":"required_after_evidence","S6_CLOSURE_VERIFIER_INDEPENDENCE":"independent_verifier_requirement",
+          "S6_CLOSURE_COMMIT_BRANCH_FRESHNESS":"allowed_repository_commit","S6_CLOSURE_EVIDENCE_CLASS":"evidence_classes_allowed_to_close",
+          "S6_CLOSURE_REGRESSION_REQUIREMENTS":"regression_checks","S6_CLOSURE_TEST_REQUIREMENTS":"test_requirements",
+          "S6_CLOSURE_INSTRUMENTATION_REQUIREMENTS":"instrumentation_requirements","S6_CLOSURE_PROTECTED_INVARIANTS":"protected_invariants",
+          "S6_CLOSURE_OWNER_DECISION":"owner_decision_requirement",
+        }
+        return "remediation_closure_contract",_evidence_artifact(CLOSURE,"closure-contract.json"),fields[requirement_id]
+    s7_plan={
+      "S7_SPECIALIST_CATALOGUE":"specialists","S7_NATIVE_BOUNDARY_REUSE":"specialists","S7_TYPED_SURFACE_POLICY":"specialists",
+      "S7_SELECTION_EVIDENCE_LINKS":"specialists","S7_PYTHON_SELECTION":"input_vector","S7_TYPESCRIPT_SELECTION":"input_vector",
+      "S7_AI_SELECTION":"specialists","S7_BROWSER_EXPLICIT_SKIP":"specialists","S7_BROWSER_ABSENCE_NOT_INSPECTED":"specialists",
+      "S7_TEST_ADEQUACY_APPLICABILITY":"specialists","S7_INSTRUMENTATION_APPLICABILITY":"specialists",
+    }
+    if requirement_id in s7_plan:
+        case=AI if requirement_id in {"S7_NATIVE_BOUNDARY_REUSE","S7_TYPED_SURFACE_POLICY","S7_SELECTION_EVIDENCE_LINKS","S7_AI_SELECTION","S7_INSTRUMENTATION_APPLICABILITY"} else (BROWSER if "BROWSER" in requirement_id else LANGUAGES)
+        name="review-plan.json" if case!=LANGUAGES else ("typescript-review-plan.json" if requirement_id=="S7_TYPESCRIPT_SELECTION" else "python-review-plan.json")
+        return "review_plan",_evidence_artifact(case,name),s7_plan[requirement_id]
+    if requirement_id in {"S7_PRODUCT_INTENT_WRAPPER","S7_NATIVE_WORK_ORDER_INTEGRITY","S7_CODEX_PACKAGE_COMPLETENESS","S7_MANUAL_CODEX_PARITY"}:
+        return "codex_execution_package",_evidence_artifact(TRANSPORT,"codex-execution-package.json"),"native_work_order"
+    if requirement_id=="S7_HARNESS_DECLARATION_HONESTY":return "harness_execution_receipt",_evidence_artifact(TRANSPORT,"manual-receipt.json"),"independence_limitation"
+    if requirement_id in {"S7_TRUSTED_SUBMISSION_PATHS","S7_CORRECTED_RESULT_ACCEPTANCE"}:
+        return "review_accepted_results",_evidence_artifact(REVISION,"accepted-results.json"),"results"
+    if requirement_id=="S7_FAILED_RESULT_NO_ADAPTATION":
+        return "review_revision_ledger",_evidence_artifact(REVISION_FAIL,"revision-ledger.json"),"entries"
+    if requirement_id in {"S7_SUBMISSION_BYTE_PERSISTENCE","S7_REVISION_REQUEST","S7_SECOND_INVALID_FAILURE"}:
+        return "review_revision_ledger",_evidence_artifact(REVISION if requirement_id!="S7_SECOND_INVALID_FAILURE" else REVISION_FAIL,"revision-ledger.json"),"entries"
+    if requirement_id in {"S7_TRIGGER_SPECIFIC_EVIDENCE","S7_MIGRATION_ADAPTATION","S7_AI_ADAPTATION","S7_BROWSER_DISPROVEN_ADAPTATION","S7_SUPERSEDED_WORK_ORDER_PRESERVATION","S7_ADAPTATION_IDEMPOTENCY"}:
+        return "review_plan",_evidence_artifact(ADAPT,"after-review-plan.json"),"adaptation_depth"
+    if requirement_id in {"S7_ADAPTATION_CYCLE_DEPTH","S7_POINTER_LAST_PUBLICATION"}:
+        return "review_plan",_evidence_artifact(ADAPT,"after-review-plan.json"),"adaptation_depth" if requirement_id=="S7_ADAPTATION_CYCLE_DEPTH" else "supersedes"
+    contest_ledger={"S8_CONTEST_TARGET_REGISTRY","S8_CONTEST_SOURCE_GENERATION","S8_CONTEST_TARGET_EXISTENCE","S8_CONTEST_EVIDENCE_EXISTENCE","S8_CONTEST_EVIDENCE_RELEVANCE","S8_CONTEST_AUTHORITY_PRESERVATION","S8_CONTEST_APPEND_SEQUENCE","S8_CONTEST_PREVIOUS_HASH","S8_CONTEST_IDEMPOTENT_REPLAY","S8_CONTEST_CONFLICTING_DUPLICATE","S8_CONTEST_OWNER_AUTHORITY","S8_NAMED_RISK_FACT_NON_MUTATION","S8_FUTURE_REMEDIATION_NO_CYCLE"}
+    if requirement_id in contest_ledger:return "contestation_ledger",_evidence_artifact(RISK if requirement_id in {"S8_CONTEST_APPEND_SEQUENCE","S8_CONTEST_PREVIOUS_HASH","S8_CONTEST_OWNER_AUTHORITY"} else CONTEST,"contestation-ledger.json"),"actions"
+    if requirement_id in {"S8_NAMED_RISK_DECISION_EFFECT","S8_OWNER_DECISION_BUDGET","S8_OWNER_DECISION_PRIORITY","S8_OWNER_DECISION_OVERFLOW"}:
+        field={"S8_NAMED_RISK_DECISION_EFFECT":"named_risk_effects","S8_OWNER_DECISION_BUDGET":"immediate_owner_decisions","S8_OWNER_DECISION_PRIORITY":"priority_reason_codes","S8_OWNER_DECISION_OVERFLOW":"overflow_owner_decisions"}[requirement_id]
+        return "contestation_effects",_evidence_artifact(RISK,"contestation-effects.json"),field
+    management_map={
+      "S8_EXECUTIVE_SECTION_COMPLETENESS":("management_executive_release_brief","artifacts/executive-release-brief.json","sections"),
+      "S8_PRODUCT_MATRIX_COMPLETENESS":("management_product_release_review","artifacts/product-release-review.json","section_records"),
+      "S8_ENGINEERING_SECTION_COMPLETENESS":("management_engineering_release_assessment","artifacts/engineering-release-assessment.json","section_records"),
+      "S8_MEASUREMENT_AI_PASSTHROUGH":("management_measurement_ai_readiness","artifacts/measurement-ai-readiness.json","canonical_artifacts"),
+      "S8_REMEDIATION_OVERVIEW_COMPLETENESS":("management_remediation_overview","artifacts/remediation-overview.json","canonical_artifacts"),
+      "S8_CLOSURE_CONTRACT_INDEXING":("management_remediation_overview","artifacts/remediation-overview.json","section_records"),
+      "S8_CONTESTABILITY_INCLUSION":("management_executive_release_brief","artifacts/executive-release-brief.json","section_records"),
+      "S8_RECOMMENDATION_POLICY":("management_release_recommendation_view","artifacts/release-recommendation-view.json","computed_recommendation"),
+      "S8_ACCEPTED_CONDITION_EFFECT":("management_executive_release_brief","artifacts/executive-release-brief.json","section_records"),
+      "S8_NAMED_RISK_RECOMMENDATION_EFFECT":("management_release_recommendation_view","artifacts/release-recommendation-view.json","computed_recommendation"),
+      "S8_INSUFFICIENT_EVIDENCE_STATE":("management_executive_release_brief","artifacts/executive-release-brief.json","unknowns"),
+    }
+    if requirement_id in management_map:
+        contract,name,field=management_map[requirement_id];return contract,_evidence_artifact(MANAGEMENT,name),field
+    if requirement_id.startswith("S8_MANAGEMENT_") or requirement_id in {"S8_DETERMINISTIC_JSON","S8_ARTIFACT_HASH_INTEGRITY","S8_ARTIFACT_FILE_SET","S8_DETERMINISTIC_RERENDER","S8_UPSTREAM_STALENESS"}:
+        return "management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"artifact_dependency_vector" if "DEPENDENCY" in requirement_id or requirement_id=="S8_UPSTREAM_STALENESS" else "artifact_hashes"
+    if requirement_id in {"S8_SAFE_HTML","S8_SAFE_MARKDOWN"}:
+        return "management_executive_release_brief",_evidence_artifact(MANAGEMENT,"artifacts/executive-release-brief.json"),"sections"
+    # Shared integrity proofs use the same real canonical loaders they protect;
+    # the registry remains explicit after generation and no runtime prefix
+    # dispatch exists.
+    shared={
+      "SHARED_TRUSTED_READS":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"artifact_hashes"),
+      "SHARED_TRUSTED_WRITES":("remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"packets"),
+      "SHARED_LINK_REPARSE_SPECIAL_REJECTION":("remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"schema_version"),
+      "SHARED_CAPACITY_LIMITS":("remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"packets"),
+      "SHARED_POINTER_LATE_FAILURE":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"bundle_hash"),
+      "SHARED_ZERO_PROHIBITED_OPERATIONS":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"artifact_hashes"),
+      "SHARED_CONTRACT_INVENTORY":("review_plan",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
+      "SHARED_EXECUTED_CONTRACT_PARITY":("review_plan",_evidence_artifact(TRANSPORT,"accepted-results.json"),"results"),
+      "SHARED_BEHAVIORAL_EVAL_INTEGRITY":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"semantic_bundle_hash"),
+      "SHARED_WORKFLOW_EVAL_INTEGRITY":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"schema_version"),
+      "SHARED_INSTALLED_WHEEL_LIFECYCLE":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"release_id"),
+      "SHARED_SKILL_PILOT_CONSISTENCY":("remediation_plan",_evidence_artifact(CARDINALITY,"remediation-plan.json"),"release_id"),
+      "SHARED_PROOF_EXECUTION":("remediation_overlay",_evidence_artifact(CARDINALITY,"remediation-overlay.json"),"nodes"),
+      "SHARED_CLOSEOUT_GENERATION":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"schema_version"),
+      "SHARED_INDEPENDENT_VALIDATION":("management_generation_manifest",_evidence_artifact(MANAGEMENT,"generation-manifest.json"),"compiler_version"),
+    }
+    return shared[requirement_id]
+
+
+def _attack_spec(requirement_id: str, proof_id: str) -> tuple[dict,dict,str]:
+    contract,artifact,field=_canonical_attack(requirement_id)
+    special={
+      "codex_execution_package":("shiproom.review_organisation.validate_codex_execution_package",["$mutated"],"codex_execution_package_shape_invalid"),
+      "harness_execution_receipt":("shiproom.review_organisation.validate_harness_execution_receipt",["$mutated","$base_work_order_id"],"harness_execution_receipt_shape_invalid"),
+    }
+    if contract in special:
+        function,args,error=special[contract]
+        if "$base_work_order_id" in args:
+            # The executor resolves this closed token from the unmodified base.
+            args=["$mutated",{"$keyword":{"name":"work_order_id","base_pointer":"/work_order_id"}}]
+    else:function,args,error="shiproom.session6_8_contract_validation.validate_canonical_contract",[contract,"$mutated"],contract+"_contract_invalid"
+    spec={"schema_version":"production-proof-attack.v1","subcase_id":proof_id,"mutation_id":"mutation_"+proof_id,"mutation_class":"required_binding_removed","target":"/"+field,"base_artifact":artifact,"mutation":{"operation":"remove","pointer":"/"+field},"production_function":function,"arguments":args,"expected_status_or_error":error,"expected_exception":"ValueError","channel":"exception"}
+    outcome={"schema_version":"production-rejection-binding.v1","subcase_id":proof_id,"channel":"exception","production_function":function,"expected_status_or_error":error,"expected_exception":"ValueError","receipt_artifact":None,"receipt_hash":None}
+    return spec,outcome,error
 
 
 def main() -> int:
@@ -241,30 +347,36 @@ def main() -> int:
     for ordinal,requirement in enumerate(requirements,1):
         rid=requirement["requirement_id"]
         variants={"valid":VALID[rid],"near_valid":_near(rid),"adversarial_invalid":_adversarial(rid)}
-        rejected=variants["adversarial_invalid"]["query"]
+        adversarial_id=f"proof_{rid.lower()}_adversarial_invalid"
+        attack_spec,outcome_evidence,attack_error=_attack_spec(rid,adversarial_id)
         requirement["adversarial_behavior"]=(
-            f"The owning boundary must expose the isolated rejection recorded in "
-            f"{rejected['artifact']} at {rejected['selector'] or '/'} using "
-            f"{rejected['operator']}, while preserving every authoritative pointer and source artifact."
+            f"The owning production boundary {attack_spec['production_function']} must reject the isolated "
+            f"{attack_spec['mutation_class']} mutation at {attack_spec['target']} with {attack_error}; "
+            "a passing artifact query or configured label is never rejection authority."
         )
-        requirement["adversarial_error_code"]=_observed_code(rejected)
+        requirement["adversarial_error_code"]=attack_error
         requirement["source_text_hash"]="sha256:"+hashlib.sha256(requirement["normative_behavior"].encode("utf-8")).hexdigest()
         requirement["approved_semantic_hash"]=requirement_semantic_hash(requirement)
         for fixture_class in CLASSES:
             source=variants[fixture_class]; case=source["workflow_case"]
             query=source["query"]
-            queries=[query]
-            if fixture_class != "valid" and VALID[rid]["query"] != query:
+            proof_id=f"proof_{rid.lower()}_{fixture_class}"
+            if fixture_class=="adversarial_invalid":
+                queries=[{"artifact":f"proof-artifacts/{proof_id}/subcase-manifest.json","selector":"/mutation_id","operator":"equals","expected":"mutation_"+proof_id},query]
+            else:queries=[query]
+            if fixture_class == "near_valid" and VALID[rid]["query"] != query:
                 queries.append(VALID[rid]["query"])
-            fingerprint_input={"workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],"queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"]}
+            active_attack=attack_spec if fixture_class=="adversarial_invalid" else None
+            fingerprint_input={"workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],"queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],"attack_spec":active_attack}
             rows.append({
-                "proof_id":f"proof_{rid.lower()}_{fixture_class}","requirement_id":rid,"fixture_class":fixture_class,
+                "proof_id":proof_id,"requirement_id":rid,"fixture_class":fixture_class,
                 "workflow_case":case,"production_functions":workflow_contracts[case]["required_production_functions"],
                 "artifact_queries":queries,"expected_boundary_outcome":source["expected_boundary_outcome"],
                 "expected_acceptance":fixture_class!="adversarial_invalid",
-                "expected_error":_observed_code(query) if fixture_class=="adversarial_invalid" else None,
-                "expected_exception":"ValueError" if fixture_class=="adversarial_invalid" and query["selector"].endswith("/error") else None,
-                "rejection_evidence":query if fixture_class=="adversarial_invalid" else None,
+                "expected_error":attack_error if fixture_class=="adversarial_invalid" else None,
+                "expected_exception":"ValueError" if fixture_class=="adversarial_invalid" else None,
+                "fixture_binding":None,"outcome_evidence":outcome_evidence if fixture_class=="adversarial_invalid" else None,
+                "attack_spec":active_attack,
                 "minimum_cardinality":1,"canonical_artifacts":sorted({item["artifact"] for item in queries}),
                 "semantic_fingerprint":"sha256:"+hashlib.sha256(_canonical(fingerprint_input)).hexdigest(),
                 "shared_mechanism_justification":"The retained production lifecycle is shared; this requirement uses its own frozen artifact selector and comparator.",

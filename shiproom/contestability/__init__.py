@@ -54,6 +54,7 @@ def target_registry(value: dict | None = None)->dict:
     return value
 
 
+@observed_boundary
 def validate_action_contract(action: dict) -> dict:
     required={"action_id","release_id","actor_type","actor_label","action","target_type","target_id","source_generation","submitted_evidence","rationale","created_at","owner_authority_ref","owner_authority_snapshot_hash"}
     if not isinstance(action,dict) or set(action)!=required:

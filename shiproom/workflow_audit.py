@@ -34,6 +34,10 @@ def _hash(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _component_hashes(args: tuple[Any, ...], kwargs: dict[str, Any]) -> list[str]:
+    return [_hash(value) for value in args] + [_hash({key: kwargs[key]}) for key in sorted(kwargs)]
+
+
 def _commit(root: Path) -> str:
     return subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True, text=True, capture_output=True).stdout.strip()
 
@@ -55,12 +59,32 @@ def session(root: Path, workflow_case: str) -> Iterator[list[dict[str, Any]]]:
     Nested calls receive the current invocation as their parent.  A disabled
     audit context is indistinguishable from a direct production invocation.
     """
-    state = {"root": root, "workflow_case": workflow_case, "records": [], "stack": []}
+    state = {"root": root, "workflow_case": workflow_case, "records": [], "stack": [], "subcase": None}
     token = _ACTIVE.set(state)
     try:
         yield state["records"]
     finally:
         _ACTIVE.reset(token)
+
+
+@contextmanager
+def subcase(subcase_id: str) -> Iterator[None]:
+    """Bind subsequently observed production calls to one controlled subcase.
+
+    This context can only label calls already captured by :func:`session`; it
+    cannot create invocation records.  Nested or overlapping subcases are
+    rejected so an error cannot be retrospectively attached to another proof.
+    """
+    state = _ACTIVE.get()
+    if state is None:
+        raise ValueError("workflow_audit_subcase_without_session")
+    if not isinstance(subcase_id, str) or not subcase_id or state["subcase"] is not None:
+        raise ValueError("workflow_audit_subcase_invalid")
+    state["subcase"] = subcase_id
+    try:
+        yield
+    finally:
+        state["subcase"] = None
 
 
 def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | None = None, **kwargs: Any) -> T:
@@ -81,9 +105,11 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
     record: dict[str, Any] = {
         "invocation_id": invocation_id,
         "workflow_case": state["workflow_case"],
+        "subcase_id": state["subcase"],
         "module": module,
         "qualified_function": module + "." + qualified,
         "input_semantic_hash": _hash({"args": args, "kwargs": kwargs}),
+        "input_component_hashes": _component_hashes(args, kwargs),
         "output_semantic_hash": None,
         "exception_type": None,
         "typed_status_or_error": None,
@@ -91,6 +117,8 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
         "generated_artifact_hashes": {},
         "parent_invocation_id": state["stack"][-1] if state["stack"] else None,
         "final_commit": _commit(state["root"]),
+        "persisted_state_before": persisted_before,
+        "persisted_state_after": None,
     }
     state["records"].append(record)
     state["stack"].append(invocation_id)
@@ -110,6 +138,7 @@ def invoke(callable_: Callable[..., T], *args: Any, artifact_paths: list[str] | 
         return value
     finally:
         persisted_after=_persisted_state(args)
+        record["persisted_state_after"] = persisted_after
         changed={path:digest for path,digest in persisted_after.items() if persisted_before.get(path)!=digest}
         if changed:
             record["generated_artifact_paths"]=sorted(changed)

@@ -7,6 +7,7 @@ import os
 import re
 import uuid
 from pathlib import Path
+from shiproom.workflow_audit import observed_boundary
 from typing import Any
 
 from .authority import LocalExecutionContext
@@ -204,6 +205,7 @@ def _canonical_field_pairs(values: list[str], ref_groups: object, sources: dict)
     return [pair["value"] for pair in pairs], [pair["source_refs"] for pair in pairs]
 
 
+@observed_boundary
 def _validate_proposal(proposal: dict, packet: dict) -> None:
     fields = {"schema_version", "release_id", "release_commit", "source_packet_hash", "claims", "requirements", "criteria", "ambiguities"}
     if set(proposal) != fields or proposal.get("schema_version") != PROPOSAL_SCHEMA or proposal["release_id"] != packet["release_id"] or proposal["release_commit"] != packet["release_commit"] or proposal["source_packet_hash"] != packet["packet_hash"] or not all(isinstance(proposal[x], list) for x in ("claims", "requirements", "criteria", "ambiguities")): raise ValueError("invalid or unbound proposal")
