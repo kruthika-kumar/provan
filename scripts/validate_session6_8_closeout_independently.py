@@ -138,7 +138,7 @@ def _semantic_hash(row:dict)->str:return _sha(_canonical({key:row[key] for key i
 def _workflow_hash(row:dict)->str:return _sha(_canonical({key:row[key] for key in WORKFLOW_FIELDS}))
 
 
-def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)->dict:
+def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str,require_tamper_evidence:bool=True)->dict:
     bundle=bundle.resolve();manifest=_load(bundle/"session6-8-evidence-bundle-manifest.json")
     if manifest.get("final_evidence_commit")!=expected_commit:raise CloseoutValidationError("closeout_final_commit_mismatch")
     body={**manifest,"manifest_hash":""}
@@ -177,7 +177,7 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
         if {row.get("fixture_class") for row in proof_registry if row.get("requirement_id")==rid}!={"valid","near_valid","adversarial_invalid"}:raise CloseoutValidationError("closeout_proof_fixture_class_reuse")
     fingerprints=[]
     for row in proof_registry:
-        raw={"workflow_case":row["workflow_case"],"production_functions":row["production_functions"],"queries":row["artifact_queries"],"expected_boundary_outcome":row["expected_boundary_outcome"]}
+        raw={"workflow_case":row["workflow_case"],"production_functions":row["production_functions"],"queries":row["artifact_queries"],"expected_boundary_outcome":row["expected_boundary_outcome"],"attack_spec":row.get("attack_spec"),"near_spec":row.get("near_spec")}
         fingerprint=_sha(_canonical(raw));fingerprints.append(fingerprint)
         if row.get("semantic_fingerprint")!=fingerprint:raise CloseoutValidationError("closeout_proof_fingerprint_tampered")
         if row.get("independent_requirement_assertion")!=requirements_by[row["requirement_id"]]["normative_behavior"]:raise CloseoutValidationError("closeout_proof_requirement_substitution")
@@ -219,9 +219,9 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
         if row.get("actual_exception")!=expected.get("expected_python_exception") or row.get("actual_error_code")!=expected.get("expected_error_code"):raise CloseoutValidationError("closeout_proof_rejection_mismatch")
         if row.get("semantic_fingerprint")!=registered.get("semantic_fingerprint"):raise CloseoutValidationError("closeout_proof_receipt_fingerprint_mismatch")
         ids=set(row.get("production_invocation_ids",[]));invocations=row.get("production_invocations",[])
+        _validate_production_rejection(bundle,row,registered)
         if not ids or ids!={item.get("invocation_id") for item in invocations}:raise CloseoutValidationError("closeout_proof_invocation_missing")
         if not set(registered["production_functions"]).issubset({item.get("qualified_function") for item in invocations}):raise CloseoutValidationError("closeout_proof_invocation_missing")
-        _validate_production_rejection(bundle,row,registered)
         counts=[]
         for assertion in row.get("artifact_assertions",[]):
             passed,actual,count=_query(bundle,assertion["query"]);relative=assertion["query"]["artifact"]
@@ -265,9 +265,10 @@ def validate_bundle(bundle:Path,*,expected_commit:str,expected_receipt_hash:str)
     if not wheel_file.is_file() or _sha(wheel_file.read_bytes())!=wheel.get("wheel_sha256"):raise CloseoutValidationError("closeout_bundled_wheel_invalid")
     if not (bundle/"independent-validator-entrypoint.py").is_file():raise CloseoutValidationError("closeout_validator_source_missing")
 
-    tamper=_load(bundle/"session6-8-tamper-receipt.json");attacks=tamper.get("attacks",[])
-    if tamper.get("final_commit")!=expected_commit or tamper.get("attack_count")!=31 or len(attacks)!=31 or len({row.get("attack_id") for row in attacks})!=31:raise CloseoutValidationError("closeout_tamper_evidence_incomplete")
-    if any(not row.get("expected_error") or row.get("actual_error")!=row.get("expected_error") for row in attacks):raise CloseoutValidationError("closeout_tamper_rejection_mismatch")
+    if require_tamper_evidence:
+        tamper=_load(bundle/"session6-8-tamper-receipt.json");attacks=tamper.get("attacks",[])
+        if tamper.get("final_commit")!=expected_commit or tamper.get("attack_count")!=35 or len(attacks)!=35 or len({row.get("attack_id") for row in attacks})!=35:raise CloseoutValidationError("closeout_tamper_evidence_incomplete")
+        if any(not row.get("expected_error") or row.get("actual_error")!=row.get("expected_error") for row in attacks):raise CloseoutValidationError("closeout_tamper_rejection_mismatch")
 
     if len(claims)!=len({row.get("claim_id") for row in claims}):raise CloseoutValidationError("closeout_claim_duplicate")
     resolution=_load(bundle/"session6-8-claim-resolution-receipt.json")

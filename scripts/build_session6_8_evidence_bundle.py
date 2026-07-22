@@ -66,7 +66,8 @@ def build(target: Path, *, final_commit: str, include_tamper: bool = True) -> di
         "security-evidence": local / "session6-8-security-evidence",
         "wheel-logs": local / "wheel-command-logs",
         "session6-8-workflow-evidence": local / "session6-8-workflow-evidence",
-        "proof-events": local / "proof-events",
+        "proof-events": local / "session6-8-proof-events",
+        "proof-artifacts": local / "proof-artifacts",
     }
     for prefix, source_root in directories.items():
         if not source_root.is_dir(): raise ValueError("evidence_bundle_directory_missing:" + prefix)

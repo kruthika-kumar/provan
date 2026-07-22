@@ -110,7 +110,7 @@ def run(bundle: Path, *, expected_commit: str) -> dict:
         with tempfile.TemporaryDirectory() as raw:
             target=Path(raw)/"bundle";shutil.copytree(bundle,target)
             receipt_hash=_mutate(target,attack)
-            try:validate_bundle(target,expected_commit=expected_commit,expected_receipt_hash=receipt_hash);actual=None
+            try:validate_bundle(target,expected_commit=expected_commit,expected_receipt_hash=receipt_hash,require_tamper_evidence=False);actual=None
             except CloseoutValidationError as exc:actual=str(exc)
             rows.append({"attack_id":attack,"expected_error":expected,"actual_error":actual,"passed":actual==expected})
     return {"schema_version":"session6-8-tamper-receipt.v1","final_commit":expected_commit,"source_bundle_manifest_hash":source_manifest["manifest_hash"],"attack_count":len(rows),"attacks":rows,"passed":all(row["passed"] for row in rows)}
