@@ -15,7 +15,7 @@ from shiproom.external_validation.v2 import (
     validate_receipt_v2, validate_status_chain,
 )
 from shiproom.external_validation.scheduler import RunScheduler
-from shiproom.external_validation.proof_views import sanitize_proof
+from shiproom.external_validation.proof_views import public_doctor_view, sanitize_proof
 from shiproom.external_validation.status import resolve_status
 
 H = "sha256:" + "a" * 64
@@ -106,6 +106,8 @@ def test_public_proof_view_is_deterministic_and_non_qualifying():
     two = sanitize_proof(canonical, canonical_hash=H, policy_version="1", tool_hash=H)
     assert one == two and one["authority"] == "non_qualifying_public_view"
     assert "container_id" not in one["proof"] and "external_root" not in one["proof"]
+    doctor = {"implementation_commit":"a"*40,"source_tree":"b"*40,"runner_image":"example/runner@"+H,"adversarial_canaries":{"timeout":"proven"},"proof":{"corpus":{"receipt_count":5}}}
+    assert public_doctor_view(doctor, canonical_hash=H, policy_version="1", tool_hash=H) == public_doctor_view(doctor, canonical_hash=H, policy_version="1", tool_hash=H)
 
 
 def test_status_document_resolves_reopening_and_rejects_bad_document(tmp_path: Path):

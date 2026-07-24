@@ -20,3 +20,20 @@ def sanitize_proof(canonical: dict[str, Any], *, canonical_hash: str, policy_ver
             "redacted_fields": sorted(key for key in canonical if key in PRIVATE_KEYS), "proof": clean(canonical)}
     view["view_hash"] = "sha256:" + sha256(canonical_json(view)).hexdigest()
     return view
+
+
+def public_doctor_view(canonical: dict[str, Any], *, canonical_hash: str, policy_version: str, tool_hash: str) -> dict[str, Any]:
+    """A compact deterministic view that cannot locate private receipts/runs."""
+    proof = canonical["proof"]
+    view = {
+        "schema_id": "external_validation.public_proof_view.v1", "schema_version": "1",
+        "canonical_artifact_hash": canonical_hash, "sanitization_policy_version": policy_version,
+        "sanitization_tool_hash": tool_hash, "authority": "non_qualifying_public_view",
+        "redacted_fields": ["proof.index", "proof.receipt_ids", "proof.schedule", "private_artifact_locations"],
+        "proof": {"kind": "session1_repair_detection_qualification", "implementation_commit": canonical["implementation_commit"],
+                  "source_tree": canonical["source_tree"], "runner_image": canonical["runner_image"],
+                  "receipt_count": proof["corpus"]["receipt_count"], "adversarial_canaries": canonical["adversarial_canaries"],
+                  "detection_profile": "QUALIFIED", "remediation_profile": "BLOCKED", "overall_status": "PARTIALLY_QUALIFIED"},
+    }
+    view["view_hash"] = "sha256:" + sha256(canonical_json(view)).hexdigest()
+    return view
