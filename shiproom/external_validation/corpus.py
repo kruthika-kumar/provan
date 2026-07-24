@@ -46,4 +46,11 @@ def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, 
         if receipt_id in seen: raise ValueError("duplicate_receipt")
         seen.add(receipt_id)
         if item["case_id"] not in case_manifest_ledger: raise ValueError("case_authority_ledger_required")
+        case = case_manifest_ledger[item["case_id"]]
+        if item["repository"] != case.get("repository") or item["commit_sha"] != case.get("commit_sha"):
+            raise ValueError("case_authority_snapshot_mismatch")
+        if item["release_surfaces"] != case.get("release_surfaces"):
+            raise ValueError("case_authority_surface_mismatch")
+        if item["observation_inputs"]["snapshot_hash"] != case.get("snapshot_hash"):
+            raise ValueError("case_authority_hash_mismatch")
     return {"receipt_count": len(seen), "receipt_ids": sorted(seen)}

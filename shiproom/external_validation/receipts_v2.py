@@ -28,12 +28,25 @@ def finalize_v2(*, receipt: dict[str, Any], manifest: dict[str, Any], manifest_p
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
         if canonical_json(json.loads(destination.read_text(encoding="utf-8"))) != canonical_json(receipt): raise FileExistsError("conflicting_final_receipt")
+        if journal.record(receipt["finalization_journal_id"])["phase"] == "PREPARED":
+            journal.phase(receipt["finalization_journal_id"], "PREPARED", "RECEIPT_DURABLE")
         return rid, receipt
     fd, temporary = tempfile.mkstemp(prefix="receipt-v2-", dir=destination.parent)
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(canonical_json(receipt)); handle.flush(); os.fsync(handle.fileno())
         os.replace(temporary, destination)
+        # Parent metadata is part of durability on filesystems that support it.
+        try:
+            directory = os.open(destination.parent, os.O_RDONLY)
+            try: os.fsync(directory)
+            finally: os.close(directory)
+        except (PermissionError, OSError):
+            # Windows does not expose a portable directory fsync.  The receipt
+            # remains in PREPARED/RECEIPT_DURABLE journal state and recovery
+            # rehashes it; doctor reports this platform capability separately.
+            if os.name != "nt": raise
+        journal.phase(receipt["finalization_journal_id"], "PREPARED", "RECEIPT_DURABLE")
     except Exception:
         try: os.unlink(temporary)
         except FileNotFoundError: pass

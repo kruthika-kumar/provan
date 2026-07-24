@@ -113,7 +113,7 @@ def observation_key_v2(inputs: dict[str, Any]) -> str:
 
 def validate_receipt_v2(value: Any) -> dict[str, Any]:
     item = _object(value, "")
-    required = {"schema_id", "schema_version", "observation_key", "observation_inputs", "attempt_id", "attempt_lineage", "case_id", "arm", "source_hash", "release_packet_hash", "artifact_manifest_hash", "container", "execution", "model_usage", "cost", "applicability", "termination", "evidence_eligible", "finalization_journal_id", "supervisor"}
+    required = {"schema_id", "schema_version", "observation_key", "observation_inputs", "attempt_id", "attempt_lineage", "case_id", "arm", "repository", "commit_sha", "release_surfaces", "source_hash", "release_packet_hash", "artifact_manifest_hash", "container", "execution", "model_usage", "cost", "applicability", "termination", "evidence_eligible", "finalization_journal_id", "supervisor"}
     _exact(item, required)
     if item["schema_id"] != "external_validation.run_receipt.v2" or item["schema_version"] != "2": _fail("receipt_v2_header_invalid")
     inputs = _object(item["observation_inputs"], "/observation_inputs")
@@ -121,6 +121,8 @@ def validate_receipt_v2(value: Any) -> dict[str, Any]:
     if set(inputs) != identity_required: _fail("v2_observation_inputs_invalid", "/observation_inputs")
     if inputs["case_id"] != item["case_id"] or inputs["arm"] != item["arm"]: _fail("v2_observation_binding_invalid")
     if item["observation_key"] != observation_key_v2(inputs): _fail("observation_identity_mismatch")
+    if not isinstance(item["repository"], str) or not item["repository"] or not isinstance(item["commit_sha"], str) or len(item["commit_sha"]) != 40 or not isinstance(item["release_surfaces"], list) or not all(isinstance(surface, str) and surface for surface in item["release_surfaces"]):
+        _fail("case_authority_invalid")
     if not isinstance(item["attempt_lineage"], int) or item["attempt_lineage"] < 1 or item["attempt_id"] != attempt_id(item["observation_key"], item["attempt_lineage"]): _fail("attempt_identity_mismatch")
     for key in ("source_hash", "release_packet_hash", "artifact_manifest_hash"): _sha(item[key], "/" + key)
     container = _object(item["container"], "/container")
@@ -277,6 +279,23 @@ class FinalizationJournal:
         _sha(manifest_hash, "manifest_hash")
         with self.db: self.db.execute("INSERT INTO finalization_journal VALUES(?,?,?,?,?,?,?,?)", (journal_id, attempt, run, manifest_hash, receipt_path, nonce, "host_supervisor", "PREPARED"))
 
+    def phase(self, journal_id: str, expected: str, next_phase: str) -> None:
+        """Advance only the frozen finalization state machine.
+
+        The journal is the adoption authority after a crash; a receipt on disk
+        without the matching durable phase is never elevated to evidence.
+        """
+        if (expected, next_phase) not in {("PREPARED", "RECEIPT_DURABLE"), ("RECEIPT_DURABLE", "TERMINAL_COMMITTED")}:
+            raise ValueError("journal_phase_transition_invalid")
+        with self.db:
+            changed = self.db.execute("UPDATE finalization_journal SET phase=? WHERE journal_id=? AND phase=?", (next_phase, journal_id, expected)).rowcount
+            if changed != 1: raise RuntimeError("journal_phase_conflict")
+
     def can_adopt(self, journal_id: str, attempt: str, manifest_hash: str, receipt_path: str) -> bool:
-        row = self.db.execute("SELECT attempt_id,manifest_hash,receipt_path,authority FROM finalization_journal WHERE journal_id=?", (journal_id,)).fetchone()
-        return bool(row and row == (attempt, manifest_hash, receipt_path, "host_supervisor"))
+        row = self.db.execute("SELECT attempt_id,manifest_hash,receipt_path,authority,phase FROM finalization_journal WHERE journal_id=?", (journal_id,)).fetchone()
+        return bool(row and row[:4] == (attempt, manifest_hash, receipt_path, "host_supervisor") and row[4] in {"PREPARED", "RECEIPT_DURABLE"})
+
+    def record(self, journal_id: str) -> dict[str, Any] | None:
+        row = self.db.execute("SELECT journal_id,attempt_id,run_id,manifest_hash,receipt_path,nonce,authority,phase FROM finalization_journal WHERE journal_id=?", (journal_id,)).fetchone()
+        if not row: return None
+        return dict(zip(("journal_id", "attempt_id", "run_id", "manifest_hash", "receipt_path", "nonce", "authority", "phase"), row))
