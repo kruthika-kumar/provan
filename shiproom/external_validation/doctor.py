@@ -10,6 +10,8 @@ import uuid
 from .proof_v2 import run_five_arm_v2_proof, run_v2_security_canaries
 from .runner import docker_available
 from .runner_v2 import ExecutionPolicyV2, create_argv, validate_create_argv
+from .identity import canonical_json
+from .security import sha256_file
 
 
 DETECTION_CONTROLS = (
@@ -80,7 +82,10 @@ def qualification(*, run_dynamic: bool = True) -> dict:
         os.environ["SHIPROOM_EXTERNAL_VALIDATION_ROOT"] = old_root
     detection = _profile("QUALIFIED", DETECTION_CONTROLS)
     detection["controls"] = {control: "proven" for control in DETECTION_CONTROLS}
-    detection.update({"implementation_commit": commit, "source_tree": tree, "private_proof_index": proof["index"], "receipt_ids": proof["receipt_ids"], "adversarial_canaries": canaries})
+    private_matrix = {"schema_id":"external_validation.doctor_matrix.v1","schema_version":"1","implementation_commit":commit,"source_tree":tree,"runner_image":image,"proof":proof,"adversarial_canaries":canaries}
+    matrix_path = proof_root / "supervisor-owned" / "logs" / "doctor-matrix.json"
+    matrix_path.write_bytes(canonical_json(private_matrix))
+    detection.update({"implementation_commit": commit, "source_tree": tree, "private_proof_index": proof["index"], "receipt_ids": proof["receipt_ids"], "adversarial_canaries": canaries, "private_canonical_proof_hash": sha256_file(matrix_path)})
     remediation = _profile("BLOCKED", REMEDIATION_CONTROLS, "hard_writable_worktree_quota_not_qualified")
     return {"detection_profile": detection, "remediation_profile": remediation, "overall_status": "PARTIALLY_QUALIFIED"}
 
