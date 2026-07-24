@@ -2,10 +2,11 @@
 
 | Claim | Implemented in | Positive proof | Negative proof | Artifact evidence |
 | --- | --- | --- | --- | --- |
-| Docker read-only, network, and host isolation | `shiproom.external_validation.doctor` | qualified Linux Docker canaries | root write and DNS failed; host-only secret/socket absent | `docker_qualification.md` |
+| Detection Docker isolation | receipt-v2 `doctor` / `runner_v2` | Linux Docker v2 matrix; effective inspect and five arms | unsafe policy, wrapper interference, background writer, timeout and log-limit canaries | private canonical matrix hash in `docker_qualification.md` |
 | Safe materialization | `materialize_snapshot` | bare-mirror immutable SHA export | branch, unknown SHA, submodule, symlink archive rejected | focused suite |
-| Evidence authority | host finalizer and corpus | artifact rehash and case-ledger binding | self-authored/tampered receipt and missing ledger rejected | focused suite |
+| Evidence authority | v2 host finalizer, journal, corpus | sealed artifact rehash and immutable case-ledger binding | self-authored/tampered or unjournaled receipt and missing ledger rejected | focused suite and v2 matrix |
 | Scheduler integrity | `RunScheduler` | frozen schedule, durable attempts, terminal indexing | reseed, pre-freeze execution, late enqueue, ambiguous retry rejected | focused suite |
-| Five-arm lifecycle | `run_five_arm_lifecycle` | five distinct host-finalized receipts | doctor gate, deterministic-core leak, output-root escape rejected | committed redacted proof receipt |
+| Five-arm lifecycle | `run_five_arm_v2_proof` | five distinct v2 host-finalized receipts | cache/deterministic leak, output-root escape, frame and seal failures rejected | private v2 matrix + public hash-bound view |
 | Terminal-scenario preservation | scheduler/finalizer/corpus proof | all synthetic terminal scenarios finalizable and indexed | receipt/evidence tampering rejected | focused suite |
-| Session 1 acceptance | closed for Session 1 substrate | Parts A-C GO; focused suite 29 passed; Docker QUALIFIED; full baseline 784 passed/3 skipped in 1449.71s | no benchmark, model, case, or outcome was selected | fresh review required for later benchmark work |
+| Remediation Docker isolation | `runner_v2` policy only | none: host hard worktree quota is not qualification-proven | capability fails closed as blocked | `docker_qualification.md` |
+| Session 1 acceptance | **open / partially qualified** | detection profile `QUALIFIED`; focused repair suite passed | remediation profile `BLOCKED`; no hard writable-worktree quota | fresh closeout and baseline evidence required; no benchmark work |

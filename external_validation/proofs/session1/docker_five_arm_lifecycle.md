@@ -1,10 +1,11 @@
 # Docker five-arm lifecycle proof
 
-On 2026-07-24, a disposable synthetic beta fixture completed via each common
-Docker adapter. The host supervisor wrote and finalized five schema-valid
-receipts, then validated the private evidence corpus: `receipt_count: 5`.
+The historical v1 lifecycle proof is retained only as non-effective audit
+history. The repair's canonical v2 proof is bound by the private doctor-matrix
+hash and deterministic public view recorded in `docker_qualification.md`.
 
-The private synthetic fixture, raw outputs, SQLite state, command logs, and
-receipts were written under `SHIPROOM_EXTERNAL_VALIDATION_ROOT`; they are not
-Git artifacts. This proof did not select a benchmark case, model, target, or
-outcome.
+From clean Commit A, one synthetic Git snapshot completed each of the five arms
+through the supervisor-owned v2 lifecycle. Five distinct v2 receipts were
+sealed, journaled, terminally committed to SQLite, indexed, and revalidated
+through the supervisor-only corpus reader. No benchmark case, model, target,
+or outcome was selected.

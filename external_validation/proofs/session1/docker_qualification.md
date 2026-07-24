@@ -1,16 +1,19 @@
-# Docker qualification proof
+# Docker repair qualification proof
 
-On 2026-07-24, the approved host Docker Desktop Linux Engine passed
-`python -m shiproom.external_validation.doctor` with immutable image
-`busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028`.
+The historical v1 Docker claim is superseded and non-effective. The canonical
+private v2 matrix for Commit A `043592ca74992d65979e40dbe418a5d1bdb66394`
+has SHA-256 `ac2a2e5c3594807abcd75fe75f7a79c43d884de9ab39acfeebfdd81d3a7ebad9`.
+The deterministic public view is
+`session1_repair_detection_qualification.public.json`; it is explicitly
+non-qualifying and contains no external-root or container location.
 
-| Canary | Result |
-| --- | --- |
-| read-only root write | denied |
-| outbound DNS with `--network=none` | denied |
-| host secret and Docker socket | absent |
+Detection profile is `QUALIFIED` on the Linux Docker Engine. The v2 proof
+validated effective inspect parity, non-root UID separation, no network,
+read-only mounts, caps/no-new-privileges, bounded resources/logs, transfer,
+five-arm parity/corpus, residual cleanup, and adversarial wrapper isolation,
+background-writer quiescence, timeout cleanup, and bounded log capture.
 
-The resulting runtime qualification status is `QUALIFIED`. A sandbox that
-cannot access the host Docker named pipe reports
-`IMPLEMENTED_BUT_RUNTIME_QUALIFICATION_BLOCKED`; that is a local invocation
-capability, not a substitute result for the approved host qualification.
+Remediation profile is `BLOCKED`: this host has not proven a hard writable
+worktree quota. Overall status is therefore `PARTIALLY_QUALIFIED`; no mutation,
+writable remediation, controlled manifest freeze, beta execution, or Session 2
+completion is authorized.

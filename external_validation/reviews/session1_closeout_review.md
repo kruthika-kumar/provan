@@ -1,15 +1,24 @@
-# Session 1 closeout review
+# Session 1 repair closeout review
 
 | Field | Value |
 | --- | --- |
-| review_verdict | GO |
-| qualification_status | QUALIFIED |
+| review_verdict | GO for the scoped repair implementation; overall acceptance remains open |
+| detection_profile | QUALIFIED |
+| remediation_profile | BLOCKED |
+| overall_status | PARTIALLY_QUALIFIED |
 
-Docker qualification ran against Docker Desktop Linux Engine using immutable BusyBox digest `sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028`. Read-only writes and outbound DNS were denied; the injected host-only canary secret and Docker socket were inaccessible. Parts A, B, and C each received fresh `GO` reviews.
+The v1 closeout claim is superseded on this repair branch. Commit A
+`a3ce6abc4a6aee2807d06e389960b9269da8d170` passed the real Linux Docker
+receipt-v2 detection matrix, bound by the private canonical hash and public
+sanitized view in `docker_qualification.md`. The canaries include effective
+inspect parity, separate principals, transfer/sealing, background-writer
+quiescence, timeout cleanup, bounded capture, and five-arm corpus validation.
 
-The full existing baseline completed on 2026-07-24 with
-`python -m pytest -q`: **784 passed, 3 skipped in 1449.71 seconds**. The
-fresh closeout review therefore returns `GO`. Docker-backed claims remain
-qualified; this authorizes preservation push of the reviewed feature branch,
-but does not authorize a merge, release tag, benchmark run, or model/case
-selection.
+Fresh read-only review of Commit A returned `GO`: it reran the focused suite
+(38 passed) and verified effective mount-source/privilege inspection, bounded
+transfer capture, and journal-backed index/corpus authority. Remediation is
+blocked because this host has not qualified a hard writable worktree quota. No
+merge, tag, Session 1 completion claim, benchmark run, model/case selection,
+private mutation materialization, or writable remediation is authorized. The
+full baseline is still a required evidence gate and is not represented as
+complete by this review.
