@@ -37,7 +37,7 @@ def run_v2_security_canaries(root: Path, policy: ExecutionPolicyV2) -> dict:
         return runner.execute(owner='canary-'+label, name='shiproom-canary-'+label+'-'+uuid.uuid4().hex[:8], cidfile=root/(label+'.cid'), patient=patient, packet=packet, command=command, seal_root=sealed)
     # PID 1 is the supervisor.  The main shell exits while its patient-UID child
     # is still poised to overwrite output; reaping/quiescence must precede transfer.
-    isolation=execute('isolation', ['sh','-c','test ! -r /supervisor/supervisor.py && test ! -r /proc/1/fd/1 && ! kill -0 1 && printf stable >/output/result.txt; code=$?; (sleep 1; printf race >/output/result.txt) & exit $code'])
+    isolation=execute('isolation', ['sh','-c','if [ -r /supervisor/supervisor.py ]; then exit 90; fi; if ( : >/proc/1/fd/1 ) 2>/dev/null; then exit 91; fi; if kill -0 1 2>/dev/null; then exit 92; fi; printf stable >/output/result.txt; (sleep 1; printf race >/output/result.txt) & exit 0'])
     if not isolation['evidence_eligible'] or isolation['termination'] != 'completed' or (isolation['sealed_output']/'result.txt').read_bytes() != b'stable':
         raise RuntimeError('wrapper_isolation_or_quiescence_failed')
     manifest_entry=next(entry for entry in isolation['artifact_manifest']['artifacts'] if entry['path']=='result.txt')
