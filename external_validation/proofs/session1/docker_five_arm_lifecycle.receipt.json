@@ -3,21 +3,21 @@
   "schema_version": "1",
   "proof": "docker_five_arm_lifecycle",
   "executed_at": "2026-07-24",
-  "implementation_base_commit": "7a2034195e372f5555682eab72e1501804db28db",
+  "implementation_base_commit": "9b829de26288024fbb20d68064c1f9e8c52696e8",
   "implementation_state": "committed-substrate",
   "command": "python -m shiproom.external_validation.proof --evidence-root <private> --patient-root <private> --shiproom-root <checkout> --summary <private>",
   "image": "busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028",
   "qualification": {"qualification_status": "QUALIFIED", "canaries": {"read_only": "enforced", "network": "enforced", "secret_socket": "isolated"}},
   "corpus": {"receipt_count": 5, "all_states": ["TERMINAL"]},
   "arm_receipts": {
-    "NATIVE_CHECKS_ONLY": "receipt_37533bb73d1d4290adfcea955f52e36e0fb4242cfe38c863ca54de15ff420b64",
-    "SHIPROOM_DETERMINISTIC_ONLY": "receipt_4cf4f3aa8f77a18388c7b027a3fecdcb3478a88ecd662138fa757332fd3d8b77",
-    "SHIPROOM_FULL": "receipt_6f7a894e156c35b944b1e2d11ffea696e445ce0fefda09e2e0f293d43e5010be",
-    "SOTA_AGENT": "receipt_8d61cb9a9f37f0f8b18921cce27aa81de15d863d35dc1603bd0556a5d0204b21",
-    "SHIPROOM_NO_DETERMINISTIC_CORE": "receipt_3517301295e147f7ebb63278515da8c29fa002e8b1736b3321839af0bdb18da8"
+    "NATIVE_CHECKS_ONLY": "receipt_19e4a117de66a01291a70f44a5ed81865eae6eca4d8366b790af4d0a2d2459f5",
+    "SHIPROOM_DETERMINISTIC_ONLY": "receipt_961ed2f102d36fb5ec5764772b2f1a7c2c5cf2b5bfa8242d02e4db89f9fda2ff",
+    "SHIPROOM_FULL": "receipt_070e9c68dfac25aafc2b06168a7772d234a410daaf93ecfa57dbc67960f58fe7",
+    "SOTA_AGENT": "receipt_d75407dde89896cfa1119ccd942a90a0eea08ddb0463e51fbbca3eed43bdcffe",
+    "SHIPROOM_NO_DETERMINISTIC_CORE": "receipt_0caedf1720f570df9a5429dc5e03904d3ad216fadf10de392e1b80b5e2938420"
   },
   "private_artifact_hashes": {
-    "scheduler.sqlite": "sha256:2de2a87d3355a1ee49ef5c414cf0a092ba3e38a04f20f774c2b58dc9c5145d39",
+    "scheduler.sqlite": "sha256:fc1eabf64587cb716bf19443d46d7b12211da7748eaaac528285642e9d96a7a2",
     "source-snapshot.json": "sha256:5df6a6527c0290da7caa420d131eb6f25d2ecda637e6f94918b39aa984ded996",
     "release-packet.json": "sha256:c9358425cc56660ad4d1337a21de5df45897b0e30ee56085ecf7c64171d48d34"
   },
