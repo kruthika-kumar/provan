@@ -30,9 +30,10 @@ def _frame(frame_type: int, sequence: int, payload: bytes) -> bytes:
 
 
 def _receipt() -> dict:
-    inputs = {"case_id":"case_a","snapshot_hash":H,"arm":"NATIVE_CHECKS_ONLY","system_version":"a" * 40,"prompt_version":"p","policy_version":"p","model":"none","model_settings":{},"model_sampling_seed":None,"tool_policy_version":"t","execution_policy_version":"policy-v2","cache_mode":"cold","runner_image_digest":H,"execution_policy_hash":H}
+    image = "example.invalid/runner@" + H
+    inputs = {"case_id":"case_a","snapshot_hash":H,"arm":"NATIVE_CHECKS_ONLY","system_version":"a" * 40,"prompt_version":"p","policy_version":"p","model":"none","model_settings":{},"model_sampling_seed":None,"tool_policy_version":"t","execution_policy_version":"policy-v2","cache_mode":"cold","runner_image_digest":image,"execution_policy_hash":H}
     observation = observation_key_v2(inputs)
-    return {"schema_id":"external_validation.run_receipt.v2","schema_version":"2","observation_key":observation,"observation_inputs":inputs,"attempt_id":attempt_id(observation,1),"attempt_lineage":1,"case_id":"case_a","arm":"NATIVE_CHECKS_ONLY","source_hash":H,"release_packet_hash":H,"artifact_manifest_hash":H,"container":{"id":"cid","name":"name","requested_policy_hash":H,"effective_inspect_hash":H,"runner_image_digest":H,"teardown":"proven","residual_absence":True},"execution":{"started_at":"2026-07-24T00:00:00Z","completed_at":"2026-07-24T00:00:01Z","monotonic_seconds":1,"shiproom_commit":"a" * 40,"package_tree_hash":H,"artifact_protocol_version":"SRXFER02","wrapper_version":"1","cache_policy_version":"1","security_policy_version":"1","resource_policy_hash":H},"model_usage":{"state":"not_applicable"},"cost":{"state":"not_applicable"},"applicability":{},"termination":"completed","evidence_eligible":True,"finalization_journal_id":"journal_a","supervisor":"host_supervisor"}
+    return {"schema_id":"external_validation.run_receipt.v2","schema_version":"2","observation_key":observation,"observation_inputs":inputs,"attempt_id":attempt_id(observation,1),"attempt_lineage":1,"case_id":"case_a","arm":"NATIVE_CHECKS_ONLY","source_hash":H,"release_packet_hash":H,"artifact_manifest_hash":H,"container":{"id":"cid","name":"name","requested_policy_hash":H,"effective_inspect_hash":H,"runner_image_digest":image,"teardown":"proven","residual_absence":True},"execution":{"started_at":"2026-07-24T00:00:00Z","completed_at":"2026-07-24T00:00:01Z","monotonic_seconds":1,"shiproom_commit":"a" * 40,"package_tree_hash":H,"artifact_protocol_version":"SRXFER02","wrapper_version":"1","cache_policy_version":"1","security_policy_version":"1","resource_policy_hash":H},"model_usage":{"state":"not_applicable"},"cost":{"state":"not_applicable"},"applicability":{},"termination":"completed","evidence_eligible":True,"finalization_journal_id":"journal_a","supervisor":"host_supervisor"}
 
 
 def test_manifest_is_canonical_and_rejects_casefold_collision():
@@ -87,6 +88,13 @@ def test_terminal_scheduler_recovery_cannot_reopen_finalized_operation(tmp_path:
     reopened = RunScheduler(path); assert reopened.recover_interrupted() == []
     assert reopened.db.execute("SELECT state,receipt_id FROM runs WHERE observation_key='obs'").fetchone() == ("TERMINAL", "receipt")
     assert reopened.db.execute("SELECT state FROM operations WHERE operation_id='operation'").fetchone()[0] == "TERMINAL"
+
+
+def test_schedule_freeze_rejects_omitted_enqueued_observation(tmp_path: Path):
+    scheduler = RunScheduler(tmp_path / "runs.sqlite")
+    scheduler.enqueue("one", "attempt-one"); scheduler.enqueue("two", "attempt-two")
+    with pytest.raises(ValueError, match="schedule_run_set_incomplete"):
+        scheduler.freeze_schedule(["one"], "seed")
 
 
 def test_public_proof_view_is_deterministic_and_non_qualifying():

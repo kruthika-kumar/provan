@@ -79,6 +79,8 @@ class RunScheduler:
         """Persist one reproducible randomized order; order is never identity."""
         if len(set(observation_keys)) != len(observation_keys):
             raise ValueError("schedule_duplicate_observation")
+        queued = {row[0] for row in self.db.execute("SELECT observation_key FROM runs")}
+        if queued != set(observation_keys): raise ValueError("schedule_run_set_incomplete")
         run_set_hash = "sha256:" + hashlib.sha256(json.dumps(sorted(observation_keys), separators=(",", ":")).encode()).hexdigest()
         schedule_id = "schedule_" + hashlib.sha256(json.dumps([run_set_hash, algorithm_version, public_seed], separators=(",", ":")).encode()).hexdigest()
         existing = self.db.execute("SELECT schedule_id,run_set_hash,algorithm_version,public_seed FROM schedule_metadata WHERE singleton=1").fetchone()

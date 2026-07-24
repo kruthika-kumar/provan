@@ -51,6 +51,11 @@ def _sha(value: Any, path: str) -> None:
         _fail("sha256_invalid", path)
 
 
+def _image_digest(value: Any, path: str) -> None:
+    if not isinstance(value, str) or "@sha256:" not in value or len(value.rsplit("@sha256:", 1)[1]) != 64:
+        _fail("image_digest_invalid", path)
+
+
 def _object(value: Any, path: str) -> dict[str, Any]:
     if not isinstance(value, dict): _fail("object_required", path)
     return value
@@ -121,7 +126,8 @@ def validate_receipt_v2(value: Any) -> dict[str, Any]:
     container = _object(item["container"], "/container")
     _exact(container, {"id", "name", "requested_policy_hash", "effective_inspect_hash", "runner_image_digest", "teardown", "residual_absence"}, "/container")
     if not all(isinstance(container[key], str) and container[key] for key in ("id", "name")) or container["teardown"] not in {"proven", "containment_failure"} or not isinstance(container["residual_absence"], bool): _fail("container_provenance_invalid", "/container")
-    for key in ("requested_policy_hash", "effective_inspect_hash", "runner_image_digest"): _sha(container[key], "/container/" + key)
+    for key in ("requested_policy_hash", "effective_inspect_hash"): _sha(container[key], "/container/" + key)
+    _image_digest(container["runner_image_digest"], "/container/runner_image_digest")
     execution = _object(item["execution"], "/execution")
     _exact(execution, {"started_at", "completed_at", "monotonic_seconds", "shiproom_commit", "package_tree_hash", "artifact_protocol_version", "wrapper_version", "cache_policy_version", "security_policy_version", "resource_policy_hash"}, "/execution")
     if not isinstance(execution["monotonic_seconds"], (int, float)) or execution["monotonic_seconds"] < 0 or not isinstance(execution["shiproom_commit"], str) or len(execution["shiproom_commit"]) not in {40, 64}:
@@ -253,6 +259,12 @@ class BackendLock:
             row = self.db.execute("SELECT incident_id FROM backend_locks WHERE backend=?", (backend,)).fetchone()
             if not row or row[0] != incident_id: raise RuntimeError("incident_resolution_mismatch")
             self.db.execute("UPDATE backend_locks SET incident_id=NULL,owner='resolved' WHERE backend=?", (backend,))
+
+    def release(self, backend: str, owner: str) -> None:
+        with self.db:
+            row = self.db.execute("SELECT incident_id,owner FROM backend_locks WHERE backend=?", (backend,)).fetchone()
+            if row and row[0] is None and row[1] == owner:
+                self.db.execute("DELETE FROM backend_locks WHERE backend=?", (backend,))
 
 
 class FinalizationJournal:

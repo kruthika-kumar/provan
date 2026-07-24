@@ -16,6 +16,8 @@ import subprocess
 import tarfile
 import tempfile
 import time
+import threading
+import queue
 from typing import Any
 
 from .identity import canonical_json
@@ -44,7 +46,7 @@ class ExecutionPolicyV2:
     grace_seconds: int = 5
 
     def validate(self) -> None:
-        if not all("@sha256:" in value for value in (self.image_digest, self.runner_image_digest)):
+        if self.image_digest != self.runner_image_digest or not all("@sha256:" in value for value in (self.image_digest, self.runner_image_digest)):
             raise ValueError("immutable_runner_image_required")
         if self.cpus <= 0 or self.pids < 2 or min(self.output_tmpfs_bytes, self.stdout_limit_bytes, self.stderr_limit_bytes, self.wall_seconds, self.grace_seconds) < 1:
             raise ValueError("execution_policy_invalid")
@@ -94,9 +96,31 @@ def effective_projection(inspect: dict[str, Any]) -> dict[str, Any]:
         "cap_drop": sorted(host.get("CapDrop") or []), "security": sorted(host.get("SecurityOpt") or []),
         "pid": host.get("PidMode"), "ipc": host.get("IpcMode"), "userns": host.get("UsernsMode"), "devices": host.get("Devices") or [],
         "memory": host.get("Memory"), "memory_swap": host.get("MemorySwap"), "pids": host.get("PidsLimit"),
-        "restart": (host.get("RestartPolicy") or {}).get("Name"), "env": sorted(config.get("Env") or []),
+        "cpu_nano": host.get("NanoCpus"), "restart": (host.get("RestartPolicy") or {}).get("Name"), "log_driver": (host.get("LogConfig") or {}).get("Type"), "env": sorted(config.get("Env") or []),
         "labels": config.get("Labels") or {}, "mounts": sorted(({"destination": m.get("Destination"), "rw": m.get("RW"), "type": m.get("Type")} for m in inspect.get("Mounts", [])), key=lambda x: str(x)),
     }
+
+
+def _memory_bytes(value: str) -> int:
+    suffix = value[-1:].lower(); multiplier = {"g": 1024**3, "m": 1024**2, "k": 1024}.get(suffix, 1)
+    return int(float(value[:-1] if suffix in {"g", "m", "k"} else value) * multiplier)
+
+
+def assert_effective_policy(projection: dict[str, Any], policy: ExecutionPolicyV2, patient: Path, packet: Path, backend: str) -> None:
+    mounts = {item["destination"]: item for item in projection["mounts"]}
+    required_security = {"no-new-privileges"}
+    security = " ".join(projection["security"])
+    if projection["image"] != policy.image_digest or projection["network"] != "none" or not projection["readonly"] or projection["user"] != SUPERVISOR_UID:
+        raise RuntimeError("effective_docker_policy_mismatch")
+    if "ALL" not in projection["cap_drop"] or not all(word in security for word in required_security) or "seccomp=" not in security:
+        raise RuntimeError("effective_docker_policy_mismatch")
+    if projection["pid"] or projection["ipc"] not in {"", "private"} or projection["userns"] or projection["devices"] or projection["restart"] not in {"", "no"}:
+        raise RuntimeError("effective_docker_policy_mismatch")
+    if projection["memory"] != _memory_bytes(policy.memory) or projection["memory_swap"] != _memory_bytes(policy.memory) or projection["pids"] != policy.pids or projection["cpu_nano"] != int(policy.cpus * 1_000_000_000) or projection["log_driver"] != "none":
+        raise RuntimeError("effective_docker_policy_mismatch")
+    if any(item.startswith(("HTTP_", "HTTPS_", "ALL_PROXY=", "HOME=", "SSH_", "AWS_")) for item in projection["env"]): raise RuntimeError("effective_docker_policy_mismatch")
+    if set(mounts) != {"/patient", "/release"} or mounts["/patient"]["rw"] or mounts["/release"]["rw"] or projection["labels"].get("shiproom.external_validation.backend") != backend:
+        raise RuntimeError("effective_docker_policy_mismatch")
 
 
 def projection_hash(value: dict[str, Any]) -> str:
@@ -108,18 +132,36 @@ def _run(argv: list[str], *, timeout: int = 30, binary: bool = False) -> subproc
 
 
 def _bounded_exec(argv: list[str], stdout_limit: int, stderr_limit: int, timeout: int) -> dict[str, Any]:
-    """Drain both streams concurrently through communicate; limits are raw bytes."""
+    """Concurrent raw-byte drain with bounded retention and immediate CLI stop."""
     process = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={"PATH": os.environ.get("PATH", ""), "NO_PROXY": "", "HTTP_PROXY": "", "HTTPS_PROXY": "", "ALL_PROXY": ""})
+    events: queue.Queue[tuple[str, bytes | None]] = queue.Queue()
+    def drain(name: str, stream) -> None:
+        try:
+            while True:
+                block = stream.read(65536)
+                if not block: break
+                events.put((name, block))
+        finally: events.put((name, None))
+    threads = [threading.Thread(target=drain, args=("stdout", process.stdout), daemon=True), threading.Thread(target=drain, args=("stderr", process.stderr), daemon=True)]
+    for thread in threads: thread.start()
+    kept={"stdout":bytearray(), "stderr":bytearray()}; observed={"stdout":0, "stderr":0}; closed=set(); cause=None; deadline=time.monotonic()+timeout
     try:
-        out, err = process.communicate(timeout=timeout)
-        cause = "completed" if process.returncode == 0 else "command_failed"
+        while len(closed) < 2 or process.poll() is None:
+            if time.monotonic() > deadline and cause is None: cause="WALL_TIME_EXCEEDED"; process.terminate()
+            try: name, block = events.get(timeout=.05)
+            except queue.Empty: continue
+            if block is None: closed.add(name); continue
+            observed[name] += len(block); limit = stdout_limit if name == "stdout" else stderr_limit
+            room=max(0,limit-len(kept[name])); kept[name].extend(block[:room])
+            if observed[name] > limit and cause is None:
+                cause = "STDOUT_LIMIT_EXCEEDED" if name == "stdout" else "STDERR_LIMIT_EXCEEDED"; process.terminate()
+        process.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        process.kill(); out, err = process.communicate(timeout=5); cause = "WALL_TIME_EXCEEDED"
-    out = out or b""; err = err or b""
-    if len(out) > stdout_limit: cause = "STDOUT_LIMIT_EXCEEDED"
-    if len(err) > stderr_limit: cause = "STDERR_LIMIT_EXCEEDED"
-    return {"returncode": process.returncode, "termination": cause, "stdout": out[:stdout_limit], "stderr": err[:stderr_limit],
-            "stdout_observed": len(out), "stderr_observed": len(err), "stdout_retained": min(len(out), stdout_limit), "stderr_retained": min(len(err), stderr_limit)}
+        process.kill(); cause = cause or "WALL_TIME_EXCEEDED"
+    for thread in threads: thread.join(timeout=1)
+    cause = cause or ("completed" if process.returncode == 0 else "command_failed")
+    return {"returncode": process.returncode, "termination": cause, "stdout": bytes(kept["stdout"]), "stderr": bytes(kept["stderr"]),
+            "stdout_observed": observed["stdout"], "stderr_observed": observed["stderr"], "stdout_retained": len(kept["stdout"]), "stderr_retained": len(kept["stderr"]), "stdout_discarded": observed["stdout"]-len(kept["stdout"]), "stderr_discarded": observed["stderr"]-len(kept["stderr"])}
 
 
 def _safe_extract(archive: bytes, destination: Path, manifest: dict[str, Any]) -> None:
@@ -161,19 +203,18 @@ class DockerSupervisorV2:
             inspect = _run([docker_executable(), "inspect", container_id])
             if inspect.returncode: raise RuntimeError("docker_inspect_failed")
             projection = effective_projection(json.loads(inspect.stdout)[0])
-            if projection["network"] != "none" or not projection["readonly"] or projection["user"] != SUPERVISOR_UID or projection["devices"] or projection["restart"] not in {"", "no"}:
-                raise RuntimeError("effective_docker_policy_mismatch")
+            assert_effective_policy(projection, self.policy, patient, packet, self.backend)
             start = _run([docker_executable(), "start", container_id])
             if start.returncode: raise RuntimeError("docker_start_failed")
             patient_result = _bounded_exec([docker_executable(), "exec", "--user", PATIENT_UID, "--workdir", "/patient", container_id, "/gateway/patient-launcher", *command], self.policy.stdout_limit_bytes, self.policy.stderr_limit_bytes, self.policy.wall_seconds)
             # The reaper is a separate exec with no patient-inherited descriptor.
             reaper = _run([docker_executable(), "exec", "--user", PATIENT_UID, container_id, "/gateway/patient-reaper", PATIENT_UID], timeout=self.policy.grace_seconds + 10)
-            probe = _run([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence-probe", PATIENT_UID], timeout=15)
+            probe = _run([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence_probe.py", PATIENT_UID.split(":")[0]], timeout=15)
             if reaper.returncode or probe.returncode:
                 patient_result["termination"] = "artifact_transfer_failed"
-                outcome = {**patient_result, "container_id": container_id, "evidence_eligible": False, "quiescence": False}
+                outcome = {**patient_result, "container_id": container_id, "evidence_eligible": False, "quiescence": False, "reaper_code": reaper.returncode, "probe_code": probe.returncode, "reaper_stderr": reaper.stderr, "probe_stderr": probe.stderr}
             else:
-                transfer = subprocess.Popen([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer-helper"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                transfer = subprocess.Popen([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 raw, transfer_err = transfer.communicate(timeout=30)
                 if transfer.returncode: raise RuntimeError("transfer_helper_failed:" + transfer_err.decode("utf-8", "replace"))
                 manifest, archive = parse_transfer(__import__("io").BytesIO(raw), TransferLimits(self.policy.output_tmpfs_bytes, 4096, self.policy.output_tmpfs_bytes * 2))
@@ -206,6 +247,8 @@ class DockerSupervisorV2:
                 outcome["cleanup"] = cleanup
                 if not absent:
                     outcome["termination"] = "CONTAINMENT_FAILURE"; outcome["evidence_eligible"] = False
+            if absent:
+                self.lock.release(self.backend, owner)
         if outcome is None:
             raise RuntimeError("docker_execution_no_outcome")
         return outcome
