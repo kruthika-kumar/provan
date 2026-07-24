@@ -12,6 +12,7 @@ PRIVATE_PATH_MARKERS = ("oracle", "mutation", "adjudication", "raw-output", "pat
 PUBLIC_REVIEW_FILES = {
     "session1_part_a_review.md", "session1_part_a_disposition.md", "session1_part_b_review.md", "session1_part_b_disposition.md",
     "session1_part_c_review.md", "session1_part_c_disposition.md", "session1_closeout_review.md", "session1_claim_audit.md",
+    "session1_reopening_record.md", "session1_repair_disposition.md", "session1_effective_status.md",
 }
 SECRET_PATTERN = re.compile(r"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{20,}\b|\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b|aws_secret_access_key|docker\.sock)")
 
