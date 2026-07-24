@@ -132,6 +132,7 @@ def test_docker_contract_is_argument_vector_and_rejects_forbidden_options(tmp_pa
 def test_scheduler_preserves_ambiguous_provider_call(tmp_path: Path):
     scheduler = RunScheduler(tmp_path / "runs.sqlite")
     assert scheduler.enqueue("obs_1", "attempt_1") == "QUEUED"
+    with pytest.raises(ValueError, match="operation_state_forbidden"): scheduler.begin_operation("obs_1", "before_freeze")
     scheduler.freeze_schedule(["obs_1"], "public-seed")
     scheduler.begin_operation("obs_1", "provider_call_1"); scheduler.mark_ambiguous("provider_call_1")
     scheduler.finalize("obs_1", "receipt_1")
