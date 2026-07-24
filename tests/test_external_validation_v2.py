@@ -63,7 +63,7 @@ def test_receipt_v2_binds_runner_identity_and_never_self_hashes():
 
 
 def test_status_resolver_fails_closed_and_journal_requires_exact_binding(tmp_path: Path):
-    initial = {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"original","predecessor_status_id":None,"commit_sha":"a" * 40,"branch":"old","scope":"session1","status":"QUALIFIED"}
+    initial = {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"original","predecessor_status_id":None,"commit_sha":"a" * 40,"branch":"old","scope":"session1","timestamp":"2026-07-24T00:00:00Z","status":"QUALIFIED"}
     reopening = {**initial,"status_id":"reopened","predecessor_status_id":"original","branch":"repair","status":"REOPENED"}
     assert validate_status_chain([initial,reopening])["status"] == "REOPENED"
     with pytest.raises(V2ValidationError, match="status_competing_successors"):

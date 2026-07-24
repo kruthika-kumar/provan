@@ -179,9 +179,10 @@ def validate_status_chain(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 def validate_status_record(value: Any) -> dict[str, Any]:
     item = _object(value, "")
-    _exact(item, {"schema_id", "schema_version", "status_id", "predecessor_status_id", "commit_sha", "branch", "scope", "status"})
-    if item["schema_id"] != "external_validation.status_supersession.v1" or item["schema_version"] != "1" or not all(isinstance(item[key], str) and item[key] for key in ("status_id", "commit_sha", "branch", "scope", "status")):
+    _exact(item, {"schema_id", "schema_version", "status_id", "predecessor_status_id", "commit_sha", "branch", "scope", "timestamp", "status"})
+    if item["schema_id"] != "external_validation.status_supersession.v1" or item["schema_version"] != "1" or not all(isinstance(item[key], str) and item[key] for key in ("status_id", "commit_sha", "branch", "scope", "timestamp", "status")):
         _fail("status_header_invalid")
+    if len(item["commit_sha"]) != 40 or any(char not in "0123456789abcdef" for char in item["commit_sha"]): _fail("status_commit_invalid")
     if item["predecessor_status_id"] is not None and not isinstance(item["predecessor_status_id"], str): _fail("status_predecessor_invalid")
     return item
 
