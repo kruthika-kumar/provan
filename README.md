@@ -2,7 +2,7 @@
 
 Shiproom is a packet-only, read-only release-assessment compiler. It prepares portable reviewer work orders, validates independently produced Product and Engineering results, and composes a canonical assessment overlay without changing the release, evidence graph, findings, decisions, or verdict.
 
-External-validation methodology and its reusable, Docker-qualified execution substrate are documented in [external_validation/README.md](external_validation/README.md). The control plane is separate from private patient repositories, hidden oracles, and raw execution evidence.
+External-validation methodology and its reusable execution substrate are documented in [external_validation/README.md](external_validation/README.md). **Session 1 is currently reopened for security and evidence-integrity repair; the predecessor Docker qualification is not effective.** The control plane is separate from private patient repositories, hidden oracles, and raw execution evidence.
 
 ## Fresh-build provenance
 

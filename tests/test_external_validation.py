@@ -25,7 +25,7 @@ from importlib import resources
 
 SHA = "a" * 40
 HASH = "sha256:" + "b" * 64
-APPLICABILITY = {name: "not_applicable" for name in ("ENGINEERING_EXECUTION", "PRODUCT_JOURNEY", "PRODUCT_MEASUREMENT", "DATA_CONTRACT_PIPELINE", "AI_EVAL")}
+APPLICABILITY = {name: ("applicable" if name == "ENGINEERING_EXECUTION" else "not_applicable") for name in ("ENGINEERING_EXECUTION", "PRODUCT_JOURNEY", "PRODUCT_MEASUREMENT", "DATA_CONTRACT_PIPELINE", "AI_EVAL")}
 
 
 def _case(schema_id: str = "external_validation.beta_case") -> dict:
@@ -150,7 +150,8 @@ def test_scheduler_persists_seeded_order_attempt_history_and_safe_recovery(tmp_p
     with pytest.raises(ValueError, match="schedule_closed_to_new_observations"): scheduler.enqueue("obs_late", "attempt_late")
     scheduler.mark_infrastructure_failure("obs_0", "container_startup")
     scheduler.infrastructure_retry("obs_0", "attempt_0b", "container_startup")
-    assert scheduler.index("schedule") ["records"][next(index for index, item in enumerate(scheduler.index("schedule")["records"]) if item["observation_key"] == "obs_0")]["attempts"][0]["state"] == "SUPERSEDED"
+    assert scheduler.index()["records"][next(index for index, item in enumerate(scheduler.index()["records"]) if item["observation_key"] == "obs_0")]["attempts"][0]["state"] == "SUPERSEDED"
+    with pytest.raises(ValueError, match="schedule_id_authority_mismatch"): scheduler.index("schedule")
     scheduler.begin_operation("obs_1", "op_1", "provider-1")
     with pytest.raises(ValueError, match="retry_state_forbidden"): scheduler.infrastructure_retry("obs_1", "attempt_1b", "container_startup")
     assert "obs_0" in scheduler.recover_interrupted()

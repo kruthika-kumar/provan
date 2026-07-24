@@ -66,11 +66,11 @@ def _finite_nonnegative(value: Any, path: str) -> None:
     if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0: _error("nonnegative_finite_required", path, "must be finite and non-negative")
 
 
-def _header(value: dict[str, Any], schema_id: str) -> None:
+def _header(value: dict[str, Any], schema_id: str, *, readable: bool = False) -> None:
     _required(value, set(value) | {"schema_id", "schema_version"}, "")
     if value.get("schema_id") != schema_id: _error("schema_id_invalid", "/schema_id", schema_id)
     if not isinstance(value.get("schema_version"), str): _error("schema_version_invalid", "/schema_version", "must be string")
-    try: registration(schema_id, value["schema_version"])
+    try: registration(schema_id, value["schema_version"], readable=readable)
     except ValueError: _error("unsupported_schema_version", "/schema_version", "not registered current version")
 
 
@@ -94,6 +94,8 @@ def _validate_case(value: dict[str, Any], schema_id: str) -> dict[str, Any]:
     applicability = _mapping(value["applicability"], "/applicability")
     if set(applicability) != SURFACES: _error("applicability_incomplete", "/applicability", "all typed surfaces required")
     if any(item not in APPLICABILITY for item in applicability.values()): _error("applicability_state_invalid", "/applicability", "invalid state")
+    if any(applicability[surface] == "not_applicable" for surface in surfaces):
+        _error("declared_surface_not_applicable", "/applicability", "declared active surface cannot be not_applicable")
     if schema_id == "external_validation.controlled_pair_case":
         _git_sha(value["buggy_sha"], "/buggy_sha"); _git_sha(value["fixed_sha"], "/fixed_sha")
         _sha(value["oracle_commitment"], "/oracle_commitment"); _sha(value["release_packet_hash"], "/release_packet_hash")
@@ -115,7 +117,7 @@ def _validate_case(value: dict[str, Any], schema_id: str) -> dict[str, Any]:
 
 
 def _validate_receipt(value: dict[str, Any]) -> dict[str, Any]:
-    _header(value, "external_validation.run_receipt")
+    _header(value, "external_validation.run_receipt", readable=True)
     keys = {"schema_id", "schema_version", "receipt_id", "observation_key", "observation_inputs", "attempt_id", "attempt_lineage", "case_id", "dataset", "snapshot_type", "arm", "repository", "pr_number", "maturity_band", "base_sha", "target_sha", "commit_sha", "release_surfaces", "applicability", "hashes", "versions", "started_at", "completed_at", "terminal_state", "termination", "checks", "model_usage", "cost", "totals", "findings", "logs", "supervisor"}
     _required(value, keys, "")
     if value["arm"] not in ARMS: _error("arm_invalid", "/arm", "unknown arm")
@@ -129,6 +131,7 @@ def _validate_receipt(value: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value["release_surfaces"], list) or any(surface not in SURFACES for surface in value["release_surfaces"]): _error("release_surface_invalid", "/release_surfaces", "typed surfaces required")
     applicability = _mapping(value["applicability"], "/applicability")
     if set(applicability) != SURFACES or any(state not in APPLICABILITY for state in applicability.values()): _error("applicability_incomplete", "/applicability", "typed decision for every surface required")
+    if any(applicability[surface] == "not_applicable" for surface in value["release_surfaces"]): _error("declared_surface_not_applicable", "/applicability", "declared active surface cannot be not_applicable")
     try:
         started, completed = datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")), datetime.fromisoformat(value["completed_at"].replace("Z", "+00:00"))
         if completed < started: raise ValueError
@@ -240,6 +243,21 @@ def validate_artifact(value: Any) -> dict[str, Any]:
     if schema_id == "external_validation.controlled_pair_case": return _validate_case(item, schema_id)
     if schema_id == "external_validation.natural_pr_case": return _validate_case(item, schema_id)
     if schema_id == "external_validation.run_receipt": return _validate_receipt(item)
+    if schema_id == "external_validation.run_receipt.v2":
+        from .v2 import validate_receipt_v2
+        return validate_receipt_v2(item)
+    if schema_id == "external_validation.artifact_manifest.v1":
+        from .v2 import validate_artifact_manifest
+        return validate_artifact_manifest(item)
+    if schema_id == "external_validation.containment_incident.v1":
+        from .v2 import validate_incident
+        return validate_incident(item)
+    if schema_id == "external_validation.status_supersession.v1":
+        from .v2 import validate_status_record
+        return validate_status_record(item)
+    if schema_id == "external_validation.finalization_journal.v1":
+        from .v2 import validate_finalization_journal_record
+        return validate_finalization_journal_record(item)
     if schema_id == "external_validation.applicability": return _validate_applicability(item)
     if schema_id == "external_validation.run_index": return _validate_run_index(item)
     if schema_id == "external_validation.synthetic_proof_receipt": return _validate_synthetic_proof_receipt(item)

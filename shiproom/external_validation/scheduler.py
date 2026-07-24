@@ -134,6 +134,7 @@ class RunScheduler:
                 return
             self.db.execute("UPDATE runs SET state='TERMINAL',receipt_id=? WHERE observation_key=?", (receipt_id, observation_key))
             self.db.execute("UPDATE attempts SET state='TERMINAL',receipt_id=? WHERE attempt_id=?", (receipt_id, run[0]))
+            self.db.execute("UPDATE operations SET state='TERMINAL' WHERE attempt_id=? AND state='IN_FLIGHT'", (run[0],))
             self.checkpoint(observation_key, "TERMINAL", {"receipt_id": receipt_id})
 
     def mark_infrastructure_failure(self, observation_key: str, reason: str) -> None:
@@ -162,10 +163,10 @@ class RunScheduler:
             self.db.execute("UPDATE runs SET state='QUEUED',active_attempt_id=?,detail=? WHERE observation_key=?", (next_attempt, reason, observation_key))
 
     def index(self, schedule_id: str | None = None) -> dict:
-        if schedule_id is None:
-            row = self.db.execute("SELECT schedule_id FROM schedule_metadata WHERE singleton=1").fetchone()
-            if not row: raise ValueError("schedule_not_frozen")
-            schedule_id = row[0]
+        row = self.db.execute("SELECT schedule_id FROM schedule_metadata WHERE singleton=1").fetchone()
+        if not row: raise ValueError("schedule_not_frozen")
+        if schedule_id is not None and schedule_id != row[0]: raise ValueError("schedule_id_authority_mismatch")
+        schedule_id = row[0]
         records = []
         for run in self.db.execute("SELECT * FROM runs ORDER BY schedule_position,observation_key"):
             attempts = [{"attempt_id": row[0], "lineage": row[1], "state": row[2], "reason": row[3], "receipt_id": row[4]} for row in self.db.execute("SELECT attempt_id,lineage,state,reason,receipt_id FROM attempts WHERE observation_key=? ORDER BY lineage", (run[0],))]

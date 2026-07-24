@@ -26,3 +26,24 @@ def validate_corpus(root: Path, shiproom_root: Path, patient_root: Path | None =
                 if item in seen[key]: raise ValueError("duplicate_" + key)
                 seen[key].add(item)
     return {"receipt_count": len(receipts), "receipt_ids": sorted(seen["receipt_id"])}
+
+
+def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, case_manifest_ledger: dict[str, dict]) -> dict:
+    """Validate only a supervisor-produced index, never arbitrary patient bytes."""
+    evidence_root = external_root(str(root), shiproom_root)
+    index_path = canonical_safe_path(evidence_root, receipt_index, allow_missing_leaf=False)
+    if not index_path.is_file(): raise ValueError("supervisor_index_missing")
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    if not isinstance(index, dict) or set(index) != {"receipts"} or not isinstance(index["receipts"], list): raise ValueError("supervisor_index_invalid")
+    seen = set()
+    for relative in index["receipts"]:
+        if not isinstance(relative, str) or not relative.startswith("supervisor-owned/receipts/"): raise ValueError("receipt_index_path_invalid")
+        path = canonical_safe_path(evidence_root, evidence_root / relative, allow_missing_leaf=False)
+        item = json.loads(path.read_text(encoding="utf-8"))
+        from .v2 import receipt_id_v2, validate_receipt_v2
+        validate_receipt_v2(item)
+        receipt_id = receipt_id_v2(item)
+        if receipt_id in seen: raise ValueError("duplicate_receipt")
+        seen.add(receipt_id)
+        if item["case_id"] not in case_manifest_ledger: raise ValueError("case_authority_ledger_required")
+    return {"receipt_count": len(seen), "receipt_ids": sorted(seen)}

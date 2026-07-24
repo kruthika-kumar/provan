@@ -33,7 +33,7 @@ exclude = ["skills*", "tests*"]
 "shiproom.review_organisation" = ["*.json"]
 "shiproom.contestability_schemas" = ["*.json"]
 "shiproom.management_artifacts" = ["*.json"]
-"shiproom.external_validation" = ["schemas/*.json"]
+"shiproom.external_validation" = ["schemas/*.json", "seccomp-v2.json", "runner_image/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

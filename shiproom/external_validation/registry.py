@@ -40,9 +40,9 @@ def _load_registry() -> list[SchemaRegistration]:
 REGISTRY = _load_registry()
 
 
-def registration(schema_id: str, version: str) -> SchemaRegistration:
+def registration(schema_id: str, version: str, *, readable: bool = False) -> SchemaRegistration:
     matches = [item for item in REGISTRY if item.schema_id == schema_id and item.version == version]
-    if len(matches) != 1 or matches[0].status != "current":
+    if len(matches) != 1 or (matches[0].status != "current" and not (readable and matches[0].status == "superseded")):
         raise ValueError("unsupported_schema_version")
     return matches[0]
 
