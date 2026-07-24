@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 from .validators import validate_artifact
 from .security import canonical_safe_path, external_root
+from .v2 import FinalizationJournal
 
 def validate_corpus(root: Path, shiproom_root: Path, patient_root: Path | None = None, *, case_manifest_ledger: dict[str, dict] | None = None) -> dict:
     """Fail closed across the full evidence root, not merely one mutable index."""
@@ -28,7 +29,7 @@ def validate_corpus(root: Path, shiproom_root: Path, patient_root: Path | None =
     return {"receipt_count": len(receipts), "receipt_ids": sorted(seen["receipt_id"])}
 
 
-def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, case_manifest_ledger: dict[str, dict]) -> dict:
+def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, case_manifest_ledger: dict[str, dict], journal: FinalizationJournal) -> dict:
     """Validate only a supervisor-produced index, never arbitrary patient bytes."""
     evidence_root = external_root(str(root), shiproom_root)
     index_path = canonical_safe_path(evidence_root, receipt_index, allow_missing_leaf=False)
@@ -53,4 +54,7 @@ def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, 
             raise ValueError("case_authority_surface_mismatch")
         if item["observation_inputs"]["snapshot_hash"] != case.get("snapshot_hash"):
             raise ValueError("case_authority_hash_mismatch")
+        record = journal.record(item["finalization_journal_id"])
+        if not record or record["phase"] != "TERMINAL_COMMITTED" or record["attempt_id"] != item["attempt_id"] or record["manifest_hash"] != item["artifact_manifest_hash"] or record["receipt_path"] != str(path):
+            raise ValueError("receipt_finalization_journal_authority_missing")
     return {"receipt_count": len(seen), "receipt_ids": sorted(seen)}

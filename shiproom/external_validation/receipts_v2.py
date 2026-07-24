@@ -56,6 +56,12 @@ def finalize_v2(*, receipt: dict[str, Any], manifest: dict[str, Any], manifest_p
 
 def write_index(receipts: list[tuple[str, Path]], destination: Path) -> None:
     """A reproducible projection: IDs and canonical supervisor-relative paths only."""
+    for receipt_id, path in receipts:
+        if not str(path).replace("\\", "/").startswith("supervisor-owned/receipts/"):
+            raise ValueError("receipt_index_path_authority_invalid")
+        receipt = json.loads((destination.parents[2] / path).read_text(encoding="utf-8"))
+        validate_receipt_v2(receipt)
+        if receipt_id_v2(receipt) != receipt_id: raise ValueError("receipt_index_receipt_id_invalid")
     value = {"receipts": [path.as_posix() for _, path in sorted(receipts)]}
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(canonical_json(value))

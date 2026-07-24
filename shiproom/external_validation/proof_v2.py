@@ -89,5 +89,5 @@ def run_five_arm_v2_proof(root: Path, policy: ExecutionPolicyV2, shiproom_root: 
         receipt_id,_=finalize_v2(receipt=receipt,manifest=manifest,manifest_path=manifest_path,artifacts=artifact_paths,journal=journal,destination=receipt_path); scheduler.finalize(observation, receipt_id); journal.phase(journal_id, "RECEIPT_DURABLE", "TERMINAL_COMMITTED"); receipt_ids[arm]=receipt_id; receipt_paths.append((receipt_id,receipt_path.relative_to(root)))
     write_index(receipt_paths,indexes/'run-index.json')
     ledger={"case_synthetic_v2":{"repository":"synthetic/shiproom-v2-proof","commit_sha":patient_commit,"release_surfaces":["synthetic"],"snapshot_hash":sha256_file(source)}}
-    corpus=validate_corpus_v2(root, shiproom_root, receipt_index=indexes/'run-index.json', case_manifest_ledger=ledger)
+    corpus=validate_corpus_v2(root, shiproom_root, receipt_index=indexes/'run-index.json', case_manifest_ledger=ledger, journal=journal)
     return {"receipt_ids":receipt_ids,"index":str((indexes/'run-index.json').relative_to(root)),"implementation_commit":commit,"runner_image":policy.runner_image_digest,"corpus":corpus,"schedule":scheduler.index()}

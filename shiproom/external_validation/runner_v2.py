@@ -93,11 +93,11 @@ def effective_projection(inspect: dict[str, Any]) -> dict[str, Any]:
     host = inspect.get("HostConfig", {}); config = inspect.get("Config", {})
     return {
         "image": config.get("Image"), "user": config.get("User"), "readonly": host.get("ReadonlyRootfs"), "network": host.get("NetworkMode"),
-        "cap_drop": sorted(host.get("CapDrop") or []), "security": sorted(host.get("SecurityOpt") or []),
+        "cap_drop": sorted(host.get("CapDrop") or []), "cap_add": sorted(host.get("CapAdd") or []), "privileged": bool(host.get("Privileged")), "security": sorted(host.get("SecurityOpt") or []),
         "pid": host.get("PidMode"), "ipc": host.get("IpcMode"), "userns": host.get("UsernsMode"), "devices": host.get("Devices") or [],
         "memory": host.get("Memory"), "memory_swap": host.get("MemorySwap"), "pids": host.get("PidsLimit"),
         "cpu_nano": host.get("NanoCpus"), "restart": (host.get("RestartPolicy") or {}).get("Name"), "log_driver": (host.get("LogConfig") or {}).get("Type"), "env": sorted(config.get("Env") or []),
-        "labels": config.get("Labels") or {}, "mounts": sorted(({"destination": m.get("Destination"), "rw": m.get("RW"), "type": m.get("Type")} for m in inspect.get("Mounts", [])), key=lambda x: str(x)),
+        "labels": config.get("Labels") or {}, "mounts": sorted(({"source": m.get("Source"), "destination": m.get("Destination"), "rw": m.get("RW"), "type": m.get("Type")} for m in inspect.get("Mounts", [])), key=lambda x: str(x)),
     }
 
 
@@ -112,14 +112,14 @@ def assert_effective_policy(projection: dict[str, Any], policy: ExecutionPolicyV
     security = " ".join(projection["security"])
     if projection["image"] != policy.image_digest or projection["network"] != "none" or not projection["readonly"] or projection["user"] != SUPERVISOR_UID:
         raise RuntimeError("effective_docker_policy_mismatch")
-    if "ALL" not in projection["cap_drop"] or not all(word in security for word in required_security) or "seccomp=" not in security:
+    if "ALL" not in projection["cap_drop"] or projection["cap_add"] or projection["privileged"] or not all(word in security for word in required_security) or "seccomp=" not in security:
         raise RuntimeError("effective_docker_policy_mismatch")
     if projection["pid"] or projection["ipc"] not in {"", "private"} or projection["userns"] or projection["devices"] or projection["restart"] not in {"", "no"}:
         raise RuntimeError("effective_docker_policy_mismatch")
     if projection["memory"] != _memory_bytes(policy.memory) or projection["memory_swap"] != _memory_bytes(policy.memory) or projection["pids"] != policy.pids or projection["cpu_nano"] != int(policy.cpus * 1_000_000_000) or projection["log_driver"] != "none":
         raise RuntimeError("effective_docker_policy_mismatch")
     if any(item.startswith(("HTTP_", "HTTPS_", "ALL_PROXY=", "HOME=", "SSH_", "AWS_")) for item in projection["env"]): raise RuntimeError("effective_docker_policy_mismatch")
-    if set(mounts) != {"/patient", "/release"} or mounts["/patient"]["rw"] or mounts["/release"]["rw"] or projection["labels"].get("shiproom.external_validation.backend") != backend:
+    if set(mounts) != {"/patient", "/release"} or mounts["/patient"]["rw"] or mounts["/release"]["rw"] or mounts["/patient"]["type"] != "bind" or mounts["/release"]["type"] != "bind" or Path(str(mounts["/patient"]["source"])).resolve() != patient.resolve() or Path(str(mounts["/release"]["source"])).resolve() != packet.resolve() or projection["labels"].get("shiproom.external_validation.backend") != backend:
         raise RuntimeError("effective_docker_policy_mismatch")
 
 
@@ -214,9 +214,9 @@ class DockerSupervisorV2:
                 patient_result["termination"] = "artifact_transfer_failed"
                 outcome = {**patient_result, "container_id": container_id, "evidence_eligible": False, "quiescence": False, "reaper_code": reaper.returncode, "probe_code": probe.returncode, "reaper_stderr": reaper.stderr, "probe_stderr": probe.stderr}
             else:
-                transfer = subprocess.Popen([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                raw, transfer_err = transfer.communicate(timeout=30)
-                if transfer.returncode: raise RuntimeError("transfer_helper_failed:" + transfer_err.decode("utf-8", "replace"))
+                transfer = _bounded_exec([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], self.policy.output_tmpfs_bytes * 2, 64 * 1024, 30)
+                if transfer["termination"] != "completed": raise RuntimeError("transfer_helper_failed:" + transfer["termination"])
+                raw = transfer["stdout"]
                 manifest, archive = parse_transfer(__import__("io").BytesIO(raw), TransferLimits(self.policy.output_tmpfs_bytes, 4096, self.policy.output_tmpfs_bytes * 2))
                 sealed = seal_root / container_id; sealed.mkdir(parents=True, exist_ok=False); _safe_extract(archive, sealed, manifest)
                 outcome = {**patient_result, "container_id": container_id, "evidence_eligible": True, "artifact_manifest": manifest, "sealed_output": sealed,
