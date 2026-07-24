@@ -1,0 +1,14 @@
+{
+  "schema_id": "external_validation.schema_registry",
+  "version": "1",
+  "schemas": [
+    {"schema_id":"external_validation.beta_case","version":"1","filename":"beta-case.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.controlled_pair_case","version":"1","filename":"controlled-pair-case.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.natural_pr_case","version":"1","filename":"natural-pr-case.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.run_receipt","version":"1","filename":"run-receipt.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.applicability","version":"1","filename":"applicability.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.price_table","version":"1","filename":"price-table.v1.json","validator":"shiproom.external_validation.pricing.validate_price_table","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.run_index","version":"1","filename":"run-index.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"},
+    {"schema_id":"external_validation.synthetic_proof_receipt","version":"1","filename":"synthetic-proof-receipt.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
+  ]
+}

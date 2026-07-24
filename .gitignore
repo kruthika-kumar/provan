@@ -23,6 +23,12 @@ external-release-state/
 audio/
 runtime-provenance/
 context-bootstrap/
+external_validation/private/
+external_validation/raw-output/
+external_validation/patient-repositories/
+external_validation/adjudication-private/
+external_validation/mutations-private/
+external_validation/oracles-private/
 *.mp3
 *.wav
 .env

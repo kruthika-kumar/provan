@@ -1,0 +1,25 @@
+{
+  "schema_id": "external_validation.synthetic_proof_receipt",
+  "schema_version": "1",
+  "proof": "docker_five_arm_lifecycle",
+  "executed_at": "2026-07-24",
+  "implementation_base_commit": "0672cbe7f4afb9f9244cf594aa477f72a433f592",
+  "implementation_state": "uncommitted-reviewed-substrate",
+  "command": "python -m shiproom.external_validation.proof --evidence-root <private> --patient-root <private> --shiproom-root <checkout> --summary <private>",
+  "image": "busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028",
+  "qualification": {"qualification_status": "QUALIFIED", "canaries": {"read_only": "enforced", "network": "enforced", "secret_socket": "isolated"}},
+  "corpus": {"receipt_count": 5, "all_states": ["TERMINAL"]},
+  "arm_receipts": {
+    "NATIVE_CHECKS_ONLY": "receipt_c1a94b1239b32376a1c9d57bb6baca65f9bec4e1ab23daf1326e0285e06edc91",
+    "SHIPROOM_DETERMINISTIC_ONLY": "receipt_f5508793e53af49944f27148949a4b51e228315c9f1588a6cfb3c334ca9cf7f9",
+    "SHIPROOM_FULL": "receipt_7c53c56000944c6f7777b996f8972db4879dc54c00e898388fe333b152359cab",
+    "SOTA_AGENT": "receipt_ac9b604a1f537bce9e6664fe7253a5e20b97ded7f4a2f0dd064872329c86749a",
+    "SHIPROOM_NO_DETERMINISTIC_CORE": "receipt_f0e156119ce4b82de2ad85dfe8c1ed17713a59626fd665ae6b1ac5cd511a82ee"
+  },
+  "private_artifact_hashes": {
+    "scheduler.sqlite": "sha256:dbcfe8403e4b4a0119afd84e8d9ae74fed5cb2b97a072aa06e44d0aa57f607cf",
+    "source-snapshot.json": "sha256:5df6a6527c0290da7caa420d131eb6f25d2ecda637e6f94918b39aa984ded996",
+    "release-packet.json": "sha256:c9358425cc56660ad4d1337a21de5df45897b0e30ee56085ecf7c64171d48d34"
+  },
+  "redaction": "No patient repository, raw output, oracle, mutation, target, provider credential, or model output is included."
+}
