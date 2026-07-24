@@ -67,6 +67,8 @@ class RunScheduler:
             row = self.db.execute("SELECT state FROM runs WHERE observation_key=?", (observation_key,)).fetchone()
             if row:
                 return row[0]
+            if self.db.execute("SELECT 1 FROM schedule_metadata WHERE singleton=1").fetchone():
+                raise ValueError("schedule_closed_to_new_observations")
             self.db.execute("INSERT INTO runs (observation_key,state,active_attempt_id,receipt_id,detail,schedule_position) VALUES (?,?,?,?,?,?)",
                             (observation_key, "QUEUED", attempt_id, None, "", schedule_position))
             self.db.execute("INSERT INTO attempts (attempt_id,observation_key,lineage,state,created_sequence) VALUES (?,?,?,?,?)",
@@ -96,8 +98,8 @@ class RunScheduler:
 
     def begin_operation(self, observation_key: str, operation_id: str, provider_operation_id: str | None = None) -> None:
         with self.db:
-            run = self.db.execute("SELECT active_attempt_id,state FROM runs WHERE observation_key=?", (observation_key,)).fetchone()
-            if not run or run[1] != "QUEUED":
+            run = self.db.execute("SELECT active_attempt_id,state,schedule_position FROM runs WHERE observation_key=?", (observation_key,)).fetchone()
+            if not run or run[1] != "QUEUED" or run[2] is None:
                 raise ValueError("operation_state_forbidden")
             self.db.execute("INSERT INTO operations VALUES (?,?,?,?,?)", (operation_id, run[0], observation_key, "IN_FLIGHT", provider_operation_id))
             self.db.execute("UPDATE runs SET state='RUNNING' WHERE observation_key=?", (observation_key,))

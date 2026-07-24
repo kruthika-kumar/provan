@@ -9,4 +9,5 @@ Each invariant is exercised by valid, near-valid, and adversarial fixtures in `t
 | Root confinement | approved oracle | patient-root oracle | automated |
 | Docker command policy | hardened argument vector | privileged option | Docker-qualified; see `docker_qualification.md` |
 | Five-arm parity | common-context smoke | deterministic-core leak | Docker-backed synthetic lifecycle; see `docker_five_arm_lifecycle.md` |
-| Scheduler recovery | queued observation | ambiguous provider call | automated, durable SQLite attempt history |
+| Scheduler recovery | queued observation | ambiguous provider call and reseed | automated, durable SQLite attempt history |
+| Terminal receipts | every synthetic terminal state | evidence-state and receipt tampering | automated host-supervisor receipt proof |

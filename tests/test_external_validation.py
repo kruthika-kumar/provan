@@ -132,6 +132,7 @@ def test_docker_contract_is_argument_vector_and_rejects_forbidden_options(tmp_pa
 def test_scheduler_preserves_ambiguous_provider_call(tmp_path: Path):
     scheduler = RunScheduler(tmp_path / "runs.sqlite")
     assert scheduler.enqueue("obs_1", "attempt_1") == "QUEUED"
+    scheduler.freeze_schedule(["obs_1"], "public-seed")
     scheduler.begin_operation("obs_1", "provider_call_1"); scheduler.mark_ambiguous("provider_call_1")
     scheduler.finalize("obs_1", "receipt_1")
     assert scheduler.db.execute("SELECT state,receipt_id FROM runs WHERE observation_key='obs_1'").fetchone() == ("INDETERMINATE_IN_FLIGHT", None)
@@ -144,10 +145,13 @@ def test_scheduler_persists_seeded_order_attempt_history_and_safe_recovery(tmp_p
     for number in range(3): scheduler.enqueue(f"obs_{number}", f"attempt_{number}")
     order = scheduler.freeze_schedule(["obs_0", "obs_1", "obs_2"], "public-seed")
     assert order == scheduler.freeze_schedule(["obs_0", "obs_1", "obs_2"], "public-seed")
+    with pytest.raises(ValueError, match="schedule_reseed_forbidden"): scheduler.freeze_schedule(["obs_0", "obs_1", "obs_2"], "other-seed")
+    with pytest.raises(ValueError, match="schedule_closed_to_new_observations"): scheduler.enqueue("obs_late", "attempt_late")
     scheduler.mark_infrastructure_failure("obs_0", "container_startup")
     scheduler.infrastructure_retry("obs_0", "attempt_0b", "container_startup")
     assert scheduler.index("schedule") ["records"][next(index for index, item in enumerate(scheduler.index("schedule")["records"]) if item["observation_key"] == "obs_0")]["attempts"][0]["state"] == "SUPERSEDED"
     scheduler.begin_operation("obs_1", "op_1", "provider-1")
+    with pytest.raises(ValueError, match="retry_state_forbidden"): scheduler.infrastructure_retry("obs_1", "attempt_1b", "container_startup")
     assert "obs_0" in scheduler.recover_interrupted()
     assert scheduler.db.execute("SELECT state FROM runs WHERE observation_key='obs_1'").fetchone()[0] == "INDETERMINATE_IN_FLIGHT"
 
@@ -245,6 +249,27 @@ def test_all_synthetic_terminal_scenarios_and_five_arm_smoke():
     context = ArmContext("case", HASH, HASH, HASH, HASH, HASH, HASH)
     results = five_arm_smoke(context)
     assert set(results) == set(ARMS) and all(result["terminal_state"] == "completed" for result in results.values())
+
+
+def test_every_synthetic_terminal_scenario_flows_through_scheduler_finalizer_and_corpus(tmp_path: Path, monkeypatch):
+    evidence, shiproom = tmp_path / "evidence", tmp_path / "shiproom"; evidence.mkdir(); shiproom.mkdir(); monkeypatch.setenv("SHIPROOM_EXTERNAL_VALIDATION_ROOT", str(evidence))
+    from shiproom.external_validation.security import sha256_file
+    source, packet = evidence / "source.bin", evidence / "packet.bin"; source.write_bytes(b"source"); packet.write_bytes(b"packet")
+    scheduler = RunScheduler(evidence / "terminal.sqlite")
+    prepared = {}
+    for scenario in SCENARIOS:
+        receipt = _receipt(); receipt["observation_inputs"]["model_settings"] = {"synthetic_scenario": scenario}; receipt["observation_key"] = observation_key(receipt["observation_inputs"]); receipt["attempt_id"] = attempt_id(receipt["observation_key"], 1)
+        receipt["terminal_state"] = scenario_output(scenario)["terminal_state"]; receipt["termination"] = receipt["terminal_state"]
+        output = evidence / f"output-{scenario}.bin"; output.write_text(scenario)
+        receipt["hashes"].update({"source": sha256_file(source), "release_packet": sha256_file(packet), "output": sha256_file(output)})
+        prepared[receipt["observation_key"]] = (_seal(receipt), output)
+        scheduler.enqueue(receipt["observation_key"], receipt["attempt_id"])
+    scheduler.freeze_schedule(list(prepared), "terminal-public-seed")
+    for key in scheduler.recover_interrupted():
+        receipt, output = prepared[key]; scheduler.begin_operation(key, "synthetic_" + key)
+        finalized = finalize_receipt(receipt, evidence / "receipts" / f"{key}.json", evidence, shiproom, artifact_paths={"source": source, "release_packet": packet, "output": output}, case_manifest=_case())
+        scheduler.finalize(key, finalized["receipt_id"])
+    assert validate_corpus(evidence, shiproom, case_manifest_ledger={_case()["case_id"]: _case()})["receipt_count"] == len(SCENARIOS)
 
 
 def test_supervisor_finalization_rehashes_real_artifacts(tmp_path: Path, monkeypatch):
