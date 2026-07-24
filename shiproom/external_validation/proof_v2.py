@@ -27,6 +27,34 @@ def _manifest(entries: list[dict]) -> dict:
     return {"schema_id":"external_validation.artifact_manifest.v1","schema_version":"1","artifacts":entries,"aggregate_bytes":total,"tree_hash":"sha256:"+hashlib.sha256(canonical_json({"artifacts":entries,"aggregate_bytes":total})).hexdigest()}
 
 
+def run_v2_security_canaries(root: Path, policy: ExecutionPolicyV2) -> dict:
+    """Adversarial runtime proofs; raw bytes stay inside the private root."""
+    patient=root/'canary-patient'; packet=root/'canary-packet'; sealed=root/'supervisor-owned'/'canary-sealed'
+    patient.mkdir(exist_ok=False); packet.mkdir(exist_ok=False); sealed.mkdir(parents=True,exist_ok=False)
+    (patient/'fixture').write_text('canary\n', encoding='utf-8'); (packet/'release.json').write_bytes(canonical_json({'synthetic':'canary'}))
+    lock=BackendLock(root/'supervisor-owned'/'canary-locks.sqlite'); runner=DockerSupervisorV2(policy, 'doctor-v2-canary', lock)
+    def execute(label: str, command: list[str]) -> dict:
+        return runner.execute(owner='canary-'+label, name='shiproom-canary-'+label+'-'+uuid.uuid4().hex[:8], cidfile=root/(label+'.cid'), patient=patient, packet=packet, command=command, seal_root=sealed)
+    # PID 1 is the supervisor.  The main shell exits while its patient-UID child
+    # is still poised to overwrite output; reaping/quiescence must precede transfer.
+    isolation=execute('isolation', ['sh','-c','test ! -r /supervisor/supervisor.py && test ! -r /proc/1/fd/1 && ! kill -0 1 && printf stable >/output/result.txt; code=$?; (sleep 1; printf race >/output/result.txt) & exit $code'])
+    if not isolation['evidence_eligible'] or isolation['termination'] != 'completed' or (isolation['sealed_output']/'result.txt').read_bytes() != b'stable':
+        raise RuntimeError('wrapper_isolation_or_quiescence_failed')
+    manifest_entry=next(entry for entry in isolation['artifact_manifest']['artifacts'] if entry['path']=='result.txt')
+    if manifest_entry['sha256'] != sha256_file(isolation['sealed_output']/'result.txt'):
+        raise RuntimeError('sealed_output_hash_mismatch')
+    time.sleep(1.2)
+    if (isolation['sealed_output']/'result.txt').read_bytes() != b'stable': raise RuntimeError('post_transfer_mutation_detected')
+    tight=ExecutionPolicyV2(**{**policy.__dict__, 'wall_seconds':2, 'stdout_limit_bytes':1024})
+    timeout_runner=DockerSupervisorV2(tight, 'doctor-v2-timeout', lock)
+    timeout=timeout_runner.execute(owner='canary-timeout', name='shiproom-canary-timeout-'+uuid.uuid4().hex[:8], cidfile=root/'timeout.cid', patient=patient, packet=packet, command=['sh','-c','sleep 20'], seal_root=sealed)
+    if timeout['termination'] != 'WALL_TIME_EXCEEDED' or not timeout['residual_absence']: raise RuntimeError('timeout_containment_failed')
+    logs=timeout_runner.execute(owner='canary-logs', name='shiproom-canary-logs-'+uuid.uuid4().hex[:8], cidfile=root/'logs.cid', patient=patient, packet=packet, command=['sh','-c','yes x | head -c 4096'], seal_root=sealed)
+    if logs['termination'] != 'STDOUT_LIMIT_EXCEEDED' or logs['stdout_discarded'] <= 0 or not logs['residual_absence']:
+        raise RuntimeError('bounded_log_capture_failed')
+    return {'wrapper_isolation':'proven','background_writer':'proven','timeout_cleanup':'proven','bounded_logs':'proven'}
+
+
 def run_five_arm_v2_proof(root: Path, policy: ExecutionPolicyV2, shiproom_root: Path) -> dict:
     root.mkdir(parents=True, exist_ok=False)
     patient=root/'patient'; packet=root/'packet'; sealed=root/'supervisor-owned'/'sealed-output'; logs=root/'supervisor-owned'/'logs'; receipts=root/'supervisor-owned'/'receipts'; manifests=root/'supervisor-owned'/'sealed-output-manifests'; indexes=root/'supervisor-owned'/'indexes'

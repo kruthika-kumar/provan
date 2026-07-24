@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import uuid
 
-from .proof_v2 import run_five_arm_v2_proof
+from .proof_v2 import run_five_arm_v2_proof, run_v2_security_canaries
 from .runner import docker_available
 from .runner_v2 import ExecutionPolicyV2, create_argv, validate_create_argv
 
@@ -73,13 +73,14 @@ def qualification(*, run_dynamic: bool = True) -> dict:
         proof = run_five_arm_v2_proof(proof_root, policy, repository)
         if proof["implementation_commit"] != commit or proof["corpus"]["receipt_count"] != 5:
             raise RuntimeError("doctor_proof_commit_or_corpus_mismatch")
+        canaries = run_v2_security_canaries(proof_root, policy)
     except Exception as exc:
         return _base_result("FAILED", f"dynamic_v2_canary_failed:{type(exc).__name__}", failed=True)
     finally:
         os.environ["SHIPROOM_EXTERNAL_VALIDATION_ROOT"] = old_root
     detection = _profile("QUALIFIED", DETECTION_CONTROLS)
     detection["controls"] = {control: "proven" for control in DETECTION_CONTROLS}
-    detection.update({"implementation_commit": commit, "source_tree": tree, "private_proof_index": proof["index"], "receipt_ids": proof["receipt_ids"]})
+    detection.update({"implementation_commit": commit, "source_tree": tree, "private_proof_index": proof["index"], "receipt_ids": proof["receipt_ids"], "adversarial_canaries": canaries})
     remediation = _profile("BLOCKED", REMEDIATION_CONTROLS, "hard_writable_worktree_quota_not_qualified")
     return {"detection_profile": detection, "remediation_profile": remediation, "overall_status": "PARTIALLY_QUALIFIED"}
 
