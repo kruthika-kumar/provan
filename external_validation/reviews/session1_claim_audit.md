@@ -8,4 +8,4 @@
 | Scheduler integrity | `RunScheduler` | frozen schedule, durable attempts, terminal indexing | reseed, pre-freeze execution, late enqueue, ambiguous retry rejected | focused suite |
 | Five-arm lifecycle | `run_five_arm_lifecycle` | five distinct host-finalized receipts | doctor gate, deterministic-core leak, output-root escape rejected | committed redacted proof receipt |
 | Terminal-scenario preservation | scheduler/finalizer/corpus proof | all synthetic terminal scenarios finalizable and indexed | receipt/evidence tampering rejected | focused suite |
-| Session 1 acceptance | pending closeout | Parts A-C GO; focused suite 29 passed; Docker QUALIFIED | full existing 782-test baseline exceeded 15 minutes at 9% and did not complete | closeout review required |
+| Session 1 acceptance | open | Parts A-C GO; focused suite 29 passed; Docker QUALIFIED | full existing 782-test baseline exceeded 15 minutes at 9% and did not complete | fresh closeout GO required after completed baseline |
