@@ -16,6 +16,7 @@ from shiproom.external_validation.v2 import (
 )
 from shiproom.external_validation.scheduler import RunScheduler
 from shiproom.external_validation.proof_views import sanitize_proof
+from shiproom.external_validation.status import resolve_status
 
 H = "sha256:" + "a" * 64
 
@@ -105,3 +106,12 @@ def test_public_proof_view_is_deterministic_and_non_qualifying():
     two = sanitize_proof(canonical, canonical_hash=H, policy_version="1", tool_hash=H)
     assert one == two and one["authority"] == "non_qualifying_public_view"
     assert "container_id" not in one["proof"] and "external_root" not in one["proof"]
+
+
+def test_status_document_resolves_reopening_and_rejects_bad_document(tmp_path: Path):
+    records = [
+        {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"old","predecessor_status_id":None,"commit_sha":"a"*40,"branch":"old","scope":"session1","timestamp":"now","status":"QUALIFIED"},
+        {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"new","predecessor_status_id":"old","commit_sha":"b"*40,"branch":"new","scope":"session1","timestamp":"later","status":"REOPENED"},
+    ]
+    path = tmp_path / "status.json"; path.write_text(json.dumps({"schema_id":"external_validation.status_chain.v1","schema_version":"1","records":records}), encoding="utf-8")
+    assert resolve_status(path)["effective_status"] == "REOPENED"
