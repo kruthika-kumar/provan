@@ -12,6 +12,18 @@ STAGE_SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-
 
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def stage_hash(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def trusted_host_executable(path:Path)->None:
+    item=path.stat(follow_symlinks=False)
+    if not stat.S_ISREG(item.st_mode) or item.st_uid!=0 or item.st_mode&0o022 or not item.st_mode&0o111: raise RuntimeError("staged_attestation_tool_untrusted")
+def staged_directory(path:Path,mode:int)->None:
+    item=path.lstat()
+    if not stat.S_ISDIR(item.st_mode) or item.st_uid!=0 or item.st_gid!=0 or item.st_mode&0o022: raise RuntimeError("staged_directory_untrusted")
+    flags=os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW
+    fd=os.open(path,flags)
+    try:
+        opened=os.fstat(fd)
+        if opened.st_dev!=item.st_dev or opened.st_ino!=item.st_ino or stat.S_IMODE(opened.st_mode)!=mode: raise RuntimeError("staged_directory_raced")
+    finally: os.close(fd)
 def staged_regular(path:Path)->None:
     item=path.lstat()
     if not stat.S_ISREG(item.st_mode) or item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("staged_file_untrusted")
@@ -25,7 +37,8 @@ def require_staged_script(script:Path)->None:
     """
     raw=script.absolute()
     if raw.name!="package_contract.py" or raw.parent.parent!=STAGE_ROOT or len(raw.parent.name)!=64 or any(char not in "0123456789abcdef" for char in raw.parent.name): raise RuntimeError("staged_path_invalid")
-    staged_regular(raw); stage=raw.parent; manifest_path=stage/"manifest.json"; attestation_path=stage/"stage0-attestation.json"
+    staged_directory(STAGE_ROOT,0o755); stage=raw.parent; staged_directory(stage,0o755); staged_directory(stage/"schemas",0o755)
+    staged_regular(raw); manifest_path=stage/"manifest.json"; attestation_path=stage/"stage0-attestation.json"
     staged_regular(manifest_path); staged_regular(attestation_path)
     manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
     if set(manifest)!={"schema_id","schema_version","source_commit","source_tree","source_manifest","attestation_hash","bundle_hash"} or manifest["schema_id"]!="remediation_staged_bundle.v1" or manifest["schema_version"]!="1": raise RuntimeError("staged_manifest_invalid")
@@ -41,7 +54,14 @@ def require_staged_script(script:Path)->None:
         if stage_hash(path)!=source_manifest["schemas"][name]: raise RuntimeError("staged_hash_mismatch")
     attestation=json.loads(attestation_path.read_text(encoding="utf-8")); claimed_attestation=attestation.pop("attestation_hash",None)
     if claimed_attestation!=manifest["attestation_hash"] or claimed_attestation!="sha256:"+hashlib.sha256(canonical(attestation)).hexdigest(): raise RuntimeError("staged_attestation_mismatch")
-    if attestation.get("schema_id")!="remediation_stage0_attestation.v1" or attestation.get("schema_version")!="1" or attestation.get("commit")!=manifest["source_commit"] or attestation.get("tree")!=manifest["source_tree"] or attestation.get("bundle_files")!=source_manifest["files"] or attestation.get("schemas")!=source_manifest["schemas"]: raise RuntimeError("staged_attestation_mismatch")
+    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","shellcheck","commands","created_at"}
+    if set(attestation)!=required or attestation["schema_id"]!="remediation_stage0_attestation.v1" or attestation["schema_version"]!="1" or attestation["commit"]!=manifest["source_commit"] or attestation["tree"]!=manifest["source_tree"] or attestation["bundle_files"]!=source_manifest["files"] or attestation["schemas"]!=source_manifest["schemas"]: raise RuntimeError("staged_attestation_mismatch")
+    commands=attestation["commands"]; shells=[name for name in STAGE_FILES if name.endswith(".sh")]
+    expected_commands=[["/usr/bin/bash","-n",*shells],["/usr/bin/bash","tests.sh"],["/usr/bin/git","diff","--check"],["/usr/bin/shellcheck","--version"],["/usr/bin/shellcheck","-S","warning",*shells]]
+    if not isinstance(commands,list) or len(commands)!=5 or any(not isinstance(row,dict) or row.get("exit_code")!=0 or row.get("command")!=expected for row,expected in zip(commands,expected_commands)): raise RuntimeError("staged_attestation_commands_invalid")
+    shellcheck=attestation["shellcheck"]
+    if not isinstance(shellcheck,dict) or shellcheck.get("path")!="/usr/bin/shellcheck" or shellcheck.get("hash")!=stage_hash(Path("/usr/bin/shellcheck")) or not shellcheck.get("version"): raise RuntimeError("staged_attestation_shellcheck_invalid")
+    for executable in (Path("/usr/bin/bash"),Path("/usr/bin/git"),Path("/usr/bin/shellcheck")): trusted_host_executable(executable)
 
 class PackageContractError(ValueError): pass
 
