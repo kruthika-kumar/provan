@@ -104,6 +104,24 @@ quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"; 
 quota_record(){ local p=$1 out source; source=$(state_get LOOP); out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v project="$p" -v source="$source" -v mount="$MOUNT" '$1==source && $NF==mount && NF==12 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", project, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
 quota_limits_verified(){ local p=$1 b=$2 i=$3 row rp rb ri; row=$(quota_record "$p") || return 1; IFS=$'\t' read -r rp rb ri <<<"$row"; [[ "$rp" == "$p" && "$rb" == "$b" && "$ri" == "$i" ]]; }
 storage_verified(){ local loop; require_paths; loop=$(state_get LOOP); is_recorded_block_device "$loop" && [[ "$(losetup -n -O BACK-FILE "$loop")" == "$IMAGE" ]] || return 1; findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || return 1; xfs_info "$MOUNT" | grep -q 'ftype=1' || return 1; quota_limits_verified "$(state_get DATA_PROJECT)" "$(state_get DATA_BYTES)" "$(state_get DATA_INODES)"; }
+capacity_record_from_xfs(){
+  local total available nominal instance
+  read -r total available < <(df -B1 --output=size,avail "$MOUNT" | tail -n 1)
+  nominal=$(stat -c %s "$IMAGE"); instance=$(control instance)
+  [[ "$total" =~ ^[0-9]+$ && "$available" =~ ^[0-9]+$ && "$nominal" =~ ^[0-9]+$ && -n "$instance" ]] || return 1
+  /usr/bin/python3 - "$instance" "$nominal" "$total" "$available" <<'PY'
+import hashlib,json,sys
+instance,nominal,total,available=sys.argv[1:]
+nominal,total,available=map(int,(nominal,total,available))
+docker=8*1024**3; metadata=1024**3; supervisor=1024**3
+usable=min(total,available); aggregate=min(4*1024**3,usable-docker-metadata-supervisor)
+if aggregate < 2*1024**3: raise SystemExit(2)
+evidence={"backend_instance_id":instance,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"qualified_worktree_aggregate_limit":aggregate,"inode_policy_cap":500000,"max_active_projects":2}
+evidence_hash="sha256:"+hashlib.sha256(json.dumps(evidence,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+record={"capacity_id":"capacity_"+evidence_hash.split(":",1)[1][:32],"backend_instance_id":instance,"evidence_hash":evidence_hash,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"aggregate_worktree_bytes":aggregate,"inode_policy_cap":500000,"max_active_projects":2}
+print(json.dumps(record,sort_keys=True,separators=(",",":")))
+PY
+}
 contain_units(){ local u pfx; command -v systemctl >/dev/null && systemctl show-environment >/dev/null 2>&1 || die systemd_unavailable
   for u in docker.socket docker.service containerd.service; do
     pfx=$(unit_prefix "$u")
