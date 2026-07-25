@@ -1,24 +1,47 @@
 #!/usr/bin/env python3
 """Validate the frozen, approval-bound Docker/XFS package transaction."""
 from __future__ import annotations
-import argparse, hashlib, importlib.util, json, os, re, stat, subprocess, sys
+import argparse, hashlib, json, os, re, stat, subprocess, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-def require_staged_script(script:Path)->None:
-    """Load only the bootstrap sibling whose stage will be verified.
+STAGE_ROOT=Path("/run/shiproom-remediation-bootstrap")
+STAGE_FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+STAGE_SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 
-    Privileged invocations use ``python -I -S`` so they do not inherit a
-    caller-controlled module search path; that deliberately excludes the
-    script directory.  An exact sibling load keeps that isolation while still
-    making the bootstrap verifier the authority for this staged script.
+def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+def stage_hash(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def staged_regular(path:Path)->None:
+    item=path.lstat()
+    if not stat.S_ISREG(item.st_mode) or item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("staged_file_untrusted")
+
+def require_staged_script(script:Path)->None:
+    """Independently validate the immutable staged bundle without executing it.
+
+    This verifier intentionally does not import ``bootstrap.py``: an isolated
+    Python process must never execute a sibling before ownership, type, and
+    manifest hashes establish that the sibling belongs to the staged bundle.
     """
-    bootstrap_path=script.resolve().with_name("bootstrap.py")
-    spec=importlib.util.spec_from_file_location("shiproom_remediation_stage_bootstrap",bootstrap_path)
-    if spec is None or spec.loader is None: raise RuntimeError("staged_bootstrap_load_invalid")
-    module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-    module.require_staged_script(script)
+    raw=script.absolute()
+    if raw.name!="package_contract.py" or raw.parent.parent!=STAGE_ROOT or len(raw.parent.name)!=64 or any(char not in "0123456789abcdef" for char in raw.parent.name): raise RuntimeError("staged_path_invalid")
+    staged_regular(raw); stage=raw.parent; manifest_path=stage/"manifest.json"; attestation_path=stage/"stage0-attestation.json"
+    staged_regular(manifest_path); staged_regular(attestation_path)
+    manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
+    if set(manifest)!={"schema_id","schema_version","source_commit","source_tree","source_manifest","attestation_hash","bundle_hash"} or manifest["schema_id"]!="remediation_staged_bundle.v1" or manifest["schema_version"]!="1": raise RuntimeError("staged_manifest_invalid")
+    claimed_bundle=manifest.pop("bundle_hash")
+    if claimed_bundle!="sha256:"+stage.name or claimed_bundle!="sha256:"+hashlib.sha256(canonical(manifest)).hexdigest(): raise RuntimeError("staged_manifest_identity_invalid")
+    source_manifest=manifest["source_manifest"]
+    if not isinstance(source_manifest,dict) or set(source_manifest)!={"files","schemas"} or set(source_manifest["files"])!=set(STAGE_FILES) or set(source_manifest["schemas"])!=set(STAGE_SCHEMAS): raise RuntimeError("staged_manifest_files_invalid")
+    for name in STAGE_FILES:
+        path=stage/name; staged_regular(path)
+        if stage_hash(path)!=source_manifest["files"][name]: raise RuntimeError("staged_hash_mismatch")
+    for name in STAGE_SCHEMAS:
+        path=stage/"schemas"/name; staged_regular(path)
+        if stage_hash(path)!=source_manifest["schemas"][name]: raise RuntimeError("staged_hash_mismatch")
+    attestation=json.loads(attestation_path.read_text(encoding="utf-8")); claimed_attestation=attestation.pop("attestation_hash",None)
+    if claimed_attestation!=manifest["attestation_hash"] or claimed_attestation!="sha256:"+hashlib.sha256(canonical(attestation)).hexdigest(): raise RuntimeError("staged_attestation_mismatch")
+    if attestation.get("schema_id")!="remediation_stage0_attestation.v1" or attestation.get("schema_version")!="1" or attestation.get("commit")!=manifest["source_commit"] or attestation.get("tree")!=manifest["source_tree"] or attestation.get("bundle_files")!=source_manifest["files"] or attestation.get("schemas")!=source_manifest["schemas"]: raise RuntimeError("staged_attestation_mismatch")
 
 class PackageContractError(ValueError): pass
 

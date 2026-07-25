@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import tempfile
+import subprocess
+import sys
 from pathlib import Path
 import json
 from types import SimpleNamespace
@@ -133,12 +135,13 @@ with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleName
     expect_package("package_contract_candidate_source_missing",lambda: package_contract.policy_candidate("docker.io"))
 with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="Candidate: (none)\n",stderr="")):
     expect_package("package_contract_candidate_missing",lambda: package_contract.policy_candidate("docker.io"))
-bootstrap_guard_calls=[]
-fixture_bootstrap=SimpleNamespace(require_staged_script=lambda script: bootstrap_guard_calls.append(script))
-fixture_spec=SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: setattr(module,"require_staged_script",fixture_bootstrap.require_staged_script)))
-with mock.patch.object(package_contract.importlib.util,"spec_from_file_location",return_value=fixture_spec), mock.patch.object(package_contract.importlib.util,"module_from_spec",return_value=fixture_bootstrap):
-    package_contract.require_staged_script(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package_contract.py"))
-assert bootstrap_guard_calls==[Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package_contract.py")]
+symlink_stat=SimpleNamespace(st_mode=__import__("stat").S_IFLNK,st_uid=0,st_gid=0)
+with mock.patch.object(Path,"lstat",return_value=symlink_stat):
+    try: package_contract.staged_regular(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/bootstrap.py"))
+    except RuntimeError as exc: assert str(exc)=="staged_file_untrusted"
+    else: raise AssertionError("staged bootstrap symlink accepted")
+isolated_capture=subprocess.run([sys.executable,"-I","-S",str(Path(package_contract.__file__).resolve()),"--capture",str(Path(tempfile.gettempdir())/"package-contract-isolated.json")],text=True,capture_output=True,check=False)
+assert isolated_capture.returncode==2 and "package_contract_error:staged_path_invalid" in isolated_capture.stderr
 with mock.patch.object(package_contract,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     expect_package("staged_path_invalid",lambda: package_contract.capture(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package-contract.json")))
 partial_writes=[]
