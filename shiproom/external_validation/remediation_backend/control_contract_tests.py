@@ -150,7 +150,11 @@ try:
 except ImportError:
     jsonschema = None
 if jsonschema is not None:
-    schema_root = Path(__file__).parent.parent / "schemas"
+    # The reviewed source keeps schemas beside remediation_backend; a sealed
+    # staging bundle keeps them inside its immutable root.  Both are explicit
+    # package layouts, and no caller-supplied schema path is accepted.
+    staged_schema_root = Path(__file__).parent / "schemas"
+    schema_root = staged_schema_root if staged_schema_root.is_dir() else Path(__file__).parent.parent / "schemas"
     release_schema = json.loads((schema_root / "remediation-release-authorization.v1.json").read_text(encoding="utf-8"))
     package_schema = json.loads((schema_root / "remediation-package-contract.v1.json").read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(release_schema); jsonschema.Draft202012Validator.check_schema(package_schema)
