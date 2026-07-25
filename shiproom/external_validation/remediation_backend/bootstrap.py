@@ -5,10 +5,20 @@ import argparse, hashlib, json, os, shutil, stat, subprocess, sys
 from pathlib import Path
 
 ROOT=Path("/run/shiproom-remediation-bootstrap")
-FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def git_environment(path:Path)->dict[str,str]|None:
+    """Read a Windows-mounted worktree using its committed autocrlf view only."""
+    try: mounted_windows=path.resolve().is_relative_to(Path("/mnt/c"))
+    except AttributeError: mounted_windows=str(path.resolve()).startswith("/mnt/c/")
+    if not mounted_windows: return None
+    result=dict(os.environ)
+    result.update({"GIT_CONFIG_COUNT":"1","GIT_CONFIG_KEY_0":"core.autocrlf","GIT_CONFIG_VALUE_0":"true"})
+    return result
+def git_output(source:Path,*args:str)->str:
+    return subprocess.check_output(["/usr/bin/git","-C",str(source),*args],text=True,env=git_environment(source)).strip()
 def regular(path:Path)->None:
     item=path.lstat()
     if not stat.S_ISREG(item.st_mode): raise RuntimeError("provenance_not_regular")
@@ -16,7 +26,7 @@ def source_manifest(source:Path)->dict[str,object]:
     schema_dir=source/"schemas" if (source/"schemas").is_dir() else source.parent/"schemas"
     return {"files":{name:sha(source/name) for name in FILES},"schemas":{name:sha(schema_dir/name) for name in SCHEMAS}}
 def source_root(source:Path)->Path:
-    repo=Path(subprocess.check_output(["/usr/bin/git","-C",str(source),"rev-parse","--show-toplevel"],text=True).strip()).resolve()
+    repo=Path(git_output(source,"rev-parse","--show-toplevel")).resolve()
     expected=(repo/"shiproom/external_validation/remediation_backend").resolve()
     if source.resolve()!=expected: raise RuntimeError("bootstrap_source_not_canonical")
     return repo
@@ -28,7 +38,11 @@ def validate_attestation(path:Path,source:Path,commit:str,tree:str)->dict[str,ob
     if claimed!="sha256:"+hashlib.sha256(canonical(data)).hexdigest(): raise RuntimeError("attestation_hash_invalid")
     data["attestation_hash"]=claimed
     if data["commit"]!=commit or data["tree"]!=tree or data["bundle_files"]!=source_manifest(source)["files"] or data["schemas"]!=source_manifest(source)["schemas"]: raise RuntimeError("attestation_binding_mismatch")
-    if not isinstance(data["commands"],list) or not data["commands"] or any(not isinstance(row,dict) or row.get("exit_code")!=0 for row in data["commands"]): raise RuntimeError("attestation_commands_invalid")
+    commands=data["commands"]
+    if not isinstance(commands,list) or len(commands)!=5 or any(not isinstance(row,dict) or row.get("exit_code")!=0 or not isinstance(row.get("command"),list) for row in commands): raise RuntimeError("attestation_commands_invalid")
+    expected_shells=[name for name in FILES if name.endswith(".sh")]
+    if commands[0]["command"]!=["bash","-n",*expected_shells] or commands[1]["command"]!=["bash","tests.sh"] or commands[2]["command"]!=["git","diff","--check"]: raise RuntimeError("attestation_commands_invalid")
+    if len(commands[3]["command"])!=2 or commands[3]["command"][1]!="--version" or len(commands[4]["command"])!=3+len(expected_shells) or commands[4]["command"][1:3]!=["-S","warning"] or commands[4]["command"][3:]!=expected_shells: raise RuntimeError("attestation_commands_invalid")
     shell=data["shellcheck"]
     if not isinstance(shell,dict) or not isinstance(shell.get("hash"),str) or not shell.get("version"): raise RuntimeError("attestation_shellcheck_invalid")
     return data
@@ -71,8 +85,8 @@ def main()->int:
     if not (a.stage or a.approve_attestation) or not a.source or not a.commit or not a.tree or not a.attestation: raise SystemExit("bootstrap_arguments_invalid")
     if os.geteuid()!=0: raise SystemExit("bootstrap_root_required")
     source=a.source.resolve(); repo=source_root(source)
-    head=subprocess.check_output(["/usr/bin/git","-C",str(repo),"rev-parse","HEAD"],text=True).strip(); actual_tree=subprocess.check_output(["/usr/bin/git","-C",str(repo),"rev-parse","HEAD^{tree}"],text=True).strip()
-    if head!=a.commit or actual_tree!=a.tree or subprocess.check_output(["/usr/bin/git","-C",str(repo),"status","--porcelain"],text=True): raise SystemExit("unclean_or_wrong_commit")
+    head=git_output(repo,"rev-parse","HEAD"); actual_tree=git_output(repo,"rev-parse","HEAD^{tree}")
+    if head!=a.commit or actual_tree!=a.tree or git_output(repo,"status","--porcelain"): raise SystemExit("unclean_or_wrong_commit")
     if a.approve_attestation: print(approve(source,a.attestation,a.commit,a.tree)); return 0
     attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); manifest=staged_manifest(source,attestation,a.commit,a.tree); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
     target.mkdir(parents=True,mode=0o700,exist_ok=False)

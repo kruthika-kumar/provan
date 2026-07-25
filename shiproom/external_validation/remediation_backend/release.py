@@ -9,6 +9,8 @@ import os
 import stat
 import subprocess
 import sys
+import fcntl
+from contextlib import contextmanager
 from pathlib import Path
 
 os.environ["PATH"]="/usr/sbin:/usr/bin:/sbin:/bin"
@@ -27,6 +29,31 @@ except ImportError:
 
 class ReleaseError(RuntimeError):
     pass
+
+
+LOCK = Path("/run/lock/shiproom-remediation.backend.lock")
+
+
+@contextmanager
+def backend_lock():
+    """Hold the fixed, non-removable backend lock for the entire release."""
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    inherited = False
+    try:
+        candidate = os.fstat(9)
+        on_disk = LOCK.stat()
+        inherited = candidate.st_dev == on_disk.st_dev and candidate.st_ino == on_disk.st_ino
+    except OSError:
+        inherited = False
+    item = os.fdopen(9, "a+", encoding="ascii", closefd=False) if inherited else LOCK.open("a+", encoding="ascii")
+    try:
+        os.chmod(LOCK, 0o600)
+        fcntl.flock(item.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(item.fileno(), fcntl.LOCK_UN)
+        if not inherited:
+            item.close()
 
 
 def sha256(path: Path) -> str:
@@ -83,6 +110,10 @@ def run(command: list[str]) -> None:
         raise ReleaseError("release_command_failed:" + " ".join(command[:3]))
 
 
+def residual_proof(script: Path, tree: Path, authority: dict[str, object], socket: Path, aliases: Path) -> None:
+    run(["/usr/bin/python3", str(script), "--root", str(tree), "--device", str(authority["device"]), "--inode", str(authority["inode"]), "--mount-id", str(authority["mount_id"]), "--socket", str(socket), "--aliases-json", str(aliases)])
+
+
 def trusted_binary(name: str) -> str:
     path = next((Path(prefix)/name for prefix in ("/usr/sbin", "/usr/bin", "/sbin", "/bin") if (Path(prefix)/name).is_file()), None)
     if path is None: raise ReleaseError("trusted_binary_missing:"+name)
@@ -106,14 +137,16 @@ def main() -> int:
     parser.add_argument("--authorization-root", type=Path, required=True)
     parser.add_argument("--supervisor-root", type=Path, required=True)
     parser.add_argument("--mount", type=Path, required=True)
+    parser.add_argument("--socket", type=Path, required=True)
     parser.add_argument("--helper", type=Path, required=True)
     args = parser.parse_args()
     if os.geteuid() != 0:
         raise ReleaseError("release_root_required")
     require_staged_script(Path(__file__))
     document = load_authorization(args.authorization, args.authorization_root)
-    control = Control(args.db)
-    try:
+    with backend_lock():
+      control = Control(args.db)
+      try:
         control.assert_ready()
         indexed = control.authorization(str(document["authorization_id"]))
         if indexed["attempt_id"] != document["attempt_id"] or indexed["content_hash"] != digest(document) or Path(str(indexed["artifact_path"])).resolve() != args.authorization.resolve():
@@ -136,9 +169,23 @@ def main() -> int:
             os.close(fd)
         rehash_records(document, args.supervisor_root)
         attempt = str(document["attempt_id"]); project = int(document["project_id"])
-        control.release_phase(attempt, "RESIDUAL_ABSENCE_VERIFIED", {"authorization_id": document["authorization_id"], "rehash": True})
+        # Revoke the untrusted UID only after all evidence was sealed and
+        # independently rehashed.  A root-owned 0700 tree prevents a patient
+        # from racing the residual sweep or destructive helper.
+        os.chown(tree, 0, 0); os.chmod(tree, 0o700)
+        aliases = args.supervisor_root / "release-aliases" / (attempt + ".json")
+        aliases.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        aliases.write_bytes(canonical(control.registered_worktree_paths()))
+        os.chown(aliases, 0, 0); os.chmod(aliases, 0o400)
+        residual = Path(__file__).with_name("residual.py")
+        if not residual.is_file(): raise ReleaseError("residual_helper_missing")
+        residual_proof(residual, tree, authority, args.socket, aliases)
+        control.release_phase(attempt, "RESIDUAL_ABSENCE_VERIFIED", {"authorization_id": document["authorization_id"], "rehash": True, "aliases_hash": sha256(aliases)})
         control.release_phase(attempt, "WORKTREE_CONTENT_DELETE_STARTED")
         if args.helper.resolve() != Path(__file__).with_name("release_helper.py").resolve(): raise ReleaseError("release_helper_path_untrusted")
+        # Recheck directly before descriptor-relative deletion.  This remains
+        # under the same fixed lock and RELEASING lifecycle transaction.
+        residual_proof(residual, tree, authority, args.socket, aliases)
         run(["/usr/bin/python3", str(args.helper), "delete-contents", "--root", str(tree), "--expected-device", str(st.st_dev), "--expected-inode", str(st.st_ino), "--expected-mount-id", str(authority["mount_id"])])
         control.release_phase(attempt, "WORKTREE_EMPTY_VERIFIED")
         control.release_phase(attempt, "PROJECT_CLEAR_STARTED")
@@ -151,13 +198,13 @@ def main() -> int:
         control.release_phase(attempt, "WORKTREE_ABSENT_VERIFIED")
         control.release_phase(attempt, "REGISTRY_REMOVAL_PREPARED")
         control.commit_release(attempt)
-    except Exception as exc:
+      except Exception as exc:
         try:
             control.incident("RELEASE_UNCERTAIN", "QUOTA_STATE_UNCERTAIN", {"error": str(exc), "authorization": str(args.authorization)})
         except Exception:
             pass
         raise
-    finally:
+      finally:
         control.close()
     print("release_committed")
     return 0

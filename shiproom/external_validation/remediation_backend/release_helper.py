@@ -24,7 +24,9 @@ RESOLVE_NO_XDEV = 0x01
 RESOLVE_NO_MAGICLINKS = 0x02
 RESOLVE_BENEATH = 0x08
 RESOLVE_NO_SYMLINKS = 0x04
-SYS_OPENAT2 = {"x86_64": 437, "amd64": 437}.get(os.uname().machine)
+SYS_OPENAT2 = {"x86_64": 437, "amd64": 437}.get(os.uname().machine if hasattr(os, "uname") else "")
+O_DIRECTORY = getattr(os, "O_DIRECTORY", 0)
+O_CLOEXEC = getattr(os, "O_CLOEXEC", 0)
 
 
 class ReleaseBlocked(RuntimeError):
@@ -35,7 +37,7 @@ class OpenHow(ctypes.Structure):
     _fields_ = [("flags", ctypes.c_ulonglong), ("mode", ctypes.c_ulonglong), ("resolve", ctypes.c_ulonglong)]
 
 
-def openat2(dirfd: int, name: str, flags: int = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC) -> int:
+def openat2(dirfd: int, name: str, flags: int = os.O_RDONLY | O_DIRECTORY | O_CLOEXEC) -> int:
     if SYS_OPENAT2 is None:
         raise ReleaseBlocked("release_capability_blocked:unsupported_architecture")
     how = OpenHow(flags, 0, RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_MAGICLINKS | RESOLVE_NO_XDEV)
@@ -47,6 +49,16 @@ def openat2(dirfd: int, name: str, flags: int = os.O_RDONLY | os.O_DIRECTORY | o
             raise ReleaseBlocked("release_capability_blocked:openat2")
         raise OSError(error, os.strerror(error), name)
     return fd
+
+
+def require_openat2() -> None:
+    """Prove the kernel supports the exact resolver contract before release."""
+    fd = os.open("/", os.O_RDONLY | O_DIRECTORY | O_CLOEXEC)
+    try:
+        probe = openat2(fd, ".")
+        os.close(probe)
+    finally:
+        os.close(fd)
 
 
 def mount_id(fd: int) -> int:
@@ -99,7 +111,7 @@ def delete_tree(fd: int, root_device: int, expected_mount: int) -> None:
 def open_registered_root(root: Path) -> tuple[int, int]:
     if root.name in {"", ".", ".."} or not root.is_absolute():
         raise ReleaseBlocked("release_root_path_invalid")
-    parent_fd = os.open(root.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    parent_fd = os.open(root.parent, os.O_RDONLY | O_DIRECTORY | O_CLOEXEC)
     try:
         root_fd = openat2(parent_fd, root.name)
     except BaseException:

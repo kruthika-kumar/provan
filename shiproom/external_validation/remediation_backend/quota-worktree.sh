@@ -59,7 +59,7 @@ case "$action" in
   release)
     authorization=${3:?root-owned-authorization-path-required}
     [[ -f "$authorization" ]] || die authorization_missing
-    exec python3 "$DIR/release.py" --db "$CONTROL_DB" --authorization "$authorization" --authorization-root "$ROOT/supervisor-owned/authorizations" --supervisor-root "$ROOT/supervisor-owned" --mount "$MOUNT" --helper "$DIR/release_helper.py"
+    exec python3 "$DIR/release.py" --db "$CONTROL_DB" --authorization "$authorization" --authorization-root "$ROOT/supervisor-owned/authorizations" --supervisor-root "$ROOT/supervisor-owned" --mount "$MOUNT" --socket "$SOCKET" --helper "$DIR/release_helper.py"
     ;;
   *) die action_invalid ;;
 esac

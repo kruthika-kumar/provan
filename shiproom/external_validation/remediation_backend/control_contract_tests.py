@@ -11,7 +11,8 @@ from control import Control, ControlError, canonical, digest
 from contracts import ContractError, validate_release_authorization
 import package_contract
 from package_contract import PackageContractError, validate as validate_package_contract
-from bootstrap import source_manifest, validate_attestation
+from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
+import release_helper
 
 H = "sha256:" + "a" * 64
 
@@ -73,6 +74,18 @@ with tempfile.TemporaryDirectory() as package_raw:
         return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
     with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=fake_run): package_contract.verify_live(contract_path)
     with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=H): expect_package("package_contract_sources_drift",lambda: package_contract.verify_live(contract_path))
+    def changed_simulation(argv, **_):
+        text="changed" if "apt-get" in argv[0] else "Candidate: 1.0\nfixture"
+        return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=changed_simulation): expect_package("package_contract_simulation_drift",lambda: package_contract.verify_live(contract_path))
+    def bad_candidate(argv, **_):
+        text="simulation" if "apt-get" in argv[0] else "Candidate: wrong\nfixture"
+        return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=bad_candidate): expect_package("package_contract_candidate_drift",lambda: package_contract.verify_live(contract_path))
+    with mock.patch.object(package_contract,"immutable_root_file",side_effect=PackageContractError("package_contract_artifact_untrusted")): expect_package("package_contract_artifact_untrusted",lambda: package_contract.verify_live(contract_path))
+with mock.patch.object(release_helper.os,"geteuid",return_value=0,create=True), mock.patch.object(release_helper,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
+    args=type("Args",(),{"root":Path("/tmp/fixture"),"expected_device":1,"expected_inode":1,"expected_mount_id":1,"operation":"verify-empty"})()
+    expect("staged_path_invalid",lambda: release_helper.action(args))
 try:
     import jsonschema
 except ImportError:
@@ -87,12 +100,22 @@ if jsonschema is not None:
 
 with tempfile.TemporaryDirectory() as raw:
     backend_source = Path(__file__).parent
-    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"shellcheck":{"hash":H,"version":"fixture"},"commands":[{"exit_code":0}],"created_at":"2026-07-25T00:00:00Z"}
+    shell_scripts=[name for name in BOOTSTRAP_FILES if name.endswith(".sh")]
+    stage_commands=[
+        {"command":["bash","-n",*shell_scripts],"exit_code":0},
+        {"command":["bash","tests.sh"],"exit_code":0},
+        {"command":["git","diff","--check"],"exit_code":0},
+        {"command":["/usr/bin/shellcheck","--version"],"exit_code":0},
+        {"command":["/usr/bin/shellcheck","-S","warning",*shell_scripts],"exit_code":0},
+    ]
+    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"shellcheck":{"hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
     stage0["attestation_hash"] = digest(stage0)
     stage0_path=Path(raw)/"stage0.json"; stage0_path.write_text(json.dumps(stage0),encoding="utf-8")
     assert validate_attestation(stage0_path,backend_source,"0"*40,"1"*40)["attestation_hash"] == stage0["attestation_hash"]
     tampered=dict(stage0); tampered["tree"]="2"*40; (Path(raw)/"bad-stage0.json").write_text(json.dumps(tampered),encoding="utf-8")
     expect("attestation_hash_invalid", lambda: validate_attestation(Path(raw)/"bad-stage0.json",backend_source,"0"*40,"2"*40))
+    malformed=dict(stage0); malformed["commands"]=[dict(row) for row in stage_commands]; malformed["commands"][2]["command"]=["git","status","--porcelain"]; malformed["attestation_hash"]=digest({key:value for key,value in malformed.items() if key!="attestation_hash"}); (Path(raw)/"malformed-stage0.json").write_text(json.dumps(malformed),encoding="utf-8")
+    expect("attestation_commands_invalid", lambda: validate_attestation(Path(raw)/"malformed-stage0.json",backend_source,"0"*40,"1"*40))
     control = Control(Path(raw) / "control.sqlite3")
     instance = control.initialize()
     assert control.initialize() == instance
@@ -121,6 +144,7 @@ with tempfile.TemporaryDirectory() as raw:
     validate_release_authorization(document)
     if jsonschema is not None: jsonschema.Draft202012Validator(release_schema).validate(document)
     control.authorize_release(document, "/supervisor/authorizations/a.json")
+    expect("backend_execution_blocked:RELEASING", lambda: control.reserve("attempt-c", 1, 1, H, "capacity-1", 9_000_000_000))
     stored_second = authority(instance, "attempt-b", second); stored_second["inode"] = 99
     control.allocation_phase("attempt-b", "TREE_CREATED", stored_second)
     control.allocation_phase("attempt-b", "PROJECT_ASSIGNED", stored_second)

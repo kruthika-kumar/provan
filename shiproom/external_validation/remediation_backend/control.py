@@ -129,6 +129,12 @@ class Control:
         if state != "READY":
             raise ControlError("backend_execution_blocked:" + state)
 
+    def assert_no_releasing_worktree(self) -> None:
+        """A sealed attempt is exclusive until its retirement transaction commits."""
+        row = self.db.execute("SELECT attempt_id FROM releases WHERE phase != 'RELEASE_COMMITTED' LIMIT 1").fetchone()
+        if row is not None:
+            raise ControlError("backend_execution_blocked:RELEASING")
+
     def instance_id(self) -> str:
         return str(self._backend()["backend_instance_id"])
 
@@ -192,6 +198,7 @@ class Control:
             raise ControlError("reservation_invalid")
         with self.tx():
             self.assert_ready()
+            self.assert_no_releasing_worktree()
             cap = self.db.execute("SELECT * FROM capacity WHERE capacity_id=? AND active=1", (capacity_id,)).fetchone()
             if cap is None:
                 raise ControlError("capacity_unqualified")
@@ -231,6 +238,17 @@ class Control:
         if row is None:
             raise ControlError("allocation_missing")
         return {key: (json.loads(row[key]) if key in {"worktree_authority_json", "quota_evidence_json"} and row[key] is not None else row[key]) for key in row.keys()}
+
+    def registered_worktree_paths(self) -> list[str]:
+        """Return all durable worktree authorities for residual-alias checking."""
+        rows = self.db.execute("SELECT worktree_authority_json FROM allocations WHERE worktree_authority_json != '{}' ").fetchall()
+        paths: list[str] = []
+        for row in rows:
+            value = json.loads(str(row[0]))
+            path = value.get("canonical_path")
+            if isinstance(path, str):
+                paths.append(path)
+        return paths
 
     def authorize_release(self, document: dict[str, Any], artifact_path: str) -> str:
         try:

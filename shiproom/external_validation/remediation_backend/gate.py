@@ -5,11 +5,26 @@ import argparse, hashlib, json, os, shutil, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def git_environment(path:Path)->dict[str,str]|None:
+    """Match the approved Windows worktree's line-ending view without mutating it.
+
+    The Stage-0 gate is executed inside WSL but the authoritative repository is
+    Windows-mounted and committed with ``core.autocrlf=true``.  Git otherwise
+    reports an artificial dirty tree solely from that view difference.  This
+    environment-local override is deliberately limited to mounted Windows
+    worktrees; no git configuration is written or changed.
+    """
+    try: mounted_windows=path.resolve().is_relative_to(Path("/mnt/c"))
+    except AttributeError: mounted_windows=str(path.resolve()).startswith("/mnt/c/")
+    if not mounted_windows: return None
+    result=dict(os.environ)
+    result.update({"GIT_CONFIG_COUNT":"1","GIT_CONFIG_KEY_0":"core.autocrlf","GIT_CONFIG_VALUE_0":"true"})
+    return result
 def run(command:list[str],cwd:Path)->dict:
-    result=subprocess.run(command,cwd=cwd,text=True,capture_output=True,check=False)
+    result=subprocess.run(command,cwd=cwd,text=True,capture_output=True,check=False,env=git_environment(cwd) if command and command[0]=="git" else None)
     return {"command":command,"exit_code":result.returncode,"stdout":result.stdout,"stderr":result.stderr}
 def required(result:dict,name:str)->str:
     if result["exit_code"]: raise SystemExit(name)

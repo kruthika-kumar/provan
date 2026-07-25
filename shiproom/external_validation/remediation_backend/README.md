@@ -53,6 +53,13 @@ patient UID/GID `65533`; the supervisor retains root-only access to the quota
 registry, quarantine and Docker data. No other host or patient path is made
 writable by this backend.
 
+Before any release deletion, the staged release driver holds the same fixed
+backend lock as allocation, rehashes the indexed release authorization,
+revokes patient ownership of the tree, and runs two fail-closed residual
+reference sweeps over proc cwd/root/fds, mount evidence, registered aliases,
+and every mount of every container on the custom daemon.  Only then may the
+staged `openat2` helper remove contents descriptor-relatively.
+
 Package installation affects apt/dpkg state. The setup script also creates a
 temporary Shiproom-owned `/usr/sbin/policy-rc.d` and records/masks only default
 Docker/containerd units it changes; these are outside the three data roots and
