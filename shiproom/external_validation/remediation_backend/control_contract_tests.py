@@ -12,6 +12,7 @@ from control import Control, ControlError, canonical, digest
 from contracts import ContractError, validate_release_authorization
 import package_contract
 import bootstrap
+import gate
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
@@ -27,6 +28,13 @@ assert closed_git_environment["GIT_CONFIG_VALUE_1"]==str(reviewed_repository)
 assert not any(key in closed_git_environment for key in ("GIT_DIR","GIT_WORK_TREE","GIT_INDEX_FILE"))
 assert closed_git_environment["GIT_CONFIG_GLOBAL"]=="/dev/null"
 assert closed_git_environment["GIT_CONFIG_NOSYSTEM"]=="1"
+with mock.patch.dict(__import__("os").environ, {"GIT_DIR":"/attacker/git", "GIT_WORK_TREE":"/attacker/tree", "GIT_INDEX_FILE":"/attacker/index"}, clear=False):
+    gate_git_environment=gate.git_environment(reviewed_repository)
+assert not any(key in gate_git_environment for key in ("GIT_DIR","GIT_WORK_TREE","GIT_INDEX_FILE"))
+assert gate_git_environment["GIT_CONFIG_VALUE_1"]==str(reviewed_repository)
+try: gate.canonical_bundle(Path("/attacker/remediation_backend"))
+except SystemExit as exc: assert str(exc)=="gate_bundle_not_approved"
+else: raise AssertionError("unapproved Stage-0 bundle accepted")
 
 PACKAGE = {"schema_id": "remediation_package_contract.v1", "schema_version": "1", "distribution_id": "ubuntu", "release": "noble", "apt_sources_hash": H, "apt_sources_artifact": "/stage/sources.bin", "simulation_hash": H, "simulation_artifact": "/stage/simulation.txt", "packages": [{"name": "docker.io", "version": "1.0", "source": "fixture"}, {"name": "xfsprogs", "version": "1.0", "source": "fixture"}, {"name": "quota", "version": "1.0", "source": "fixture"}], "created_at": "2026-07-25T00:00:00Z"}
 
