@@ -98,6 +98,14 @@ fsynced=[]
 with mock.patch.object(bootstrap.os,"O_DIRECTORY",0,create=True), mock.patch.object(bootstrap.os,"O_NOFOLLOW",0,create=True), mock.patch.object(bootstrap,"source_root"), mock.patch.object(bootstrap,"validate_attestation",return_value={"attestation_hash":approval_hash}), mock.patch.object(bootstrap,"secure_root_directory"), mock.patch.object(bootstrap,"approval_path",return_value=Path("/run/shiproom-remediation-bootstrap/approvals/"+"b"*64)), mock.patch.object(bootstrap.os,"open",side_effect=[10,11]), mock.patch.object(bootstrap.os,"fdopen",return_value=ApprovalHandle()), mock.patch.object(bootstrap.os,"fchown",create=True), mock.patch.object(bootstrap.os,"fchmod",create=True), mock.patch.object(bootstrap.os,"fsync",side_effect=fsynced.append), mock.patch.object(bootstrap.os,"close"):
     bootstrap.approve(Path("/source"),Path("/attestation"),"0"*40,"1"*40)
 assert fsynced==[11,10]
+gate_runs=[]
+def gate_run(command, **kwargs):
+    gate_runs.append((command,kwargs)); return SimpleNamespace(returncode=0,stdout="",stderr="")
+with mock.patch.object(bootstrap,"trusted_host_executable"), mock.patch.object(bootstrap.subprocess,"run",side_effect=gate_run):
+    bootstrap.rerun_privileged_gate(Path("/sealed/bundle"),Path("/approved/repository"))
+git_run=next(item for item in gate_runs if item[0][1:]==["diff","--check"])
+assert git_run[1]["cwd"]==Path("/approved/repository") and git_run[1]["env"]==bootstrap.git_environment(Path("/approved/repository"))
+assert all(item[1]["cwd"]==Path("/sealed/bundle") for item in gate_runs if item is not git_run)
 
 
 validate_package_contract(PACKAGE)

@@ -36,10 +36,10 @@ def git_output(repository:Path,*args:str)->str:
 def regular(path:Path)->None:
     item=path.lstat()
     if not stat.S_ISREG(item.st_mode): raise RuntimeError("provenance_not_regular")
-def secure_root_directory(path:Path)->None:
+def secure_root_directory(path:Path, mode:int=0o700)->None:
     """Create/verify a fixed root-owned directory without traversing a link."""
     try:
-        os.mkdir(path,0o700)
+        os.mkdir(path,mode)
     except FileExistsError:
         pass
     item=path.lstat()
@@ -49,6 +49,8 @@ def secure_root_directory(path:Path)->None:
     try:
         opened=os.fstat(fd)
         if opened.st_dev!=item.st_dev or opened.st_ino!=item.st_ino: raise RuntimeError("bootstrap_directory_raced")
+        if stat.S_IMODE(opened.st_mode)!=mode:
+            os.fchmod(fd,mode); os.fsync(fd)
     finally:
         os.close(fd)
 def source_manifest(source:Path)->dict[str,object]:
@@ -103,7 +105,7 @@ def approval_path(attestation_hash:str)->Path:
     return ROOT/"approvals"/attestation_hash.removeprefix("sha256:")
 def approve(source:Path,attestation_path:Path,commit:str,tree:str)->Path:
     source_root(source); attestation=validate_attestation(attestation_path,source,commit,tree)
-    secure_root_directory(ROOT); secure_root_directory(ROOT/"approvals")
+    secure_root_directory(ROOT,0o755); secure_root_directory(ROOT/"approvals",0o700)
     path=approval_path(str(attestation["attestation_hash"]))
     body={"schema_id":"remediation_stage0_approval.v1","schema_version":"1","attestation_hash":attestation["attestation_hash"],"commit":commit,"tree":tree}
     parent_fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
@@ -134,7 +136,8 @@ def rerun_privileged_gate(staged:Path, repository:Path)->None:
     def required(command:list[str], *, dropped:bool=False)->None:
         def demote()->None:
             os.setgroups([]); os.setgid(65534); os.setuid(65534)
-        result=subprocess.run(command,cwd=staged,text=True,capture_output=True,check=False,env=git_environment(repository) if command[0]==str(git) else None,preexec_fn=demote if dropped else None,timeout=120)
+        is_git=command[0]==str(git)
+        result=subprocess.run(command,cwd=repository if is_git else staged,text=True,capture_output=True,check=False,env=git_environment(repository) if is_git else None,preexec_fn=demote if dropped else None,timeout=120)
         if result.returncode: raise RuntimeError("bootstrap_gate_failed:"+Path(command[0]).name)
     required([str(bash),"-n",*shells])
     required([str(shellcheck),"-S","warning",*shells])
@@ -152,11 +155,11 @@ def main()->int:
     head=git_output(repo,"rev-parse","HEAD"); actual_tree=git_output(repo,"rev-parse","HEAD^{tree}")
     if head!=a.commit or actual_tree!=a.tree or git_output(repo,"status","--porcelain"): raise SystemExit("unclean_or_wrong_commit")
     if a.approve_attestation: print(approve(source,a.attestation,a.commit,a.tree)); return 0
-    attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); manifest=staged_manifest(source,attestation,a.commit,a.tree); secure_root_directory(ROOT); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
-    target.mkdir(parents=True,mode=0o700,exist_ok=False)
+    attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); manifest=staged_manifest(source,attestation,a.commit,a.tree); secure_root_directory(ROOT,0o755); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
+    target.mkdir(parents=True,mode=0o755,exist_ok=False)
     for name in FILES:
         out=target/name; shutil.copyfile(source/name,out); os.chown(out,0,0); out.chmod(0o555 if out.suffix==".sh" else 0o444)
-    schemas=target/"schemas"; schemas.mkdir(mode=0o700); os.chown(schemas,0,0)
+    schemas=target/"schemas"; schemas.mkdir(mode=0o755); os.chown(schemas,0,0)
     for name in SCHEMAS:
         out=schemas/name; shutil.copyfile(source.parent/"schemas"/name,out); os.chown(out,0,0); out.chmod(0o444)
     staged_attestation=target/"stage0-attestation.json"; shutil.copyfile(a.attestation,staged_attestation); os.chown(staged_attestation,0,0); staged_attestation.chmod(0o400)
