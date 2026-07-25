@@ -110,7 +110,7 @@ def root_stage_file(path:Path)->None:
     stage=Path(__file__).resolve().parent
     try: path.resolve().parent.relative_to(stage)
     except ValueError as exc: raise PackageContractError("package_contract_capture_outside_stage") from exc
-    if path.parent!=stage or os.geteuid()!=0: raise PackageContractError("package_contract_capture_authority_invalid")
+    if path.parent!=stage or getattr(os,"geteuid",lambda:-1)()!=0: raise PackageContractError("package_contract_capture_authority_invalid")
 def write_immutable(path:Path,data:bytes)->None:
     fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
     try:
@@ -144,9 +144,12 @@ def policy_candidate(name:str)->tuple[str,str]:
             if source: return candidate,source.group(1)
     raise PackageContractError("package_contract_candidate_source_missing")
 def capture(out:Path)->None:
+    # A dropped-UID Stage-0 test must fail here without attempting to read
+    # root-only staged evidence.  Root callers still pass the full immutable
+    # bundle verifier immediately afterwards and before any output is opened.
+    root_stage_file(out)
     try: require_staged_script(Path(__file__))
     except RuntimeError as exc: raise PackageContractError(str(exc)) from exc
-    root_stage_file(out)
     sources=out.parent/"apt-sources.bin"; simulation=out.parent/"package-simulation.txt"
     root_stage_file(sources); root_stage_file(simulation)
     packages=[{"name":name,"version":version,"source":source} for name,version,source in ([(name,*policy_candidate(name)) for name in sorted(NAMES)])]
