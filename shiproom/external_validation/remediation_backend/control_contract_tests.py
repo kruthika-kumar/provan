@@ -41,6 +41,8 @@ assert '$1==source && $NF==mount && NF==12' in lib_source
 release_source=(Path(__file__).parent/"release.py").read_text(encoding="utf-8")
 assert 'f"quota -p -nNv -b -i {project}"' in release_source
 assert '"-d", str(project)' not in release_source
+assert '"-n", "-o", "SOURCE", "--target", str(mount)' in release_source
+assert 'line.split()[0] == sources[0]' in release_source
 assert 'matching[0][3] != "0" or matching[0][8] != "0"' in release_source
 
 H = "sha256:" + "a" * 64
@@ -215,10 +217,16 @@ if release is not None:
     # Release clearance reuses the verbose quota format and fails closed if
     # either hard limit or the only mounted-filesystem row is unexpected.
     quota_row="/dev/loop7 0 0 0 0 - 0 0 0 0 - /mnt/fixture\n"
-    with mock.patch.object(release,"trusted_binary",return_value="/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=quota_row,stderr="")):
+    def project_clear_command(argv, **_):
+        output="/dev/loop7\n" if Path(argv[0]).name=="findmnt" else quota_row
+        return SimpleNamespace(returncode=0,stdout=output,stderr="")
+    with mock.patch.object(release,"trusted_binary",side_effect=lambda name: "/usr/bin/findmnt" if name=="findmnt" else "/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",side_effect=project_clear_command):
         release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
-    for invalid_quota_row in ("/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/other\n", "/dev/loop7 0 0 1 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/loop7 0 0 0 0 - 0 0 1 0 - /mnt/fixture\n"):
-        with mock.patch.object(release,"trusted_binary",return_value="/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=invalid_quota_row,stderr="")):
+    for invalid_quota_row in ("/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/other\n", "/dev/loop7 0 0 1 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/loop7 0 0 0 0 - 0 0 1 0 - /mnt/fixture\n"):
+        def invalid_project_clear_command(argv, **_):
+            output="/dev/loop7\n" if Path(argv[0]).name=="findmnt" else invalid_quota_row
+            return SimpleNamespace(returncode=0,stdout=output,stderr="")
+        with mock.patch.object(release,"trusted_binary",side_effect=lambda name: "/usr/bin/findmnt" if name=="findmnt" else "/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",side_effect=invalid_project_clear_command):
             try:
                 release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
             except release.ReleaseError as exc:
