@@ -18,6 +18,14 @@ import gate
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
+try:
+    import release
+except ModuleNotFoundError as exc:
+    if exc.name != "fcntl":
+        raise
+    # The command-shim suite runs this module on Linux.  Retain its static and
+    # SQLite checks on Windows, where Python deliberately lacks fcntl.
+    release = None
 import xfs_project
 
 setup_source=(Path(__file__).parent/"setup.sh").read_text(encoding="utf-8")
@@ -30,6 +38,10 @@ assert 'xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"' in lib_source
 assert "quota -p -nN $p" not in lib_source
 assert "xfs_quota -x -d \"$p\"" not in lib_source
 assert '$1==source && $NF==mount && NF==12' in lib_source
+release_source=(Path(__file__).parent/"release.py").read_text(encoding="utf-8")
+assert 'f"quota -p -nNv -b -i {project}"' in release_source
+assert '"-d", str(project)' not in release_source
+assert 'matching[0][3] != "0" or matching[0][8] != "0"' in release_source
 
 H = "sha256:" + "a" * 64
 
@@ -198,6 +210,21 @@ with tempfile.TemporaryDirectory() as xfs_raw:
         return 0
     with mock.patch.object(xfs_project,"fcntl",SimpleNamespace(ioctl=assigned_ioctl)), mock.patch.object(xfs_project.os,"open",return_value=3), mock.patch.object(xfs_project.os,"close"):
         expect("project_assignment_clear_unverified",lambda: xfs_project.require_cleared(Path(xfs_raw)))
+
+if release is not None:
+    # Release clearance reuses the verbose quota format and fails closed if
+    # either hard limit or the only mounted-filesystem row is unexpected.
+    quota_row="/dev/loop7 0 0 0 0 - 0 0 0 0 - /mnt/fixture\n"
+    with mock.patch.object(release,"trusted_binary",return_value="/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=quota_row,stderr="")):
+        release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
+    for invalid_quota_row in ("/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/other\n", "/dev/loop7 0 0 1 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/loop7 0 0 0 0 - 0 0 1 0 - /mnt/fixture\n"):
+        with mock.patch.object(release,"trusted_binary",return_value="/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=invalid_quota_row,stderr="")):
+            try:
+                release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
+            except release.ReleaseError as exc:
+                assert str(exc)=="project_limit_clear_unverified"
+            else:
+                raise AssertionError("project_limit_clear_unverified not rejected")
 try:
     import jsonschema
 except ImportError:

@@ -50,7 +50,7 @@ EOF
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
 id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
-case "$*" in *'quota -p -nNv -b -i'*) if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; printf 'test-loop 0 0 %s 0 - 0 0 %s 0 - %s\n' "$b" "$i" "$SHIPROOM_REMEDIATION_MOUNT";; *) exit 0;; esac
+case "$*" in *'quota -p -nNv -b -i'*) case "$id" in ''|*[!0-9]*) exit 98;; esac; [ -z "${TEST_EXPECT_PROJECT:-}" ] || [ "$id" = "$TEST_EXPECT_PROJECT" ] || exit 98; if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; source=test-loop; mount=$SHIPROOM_REMEDIATION_MOUNT; case "${TEST_QUOTA_VARIANT:-valid}" in wrong_device) source=wrong-loop;; wrong_mount) mount=$SHIPROOM_REMEDIATION_MOUNT/not-the-mounted-filesystem;; short_row) printf '%s 0 0 %s 0 - 0 0 %s 0 -\n' "$source" "$b" "$i"; exit 0;; valid) :;; *) exit 99;; esac; printf '%s 0 0 %s 0 - 0 0 %s 0 - %s\n' "$source" "$b" "$i" "$mount";; *) exit 0;; esac
 EOF
 cat >"$shim/systemctl" <<'EOF'
 #!/bin/sh
@@ -74,8 +74,13 @@ EOF
 chmod +x "$shim"/*; export SYSTEMCTL_LOG="$tmp/systemctl.log" SYSTEMCTL_STATE="$tmp/systemctl.state"
 
 echo '[3/10] numeric headerless project-quota parser and storage verification'
+export TEST_EXPECT_PROJECT=10000
 : >"$SHIPROOM_REMEDIATION_ROOT/backend.state"; state_put LOOP test-loop; state_put DATA_PROJECT 10000; state_put DATA_BYTES 8589934592; state_put DATA_INODES 200000; quota_limits_verified 10000 8589934592 200000
 ! quota_limits_verified 10000 1 1
+export TEST_QUOTA_VARIANT=wrong_device; ! quota_limits_verified 10000 8589934592 200000
+export TEST_QUOTA_VARIANT=wrong_mount; ! quota_limits_verified 10000 8589934592 200000
+export TEST_QUOTA_VARIANT=short_row; ! quota_limits_verified 10000 8589934592 200000
+unset TEST_QUOTA_VARIANT TEST_EXPECT_PROJECT
 
 echo '[4/10] concurrent quota allocation has distinct, durable project IDs'
 control_init; instance=$(control instance); capacity=$(python3 - "$instance" <<'PY'

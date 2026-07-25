@@ -152,12 +152,15 @@ def project_clear(mount: Path, tree: Path, project: int) -> None:
     run([quota, "-x", "-c", f"limit -p bsoft=0 bhard=0 isoft=0 ihard=0 {project}", str(mount)])
     run([quota, "-x", "-c", f"project -C -p {tree} {project}", str(mount)])
     require_cleared(tree)
-    report = subprocess.run([quota, "-x", "-d", str(project), "-c", "quota -p -nN", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
-    if report.returncode == 0:
-        for line in report.stdout.splitlines():
-            fields=line.split()
-            if fields[:1] == [str(project)] and any(value != "0" for value in fields[1:] if value.isdecimal()):
-                raise ReleaseError("project_limit_clear_unverified")
+    # quota output is keyed by the filesystem device, not project ID.  Demand
+    # the same numeric/headerless/verbose block+inode form used by setup, so a
+    # zero-usage project still emits a row and both hard limits are observable.
+    report = subprocess.run([quota, "-x", "-c", f"quota -p -nNv -b -i {project}", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
+    if report.returncode:
+        raise ReleaseError("project_limit_clear_report_failed")
+    matching = [line.split() for line in report.stdout.splitlines() if len(line.split()) == 12 and line.split()[-1] == str(mount)]
+    if len(matching) != 1 or matching[0][3] != "0" or matching[0][8] != "0":
+        raise ReleaseError("project_limit_clear_unverified")
 
 
 def main() -> int:
