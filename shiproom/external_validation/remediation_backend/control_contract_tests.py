@@ -19,6 +19,15 @@ import xfs_project
 
 H = "sha256:" + "a" * 64
 
+# Root provenance checks must never inherit a caller's Git redirection state.
+reviewed_repository=Path("/reviewed/repository")
+with mock.patch.dict(__import__("os").environ, {"GIT_DIR":"/attacker/git", "GIT_WORK_TREE":"/attacker/tree", "GIT_INDEX_FILE":"/attacker/index", "GIT_CONFIG_GLOBAL":"/attacker/config"}, clear=False):
+    closed_git_environment=bootstrap.git_environment(reviewed_repository)
+assert closed_git_environment["GIT_CONFIG_VALUE_1"]==str(reviewed_repository)
+assert not any(key in closed_git_environment for key in ("GIT_DIR","GIT_WORK_TREE","GIT_INDEX_FILE"))
+assert closed_git_environment["GIT_CONFIG_GLOBAL"]=="/dev/null"
+assert closed_git_environment["GIT_CONFIG_NOSYSTEM"]=="1"
+
 PACKAGE = {"schema_id": "remediation_package_contract.v1", "schema_version": "1", "distribution_id": "ubuntu", "release": "noble", "apt_sources_hash": H, "apt_sources_artifact": "/stage/sources.bin", "simulation_hash": H, "simulation_artifact": "/stage/simulation.txt", "packages": [{"name": "docker.io", "version": "1.0", "source": "fixture"}, {"name": "xfsprogs", "version": "1.0", "source": "fixture"}, {"name": "quota", "version": "1.0", "source": "fixture"}], "created_at": "2026-07-25T00:00:00Z"}
 
 

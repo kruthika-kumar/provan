@@ -5,6 +5,7 @@ import argparse, hashlib, json, os, shutil, stat, subprocess, sys
 from pathlib import Path
 
 ROOT=Path("/run/shiproom-remediation-bootstrap")
+APPROVED_SOURCE=Path("/mnt/c/Users/Kruthika Kumar/Documents/Projects/Hermes buildathon - Shiproom/shiproom/external_validation/remediation_backend")
 FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
@@ -12,20 +13,26 @@ def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexd
 def trusted_host_executable(path:Path)->None:
     item=path.stat(follow_symlinks=False)
     if not stat.S_ISREG(item.st_mode) or item.st_uid!=0 or item.st_mode&0o022 or not item.st_mode&0o111: raise RuntimeError("attestation_tool_untrusted")
-def git_environment(path:Path)->dict[str,str]|None:
-    """Read a Windows-mounted worktree using its committed autocrlf view only."""
-    try: mounted_windows=path.resolve().is_relative_to(Path("/mnt/c"))
-    except AttributeError: mounted_windows=str(path.resolve()).startswith("/mnt/c/")
-    if not mounted_windows: return None
-    # Root's Git correctly refuses a Windows-owned worktree unless the exact
-    # repository is explicitly trusted.  Pass that exception only to this
-    # single Git subprocess; never mutate global/system Git configuration.
-    repository = path.resolve() if (path.resolve()/"shiproom").is_dir() else path.resolve().parents[2]
-    result=dict(os.environ)
-    result.update({"GIT_CONFIG_COUNT":"2","GIT_CONFIG_KEY_0":"core.autocrlf","GIT_CONFIG_VALUE_0":"true","GIT_CONFIG_KEY_1":"safe.directory","GIT_CONFIG_VALUE_1":str(repository)})
-    return result
-def git_output(source:Path,*args:str)->str:
-    return subprocess.check_output(["/usr/bin/git","-C",str(source),*args],text=True,env=git_environment(source)).strip()
+def canonical_source(source:Path)->tuple[Path,Path]:
+    """Bind root Git checks to the one reviewed WSL worktree, before Git runs."""
+    resolved=source.resolve()
+    approved=APPROVED_SOURCE.resolve()
+    if resolved!=approved:
+        raise RuntimeError("bootstrap_source_not_approved")
+    repo=approved.parents[2]
+    if approved.name!="remediation_backend" or approved.parent.name!="external_validation" or approved.parents[1].name!="shiproom":
+        raise RuntimeError("bootstrap_source_layout_invalid")
+    return approved,repo
+def git_environment(repository:Path)->dict[str,str]:
+    """A closed Git environment; never inherit caller-controlled GIT_* state."""
+    return {
+        "PATH":"/usr/sbin:/usr/bin:/sbin:/bin", "HOME":"/root", "LANG":"C.UTF-8",
+        "GIT_CONFIG_NOSYSTEM":"1", "GIT_CONFIG_GLOBAL":"/dev/null", "GIT_TERMINAL_PROMPT":"0",
+        "GIT_CONFIG_COUNT":"2", "GIT_CONFIG_KEY_0":"core.autocrlf", "GIT_CONFIG_VALUE_0":"true",
+        "GIT_CONFIG_KEY_1":"safe.directory", "GIT_CONFIG_VALUE_1":str(repository),
+    }
+def git_output(repository:Path,*args:str)->str:
+    return subprocess.check_output(["/usr/bin/git","-C",str(repository),*args],text=True,env=git_environment(repository)).strip()
 def regular(path:Path)->None:
     item=path.lstat()
     if not stat.S_ISREG(item.st_mode): raise RuntimeError("provenance_not_regular")
@@ -34,9 +41,10 @@ def source_manifest(source:Path)->dict[str,object]:
     return {"files":{name:sha(source/name) for name in FILES},"schemas":{name:sha(schema_dir/name) for name in SCHEMAS}}
 def source_root(source:Path)->Path:
     trusted_host_executable(Path("/usr/bin/git"))
-    repo=Path(git_output(source,"rev-parse","--show-toplevel")).resolve()
-    expected=(repo/"shiproom/external_validation/remediation_backend").resolve()
-    if source.resolve()!=expected: raise RuntimeError("bootstrap_source_not_canonical")
+    approved,expected_repo=canonical_source(source)
+    repo=Path(git_output(expected_repo,"rev-parse","--show-toplevel")).resolve()
+    if repo!=expected_repo or approved!=(repo/"shiproom/external_validation/remediation_backend").resolve():
+        raise RuntimeError("bootstrap_source_not_canonical")
     return repo
 def validate_attestation(path:Path,source:Path,commit:str,tree:str)->dict[str,object]:
     regular(path); data=json.loads(path.read_text(encoding="utf-8"))
@@ -99,7 +107,7 @@ def rerun_privileged_gate(source:Path)->None:
     def required(command:list[str], *, dropped:bool=False)->None:
         def demote()->None:
             os.setgroups([]); os.setgid(65534); os.setuid(65534)
-        result=subprocess.run(command,cwd=source,text=True,capture_output=True,check=False,env=git_environment(source) if command[0]==str(git) else None,preexec_fn=demote if dropped else None,timeout=120)
+        result=subprocess.run(command,cwd=source,text=True,capture_output=True,check=False,env=git_environment(source_root(source)) if command[0]==str(git) else None,preexec_fn=demote if dropped else None,timeout=120)
         if result.returncode: raise RuntimeError("bootstrap_gate_failed:"+Path(command[0]).name)
     required([str(bash),"-n",*shells])
     required([str(shellcheck),"-S","warning",*shells])
