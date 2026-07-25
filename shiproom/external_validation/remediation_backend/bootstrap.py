@@ -36,6 +36,21 @@ def git_output(repository:Path,*args:str)->str:
 def regular(path:Path)->None:
     item=path.lstat()
     if not stat.S_ISREG(item.st_mode): raise RuntimeError("provenance_not_regular")
+def secure_root_directory(path:Path)->None:
+    """Create/verify a fixed root-owned directory without traversing a link."""
+    try:
+        os.mkdir(path,0o700)
+    except FileExistsError:
+        pass
+    item=path.lstat()
+    if not stat.S_ISDIR(item.st_mode) or item.st_uid!=0 or item.st_gid!=0 or item.st_mode&0o022:
+        raise RuntimeError("bootstrap_directory_untrusted")
+    fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        opened=os.fstat(fd)
+        if opened.st_dev!=item.st_dev or opened.st_ino!=item.st_ino: raise RuntimeError("bootstrap_directory_raced")
+    finally:
+        os.close(fd)
 def source_manifest(source:Path)->dict[str,object]:
     schema_dir=source/"schemas" if (source/"schemas").is_dir() else source.parent/"schemas"
     return {"files":{name:sha(source/name) for name in FILES},"schemas":{name:sha(schema_dir/name) for name in SCHEMAS}}
@@ -83,11 +98,17 @@ def approval_path(attestation_hash:str)->Path:
     return ROOT/"approvals"/attestation_hash.removeprefix("sha256:")
 def approve(source:Path,attestation_path:Path,commit:str,tree:str)->Path:
     source_root(source); attestation=validate_attestation(attestation_path,source,commit,tree)
-    path=approval_path(str(attestation["attestation_hash"])); path.parent.mkdir(parents=True,mode=0o700)
+    secure_root_directory(ROOT); secure_root_directory(ROOT/"approvals")
+    path=approval_path(str(attestation["attestation_hash"]))
     body={"schema_id":"remediation_stage0_approval.v1","schema_version":"1","attestation_hash":attestation["attestation_hash"],"commit":commit,"tree":tree}
-    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o400)
-    with os.fdopen(fd,"wb") as handle: handle.write(canonical(body))
-    os.chown(path,0,0); return path
+    parent_fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        fd=os.open(path.name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400,dir_fd=parent_fd)
+        with os.fdopen(fd,"wb") as handle:
+            os.fchown(handle.fileno(),0,0); os.fchmod(handle.fileno(),0o400); handle.write(canonical(body)); handle.flush(); os.fsync(handle.fileno())
+    finally:
+        os.close(parent_fd)
+    return path
 def verify_approval(attestation:dict[str,object],commit:str,tree:str)->None:
     path=approval_path(str(attestation["attestation_hash"])); regular(path); item=path.stat()
     if item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("stage0_approval_untrusted")
