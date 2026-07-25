@@ -111,6 +111,17 @@ assert all(item[1]["cwd"]==Path("/sealed/bundle") for item in gate_runs if item 
 validate_package_contract(PACKAGE)
 bad_package = dict(PACKAGE); bad_package["packages"] = list(PACKAGE["packages"][:-1])
 expect_package("package_contract_packages_invalid", lambda: validate_package_contract(bad_package))
+policy_fixture="""docker.io:
+  Installed: (none)
+  Candidate: 29.1.3-0ubuntu3~24.04.2
+  Version table:
+     29.1.3-0ubuntu3~24.04.2 500
+        500 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages
+"""
+with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=policy_fixture,stderr="")):
+    assert package_contract.policy_candidate("docker.io")==("29.1.3-0ubuntu3~24.04.2","http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages")
+with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="Candidate: (none)\n",stderr="")):
+    expect_package("package_contract_candidate_missing",lambda: package_contract.policy_candidate("docker.io"))
 with tempfile.TemporaryDirectory() as package_raw:
     source_artifact=Path(package_raw)/"sources.bin"; simulation_artifact=Path(package_raw)/"simulation.txt"
     source_artifact.write_bytes(b"sources"); simulation_artifact.write_bytes(b"simulation")

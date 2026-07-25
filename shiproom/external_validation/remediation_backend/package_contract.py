@@ -2,6 +2,7 @@
 """Validate the frozen, approval-bound Docker/XFS package transaction."""
 from __future__ import annotations
 import argparse, hashlib, json, os, re, stat, subprocess, sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,9 +27,10 @@ def validate(value: Any) -> dict[str, Any]:
 
 def file_hash(path: Path) -> str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
 def current_sources_hash() -> str:
+    return "sha256:"+hashlib.sha256(sources_payload()).hexdigest()
+def sources_payload() -> bytes:
     paths=[Path("/etc/apt/sources.list"),*sorted(Path("/etc/apt/sources.list.d").glob("*"))]
-    payload=b"".join(str(path).encode()+b"\0"+path.read_bytes()+b"\0" for path in paths if path.is_file())
-    return "sha256:"+hashlib.sha256(payload).hexdigest()
+    return b"".join(str(path).encode()+b"\0"+path.read_bytes()+b"\0" for path in paths if path.is_file())
 def immutable_root_file(path:Path, contract:Path)->None:
     item=path.resolve(strict=True).stat()
     parent=contract.parent.resolve()
@@ -47,9 +49,50 @@ def verify_live(contract_path:Path)->None:
     for item in value["packages"]:
         policy=subprocess.run(["/usr/bin/apt-cache","policy",item["name"]],text=True,capture_output=True,timeout=30,check=False)
         if policy.returncode or f"Candidate: {item['version']}" not in policy.stdout or item["source"] not in policy.stdout: raise PackageContractError("package_contract_candidate_drift")
+def root_stage_file(path:Path)->None:
+    stage=Path(__file__).resolve().parent
+    try: path.resolve().parent.relative_to(stage)
+    except ValueError as exc: raise PackageContractError("package_contract_capture_outside_stage") from exc
+    if path.parent!=stage or os.geteuid()!=0: raise PackageContractError("package_contract_capture_authority_invalid")
+def write_immutable(path:Path,data:bytes)->None:
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
+    try:
+        os.fchown(fd,0,0); os.fchmod(fd,0o400); os.write(fd,data); os.fsync(fd)
+    finally: os.close(fd)
+    parent=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try: os.fsync(parent)
+    finally: os.close(parent)
+def policy_candidate(name:str)->tuple[str,str]:
+    result=subprocess.run(["/usr/bin/apt-cache","policy",name],text=True,capture_output=True,timeout=30,check=False)
+    if result.returncode: raise PackageContractError("package_contract_policy_failed")
+    candidate=next((line.split(":",1)[1].strip() for line in result.stdout.splitlines() if line.strip().startswith("Candidate:")),None)
+    if not candidate or candidate=="(none)": raise PackageContractError("package_contract_candidate_missing")
+    lines=result.stdout.splitlines(); found=False
+    for line in lines:
+        if line.strip().startswith(candidate+" ") or line.strip().startswith("*** "+candidate+" "): found=True; continue
+        if found and " http" in line:
+            return candidate,line.strip().split(None,1)[1]
+    raise PackageContractError("package_contract_candidate_source_missing")
+def capture(out:Path)->None:
+    root_stage_file(out)
+    sources=out.parent/"apt-sources.bin"; simulation=out.parent/"package-simulation.txt"
+    root_stage_file(sources); root_stage_file(simulation)
+    packages=[{"name":name,"version":version,"source":source} for name,version,source in ([(name,*policy_candidate(name)) for name in sorted(NAMES)])]
+    specs=[item["name"]+"="+item["version"] for item in packages]
+    result=subprocess.run(["/usr/bin/apt-get","-s","--no-install-recommends","install",*specs],text=False,capture_output=True,timeout=60,check=False)
+    if result.returncode: raise PackageContractError("package_contract_simulation_failed")
+    source_bytes=sources_payload(); simulation_bytes=result.stdout+result.stderr
+    write_immutable(sources,source_bytes); write_immutable(simulation,simulation_bytes)
+    os_release=dict(line.split("=",1) for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines() if "=" in line)
+    value={"schema_id":"remediation_package_contract.v1","schema_version":"1","distribution_id":os_release.get("ID","").strip('"'),"release":os_release.get("VERSION_CODENAME","").strip('"'),"apt_sources_hash":"sha256:"+hashlib.sha256(source_bytes).hexdigest(),"apt_sources_artifact":str(sources),"simulation_hash":"sha256:"+hashlib.sha256(simulation_bytes).hexdigest(),"simulation_artifact":str(simulation),"packages":packages,"created_at":datetime.now(timezone.utc).isoformat().replace("+00:00","Z")}
+    write_immutable(out,json.dumps(value,sort_keys=True,separators=(",",":")).encode("utf-8")); verify_live(out)
 
 def main() -> int:
-    p=argparse.ArgumentParser(); p.add_argument("contract",type=Path); p.add_argument("--install-args",action="store_true"); p.add_argument("--verify-live",action="store_true"); a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument("contract",type=Path,nargs="?"); p.add_argument("--install-args",action="store_true"); p.add_argument("--verify-live",action="store_true"); p.add_argument("--capture",type=Path); a=p.parse_args()
+    if a.capture:
+        if a.contract or a.install_args or a.verify_live: raise SystemExit("package_contract_capture_arguments_invalid")
+        capture(a.capture); print("package_contract_captured"); return 0
+    if not a.contract: raise SystemExit("package_contract_required")
     value=validate(json.loads(a.contract.read_text(encoding="utf-8")))
     if a.verify_live: verify_live(a.contract)
     if a.install_args:
