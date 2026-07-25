@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    from .bootstrap import require_staged_script
+except ImportError:  # Direct execution from the root-owned staged bundle.
+    from bootstrap import require_staged_script
+
 class PackageContractError(ValueError): pass
 
 REQUIRED={"schema_id","schema_version","distribution_id","release","apt_sources_hash","apt_sources_artifact","simulation_hash","simulation_artifact","packages","created_at"}
@@ -47,8 +52,8 @@ def verify_live(contract_path:Path)->None:
     result=subprocess.run(["/usr/bin/apt-get","-s","--no-install-recommends","install",*specs],text=True,capture_output=True,timeout=60,check=False)
     if result.returncode or file_hash(Path(value["simulation_artifact"]))!="sha256:"+hashlib.sha256((result.stdout+result.stderr).encode()).hexdigest(): raise PackageContractError("package_contract_simulation_drift")
     for item in value["packages"]:
-        policy=subprocess.run(["/usr/bin/apt-cache","policy",item["name"]],text=True,capture_output=True,timeout=30,check=False)
-        if policy.returncode or f"Candidate: {item['version']}" not in policy.stdout or item["source"] not in policy.stdout: raise PackageContractError("package_contract_candidate_drift")
+        version,source=policy_candidate(item["name"])
+        if version!=item["version"] or source!=item["source"]: raise PackageContractError("package_contract_candidate_drift")
 def root_stage_file(path:Path)->None:
     stage=Path(__file__).resolve().parent
     try: path.resolve().parent.relative_to(stage)
@@ -57,7 +62,13 @@ def root_stage_file(path:Path)->None:
 def write_immutable(path:Path,data:bytes)->None:
     fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
     try:
-        os.fchown(fd,0,0); os.fchmod(fd,0o400); os.write(fd,data); os.fsync(fd)
+        os.fchown(fd,0,0); os.fchmod(fd,0o400)
+        pending=memoryview(data)
+        while pending:
+            written=os.write(fd,pending)
+            if written<=0: raise PackageContractError("package_contract_write_failed")
+            pending=pending[written:]
+        os.fsync(fd)
     finally: os.close(fd)
     parent=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
     try: os.fsync(parent)
@@ -74,6 +85,8 @@ def policy_candidate(name:str)->tuple[str,str]:
             return candidate,line.strip().split(None,1)[1]
     raise PackageContractError("package_contract_candidate_source_missing")
 def capture(out:Path)->None:
+    try: require_staged_script(Path(__file__))
+    except RuntimeError as exc: raise PackageContractError(str(exc)) from exc
     root_stage_file(out)
     sources=out.parent/"apt-sources.bin"; simulation=out.parent/"package-simulation.txt"
     root_stage_file(sources); root_stage_file(simulation)

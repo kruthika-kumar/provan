@@ -122,6 +122,15 @@ with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleName
     assert package_contract.policy_candidate("docker.io")==("29.1.3-0ubuntu3~24.04.2","http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages")
 with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="Candidate: (none)\n",stderr="")):
     expect_package("package_contract_candidate_missing",lambda: package_contract.policy_candidate("docker.io"))
+with mock.patch.object(package_contract,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
+    expect_package("staged_path_invalid",lambda: package_contract.capture(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package-contract.json")))
+partial_writes=[]
+def partial_write(_fd, data):
+    raw=bytes(data); partial_writes.append(raw)
+    return 1 if len(partial_writes)==1 else len(raw)
+with mock.patch.object(package_contract.os,"O_NOFOLLOW",0,create=True), mock.patch.object(package_contract.os,"O_DIRECTORY",0,create=True), mock.patch.object(package_contract.os,"open",side_effect=[31,32]), mock.patch.object(package_contract.os,"close"), mock.patch.object(package_contract.os,"fchown",create=True), mock.patch.object(package_contract.os,"fchmod",create=True), mock.patch.object(package_contract.os,"fsync"), mock.patch.object(package_contract.os,"write",side_effect=partial_write):
+    package_contract.write_immutable(Path("/stage/partial-write"),b"abc")
+assert partial_writes==[b"abc",b"bc"]
 with tempfile.TemporaryDirectory() as package_raw:
     source_artifact=Path(package_raw)/"sources.bin"; simulation_artifact=Path(package_raw)/"simulation.txt"
     source_artifact.write_bytes(b"sources"); simulation_artifact.write_bytes(b"simulation")
@@ -131,16 +140,13 @@ with tempfile.TemporaryDirectory() as package_raw:
     def fake_run(argv, **_):
         text="simulation" if "apt-get" in argv[0] else f"Candidate: 1.0\nfixture"
         return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
-    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=fake_run): package_contract.verify_live(contract_path)
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract,"policy_candidate",return_value=("1.0","fixture")), mock.patch.object(package_contract.subprocess,"run",side_effect=fake_run): package_contract.verify_live(contract_path)
     with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=H): expect_package("package_contract_sources_drift",lambda: package_contract.verify_live(contract_path))
     def changed_simulation(argv, **_):
         text="changed" if "apt-get" in argv[0] else "Candidate: 1.0\nfixture"
         return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
-    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=changed_simulation): expect_package("package_contract_simulation_drift",lambda: package_contract.verify_live(contract_path))
-    def bad_candidate(argv, **_):
-        text="simulation" if "apt-get" in argv[0] else "Candidate: wrong\nfixture"
-        return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
-    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=bad_candidate): expect_package("package_contract_candidate_drift",lambda: package_contract.verify_live(contract_path))
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract,"policy_candidate",return_value=("1.0","fixture")), mock.patch.object(package_contract.subprocess,"run",side_effect=changed_simulation): expect_package("package_contract_simulation_drift",lambda: package_contract.verify_live(contract_path))
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract,"policy_candidate",return_value=("1.0","wrong-source")), mock.patch.object(package_contract.subprocess,"run",side_effect=fake_run): expect_package("package_contract_candidate_drift",lambda: package_contract.verify_live(contract_path))
     with mock.patch.object(package_contract,"immutable_root_file",side_effect=PackageContractError("package_contract_artifact_untrusted")): expect_package("package_contract_artifact_untrusted",lambda: package_contract.verify_live(contract_path))
 with mock.patch.object(release_helper.os,"geteuid",return_value=0,create=True), mock.patch.object(release_helper,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     args=type("Args",(),{"root":Path("/tmp/fixture"),"expected_device":1,"expected_inode":1,"expected_mount_id":1,"operation":"verify-empty"})()
