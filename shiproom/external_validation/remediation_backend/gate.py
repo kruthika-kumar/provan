@@ -38,13 +38,13 @@ def required(result:dict,name:str)->str:
 def main()->int:
     p=argparse.ArgumentParser(); p.add_argument("bundle",type=Path); p.add_argument("--commit",required=True); p.add_argument("--tree",required=True); p.add_argument("--out",type=Path,required=True); a=p.parse_args()
     if os.geteuid()==0: raise SystemExit("stage0_must_be_nonroot")
-    repo=Path(required(run(["git","rev-parse","--show-toplevel"],a.bundle),"gate_repository_missing"))
-    if required(run(["git","rev-parse","HEAD"],repo),"gate_head_missing")!=a.commit or required(run(["git","rev-parse","HEAD^{tree}"],repo),"gate_tree_missing")!=a.tree: raise SystemExit("gate_commit_tree_mismatch")
-    if required(run(["git","status","--porcelain"],repo),"gate_status_missing"): raise SystemExit("gate_worktree_dirty")
+    git=str(trusted_host_executable(Path("/usr/bin/git")))
+    repo=Path(required(run([git,"rev-parse","--show-toplevel"],a.bundle),"gate_repository_missing"))
+    if required(run([git,"rev-parse","HEAD"],repo),"gate_head_missing")!=a.commit or required(run([git,"rev-parse","HEAD^{tree}"],repo),"gate_tree_missing")!=a.tree: raise SystemExit("gate_commit_tree_mismatch")
+    if required(run([git,"status","--porcelain"],repo),"gate_status_missing"): raise SystemExit("gate_worktree_dirty")
     bundle_files={name:sha(a.bundle/name) for name in FILES}
     schema_dir=a.bundle.parent/"schemas"; schemas={name:sha(schema_dir/name) for name in SCHEMAS}
     bash=str(trusted_host_executable(Path("/usr/bin/bash")))
-    git=str(trusted_host_executable(Path("/usr/bin/git")))
     shellcheck=str(trusted_host_executable(Path("/usr/bin/shellcheck")))
     commands=[run([bash,"-n",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle),run([bash,"tests.sh"],a.bundle),run([git,"diff","--check"],repo),run([shellcheck,"--version"],a.bundle),run([shellcheck,"-S","warning",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle)]
     if any(item["exit_code"] for item in commands): raise SystemExit("stage0_gate_failed")
