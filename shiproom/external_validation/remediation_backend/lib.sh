@@ -102,7 +102,23 @@ is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -
 # -n/-N freeze numeric, headerless output; block limits are in 1KiB units.
 quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"; }
 quota_record(){ local p=$1 out source; source=$(state_get LOOP); out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v project="$p" -v source="$source" -v mount="$MOUNT" '$1==source && $NF==mount && NF==12 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", project, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
-quota_limits_verified(){ local p=$1 b=$2 i=$3 row rp rb ri; row=$(quota_record "$p") || return 1; IFS=$'\t' read -r rp rb ri <<<"$row"; [[ "$rp" == "$p" && "$rb" == "$b" && "$ri" == "$i" ]]; }
+quota_limits_verified(){
+  local p=$1 b=$2 i=$3 row rp rb ri
+  if ! row=$(quota_record "$p"); then
+    # The selected-project report is supervisor command output, not patient
+    # evidence.  Preserve it on stderr at this hard gate so an XFS-version
+    # layout mismatch can be repaired from facts without accepting a loose row.
+    printf 'shiproom remediation: quota report did not match the frozen parser (project=%s expected_bytes=%s expected_inodes=%s)\n' "$p" "$b" "$i" >&2
+    quota_machine "$p" >&2 || true
+    return 1
+  fi
+  IFS=$'\t' read -r rp rb ri <<<"$row"
+  if [[ "$rp" != "$p" || "$rb" != "$b" || "$ri" != "$i" ]]; then
+    printf 'shiproom remediation: quota limits mismatch (project=%s observed_bytes=%s observed_inodes=%s expected_bytes=%s expected_inodes=%s)\n' "$p" "$rb" "$ri" "$b" "$i" >&2
+    quota_machine "$p" >&2 || true
+    return 1
+  fi
+}
 storage_verified(){ local loop; require_paths; loop=$(state_get LOOP); is_recorded_block_device "$loop" && [[ "$(losetup -n -O BACK-FILE "$loop")" == "$IMAGE" ]] || return 1; findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || return 1; xfs_info "$MOUNT" | grep -q 'ftype=1' || return 1; quota_limits_verified "$(state_get DATA_PROJECT)" "$(state_get DATA_BYTES)" "$(state_get DATA_INODES)"; }
 capacity_record_from_xfs(){
   local total available nominal instance
