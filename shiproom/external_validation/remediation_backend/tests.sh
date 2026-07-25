@@ -86,10 +86,14 @@ truncate -s 16G "$IMAGE"; control_init; capacity=$(capacity_record_from_xfs); co
 
 echo '[4/10] concurrent quota allocation has distinct, durable project IDs'
 control_init; instance=$(control instance); capacity=$(python3 - "$instance" <<'PY'
-import json,sys
-print(json.dumps({'capacity_id':'test_capacity','backend_instance_id':sys.argv[1],'evidence_hash':'sha256:'+'0'*64,'nominal_image_bytes':17179869184,'filesystem_total_data_bytes':17179869184,'filesystem_available_bytes':17179869184,'metadata_reserve_bytes':1073741824,'supervisor_reserve_bytes':1073741824,'docker_bytes':8589934592,'aggregate_worktree_bytes':6442450944,'inode_policy_cap':1000000,'max_active_projects':4}))
+import hashlib,json,sys
+evidence={'backend_instance_id':sys.argv[1],'nominal_image_bytes':17179869184,'filesystem_total_data_bytes':17179869184,'filesystem_available_bytes':17179869184,'metadata_reserve_bytes':1073741824,'supervisor_reserve_bytes':1073741824,'docker_bytes':8589934592,'qualified_worktree_aggregate_limit':6442450944,'inode_policy_cap':1000000,'max_active_projects':4}
+h='sha256:'+hashlib.sha256(json.dumps(evidence,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+aggregate=evidence.pop('qualified_worktree_aggregate_limit')
+record={**evidence,'capacity_id':'capacity_'+h.split(':',1)[1][:32],'evidence_hash':h,'aggregate_worktree_bytes':aggregate}
+print(json.dumps(record))
 PY
-); control install-capacity "$capacity" >/dev/null; state 'state_put CAPACITY_ID test_capacity'
+); control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); state "state_put CAPACITY_ID '$capacity_id'"
 export TEST_QUOTA_BLOCKS=1024 TEST_QUOTA_INODES=1024
 "$DIR/quota-worktree.sh" allocate casea 1048576 1024 "$SOURCE_HASH" >"$tmp/a" & a=$!
 "$DIR/quota-worktree.sh" allocate caseb 1048576 1024 "$SOURCE_HASH" >"$tmp/b" & b=$!

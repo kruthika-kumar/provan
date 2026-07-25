@@ -181,6 +181,21 @@ class Control:
             raise ControlError("capacity_value_invalid")
         if record["max_active_projects"] < 1 or not str(record["evidence_hash"]).startswith("sha256:"):
             raise ControlError("capacity_value_invalid")
+        evidence = {
+            "backend_instance_id": record["backend_instance_id"],
+            "nominal_image_bytes": record["nominal_image_bytes"],
+            "filesystem_total_data_bytes": record["filesystem_total_data_bytes"],
+            "filesystem_available_bytes": record["filesystem_available_bytes"],
+            "metadata_reserve_bytes": record["metadata_reserve_bytes"],
+            "supervisor_reserve_bytes": record["supervisor_reserve_bytes"],
+            "docker_bytes": record["docker_bytes"],
+            "qualified_worktree_aggregate_limit": record["aggregate_worktree_bytes"],
+            "inode_policy_cap": record["inode_policy_cap"],
+            "max_active_projects": record["max_active_projects"],
+        }
+        expected_hash = digest(evidence)
+        if record["evidence_hash"] != expected_hash or record["capacity_id"] != "capacity_" + expected_hash.split(":", 1)[1][:32]:
+            raise ControlError("capacity_evidence_invalid")
         usable = min(record["filesystem_total_data_bytes"], record["filesystem_available_bytes"])
         if record["docker_bytes"] + record["metadata_reserve_bytes"] + record["supervisor_reserve_bytes"] + record["aggregate_worktree_bytes"] > usable:
             raise ControlError("capacity_overcommitted")

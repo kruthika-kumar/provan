@@ -47,6 +47,24 @@ assert 'matching[0][3] != "0" or matching[0][8] != "0"' in release_source
 
 H = "sha256:" + "a" * 64
 
+def capacity_record(instance: str, *, total: int = 16_000_000_000, available: int = 16_000_000_000, aggregate: int = 6_000_000_000) -> dict[str, object]:
+    evidence = {
+        "backend_instance_id": instance, "nominal_image_bytes": 17_179_869_184,
+        "filesystem_total_data_bytes": total, "filesystem_available_bytes": available,
+        "metadata_reserve_bytes": 1_000_000_000, "supervisor_reserve_bytes": 1_000_000_000,
+        "docker_bytes": 8_000_000_000, "qualified_worktree_aggregate_limit": aggregate,
+        "inode_policy_cap": 10_000, "max_active_projects": 2,
+    }
+    evidence_hash = digest(evidence)
+    return {
+        "capacity_id": "capacity_" + evidence_hash.split(":", 1)[1][:32], "backend_instance_id": instance,
+        "evidence_hash": evidence_hash, "nominal_image_bytes": evidence["nominal_image_bytes"],
+        "filesystem_total_data_bytes": total, "filesystem_available_bytes": available,
+        "metadata_reserve_bytes": evidence["metadata_reserve_bytes"], "supervisor_reserve_bytes": evidence["supervisor_reserve_bytes"],
+        "docker_bytes": evidence["docker_bytes"], "aggregate_worktree_bytes": aggregate,
+        "inode_policy_cap": evidence["inode_policy_cap"], "max_active_projects": evidence["max_active_projects"],
+    }
+
 # Root provenance checks must never inherit a caller's Git redirection state.
 reviewed_repository=Path("/reviewed/repository")
 with mock.patch.dict(__import__("os").environ, {"GIT_DIR":"/attacker/git", "GIT_WORK_TREE":"/attacker/tree", "GIT_INDEX_FILE":"/attacker/index", "GIT_CONFIG_GLOBAL":"/attacker/config"}, clear=False):
@@ -278,21 +296,19 @@ with tempfile.TemporaryDirectory() as raw:
     control = Control(Path(raw) / "control.sqlite3")
     instance = control.initialize()
     assert control.initialize() == instance
-    capacity = {
-        "capacity_id": "capacity-1", "backend_instance_id": instance, "evidence_hash": H,
-        "nominal_image_bytes": 17_179_869_184, "filesystem_total_data_bytes": 16_000_000_000,
-        "filesystem_available_bytes": 16_000_000_000, "metadata_reserve_bytes": 1_000_000_000,
-        "supervisor_reserve_bytes": 1_000_000_000, "docker_bytes": 8_000_000_000,
-        "aggregate_worktree_bytes": 6_000_000_000, "inode_policy_cap": 10_000,
-        "max_active_projects": 2,
-    }
+    capacity = capacity_record(instance)
     control.install_capacity(capacity)
+    capacity_id = str(capacity["capacity_id"])
+    forged = dict(capacity); forged["filesystem_available_bytes"] = 99_000_000_000
+    expect("capacity_evidence_invalid", lambda: control.install_capacity(forged))
+    wrong_id = dict(capacity); wrong_id["capacity_id"] = "capacity_" + "0" * 32
+    expect("capacity_evidence_invalid", lambda: control.install_capacity(wrong_id))
     expect("setup_phase_transition_invalid", lambda: control.phase("DAEMON_STARTED"))
     control.phase("ROOTS_CREATED"); control.phase("STATE_INITIALIZED"); control.phase("POLICY_GUARD_CREATED")
-    first = control.reserve("attempt-a", 4_000_000_000, 4_000, H, "capacity-1", 9_000_000_000)
-    second = control.reserve("attempt-b", 2_000_000_000, 4_000, H, "capacity-1", 9_000_000_000)
+    first = control.reserve("attempt-a", 4_000_000_000, 4_000, H, capacity_id, 9_000_000_000)
+    second = control.reserve("attempt-b", 2_000_000_000, 4_000, H, capacity_id, 9_000_000_000)
     assert (first, second) == (20000, 20001)
-    expect("capacity_project_count_exceeded", lambda: control.reserve("attempt-c", 1, 1, H, "capacity-1", 9_000_000_000))
+    expect("capacity_project_count_exceeded", lambda: control.reserve("attempt-c", 1, 1, H, capacity_id, 9_000_000_000))
     document = authorization(instance, "attempt-a", first)
     recorded_authority = authority(instance, "attempt-a", first)
     expect("allocation_phase_transition_invalid", lambda: control.allocation_phase("attempt-a", "PROJECT_ASSIGNED", recorded_authority))
@@ -303,7 +319,7 @@ with tempfile.TemporaryDirectory() as raw:
     validate_release_authorization(document)
     if jsonschema is not None: jsonschema.Draft202012Validator(release_schema).validate(document)
     control.authorize_release(document, "/supervisor/authorizations/a.json")
-    expect("backend_execution_blocked:RELEASING", lambda: control.reserve("attempt-c", 1, 1, H, "capacity-1", 9_000_000_000))
+    expect("backend_execution_blocked:RELEASING", lambda: control.reserve("attempt-c", 1, 1, H, capacity_id, 9_000_000_000))
     stored_second = authority(instance, "attempt-b", second); stored_second["inode"] = 99
     control.allocation_phase("attempt-b", "TREE_CREATED", stored_second)
     control.allocation_phase("attempt-b", "PROJECT_ASSIGNED", stored_second)
@@ -315,7 +331,7 @@ with tempfile.TemporaryDirectory() as raw:
         control.release_phase("attempt-a", phase)
     control.commit_release("attempt-a")
     # Capacity returns atomically only after the retirement transaction.
-    third = control.reserve("attempt-c", 4_000_000_000, 4_000, H, "capacity-1", 9_000_000_000)
+    third = control.reserve("attempt-c", 4_000_000_000, 4_000, H, capacity_id, 9_000_000_000)
     assert third == 20002
     incident = control.incident("test", "QUOTA_STATE_UNCERTAIN", {"reason": "fixture"})
     expect("backend_execution_blocked:QUOTA_STATE_UNCERTAIN", control.assert_ready)
