@@ -133,6 +133,12 @@ with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleName
     expect_package("package_contract_candidate_source_missing",lambda: package_contract.policy_candidate("docker.io"))
 with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="Candidate: (none)\n",stderr="")):
     expect_package("package_contract_candidate_missing",lambda: package_contract.policy_candidate("docker.io"))
+bootstrap_guard_calls=[]
+fixture_bootstrap=SimpleNamespace(require_staged_script=lambda script: bootstrap_guard_calls.append(script))
+fixture_spec=SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: setattr(module,"require_staged_script",fixture_bootstrap.require_staged_script)))
+with mock.patch.object(package_contract.importlib.util,"spec_from_file_location",return_value=fixture_spec), mock.patch.object(package_contract.importlib.util,"module_from_spec",return_value=fixture_bootstrap):
+    package_contract.require_staged_script(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package_contract.py"))
+assert bootstrap_guard_calls==[Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package_contract.py")]
 with mock.patch.object(package_contract,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     expect_package("staged_path_invalid",lambda: package_contract.capture(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package-contract.json")))
 partial_writes=[]

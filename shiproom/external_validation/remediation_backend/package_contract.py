@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 """Validate the frozen, approval-bound Docker/XFS package transaction."""
 from __future__ import annotations
-import argparse, hashlib, json, os, re, stat, subprocess, sys
+import argparse, hashlib, importlib.util, json, os, re, stat, subprocess, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-try:
-    from .bootstrap import require_staged_script
-except ImportError:  # Direct execution from the root-owned staged bundle.
-    from bootstrap import require_staged_script
+def require_staged_script(script:Path)->None:
+    """Load only the bootstrap sibling whose stage will be verified.
+
+    Privileged invocations use ``python -I -S`` so they do not inherit a
+    caller-controlled module search path; that deliberately excludes the
+    script directory.  An exact sibling load keeps that isolation while still
+    making the bootstrap verifier the authority for this staged script.
+    """
+    bootstrap_path=script.resolve().with_name("bootstrap.py")
+    spec=importlib.util.spec_from_file_location("shiproom_remediation_stage_bootstrap",bootstrap_path)
+    if spec is None or spec.loader is None: raise RuntimeError("staged_bootstrap_load_invalid")
+    module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    module.require_staged_script(script)
 
 class PackageContractError(ValueError): pass
 
