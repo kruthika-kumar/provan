@@ -16,7 +16,7 @@ def validate(value: Any) -> dict[str, Any]:
     if value["schema_id"]!="remediation_package_contract.v1" or value["schema_version"]!="1": raise PackageContractError("package_contract_version_invalid")
     if not all(isinstance(value[k],str) and value[k] for k in {"distribution_id","release","created_at"}): raise PackageContractError("package_contract_text_invalid")
     if not SHA.fullmatch(value["apt_sources_hash"]) or not SHA.fullmatch(value["simulation_hash"]): raise PackageContractError("package_contract_hash_invalid")
-    if any(not isinstance(value[key],str) or not value[key].startswith("/") for key in {"apt_sources_artifact","simulation_artifact"}): raise PackageContractError("package_contract_artifact_path_invalid")
+    if any(not isinstance(value[key],str) or not (value[key].startswith("/") or Path(value[key]).is_absolute()) for key in {"apt_sources_artifact","simulation_artifact"}): raise PackageContractError("package_contract_artifact_path_invalid")
     packages=value["packages"]
     if not isinstance(packages,list) or {x.get("name") for x in packages if isinstance(x,dict)}!=NAMES or len(packages)!=3: raise PackageContractError("package_contract_packages_invalid")
     for item in packages:

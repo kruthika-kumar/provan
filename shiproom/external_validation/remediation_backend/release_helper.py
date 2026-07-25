@@ -14,6 +14,10 @@ import os
 import stat
 import sys
 from pathlib import Path
+try:
+    from .bootstrap import require_staged_script
+except ImportError:
+    from bootstrap import require_staged_script
 
 HELPER_VERSION = "remediation-release-helper.v1"
 RESOLVE_NO_XDEV = 0x01
@@ -107,6 +111,7 @@ def open_registered_root(root: Path) -> tuple[int, int]:
 def action(args: argparse.Namespace) -> None:
     if os.geteuid() != 0:
         raise ReleaseBlocked("release_root_required")
+    require_staged_script(Path(__file__))
     parent_fd, root_fd = open_registered_root(args.root)
     try:
         verify_root(root_fd, args.expected_device, args.expected_inode, args.expected_mount_id)

@@ -5,9 +5,11 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import json
+from unittest import mock
 
 from control import Control, ControlError, canonical, digest
 from contracts import ContractError, validate_release_authorization
+import package_contract
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import source_manifest, validate_attestation
 
@@ -60,6 +62,17 @@ def expect_package(code: str, fn) -> None:
 validate_package_contract(PACKAGE)
 bad_package = dict(PACKAGE); bad_package["packages"] = list(PACKAGE["packages"][:-1])
 expect_package("package_contract_packages_invalid", lambda: validate_package_contract(bad_package))
+with tempfile.TemporaryDirectory() as package_raw:
+    source_artifact=Path(package_raw)/"sources.bin"; simulation_artifact=Path(package_raw)/"simulation.txt"
+    source_artifact.write_bytes(b"sources"); simulation_artifact.write_bytes(b"simulation")
+    package_live=dict(PACKAGE); package_live["apt_sources_artifact"]=str(source_artifact); package_live["simulation_artifact"]=str(simulation_artifact)
+    package_live["apt_sources_hash"]="sha256:"+__import__("hashlib").sha256(b"sources").hexdigest(); package_live["simulation_hash"]="sha256:"+__import__("hashlib").sha256(b"simulation").hexdigest()
+    contract_path=Path(package_raw)/"contract.json"; contract_path.write_text(json.dumps(package_live),encoding="utf-8")
+    def fake_run(argv, **_):
+        text="simulation" if "apt-get" in argv[0] else f"Candidate: 1.0\nfixture"
+        return type("Result",(),{"returncode":0,"stdout":text,"stderr":""})()
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=package_live["apt_sources_hash"]), mock.patch.object(package_contract.subprocess,"run",side_effect=fake_run): package_contract.verify_live(contract_path)
+    with mock.patch.object(package_contract,"immutable_root_file"), mock.patch.object(package_contract,"current_sources_hash",return_value=H): expect_package("package_contract_sources_drift",lambda: package_contract.verify_live(contract_path))
 try:
     import jsonschema
 except ImportError:
@@ -108,6 +121,12 @@ with tempfile.TemporaryDirectory() as raw:
     validate_release_authorization(document)
     if jsonschema is not None: jsonschema.Draft202012Validator(release_schema).validate(document)
     control.authorize_release(document, "/supervisor/authorizations/a.json")
+    stored_second = authority(instance, "attempt-b", second); stored_second["inode"] = 99
+    control.allocation_phase("attempt-b", "TREE_CREATED", stored_second)
+    control.allocation_phase("attempt-b", "PROJECT_ASSIGNED", stored_second)
+    control.allocation_phase("attempt-b", "LIMIT_ASSIGNED", stored_second, {"project_id": second, "byte_limit": 2_000_000_000, "inode_limit": 4_000})
+    control.allocation_phase("attempt-b", "REGISTRY_COMMITTED", stored_second, {"project_id": second, "byte_limit": 2_000_000_000, "inode_limit": 4_000})
+    expect("authorization_worktree_authority_mismatch", lambda: control.authorize_release(authorization(instance, "attempt-b", second), "/supervisor/authorizations/b.json"))
     expect("release_phase_transition_invalid", lambda: control.release_phase("attempt-a", "PROJECT_CLEARED_VERIFIED"))
     for phase in ("RESIDUAL_ABSENCE_VERIFIED", "WORKTREE_CONTENT_DELETE_STARTED", "WORKTREE_EMPTY_VERIFIED", "PROJECT_CLEAR_STARTED", "PROJECT_CLEARED_VERIFIED", "WORKTREE_ROOT_DELETE_STARTED", "WORKTREE_ABSENT_VERIFIED", "REGISTRY_REMOVAL_PREPARED"):
         control.release_phase("attempt-a", phase)
