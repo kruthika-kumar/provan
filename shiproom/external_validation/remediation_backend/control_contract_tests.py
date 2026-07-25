@@ -120,6 +120,17 @@ policy_fixture="""docker.io:
 """
 with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=policy_fixture,stderr="")):
     assert package_contract.policy_candidate("docker.io")==("29.1.3-0ubuntu3~24.04.2","http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages")
+candidate_without_origin="""docker.io:
+  Installed: 2.0
+  Candidate: 2.0
+  Version table:
+ *** 2.0 100
+        100 /var/lib/dpkg/status
+     1.0 500
+        500 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages
+"""
+with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout=candidate_without_origin,stderr="")):
+    expect_package("package_contract_candidate_source_missing",lambda: package_contract.policy_candidate("docker.io"))
 with mock.patch.object(package_contract.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="Candidate: (none)\n",stderr="")):
     expect_package("package_contract_candidate_missing",lambda: package_contract.policy_candidate("docker.io"))
 with mock.patch.object(package_contract,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):

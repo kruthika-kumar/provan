@@ -79,10 +79,17 @@ def policy_candidate(name:str)->tuple[str,str]:
     candidate=next((line.split(":",1)[1].strip() for line in result.stdout.splitlines() if line.strip().startswith("Candidate:")),None)
     if not candidate or candidate=="(none)": raise PackageContractError("package_contract_candidate_missing")
     lines=result.stdout.splitlines(); found=False
+    version_header=re.compile(r"^\s{1,6}(?:\*\*\*\s+)?(\S+)\s+\d+\s*$")
+    source_line=re.compile(r"^\s*\d+\s+(https?://\S.*)$")
     for line in lines:
-        if line.strip().startswith(candidate+" ") or line.strip().startswith("*** "+candidate+" "): found=True; continue
-        if found and " http" in line:
-            return candidate,line.strip().split(None,1)[1]
+        header=version_header.match(line)
+        if header:
+            if found: break
+            found=header.group(1)==candidate
+            continue
+        if found:
+            source=source_line.match(line)
+            if source: return candidate,source.group(1)
     raise PackageContractError("package_contract_candidate_source_missing")
 def capture(out:Path)->None:
     try: require_staged_script(Path(__file__))
