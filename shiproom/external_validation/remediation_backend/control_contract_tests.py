@@ -26,6 +26,8 @@ lib_source=(Path(__file__).parent/"lib.sh").read_text(encoding="utf-8")
 root_residual_source=lib_source.split("root_residual_absence_proven(){",1)[1].split("safe_remove_owned_root(){",1)[0]
 assert "findmnt -rn -o TARGET" in root_residual_source
 assert "findmnt -R -n -o TARGET --target" not in root_residual_source
+assert 'xfs_quota -x -c "quota -p -nN $p" "$MOUNT"' in lib_source
+assert "xfs_quota -x -d \"$p\"" not in lib_source
 
 H = "sha256:" + "a" * 64
 

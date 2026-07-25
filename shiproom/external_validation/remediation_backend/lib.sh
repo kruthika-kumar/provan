@@ -97,7 +97,7 @@ no_live_default_or_custom_daemon(){ [[ ! -S /var/run/docker.sock && ! -S "$SOCKE
 is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -b "$1" ]]; }
 
 # xfs_quota's numeric, headerless quota report is parsed as 1KiB blocks, not human-readable units.
-quota_machine(){ local p=$1; xfs_quota -x -d "$p" -c 'quota -p -nN' "$MOUNT"; }
+quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nN $p" "$MOUNT"; }
 quota_record(){ local p=$1 out; out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v p="$p" '$1==p && NF>=9 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", $1, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
 quota_limits_verified(){ local p=$1 b=$2 i=$3 row rp rb ri; row=$(quota_record "$p") || return 1; IFS=$'\t' read -r rp rb ri <<<"$row"; [[ "$rp" == "$p" && "$rb" == "$b" && "$ri" == "$i" ]]; }
 storage_verified(){ local loop; require_paths; loop=$(state_get LOOP); is_recorded_block_device "$loop" && [[ "$(losetup -n -O BACK-FILE "$loop")" == "$IMAGE" ]] || return 1; findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || return 1; xfs_info "$MOUNT" | grep -q 'ftype=1' || return 1; quota_limits_verified "$(state_get DATA_PROJECT)" "$(state_get DATA_BYTES)" "$(state_get DATA_INODES)"; }
