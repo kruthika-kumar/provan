@@ -106,6 +106,7 @@ def approve(source:Path,attestation_path:Path,commit:str,tree:str)->Path:
         fd=os.open(path.name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400,dir_fd=parent_fd)
         with os.fdopen(fd,"wb") as handle:
             os.fchown(handle.fileno(),0,0); os.fchmod(handle.fileno(),0o400); handle.write(canonical(body)); handle.flush(); os.fsync(handle.fileno())
+        os.fsync(parent_fd)
     finally:
         os.close(parent_fd)
     return path

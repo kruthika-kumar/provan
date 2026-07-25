@@ -80,6 +80,26 @@ def expect_package(code: str, fn) -> None:
     else: raise AssertionError(code + " not rejected")
 
 
+untrusted_directory=SimpleNamespace(st_mode=__import__("stat").S_IFLNK,st_uid=0,st_gid=0,st_dev=1,st_ino=2)
+with mock.patch.object(bootstrap.os,"mkdir",side_effect=FileExistsError), mock.patch.object(Path,"lstat",return_value=untrusted_directory):
+    expect("bootstrap_directory_untrusted",lambda: bootstrap.secure_root_directory(Path("/run/shiproom-remediation-bootstrap")))
+trusted_directory=SimpleNamespace(st_mode=__import__("stat").S_IFDIR|0o700,st_uid=0,st_gid=0,st_dev=1,st_ino=2)
+different_directory=SimpleNamespace(st_dev=1,st_ino=3)
+with mock.patch.object(bootstrap.os,"O_DIRECTORY",0,create=True), mock.patch.object(bootstrap.os,"O_NOFOLLOW",0,create=True), mock.patch.object(bootstrap.os,"mkdir",side_effect=FileExistsError), mock.patch.object(Path,"lstat",return_value=trusted_directory), mock.patch.object(bootstrap.os,"open",return_value=9), mock.patch.object(bootstrap.os,"fstat",return_value=different_directory), mock.patch.object(bootstrap.os,"close"):
+    expect("bootstrap_directory_raced",lambda: bootstrap.secure_root_directory(Path("/run/shiproom-remediation-bootstrap")))
+approval_hash="sha256:"+"b"*64
+class ApprovalHandle:
+    def __enter__(self): return self
+    def __exit__(self,*_): return False
+    def fileno(self): return 11
+    def write(self,_): return 1
+    def flush(self): pass
+fsynced=[]
+with mock.patch.object(bootstrap.os,"O_DIRECTORY",0,create=True), mock.patch.object(bootstrap.os,"O_NOFOLLOW",0,create=True), mock.patch.object(bootstrap,"source_root"), mock.patch.object(bootstrap,"validate_attestation",return_value={"attestation_hash":approval_hash}), mock.patch.object(bootstrap,"secure_root_directory"), mock.patch.object(bootstrap,"approval_path",return_value=Path("/run/shiproom-remediation-bootstrap/approvals/"+"b"*64)), mock.patch.object(bootstrap.os,"open",side_effect=[10,11]), mock.patch.object(bootstrap.os,"fdopen",return_value=ApprovalHandle()), mock.patch.object(bootstrap.os,"fchown",create=True), mock.patch.object(bootstrap.os,"fchmod",create=True), mock.patch.object(bootstrap.os,"fsync",side_effect=fsynced.append), mock.patch.object(bootstrap.os,"close"):
+    bootstrap.approve(Path("/source"),Path("/attestation"),"0"*40,"1"*40)
+assert fsynced==[11,10]
+
+
 validate_package_contract(PACKAGE)
 bad_package = dict(PACKAGE); bad_package["packages"] = list(PACKAGE["packages"][:-1])
 expect_package("package_contract_packages_invalid", lambda: validate_package_contract(bad_package))
