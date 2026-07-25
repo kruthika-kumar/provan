@@ -82,7 +82,7 @@ export TEST_QUOTA_VARIANT=wrong_mount; ! quota_limits_verified 10000 8589934592 
 export TEST_QUOTA_VARIANT=short_row; ! quota_limits_verified 10000 8589934592 200000
 unset TEST_QUOTA_VARIANT TEST_EXPECT_PROJECT
 echo '[3a/17] actual-free-space capacity record binds live measurement and reserves'
-truncate -s 16G "$IMAGE"; control_init; capacity=$(capacity_record_from_xfs); control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); [[ "$capacity_id" == capacity_* ]]; state_put CAPACITY_ID "$capacity_id"
+truncate -s 16G "$IMAGE"; control_init; capacity=$(capacity_record_from_xfs)
 python3 - "$capacity" "$MOUNT" "$IMAGE" <<'PY'
 import json,subprocess,sys
 record=json.loads(sys.argv[1]); mount,image=sys.argv[2:]
@@ -95,6 +95,7 @@ assert record["nominal_image_bytes"]==nominal==16*1024**3
 assert record["aggregate_worktree_bytes"]==expected
 assert record["docker_bytes"]+record["metadata_reserve_bytes"]+record["supervisor_reserve_bytes"]+record["aggregate_worktree_bytes"]<=min(total,available)
 PY
+control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); [[ "$capacity_id" == capacity_* ]]; state_put CAPACITY_ID "$capacity_id"
 
 echo '[4/10] concurrent quota allocation has distinct, durable project IDs'
 control_init; instance=$(control instance); capacity=$(python3 - "$instance" <<'PY'
