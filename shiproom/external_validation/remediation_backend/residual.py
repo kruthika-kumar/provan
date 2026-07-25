@@ -54,7 +54,7 @@ def _proc_references(root: Path, device: int) -> list[dict[str, object]]:
         if not entry.name.isdecimal():
             continue
         pid = entry.name
-        for name in ("cwd", "root"):
+        for name in ("cwd", "root", "exe"):
             candidate = entry / name
             try:
                 target = os.readlink(candidate)
@@ -88,6 +88,25 @@ def _proc_references(root: Path, device: int) -> list[dict[str, object]]:
                 continue
             except PermissionError as exc:
                 raise ResidualBlocked("residual_fd_unreadable:" + pid) from exc
+            except OSError:
+                continue
+        maps = entry / "map_files"
+        try:
+            mappings = list(maps.iterdir())
+        except FileNotFoundError:
+            continue
+        except PermissionError as exc:
+            raise ResidualBlocked("residual_map_files_unreadable:" + pid) from exc
+        for mapping in mappings:
+            try:
+                target = os.readlink(mapping)
+                textual_hit = target.removesuffix(" (deleted)") == str(root) or target.removesuffix(" (deleted)").startswith(str(root) + "/")
+                if textual_hit or _under_root(mapping, root, device):
+                    hits.append({"pid": int(pid), "kind": "map_file", "range": mapping.name, "target": target})
+            except FileNotFoundError:
+                continue
+            except PermissionError as exc:
+                raise ResidualBlocked("residual_map_files_unreadable:" + pid) from exc
             except OSError:
                 continue
     return hits

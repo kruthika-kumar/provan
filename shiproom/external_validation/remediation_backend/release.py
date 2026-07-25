@@ -34,20 +34,42 @@ class ReleaseError(RuntimeError):
 LOCK = Path("/run/lock/shiproom-remediation.backend.lock")
 
 
+def _verify_lock_stat(value: os.stat_result) -> None:
+    if not stat.S_ISREG(value.st_mode) or value.st_uid != 0 or value.st_mode & 0o022:
+        raise ReleaseError("backend_lock_untrusted")
+
+
+def _open_safe_lock() -> int:
+    """Open the fixed lock without following a sticky-directory attacker link."""
+    parent = LOCK.parent.stat(follow_symlinks=False)
+    if not stat.S_ISDIR(parent.st_mode) or parent.st_uid != 0:
+        raise ReleaseError("backend_lock_parent_untrusted")
+    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(LOCK, flags, 0o600)
+    try:
+        value = os.fstat(fd)
+        _verify_lock_stat(value)
+        os.fchmod(fd, 0o600)
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 @contextmanager
 def backend_lock():
     """Hold the fixed, non-removable backend lock for the entire release."""
-    LOCK.parent.mkdir(parents=True, exist_ok=True)
     inherited = False
     try:
         candidate = os.fstat(9)
-        on_disk = LOCK.stat()
-        inherited = candidate.st_dev == on_disk.st_dev and candidate.st_ino == on_disk.st_ino
+        _verify_lock_stat(candidate)
+        current = os.stat(LOCK, follow_symlinks=False)
+        _verify_lock_stat(current)
+        inherited = candidate.st_dev == current.st_dev and candidate.st_ino == current.st_ino
     except OSError:
         inherited = False
-    item = os.fdopen(9, "a+", encoding="ascii", closefd=False) if inherited else LOCK.open("a+", encoding="ascii")
+    item = os.fdopen(9, "a+", encoding="ascii", closefd=False) if inherited else os.fdopen(_open_safe_lock(), "a+", encoding="ascii")
     try:
-        os.chmod(LOCK, 0o600)
         fcntl.flock(item.fileno(), fcntl.LOCK_EX)
         yield
     finally:
@@ -122,12 +144,20 @@ def trusted_binary(name: str) -> str:
     return str(path)
 def project_clear(mount: Path, tree: Path, project: int) -> None:
     quota=trusted_binary("xfs_quota")
+    # Limits are an independent project-ID authority.  Clear and verify them
+    # while the now-empty registered root still exists; project -C alone is
+    # insufficient because the retired ID could retain hard limits.
+    run([quota, "-x", "-c", f"limit -p bsoft=0 bhard=0 isoft=0 ihard=0 {project}", str(mount)])
     run([quota, "-x", "-c", f"project -C -p {tree} {project}", str(mount)])
-    # A second assignment of the retired ID must fail on a real qualified XFS
-    # backend; doctor proves this command's project-specific evidence.
+    checked = subprocess.run([quota, "-x", "-c", f"project -c -p {tree} {project}", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
+    if checked.returncode == 0:
+        raise ReleaseError("project_assignment_clear_unverified")
     report = subprocess.run([quota, "-x", "-d", str(project), "-c", "quota -p -nN", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
-    if report.returncode == 0 and any(line.split()[:1] == [str(project)] for line in report.stdout.splitlines()):
-        raise ReleaseError("project_clear_unverified")
+    if report.returncode == 0:
+        for line in report.stdout.splitlines():
+            fields=line.split()
+            if fields[:1] == [str(project)] and any(value != "0" for value in fields[1:] if value.isdecimal()):
+                raise ReleaseError("project_limit_clear_unverified")
 
 
 def main() -> int:

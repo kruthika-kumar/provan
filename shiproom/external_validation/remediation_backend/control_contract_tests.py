@@ -10,6 +10,7 @@ from unittest import mock
 from control import Control, ControlError, canonical, digest
 from contracts import ContractError, validate_release_authorization
 import package_contract
+import bootstrap
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
@@ -102,20 +103,28 @@ with tempfile.TemporaryDirectory() as raw:
     backend_source = Path(__file__).parent
     shell_scripts=[name for name in BOOTSTRAP_FILES if name.endswith(".sh")]
     stage_commands=[
-        {"command":["bash","-n",*shell_scripts],"exit_code":0},
-        {"command":["bash","tests.sh"],"exit_code":0},
-        {"command":["git","diff","--check"],"exit_code":0},
+        {"command":["/usr/bin/bash","-n",*shell_scripts],"exit_code":0},
+        {"command":["/usr/bin/bash","tests.sh"],"exit_code":0},
+        {"command":["/usr/bin/git","diff","--check"],"exit_code":0},
         {"command":["/usr/bin/shellcheck","--version"],"exit_code":0},
         {"command":["/usr/bin/shellcheck","-S","warning",*shell_scripts],"exit_code":0},
     ]
-    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"shellcheck":{"hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
+    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"shellcheck":{"path":"/usr/bin/shellcheck","hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
     stage0["attestation_hash"] = digest(stage0)
     stage0_path=Path(raw)/"stage0.json"; stage0_path.write_text(json.dumps(stage0),encoding="utf-8")
-    assert validate_attestation(stage0_path,backend_source,"0"*40,"1"*40)["attestation_hash"] == stage0["attestation_hash"]
+    real_bootstrap_sha=bootstrap.sha
+    def fixture_sha(path:Path)->str: return H if path==Path("/usr/bin/shellcheck") else real_bootstrap_sha(path)
+    with mock.patch.object(bootstrap,"trusted_host_executable"), mock.patch.object(bootstrap,"sha",side_effect=fixture_sha):
+        assert validate_attestation(stage0_path,backend_source,"0"*40,"1"*40)["attestation_hash"] == stage0["attestation_hash"]
     tampered=dict(stage0); tampered["tree"]="2"*40; (Path(raw)/"bad-stage0.json").write_text(json.dumps(tampered),encoding="utf-8")
-    expect("attestation_hash_invalid", lambda: validate_attestation(Path(raw)/"bad-stage0.json",backend_source,"0"*40,"2"*40))
+    with mock.patch.object(bootstrap,"trusted_host_executable"), mock.patch.object(bootstrap,"sha",side_effect=fixture_sha):
+        expect("attestation_hash_invalid", lambda: validate_attestation(Path(raw)/"bad-stage0.json",backend_source,"0"*40,"2"*40))
     malformed=dict(stage0); malformed["commands"]=[dict(row) for row in stage_commands]; malformed["commands"][2]["command"]=["git","status","--porcelain"]; malformed["attestation_hash"]=digest({key:value for key,value in malformed.items() if key!="attestation_hash"}); (Path(raw)/"malformed-stage0.json").write_text(json.dumps(malformed),encoding="utf-8")
-    expect("attestation_commands_invalid", lambda: validate_attestation(Path(raw)/"malformed-stage0.json",backend_source,"0"*40,"1"*40))
+    with mock.patch.object(bootstrap,"trusted_host_executable"), mock.patch.object(bootstrap,"sha",side_effect=fixture_sha):
+        expect("attestation_commands_invalid", lambda: validate_attestation(Path(raw)/"malformed-stage0.json",backend_source,"0"*40,"1"*40))
+    shadowed=dict(stage0); shadowed["shellcheck"]={"path":"/tmp/shellcheck","hash":H,"version":"fixture"}; shadowed["attestation_hash"]=digest({key:value for key,value in shadowed.items() if key!="attestation_hash"}); (Path(raw)/"shadowed-stage0.json").write_text(json.dumps(shadowed),encoding="utf-8")
+    with mock.patch.object(bootstrap,"trusted_host_executable"), mock.patch.object(bootstrap,"sha",side_effect=fixture_sha):
+        expect("attestation_shellcheck_invalid", lambda: validate_attestation(Path(raw)/"shadowed-stage0.json",backend_source,"0"*40,"1"*40))
     control = Control(Path(raw) / "control.sqlite3")
     instance = control.initialize()
     assert control.initialize() == instance

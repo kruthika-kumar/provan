@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """Non-root, content-addressed Stage-0 gate for a remediation bundle."""
 from __future__ import annotations
-import argparse, hashlib, json, os, shutil, subprocess
+import argparse, hashlib, json, os, stat, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
+def trusted_host_executable(path:Path)->Path:
+    """Stage 0 never inherits tool authority from a caller-controlled PATH."""
+    item=path.stat(follow_symlinks=False)
+    if not stat.S_ISREG(item.st_mode) or item.st_uid!=0 or item.st_mode&0o022 or not item.st_mode&0o111:
+        raise SystemExit("stage0_tool_untrusted:"+str(path))
+    return path
 def git_environment(path:Path)->dict[str,str]|None:
     """Match the approved Windows worktree's line-ending view without mutating it.
 
@@ -37,9 +43,10 @@ def main()->int:
     if required(run(["git","status","--porcelain"],repo),"gate_status_missing"): raise SystemExit("gate_worktree_dirty")
     bundle_files={name:sha(a.bundle/name) for name in FILES}
     schema_dir=a.bundle.parent/"schemas"; schemas={name:sha(schema_dir/name) for name in SCHEMAS}
-    shellcheck=shutil.which("shellcheck")
-    if not shellcheck: raise SystemExit("shellcheck_gate_missing")
-    commands=[run(["bash","-n",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle),run(["bash","tests.sh"],a.bundle),run(["git","diff","--check"],repo),run([shellcheck,"--version"],a.bundle),run([shellcheck,"-S","warning",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle)]
+    bash=str(trusted_host_executable(Path("/usr/bin/bash")))
+    git=str(trusted_host_executable(Path("/usr/bin/git")))
+    shellcheck=str(trusted_host_executable(Path("/usr/bin/shellcheck")))
+    commands=[run([bash,"-n",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle),run([bash,"tests.sh"],a.bundle),run([git,"diff","--check"],repo),run([shellcheck,"--version"],a.bundle),run([shellcheck,"-S","warning",*filter(lambda x:x.endswith(".sh"),FILES)],a.bundle)]
     if any(item["exit_code"] for item in commands): raise SystemExit("stage0_gate_failed")
     data={"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":a.commit,"tree":a.tree,"bundle_files":bundle_files,"schemas":schemas,"shellcheck":{"path":shellcheck,"hash":sha(Path(shellcheck)),"version":commands[3]["stdout"]},"commands":commands,"created_at":datetime.now(timezone.utc).isoformat().replace("+00:00","Z")}
     data["attestation_hash"]="sha256:"+hashlib.sha256(json.dumps(data,sort_keys=True,separators=(",",":")).encode()).hexdigest()
