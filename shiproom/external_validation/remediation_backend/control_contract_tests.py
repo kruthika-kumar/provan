@@ -40,6 +40,15 @@ assert 'xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"' in lib_source
 assert "quota -p -nN $p" not in lib_source
 assert "xfs_quota -x -d \"$p\"" not in lib_source
 assert '$1==source && $NF==mount && NF==12' in lib_source
+assert 'quota_limit_kib(){' in lib_source
+assert 'printf \'%sk\'' in lib_source
+setup_quota_source=(Path(__file__).parent/"setup.sh").read_text(encoding="utf-8")
+worktree_quota_source=(Path(__file__).parent/"quota-worktree.sh").read_text(encoding="utf-8")
+assert 'data_limit=$(quota_limit_kib 8589934592)' in setup_quota_source
+assert 'bhard=${data_limit}' in setup_quota_source
+assert 'limit=$(quota_limit_kib "$bytes")' in worktree_quota_source
+assert 'bhard=${limit}' in worktree_quota_source
+assert 'bhard=${bytes}b' not in worktree_quota_source
 release_source=(Path(__file__).parent/"release.py").read_text(encoding="utf-8")
 assert 'f"quota -p -nNv -b -i {project}"' in release_source
 assert '"-d", str(project)' not in release_source

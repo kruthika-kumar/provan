@@ -50,7 +50,7 @@ EOF
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
 id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
-case "$*" in *'quota -p -nNv -b -i'*) case "$id" in ''|*[!0-9]*) exit 98;; esac; [ -z "${TEST_EXPECT_PROJECT:-}" ] || [ "$id" = "$TEST_EXPECT_PROJECT" ] || exit 98; if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; source=test-loop; mount=$SHIPROOM_REMEDIATION_MOUNT; case "${TEST_QUOTA_VARIANT:-valid}" in wrong_device) source=wrong-loop;; wrong_mount) mount=$SHIPROOM_REMEDIATION_MOUNT/not-the-mounted-filesystem;; short_row) printf '%s 0 0 %s 0 - 0 0 %s 0 -\n' "$source" "$b" "$i"; exit 0;; valid) :;; *) exit 99;; esac; printf '%s 0 0 %s 0 - 0 0 %s 0 - %s\n' "$source" "$b" "$i" "$mount";; *) exit 0;; esac
+case "$*" in *'quota -p -nNv -b -i'*) case "$id" in ''|*[!0-9]*) exit 98;; esac; [ -z "${TEST_EXPECT_PROJECT:-}" ] || [ "$id" = "$TEST_EXPECT_PROJECT" ] || exit 98; if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; source=test-loop; mount=$SHIPROOM_REMEDIATION_MOUNT; case "${TEST_QUOTA_VARIANT:-valid}" in wrong_device) source=wrong-loop;; wrong_mount) mount=$SHIPROOM_REMEDIATION_MOUNT/not-the-mounted-filesystem;; short_row) printf '%s 0 0 %s 0 - 0 0 %s 0 -\n' "$source" "$b" "$i"; exit 0;; valid) :;; *) exit 99;; esac; printf '%s 0 0 %s 0 - 0 0 %s 0 - %s\n' "$source" "$b" "$i" "$mount";; *'limit -p'*) [ -z "${TEST_EXPECT_LIMIT:-}" ] || case "$*" in *"bhard=$TEST_EXPECT_LIMIT "*) exit 0;; *) exit 98;; esac; exit 0;; *) exit 0;; esac
 EOF
 cat >"$shim/systemctl" <<'EOF'
 #!/bin/sh
@@ -76,6 +76,7 @@ chmod +x "$shim"/*; export SYSTEMCTL_LOG="$tmp/systemctl.log" SYSTEMCTL_STATE="$
 echo '[3/10] numeric headerless project-quota parser and storage verification'
 export TEST_EXPECT_PROJECT=10000
 : >"$SHIPROOM_REMEDIATION_ROOT/backend.state"; state_put LOOP test-loop; state_put DATA_PROJECT 10000; state_put DATA_BYTES 8589934592; state_put DATA_INODES 200000; quota_limits_verified 10000 8589934592 200000
+[[ "$(quota_limit_kib 8589934592)" == 8388608k ]]; [[ "$(quota_limit_kib 1048576)" == 1024k ]]; ! quota_limit_kib 1; ! quota_limit_kib 01024
 ! quota_limits_verified 10000 1 1
 export TEST_QUOTA_VARIANT=wrong_device; ! quota_limits_verified 10000 8589934592 200000
 export TEST_QUOTA_VARIANT=wrong_mount; ! quota_limits_verified 10000 8589934592 200000
@@ -107,12 +108,12 @@ record={**evidence,'capacity_id':'capacity_'+h.split(':',1)[1][:32],'evidence_ha
 print(json.dumps(record))
 PY
 ); control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); state "state_put CAPACITY_ID '$capacity_id'"
-export TEST_QUOTA_BLOCKS=1024 TEST_QUOTA_INODES=1024
+export TEST_QUOTA_BLOCKS=1024 TEST_QUOTA_INODES=1024 TEST_EXPECT_LIMIT=1024k
 "$DIR/quota-worktree.sh" allocate casea 1048576 1024 "$SOURCE_HASH" >"$tmp/a" & a=$!
 "$DIR/quota-worktree.sh" allocate caseb 1048576 1024 "$SOURCE_HASH" >"$tmp/b" & b=$!
 wait "$a"; wait "$b"; awk -F '\t' 'NR==2 {if ($1 <= prior) exit 1} {prior=$1} END {exit(NR==2?0:1)}' "$SHIPROOM_REMEDIATION_ROOT/projects.tsv"
 [[ ! -e "$SHIPROOM_REMEDIATION_ROOT/allocation.pending" ]]; [[ $(awk -F '\t' 'END{print NR}' "$SHIPROOM_REMEDIATION_ROOT/projects.tsv") -eq 2 ]]
-unset TEST_QUOTA_BLOCKS TEST_QUOTA_INODES
+unset TEST_QUOTA_BLOCKS TEST_QUOTA_INODES TEST_EXPECT_LIMIT
 
 echo '[5/10] partial allocation stays quarantined on the controlled XFS root'
 cat >"$shim/xfs_quota" <<'EOF'

@@ -43,7 +43,8 @@ case "$action" in
     control allocation-phase "$attempt" TREE_CREATED "$authority" --pending-json "{\"project_id\":$project,\"attempt_id\":\"$attempt\",\"phase\":\"TREE_CREATED\",\"requested_bytes\":$bytes,\"requested_inodes\":$inodes,\"worktree_path_hash\":\"$path_hash\"}" || allocation_failure "$project" state_tree
     if ! xfs_quota -x -c "project -s -p $tree $project" "$MOUNT"; then allocation_failure "$project" project_assign; fi
     control allocation-phase "$attempt" PROJECT_ASSIGNED "$authority" || allocation_failure "$project" state_project
-    if ! xfs_quota -x -c "limit -p bhard=${bytes}b ihard=$inodes $project" "$MOUNT" || ! quota_limits_verified "$project" "$bytes" "$inodes"; then
+    limit=$(quota_limit_kib "$bytes") || allocation_failure "$project" quota_unit
+    if ! xfs_quota -x -c "limit -p bhard=${limit} ihard=$inodes $project" "$MOUNT" || ! quota_limits_verified "$project" "$bytes" "$inodes"; then
       xfs_quota -x -c "project -C -p $tree $project" "$MOUNT" || true
       allocation_failure "$project" quota_limit
     fi

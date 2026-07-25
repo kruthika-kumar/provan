@@ -102,6 +102,11 @@ is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -
 # -n/-N freeze numeric, headerless output; block limits are in 1KiB units.
 quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"; }
 quota_record(){ local p=$1 out source; source=$(state_get LOOP); out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v project="$p" -v source="$source" -v mount="$MOUNT" '$1==source && $NF==mount && NF==12 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", project, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
+# xfs_quota does not define a byte ("b") limit suffix.  On this toolchain it
+# is treated as filesystem blocks, which silently turns an 8 GiB request into
+# a 32 GiB limit on a 4 KiB XFS filesystem.  The frozen policy is in bytes;
+# require an exact KiB representation and send the documented k suffix.
+quota_limit_kib(){ local bytes=$1 decimal; [[ "$bytes" =~ ^[1-9][0-9]*$ ]] || return 1; decimal=$((10#$bytes)); (( decimal % 1024 == 0 )) || return 1; printf '%sk' "$((decimal / 1024))"; }
 quota_limits_verified(){
   local p=$1 b=$2 i=$3 row rp rb ri
   if ! row=$(quota_record "$p"); then
