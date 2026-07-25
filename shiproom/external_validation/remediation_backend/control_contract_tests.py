@@ -2,6 +2,7 @@
 """Non-privileged behavioral tests for SQLite authority and contracts."""
 from __future__ import annotations
 
+import sqlite3
 import tempfile
 import subprocess
 import sys
@@ -15,6 +16,7 @@ from contracts import ContractError, validate_release_authorization
 import package_contract
 import bootstrap
 import gate
+import doctor
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
@@ -44,6 +46,14 @@ assert '"-d", str(project)' not in release_source
 assert '"-n", "-o", "SOURCE", "--target", str(mount)' in release_source
 assert 'line.split()[0] == sources[0]' in release_source
 assert 'matching[0][3] != "0" or matching[0][8] != "0"' in release_source
+doctor_source=(Path(__file__).parent/"doctor.py").read_text(encoding="utf-8")
+assert 'p.add_argument("--run-remediation-fixture",action="store_true")' in doctor_source
+assert 'require_staged_script(allocation_script)' in doctor_source
+assert 'def fixture_failure(' in doctor_source
+assert '"reason"]="incident_persistence_failed"' in doctor_source
+assert 'fixture_failure(db,attempt,"byte_quota_probes"' in doctor_source
+assert 'fixture_failure(db,inode_attempt,"inode_quota_probe"' in doctor_source
+assert 'tree != expected or not tree.is_dir()' in doctor_source
 
 H = "sha256:" + "a" * 64
 
@@ -341,5 +351,55 @@ with tempfile.TemporaryDirectory() as raw:
     bad["worktree_authority"]["attempt_id"] = "other"  # type: ignore[index]
     expect("worktree_binding_mismatch", lambda: validate_release_authorization(bad))
     control.close()
+
+# The opt-in privileged doctor must never use an allocation helper's stdout as
+# path authority.  These fixtures run without root or a mounted XFS backend.
+with tempfile.TemporaryDirectory() as raw:
+    root=Path(raw); tree=root/"worktree"; tree.mkdir()
+    document={"canonical_path":str(tree)}
+    class FixtureControl:
+        def __init__(self, _db: Path): pass
+        def allocation(self, _attempt: str) -> dict[str, object]: return {"worktree_authority_json":document}
+        def close(self) -> None: pass
+    result={"stdout":str(tree)+"\n","exit_code":0}
+    with mock.patch.object(doctor,"Control",FixtureControl):
+        assert doctor.allocated_tree(root/"control.sqlite3","doctor-fixture",result) == tree
+        expect("doctor_allocation_output_invalid",lambda: doctor.allocated_tree(root/"control.sqlite3","doctor-fixture",{"stdout":str(tree)+"\nextra\n"}))
+        document["canonical_path"]=str(root/"other")
+        expect("doctor_allocation_authority_mismatch",lambda: doctor.allocated_tree(root/"control.sqlite3","doctor-fixture",result))
+    with mock.patch.object(doctor,"invocation",side_effect=AssertionError("unqualified doctor invoked allocation")):
+        blocked=doctor.real_quota_lifecycle_fixture(root/"not-authoritative.sqlite3")
+    assert blocked == {"name":"real_quota_lifecycle_fixture","ok":False,"reason":"doctor_paths_not_qualified"}
+
+    class IncidentControl:
+        def __init__(self, _db: Path): pass
+        def incident(self, _kind: str, _state: str, _payload: dict[str, object]) -> str: return "incident_"+"a"*32
+        def close(self) -> None: pass
+    class BrokenIncidentControl(IncidentControl):
+        def incident(self, _kind: str, _state: str, _payload: dict[str, object]) -> str: raise sqlite3.OperationalError("database locked")
+    with mock.patch.object(doctor,"Control",IncidentControl):
+        assert doctor.fixture_incident(root/"control.sqlite3","doctor-fixture","probe",{}) == {"persisted":True,"incident_id":"incident_"+"a"*32}
+    with mock.patch.object(doctor,"Control",BrokenIncidentControl):
+        failed_incident=doctor.fixture_incident(root/"control.sqlite3","doctor-fixture","probe",{})
+    assert failed_incident["persisted"] is False and failed_incident["error"] == "incident_persistence_failed"
+
+    # Exercise the destructive-fixture error branches with shims only.  The
+    # fixture must create a durable incident record for an EDQUOT failure or
+    # release failure; failed incident persistence is distinguished, not null.
+    fixture_root=root/"fixture-root"; fixture_root.mkdir(); fixture_tree=root/"fixture-worktree"; fixture_tree.mkdir()
+    under=fixture_tree/"under-limit.bin"; under.write_bytes(b"x"*(512*1024))
+    qualified_db=fixture_root/"control.sqlite3"
+    common={"ROOT":fixture_root,"MOUNT":SimpleNamespace(is_mount=lambda:True),"RUN":SimpleNamespace(is_dir=lambda:True)}
+    allocation={"exit_code":0,"stdout":str(fixture_tree)+"\n"}
+    persisted={"persisted":True,"incident_id":"incident_"+"b"*32}
+    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",return_value=fixture_tree), mock.patch.object(doctor,"quota_probe",side_effect=[{"exit_code":0},{"exit_code":0}]), mock.patch.object(doctor,"fixture_incident",return_value=persisted):
+        byte_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
+    assert byte_failure["phase"]=="byte_quota_probes" and byte_failure["containment_state"]=="QUOTA_STATE_UNCERTAIN" and byte_failure["incident"]==persisted
+    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",return_value=fixture_tree), mock.patch.object(doctor,"quota_probe",side_effect=[{"exit_code":0},{"exit_code":42}]), mock.patch.object(doctor,"release_fixture_attempt",return_value={"ok":False,"release":{"exit_code":1}}), mock.patch.object(doctor,"fixture_incident",return_value={"persisted":False,"error":"incident_persistence_failed"}):
+        release_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
+    assert release_failure["phase"]=="byte_release" and release_failure["reason"]=="incident_persistence_failed" and release_failure["incident"]["persisted"] is False
+    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",side_effect=sqlite3.OperationalError("database is locked")), mock.patch.object(doctor,"fixture_incident",return_value=persisted):
+        sqlite_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
+    assert sqlite_failure["phase"]=="exception" and sqlite_failure["containment_state"]=="QUOTA_STATE_UNCERTAIN" and sqlite_failure["incident"]==persisted
 
 print("control and contract behavioral tests passed")
