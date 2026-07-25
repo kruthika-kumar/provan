@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "authorization_id", "backend_instance_id", "attempt_id", "project_id", "allocation_record_id", "capacity_reservation_id", "worktree_authority", "source_snapshot_hash", "sealed_artifact_manifest_hash", "receipt_id", "patch_hash", "changed_file_manifest_hash", "untracked_file_manifest_hash", "test_result_hashes", "log_hashes", "artifact_records", "supervisor_package_hash", "created_at"],
+  "properties": {
+    "schema_id": {"const": "remediation_release_authorization.v1"}, "schema_version": {"const": "1"},
+    "authorization_id": {"type": "string", "pattern": "^authorization_[a-f0-9]{32}$"},
+    "backend_instance_id": {"type": "string", "minLength": 1}, "attempt_id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "integer", "minimum": 1}, "allocation_record_id": {"type": "string", "minLength": 1}, "capacity_reservation_id": {"type": "string", "minLength": 1},
+    "worktree_authority": {"type": "object", "additionalProperties": false, "required": ["backend_instance_id", "attempt_id", "project_id", "allocation_record_id", "capacity_reservation_id", "canonical_path", "path_hash", "device", "inode", "mount_id", "uid", "gid", "source_snapshot_hash"], "properties": {
+      "backend_instance_id": {"type": "string", "minLength": 1}, "attempt_id": {"type": "string", "minLength": 1}, "project_id": {"type": "integer", "minimum": 1}, "allocation_record_id": {"type": "string", "minLength": 1}, "capacity_reservation_id": {"type": "string", "minLength": 1},
+      "canonical_path": {"type": "string", "pattern": "^/"}, "path_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 0}, "mount_id": {"type": "integer", "minimum": 0}, "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0}, "source_snapshot_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+    }},
+    "source_snapshot_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "sealed_artifact_manifest_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "receipt_id": {"type": "string", "minLength": 1}, "patch_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "changed_file_manifest_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "untracked_file_manifest_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "test_result_hashes": {"type": "array", "items": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}, "log_hashes": {"type": "array", "items": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}},
+    "artifact_records": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["kind", "canonical_path", "sha256"], "properties": {"kind": {"type": "string", "minLength": 1}, "canonical_path": {"type": "string", "pattern": "^/"}, "sha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}},
+    "supervisor_package_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "created_at": {"type": "string", "format": "date-time"}
+  }
+}

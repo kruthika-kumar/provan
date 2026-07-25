@@ -264,6 +264,14 @@ def validate_artifact(value: Any) -> dict[str, Any]:
     if schema_id == "external_validation.price_table":
         from .pricing import validate_price_table
         return validate_price_table(item)
+    if schema_id == "remediation_release_authorization.v1":
+        from .remediation_backend.contracts import validate_release_authorization
+        try: return validate_release_authorization(item)
+        except ValueError as exc: _error(str(exc), "/", "remediation release authorization invalid")
+    if schema_id == "remediation_package_contract.v1":
+        from .remediation_backend.package_contract import validate
+        try: return validate(item)
+        except ValueError as exc: _error(str(exc), "/", "remediation package contract invalid")
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 
