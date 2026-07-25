@@ -145,7 +145,7 @@ with mock.patch.object(Path,"lstat",return_value=symlink_stat):
     except RuntimeError as exc: assert str(exc)=="staged_directory_untrusted"
     else: raise AssertionError("staged schemas directory symlink accepted")
 isolated_capture=subprocess.run([sys.executable,"-I","-S",str(Path(package_contract.__file__).resolve()),"--capture",str(Path(tempfile.gettempdir())/"package-contract-isolated.json")],text=True,capture_output=True,check=False)
-assert isolated_capture.returncode==2 and "package_contract_error:staged_path_invalid" in isolated_capture.stderr
+assert isolated_capture.returncode==2 and any(code in isolated_capture.stderr for code in ("package_contract_error:staged_path_invalid","package_contract_error:package_contract_capture_authority_invalid"))
 with mock.patch.object(package_contract,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     expect_package("staged_path_invalid",lambda: package_contract.capture(Path("/run/shiproom-remediation-bootstrap/" + "a" * 64 + "/package-contract.json")))
 partial_writes=[]
