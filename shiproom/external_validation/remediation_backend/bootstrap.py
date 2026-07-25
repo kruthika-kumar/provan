@@ -17,8 +17,12 @@ def git_environment(path:Path)->dict[str,str]|None:
     try: mounted_windows=path.resolve().is_relative_to(Path("/mnt/c"))
     except AttributeError: mounted_windows=str(path.resolve()).startswith("/mnt/c/")
     if not mounted_windows: return None
+    # Root's Git correctly refuses a Windows-owned worktree unless the exact
+    # repository is explicitly trusted.  Pass that exception only to this
+    # single Git subprocess; never mutate global/system Git configuration.
+    repository = path.resolve() if (path.resolve()/"shiproom").is_dir() else path.resolve().parents[2]
     result=dict(os.environ)
-    result.update({"GIT_CONFIG_COUNT":"1","GIT_CONFIG_KEY_0":"core.autocrlf","GIT_CONFIG_VALUE_0":"true"})
+    result.update({"GIT_CONFIG_COUNT":"2","GIT_CONFIG_KEY_0":"core.autocrlf","GIT_CONFIG_VALUE_0":"true","GIT_CONFIG_KEY_1":"safe.directory","GIT_CONFIG_VALUE_1":str(repository)})
     return result
 def git_output(source:Path,*args:str)->str:
     return subprocess.check_output(["/usr/bin/git","-C",str(source),*args],text=True,env=git_environment(source)).strip()
