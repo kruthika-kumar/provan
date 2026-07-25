@@ -53,7 +53,12 @@ def secure_root_directory(path:Path)->None:
         os.close(fd)
 def source_manifest(source:Path)->dict[str,object]:
     schema_dir=source/"schemas" if (source/"schemas").is_dir() else source.parent/"schemas"
-    return {"files":{name:sha(source/name) for name in FILES},"schemas":{name:sha(schema_dir/name) for name in SCHEMAS}}
+    files={}; schemas={}
+    for name in FILES:
+        path=source/name; regular(path); files[name]=sha(path)
+    for name in SCHEMAS:
+        path=schema_dir/name; regular(path); schemas[name]=sha(path)
+    return {"files":files,"schemas":schemas}
 def source_root(source:Path)->Path:
     trusted_host_executable(Path("/usr/bin/git"))
     approved,expected_repo=canonical_source(source)
@@ -115,7 +120,7 @@ def verify_approval(attestation:dict[str,object],commit:str,tree:str)->None:
     if item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("stage0_approval_untrusted")
     value=json.loads(path.read_text(encoding="utf-8"))
     if value!={"schema_id":"remediation_stage0_approval.v1","schema_version":"1","attestation_hash":attestation["attestation_hash"],"commit":commit,"tree":tree}: raise RuntimeError("stage0_approval_mismatch")
-def rerun_privileged_gate(source:Path)->None:
+def rerun_privileged_gate(staged:Path, repository:Path)->None:
     """Root rechecks static tools and reruns behavioral shims as nobody.
 
     Test mode explicitly rejects EUID 0, so the bootstrap deliberately drops
@@ -129,7 +134,7 @@ def rerun_privileged_gate(source:Path)->None:
     def required(command:list[str], *, dropped:bool=False)->None:
         def demote()->None:
             os.setgroups([]); os.setgid(65534); os.setuid(65534)
-        result=subprocess.run(command,cwd=source,text=True,capture_output=True,check=False,env=git_environment(source_root(source)) if command[0]==str(git) else None,preexec_fn=demote if dropped else None,timeout=120)
+        result=subprocess.run(command,cwd=staged,text=True,capture_output=True,check=False,env=git_environment(repository) if command[0]==str(git) else None,preexec_fn=demote if dropped else None,timeout=120)
         if result.returncode: raise RuntimeError("bootstrap_gate_failed:"+Path(command[0]).name)
     required([str(bash),"-n",*shells])
     required([str(shellcheck),"-S","warning",*shells])
@@ -147,16 +152,16 @@ def main()->int:
     head=git_output(repo,"rev-parse","HEAD"); actual_tree=git_output(repo,"rev-parse","HEAD^{tree}")
     if head!=a.commit or actual_tree!=a.tree or git_output(repo,"status","--porcelain"): raise SystemExit("unclean_or_wrong_commit")
     if a.approve_attestation: print(approve(source,a.attestation,a.commit,a.tree)); return 0
-    attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); rerun_privileged_gate(source); manifest=staged_manifest(source,attestation,a.commit,a.tree); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
+    attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); manifest=staged_manifest(source,attestation,a.commit,a.tree); secure_root_directory(ROOT); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
     target.mkdir(parents=True,mode=0o700,exist_ok=False)
     for name in FILES:
-        out=target/name; shutil.copyfile(source/name,out); os.chown(out,0,0); out.chmod(0o500 if out.suffix==".sh" else 0o400)
+        out=target/name; shutil.copyfile(source/name,out); os.chown(out,0,0); out.chmod(0o555 if out.suffix==".sh" else 0o444)
     schemas=target/"schemas"; schemas.mkdir(mode=0o700); os.chown(schemas,0,0)
     for name in SCHEMAS:
-        out=schemas/name; shutil.copyfile(source.parent/"schemas"/name,out); os.chown(out,0,0); out.chmod(0o400)
+        out=schemas/name; shutil.copyfile(source.parent/"schemas"/name,out); os.chown(out,0,0); out.chmod(0o444)
     staged_attestation=target/"stage0-attestation.json"; shutil.copyfile(a.attestation,staged_attestation); os.chown(staged_attestation,0,0); staged_attestation.chmod(0o400)
     out=target/"manifest.json"; out.write_bytes(canonical(manifest)); os.chown(out,0,0); out.chmod(0o400)
-    verify_stage(target); print(manifest["bundle_hash"]); return 0
+    verify_stage(target); rerun_privileged_gate(target,repo); print(manifest["bundle_hash"]); return 0
 if __name__=="__main__":
     try: raise SystemExit(main())
     except (RuntimeError,OSError,json.JSONDecodeError,subprocess.CalledProcessError) as exc: print(f"bootstrap_error:{exc}",file=sys.stderr); raise SystemExit(2)
