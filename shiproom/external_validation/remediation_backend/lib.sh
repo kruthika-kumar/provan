@@ -96,9 +96,12 @@ dockerx(){ "$(state_get DOCKER_CLI)" --host "unix://$SOCKET" "$@"; }
 no_live_default_or_custom_daemon(){ [[ ! -S /var/run/docker.sock && ! -S "$SOCKET" ]] && ! pgrep -af '(^|/)(dockerd|containerd|containerd-shim)( |$)' >/dev/null; }
 is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -b "$1" ]]; }
 
-# xfs_quota's numeric, headerless quota report is parsed as 1KiB blocks, not human-readable units.
-quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nN $p" "$MOUNT"; }
-quota_record(){ local p=$1 out; out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v p="$p" '$1==p && NF>=9 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", $1, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
+# xfs_quota prints a filesystem device, not the selected project ID, in each
+# quota row.  Request both dimensions and verbose output: without -b/-i its
+# default is blocks only, and without -v a fresh zero-usage project is omitted.
+# -n/-N freeze numeric, headerless output; block limits are in 1KiB units.
+quota_machine(){ local p=$1; xfs_quota -x -c "quota -p -nNv -b -i $p" "$MOUNT"; }
+quota_record(){ local p=$1 out source; source=$(state_get LOOP); out=$(quota_machine "$p") || return 1; printf '%s\n' "$out" | awk -v project="$p" -v source="$source" -v mount="$MOUNT" '$1==source && $NF==mount && NF==12 && $4 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+$/ {printf "%s\t%.0f\t%s\n", project, $4*1024, $9; found=1; exit} END{exit(found?0:1)}'; }
 quota_limits_verified(){ local p=$1 b=$2 i=$3 row rp rb ri; row=$(quota_record "$p") || return 1; IFS=$'\t' read -r rp rb ri <<<"$row"; [[ "$rp" == "$p" && "$rb" == "$b" && "$ri" == "$i" ]]; }
 storage_verified(){ local loop; require_paths; loop=$(state_get LOOP); is_recorded_block_device "$loop" && [[ "$(losetup -n -O BACK-FILE "$loop")" == "$IMAGE" ]] || return 1; findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || return 1; xfs_info "$MOUNT" | grep -q 'ftype=1' || return 1; quota_limits_verified "$(state_get DATA_PROJECT)" "$(state_get DATA_BYTES)" "$(state_get DATA_INODES)"; }
 contain_units(){ local u pfx; command -v systemctl >/dev/null && systemctl show-environment >/dev/null 2>&1 || die systemd_unavailable

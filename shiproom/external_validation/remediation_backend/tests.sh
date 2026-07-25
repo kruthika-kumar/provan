@@ -49,8 +49,8 @@ printf 'naming   =version 2              bsize=4096   ascii-ci=0, ftype=1\n'
 EOF
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
-id=; for a in "$@"; do case "$a" in 'quota -p -nN '*) id=${a##* };; esac; done
-case "$*" in *'quota -p -nN'*) if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; printf '%s 0 0 %s 0 0 0 0 %s 0\n' "$id" "$b" "$i";; *) exit 0;; esac
+id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
+case "$*" in *'quota -p -nNv -b -i'*) if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; printf 'test-loop 0 0 %s 0 - 0 0 %s 0 - %s\n' "$b" "$i" "$SHIPROOM_REMEDIATION_MOUNT";; *) exit 0;; esac
 EOF
 cat >"$shim/systemctl" <<'EOF'
 #!/bin/sh
@@ -74,8 +74,8 @@ EOF
 chmod +x "$shim"/*; export SYSTEMCTL_LOG="$tmp/systemctl.log" SYSTEMCTL_STATE="$tmp/systemctl.state"
 
 echo '[3/10] numeric headerless project-quota parser and storage verification'
-: >"$SHIPROOM_REMEDIATION_ROOT/backend.state"; state 'state_put LOOP test-loop; state_put DATA_PROJECT 10000; state_put DATA_BYTES 8589934592; state_put DATA_INODES 200000; quota_limits_verified 10000 8589934592 200000; storage_verified'
-! state 'quota_limits_verified 10000 1 1'
+: >"$SHIPROOM_REMEDIATION_ROOT/backend.state"; state_put LOOP test-loop; state_put DATA_PROJECT 10000; state_put DATA_BYTES 8589934592; state_put DATA_INODES 200000; quota_limits_verified 10000 8589934592 200000
+! quota_limits_verified 10000 1 1
 
 echo '[4/10] concurrent quota allocation has distinct, durable project IDs'
 control_init; instance=$(control instance); capacity=$(python3 - "$instance" <<'PY'
@@ -93,8 +93,8 @@ unset TEST_QUOTA_BLOCKS TEST_QUOTA_INODES
 echo '[5/10] partial allocation stays quarantined on the controlled XFS root'
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
-id=; for a in "$@"; do case "$a" in 'quota -p -nN '*) id=${a##* };; esac; done
-case "$*" in *'limit -p'*) exit 9;; *'quota -p -nN'*) if [ "$id" = 10000 ]; then printf '10000 0 0 8388608 0 0 0 0 200000 0\n'; else printf '%s 0 0 1024 0 0 0 0 1024 0\n' "$id"; fi;; *) exit 0;; esac
+id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
+case "$*" in *'limit -p'*) exit 9;; *'quota -p -nNv -b -i'*) if [ "$id" = 10000 ]; then printf 'test-loop 0 0 8388608 0 - 0 0 200000 0 - %s\n' "$SHIPROOM_REMEDIATION_MOUNT"; else printf 'test-loop 0 0 1024 0 - 0 0 1024 0 - %s\n' "$SHIPROOM_REMEDIATION_MOUNT"; fi;; *) exit 0;; esac
 EOF
 chmod +x "$shim/xfs_quota"; ! "$DIR/quota-worktree.sh" allocate casec 1048576 1024 "$SOURCE_HASH" 2>/dev/null; [[ -d "$SHIPROOM_REMEDIATION_MOUNT/quarantine/casec-20002-quota_limit" ]]
 
@@ -138,8 +138,8 @@ printf 'test-loop xfs rw,prjquota\n'
 EOF
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
-id=; for a in "$@"; do case "$a" in 'quota -p -nN '*) id=${a##* };; esac; done
-case "$*" in *'quota -p -nN'*) printf '%s 0 0 8388608 0 0 0 0 200000 0\n' "$id";; *) exit 0;; esac
+id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
+case "$*" in *'quota -p -nNv -b -i'*) printf 'test-loop 0 0 8388608 0 - 0 0 200000 0 - %s\n' "$SHIPROOM_REMEDIATION_MOUNT";; *) exit 0;; esac
 EOF
 cat >"$shim/fake-dockerd" <<'EOF'
 #!/bin/sh
