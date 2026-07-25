@@ -141,7 +141,15 @@ recover_pending_release(){ pending_read release.pending || return 0; local p=$PE
 residual_worktree_clear(){ local tree=$1; [[ -d "$tree" && -z "$(find "$tree" -mindepth 1 -print -quit)" ]] || return 1; ! findmnt -R -n -o TARGET --target "$tree" 2>/dev/null | grep -Fx "$tree" >/dev/null; }
 create_worktree(){ local tree=$1; install -d -m 0700 "$tree"; if [[ "$TEST_MODE" != 1 ]]; then chown 65533:65533 "$tree"; fi; }
 root_residual_absence_proven(){ local target=$1
-  [[ ! -e "$target" || ! -n "$(findmnt -R -n -o TARGET --target "$target" 2>/dev/null || true)" ]] || return 1
+  # ``findmnt --target`` resolves an ordinary directory to its enclosing root
+  # mount, which is not evidence of a mount below this Shiproom-owned path.
+  # Instead, inspect every mounted target and reject only this path or a true
+  # descendant after canonicalizing the registered root.
+  local canonical_target mounted_target
+  canonical_target=$(readlink -f -- "$target") || return 1
+  while IFS= read -r mounted_target; do
+    [[ "$mounted_target" == "$canonical_target" || "$mounted_target" == "$canonical_target"/* ]] && return 1
+  done < <(findmnt -rn -o TARGET 2>/dev/null || true)
   [[ -z "$(losetup -j "$IMAGE" 2>/dev/null || true)" ]] || return 1
   [[ ! -S "$SOCKET" && ! -S /var/run/docker.sock ]] || return 1
   ! pgrep -af "dockerd.*--config-file $DAEMON_JSON" >/dev/null || return 1

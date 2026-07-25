@@ -20,6 +20,13 @@ from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attest
 import release_helper
 import xfs_project
 
+setup_source=(Path(__file__).parent/"setup.sh").read_text(encoding="utf-8")
+assert "state_put PHASE POLICY_GUARD_REMOVED; control_phase POLICY_GUARD_REMOVED; journal POLICY_GUARD removed" in setup_source
+lib_source=(Path(__file__).parent/"lib.sh").read_text(encoding="utf-8")
+root_residual_source=lib_source.split("root_residual_absence_proven(){",1)[1].split("safe_remove_owned_root(){",1)[0]
+assert "findmnt -rn -o TARGET" in root_residual_source
+assert "findmnt -R -n -o TARGET --target" not in root_residual_source
+
 H = "sha256:" + "a" * 64
 
 # Root provenance checks must never inherit a caller's Git redirection state.

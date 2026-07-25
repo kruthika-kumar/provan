@@ -43,7 +43,7 @@ state_put PACKAGE_DOCKER_IO "$(dpkg-query -W -f='${Status} ${Version}' docker.io
 state_put PACKAGE_DOCKER_IO_HASH "$(hash "$(command -v dockerd)")"; state_put PACKAGE_XFSPROGS_HASH "$(hash "$(command -v xfs_quota)")"; state_put PACKAGE_QUOTA_HASH "$(hash "$(command -v quota)")"
 # Contain any package-introduced units while the policy guard is still active.
 contain_units; state_put PHASE UNITS_CONTAINED; control_phase UNITS_CONTAINED
-cleanup_policy_guard || die policy_guard_integrity; state_put POLICY_GUARD_CREATED no; journal POLICY_GUARD removed
+cleanup_policy_guard || die policy_guard_integrity; state_put POLICY_GUARD_CREATED no; state_put PHASE POLICY_GUARD_REMOVED; control_phase POLICY_GUARD_REMOVED; journal POLICY_GUARD removed
 truncate -s 16G "$IMAGE"; control_phase IMAGE_CREATED; LOOP=$(losetup --find --show "$IMAGE"); state_put LOOP "$LOOP"; journal LOOP "$LOOP"; state_put PHASE LOOP; control_phase LOOP_ATTACHED
 mkfs.xfs -f -n ftype=1 "$LOOP"; control_phase FILESYSTEM_FORMATTED; mount -o prjquota,noatime "$LOOP" "$MOUNT"; journal MOUNT "$MOUNT"; state_put PHASE MOUNT; control_phase FILESYSTEM_MOUNTED
 findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${LOOP}[[:space:]]+xfs[[:space:]].*prjquota" || die quota_mount; xfs_info "$MOUNT" | grep -q 'ftype=1' || die ftype
