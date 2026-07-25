@@ -19,11 +19,13 @@ try:
     from .control import Control, ControlError, canonical, digest
     from .contracts import ContractError, validate_release_authorization
     from .release_helper import mount_id
+    from .xfs_project import ProjectAttributeError, require_cleared
     from .bootstrap import require_staged_script
 except ImportError:
     from control import Control, ControlError, canonical, digest
     from contracts import ContractError, validate_release_authorization
     from release_helper import mount_id
+    from xfs_project import ProjectAttributeError, require_cleared
     from bootstrap import require_staged_script
 
 
@@ -149,9 +151,7 @@ def project_clear(mount: Path, tree: Path, project: int) -> None:
     # insufficient because the retired ID could retain hard limits.
     run([quota, "-x", "-c", f"limit -p bsoft=0 bhard=0 isoft=0 ihard=0 {project}", str(mount)])
     run([quota, "-x", "-c", f"project -C -p {tree} {project}", str(mount)])
-    checked = subprocess.run([quota, "-x", "-c", f"project -c -p {tree} {project}", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
-    if checked.returncode == 0:
-        raise ReleaseError("project_assignment_clear_unverified")
+    require_cleared(tree)
     report = subprocess.run([quota, "-x", "-d", str(project), "-c", "quota -p -nN", str(mount)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30, check=False)
     if report.returncode == 0:
         for line in report.stdout.splitlines():
@@ -243,6 +243,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (ReleaseError, ControlError, ContractError, OSError, subprocess.TimeoutExpired) as exc:
+    except (ReleaseError, ControlError, ContractError, ProjectAttributeError, OSError, subprocess.TimeoutExpired) as exc:
         print(f"release_error:{exc}", file=sys.stderr)
         raise SystemExit(2)

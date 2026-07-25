@@ -41,7 +41,15 @@ privileged_entry_guard(){
 hash(){ sha256sum "$1" | awk '{print $1}'; }
 durable(){ sync -f "$1" 2>/dev/null || sync; }
 atomic_replace(){ local target=$1 source=$2; chmod 0600 "$source"; durable "$source"; mv -f "$source" "$target"; durable "$(dirname "$target")"; }
-with_lock(){ [[ -d "$(dirname "$LOCK")" ]] || die lock_directory; exec 9>>"$LOCK"; flock -x 9; }
+with_lock(){
+  [[ -d "$(dirname "$LOCK")" ]] || die lock_directory
+  # /run/lock is sticky.  In production a staged Python helper first creates
+  # or validates the lock with O_NOFOLLOW and root-only ownership; after that
+  # a non-root attacker cannot replace the root-owned 0600 inode before bash
+  # duplicates it onto FD 9.  Test mode uses its isolated disposable lock.
+  if [[ "$TEST_MODE" != 1 ]]; then /usr/bin/python3 "$BACKEND_DIR/lock_guard.py" --prepare >/dev/null || die backend_lock_untrusted; fi
+  exec 9>>"$LOCK"; flock -x 9
+}
 control(){ python3 "$BACKEND_DIR/control.py" --db "$CONTROL_DB" "$@"; }
 control_init(){ control init >/dev/null; }
 control_phase(){ control phase "$1"; }

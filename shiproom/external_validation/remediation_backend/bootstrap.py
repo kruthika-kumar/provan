@@ -5,7 +5,7 @@ import argparse, hashlib, json, os, shutil, stat, subprocess, sys
 from pathlib import Path
 
 ROOT=Path("/run/shiproom-remediation-bootstrap")
-FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()

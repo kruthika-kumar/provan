@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import json
+from types import SimpleNamespace
 from unittest import mock
 
 from control import Control, ControlError, canonical, digest
@@ -14,6 +15,7 @@ import bootstrap
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
+import xfs_project
 
 H = "sha256:" + "a" * 64
 
@@ -49,7 +51,7 @@ def authorization(instance: str, attempt: str, project: int) -> dict[str, object
 def expect(code: str, fn) -> None:
     try:
         fn()
-    except (ControlError, ContractError, RuntimeError) as exc:
+    except (ControlError, ContractError, xfs_project.ProjectAttributeError, RuntimeError) as exc:
         assert str(exc) == code, (str(exc), code)
     else:
         raise AssertionError(code + " not rejected")
@@ -87,6 +89,17 @@ with tempfile.TemporaryDirectory() as package_raw:
 with mock.patch.object(release_helper.os,"geteuid",return_value=0,create=True), mock.patch.object(release_helper,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     args=type("Args",(),{"root":Path("/tmp/fixture"),"expected_device":1,"expected_inode":1,"expected_mount_id":1,"operation":"verify-empty"})()
     expect("staged_path_invalid",lambda: release_helper.action(args))
+with tempfile.TemporaryDirectory() as xfs_raw:
+    def cleared_ioctl(_fd, _request, buffer, _mutate=True):
+        buffer[:] = __import__("struct").pack(xfs_project.FSXATTR_FORMAT, 0, 0, 0, 0, 0, b"\0" * 8)
+        return 0
+    with mock.patch.object(xfs_project,"fcntl",SimpleNamespace(ioctl=cleared_ioctl)), mock.patch.object(xfs_project.os,"open",return_value=3), mock.patch.object(xfs_project.os,"close"):
+        xfs_project.require_cleared(Path(xfs_raw))
+    def assigned_ioctl(_fd, _request, buffer, _mutate=True):
+        buffer[:] = __import__("struct").pack(xfs_project.FSXATTR_FORMAT, xfs_project.FS_XFLAG_PROJINHERIT, 0, 0, 20000, 0, b"\0" * 8)
+        return 0
+    with mock.patch.object(xfs_project,"fcntl",SimpleNamespace(ioctl=assigned_ioctl)), mock.patch.object(xfs_project.os,"open",return_value=3), mock.patch.object(xfs_project.os,"close"):
+        expect("project_assignment_clear_unverified",lambda: xfs_project.require_cleared(Path(xfs_raw)))
 try:
     import jsonschema
 except ImportError:
