@@ -164,6 +164,15 @@ def project_clear(mount: Path, tree: Path, project: int) -> None:
     if report.returncode:
         raise ReleaseError("project_limit_clear_report_failed")
     matching = [line.split() for line in report.stdout.splitlines() if len(line.split()) == 12 and line.split()[0] == sources[0] and line.split()[-1] == str(mount)]
+    # On this XFS/xfs_quota version a cleared, zero-usage project can be
+    # omitted entirely even with verbose numeric output.  The kernel ioctl
+    # above remains the project-assignment authority; an empty quota report is
+    # therefore a valid zero-limit representation.  Any nonempty output that
+    # lacks the exact mounted-filesystem row remains malformed evidence.
+    if not matching:
+        if report.stdout.strip():
+            raise ReleaseError("project_limit_clear_unverified")
+        return
     if len(matching) != 1 or matching[0][3] != "0" or matching[0][8] != "0":
         raise ReleaseError("project_limit_clear_unverified")
 

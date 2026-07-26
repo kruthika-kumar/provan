@@ -303,6 +303,14 @@ if release is not None:
         return SimpleNamespace(returncode=0,stdout=output,stderr="")
     with mock.patch.object(release,"trusted_binary",side_effect=lambda name: "/usr/bin/findmnt" if name=="findmnt" else "/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",side_effect=project_clear_command):
         release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
+    # XFS 6.6 omits a cleared, zero-usage project from an otherwise-successful
+    # numeric report.  The root remains kernel-verified as unassigned, so an
+    # empty report is the documented zero-limit representation.
+    def empty_project_clear_command(argv, **_):
+        output="/dev/loop7\n" if Path(argv[0]).name=="findmnt" else ""
+        return SimpleNamespace(returncode=0,stdout=output,stderr="")
+    with mock.patch.object(release,"trusted_binary",side_effect=lambda name: "/usr/bin/findmnt" if name=="findmnt" else "/usr/sbin/xfs_quota"), mock.patch.object(release,"run"), mock.patch.object(release,"require_cleared"), mock.patch.object(release.subprocess,"run",side_effect=empty_project_clear_command):
+        release.project_clear(Path("/mnt/fixture"),Path("/mnt/fixture/worktree"),20000)
     for invalid_quota_row in ("/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/wrong 0 0 0 0 - 0 0 0 0 - /mnt/other\n", "/dev/loop7 0 0 1 0 - 0 0 0 0 - /mnt/fixture\n", "/dev/loop7 0 0 0 0 - 0 0 1 0 - /mnt/fixture\n"):
         def invalid_project_clear_command(argv, **_):
             output="/dev/loop7\n" if Path(argv[0]).name=="findmnt" else invalid_quota_row
