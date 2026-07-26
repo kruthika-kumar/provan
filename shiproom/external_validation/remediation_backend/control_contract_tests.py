@@ -80,6 +80,16 @@ assert '"reason"]="incident_persistence_failed"' in doctor_source
 assert 'fixture_failure(db,attempt,"byte_quota_probes"' in doctor_source
 assert 'fixture_failure(db,inode_attempt,"inode_quota_probe"' in doctor_source
 assert 'tree != expected or not tree.is_dir()' in doctor_source
+assert '_STAGED_MODULE_DIRECTORY' in doctor_source
+# The privileged doctor is deliberately launched with ``-I -S``.  Its help
+# path must still import every co-staged module without a site package or a
+# caller-controlled PYTHONPATH; otherwise the real doctor fails before any
+# safety check runs.
+isolated_doctor = subprocess.run(
+    [sys.executable, "-I", "-S", str(Path(__file__).parent / "doctor.py"), "--help"],
+    text=True, capture_output=True, check=False,
+)
+assert isolated_doctor.returncode == 0 and "--run-remediation-fixture" in isolated_doctor.stdout
 
 H = "sha256:" + "a" * 64
 

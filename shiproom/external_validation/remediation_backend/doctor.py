@@ -12,6 +12,15 @@ from pathlib import Path
 
 os.environ["PATH"]="/usr/sbin:/usr/bin:/sbin:/bin"
 
+# The privileged invocation deliberately uses ``python -I -S`` so neither the
+# caller's Python environment nor site packages can influence qualification.
+# Isolated mode consequently omits the script directory from ``sys.path``.
+# Make the reviewed, co-staged sibling modules explicitly importable instead
+# of weakening the isolation flag or relying on a package installation.
+_STAGED_MODULE_DIRECTORY = str(Path(__file__).resolve().parent)
+if _STAGED_MODULE_DIRECTORY not in sys.path:
+    sys.path.insert(0, _STAGED_MODULE_DIRECTORY)
+
 try:
     from .control import Control, ControlError, canonical
     from .release_helper import require_openat2
