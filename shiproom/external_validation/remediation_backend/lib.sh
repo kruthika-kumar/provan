@@ -216,6 +216,13 @@ safe_remove_owned_root(){ local target=$1 auth dev ino mid
   dev=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["device"])' <<<"$auth")
   ino=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["inode"])' <<<"$auth")
   mid=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_id"])' <<<"$auth")
-  python3 "$BACKEND_DIR/release_helper.py" delete-contents --root "$target" --expected-device "$dev" --expected-inode "$ino" --expected-mount-id "$mid" || return 1
+  # Only the fixed supervisor-owned custom-daemon runtime root may contain
+  # dead Unix sockets after residual absence is proven.  Patient worktrees
+  # and all other roots retain the helper's strict special-file rejection.
+  if [[ "$target" == "$RUN" ]]; then
+    python3 "$BACKEND_DIR/release_helper.py" delete-contents --root "$target" --expected-device "$dev" --expected-inode "$ino" --expected-mount-id "$mid" --allow-runtime-sockets || return 1
+  else
+    python3 "$BACKEND_DIR/release_helper.py" delete-contents --root "$target" --expected-device "$dev" --expected-inode "$ino" --expected-mount-id "$mid" || return 1
+  fi
   python3 "$BACKEND_DIR/release_helper.py" delete-root --root "$target" --expected-device "$dev" --expected-inode "$ino" --expected-mount-id "$mid"
 }

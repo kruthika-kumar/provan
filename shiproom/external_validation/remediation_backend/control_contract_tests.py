@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
+import os
+import socket
 import tempfile
 import subprocess
 import sys
@@ -57,6 +59,8 @@ assert 'stop_or_absent_logger || die' in teardown_source
 assert "unverified logger pid" in teardown_source
 assert 'stop_or_absent_logger(){' in lib_source
 assert '! -e "/proc/$lp/stat"' in lib_source
+assert 'if [[ "$target" == "$RUN" ]]; then' in lib_source
+assert 'allow_runtime_sockets' in Path(__file__).with_name("release_helper.py").read_text(encoding="utf-8")
 release_source=(Path(__file__).parent/"release.py").read_text(encoding="utf-8")
 assert 'f"quota -p -nNv -b -i {project}"' in release_source
 assert '"-d", str(project)' not in release_source
@@ -246,6 +250,17 @@ with tempfile.TemporaryDirectory() as package_raw:
 with mock.patch.object(release_helper.os,"geteuid",return_value=0,create=True), mock.patch.object(release_helper,"require_staged_script",side_effect=RuntimeError("staged_path_invalid")):
     args=type("Args",(),{"root":Path("/tmp/fixture"),"expected_device":1,"expected_inode":1,"expected_mount_id":1,"operation":"verify-empty"})()
     expect("staged_path_invalid",lambda: release_helper.action(args))
+if os.name == "posix":
+    with tempfile.TemporaryDirectory() as runtime_raw:
+        runtime_root=Path(runtime_raw); runtime_fd=os.open(runtime_root,os.O_RDONLY|release_helper.O_DIRECTORY|release_helper.O_CLOEXEC)
+        runtime_socket=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+        try:
+            runtime_socket.bind(str(runtime_root/"dead.sock")); runtime_stat=os.fstat(runtime_fd); runtime_mount=release_helper.mount_id(runtime_fd)
+            expect("release_special_file_rejected",lambda: release_helper.delete_tree(runtime_fd,runtime_stat.st_dev,runtime_mount))
+            release_helper.delete_tree(runtime_fd,runtime_stat.st_dev,runtime_mount,allow_runtime_sockets=True)
+            assert not (runtime_root/"dead.sock").exists()
+        finally:
+            runtime_socket.close(); os.close(runtime_fd)
 with tempfile.TemporaryDirectory() as xfs_raw:
     def cleared_ioctl(_fd, _request, buffer, _mutate=True):
         buffer[:] = __import__("struct").pack(xfs_project.FSXATTR_FORMAT, 0, 0, 0, 0, 0, b"\0" * 8)

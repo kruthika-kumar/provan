@@ -86,7 +86,7 @@ def child_names(fd: int) -> list[str]:
     return sorted(names, key=lambda item: os.fsencode(item))
 
 
-def delete_tree(fd: int, root_device: int, expected_mount: int) -> None:
+def delete_tree(fd: int, root_device: int, expected_mount: int, *, allow_runtime_sockets: bool = False) -> None:
     if mount_id(fd) != expected_mount or os.fstat(fd).st_dev != root_device:
         raise ReleaseBlocked("release_filesystem_boundary_changed")
     for name in child_names(fd):
@@ -96,13 +96,19 @@ def delete_tree(fd: int, root_device: int, expected_mount: int) -> None:
         if stat.S_ISDIR(item.st_mode):
             child = openat2(fd, name)
             try:
-                delete_tree(child, root_device, expected_mount)
+                delete_tree(child, root_device, expected_mount, allow_runtime_sockets=allow_runtime_sockets)
             finally:
                 os.close(child)
             os.rmdir(name, dir_fd=fd)
         elif stat.S_ISREG(item.st_mode):
             if item.st_nlink != 1:
                 raise ReleaseBlocked("release_hard_link_rejected")
+            os.unlink(name, dir_fd=fd)
+        elif allow_runtime_sockets and stat.S_ISSOCK(item.st_mode):
+            # A custom-daemon runtime root can retain dead Unix socket
+            # directory entries after its verified process/residual sweep.
+            # This mode is never available to patient worktree release: it is
+            # selected only by the supervisor for the fixed $RUN root.
             os.unlink(name, dir_fd=fd)
         else:
             raise ReleaseBlocked("release_special_file_rejected")
@@ -131,7 +137,7 @@ def action(args: argparse.Namespace) -> None:
             if child_names(root_fd):
                 raise ReleaseBlocked("release_root_not_empty")
         elif args.operation == "delete-contents":
-            delete_tree(root_fd, args.expected_device, args.expected_mount_id)
+            delete_tree(root_fd, args.expected_device, args.expected_mount_id, allow_runtime_sockets=args.allow_runtime_sockets)
             verify_root(root_fd, args.expected_device, args.expected_inode, args.expected_mount_id)
             if child_names(root_fd):
                 raise ReleaseBlocked("release_delete_incomplete")
@@ -158,6 +164,7 @@ def main() -> int:
     parser.add_argument("--expected-device", type=int, required=True)
     parser.add_argument("--expected-inode", type=int, required=True)
     parser.add_argument("--expected-mount-id", type=int, required=True)
+    parser.add_argument("--allow-runtime-sockets", action="store_true")
     args = parser.parse_args()
     action(args)
     print(HELPER_VERSION + ":ok")
