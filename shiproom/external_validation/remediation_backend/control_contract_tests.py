@@ -53,6 +53,10 @@ assert 'bhard=${data_limit}' in setup_quota_source
 assert 'limit=$(quota_limit_kib "$bytes")' in worktree_quota_source
 assert 'bhard=${limit}' in worktree_quota_source
 assert 'bhard=${bytes}b' not in worktree_quota_source
+# Allocation stdout is parsed as exactly one canonical worktree path by the
+# privileged doctor; noisy xfs_quota diagnostics must not share that channel.
+assert 'project -s -p $tree $project" "$MOUNT" >&2' in worktree_quota_source
+assert 'bhard=${limit} ihard=$inodes $project" "$MOUNT" >&2' in worktree_quota_source
 assert 'bounded-log.py" --input "$LOG_FIFO" --output "$LOG" --maximum 1048576 9>&-' in start_source
 assert '"$SETSID" "$DOCKERD" --config-file "$DAEMON_JSON" --pidfile "$PID" 9>&-' in start_source
 assert '"$SETSID" "$TAIL" -f /dev/null 9>&- >"$LOG_FIFO"' in start_source
