@@ -44,11 +44,19 @@ assert 'quota_limit_kib(){' in lib_source
 assert 'printf \'%sk\'' in lib_source
 setup_quota_source=(Path(__file__).parent/"setup.sh").read_text(encoding="utf-8")
 worktree_quota_source=(Path(__file__).parent/"quota-worktree.sh").read_text(encoding="utf-8")
+start_source=(Path(__file__).parent/"start.sh").read_text(encoding="utf-8")
+teardown_source=(Path(__file__).parent/"teardown.sh").read_text(encoding="utf-8")
 assert 'data_limit=$(quota_limit_kib 8589934592)' in setup_quota_source
 assert 'bhard=${data_limit}' in setup_quota_source
 assert 'limit=$(quota_limit_kib "$bytes")' in worktree_quota_source
 assert 'bhard=${limit}' in worktree_quota_source
 assert 'bhard=${bytes}b' not in worktree_quota_source
+assert 'bounded-log.py" --input "$LOG_FIFO" --output "$LOG" --maximum 1048576 9>&-' in start_source
+assert 'setsid "$DOCKERD" --config-file "$DAEMON_JSON" --pidfile "$PID" 9>&-' in start_source
+assert 'stop_or_absent_logger || die' in teardown_source
+assert "unverified logger pid" in teardown_source
+assert 'stop_or_absent_logger(){' in lib_source
+assert '! -e "/proc/$lp/stat"' in lib_source
 release_source=(Path(__file__).parent/"release.py").read_text(encoding="utf-8")
 assert 'f"quota -p -nNv -b -i {project}"' in release_source
 assert '"-d", str(project)' not in release_source

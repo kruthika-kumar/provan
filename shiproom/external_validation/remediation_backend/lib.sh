@@ -92,6 +92,18 @@ require_paths(){ [[ "$(state_get IMAGE)" == "$IMAGE" && "$(state_get MOUNT)" == 
 daemon_probe(){ local p s e c expected; p=$(state_try DAEMON_PID) || return 1; s=$(state_try DAEMON_START) || return 1; expected=$(state_try DOCKERD_EXE) || return 1; [[ "$p" =~ ^[1-9][0-9]*$ && -r /proc/$p/stat && "$(pid_start "$p")" == "$s" ]] || return 1; c=$(tr '\0' ' ' </proc/$p/cmdline); if [[ "$TEST_MODE" == 1 && ${SHIPROOM_REMEDIATION_TEST_FAKE_DAEMON:-0} == 1 ]]; then [[ "$c" == *dockerd* ]] && return 0; fi; e=$(readlink -f "/proc/$p/exe"); [[ "$e" == "$expected" && "$c" == *"--config-file $DAEMON_JSON"* && "$c" == *"--pidfile $PID"* ]]; }
 daemon_verified(){ daemon_probe; }
 logger_probe(){ local p s; p=$(state_try LOG_PID) || return 1; s=$(state_try LOG_START) || return 1; [[ "$p" =~ ^[1-9][0-9]*$ && -r /proc/$p/stat && "$(pid_start "$p")" == "$s" ]]; }
+stop_or_absent_logger(){
+  local lp
+  if logger_probe; then
+    lp=$(state_try LOG_PID); kill -TERM "$lp" 2>/dev/null || return 1
+    for _ in $(seq 1 10); do kill -0 "$lp" 2>/dev/null || return 0; sleep 1; done
+    ! kill -0 "$lp" 2>/dev/null
+  elif lp=$(state_try LOG_PID 2>/dev/null); then
+    # Offline recovery may safely accept an already-reaped logger.  A live
+    # PID with mismatched identity is a possible reuse and must fail closed.
+    [[ "$lp" =~ ^[1-9][0-9]*$ && ! -e "/proc/$lp/stat" ]]
+  fi
+}
 dockerx(){ "$(state_get DOCKER_CLI)" --host "unix://$SOCKET" "$@"; }
 no_live_default_or_custom_daemon(){ [[ ! -S /var/run/docker.sock && ! -S "$SOCKET" ]] && ! pgrep -af '(^|/)(dockerd|containerd|containerd-shim)( |$)' >/dev/null; }
 is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -b "$1" ]]; }

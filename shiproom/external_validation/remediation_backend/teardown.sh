@@ -17,7 +17,7 @@ else
   ! pgrep -af "containerd.*$RUN" >/dev/null || die 'managed containerd remains'
   ! pgrep -af "dockerd.*--config-file $DAEMON_JSON" >/dev/null || die 'unverified managed dockerd'
 fi
-if logger_probe; then lp=$(state_try LOG_PID); kill -TERM "$lp"; for _ in $(seq 1 10); do kill -0 "$lp" 2>/dev/null || break; sleep 1; done; kill -0 "$lp" 2>/dev/null && die 'logger remains'; elif state_try LOG_PID >/dev/null 2>&1; then die 'unverified logger pid'; fi
+stop_or_absent_logger || die 'unverified logger pid'
 rm -f "$SOCKET" "$PID" "$LOG_FIFO"
 ! pgrep -af "dockerd.*--config-file $DAEMON_JSON" >/dev/null || die 'daemon remains'; ! pgrep -af "containerd.*$RUN" >/dev/null || die 'managed containerd remains'
 # LOOP-but-never-MOUNTED and MOUNTED states are distinct, recoverable paths.
