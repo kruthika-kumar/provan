@@ -77,13 +77,19 @@ def invocation(argv: list[str], *, timeout: int = 90) -> dict[str, object]:
     return {"command":argv,"exit_code":result.returncode,"stdout":result.stdout,"stderr":result.stderr}
 
 def quota_probe(path: Path, bytes_: int) -> dict[str, object]:
-    code="""import errno,os,sys
+    # Linux filesystems can surface an XFS project-quota write refusal as
+    # EDQUOT, ENOSPC, or EFBIG.  Preserve the raw errno in the canonical
+    # report and accept only those documented quota/space terminal errors;
+    # every other write error remains a fixture failure.
+    code="""import errno,json,os,sys
 p,n=sys.argv[1],int(sys.argv[2])
 try:
  with open(p,'wb',buffering=0) as f:
   block=b'x'*65536
   for _ in range((n+len(block)-1)//len(block)): f.write(block[:min(len(block),n-f.tell())])
-except OSError as e: raise SystemExit(42 if e.errno==errno.EDQUOT else 43)
+except OSError as e:
+ print(json.dumps({'quota_write_errno':e.errno,'quota_write_error':e.strerror},sort_keys=True))
+ raise SystemExit(42 if e.errno in (errno.EDQUOT,errno.ENOSPC,errno.EFBIG) else 43)
 raise SystemExit(0)
 """
     return invocation(["/usr/bin/python3","-c",code,str(path),str(bytes_)])
