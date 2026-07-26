@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,57 @@ from shiproom.session6_8_proof_execution import PROOF_CASES, execute_proof, _der
 
 ROOT=Path(__file__).resolve().parents[1]
 PROOF_IDS=tuple(PROOF_CASES)
+
+
+def _run_authentic_evidence_producer(*arguments: str) -> None:
+    """Produce every retained artifact consumed by the proof registry.
+
+    These proofs deliberately inspect artifacts created at real production
+    boundaries.  The producer sequence is therefore an explicit test
+    prerequisite, rather than an accidental dependency on ignored files left
+    by a previous local closeout run.
+    """
+    completed = subprocess.run(
+        [sys.executable, *arguments],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    assert completed.returncode == 0, (
+        "authentic evidence producer failed: "
+        + " ".join(arguments)
+        + "\nstdout:\n"
+        + completed.stdout
+        + "\nstderr:\n"
+        + completed.stderr
+    )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def authentic_proof_evidence():
+    """Build the complete proof corpus from the checked-out source tree."""
+    local = ROOT / ".shiproom" / "local"
+    _run_authentic_evidence_producer("scripts/run_evals.py")
+    _run_authentic_evidence_producer("scripts/run_workflow_integration_evals.py")
+    _run_authentic_evidence_producer(
+        "scripts/run_session6_8_security_attacks.py",
+        "--output",
+        str(local / "session6-8-security-receipt.json"),
+        "--evidence-root",
+        str(local / "security-evidence"),
+    )
+    _run_authentic_evidence_producer(
+        "scripts/run_session6_8_contract_parity.py",
+        "--output",
+        str(local / "session6-8-contract-parity-report.json"),
+        "--fixtures",
+        str(local / "parity-fixtures"),
+    )
+    _run_authentic_evidence_producer(
+        "scripts/run_session6_8_wheel_smoke.py",
+        "--output",
+        str(local / "session6-8-installed-wheel-receipt.json"),
+    )
 
 
 @pytest.fixture(scope="module")
