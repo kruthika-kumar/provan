@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 DIR=$(cd "$(dirname "$0")" && pwd); source "$DIR/lib.sh"; root_only; privileged_entry_guard
-[[ ${1:-} == --locked ]] || with_lock
-recovery=${2:-}; state_validate || die malformed_state
+locked=no; recovery=no
+for argument in "$@"; do
+  case "$argument" in
+    --locked) locked=yes ;;
+    --recovery) recovery=yes ;;
+    *) die teardown_argument ;;
+  esac
+done
+[[ "$locked" == yes ]] || with_lock
+state_validate || die malformed_state
 # An unresolved backend incident may only be inspected/recovered, never used
 # to start, allocate, release, or qualify new work.
-if [[ "$recovery" != --recovery ]]; then control_ready; fi
+if [[ "$recovery" != yes ]]; then control_ready; fi
 # Live cleanup only signals a process whose PID/start/executable/argv match state.
 if daemon_probe; then
   cli=$(state_try DOCKER_CLI) || die missing_docker_cli; ids=$(timeout 10 "$cli" --host "unix://$SOCKET" ps -aq) || die docker_list

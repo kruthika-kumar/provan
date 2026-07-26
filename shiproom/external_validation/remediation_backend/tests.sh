@@ -50,7 +50,7 @@ EOF
 cat >"$shim/xfs_quota" <<'EOF'
 #!/bin/sh
 id=; for a in "$@"; do case "$a" in 'quota -p -nNv -b -i '*) id=${a##* };; esac; done
-case "$*" in *'quota -p -nNv -b -i'*) case "$id" in ''|*[!0-9]*) exit 98;; esac; [ -z "${TEST_EXPECT_PROJECT:-}" ] || [ "$id" = "$TEST_EXPECT_PROJECT" ] || exit 98; if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; source=test-loop; mount=$SHIPROOM_REMEDIATION_MOUNT; case "${TEST_QUOTA_VARIANT:-valid}" in wrong_device) source=wrong-loop;; wrong_mount) mount=$SHIPROOM_REMEDIATION_MOUNT/not-the-mounted-filesystem;; short_row) printf '%s 0 0 %s 0 - 0 0 %s 0 -\n' "$source" "$b" "$i"; exit 0;; valid) :;; *) exit 99;; esac; printf '%s 0 0 %s 0 - 0 0 %s 0 - %s\n' "$source" "$b" "$i" "$mount";; *'limit -p'*) [ -z "${TEST_EXPECT_LIMIT:-}" ] || case "$*" in *"bhard=$TEST_EXPECT_LIMIT "*) exit 0;; *) exit 98;; esac; exit 0;; *) exit 0;; esac
+case "$*" in *'quota -p -nNv -b -i'*) case "$id" in ''|*[!0-9]*) exit 98;; esac; [ -z "${TEST_EXPECT_PROJECT:-}" ] || [ "$id" = "$TEST_EXPECT_PROJECT" ] || exit 98; if [ "$id" = 10000 ]; then b=8388608; i=200000; else b=${TEST_QUOTA_BLOCKS:-8388608}; i=${TEST_QUOTA_INODES:-200000}; fi; source=test-loop; mount=$SHIPROOM_REMEDIATION_MOUNT; case "${TEST_QUOTA_VARIANT:-valid}" in wrong_device) source=wrong-loop;; wrong_mount) mount=$SHIPROOM_REMEDIATION_MOUNT/not-the-mounted-filesystem;; short_row) printf '%s 0 0 %s 0 - 0 0 %s 0 -\n' "$source" "$b" "$i"; exit 0;; valid) :;; *) exit 99;; esac; printf '%s 0 0 %s 0 - 0 0 %s 0 - %s\n' "$source" "$b" "$i" "$mount";; *'project -s -p'*) [ -z "${TEST_XFS_DIAGNOSTIC:-}" ] || printf 'xfs-project-diagnostic\n'; exit 0;; *'limit -p'*) [ -z "${TEST_EXPECT_LIMIT:-}" ] || case "$*" in *"bhard=$TEST_EXPECT_LIMIT "*) [ -z "${TEST_XFS_DIAGNOSTIC:-}" ] || printf 'xfs-limit-diagnostic\n'; exit 0;; *) exit 98;; esac; exit 0;; *) exit 0;; esac
 EOF
 cat >"$shim/systemctl" <<'EOF'
 #!/bin/sh
@@ -109,11 +109,16 @@ print(json.dumps(record))
 PY
 ); control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); state "state_put CAPACITY_ID '$capacity_id'"
 export TEST_QUOTA_BLOCKS=1024 TEST_QUOTA_INODES=1024 TEST_EXPECT_LIMIT=1024k
-"$DIR/quota-worktree.sh" allocate casea 1048576 1024 "$SOURCE_HASH" >"$tmp/a" & a=$!
-"$DIR/quota-worktree.sh" allocate caseb 1048576 1024 "$SOURCE_HASH" >"$tmp/b" & b=$!
+export TEST_XFS_DIAGNOSTIC=yes
+"$DIR/quota-worktree.sh" allocate casea 1048576 1024 "$SOURCE_HASH" >"$tmp/a" 2>"$tmp/a.err" & a=$!
+"$DIR/quota-worktree.sh" allocate caseb 1048576 1024 "$SOURCE_HASH" >"$tmp/b" 2>"$tmp/b.err" & b=$!
 wait "$a"; wait "$b"; awk -F '\t' 'NR==2 {if ($1 <= prior) exit 1} {prior=$1} END {exit(NR==2?0:1)}' "$SHIPROOM_REMEDIATION_ROOT/projects.tsv"
 [[ ! -e "$SHIPROOM_REMEDIATION_ROOT/allocation.pending" ]]; [[ $(awk -F '\t' 'END{print NR}' "$SHIPROOM_REMEDIATION_ROOT/projects.tsv") -eq 2 ]]
-unset TEST_QUOTA_BLOCKS TEST_QUOTA_INODES TEST_EXPECT_LIMIT
+[[ "$(cat "$tmp/a")" == "$SHIPROOM_REMEDIATION_MOUNT/worktrees/casea" && $(wc -l <"$tmp/a") -eq 1 ]]
+[[ "$(cat "$tmp/b")" == "$SHIPROOM_REMEDIATION_MOUNT/worktrees/caseb" && $(wc -l <"$tmp/b") -eq 1 ]]
+grep -qx xfs-project-diagnostic "$tmp/a.err"; grep -qx xfs-limit-diagnostic "$tmp/a.err"
+grep -qx xfs-project-diagnostic "$tmp/b.err"; grep -qx xfs-limit-diagnostic "$tmp/b.err"
+unset TEST_QUOTA_BLOCKS TEST_QUOTA_INODES TEST_EXPECT_LIMIT TEST_XFS_DIAGNOSTIC
 
 echo '[5/10] partial allocation stays quarantined on the controlled XFS root'
 cat >"$shim/xfs_quota" <<'EOF'
@@ -225,9 +230,9 @@ echo '[15/17] logger PID-reuse is rejected'
 live_test_pid=$$; state "state_put LOG_PID 999999; state_put LOG_START 0; stop_or_absent_logger; state_put LOG_PID $live_test_pid; state_put LOG_START 0; ! logger_probe; ! stop_or_absent_logger; state_put LOG_KEEPER_PID 999999; state_put LOG_KEEPER_START 0; stop_or_absent_log_keeper; state_put LOG_KEEPER_PID $live_test_pid; state_put LOG_KEEPER_START 0; state_put LOG_KEEPER_EXE /bin/false; ! log_keeper_probe; ! stop_or_absent_log_keeper"
 echo '[15a/17] offline teardown accepts only an absent logger and preserves live PID-reuse evidence'
 rm -rf "$SHIPROOM_REMEDIATION_ROOT" "$SHIPROOM_REMEDIATION_MOUNT" "$SHIPROOM_REMEDIATION_RUN"; mkdir -p "$SHIPROOM_REMEDIATION_ROOT" "$SHIPROOM_REMEDIATION_MOUNT" "$SHIPROOM_REMEDIATION_RUN"; : >"$SHIPROOM_REMEDIATION_ROOT/backend.state"
-state 'state_put LOG_PID 999999; state_put LOG_START 0'; "$DIR/teardown.sh" --locked --recovery; [[ ! -e "$SHIPROOM_REMEDIATION_ROOT" && ! -e "$SHIPROOM_REMEDIATION_MOUNT" && ! -e "$SHIPROOM_REMEDIATION_RUN" ]]
+state 'state_put LOG_PID 999999; state_put LOG_START 0'; "$DIR/teardown.sh" --recovery; [[ ! -e "$SHIPROOM_REMEDIATION_ROOT" && ! -e "$SHIPROOM_REMEDIATION_MOUNT" && ! -e "$SHIPROOM_REMEDIATION_RUN" ]]
 mkdir -p "$SHIPROOM_REMEDIATION_ROOT" "$SHIPROOM_REMEDIATION_MOUNT" "$SHIPROOM_REMEDIATION_RUN"; : >"$SHIPROOM_REMEDIATION_ROOT/backend.state"
-live_test_pid=$$; state "state_put LOG_PID $live_test_pid; state_put LOG_START 0"; ! "$DIR/teardown.sh" --locked --recovery 2>/dev/null; [[ -d "$SHIPROOM_REMEDIATION_ROOT" && -d "$SHIPROOM_REMEDIATION_MOUNT" && -d "$SHIPROOM_REMEDIATION_RUN" ]]
+live_test_pid=$$; state "state_put LOG_PID $live_test_pid; state_put LOG_START 0"; ! "$DIR/teardown.sh" --recovery 2>/dev/null; [[ -d "$SHIPROOM_REMEDIATION_ROOT" && -d "$SHIPROOM_REMEDIATION_MOUNT" && -d "$SHIPROOM_REMEDIATION_RUN" ]]
 echo '[16/17] concurrent setup attempts serialize on the non-removable global lock'
 cat >"$shim/apt-get" <<'EOF'
 #!/bin/sh
