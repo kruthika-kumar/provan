@@ -191,9 +191,13 @@ cat >"$SHIPROOM_REMEDIATION_ROOT/daemon.json" <<EOF
 EOF
 state 'state_put LOOP test-loop; state_put DATA_PROJECT 10000; state_put DATA_BYTES 8589934592; state_put DATA_INODES 200000; state_put CONFIG_HASH "$(hash "$DAEMON_JSON")"'
 ( export SHIPROOM_REMEDIATION_TEST_FAKE_DAEMON=1 TEST_PGREP_EXIT=1; PATH="$shim:$PATH" "$DIR/start.sh" )
-[[ -S "$SHIPROOM_REMEDIATION_RUN/docker.sock" ]]; [[ -s "$SHIPROOM_REMEDIATION_RUN/dockerd.pid" ]]; [[ -p "$SHIPROOM_REMEDIATION_RUN/dockerd.log.fifo" ]]; fakepid=$(lib 'state_get DAEMON_PID'); kill -0 "$fakepid"; fakelog=$(lib 'state_get LOG_PID'); kill -0 "$fakelog"
+[[ -S "$SHIPROOM_REMEDIATION_RUN/docker.sock" ]]; [[ -s "$SHIPROOM_REMEDIATION_RUN/dockerd.pid" ]]; [[ -p "$SHIPROOM_REMEDIATION_RUN/dockerd.log.fifo" ]]; fakepid=$(lib 'state_get DAEMON_PID'); kill -0 "$fakepid"; fakelog=$(lib 'state_get LOG_PID'); kill -0 "$fakelog"; fakekeeper=$(lib 'state_get LOG_KEEPER_PID'); kill -0 "$fakekeeper"; lib 'log_pipeline_verified'
 flock -n "$SHIPROOM_REMEDIATION_TEST_LOCK" true
-kill -TERM "$fakepid" "$fakelog" 2>/dev/null || true; rm -f "$SHIPROOM_REMEDIATION_RUN/docker.sock" "$SHIPROOM_REMEDIATION_RUN/dockerd.pid" "$SHIPROOM_REMEDIATION_RUN/dockerd.log.fifo"
+echo '[11a/17] persistent logger survives writer exit and pipeline shutdown is controlled'
+kill -TERM "$fakepid" 2>/dev/null || true; for _ in $(seq 1 10); do kill -0 "$fakepid" 2>/dev/null || break; sleep .1; done; ! kill -0 "$fakepid" 2>/dev/null
+kill -0 "$fakelog"; kill -0 "$fakekeeper"; lib 'log_pipeline_verified'; lib 'stop_log_pipeline'
+for _ in $(seq 1 20); do kill -0 "$fakelog" 2>/dev/null || break; sleep .1; done; ! kill -0 "$fakelog" 2>/dev/null; ! kill -0 "$fakekeeper" 2>/dev/null
+rm -f "$SHIPROOM_REMEDIATION_RUN/docker.sock" "$SHIPROOM_REMEDIATION_RUN/dockerd.pid" "$SHIPROOM_REMEDIATION_RUN/dockerd.log.fifo"
 echo '[12/17] loop-only and mounted recovery paths are distinct'
 cat >"$shim/losetup" <<'EOF'
 #!/bin/sh
@@ -218,7 +222,7 @@ printf '20010\torphan\tTREE_CREATED\n' >"$SHIPROOM_REMEDIATION_ROOT/allocation.p
 echo '[14/17] release pending preserves registry authority until its committed removal'
 printf '20009\tpending\t1048576\t1024\n' >"$SHIPROOM_REMEDIATION_ROOT/projects.tsv"; printf '20009\tpending\tTREE_REMOVED\n' >"$SHIPROOM_REMEDIATION_ROOT/release.pending"; lib 'recover_pending_release'; [[ -e "$SHIPROOM_REMEDIATION_ROOT/release.pending" ]]; : >"$SHIPROOM_REMEDIATION_ROOT/projects.tsv"; lib 'recover_pending_release'; [[ ! -e "$SHIPROOM_REMEDIATION_ROOT/release.pending" ]]
 echo '[15/17] logger PID-reuse is rejected'
-state 'state_put LOG_PID 999999; state_put LOG_START 0; stop_or_absent_logger; state_put LOG_PID $$; state_put LOG_START 0; ! logger_probe; ! stop_or_absent_logger'
+live_test_pid=$$; state "state_put LOG_PID 999999; state_put LOG_START 0; stop_or_absent_logger; state_put LOG_PID $live_test_pid; state_put LOG_START 0; ! logger_probe; ! stop_or_absent_logger; state_put LOG_KEEPER_PID 999999; state_put LOG_KEEPER_START 0; stop_or_absent_log_keeper; state_put LOG_KEEPER_PID $live_test_pid; state_put LOG_KEEPER_START 0; state_put LOG_KEEPER_EXE /bin/false; ! log_keeper_probe; ! stop_or_absent_log_keeper"
 echo '[15a/17] offline teardown accepts only an absent logger and preserves live PID-reuse evidence'
 rm -rf "$SHIPROOM_REMEDIATION_ROOT" "$SHIPROOM_REMEDIATION_MOUNT" "$SHIPROOM_REMEDIATION_RUN"; mkdir -p "$SHIPROOM_REMEDIATION_ROOT" "$SHIPROOM_REMEDIATION_MOUNT" "$SHIPROOM_REMEDIATION_RUN"; : >"$SHIPROOM_REMEDIATION_ROOT/backend.state"
 state 'state_put LOG_PID 999999; state_put LOG_START 0'; "$DIR/teardown.sh" --locked --recovery; [[ ! -e "$SHIPROOM_REMEDIATION_ROOT" && ! -e "$SHIPROOM_REMEDIATION_MOUNT" && ! -e "$SHIPROOM_REMEDIATION_RUN" ]]

@@ -57,7 +57,7 @@ control_ready(){ control assert-ready; }
 
 allowed_key(){ case "$1" in
   IMAGE|MOUNT|RUN|LOOP|PHASE|POLICY_GUARD_HASH|POLICY_GUARD_CREATED|PACKAGE_DOCKER_IO|PACKAGE_XFSPROGS|PACKAGE_QUOTA|PACKAGE_DOCKER_IO_HASH|PACKAGE_XFSPROGS_HASH|PACKAGE_QUOTA_HASH|\
-  DAEMON_PID|DAEMON_START|DOCKERD_EXE|DOCKER_CLI|CONFIG_HASH|LOG_PID|LOG_START|DATA_PROJECT|DATA_BYTES|DATA_INODES|CAPACITY_ID|\
+  DAEMON_PID|DAEMON_START|DOCKERD_EXE|DOCKER_CLI|CONFIG_HASH|LOG_PID|LOG_START|LOG_KEEPER_PID|LOG_KEEPER_START|LOG_KEEPER_EXE|DATA_PROJECT|DATA_BYTES|DATA_INODES|CAPACITY_ID|\
   FAILED_RECORD|UNIT_DOCKER_SERVICE_EXISTS|UNIT_DOCKER_SERVICE_ENABLED|UNIT_DOCKER_SERVICE_MASKED|UNIT_DOCKER_SERVICE_ACTIVE|UNIT_DOCKER_SERVICE_CHANGED|\
   UNIT_DOCKER_SOCKET_EXISTS|UNIT_DOCKER_SOCKET_ENABLED|UNIT_DOCKER_SOCKET_MASKED|UNIT_DOCKER_SOCKET_ACTIVE|UNIT_DOCKER_SOCKET_CHANGED|\
   UNIT_CONTAINERD_SERVICE_EXISTS|UNIT_CONTAINERD_SERVICE_ENABLED|UNIT_CONTAINERD_SERVICE_MASKED|UNIT_CONTAINERD_SERVICE_ACTIVE|UNIT_CONTAINERD_SERVICE_CHANGED) return 0;; *) return 1;; esac; }
@@ -92,6 +92,8 @@ require_paths(){ [[ "$(state_get IMAGE)" == "$IMAGE" && "$(state_get MOUNT)" == 
 daemon_probe(){ local p s e c expected; p=$(state_try DAEMON_PID) || return 1; s=$(state_try DAEMON_START) || return 1; expected=$(state_try DOCKERD_EXE) || return 1; [[ "$p" =~ ^[1-9][0-9]*$ && -r /proc/$p/stat && "$(pid_start "$p")" == "$s" ]] || return 1; c=$(tr '\0' ' ' </proc/$p/cmdline); if [[ "$TEST_MODE" == 1 && ${SHIPROOM_REMEDIATION_TEST_FAKE_DAEMON:-0} == 1 ]]; then [[ "$c" == *dockerd* ]] && return 0; fi; e=$(readlink -f "/proc/$p/exe"); [[ "$e" == "$expected" && "$c" == *"--config-file $DAEMON_JSON"* && "$c" == *"--pidfile $PID"* ]]; }
 daemon_verified(){ daemon_probe; }
 logger_probe(){ local p s; p=$(state_try LOG_PID) || return 1; s=$(state_try LOG_START) || return 1; [[ "$p" =~ ^[1-9][0-9]*$ && -r /proc/$p/stat && "$(pid_start "$p")" == "$s" ]]; }
+log_keeper_probe(){ local p s expected actual command; p=$(state_try LOG_KEEPER_PID) || return 1; s=$(state_try LOG_KEEPER_START) || return 1; expected=$(state_try LOG_KEEPER_EXE) || return 1; [[ "$p" =~ ^[1-9][0-9]*$ && -r /proc/$p/stat && "$(pid_start "$p")" == "$s" ]] || return 1; actual=$(readlink -f "/proc/$p/exe"); command=$(tr '\0' ' ' </proc/$p/cmdline); [[ "$actual" == "$expected" && "$command" == *"/dev/null"* ]]; }
+log_pipeline_verified(){ logger_probe && log_keeper_probe; }
 stop_or_absent_logger(){
   local lp
   if logger_probe; then
@@ -104,6 +106,17 @@ stop_or_absent_logger(){
     [[ "$lp" =~ ^[1-9][0-9]*$ && ! -e "/proc/$lp/stat" ]]
   fi
 }
+stop_or_absent_log_keeper(){
+  local kp
+  if log_keeper_probe; then
+    kp=$(state_try LOG_KEEPER_PID); kill -TERM "$kp" 2>/dev/null || return 1
+    for _ in $(seq 1 10); do kill -0 "$kp" 2>/dev/null || return 0; sleep 1; done
+    ! kill -0 "$kp" 2>/dev/null
+  elif kp=$(state_try LOG_KEEPER_PID 2>/dev/null); then
+    [[ "$kp" =~ ^[1-9][0-9]*$ && ! -e "/proc/$kp/stat" ]]
+  fi
+}
+stop_log_pipeline(){ stop_or_absent_log_keeper && stop_or_absent_logger; }
 dockerx(){ "$(state_get DOCKER_CLI)" --host "unix://$SOCKET" "$@"; }
 no_live_default_or_custom_daemon(){ [[ ! -S /var/run/docker.sock && ! -S "$SOCKET" ]] && ! pgrep -af '(^|/)(dockerd|containerd|containerd-shim)( |$)' >/dev/null; }
 is_recorded_block_device(){ [[ "$TEST_MODE" == 1 && "$1" == test-loop ]] || [[ -b "$1" ]]; }
