@@ -87,6 +87,7 @@ assert 'tree != expected or not tree.is_dir()' in doctor_source
 assert '_STAGED_MODULE_DIRECTORY' in doctor_source
 assert "'quota_write_errno':e.errno" in doctor_source
 assert 'errno.EDQUOT,errno.ENOSPC,errno.EFBIG' in doctor_source
+assert "'inode_write_errno':e.errno" in doctor_source
 # The privileged doctor is deliberately launched with ``-I -S``.  Its help
 # path must still import every co-staged module without a site package or a
 # caller-controlled PYTHONPATH; otherwise the real doctor fails before any

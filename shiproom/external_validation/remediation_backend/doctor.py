@@ -95,11 +95,16 @@ raise SystemExit(0)
     return invocation(["/usr/bin/python3","-c",code,str(path),str(bytes_)])
 
 def inode_probe(path: Path) -> dict[str, object]:
-    code="""import errno,os,sys
+    # Match the byte-quota probe's strict cross-XFS errno contract.  The
+    # fixture still requires this terminal refusal before it can release the
+    # worktree; success after 4096 creates is not evidence of an inode limit.
+    code="""import errno,json,os,sys
 root=sys.argv[1]
 try:
  for n in range(4096): open(os.path.join(root,'inode-'+str(n)),'xb').close()
-except OSError as e: raise SystemExit(42 if e.errno==errno.EDQUOT else 43)
+except OSError as e:
+ print(json.dumps({'inode_write_errno':e.errno,'inode_write_error':e.strerror},sort_keys=True))
+ raise SystemExit(42 if e.errno in (errno.EDQUOT,errno.ENOSPC,errno.EFBIG) else 43)
 raise SystemExit(44)
 """
     return invocation(["/usr/bin/python3","-c",code,str(path)])
