@@ -1,36 +1,40 @@
 # Docker repair qualification proof
 
-The historical v1 Docker claim is superseded and non-effective. The canonical
-private v2 matrix for Commit A `043592ca74992d65979e40dbe418a5d1bdb66394`
-has SHA-256 `ac2a2e5c3594807abcd75fe75f7a79c43d884de9ab39acfeebfdd81d3a7ebad9`.
-The deterministic public view is
-`session1_repair_detection_qualification.public.json`; it is explicitly
-non-qualifying and contains no external-root or container location.
+The historical v1 Docker claim is superseded and non-effective. The retained
+private v2 detection matrix is hash-bound by
+`session1_repair_detection_qualification.public.json`; that public view is
+explicitly non-qualifying and contains no external-root or container location.
+It proves the immutable runner, effective inspect parity, non-root identities,
+network/mount/capability controls, bounded transfer/logging, five-arm parity,
+cache isolation, residual cleanup, wrapper isolation, background-writer
+quiescence, and timeout cleanup.
 
-Detection profile is `QUALIFIED` on the Linux Docker Engine. The v2 proof
-validated effective inspect parity, non-root UID separation, no network,
-read-only mounts, caps/no-new-privileges, bounded resources/logs, transfer,
-five-arm parity/corpus, residual cleanup, and adversarial wrapper isolation,
-background-writer quiescence, timeout cleanup, and bounded log capture.
+The only executable change from the prior remediation implementation commit
+`106149b55c80b340d46b0ea3aca0903462873e70` to current implementation Commit A
+`796605b7f94af489e9a3b0eb15e98d55a956a459` is the self-contained Session 6--8
+proof-test setup. No `runner_v2`, v2 doctor, transfer, Docker-policy, or
+five-arm execution source changed. The retained v2 detection matrix therefore
+continues to bind the unchanged production detection contract; the changed
+remediation backend was requalified below from the exact current source tree.
 
-Remediation profile is `BLOCKED`: this host has not proven a hard writable
-worktree quota. Overall status is therefore `PARTIALLY_QUALIFIED`; no mutation,
-writable remediation, controlled manifest freeze, beta execution, or Session 2
-completion is authorized.
+## Current remediation-backend qualification
 
-## Successor remediation-backend qualification
+The clean source tree `2b29b32ec0c1b7206a0685f122290b9edabab34f` passed a
+fresh root-staged doctor for Commit A `796605b7f94af489e9a3b0eb15e98d55a956a459`.
+Both `detection_profile` and `remediation_profile` are `QUALIFIED`; the
+overall result is `QUALIFIED`.
 
-The historical blocked remediation statement above is superseded only for the
-dedicated Linux remediation backend. Commit A
-`106149b55c80b340d46b0ea3aca0903462873e70` passed the real staged doctor with
-both `detection_profile` and `remediation_profile` `QUALIFIED`. The sealed
-canonical report is supervisor-owned outside Git, has SHA-256
-`27578f2f52ad9206ccf29bb5b53c755e448098b92bb155ac1174760e681f6267`, and is
-bound by the deterministic, explicitly non-qualifying public view
-`remediation_backend_qualification.public.json`.
+The canonical private report is supervisor-owned outside Git with SHA-256
+`81f56f3aff3d803b657914489d41b97cab4fc454c00e5ab61a7f0811fcf8d568` and
+report hash `c345f87c766ae93120244cd4c3539166cc01dedcf041d4f66192df88573dc079`.
+The deterministic public sanitized view is
+`remediation_backend_qualification.public.json`. It binds Stage-0 attestation
+`afc97c89a7878723caacfc424318411254787b683f804eb9ecb081e7682befad` and
+staged-bundle hash
+`ddbe3fb3bbc3ba47c1e2d7ce32e231b0e1aba23484e1e3e578b603802c8a59f4`.
 
 The real fixture proved byte and inode quota refusal, per-attempt project
 allocation, supervisor-issued release authorization, evidence rehashing,
 descriptor-relative deletion, project-clear verification while the root
-existed, and the terminal registry/project/capacity transaction. This does not
-close the separate full-regression baseline or Session 1 acceptance gate.
+existed, and the terminal registry/project/capacity transaction. Private raw
+evidence remains non-public and is the qualification authority.

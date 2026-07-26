@@ -11,4 +11,4 @@
 | P1 review/audit | Detailed reviews and claim-level audit | Fresh review dispositions |
 
 This public matrix intentionally contains no case targets, oracle details,
-patient paths, model outputs, or private adjudication material.
+repository-location identifiers, model outputs, or private adjudication material.

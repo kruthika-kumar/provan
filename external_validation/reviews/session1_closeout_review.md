@@ -2,25 +2,30 @@
 
 | Field | Value |
 | --- | --- |
-| review_verdict | GO for the scoped repair implementation; overall acceptance remains open |
+| review_verdict | GO |
+| qualification_status | QUALIFIED |
 | detection_profile | QUALIFIED |
 | remediation_profile | QUALIFIED (dedicated Linux remediation backend) |
-| overall_status | Session 1 acceptance remains open |
+| overall_status | QUALIFIED when this proof-only closeout bundle is committed |
 
-The v1 closeout claim is superseded on this repair branch. Commit A
-`a3ce6abc4a6aee2807d06e389960b9269da8d170` passed the real Linux Docker
-receipt-v2 detection matrix, bound by the private canonical hash and public
-sanitized view in `docker_qualification.md`. The canaries include effective
-inspect parity, separate principals, transfer/sealing, background-writer
-quiescence, timeout cleanup, bounded capture, and five-arm corpus validation.
+Implementation Commit A is
+`796605b7f94af489e9a3b0eb15e98d55a956a459` (tree
+`2b29b32ec0c1b7206a0685f122290b9edabab34f`). Its only post-qualification
+executable change is the test-owned prerequisite generation that removed an
+implicit ignored-cache dependency. The exact clean-commit baseline passed with
+793 tests passed and 3 skipped; its private transcript and receipt hashes are
+recorded in `full_baseline.md`.
 
-Fresh read-only review of Commit A returned `GO`: it reran the focused suite
-(38 passed) and verified effective mount-source/privilege inspection, bounded
-transfer capture, and journal-backed index/corpus authority. The successor
-root-staged remediation backend passed its real XFS quota and release-lifecycle
-doctor on Commit A `106149b55c80b340d46b0ea3aca0903462873e70`. Its canonical
-private report is supervisor-owned and hash-bound by
-`remediation_backend_qualification.public.json`; public material remains
-non-qualifying. The full baseline is still a required evidence gate, so this
-does not claim Session 1 completion, a merge, tag, benchmark run, or model/case
-selection.
+The retained receipt-v2 detection matrix covers the unchanged v2 production
+contract. The changed remediation backend was freshly root-staged and passed
+the real Linux/XFS doctor for Commit A with both profiles `QUALIFIED`; the
+private report and sanitized public binding are recorded in
+`docker_qualification.md` and
+`remediation_backend_qualification.public.json`.
+
+The fresh read-only closeout reviewer reran the public-tree leakage validator
+and focused external-validation suites (38 passed), verified the deterministic
+public view and single status successor, and returned `GO`. This bundle must
+not claim benchmark execution, case selection, model selection, mutation
+materialization, a merge, or a release tag. The successor status becomes
+effective only with this proof-only closeout commit.
