@@ -54,8 +54,9 @@ assert 'limit=$(quota_limit_kib "$bytes")' in worktree_quota_source
 assert 'bhard=${limit}' in worktree_quota_source
 assert 'bhard=${bytes}b' not in worktree_quota_source
 assert 'bounded-log.py" --input "$LOG_FIFO" --output "$LOG" --maximum 1048576 9>&-' in start_source
-assert 'setsid "$DOCKERD" --config-file "$DAEMON_JSON" --pidfile "$PID" 9>&-' in start_source
-assert '"$TAIL" -f /dev/null 9>&- >"$LOG_FIFO"' in start_source
+assert '"$SETSID" "$DOCKERD" --config-file "$DAEMON_JSON" --pidfile "$PID" 9>&-' in start_source
+assert '"$SETSID" "$TAIL" -f /dev/null 9>&- >"$LOG_FIFO"' in start_source
+assert '"$SETSID" "$PYTHON" "$DIR/bounded-log.py"' in start_source
 assert 'log_pipeline_verified || die logger_identity' in start_source
 assert 'stop_log_pipeline || die' in teardown_source
 assert "unverified logger pipeline" in teardown_source
