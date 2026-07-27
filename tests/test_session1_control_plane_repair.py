@@ -160,7 +160,8 @@ def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> N
     """Commit B cannot be forged by pointing an attestation at code changes."""
     root = Path.cwd()
     authority = root / "external_validation/status/session1-status-authority.v1.json"
-    chain = root / "external_validation/status/session1-profile-status-chain.v2.json"
+    authority_document = json.loads(authority.read_text(encoding="utf-8"))
+    chain = root / authority_document["current_chain"]["path"]
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip()
     attestation = tmp_path / "attestation.json"
