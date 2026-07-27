@@ -78,8 +78,16 @@ def materialize_fixture(*, source_root: Path, worktree: Path, source: dict[str, 
     commit = source["commit"]
     # A real Git worktree is materialized from the immutable commit, then the
     # patient sees only that dedicated quota-controlled directory.
-    for argv in (["/usr/bin/git", "init", "--quiet"], ["/usr/bin/git", "remote", "add", "origin", str(source_root)], ["/usr/bin/git", "fetch", "--quiet", "origin", commit], ["/usr/bin/git", "checkout", "--quiet", "--detach", commit]):
-        if _run(list(argv), worktree)["exit_code"] != 0: raise LifecycleError("fixture_materialization_failed")
+    # The supervisor is deliberately distinct from the patient owner of the
+    # quota tree.  Git's ownership protection therefore needs a one-command,
+    # explicit safe-directory assertion; it is never inherited globally.
+    commands = (["init", "--quiet"], ["remote", "add", "origin", str(source_root)], ["fetch", "--quiet", "origin", commit], ["checkout", "--quiet", "--detach", commit])
+    for command in commands:
+        argv = ["/usr/bin/git", "-c", f"safe.directory={worktree}", *command]
+        result = _run(argv, worktree)
+        if result["exit_code"] != 0:
+            detail = result["stderr"].decode("utf-8", "replace").strip()[-400:]
+            raise LifecycleError("fixture_materialization_failed:" + str(command[0]) + ":" + detail)
     return source
 
 
