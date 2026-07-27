@@ -1,18 +1,21 @@
 # Session 1 effective status
 
-The canonical effective status for this branch resolves from
-`external_validation/status/session1-status-chain.v1.json`; this markdown is a
-non-authoritative public view.
+The canonical effective status resolves only from
+`external_validation/status/session1-status-authority.v1.json` and its
+required root-owned external attestation; this markdown is a non-authoritative
+public view.
 
 The resolved effective status is:
 
 ```text
-QUALIFIED
+Detection: QUALIFIED
+Remediation: QUALIFIED
+Overall: QUALIFIED
 ```
 
-The original qualification and its reopening remain immutable history but are
-not effective on this successor branch. The current record is bound to
-implementation Commit A `796605b7f94af489e9a3b0eb15e98d55a956a459`; it becomes
-the public effective status only with the proof-only closeout bundle and its
-fresh closeout `GO`. Cycles, missing predecessors, and competing successors
-fail closed.
+The original qualification and reopening remain immutable history but are not
+independent current authorities. The attestation binds the proof-only status
+commit and its proof manifest; without it the resolver fails closed to
+remediation `BLOCKED` and overall `PARTIALLY_QUALIFIED`. Cycles, missing
+predecessors, competing successors, changed historical hashes, and malformed
+or uncommitted chain blobs fail closed.
