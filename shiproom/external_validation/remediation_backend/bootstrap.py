@@ -126,6 +126,11 @@ def approve(source:Path,attestation_path:Path,commit:str,tree:str)->Path:
     secure_root_directory(ROOT,0o755); secure_root_directory(ROOT/"approvals",0o700)
     path=approval_path(str(attestation["attestation_hash"]))
     body={"schema_id":"remediation_stage0_approval.v1","schema_version":"1","attestation_hash":attestation["attestation_hash"],"commit":commit,"tree":tree}
+    if path.exists():
+        regular(path); item=path.stat()
+        if item.st_uid!=0 or stat.S_IMODE(item.st_mode)!=0o400 or json.loads(path.read_text(encoding="utf-8"))!=body:
+            raise RuntimeError("stage0_approval_conflict")
+        return path
     parent_fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
     try:
         fd=os.open(path.name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400,dir_fd=parent_fd)
