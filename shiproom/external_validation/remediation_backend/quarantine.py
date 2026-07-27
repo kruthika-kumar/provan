@@ -9,6 +9,8 @@ recovery process can account for the preserved bytes.
 from __future__ import annotations
 import argparse, json, os, stat, sys
 from pathlib import Path
+_STAGED_MODULE_DIRECTORY = str(Path(__file__).resolve().parent)
+if _STAGED_MODULE_DIRECTORY not in sys.path: sys.path.insert(0, _STAGED_MODULE_DIRECTORY)
 try:
     from .bootstrap import require_staged_script
     from .release_helper import mount_id, openat2, verify_root
