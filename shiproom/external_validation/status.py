@@ -48,7 +48,7 @@ def _profile_chain(value: Any, historical: dict[str, Any]) -> dict[str, Any]:
         for record in records:
             base = {"status_id", "predecessor_status_id", "profile", "status", "implementation_commit", "timestamp"}
             final = base | {"implementation_tree", "proof_bundle_hash", "predecessor_status_ids", "expected_profiles"}
-            if not isinstance(record, dict) or set(record) not in {base, final}:
+            if not isinstance(record, dict) or (set(record) != base and set(record) != final):
                 raise V2ValidationError("profile_status_record_invalid")
             if record["profile"] != profile or not all(isinstance(record[key], str) and record[key] for key in ("status_id", "profile", "status", "implementation_commit", "timestamp")):
                 raise V2ValidationError("profile_status_record_invalid")

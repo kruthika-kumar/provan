@@ -150,4 +150,6 @@ def test_v2_migration_preserves_history_and_blocks_unknown_version(tmp_path: Pat
 
 def test_status_authority_has_one_profile_current_chain():
     result = resolve_status_authority(Path("external_validation/status/session1-status-authority.v1.json"))
-    assert result["profiles"] == {"detection": "QUALIFIED", "remediation": "REOPENED", "overall": "PARTIALLY_QUALIFIED"}
+    # Final records are intentionally ineffective until the external
+    # attestation binds the pushed proof/status commit.
+    assert result["profiles"] == {"detection": "QUALIFIED", "remediation": "BLOCKED", "overall": "PARTIALLY_QUALIFIED"}
