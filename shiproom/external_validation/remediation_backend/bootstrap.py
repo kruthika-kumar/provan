@@ -56,13 +56,17 @@ def secure_root_directory(path:Path, mode:int=0o700)->None:
         os.close(fd)
 def source_manifest(source:Path)->dict[str,object]:
     schema_dir=source/"schemas" if (source/"schemas").is_dir() else source.parent/"schemas"
+    # Source-tree dependencies are package siblings; staged dependencies are
+    # deliberately copied into the sealed stage.  Accept only either complete
+    # layout, never a mixed fallback assembled from two authorities.
+    production_root=source if all((source/name).is_file() for name in PRODUCTION_FILES) else source.parent
     files={}; schemas={}; production={}
     for name in FILES:
         path=source/name; regular(path); files[name]=sha(path)
     for name in SCHEMAS:
         path=schema_dir/name; regular(path); schemas[name]=sha(path)
     for name in PRODUCTION_FILES:
-        path=source.parent/name; regular(path); production[name]=sha(path)
+        path=production_root/name; regular(path); production[name]=sha(path)
     return {"files":files,"schemas":schemas,"production_files":production}
 def source_root(source:Path)->Path:
     trusted_host_executable(Path("/usr/bin/git"))
