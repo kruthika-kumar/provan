@@ -119,12 +119,13 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
             "--security-opt=no-new-privileges", "--user", "65532:65532",
             "--pids-limit", "64", "--memory", "256m", "--memory-swap", "256m",
             "--cpus", "0.5", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m",
-            "--mount", f"type=bind,src={tree},dst=/remediation,rw", "--workdir",
+            "--mount", f"type=bind,src={tree},dst=/remediation,readonly=false", "--workdir",
             "/remediation", image_ref]
     started_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     created = subprocess.run(argv, capture_output=True, text=True, timeout=60, check=False)
     if created.returncode != 0:
-        raise LifecycleError("patient_create_failed")
+        detail = (created.stderr or created.stdout).strip().replace("\n", " | ")[-1200:]
+        raise LifecycleError("patient_create_failed:" + detail)
     container_id = created.stdout.strip()
     if not container_id:
         raise LifecycleError("patient_create_identity_missing")

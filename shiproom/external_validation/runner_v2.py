@@ -74,7 +74,7 @@ def create_argv(policy: ExecutionPolicyV2, *, name: str, cidfile: Path, patient:
             "--pids-limit", str(policy.pids), "--restart=no", "--log-driver=none", "--label", f"shiproom.external_validation.backend={backend_label}",
             "--label", f"shiproom.external_validation.policy={policy_hash(policy)}",
             "--tmpfs", f"/tmp:rw,nosuid,nodev,noexec,size=16m", "--tmpfs", f"/output:rw,nosuid,nodev,noexec,size={policy.output_tmpfs_bytes}",
-            "--mount", f"type=bind,src={patient},dst=/patient,readonly", "--mount", f"type=bind,src={packet},dst=/release,readonly",
+            "--mount", f"type=bind,src={patient},dst=/patient,readonly=true", "--mount", f"type=bind,src={packet},dst=/release,readonly=true",
             policy.image_digest, f"{SUPERVISOR_DIR}/supervisor"]
     validate_create_argv(args)
     return args

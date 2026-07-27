@@ -48,10 +48,10 @@ def docker_argv(policy: DockerPolicy, patient: Path, packet: Path, output: Path,
         raise RuntimeError("docker_cli_unavailable")
     args = [docker, "run", "--rm", "--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--user", policy.uid_gid,
             "--cpus", str(policy.cpus), "--memory", policy.memory, "--memory-swap", policy.memory, "--pids-limit", str(policy.pids),
-            "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=64m", "--mount", f"type=bind,src={patient},dst=/patient,ro",
-            "--mount", f"type=bind,src={packet},dst=/release,ro", "--mount", f"type=bind,src={output},dst=/output,rw"]
+            "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=64m", "--mount", f"type=bind,src={patient},dst=/patient,readonly=true",
+            "--mount", f"type=bind,src={packet},dst=/release,readonly=true", "--mount", f"type=bind,src={output},dst=/output,readonly=false"]
     if remediation:
-        args += ["--mount", f"type=bind,src={remediation_worktree},dst=/remediation,rw"]
+        args += ["--mount", f"type=bind,src={remediation_worktree},dst=/remediation,readonly=false"]
     args.append(policy.image_digest)
     validate_docker_argv(args)
     return args
