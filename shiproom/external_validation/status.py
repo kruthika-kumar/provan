@@ -104,6 +104,7 @@ def _validate_external_attestation(
     proof_path = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
     if not proof_path.is_file() or _committed_content_hash(root, proof_path) != data["proof_bundle_hash"]:
         raise V2ValidationError("status_attestation_proof_binding_invalid")
+    _committed_file(root, proof_path)
     try:
         proof = json.loads(proof_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:

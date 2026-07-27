@@ -12,6 +12,7 @@ import pytest
 
 from shiproom.external_validation.remediation_backend.control import Control, ControlError, canonical, digest
 from shiproom.external_validation.remediation_backend.migration import MigrationError, migrate_v2_to_v3
+import shiproom.external_validation.status as status_module
 from shiproom.external_validation.status import resolve_status_authority
 from shiproom.external_validation.v2 import V2ValidationError
 
@@ -180,3 +181,33 @@ def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> N
     attestation.chmod(0o400)
     with pytest.raises(V2ValidationError, match="status_attestation_commit_scope_invalid"):
         resolve_status_authority(authority, repository_root=root, attestation=attestation)
+
+
+def test_status_attestation_activates_and_committed_checks_the_proof_manifest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A valid Commit-B attestation activates profiles and checks proof bytes."""
+    root = Path.cwd()
+    authority = root / "external_validation/status/session1-status-authority.v1.json"
+    authority_document = json.loads(authority.read_text(encoding="utf-8"))
+    chain = root / authority_document["current_chain"]["path"]
+    proof = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
+    current = json.loads(chain.read_text(encoding="utf-8"))
+    attestation = tmp_path / "valid-attestation.json"
+    attestation.write_text(json.dumps({
+        "schema_id": "external_validation.status_attestation.v1",
+        "schema_version": "1",
+        "commit_b": "771a0e6915f03157f7cb64b13e524b2884f8a3b9",
+        "commit_b_tree": "72baa0bad0f6d764a314affeab7e9938c0c2fb1e",
+        "proof_bundle_hash": current["profiles"]["detection"][-1]["proof_bundle_hash"],
+        "status_authority_hash": "sha256:" + hashlib.sha256(authority.read_bytes()).hexdigest(),
+        "status_chain_hash": "sha256:" + hashlib.sha256(chain.read_bytes()).hexdigest(),
+    }), encoding="utf-8")
+    attestation.chmod(0o400)
+    called: list[Path] = []
+    original = status_module._committed_file
+    def recording_commit_check(repository: Path, path: Path) -> None:
+        called.append(path.resolve())
+        original(repository, path)
+    monkeypatch.setattr(status_module, "_committed_file", recording_commit_check)
+    resolved = resolve_status_authority(authority, repository_root=root, attestation=attestation)
+    assert resolved["profiles"] == {"detection": "QUALIFIED", "remediation": "QUALIFIED", "overall": "QUALIFIED"}
+    assert proof.resolve() in called
