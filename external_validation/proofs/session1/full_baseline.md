@@ -1,22 +1,25 @@
 # Full regression baseline — control-plane repair
 
-The full repository baseline ran from a clean worktree at implementation
-commit `6696854f32b6687b92f32de78caeeaa519841661` (the current successor
-branch head at invocation) on 2026-07-27.
+The final full repository baseline ran from a clean canonical worktree at
+commit `ece6234` on 2026-07-27. The root-staged runtime doctor remains bound
+to its production implementation commit `48fa698d1395b4d2d503394c64d82761f4ee885d`;
+`ece6234` contains only post-doctor status-attestation hardening and its
+regression coverage.
 
 ```text
 python -m pytest -q
 ```
 
-The completed command exited `0` after 2009.03 seconds:
+The completed command exited `0` after 2285.70 seconds:
 
 ```text
-802 passed, 3 skipped in 2009.03s (0:33:29)
+804 passed, 3 skipped in 2285.70s (0:38:05)
 ```
 
-The initial 10-minute and diagnostic 5-minute bounds were recorded as timeout
-evidence only; neither was treated as a baseline result. The final run used a
-three-hour bound, completed normally, and left no residual pytest process.
+An earlier detached-worktree run failed only because that checkout converted an
+unrelated byte-identical fixture from LF to CRLF; the canonical checkout's
+targeted byte-identity test passed before this complete run. The completed
+canonical run used a three-hour bound and is the only final baseline result.
 
 This is a regression baseline. It neither selects benchmark cases/models nor
 contains private evidence.

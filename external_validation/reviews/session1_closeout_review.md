@@ -2,23 +2,24 @@
 
 | Field | Value |
 | --- | --- |
-| review_verdict | GO, subject to the committed proof bundle and external attestation |
-| qualification_status | QUALIFIED |
+| review_verdict | Pending fresh closeout review of the updated proof bundle and external attestation |
+| qualification_status | Public resolver: PARTIALLY_QUALIFIED; externally attested result: pending refreshed attestation |
 | detection_profile | QUALIFIED |
-| remediation_profile | QUALIFIED — root-staged Linux Docker/XFS doctor |
-| overall_status | QUALIFIED |
+| remediation_profile | Public resolver: BLOCKED; externally attested result: pending refreshed attestation |
+| overall_status | Public resolver: PARTIALLY_QUALIFIED; externally attested result: pending refreshed attestation |
 
-The production doctor completed all required runtime proofs: real Git repair
+The refreshed production doctor for implementation commit
+`48fa698d1395b4d2d503394c64d82761f4ee885d` completed all required runtime proofs: real Git repair
 and receipt-v2 finalization, overlapping quota domains and capacity lineage,
 authorization/artifact tampering rejection, and residual cwd/FD rejection.
 Its private canonical report is bound by
 `control_plane_repair_proof_manifest.json`; public material is not the
 qualification authority.
 
-The final complete baseline ran from a clean worktree at
-`6696854f32b6687b92f32de78caeeaa519841661` and completed with **802 passed,
-3 skipped in 2009.03 seconds**. Earlier timeout runs were not used as
-positive evidence.
+The final complete canonical baseline at `ece6234` completed with **804
+passed, 3 skipped in 2285.70 seconds**. The post-doctor changes are limited to
+status-attestation hardening and regression coverage; they do not alter the
+staged remediation runtime bundle qualified at `48fa698…`.
 
 The status authority resolves only through its profile chain and requires the
 root-owned external attestation binding the pushed proof/status commit. No

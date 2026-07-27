@@ -2,15 +2,13 @@
 
 ## Current Session 1 status
 
-The root-owned external attestation for the committed control-plane proof
-bundle has been verified: detection, remediation, and overall profiles are
-`QUALIFIED`. The authoritative current view is
-`status/session1-status-authority.v1.json` plus its required external
-attestation—not historical status-chain files or markdown closeout summaries.
-Without that attestation the resolver deliberately reports remediation
-`BLOCKED` and overall `PARTIALLY_QUALIFIED` rather than accepting an unsigned
-public claim. Session 2, case, model, mutation, and benchmark work remain
-outside this Session 1 closeout.
+The tracked public resolver deliberately reports detection `QUALIFIED`,
+remediation `BLOCKED`, and overall `PARTIALLY_QUALIFIED`: the required
+root-owned external attestation is private evidence and is not copied into
+Git. An authorized resolver may report all profiles `QUALIFIED` only after it
+validates that attestation against the committed authority chain, proof
+manifest, implementation Commit A, and proof-only Commit B. Session 2, case,
+model, mutation, and benchmark work remain outside this Session 1 closeout.
 
 This directory is the public, version-controlled control plane for Shiproom's external validation programme. The normative methodology is [the v2 testing plan](plan/shiproom_external_validation_testing_plan_v2.md); the [Codex action plan](plan/shiproom_external_validation_codex_action_plan.md) governs execution sequencing and cannot weaken that methodology.
 
