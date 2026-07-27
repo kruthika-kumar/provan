@@ -1,31 +1,26 @@
-# Session 1 repair closeout review
+# Session 1 control-plane repair closeout
 
 | Field | Value |
 | --- | --- |
-| review_verdict | GO |
+| review_verdict | GO, subject to the committed proof bundle and external attestation |
 | qualification_status | QUALIFIED |
 | detection_profile | QUALIFIED |
-| remediation_profile | QUALIFIED (dedicated Linux remediation backend) |
-| overall_status | QUALIFIED when this proof-only closeout bundle is committed |
+| remediation_profile | QUALIFIED — root-staged Linux Docker/XFS doctor |
+| overall_status | QUALIFIED |
 
-Implementation Commit A is
-`796605b7f94af489e9a3b0eb15e98d55a956a459` (tree
-`2b29b32ec0c1b7206a0685f122290b9edabab34f`). Its only post-qualification
-executable change is the test-owned prerequisite generation that removed an
-implicit ignored-cache dependency. The exact clean-commit baseline passed with
-793 tests passed and 3 skipped; its private transcript and receipt hashes are
-recorded in `full_baseline.md`.
+The production doctor completed all required runtime proofs: real Git repair
+and receipt-v2 finalization, overlapping quota domains and capacity lineage,
+authorization/artifact tampering rejection, and residual cwd/FD rejection.
+Its private canonical report is bound by
+`control_plane_repair_proof_manifest.json`; public material is not the
+qualification authority.
 
-The retained receipt-v2 detection matrix covers the unchanged v2 production
-contract. The changed remediation backend was freshly root-staged and passed
-the real Linux/XFS doctor for Commit A with both profiles `QUALIFIED`; the
-private report and sanitized public binding are recorded in
-`docker_qualification.md` and
-`remediation_backend_qualification.public.json`.
+The final complete baseline ran from a clean worktree at
+`6696854f32b6687b92f32de78caeeaa519841661` and completed with **802 passed,
+3 skipped in 2009.03 seconds**. Earlier timeout runs were not used as
+positive evidence.
 
-The fresh read-only closeout reviewer reran the public-tree leakage validator
-and focused external-validation suites (38 passed), verified the deterministic
-public view and single status successor, and returned `GO`. This bundle must
-not claim benchmark execution, case selection, model selection, mutation
-materialization, a merge, or a release tag. The successor status becomes
-effective only with this proof-only closeout commit.
+The status authority resolves only through its profile chain and requires the
+root-owned external attestation binding the pushed proof/status commit. No
+benchmark, case-selection, model-selection, or Session 2 work is represented
+by this closeout.
