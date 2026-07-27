@@ -35,6 +35,128 @@ def _committed_file(root: Path, path: Path) -> None:
         raise V2ValidationError("status_authority_uncommitted_blob")
 
 
+def _git_blob(root: Path, revision: str, relative: str) -> str:
+    """Return one committed blob ID, failing closed on an unavailable Git view."""
+    try:
+        result = subprocess.run(
+            ["git", "-c", "safe.directory=" + str(root.resolve()), "rev-parse", f"{revision}:{relative}"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
+    if result.returncode != 0 or len(result.stdout.strip()) != 40:
+        raise V2ValidationError("status_attestation_commit_binding_invalid")
+    return result.stdout.strip()
+
+
+def _validate_external_attestation(
+    *, root: Path, authority_path: Path, current_path: Path, profiles: dict[str, dict[str, Any]], attestation: Path
+) -> None:
+    """Validate the external Commit-B attestation against actual Git objects.
+
+    The attestation is deliberately outside Git.  It must therefore bind the
+    committed authority/chain/proof bytes and the implementation identity, not
+    merely repeat hashes supplied by a caller.
+    """
+    if attestation.is_symlink() or not attestation.is_file() or attestation.stat().st_mode & 0o022:
+        raise V2ValidationError("status_attestation_insecure_file")
+    try:
+        data = json.loads(attestation.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise V2ValidationError("status_attestation_invalid") from exc
+    required = {"schema_id", "schema_version", "commit_b", "commit_b_tree", "proof_bundle_hash", "status_authority_hash", "status_chain_hash"}
+    if not isinstance(data, dict) or set(data) != required or data.get("schema_id") != "external_validation.status_attestation.v1" or data.get("schema_version") != "1":
+        raise V2ValidationError("status_attestation_invalid")
+    if data.get("status_authority_hash") != _hash(authority_path) or data.get("status_chain_hash") != _hash(current_path):
+        raise V2ValidationError("status_attestation_binding_invalid")
+    final_rows = list(profiles.values())
+    if (
+        not all(isinstance(data[key], str) for key in ("commit_b", "commit_b_tree", "proof_bundle_hash"))
+        or any(row.get("proof_bundle_hash") != data["proof_bundle_hash"] for row in final_rows)
+        or any(row.get("implementation_commit") != final_rows[0].get("implementation_commit") or row.get("implementation_tree") != final_rows[0].get("implementation_tree") for row in final_rows)
+    ):
+        raise V2ValidationError("status_attestation_proof_binding_invalid")
+    proof_path = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
+    if not proof_path.is_file() or _hash(proof_path) != data["proof_bundle_hash"]:
+        raise V2ValidationError("status_attestation_proof_binding_invalid")
+    try:
+        proof = json.loads(proof_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise V2ValidationError("status_attestation_proof_binding_invalid") from exc
+    implementation_commit = final_rows[0]["implementation_commit"]
+    implementation_tree = final_rows[0]["implementation_tree"]
+    expected_profiles = final_rows[0]["expected_profiles"]
+    if (
+        not isinstance(proof, dict)
+        or proof.get("schema_id") != "external_validation.session1_control_plane_proof_manifest.v1"
+        or proof.get("implementation_commit") != implementation_commit
+        or proof.get("implementation_tree") != implementation_tree
+        or proof.get("profiles") != expected_profiles
+    ):
+        raise V2ValidationError("status_attestation_proof_binding_invalid")
+    try:
+        git = ["git", "-c", "safe.directory=" + str(root.resolve())]
+        commit_tree = subprocess.run([*git, "rev-parse", str(data["commit_b"]) + "^{tree}"], cwd=root, text=True, capture_output=True, check=False, timeout=10)
+        ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", str(data["commit_b"]), "HEAD"], cwd=root, capture_output=True, check=False, timeout=10)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
+    if commit_tree.returncode != 0 or ancestor.returncode != 0 or commit_tree.stdout.strip() != data["commit_b_tree"]:
+        raise V2ValidationError("status_attestation_commit_binding_invalid")
+    try:
+        commit_paths = subprocess.run(
+            [*git, "diff-tree", "--no-commit-id", "--name-only", "-r", str(data["commit_b"])],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
+    proof_only_prefixes = (
+        "external_validation/proofs/",
+        "external_validation/reviews/",
+        "external_validation/status/",
+        "external_validation/README.md",
+    )
+    if commit_paths.returncode != 0 or any(
+        path and not path.startswith(proof_only_prefixes) for path in commit_paths.stdout.splitlines()
+    ):
+        raise V2ValidationError("status_attestation_commit_scope_invalid")
+    try:
+        implementation_tree_result = subprocess.run(
+            [*git, "rev-parse", implementation_commit + "^{tree}"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+        implementation_ancestor = subprocess.run(
+            [*git, "merge-base", "--is-ancestor", implementation_commit, str(data["commit_b"])],
+            cwd=root,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
+    if (
+        implementation_tree_result.returncode != 0
+        or implementation_ancestor.returncode != 0
+        or implementation_tree_result.stdout.strip() != implementation_tree
+    ):
+        raise V2ValidationError("status_attestation_implementation_binding_invalid")
+    for path in (authority_path, current_path, proof_path):
+        relative = path.resolve().relative_to(root.resolve()).as_posix()
+        if _git_blob(root, str(data["commit_b"]), relative) != _git_blob(root, "HEAD", relative):
+            raise V2ValidationError("status_attestation_commit_binding_invalid")
+
+
 def _profile_chain(value: Any, historical: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict) or set(value) != {"schema_id", "schema_version", "historical_anchor", "profiles"}:
         raise V2ValidationError("profile_status_chain_document_invalid")
@@ -153,11 +275,13 @@ def resolve_status_authority(authority_path: Path, *, repository_root: Path | No
             resolved["remediation"] = "BLOCKED" if resolved["remediation"] == "QUALIFIED" else resolved["remediation"]
             resolved["overall"] = "PARTIALLY_QUALIFIED"
         else:
-            data = json.loads(attestation.read_text(encoding="utf-8"))
-            required = {"schema_id", "schema_version", "commit_b", "commit_b_tree", "proof_bundle_hash", "status_authority_hash", "status_chain_hash"}
-            if not isinstance(data, dict) or set(data) != required or data.get("schema_id") != "external_validation.status_attestation.v1" or data.get("schema_version") != "1":
-                raise V2ValidationError("status_attestation_invalid")
-            if data.get("status_authority_hash") != _hash(authority_path) or data.get("status_chain_hash") != _hash(current_path): raise V2ValidationError("status_attestation_binding_invalid")
+            _validate_external_attestation(
+                root=root,
+                authority_path=authority_path,
+                current_path=current_path,
+                profiles=profiles,
+                attestation=attestation,
+            )
     return {"profiles": resolved, "profile_status_ids": {name: row["status_id"] for name, row in profiles.items()}, "historical": historical}
 
 

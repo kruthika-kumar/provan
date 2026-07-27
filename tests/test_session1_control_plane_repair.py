@@ -13,6 +13,7 @@ import pytest
 from shiproom.external_validation.remediation_backend.control import Control, ControlError, canonical, digest
 from shiproom.external_validation.remediation_backend.migration import MigrationError, migrate_v2_to_v3
 from shiproom.external_validation.status import resolve_status_authority
+from shiproom.external_validation.v2 import V2ValidationError
 
 
 PREDECESSOR = "72e0884a69cbf57c17bc7b620c2c4a1314d3fe01"
@@ -153,3 +154,26 @@ def test_status_authority_has_one_profile_current_chain():
     # Final records are intentionally ineffective until the external
     # attestation binds the pushed proof/status commit.
     assert result["profiles"] == {"detection": "QUALIFIED", "remediation": "BLOCKED", "overall": "PARTIALLY_QUALIFIED"}
+
+
+def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> None:
+    """Commit B cannot be forged by pointing an attestation at code changes."""
+    root = Path.cwd()
+    authority = root / "external_validation/status/session1-status-authority.v1.json"
+    chain = root / "external_validation/status/session1-profile-status-chain.v2.json"
+    proof = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip()
+    attestation = tmp_path / "attestation.json"
+    attestation.write_text(json.dumps({
+        "schema_id": "external_validation.status_attestation.v1",
+        "schema_version": "1",
+        "commit_b": head,
+        "commit_b_tree": tree,
+        "proof_bundle_hash": "sha256:" + hashlib.sha256(proof.read_bytes()).hexdigest(),
+        "status_authority_hash": "sha256:" + hashlib.sha256(authority.read_bytes()).hexdigest(),
+        "status_chain_hash": "sha256:" + hashlib.sha256(chain.read_bytes()).hexdigest(),
+    }), encoding="utf-8")
+    attestation.chmod(0o400)
+    with pytest.raises(V2ValidationError, match="status_attestation_commit_scope_invalid"):
+        resolve_status_authority(authority, repository_root=root, attestation=attestation)
