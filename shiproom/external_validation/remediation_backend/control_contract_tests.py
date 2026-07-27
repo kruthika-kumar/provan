@@ -115,6 +115,32 @@ with tempfile.TemporaryDirectory() as temporary:
         assert cwd in {fixture_root, source_root}
         assert argv[:3] == ["/usr/bin/git", "-c", f"safe.directory={cwd}"], argv
 
+# First production receipt finalization creates the supervisor-owned journal
+# parent before SQLite is opened.  A fresh backend must not depend on an
+# earlier receipt having happened to create it.
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary)
+    artifact = root / "patch.bin"; artifact.write_bytes(b"patch")
+    journal_root = root / "new-journal-parent"
+    fixture_hash = "sha256:" + "a" * 64
+    calls: list[Path] = []
+    class JournalProbe:
+        def __init__(self, database: Path):
+            assert database.parent == journal_root and database.parent.is_dir()
+            calls.append(database)
+        def prepare(self, *unused): pass
+        def phase(self, *unused): pass
+    source = {"commit": "a" * 40, "source_snapshot_hash": fixture_hash}
+    command = {"label": "fixture", "command": ["true"], "exit_code": 0, "stdout": b"", "stderr": b"", "started_at": "2026-07-27T00:00:00Z", "completed_at": "2026-07-27T00:00:01Z"}
+    container = {"requested_policy_hash": fixture_hash}
+    with mock.patch.object(lifecycle, "FinalizationJournal", JournalProbe), mock.patch.object(lifecycle, "finalize_v2", return_value=("receipt_fixture", root / "receipts" / "fixture.json")):
+        receipt_id, _, _, _ = lifecycle.seal_and_finalize(
+            attempt="fixture-attempt", source=source, artifacts={"patch.bin": artifact}, command_results=[command],
+            receipt_root=root / "supervisor", journal_root=journal_root, runner_image_digest="shiproom.local/runner@sha256:" + "b" * 64,
+            container=container, shiproom_commit="c" * 40, package_tree_hash="d" * 40,
+        )
+    assert receipt_id == "receipt_fixture" and calls == [journal_root / "finalization.sqlite"]
+
 H = "sha256:" + "a" * 64
 
 def capacity_record(instance: str, *, total: int = 16_000_000_000, available: int = 16_000_000_000, aggregate: int = 6_000_000_000, predecessor: str | None = None, qualified_at: str = "2026-07-27T00:00:00Z") -> dict[str, object]:
