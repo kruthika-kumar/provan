@@ -1,5 +1,14 @@
 # Shiproom external validation
 
+## Current Session 1 status
+
+Session 1 remediation is reopened for final control-plane repair. Detection
+remains qualified; remediation is `REOPENED`; overall status is
+`PARTIALLY_QUALIFIED`. The authoritative current view is
+`status/session1-status-authority.v1.json`, not historical status-chain files
+or markdown closeout summaries. No Session 2, case, model, mutation, or
+benchmark work is authorized while this repair is open.
+
 This directory is the public, version-controlled control plane for Shiproom's external validation programme. The normative methodology is [the v2 testing plan](plan/shiproom_external_validation_testing_plan_v2.md); the [Codex action plan](plan/shiproom_external_validation_codex_action_plan.md) governs execution sequencing and cannot weaken that methodology.
 
 ## Incorporated authority
