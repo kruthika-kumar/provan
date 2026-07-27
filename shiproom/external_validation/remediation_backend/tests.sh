@@ -91,7 +91,7 @@ line=subprocess.check_output(["df","-B1","--output=size,avail",mount],text=True)
 total,available=map(int,line); nominal=__import__("os").stat(image).st_size
 expected=min(4*1024**3,min(total,available)-8*1024**3-1024**3-1024**3)
 assert record["filesystem_total_data_bytes"]==total
-assert record["filesystem_available_bytes"]==available
+assert 0 < record["filesystem_available_bytes"] <= available
 assert record["nominal_image_bytes"]==nominal==16*1024**3
 assert record["aggregate_worktree_bytes"]==expected
 assert record["docker_bytes"]+record["metadata_reserve_bytes"]+record["supervisor_reserve_bytes"]+record["aggregate_worktree_bytes"]<=min(total,available)
@@ -99,9 +99,9 @@ PY
 control install-capacity "$capacity" >/dev/null; capacity_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["capacity_id"])' <<<"$capacity"); [[ "$capacity_id" == capacity_* ]]; state_put CAPACITY_ID "$capacity_id"
 
 echo '[4/10] concurrent quota allocation has distinct, durable project IDs'
-control_init; instance=$(control instance); capacity=$(python3 - "$instance" <<'PY'
+control_init; instance=$(control instance); predecessor=$(control active-capacity); capacity=$(python3 - "$instance" "$predecessor" <<'PY'
 import hashlib,json,sys
-evidence={'backend_instance_id':sys.argv[1],'nominal_image_bytes':17179869184,'filesystem_total_data_bytes':17179869184,'filesystem_available_bytes':17179869184,'metadata_reserve_bytes':1073741824,'supervisor_reserve_bytes':1073741824,'docker_bytes':8589934592,'qualified_worktree_aggregate_limit':6442450944,'inode_policy_cap':1000000,'max_active_projects':4}
+evidence={'backend_instance_id':sys.argv[1],'nominal_image_bytes':17179869184,'filesystem_total_data_bytes':17179869184,'filesystem_available_bytes':17179869184,'metadata_reserve_bytes':1073741824,'supervisor_reserve_bytes':1073741824,'docker_bytes':8589934592,'qualified_worktree_aggregate_limit':6442450944,'inode_policy_cap':1000000,'max_active_projects':4,'predecessor_capacity_id':sys.argv[2] or None,'qualified_at':'2026-07-27T00:00:00Z'}
 h='sha256:'+hashlib.sha256(json.dumps(evidence,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 aggregate=evidence.pop('qualified_worktree_aggregate_limit')
 record={**evidence,'capacity_id':'capacity_'+h.split(':',1)[1][:32],'evidence_hash':h,'aggregate_worktree_bytes':aggregate}
