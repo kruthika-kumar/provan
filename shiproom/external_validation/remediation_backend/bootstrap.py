@@ -61,6 +61,7 @@ def source_manifest(source:Path)->dict[str,object]:
     # deliberately copied into the sealed stage.  Accept only either complete
     # layout, never a mixed fallback assembled from two authorities.
     production_root=source if all((source/name).is_file() for name in PRODUCTION_FILES) else source.parent
+    runner_root=source/"runner_image" if (source/"runner_image").is_dir() else source.parent/"runner_image"
     files={}; schemas={}; production={}; runner={}
     for name in FILES:
         path=source/name; regular(path); files[name]=sha(path)
@@ -69,7 +70,7 @@ def source_manifest(source:Path)->dict[str,object]:
     for name in PRODUCTION_FILES:
         path=production_root/name; regular(path); production[name]=sha(path)
     for name in RUNNER_FILES:
-        path=source.parent/"runner_image"/name; regular(path); runner[name]=sha(path)
+        path=runner_root/name; regular(path); runner[name]=sha(path)
     return {"files":files,"schemas":schemas,"production_files":production,"runner_files":runner}
 def source_root(source:Path)->Path:
     trusted_host_executable(Path("/usr/bin/git"))
