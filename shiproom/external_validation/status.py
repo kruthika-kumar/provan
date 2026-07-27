@@ -22,10 +22,15 @@ def _committed_file(root: Path, path: Path) -> None:
     except ValueError as exc:
         raise V2ValidationError("status_authority_path_outside_repository") from exc
     try:
-        result = subprocess.run(["git", "show", "HEAD:" + relative], cwd=root, capture_output=True, check=False, timeout=10)
+        expected = subprocess.run(["git", "rev-parse", "HEAD:" + relative], cwd=root, text=True, capture_output=True, check=False, timeout=10)
+        actual = subprocess.run(["git", "hash-object", "--path=" + relative, str(path)], cwd=root, text=True, capture_output=True, check=False, timeout=10)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise V2ValidationError("status_authority_commit_check_unavailable") from exc
-    if result.returncode != 0 or result.stdout != path.read_bytes():
+    # Compare Git blob identities rather than raw working-tree bytes: Windows
+    # checkouts may legitimately apply CRLF filters while still representing
+    # the exact committed authority blob.  An uncommitted semantic change
+    # produces a different filtered blob hash and remains fail-closed.
+    if expected.returncode != 0 or actual.returncode != 0 or expected.stdout.strip() != actual.stdout.strip():
         raise V2ValidationError("status_authority_uncommitted_blob")
 
 
