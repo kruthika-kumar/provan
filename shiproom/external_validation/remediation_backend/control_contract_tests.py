@@ -345,7 +345,8 @@ with tempfile.TemporaryDirectory() as raw:
         {"command":["/usr/bin/shellcheck","--version"],"exit_code":0},
         {"command":["/usr/bin/shellcheck","-S","warning",*shell_scripts],"exit_code":0},
     ]
-    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"production_files":source_manifest(backend_source)["production_files"],"shellcheck":{"path":"/usr/bin/shellcheck","hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
+    manifest=source_manifest(backend_source)
+    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":manifest["files"],"schemas":manifest["schemas"],"production_files":manifest["production_files"],"runner_files":manifest["runner_files"],"shellcheck":{"path":"/usr/bin/shellcheck","hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
     stage0["attestation_hash"] = digest(stage0)
     stage0_path=Path(raw)/"stage0.json"; stage0_path.write_text(json.dumps(stage0),encoding="utf-8")
     real_bootstrap_sha=bootstrap.sha
