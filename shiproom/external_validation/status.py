@@ -22,7 +22,7 @@ def _committed_file(root: Path, path: Path) -> None:
     except ValueError as exc:
         raise V2ValidationError("status_authority_path_outside_repository") from exc
     try:
-        git = ["git", "-c", "safe.directory=" + str(root.resolve())]
+        git = ["git", "-c", "core.autocrlf=true", "-c", "safe.directory=" + str(root.resolve())]
         expected = subprocess.run([*git, "rev-parse", "HEAD:" + relative], cwd=root, text=True, capture_output=True, check=False, timeout=10)
         actual = subprocess.run([*git, "hash-object", "--path=" + relative, str(path)], cwd=root, text=True, capture_output=True, check=False, timeout=10)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -39,7 +39,7 @@ def _git_blob(root: Path, revision: str, relative: str) -> str:
     """Return one committed blob ID, failing closed on an unavailable Git view."""
     try:
         result = subprocess.run(
-            ["git", "-c", "safe.directory=" + str(root.resolve()), "rev-parse", f"{revision}:{relative}"],
+            ["git", "-c", "core.autocrlf=true", "-c", "safe.directory=" + str(root.resolve()), "rev-parse", f"{revision}:{relative}"],
             cwd=root,
             text=True,
             capture_output=True,
@@ -61,7 +61,7 @@ def _committed_content_hash(root: Path, path: Path) -> str:
         raise V2ValidationError("status_authority_path_outside_repository") from exc
     try:
         result = subprocess.run(
-            ["git", "-c", "safe.directory=" + str(root.resolve()), "show", "HEAD:" + relative],
+            ["git", "-c", "core.autocrlf=true", "-c", "safe.directory=" + str(root.resolve()), "show", "HEAD:" + relative],
             cwd=root,
             capture_output=True,
             check=False,
