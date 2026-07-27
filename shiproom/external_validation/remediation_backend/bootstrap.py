@@ -100,8 +100,15 @@ def verify_stage(target:Path)->None:
         if item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("staged_ownership_invalid")
     expected=manifest["source_manifest"]
     if {name:sha(target/name) for name in FILES}!=expected["files"] or {name:sha(target/name) for name in PRODUCTION_FILES}!=expected["production_files"] or {name:sha(target/"schemas"/name) for name in SCHEMAS}!=expected["schemas"]: raise RuntimeError("staged_hash_mismatch")
-    attestation=validate_attestation(target/"stage0-attestation.json",target,manifest["source_commit"],manifest["source_tree"])
-    if attestation["attestation_hash"]!=manifest["attestation_hash"]: raise RuntimeError("staged_attestation_mismatch")
+    # The staged bundle has no external-validation parent package tree.  Do
+    # not call source_manifest(target): it would accidentally look for
+    # production dependencies beside /run/..., rather than verifying their
+    # already sealed manifest entries inside the bundle.
+    data=json.loads((target/"stage0-attestation.json").read_text(encoding="utf-8"))
+    claimed=data.pop("attestation_hash",None)
+    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","shellcheck","commands","created_at"}
+    if claimed!="sha256:"+hashlib.sha256(canonical(data)).hexdigest() or set(data)!=required: raise RuntimeError("staged_attestation_mismatch")
+    if data["schema_id"]!="remediation_stage0_attestation.v1" or data["schema_version"]!="1" or data["commit"]!=manifest["source_commit"] or data["tree"]!=manifest["source_tree"] or data["bundle_files"]!=expected["files"] or data["schemas"]!=expected["schemas"] or data["production_files"]!=expected["production_files"] or claimed!=manifest["attestation_hash"]: raise RuntimeError("staged_attestation_mismatch")
 def require_staged_script(script:Path)->None:
     verify_stage(script.resolve().parent)
 def approval_path(attestation_hash:str)->Path:
