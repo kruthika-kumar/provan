@@ -382,7 +382,7 @@ def real_residual_reference_fixture(db: Path, runner_image: str, shiproom_commit
         environment = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "SHIPROOM_QUALIFICATION_RUN_ID": qualification_run}
         allocation_result = invocation([str(allocation_script), "allocate", attempt, str(32 * 1024 * 1024), "2048", source["source_snapshot_hash"]], environment=environment)
         if allocation_result["exit_code"] != 0:
-            raise RuntimeError("doctor_residual_allocation_failed")
+            raise RuntimeError("doctor_residual_allocation_failed:" + str(allocation_result["stderr"])[-800:])
         tree = allocated_tree(db, attempt, allocation_result)
         materialize_fixture(source_root=source_root, worktree=tree, source=source)
         _patient_ownership(tree)
