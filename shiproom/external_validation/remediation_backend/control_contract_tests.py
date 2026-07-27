@@ -480,6 +480,18 @@ with tempfile.TemporaryDirectory() as raw:
     expect("backend_execution_blocked:QUOTA_STATE_UNCERTAIN", control.assert_ready)
     control.resolve_incident(incident, {"proof": H})
     control.assert_ready()
+    # A release that failed before content deletion has a different durable
+    # shape from an allocation-time incident.  Its recovery retains the
+    # original authorization/release row while atomically retiring capacity.
+    release_document = authorization(instance, "attempt-b", second)
+    release_document["worktree_authority"] = stored_second
+    control.authorize_release(release_document, "/supervisor/authorizations/recovery.json")
+    release_incident = control.incident("RELEASE_UNCERTAIN", "QUOTA_STATE_UNCERTAIN", {"reason": "authorization_fixture"})
+    resolution = control.complete_release_quarantine_recovery("attempt-b", release_incident, H)
+    assert resolution.startswith("incident_")
+    assert control.allocation("attempt-b")["terminal_status"] == "QUARANTINED_RETIRED"
+    assert control.db.execute("SELECT phase,terminal_status FROM releases WHERE attempt_id='attempt-b'").fetchone()["phase"] == "RECOVERY_COMMITTED"
+    control.assert_ready()
     bad = authorization(instance, "attempt-b", second)
     bad["worktree_authority"]["attempt_id"] = "other"  # type: ignore[index]
     expect("worktree_binding_mismatch", lambda: validate_release_authorization(bad))
