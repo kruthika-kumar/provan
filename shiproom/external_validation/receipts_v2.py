@@ -7,9 +7,14 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
-from .identity import canonical_json
-from .security import sha256_file
-from .v2 import FinalizationJournal, receipt_id_v2, validate_artifact_manifest, validate_receipt_v2
+try:
+    from .identity import canonical_json
+    from .security import sha256_file
+    from .v2 import FinalizationJournal, receipt_id_v2, validate_artifact_manifest, validate_receipt_v2
+except ImportError:  # root-staged remediation bundle copies hash-bound helpers
+    from identity import canonical_json
+    from security import sha256_file
+    from v2 import FinalizationJournal, receipt_id_v2, validate_artifact_manifest, validate_receipt_v2
 
 
 def finalize_v2(*, receipt: dict[str, Any], manifest: dict[str, Any], manifest_path: Path, artifacts: dict[str, Path], journal: FinalizationJournal, destination: Path) -> tuple[str, dict[str, Any]]:

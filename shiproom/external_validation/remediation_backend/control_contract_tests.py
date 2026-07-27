@@ -77,17 +77,13 @@ assert '"-n", "-o", "SOURCE", "--target", str(mount)' in release_source
 assert 'line.split()[0] == sources[0]' in release_source
 assert 'matching[0][3] != "0" or matching[0][8] != "0"' in release_source
 doctor_source=(Path(__file__).parent/"doctor.py").read_text(encoding="utf-8")
-assert 'p.add_argument("--run-remediation-fixture",action="store_true")' in doctor_source
-assert 'require_staged_script(allocation_script)' in doctor_source
-assert 'def fixture_failure(' in doctor_source
-assert '"reason"]="incident_persistence_failed"' in doctor_source
-assert 'fixture_failure(db,attempt,"byte_quota_probes"' in doctor_source
-assert 'fixture_failure(db,inode_attempt,"inode_quota_probe"' in doctor_source
-assert 'tree != expected or not tree.is_dir()' in doctor_source
+assert 'parser.add_argument("--run-remediation-fixture", action="store_true")' in doctor_source
+assert 'real_git_remediation_fixture' in doctor_source
+assert 'prepare_fixture_source' in doctor_source and 'materialize_fixture' in doctor_source
+assert 'seal_and_finalize' in doctor_source and 'validate_release_authorization' in doctor_source
+assert '"0" * 64' not in doctor_source and '"a" * 64' not in doctor_source
+assert 'tree != Path(str(authority["canonical_path"])) or not tree.is_dir()' in doctor_source
 assert '_STAGED_MODULE_DIRECTORY' in doctor_source
-assert "'quota_write_errno':e.errno" in doctor_source
-assert 'errno.EDQUOT,errno.ENOSPC,errno.EFBIG' in doctor_source
-assert "'inode_write_errno':e.errno" in doctor_source
 # The privileged doctor is deliberately launched with ``-I -S``.  Its help
 # path must still import every co-staged module without a site package or a
 # caller-controlled PYTHONPATH; otherwise the real doctor fails before any
@@ -100,13 +96,13 @@ assert isolated_doctor.returncode == 0 and "--run-remediation-fixture" in isolat
 
 H = "sha256:" + "a" * 64
 
-def capacity_record(instance: str, *, total: int = 16_000_000_000, available: int = 16_000_000_000, aggregate: int = 6_000_000_000) -> dict[str, object]:
+def capacity_record(instance: str, *, total: int = 16_000_000_000, available: int = 16_000_000_000, aggregate: int = 6_000_000_000, predecessor: str | None = None, qualified_at: str = "2026-07-27T00:00:00Z") -> dict[str, object]:
     evidence = {
         "backend_instance_id": instance, "nominal_image_bytes": 17_179_869_184,
         "filesystem_total_data_bytes": total, "filesystem_available_bytes": available,
         "metadata_reserve_bytes": 1_000_000_000, "supervisor_reserve_bytes": 1_000_000_000,
         "docker_bytes": 8_000_000_000, "qualified_worktree_aggregate_limit": aggregate,
-        "inode_policy_cap": 10_000, "max_active_projects": 2,
+        "inode_policy_cap": 10_000, "max_active_projects": 2, "predecessor_capacity_id": predecessor, "qualified_at": qualified_at,
     }
     evidence_hash = digest(evidence)
     return {
@@ -115,7 +111,7 @@ def capacity_record(instance: str, *, total: int = 16_000_000_000, available: in
         "filesystem_total_data_bytes": total, "filesystem_available_bytes": available,
         "metadata_reserve_bytes": evidence["metadata_reserve_bytes"], "supervisor_reserve_bytes": evidence["supervisor_reserve_bytes"],
         "docker_bytes": evidence["docker_bytes"], "aggregate_worktree_bytes": aggregate,
-        "inode_policy_cap": evidence["inode_policy_cap"], "max_active_projects": evidence["max_active_projects"],
+        "inode_policy_cap": evidence["inode_policy_cap"], "max_active_projects": evidence["max_active_projects"], "predecessor_capacity_id": predecessor, "qualified_at": qualified_at,
     }
 
 # Root provenance checks must never inherit a caller's Git redirection state.
@@ -349,7 +345,7 @@ with tempfile.TemporaryDirectory() as raw:
         {"command":["/usr/bin/shellcheck","--version"],"exit_code":0},
         {"command":["/usr/bin/shellcheck","-S","warning",*shell_scripts],"exit_code":0},
     ]
-    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"shellcheck":{"path":"/usr/bin/shellcheck","hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
+    stage0 = {"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":"0"*40,"tree":"1"*40,"bundle_files":source_manifest(backend_source)["files"],"schemas":source_manifest(backend_source)["schemas"],"production_files":source_manifest(backend_source)["production_files"],"shellcheck":{"path":"/usr/bin/shellcheck","hash":H,"version":"fixture"},"commands":stage_commands,"created_at":"2026-07-25T00:00:00Z"}
     stage0["attestation_hash"] = digest(stage0)
     stage0_path=Path(raw)/"stage0.json"; stage0_path.write_text(json.dumps(stage0),encoding="utf-8")
     real_bootstrap_sha=bootstrap.sha
@@ -430,38 +426,7 @@ with tempfile.TemporaryDirectory() as raw:
         document["canonical_path"]=str(root/"other")
         expect("doctor_allocation_authority_mismatch",lambda: doctor.allocated_tree(root/"control.sqlite3","doctor-fixture",result))
     with mock.patch.object(doctor,"invocation",side_effect=AssertionError("unqualified doctor invoked allocation")):
-        blocked=doctor.real_quota_lifecycle_fixture(root/"not-authoritative.sqlite3")
-    assert blocked == {"name":"real_quota_lifecycle_fixture","ok":False,"reason":"doctor_paths_not_qualified"}
-
-    class IncidentControl:
-        def __init__(self, _db: Path): pass
-        def incident(self, _kind: str, _state: str, _payload: dict[str, object]) -> str: return "incident_"+"a"*32
-        def close(self) -> None: pass
-    class BrokenIncidentControl(IncidentControl):
-        def incident(self, _kind: str, _state: str, _payload: dict[str, object]) -> str: raise sqlite3.OperationalError("database locked")
-    with mock.patch.object(doctor,"Control",IncidentControl):
-        assert doctor.fixture_incident(root/"control.sqlite3","doctor-fixture","probe",{}) == {"persisted":True,"incident_id":"incident_"+"a"*32}
-    with mock.patch.object(doctor,"Control",BrokenIncidentControl):
-        failed_incident=doctor.fixture_incident(root/"control.sqlite3","doctor-fixture","probe",{})
-    assert failed_incident["persisted"] is False and failed_incident["error"] == "incident_persistence_failed"
-
-    # Exercise the destructive-fixture error branches with shims only.  The
-    # fixture must create a durable incident record for an EDQUOT failure or
-    # release failure; failed incident persistence is distinguished, not null.
-    fixture_root=root/"fixture-root"; fixture_root.mkdir(); fixture_tree=root/"fixture-worktree"; fixture_tree.mkdir()
-    under=fixture_tree/"under-limit.bin"; under.write_bytes(b"x"*(512*1024))
-    qualified_db=fixture_root/"control.sqlite3"
-    common={"ROOT":fixture_root,"MOUNT":SimpleNamespace(is_mount=lambda:True),"RUN":SimpleNamespace(is_dir=lambda:True)}
-    allocation={"exit_code":0,"stdout":str(fixture_tree)+"\n"}
-    persisted={"persisted":True,"incident_id":"incident_"+"b"*32}
-    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",return_value=fixture_tree), mock.patch.object(doctor,"quota_probe",side_effect=[{"exit_code":0},{"exit_code":0}]), mock.patch.object(doctor,"fixture_incident",return_value=persisted):
-        byte_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
-    assert byte_failure["phase"]=="byte_quota_probes" and byte_failure["containment_state"]=="QUOTA_STATE_UNCERTAIN" and byte_failure["incident"]==persisted
-    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",return_value=fixture_tree), mock.patch.object(doctor,"quota_probe",side_effect=[{"exit_code":0},{"exit_code":42}]), mock.patch.object(doctor,"release_fixture_attempt",return_value={"ok":False,"release":{"exit_code":1}}), mock.patch.object(doctor,"fixture_incident",return_value={"persisted":False,"error":"incident_persistence_failed"}):
-        release_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
-    assert release_failure["phase"]=="byte_release" and release_failure["reason"]=="incident_persistence_failed" and release_failure["incident"]["persisted"] is False
-    with mock.patch.multiple(doctor,**common), mock.patch.object(doctor,"require_staged_script"), mock.patch.object(doctor,"invocation",return_value=allocation), mock.patch.object(doctor,"allocated_tree",side_effect=sqlite3.OperationalError("database is locked")), mock.patch.object(doctor,"fixture_incident",return_value=persisted):
-        sqlite_failure=doctor.real_quota_lifecycle_fixture(qualified_db)
-    assert sqlite_failure["phase"]=="exception" and sqlite_failure["containment_state"]=="QUOTA_STATE_UNCERTAIN" and sqlite_failure["incident"]==persisted
+        blocked=doctor.real_git_remediation_fixture(root/"not-authoritative.sqlite3","example/runner@sha256:"+"a"*64,"b"*40,"sha256:"+"c"*64)
+    assert blocked == {"name":"real_git_remediation_fixture","ok":False,"reason":"doctor_paths_not_qualified"}
 
 print("control and contract behavioral tests passed")

@@ -151,20 +151,22 @@ quota_limits_verified(){
 }
 storage_verified(){ local loop; require_paths; loop=$(state_get LOOP); is_recorded_block_device "$loop" && [[ "$(losetup -n -O BACK-FILE "$loop")" == "$IMAGE" ]] || return 1; findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || return 1; xfs_info "$MOUNT" | grep -q 'ftype=1' || return 1; quota_limits_verified "$(state_get DATA_PROJECT)" "$(state_get DATA_BYTES)" "$(state_get DATA_INODES)"; }
 capacity_record_from_xfs(){
-  local total available nominal instance
+  local total available nominal instance predecessor
   read -r total available < <(df -B1 --output=size,avail "$MOUNT" | tail -n 1)
   nominal=$(stat -c %s "$IMAGE"); instance=$(control instance)
   [[ "$total" =~ ^[0-9]+$ && "$available" =~ ^[0-9]+$ && "$nominal" =~ ^[0-9]+$ && -n "$instance" ]] || return 1
-  /usr/bin/python3 - "$instance" "$nominal" "$total" "$available" <<'PY'
+  predecessor=$(control active-capacity 2>/dev/null || true)
+  /usr/bin/python3 - "$instance" "$nominal" "$total" "$available" "$predecessor" <<'PY'
 import hashlib,json,sys
-instance,nominal,total,available=sys.argv[1:]
+instance,nominal,total,available,predecessor=sys.argv[1:]
 nominal,total,available=map(int,(nominal,total,available))
 docker=8*1024**3; metadata=1024**3; supervisor=1024**3
 usable=min(total,available); aggregate=min(4*1024**3,usable-docker-metadata-supervisor)
 if aggregate < 2*1024**3: raise SystemExit(2)
-evidence={"backend_instance_id":instance,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"qualified_worktree_aggregate_limit":aggregate,"inode_policy_cap":500000,"max_active_projects":2}
+qualified_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat().replace('+00:00','Z')
+evidence={"backend_instance_id":instance,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"qualified_worktree_aggregate_limit":aggregate,"inode_policy_cap":500000,"max_active_projects":2,"predecessor_capacity_id":predecessor or None,"qualified_at":qualified_at}
 evidence_hash="sha256:"+hashlib.sha256(json.dumps(evidence,sort_keys=True,separators=(",",":")).encode()).hexdigest()
-record={"capacity_id":"capacity_"+evidence_hash.split(":",1)[1][:32],"backend_instance_id":instance,"evidence_hash":evidence_hash,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"aggregate_worktree_bytes":aggregate,"inode_policy_cap":500000,"max_active_projects":2}
+record={"capacity_id":"capacity_"+evidence_hash.split(":",1)[1][:32],"backend_instance_id":instance,"evidence_hash":evidence_hash,"nominal_image_bytes":nominal,"filesystem_total_data_bytes":total,"filesystem_available_bytes":available,"metadata_reserve_bytes":metadata,"supervisor_reserve_bytes":supervisor,"docker_bytes":docker,"aggregate_worktree_bytes":aggregate,"inode_policy_cap":500000,"max_active_projects":2,"predecessor_capacity_id":predecessor or None,"qualified_at":qualified_at}
 print(json.dumps(record,sort_keys=True,separators=(",",":")))
 PY
 }

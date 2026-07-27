@@ -15,7 +15,10 @@ import struct
 from typing import Any, BinaryIO
 import unicodedata
 
-from .identity import canonical_json, attempt_id
+try:
+    from .identity import canonical_json, attempt_id
+except ImportError:  # root-staged remediation bundle copies hash-bound helpers
+    from identity import canonical_json, attempt_id
 
 SHA = "sha256:"
 MAGIC = b"SRXFER02"
