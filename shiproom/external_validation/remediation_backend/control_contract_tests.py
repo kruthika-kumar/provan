@@ -20,6 +20,7 @@ import bootstrap
 import gate
 import doctor
 import lifecycle
+import contracts
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
@@ -81,7 +82,7 @@ doctor_source=(Path(__file__).parent/"doctor.py").read_text(encoding="utf-8")
 assert 'parser.add_argument("--run-remediation-fixture", action="store_true")' in doctor_source
 assert 'real_git_remediation_fixture' in doctor_source
 assert 'prepare_fixture_source' in doctor_source and 'materialize_fixture' in doctor_source
-assert 'seal_and_finalize' in doctor_source and 'validate_release_authorization' in doctor_source
+assert 'seal_and_finalize' in doctor_source and 'issue_release_authorization' in doctor_source
 assert 'parser.add_argument("--source-tree"' in doctor_source
 assert 'parser.add_argument("--package-tree-hash"' in doctor_source
 assert 'package_tree_hash=package_tree_hash' in doctor_source
@@ -224,13 +225,13 @@ with tempfile.TemporaryDirectory() as temporary:
         def instance_id(self) -> str: return "backend_fixture"
         def authorize_release(self, document: dict[str, object], path: str) -> None: captured.update(document=document, path=path)
     def capture_root_owned(path: Path, data: bytes) -> None: captured["written_path"] = path; captured["written_document"] = json.loads(data)
-    with mock.patch.object(doctor, "ROOT", root), mock.patch.object(doctor, "write_root_owned", capture_root_owned), mock.patch.object(doctor, "validate_release_authorization", side_effect=lambda value: value):
-        doctor._authorization(AuthorizationControl(), "attempt_fixture", {"source_snapshot_hash": H}, "receipt_fixture", manifest, {"patch.bin": artifact, "changed-manifest.json": changed, "untracked-manifest.bin": untracked})
+    with mock.patch.object(lifecycle, "_root_immutable_write", capture_root_owned), mock.patch.object(contracts, "validate_release_authorization", side_effect=lambda value: value):
+        lifecycle.issue_release_authorization(control=AuthorizationControl(), attempt="attempt_fixture", source={"source_snapshot_hash": H}, receipt_id="receipt_fixture", manifest_path=manifest, artifacts={"patch.bin": artifact, "changed-manifest.json": changed, "untracked-manifest.bin": untracked}, authorization_root=root / "authorizations")
     document = captured["document"]
     assert isinstance(document, dict)
     records = {record["kind"]: record for record in document["artifact_records"]}
     assert records["sealed_artifact_manifest"]["canonical_path"] == str(manifest)
-    assert records["sealed_artifact_manifest"]["sha256"] == doctor.sha(manifest)
+    assert records["sealed_artifact_manifest"]["sha256"] == "sha256:" + __import__("hashlib").sha256(manifest.read_bytes()).hexdigest()
 
 
 def expect(code: str, fn) -> None:
@@ -476,7 +477,7 @@ with tempfile.TemporaryDirectory() as raw:
     # Capacity returns atomically only after the retirement transaction.
     third = control.reserve("attempt-c", 4_000_000_000, 4_000, H, capacity_id, 9_000_000_000)
     assert third == 20002
-    incident = control.incident("test", "QUOTA_STATE_UNCERTAIN", {"reason": "fixture"})
+    incident = control.incident("allocation_failure", "QUOTA_STATE_UNCERTAIN", {"reason": "fixture"})
     expect("backend_execution_blocked:QUOTA_STATE_UNCERTAIN", control.assert_ready)
     control.resolve_incident(incident, {"proof": H})
     control.assert_ready()

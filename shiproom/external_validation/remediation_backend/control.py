@@ -28,7 +28,18 @@ RETIREMENTS = {"ACTIVE", "RELEASED_RETIRED", "FAILED_RETIRED", "QUARANTINED_RETI
 TERMINAL_PROJECT_STATES = {"RELEASED_RETIRED", "FAILED_RETIRED", "QUARANTINED_RETIRED", "INCIDENT_RETIRED"}
 NONTERMINAL_PROJECT_STATES = {"RESERVED", "ALLOCATING", "ACTIVE", "RELEASING", "QUARANTINED_PENDING", "INCIDENT_BOUND", "RECOVERY_REQUIRED"}
 ALLOCATION_PHASES = {"RESERVED", "TREE_CREATED", "PROJECT_ASSIGNED", "LIMIT_ASSIGNED", "REGISTRY_COMMITTED", "QUARANTINED", "INCIDENT"}
-RELEASE_PHASES = {"EVIDENCE_SEALED", "RESIDUAL_ABSENCE_VERIFIED", "WORKTREE_CONTENT_DELETE_STARTED", "WORKTREE_EMPTY_VERIFIED", "PROJECT_CLEAR_STARTED", "PROJECT_CLEARED_VERIFIED", "WORKTREE_ROOT_DELETE_STARTED", "WORKTREE_ABSENT_VERIFIED", "REGISTRY_REMOVAL_PREPARED", "RELEASE_COMMITTED"}
+RELEASE_PHASES = {"EVIDENCE_SEALED", "RESIDUAL_ABSENCE_VERIFIED", "WORKTREE_CONTENT_DELETE_STARTED", "WORKTREE_EMPTY_VERIFIED", "PROJECT_CLEAR_STARTED", "PROJECT_CLEARED_VERIFIED", "WORKTREE_ROOT_DELETE_STARTED", "WORKTREE_ABSENT_VERIFIED", "REGISTRY_REMOVAL_PREPARED", "RELEASE_COMMITTED", "RECOVERY_COMMITTED"}
+# Incident type is immutable control-plane authority.  It must never be
+# inferred from mutable JSON payloads or silently accepted from callers; an
+# unrecognised type in either a new request or an existing database fails
+# closed.  The short TEST_* forms exist solely for disposable semantic
+# fixtures and are never emitted by privileged production entry points.
+INCIDENT_TYPES = {
+    "ALLOCATION_FAILURE", "CONTAINMENT_FAILURE", "DOCTOR_ATTEMPT_FAILURE",
+    "PACKAGE_STATE_UNCERTAIN", "QUALIFICATION_FAILURE", "RELEASE_UNCERTAIN",
+    "SCHEMA_MIGRATION_FAILURE", "UNIT_RESTORATION_FAILURE", "TEST_QUOTA",
+    "TEST_CONTAINMENT", "RESOLUTION",
+}
 PHASE_PREDECESSOR = {"ROOTS_CREATED":"PREFLIGHT_COMPLETE","STATE_INITIALIZED":"ROOTS_CREATED","POLICY_GUARD_CREATED":"STATE_INITIALIZED","PACKAGE_INSTALL_ATTEMPTED":"POLICY_GUARD_CREATED","PACKAGES_CONFIGURED":"PACKAGE_INSTALL_ATTEMPTED","UNITS_CONTAINED":"PACKAGES_CONFIGURED","POLICY_GUARD_REMOVED":"UNITS_CONTAINED","IMAGE_CREATED":"POLICY_GUARD_REMOVED","LOOP_ATTACHED":"IMAGE_CREATED","FILESYSTEM_FORMATTED":"LOOP_ATTACHED","FILESYSTEM_MOUNTED":"FILESYSTEM_FORMATTED","DATA_PROJECT_ASSIGNED":"FILESYSTEM_MOUNTED","DATA_LIMITS_VERIFIED":"DATA_PROJECT_ASSIGNED","DAEMON_CONFIG_WRITTEN":"DATA_LIMITS_VERIFIED","DAEMON_STARTED":"DAEMON_CONFIG_WRITTEN","STATUS_VERIFIED":"DAEMON_STARTED","SETUP_COMPLETE":"STATUS_VERIFIED"}
 ALLOCATION_PREDECESSOR = {"TREE_CREATED":"RESERVED","PROJECT_ASSIGNED":"TREE_CREATED","LIMIT_ASSIGNED":"PROJECT_ASSIGNED","REGISTRY_COMMITTED":"LIMIT_ASSIGNED"}
 RELEASE_PREDECESSOR = {"RESIDUAL_ABSENCE_VERIFIED":"EVIDENCE_SEALED","WORKTREE_CONTENT_DELETE_STARTED":"RESIDUAL_ABSENCE_VERIFIED","WORKTREE_EMPTY_VERIFIED":"WORKTREE_CONTENT_DELETE_STARTED","PROJECT_CLEAR_STARTED":"WORKTREE_EMPTY_VERIFIED","PROJECT_CLEARED_VERIFIED":"PROJECT_CLEAR_STARTED","WORKTREE_ROOT_DELETE_STARTED":"PROJECT_CLEARED_VERIFIED","WORKTREE_ABSENT_VERIFIED":"WORKTREE_ROOT_DELETE_STARTED","REGISTRY_REMOVAL_PREPARED":"WORKTREE_ABSENT_VERIFIED"}
@@ -151,6 +162,12 @@ class Control:
 
     def effective_status(self) -> dict[str, Any]:
         """Return the sole effective backend authority in deterministic order."""
+        # Earlier immutable rows used lower-case production names.  Case is
+        # normalized only for recognition, never rewritten; a different type
+        # remains an integrity failure rather than becoming a future blocker.
+        for candidate in self.db.execute("SELECT incident_id,incident_type FROM incidents"):
+            if str(candidate["incident_type"]).upper() not in INCIDENT_TYPES:
+                raise ControlError("incident_type_unknown:" + str(candidate["incident_id"]))
         rows = self.db.execute(
             "SELECT incident_id,incident_type,blocking_state,resolved_by,predecessor_incident_id "
             "FROM incidents WHERE blocking=1 AND resolved_by IS NULL ORDER BY incident_id"
@@ -244,7 +261,10 @@ class Control:
             self.event("setup_phase", {"phase": value})
 
     def incident(self, incident_type: str, state: str, payload: dict[str, Any], predecessor: str | None = None, *, blocking: bool = True, qualification_run_id: str | None = None) -> str:
-        if not isinstance(incident_type, str) or not incident_type or state not in STATES or state in {"READY", "BLOCKED_MULTIPLE_INCIDENTS", "MAINTENANCE_SCHEMA_MIGRATION"}:
+        canonical_type = incident_type.upper() if isinstance(incident_type, str) else ""
+        if canonical_type not in INCIDENT_TYPES - {"RESOLUTION"}:
+            raise ControlError("incident_type_unknown")
+        if state not in STATES or state in {"READY", "BLOCKED_MULTIPLE_INCIDENTS", "MAINTENANCE_SCHEMA_MIGRATION"}:
             raise ControlError("incident_state_invalid")
         incident_id = "incident_" + secrets.token_hex(16)
         with self.tx():
@@ -252,7 +272,7 @@ class Control:
                 raise ControlError("incident_predecessor_missing")
             self.db.execute(
                 "INSERT INTO incidents(incident_id,predecessor_incident_id,incident_type,blocking,blocking_state,payload_hash,payload_json,resolved_by,created_at,qualification_run_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (incident_id, predecessor, incident_type, int(blocking), state, digest(payload), canonical(payload).decode("utf-8"), None, time.time_ns(), qualification_run_id),
+                (incident_id, predecessor, canonical_type, int(blocking), state, digest(payload), canonical(payload).decode("utf-8"), None, time.time_ns(), qualification_run_id),
             )
             effective = self._persist_effective_state()
             self.event("incident", {"incident_id": incident_id, "incident_type": incident_type, "blocking_state": state, "effective_state": effective["effective_state"]})
@@ -534,7 +554,7 @@ def main() -> int:
     p_show_alloc = sub.add_parser("allocation"); p_show_alloc.add_argument("attempt")
     p_authorize = sub.add_parser("authorize-release"); p_authorize.add_argument("document_json"); p_authorize.add_argument("artifact_path")
     p_show_auth = sub.add_parser("authorization"); p_show_auth.add_argument("authorization_id")
-    p_release = sub.add_parser("release-phase"); p_release.add_argument("attempt"); p_release.add_argument("phase", choices=sorted(RELEASE_PHASES - {"RELEASE_COMMITTED"})); p_release.add_argument("--pending-json")
+    p_release = sub.add_parser("release-phase"); p_release.add_argument("attempt"); p_release.add_argument("phase", choices=sorted(RELEASE_PHASES - {"RELEASE_COMMITTED", "RECOVERY_COMMITTED"})); p_release.add_argument("--pending-json")
     p_commit = sub.add_parser("commit-release"); p_commit.add_argument("attempt")
     p_release_recovery = sub.add_parser("complete-release-quarantine-recovery"); p_release_recovery.add_argument("attempt"); p_release_recovery.add_argument("incident_id"); p_release_recovery.add_argument("evidence_hash")
     p_quarantine = sub.add_parser("complete-quarantine-recovery"); p_quarantine.add_argument("attempt"); p_quarantine.add_argument("incident_id"); p_quarantine.add_argument("evidence_hash")

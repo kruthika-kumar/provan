@@ -12,6 +12,8 @@ import os
 import subprocess
 import time
 import sys
+import secrets
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -47,7 +49,7 @@ class LifecycleError(RuntimeError):
 def function_ids() -> dict[str, str]:
     """Hashes reported by the doctor to prove it used this production module."""
     module_hash = "sha256:" + hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    return {name: module_hash for name in ("materialize_fixture", "execute_patient_command", "git_artifacts", "seal_and_finalize")}
+    return {name: module_hash for name in ("materialize_fixture", "execute_patient_command", "git_artifacts", "seal_and_finalize", "issue_release_authorization")}
 
 
 def _run(argv: list[str], cwd: Path, *, timeout: int = 30) -> dict[str, Any]:
@@ -203,12 +205,103 @@ def git_artifacts(*, source_root: Path, worktree: Path, artifact_root: Path) -> 
     return paths, {"source_commit": source_commit, "patch_hash": sha256_file(paths["patch.bin"]), "changed_hash": sha256_file(paths["changed-manifest.json"]), "untracked_hash": sha256_file(paths["untracked-manifest.bin"])}
 
 
+def _root_immutable_write(path: Path, data: bytes) -> None:
+    """Create one supervisor-owned immutable authorization artifact.
+
+    This is deliberately part of the production lifecycle, rather than a
+    doctor helper: normal remediation and qualification therefore share the
+    same release-authority construction, validation, indexing, and write
+    rules.  The caller must already be the trusted root supervisor.
+    """
+    if os.geteuid() != 0:
+        raise LifecycleError("authorization_supervisor_root_required")
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    directory = path.parent.stat(follow_symlinks=False)
+    if not stat.S_ISDIR(directory.st_mode) or directory.st_uid != 0 or directory.st_mode & 0o022:
+        raise LifecycleError("authorization_directory_untrusted")
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+    try:
+        os.fchown(descriptor, 0, 0)
+        os.fchmod(descriptor, 0o400)
+        os.write(descriptor, data)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def issue_release_authorization(*, control: Any, attempt: str, source: dict[str, str],
+                                receipt_id: str, manifest_path: Path,
+                                artifacts: dict[str, Path], authorization_root: Path,
+                                supervisor_package_path: Path | None = None) -> Path:
+    """Rehash, validate, persist, and index a release authorization.
+
+    No doctor-specific receipt-shaped or authorization-shaped object is
+    accepted here.  The same production interface obtains the allocation
+    authority from SQLite, binds every required sealed artifact, validates the
+    independent authorization contract, then indexes the immutable record.
+    """
+    try:
+        from .contracts import validate_release_authorization
+    except ImportError:
+        from contracts import validate_release_authorization
+    allocation = control.allocation(attempt)
+    authority = allocation["worktree_authority_json"]
+    if not isinstance(authority, dict):
+        raise LifecycleError("authorization_worktree_authority_missing")
+    records = [
+        {"kind": name, "canonical_path": str(path), "sha256": sha256_file(path)}
+        for name, path in sorted(artifacts.items())
+    ]
+    records.append({
+        "kind": "sealed_artifact_manifest",
+        "canonical_path": str(manifest_path),
+        "sha256": sha256_file(manifest_path),
+    })
+    indexed = {str(row["kind"]): str(row["sha256"]) for row in records}
+    required = {"patch.bin", "changed-manifest.json", "untracked-manifest.bin", "sealed_artifact_manifest"}
+    if not required.issubset(indexed):
+        raise LifecycleError("authorization_artifact_set_incomplete")
+    package = supervisor_package_path or Path(__file__)
+    document = {
+        "schema_id": "remediation_release_authorization.v1",
+        "schema_version": "1",
+        "authorization_id": "authorization_" + secrets.token_hex(16),
+        "backend_instance_id": control.instance_id(),
+        "attempt_id": attempt,
+        "project_id": allocation["project_id"],
+        "allocation_record_id": attempt,
+        "capacity_reservation_id": str(allocation["project_id"]),
+        "worktree_authority": authority,
+        "source_snapshot_hash": source["source_snapshot_hash"],
+        "sealed_artifact_manifest_hash": indexed["sealed_artifact_manifest"],
+        "receipt_id": receipt_id,
+        "patch_hash": indexed["patch.bin"],
+        "changed_file_manifest_hash": indexed["changed-manifest.json"],
+        "untracked_file_manifest_hash": indexed["untracked-manifest.bin"],
+        "test_result_hashes": [value for key, value in indexed.items() if Path(key).name.startswith("command-") and key.endswith(".json")],
+        "log_hashes": [value for key, value in indexed.items() if Path(key).name.startswith("command-") and key.endswith("stdout.bin")],
+        "artifact_records": records,
+        "supervisor_package_hash": sha256_file(package),
+        "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    validate_release_authorization(document)
+    path = authorization_root / (str(document["authorization_id"]) + ".json")
+    _root_immutable_write(path, canonical_json(document))
+    control.authorize_release(document, str(path))
+    return path
+
+
 def seal_and_finalize(*, attempt: str, source: dict[str, str], artifacts: dict[str, Path], command_results: list[dict[str, Any]], receipt_root: Path, journal_root: Path, runner_image_digest: str, container: dict[str, Any], shiproom_commit: str, package_tree_hash: str) -> tuple[str, Path, Path, dict[str, Any]]:
     """Use the package production receipt-v2 finalizer; no shaped receipt IDs."""
+    # Command capture belongs to exactly one attempt.  A shared fixed
+    # ``artifacts/command-0`` path would let a later attempt overwrite bytes
+    # already sealed by an earlier receipt, so the attempt namespace is part
+    # of the canonical artifact path.
+    command_root = receipt_root / "artifacts" / attempt
     for index, result in enumerate(command_results):
         for stream in ("stdout", "stderr"):
-            item = receipt_root / "artifacts" / f"command-{index}-{stream}.bin"; item.parent.mkdir(parents=True, exist_ok=True); item.write_bytes(result[stream]); artifacts[item.relative_to(receipt_root / "artifacts").as_posix()] = item
-        meta = receipt_root / "artifacts" / f"command-{index}.json"; meta.write_bytes(canonical_json({key: value for key, value in result.items() if key not in {"stdout", "stderr"}})); artifacts[meta.relative_to(receipt_root / "artifacts").as_posix()] = meta
+            item = command_root / f"command-{index}-{stream}.bin"; item.parent.mkdir(parents=True, exist_ok=True); item.write_bytes(result[stream]); artifacts[item.relative_to(receipt_root / "artifacts").as_posix()] = item
+        meta = command_root / f"command-{index}.json"; meta.write_bytes(canonical_json({key: value for key, value in result.items() if key not in {"stdout", "stderr"}})); artifacts[meta.relative_to(receipt_root / "artifacts").as_posix()] = meta
     entries = []
     for name, path in sorted(artifacts.items()):
         entries.append({"path": name, "type": "regular", "mode": 0o400, "size": path.stat().st_size, "sha256": sha256_file(path), "producer": "patient" if name.startswith("patch") else "supervisor", "sealer": "host_supervisor", "trust": "untrusted_patient" if name.startswith("patch") else "control_plane", "truncated": False})

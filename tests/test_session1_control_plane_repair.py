@@ -43,7 +43,7 @@ def _v3_capacity(instance: str, *, predecessor: str | None, aggregate: int = 6_0
 def test_exact_predecessor_reproduces_multi_incident_ready_defect(tmp_path: Path):
     old = _predecessor_control(tmp_path); control = old.Control(tmp_path / "old.sqlite")
     try:
-        control.initialize(); first = control.incident("first", "QUOTA_STATE_UNCERTAIN", {"proof": H}); second = control.incident("second", "CONTAINMENT_UNPROVEN", {"proof": H})
+        control.initialize(); first = control.incident("doctor_attempt_failure", "QUOTA_STATE_UNCERTAIN", {"proof": H}); second = control.incident("containment_failure", "CONTAINMENT_UNPROVEN", {"proof": H})
         control.resolve_incident(first, {"proof": H})
         assert control.db.execute("SELECT execution_state FROM backend").fetchone()[0] == "READY"
         assert control.db.execute("SELECT resolved_by FROM incidents WHERE incident_id=?", (second,)).fetchone()[0] is None
@@ -69,7 +69,7 @@ def test_exact_predecessor_reproduces_cross_capacity_accounting_defect(tmp_path:
 def test_multi_incident_state_is_derived_and_persists(tmp_path: Path):
     control = Control(tmp_path / "control.sqlite"); control.initialize()
     try:
-        first = control.incident("quota", "QUOTA_STATE_UNCERTAIN", {"proof": H}); second = control.incident("containment", "CONTAINMENT_UNPROVEN", {"proof": H})
+        first = control.incident("allocation_failure", "QUOTA_STATE_UNCERTAIN", {"proof": H}); second = control.incident("containment_failure", "CONTAINMENT_UNPROVEN", {"proof": H})
         assert control.effective_status()["effective_state"] == "BLOCKED_MULTIPLE_INCIDENTS"
         control.resolve_incident(first, {"proof": H})
         assert control.effective_status()["effective_state"] == "CONTAINMENT_UNPROVEN"
@@ -78,6 +78,18 @@ def test_multi_incident_state_is_derived_and_persists(tmp_path: Path):
         assert control.effective_status()["unresolved_incident_ids"] == [second]
         control.resolve_incident(second, {"proof": H}); control.assert_ready()
         with pytest.raises(ControlError, match="incident_resolution_invalid"): control.resolve_incident(first, {"proof": H})
+    finally:
+        control.close()
+
+
+def test_incident_type_is_immutable_authority_and_unknown_types_fail_closed(tmp_path: Path):
+    control = Control(tmp_path / "control.sqlite"); control.initialize()
+    try:
+        with pytest.raises(ControlError, match="incident_type_unknown"):
+            control.incident("caller_controlled_payload_type", "QUOTA_STATE_UNCERTAIN", {"proof": H})
+        control.db.execute("INSERT INTO incidents(incident_id,predecessor_incident_id,incident_type,blocking,blocking_state,payload_hash,payload_json,resolved_by,created_at,qualification_run_id) VALUES(?,?,?,?,?,?,?,?,?,?)", ("incident_unknown", None, "UNKNOWN_FUTURE_TYPE", 1, "QUOTA_STATE_UNCERTAIN", H, "{}", None, 1, None))
+        with pytest.raises(ControlError, match="incident_type_unknown:incident_unknown"):
+            control.effective_status()
     finally:
         control.close()
 
@@ -121,7 +133,7 @@ def test_v2_migration_preserves_history_and_blocks_unknown_version(tmp_path: Pat
     try:
         instance = control.initialize(); cap = _v2_capacity(old, instance, aggregate=6_000_000_000, available=16_000_000_000, suffix="a"); control.install_capacity(cap)
         control.reserve("attempt-a", 1_000_000, 1_024, H, str(cap["capacity_id"]), 15_000_000_000)
-        first = control.incident("quota", "QUOTA_STATE_UNCERTAIN", {"proof": H}); control.incident("containment", "CONTAINMENT_UNPROVEN", {"proof": H}); control.resolve_incident(first, {"proof": H})
+        first = control.incident("allocation_failure", "QUOTA_STATE_UNCERTAIN", {"proof": H}); control.incident("containment_failure", "CONTAINMENT_UNPROVEN", {"proof": H}); control.resolve_incident(first, {"proof": H})
     finally:
         control.close()
     evidence = migrate_v2_to_v3(database, tmp_path / "backup.sqlite", commit="b" * 40, implementation=Path(__file__), allow_live_nonterminal=True)
