@@ -57,6 +57,21 @@ def _run(argv: list[str], cwd: Path, *, timeout: int = 30) -> dict[str, Any]:
     return {"command": argv, "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr, "started_at": started.isoformat().replace("+00:00", "Z"), "completed_at": completed.isoformat().replace("+00:00", "Z")}
 
 
+def _git_output(worktree: Path, *arguments: str) -> bytes:
+    """Run host Git against a patient-owned tree with one scoped trust grant.
+
+    The supervisor intentionally hands the allocated tree to the patient UID.
+    Git then rejects a host-supervisor read unless this individual invocation
+    asserts the exact allocated path as safe.  Keeping the assertion here
+    prevents a later evidence-collection call from accidentally relying on
+    global Git configuration or from failing after valid patient execution.
+    """
+    return subprocess.check_output(
+        ["/usr/bin/git", "-c", f"safe.directory={worktree}", *arguments],
+        cwd=worktree,
+    )
+
+
 def prepare_fixture_source(source_root: Path) -> dict[str, str]:
     """Create the deterministic, immutable Git source before allocation."""
     source_root.mkdir(parents=True, mode=0o700)
@@ -177,14 +192,14 @@ def controlled_repair(worktree: Path) -> None:
 
 def git_artifacts(*, source_root: Path, worktree: Path, artifact_root: Path) -> tuple[dict[str, Path], dict[str, str]]:
     artifact_root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    patch = subprocess.check_output(["/usr/bin/git", "diff", "--binary", "HEAD"], cwd=worktree)
-    status = subprocess.check_output(["/usr/bin/git", "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=worktree)
+    patch = _git_output(worktree, "diff", "--binary", "HEAD")
+    status = _git_output(worktree, "status", "--porcelain=v1", "-z", "--untracked-files=all")
     changed = {path.relative_to(worktree).as_posix(): sha256_file(path) for path in sorted(worktree.rglob("*")) if path.is_file() and ".git" not in path.parts}
     values = {"patch.bin": patch, "changed-manifest.json": canonical_json(changed), "untracked-manifest.bin": status}
     paths: dict[str, Path] = {}
     for name, raw in values.items():
         path = artifact_root / name; path.write_bytes(raw); paths[name] = path
-    source_commit = subprocess.check_output(["/usr/bin/git", "rev-parse", "HEAD"], cwd=source_root, text=True).strip()
+    source_commit = _git_output(source_root, "rev-parse", "HEAD").decode("ascii").strip()
     return paths, {"source_commit": source_commit, "patch_hash": sha256_file(paths["patch.bin"]), "changed_hash": sha256_file(paths["changed-manifest.json"]), "untracked_hash": sha256_file(paths["untracked-manifest.bin"])}
 
 

@@ -19,6 +19,7 @@ import package_contract
 import bootstrap
 import gate
 import doctor
+import lifecycle
 from package_contract import PackageContractError, validate as validate_package_contract
 from bootstrap import FILES as BOOTSTRAP_FILES, source_manifest, validate_attestation
 import release_helper
@@ -93,6 +94,26 @@ isolated_doctor = subprocess.run(
     text=True, capture_output=True, check=False,
 )
 assert isolated_doctor.returncode == 0 and "--run-remediation-fixture" in isolated_doctor.stdout
+
+# The production artifact collector runs after the allocated Git tree has been
+# transferred to the patient UID.  Every host-side Git call must therefore
+# carry only a per-invocation safe-directory grant for the exact authority
+# path, rather than depending on mutable global Git configuration.
+with tempfile.TemporaryDirectory() as temporary:
+    fixture_root = Path(temporary) / "tree"; fixture_root.mkdir()
+    source_root = Path(temporary) / "source"; source_root.mkdir()
+    (fixture_root / "calculator.py").write_text("changed\n", encoding="utf-8")
+    artifact_root = Path(temporary) / "artifacts"
+    with mock.patch.object(lifecycle.subprocess, "check_output", side_effect=[b"patch", b"", b"deadbeef\n"]) as git_output:
+        artifacts, evidence = lifecycle.git_artifacts(source_root=source_root, worktree=fixture_root, artifact_root=artifact_root)
+    assert set(artifacts) == {"patch.bin", "changed-manifest.json", "untracked-manifest.bin"}
+    assert evidence["source_commit"] == "deadbeef"
+    assert git_output.call_count == 3
+    for call in git_output.call_args_list:
+        argv = call.args[0]
+        cwd = call.kwargs["cwd"]
+        assert cwd in {fixture_root, source_root}
+        assert argv[:3] == ["/usr/bin/git", "-c", f"safe.directory={cwd}"], argv
 
 H = "sha256:" + "a" * 64
 
