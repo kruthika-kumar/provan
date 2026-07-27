@@ -184,6 +184,10 @@ def main()->int:
     if head!=a.commit or actual_tree!=a.tree or git_output(repo,"status","--porcelain"): raise SystemExit("unclean_or_wrong_commit")
     if a.approve_attestation: print(approve(source,a.attestation,a.commit,a.tree)); return 0
     attestation=validate_attestation(a.attestation,source,a.commit,a.tree); verify_approval(attestation,a.commit,a.tree); manifest=staged_manifest(source,attestation,a.commit,a.tree); secure_root_directory(ROOT,0o755); target=ROOT/manifest["bundle_hash"].removeprefix("sha256:")
+    if target.exists():
+        verify_stage(target)
+        print(manifest["bundle_hash"])
+        return 0
     target.mkdir(parents=True,mode=0o755,exist_ok=False)
     for name in FILES:
         out=target/name; shutil.copyfile(source/name,out); os.chown(out,0,0); out.chmod(0o555 if out.suffix==".sh" else 0o444)
