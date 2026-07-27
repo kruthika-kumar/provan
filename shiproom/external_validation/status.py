@@ -92,7 +92,10 @@ def _validate_external_attestation(
     required = {"schema_id", "schema_version", "commit_b", "commit_b_tree", "proof_bundle_hash", "status_authority_hash", "status_chain_hash"}
     if not isinstance(data, dict) or set(data) != required or data.get("schema_id") != "external_validation.status_attestation.v1" or data.get("schema_version") != "1":
         raise V2ValidationError("status_attestation_invalid")
-    if data.get("status_authority_hash") != _hash(authority_path) or data.get("status_chain_hash") != _hash(current_path):
+    if (
+        data.get("status_authority_hash") != _committed_content_hash(root, authority_path)
+        or data.get("status_chain_hash") != _committed_content_hash(root, current_path)
+    ):
         raise V2ValidationError("status_attestation_binding_invalid")
     final_rows = list(profiles.values())
     if (
@@ -278,13 +281,13 @@ def resolve_status_authority(authority_path: Path, *, repository_root: Path | No
     histories = authority["historical_chains"]
     if not isinstance(histories, list) or len(histories) != 1 or not isinstance(histories[0], dict): raise V2ValidationError("status_authority_historical_invalid")
     historical_ref = histories[0]; historical_path = root / str(historical_ref.get("path", ""))
-    if not historical_path.is_file() or historical_ref.get("hash") != _hash(historical_path): raise V2ValidationError("status_authority_historical_hash_invalid")
+    if not historical_path.is_file() or historical_ref.get("hash") != _committed_content_hash(root, historical_path): raise V2ValidationError("status_authority_historical_hash_invalid")
     _committed_file(root, historical_path)
     historical = resolve_status(historical_path)
     current_ref = authority["current_chain"]
     if not isinstance(current_ref, dict) or current_ref.get("schema_id") != "external_validation.profile_status_chain.v2": raise V2ValidationError("status_authority_current_invalid")
     current_path = root / str(current_ref.get("path", ""))
-    if not current_path.is_file() or current_ref.get("hash") != _hash(current_path): raise V2ValidationError("status_authority_current_hash_invalid")
+    if not current_path.is_file() or current_ref.get("hash") != _committed_content_hash(root, current_path): raise V2ValidationError("status_authority_current_hash_invalid")
     _committed_file(root, current_path)
     try: chain = json.loads(current_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc: raise V2ValidationError("status_authority_current_invalid") from exc
