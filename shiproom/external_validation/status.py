@@ -46,13 +46,21 @@ def _profile_chain(value: Any, historical: dict[str, Any]) -> dict[str, Any]:
         seen: dict[str, dict[str, Any]] = {}
         children: dict[str, list[str]] = {}
         for record in records:
-            if not isinstance(record, dict) or set(record) != {"status_id", "predecessor_status_id", "profile", "status", "implementation_commit", "timestamp"}:
+            base = {"status_id", "predecessor_status_id", "profile", "status", "implementation_commit", "timestamp"}
+            final = base | {"implementation_tree", "proof_bundle_hash", "predecessor_status_ids", "expected_profiles"}
+            if not isinstance(record, dict) or set(record) not in {base, final}:
                 raise V2ValidationError("profile_status_record_invalid")
             if record["profile"] != profile or not all(isinstance(record[key], str) and record[key] for key in ("status_id", "profile", "status", "implementation_commit", "timestamp")):
                 raise V2ValidationError("profile_status_record_invalid")
             if len(record["implementation_commit"]) != 40 or any(c not in "0123456789abcdef" for c in record["implementation_commit"]):
                 raise V2ValidationError("profile_status_commit_invalid")
             if record["status_id"] in seen: raise V2ValidationError("profile_status_duplicate")
+            if set(record) == final:
+                if (not isinstance(record["implementation_tree"], str) or len(record["implementation_tree"]) != 40
+                        or not isinstance(record["proof_bundle_hash"], str) or not record["proof_bundle_hash"].startswith("sha256:")
+                        or not isinstance(record["predecessor_status_ids"], dict) or set(record["predecessor_status_ids"]) != {"detection", "remediation", "overall"}
+                        or not isinstance(record["expected_profiles"], dict) or set(record["expected_profiles"]) != {"detection", "remediation", "overall"}):
+                    raise V2ValidationError("profile_status_qualification_binding_invalid")
             seen[record["status_id"]] = record
             parent = record["predecessor_status_id"]
             if parent is not None:
@@ -140,7 +148,10 @@ def resolve_status_authority(authority_path: Path, *, repository_root: Path | No
             resolved["overall"] = "PARTIALLY_QUALIFIED"
         else:
             data = json.loads(attestation.read_text(encoding="utf-8"))
-            if data.get("status_authority_hash") != _hash(authority_path): raise V2ValidationError("status_attestation_binding_invalid")
+            required = {"schema_id", "schema_version", "commit_b", "commit_b_tree", "proof_bundle_hash", "status_authority_hash", "status_chain_hash"}
+            if not isinstance(data, dict) or set(data) != required or data.get("schema_id") != "external_validation.status_attestation.v1" or data.get("schema_version") != "1":
+                raise V2ValidationError("status_attestation_invalid")
+            if data.get("status_authority_hash") != _hash(authority_path) or data.get("status_chain_hash") != _hash(current_path): raise V2ValidationError("status_attestation_binding_invalid")
     return {"profiles": resolved, "profile_status_ids": {name: row["status_id"] for name, row in profiles.items()}, "historical": historical}
 
 
