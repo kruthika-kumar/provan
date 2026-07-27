@@ -34,6 +34,10 @@ def main() -> int:
     assert_absent(a.root,a.device,a.inode,a.mount_id,a.socket,aliases)
     source_parent=os.open(a.root.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_CLOEXEC)
     try:
+        # Repeat immediately before acquiring the destructive-operation
+        # descriptor.  A later sweep would necessarily observe that helper
+        # descriptor in /proc/self/fd and falsely classify it as a residual.
+        assert_absent(a.root,a.device,a.inode,a.mount_id,a.socket,aliases)
         rootfd=openat2(source_parent,a.root.name)
         try:
             verify_root(rootfd,a.device,a.inode,a.mount_id)
@@ -44,7 +48,6 @@ def main() -> int:
             destination=os.open(a.quarantine,os.O_RDONLY|os.O_DIRECTORY|os.O_CLOEXEC)
             try:
                 if os.fstat(destination).st_dev!=a.device or mount_id(destination)!=a.mount_id: raise QuarantineBlocked('quarantine_cross_filesystem')
-                assert_absent(a.root,a.device,a.inode,a.mount_id,a.socket,aliases)
                 os.rename(a.root.name,a.name,src_dir_fd=source_parent,dst_dir_fd=destination)
             finally: os.close(destination)
         finally: os.close(rootfd)
