@@ -14,9 +14,16 @@ import os
 import sqlite3
 import stat
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
+
+# Root execution intentionally uses ``python -I -S``.  Make only this sealed
+# bundle importable; never rely on a mutable working directory or site path.
+_STAGED_MODULE_DIRECTORY = str(Path(__file__).resolve().parent)
+if _STAGED_MODULE_DIRECTORY not in sys.path:
+    sys.path.insert(0, _STAGED_MODULE_DIRECTORY)
 
 try:
     from .control import SCHEMA_VERSION, TERMINAL_PROJECT_STATES, canonical, digest
