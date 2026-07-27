@@ -78,6 +78,10 @@ def _state_value(path: Path, key: str) -> str:
 def _authorization(control: Control, attempt: str, source: dict[str, str], receipt_id: str, manifest_path: Path, artifacts: dict[str, Path]) -> Path:
     allocation = control.allocation(attempt); authority = allocation["worktree_authority_json"]
     records = [{"kind": name, "canonical_path": str(path), "sha256": sha(path)} for name, path in sorted(artifacts.items())]
+    # The release authorization claims this manifest hash as the sealed
+    # evidence authority, so it must be an independently rehashed artifact
+    # record rather than an untracked assertion alongside the records.
+    records.append({"kind": "sealed_artifact_manifest", "canonical_path": str(manifest_path), "sha256": sha(manifest_path)})
     indexed = {row["kind"]: row["sha256"] for row in records}
     document = {"schema_id": "remediation_release_authorization.v1", "schema_version": "1", "authorization_id": "authorization_" + secrets.token_hex(16), "backend_instance_id": control.instance_id(), "attempt_id": attempt, "project_id": allocation["project_id"], "allocation_record_id": attempt, "capacity_reservation_id": str(allocation["project_id"]), "worktree_authority": authority, "source_snapshot_hash": source["source_snapshot_hash"], "sealed_artifact_manifest_hash": sha(manifest_path), "receipt_id": receipt_id, "patch_hash": indexed["patch.bin"], "changed_file_manifest_hash": indexed["changed-manifest.json"], "untracked_file_manifest_hash": indexed["untracked-manifest.bin"], "test_result_hashes": [value for key, value in indexed.items() if key.startswith("command-") and key.endswith(".json")], "log_hashes": [value for key, value in indexed.items() if key.startswith("command-") and key.endswith("stdout.bin")], "artifact_records": records, "supervisor_package_hash": sha(Path(__file__).with_name("lifecycle.py")), "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
     validate_release_authorization(document)

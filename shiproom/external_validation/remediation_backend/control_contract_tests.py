@@ -210,6 +210,29 @@ def authorization(instance: str, attempt: str, project: int) -> dict[str, object
     }
 
 
+# A release authorization may not claim a sealed manifest as an unrecorded
+# side assertion: the manifest itself must be one of the independently
+# rehashed supervisor artifacts presented to the release path.
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary); artifact = root / "patch.bin"; artifact.write_bytes(b"patch")
+    changed = root / "changed-manifest.json"; changed.write_bytes(b"{}")
+    untracked = root / "untracked-manifest.bin"; untracked.write_bytes(b"")
+    manifest = root / "manifest.json"; manifest.write_bytes(b"manifest")
+    captured: dict[str, object] = {}
+    class AuthorizationControl:
+        def allocation(self, unused_attempt: str) -> dict[str, object]: return {"project_id": 77, "worktree_authority_json": authority("backend_fixture", "attempt_fixture", 77)}
+        def instance_id(self) -> str: return "backend_fixture"
+        def authorize_release(self, document: dict[str, object], path: str) -> None: captured.update(document=document, path=path)
+    def capture_root_owned(path: Path, data: bytes) -> None: captured["written_path"] = path; captured["written_document"] = json.loads(data)
+    with mock.patch.object(doctor, "ROOT", root), mock.patch.object(doctor, "write_root_owned", capture_root_owned), mock.patch.object(doctor, "validate_release_authorization", side_effect=lambda value: value):
+        doctor._authorization(AuthorizationControl(), "attempt_fixture", {"source_snapshot_hash": H}, "receipt_fixture", manifest, {"patch.bin": artifact, "changed-manifest.json": changed, "untracked-manifest.bin": untracked})
+    document = captured["document"]
+    assert isinstance(document, dict)
+    records = {record["kind"]: record for record in document["artifact_records"]}
+    assert records["sealed_artifact_manifest"]["canonical_path"] == str(manifest)
+    assert records["sealed_artifact_manifest"]["sha256"] == doctor.sha(manifest)
+
+
 def expect(code: str, fn) -> None:
     try:
         fn()
