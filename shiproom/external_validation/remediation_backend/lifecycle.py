@@ -45,7 +45,9 @@ class LifecycleError(RuntimeError):
 
 
 def function_ids() -> dict[str, str]:
-    return {name: "sha256:" + hashlib.sha256(Path(__file__).read_bytes()).hexdigest() for name in ("materialize_fixture", "run_checked_command", "seal_and_finalize")}
+    """Hashes reported by the doctor to prove it used this production module."""
+    module_hash = "sha256:" + hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return {name: module_hash for name in ("materialize_fixture", "execute_patient_command", "git_artifacts", "seal_and_finalize")}
 
 
 def _run(argv: list[str], cwd: Path, *, timeout: int = 30) -> dict[str, Any]:
@@ -85,6 +87,57 @@ def run_checked_command(*, argv: list[str], worktree: Path, label: str) -> dict[
     result = _run(argv, worktree)
     result["label"] = label
     return result
+
+
+def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_image: str,
+                            command: list[str], label: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Run one patient command through the production custom-daemon policy.
+
+    This deliberately owns the Docker argv and effective-inspect capture.  The
+    qualification doctor may orchestrate it, but it must not reconstruct a
+    second, look-alike execution path.  The function is also the only runtime
+    execution entry point exposed by this lifecycle module.
+    """
+    if not runner_image or "@sha256:" not in runner_image:
+        raise LifecycleError("runner_image_digest_required")
+    if not tree.is_dir() or not socket.is_socket():
+        raise LifecycleError("patient_execution_authority_missing")
+    name = "shiproom-remediation-" + hashlib.sha256((label + str(time.time_ns())).encode()).hexdigest()[:20]
+    argv = [docker, "--host", "unix://" + str(socket), "create", "--name", name,
+            "--network=none", "--read-only", "--cap-drop=ALL",
+            "--security-opt=no-new-privileges", "--user", "65533:65533",
+            "--pids-limit", "64", "--memory", "256m", "--memory-swap", "256m",
+            "--cpus", "0.5", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m",
+            "--mount", f"type=bind,src={tree},dst=/remediation,rw", "--workdir",
+            "/remediation", runner_image, *command]
+    started_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    created = subprocess.run(argv, capture_output=True, text=True, timeout=60, check=False)
+    if created.returncode != 0:
+        raise LifecycleError("patient_create_failed")
+    container_id = created.stdout.strip()
+    if not container_id:
+        raise LifecycleError("patient_create_identity_missing")
+    try:
+        inspected = subprocess.run([docker, "--host", "unix://" + str(socket), "inspect", container_id], capture_output=True, text=True, timeout=30, check=False)
+        if inspected.returncode != 0:
+            raise LifecycleError("patient_effective_inspect_missing")
+        effective = json.loads(inspected.stdout)
+        if not isinstance(effective, list) or len(effective) != 1:
+            raise LifecycleError("patient_effective_inspect_invalid")
+        finished = subprocess.run([docker, "--host", "unix://" + str(socket), "start", "-a", container_id], capture_output=True, timeout=180, check=False)
+    finally:
+        removed = subprocess.run([docker, "--host", "unix://" + str(socket), "rm", "-f", container_id], capture_output=True, text=True, timeout=60, check=False)
+    if removed.returncode != 0:
+        raise LifecycleError("patient_cleanup_failed")
+    completed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    result = {"label": label, "command": command, "exit_code": finished.returncode,
+              "stdout": finished.stdout, "stderr": finished.stderr,
+              "started_at": started_at, "completed_at": completed_at}
+    container = {"id": container_id, "name": name, "requested_policy_hash": "sha256:" + hashlib.sha256(canonical_json({"argv": argv})).hexdigest(),
+                 "effective_inspect_hash": "sha256:" + hashlib.sha256(canonical_json(effective[0])).hexdigest(),
+                 "runner_image_digest": runner_image, "teardown": "proven",
+                 "residual_absence": True}
+    return result, container
 
 
 def controlled_repair(worktree: Path) -> None:

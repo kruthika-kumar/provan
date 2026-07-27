@@ -272,6 +272,12 @@ def validate_artifact(value: Any) -> dict[str, Any]:
         from .remediation_backend.package_contract import validate
         try: return validate(item)
         except ValueError as exc: _error(str(exc), "/", "remediation package contract invalid")
+    if schema_id == "external_validation.status_authority.v1":
+        from .status import validate_status_authority_document
+        return validate_status_authority_document(item)
+    if schema_id == "external_validation.profile_status_chain.v2":
+        from .status import validate_profile_status_chain
+        return validate_profile_status_chain(item)
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 

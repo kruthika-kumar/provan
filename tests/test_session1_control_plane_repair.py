@@ -94,6 +94,28 @@ def test_capacity_replacement_rejects_any_nonterminal_lineage_reservation(tmp_pa
         control.close()
 
 
+def test_qualification_run_uses_production_capacity_and_rejects_concurrency(tmp_path: Path):
+    control = Control(tmp_path / "control.sqlite"); instance = control.initialize()
+    try:
+        cap = _v3_capacity(instance, predecessor=None); control.install_capacity(cap)
+        run = "qualification_" + "1" * 32
+        control.start_qualification(run, "a" * 40, "b" * 40)
+        with pytest.raises(ControlError, match="qualification_run_concurrent"):
+            control.start_qualification("qualification_" + "2" * 32, "a" * 40, "b" * 40)
+        control.finish_qualification(run, True)
+        row = control.db.execute("SELECT capacity_id,state FROM qualification_runs WHERE qualification_run_id=?", (run,)).fetchone()
+        assert tuple(row) == (cap["capacity_id"], "PASSED")
+    finally:
+        control.close()
+
+
+def test_doctor_calls_production_lifecycle_interface_not_inline_docker() -> None:
+    source = Path("shiproom/external_validation/remediation_backend/doctor.py").read_text(encoding="utf-8")
+    assert "execute_patient_command(" in source
+    assert '"create", "--name"' not in source
+    assert "start_qualification(" in source and "finish_qualification(" in source
+
+
 def test_v2_migration_preserves_history_and_blocks_unknown_version(tmp_path: Path):
     old = _predecessor_control(tmp_path); database = tmp_path / "v2.sqlite"; control = old.Control(database)
     try:

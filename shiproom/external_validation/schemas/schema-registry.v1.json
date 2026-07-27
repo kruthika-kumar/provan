@@ -17,5 +17,7 @@
     {"schema_id":"external_validation.synthetic_proof_receipt","version":"1","filename":"synthetic-proof-receipt.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"remediation_release_authorization.v1","version":"1","filename":"remediation-release-authorization.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"remediation_package_contract.v1","version":"1","filename":"remediation-package-contract.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
+    ,{"schema_id":"external_validation.status_authority.v1","version":"1","filename":"status-authority.v1.json","validator":"shiproom.external_validation.status.resolve_status_authority","compatibility":"complementary","status":"current"}
+    ,{"schema_id":"external_validation.profile_status_chain.v2","version":"2","filename":"profile-status-chain.v2.json","validator":"shiproom.external_validation.status.resolve_status_authority","compatibility":"complementary","status":"current"}
   ]
 }

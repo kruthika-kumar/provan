@@ -9,6 +9,7 @@ from typing import Any
 STAGE_ROOT=Path("/run/shiproom-remediation-bootstrap")
 STAGE_FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 STAGE_SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
+STAGE_PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
 
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def stage_hash(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
@@ -45,17 +46,20 @@ def require_staged_script(script:Path)->None:
     claimed_bundle=manifest.pop("bundle_hash")
     if claimed_bundle!="sha256:"+stage.name or claimed_bundle!="sha256:"+hashlib.sha256(canonical(manifest)).hexdigest(): raise RuntimeError("staged_manifest_identity_invalid")
     source_manifest=manifest["source_manifest"]
-    if not isinstance(source_manifest,dict) or set(source_manifest)!={"files","schemas"} or set(source_manifest["files"])!=set(STAGE_FILES) or set(source_manifest["schemas"])!=set(STAGE_SCHEMAS): raise RuntimeError("staged_manifest_files_invalid")
+    if not isinstance(source_manifest,dict) or set(source_manifest)!={"files","schemas","production_files"} or set(source_manifest["files"])!=set(STAGE_FILES) or set(source_manifest["schemas"])!=set(STAGE_SCHEMAS) or set(source_manifest["production_files"])!=set(STAGE_PRODUCTION_FILES): raise RuntimeError("staged_manifest_files_invalid")
     for name in STAGE_FILES:
         path=stage/name; staged_regular(path)
         if stage_hash(path)!=source_manifest["files"][name]: raise RuntimeError("staged_hash_mismatch")
     for name in STAGE_SCHEMAS:
         path=stage/"schemas"/name; staged_regular(path)
         if stage_hash(path)!=source_manifest["schemas"][name]: raise RuntimeError("staged_hash_mismatch")
+    for name in STAGE_PRODUCTION_FILES:
+        path=stage/name; staged_regular(path)
+        if stage_hash(path)!=source_manifest["production_files"][name]: raise RuntimeError("staged_hash_mismatch")
     attestation=json.loads(attestation_path.read_text(encoding="utf-8")); claimed_attestation=attestation.pop("attestation_hash",None)
     if claimed_attestation!=manifest["attestation_hash"] or claimed_attestation!="sha256:"+hashlib.sha256(canonical(attestation)).hexdigest(): raise RuntimeError("staged_attestation_mismatch")
-    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","shellcheck","commands","created_at"}
-    if set(attestation)!=required or attestation["schema_id"]!="remediation_stage0_attestation.v1" or attestation["schema_version"]!="1" or attestation["commit"]!=manifest["source_commit"] or attestation["tree"]!=manifest["source_tree"] or attestation["bundle_files"]!=source_manifest["files"] or attestation["schemas"]!=source_manifest["schemas"]: raise RuntimeError("staged_attestation_mismatch")
+    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","shellcheck","commands","created_at"}
+    if set(attestation)!=required or attestation["schema_id"]!="remediation_stage0_attestation.v1" or attestation["schema_version"]!="1" or attestation["commit"]!=manifest["source_commit"] or attestation["tree"]!=manifest["source_tree"] or attestation["bundle_files"]!=source_manifest["files"] or attestation["schemas"]!=source_manifest["schemas"] or attestation["production_files"]!=source_manifest["production_files"]: raise RuntimeError("staged_attestation_mismatch")
     commands=attestation["commands"]; shells=[name for name in STAGE_FILES if name.endswith(".sh")]
     expected_commands=[["/usr/bin/bash","-n",*shells],["/usr/bin/bash","tests.sh"],["/usr/bin/git","diff","--check"],["/usr/bin/shellcheck","--version"],["/usr/bin/shellcheck","-S","warning",*shells]]
     if not isinstance(commands,list) or len(commands)!=5 or any(not isinstance(row,dict) or row.get("exit_code")!=0 or row.get("command")!=expected for row,expected in zip(commands,expected_commands)): raise RuntimeError("staged_attestation_commands_invalid")

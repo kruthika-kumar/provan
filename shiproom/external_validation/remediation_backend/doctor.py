@@ -23,13 +23,13 @@ try:
     from .bootstrap import require_staged_script
     from .control import Control, ControlError, canonical
     from .contracts import validate_release_authorization
-    from .lifecycle import controlled_repair, function_ids, git_artifacts, materialize_fixture, prepare_fixture_source, run_checked_command, seal_and_finalize
+    from .lifecycle import execute_patient_command, function_ids, git_artifacts, materialize_fixture, prepare_fixture_source, seal_and_finalize
     from .release_helper import require_openat2
 except ImportError:
     from bootstrap import require_staged_script
     from control import Control, ControlError, canonical
     from contracts import validate_release_authorization
-    from lifecycle import controlled_repair, function_ids, git_artifacts, materialize_fixture, prepare_fixture_source, run_checked_command, seal_and_finalize
+    from lifecycle import execute_patient_command, function_ids, git_artifacts, materialize_fixture, prepare_fixture_source, seal_and_finalize
     from release_helper import require_openat2
 
 ROOT = Path("/var/lib/shiproom-remediation")
@@ -41,8 +41,8 @@ def digest(value: object) -> str: return "sha256:" + hashlib.sha256(canonical(va
 def sha(path: Path) -> str: return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def invocation(argv: list[str], *, timeout: int = 180) -> dict[str, object]:
-    try: result = subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False)
+def invocation(argv: list[str], *, timeout: int = 180, environment: dict[str, str] | None = None) -> dict[str, object]:
+    try: result = subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False, env=environment)
     except (OSError, subprocess.TimeoutExpired) as exc: return {"command": argv, "exit_code": None, "stdout": "", "stderr": str(exc), "error": type(exc).__name__}
     return {"command": argv, "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
 
@@ -74,20 +74,6 @@ def _state_value(path: Path, key: str) -> str:
     raise RuntimeError("doctor_backend_state_missing:" + key)
 
 
-def _patient_command(*, tree: Path, runner_image: str, state: Path, command: list[str], label: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Production container execution: custom daemon, exact argv, inspect evidence."""
-    docker, socket = _state_value(state, "DOCKER_CLI"), _state_value(state, "RUN") + "/docker.sock"
-    name = "shiproom-doctor-" + secrets.token_hex(8)
-    argv = [docker, "--host", "unix://" + socket, "create", "--name", name, "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--user", "65533:65533", "--pids-limit", "64", "--memory", "256m", "--memory-swap", "256m", "--cpus", "0.5", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m", "--mount", f"type=bind,src={tree},dst=/remediation,rw", "--workdir", "/remediation", runner_image, *command]
-    created = invocation(argv); assert created["exit_code"] == 0, "doctor_patient_create_failed"
-    container_id = str(created["stdout"]).strip(); inspect = invocation([docker, "--host", "unix://" + socket, "inspect", container_id]); started = invocation([docker, "--host", "unix://" + socket, "start", "-a", container_id]); removed = invocation([docker, "--host", "unix://" + socket, "rm", "-f", container_id])
-    if removed["exit_code"] != 0: raise RuntimeError("doctor_patient_cleanup_failed")
-    result = {"label": label, "command": command, "exit_code": started["exit_code"], "stdout": str(started["stdout"]).encode(), "stderr": str(started["stderr"]).encode(), "started_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "completed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
-    effective = json.loads(str(inspect["stdout"]))[0] if inspect["exit_code"] == 0 else {}
-    container = {"id": container_id, "name": name, "requested_policy_hash": digest({"argv": argv}), "effective_inspect_hash": digest(effective), "runner_image_digest": runner_image, "teardown": "proven", "residual_absence": removed["exit_code"] == 0}
-    return result, container
-
-
 def _authorization(control: Control, attempt: str, source: dict[str, str], receipt_id: str, manifest_path: Path, artifacts: dict[str, Path]) -> Path:
     allocation = control.allocation(attempt); authority = allocation["worktree_authority_json"]
     records = [{"kind": name, "canonical_path": str(path), "sha256": sha(path)} for name, path in sorted(artifacts.items())]
@@ -103,15 +89,24 @@ def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: s
     qualification_run = "qualification_" + secrets.token_hex(16); attempt = "doctor-git-" + secrets.token_hex(8)
     source_root = ROOT / "supervisor-owned" / "doctor-sources" / qualification_run
     try:
+        control = Control(db)
+        try: control.start_qualification(qualification_run, shiproom_commit, tree_hash.removeprefix("sha256:"))
+        finally: control.close()
         source = prepare_fixture_source(source_root)
-        allocate = invocation([str(allocation_script), "allocate", attempt, str(32 * 1024 * 1024), "2048", source["source_snapshot_hash"]])
-        if allocate["exit_code"] != 0: return {"name": "real_git_remediation_fixture", "ok": False, "phase": "allocate", "result": allocate}
+        environment = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "SHIPROOM_QUALIFICATION_RUN_ID": qualification_run}
+        allocate = invocation([str(allocation_script), "allocate", attempt, str(32 * 1024 * 1024), "2048", source["source_snapshot_hash"]], environment=environment)
+        if allocate["exit_code"] != 0:
+            raise RuntimeError("doctor_production_allocation_failed:" + str(allocate["stderr"]))
         tree = allocated_tree(db, attempt, allocate); materialize_fixture(source_root=source_root, worktree=tree, source=source)
-        before_target, container = _patient_command(tree=tree, runner_image=runner_image, state=ROOT / "backend.state", command=["python3", "target_test.py"], label="target_before")
-        before_protected, _ = _patient_command(tree=tree, runner_image=runner_image, state=ROOT / "backend.state", command=["python3", "protected_test.py"], label="protected_before")
-        repair, _ = _patient_command(tree=tree, runner_image=runner_image, state=ROOT / "backend.state", command=["python3", "-c", "p='calculator.py';s=open(p).read();open(p,'w').write(s.replace('return a - b','return a + b'))"], label="controlled_repair")
-        after_target, container = _patient_command(tree=tree, runner_image=runner_image, state=ROOT / "backend.state", command=["python3", "target_test.py"], label="target_after")
-        after_protected, _ = _patient_command(tree=tree, runner_image=runner_image, state=ROOT / "backend.state", command=["python3", "protected_test.py"], label="protected_after")
+        # The host materializer creates Git metadata as root; the untrusted
+        # patient gets ownership only of its dedicated, quota-controlled tree.
+        for candidate in [tree, *tree.rglob("*")]: os.chown(candidate, 65533, 65533, follow_symlinks=False)
+        docker, socket = _state_value(ROOT / "backend.state", "DOCKER_CLI"), Path(_state_value(ROOT / "backend.state", "RUN")) / "docker.sock"
+        before_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "target_test.py"], label="target_before")
+        before_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "protected_test.py"], label="protected_before")
+        repair, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "-c", "p='calculator.py';s=open(p).read();open(p,'w').write(s.replace('return a - b','return a + b'))"], label="controlled_repair")
+        after_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "target_test.py"], label="target_after")
+        after_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "protected_test.py"], label="protected_after")
         if before_target["exit_code"] == 0 or before_protected["exit_code"] != 0 or repair["exit_code"] != 0 or after_target["exit_code"] != 0 or after_protected["exit_code"] != 0: raise RuntimeError("doctor_real_checks_invalid")
         artifacts, git_evidence = git_artifacts(source_root=source_root, worktree=tree, artifact_root=ROOT / "supervisor-owned" / "doctor-artifacts" / attempt)
         receipt_id, receipt_path, manifest_path, receipt = seal_and_finalize(attempt=attempt, source=source, artifacts=artifacts, command_results=[before_target, before_protected, repair, after_target, after_protected], receipt_root=ROOT / "supervisor-owned", journal_root=ROOT / "supervisor-owned" / "journals", runner_image_digest=runner_image, container=container, shiproom_commit=shiproom_commit, package_tree_hash=tree_hash)
@@ -123,8 +118,15 @@ def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: s
         try: allocation = control.allocation(attempt); status = control.effective_status()
         finally: control.close()
         ok = released["exit_code"] == 0 and allocation["terminal_status"] == "RELEASED_RETIRED" and status["effective_state"] == "READY" and subprocess.check_output(["/usr/bin/git", "rev-parse", "HEAD"], cwd=source_root, text=True).strip() == source["commit"]
+        control = Control(db)
+        try: control.finish_qualification(qualification_run, ok)
+        finally: control.close()
         return {"name": "real_git_remediation_fixture", "ok": ok, "qualification_run_id": qualification_run, "attempt_id": attempt, "source": source, "git_evidence": git_evidence, "receipt_id": receipt_id, "receipt_hash": sha(receipt_path), "authorization_hash": sha(authorization), "release": released, "postcondition": {"terminal_status": allocation["terminal_status"], "effective_state": status["effective_state"], "tree_absent": not tree.exists()}, "function_ids": function_ids()}
     except Exception as exc:
+        try:
+            control = Control(db); control.finish_qualification(qualification_run, False); control.close()
+        except Exception:
+            pass
         return {"name": "real_git_remediation_fixture", "ok": False, "attempt_id": attempt, "qualification_run_id": qualification_run, "error": type(exc).__name__ + ":" + str(exc), "function_ids": function_ids()}
 
 

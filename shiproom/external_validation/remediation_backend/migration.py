@@ -13,6 +13,7 @@ import json
 import os
 import sqlite3
 import stat
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -128,6 +129,37 @@ def _effective_state(connection: sqlite3.Connection) -> str:
     return "READY" if not rows_ else (str(rows_[0][0]) if len(rows_) == 1 else "BLOCKED_MULTIPLE_INCIDENTS")
 
 
+def _production_preflight(database: Path) -> None:
+    """Reject a live backend rather than migrating a database under it.
+
+    The offline migration function intentionally supports historic fixtures;
+    this preflight is used only by the staged production CLI.  It is read-only
+    and refusal leaves both the database and host runtime untouched.
+    """
+    connection = sqlite3.connect(database, isolation_level=None)
+    try:
+        if schema_version(connection) != 2:
+            raise MigrationError("migration_predecessor_version_unknown")
+        terminal = tuple(sorted(TERMINAL_PROJECT_STATES))
+        projects = connection.execute(
+            "SELECT COUNT(*) FROM projects WHERE status NOT IN ({})".format(",".join("?" for _ in terminal)), terminal
+        ).fetchone()[0]
+        pending = connection.execute("SELECT COUNT(*) FROM allocations WHERE phase != 'REGISTRY_COMMITTED' OR terminal_status IS NULL").fetchone()[0]
+        releases = connection.execute("SELECT COUNT(*) FROM releases WHERE phase != 'RELEASE_COMMITTED' OR terminal_status IS NULL").fetchone()[0]
+        incidents = connection.execute("SELECT COUNT(*) FROM incidents WHERE kind != 'RESOLUTION' AND resolved_by IS NULL").fetchone()[0]
+        if projects or pending or releases:
+            raise MigrationError("migration_live_lifecycle_present")
+        if incidents:
+            raise MigrationError("migration_unresolved_incident_present")
+    finally:
+        connection.close()
+    # A custom daemon must be cleanly stopped by the dedicated lifecycle
+    # command before schema maintenance.  Do not guess which daemon to kill.
+    result = subprocess.run(["/usr/bin/pgrep", "-af", "dockerd"], text=True, capture_output=True, check=False, timeout=10)
+    if result.returncode == 0 and "/var/lib/shiproom-remediation" in result.stdout:
+        raise MigrationError("migration_custom_daemon_running")
+
+
 def migrate_v2_to_v3(database: Path, backup: Path, *, commit: str, implementation: Path, allow_live_nonterminal: bool = False) -> dict[str, Any]:
     """Migrate an exact v2 database; used by production and predecessor fixtures."""
     if not database.is_file(): raise MigrationError("migration_database_missing")
@@ -212,7 +244,10 @@ def main() -> int:
     args = parser.parse_args()
     if os.geteuid() != 0: raise MigrationError("migration_root_required")
     require_staged_script(Path(__file__))
-    with _lock(): print(json.dumps(migrate_v2_to_v3(args.db, args.backup, commit=args.commit, implementation=Path(__file__), allow_live_nonterminal=args.allow_offline_nonterminal), sort_keys=True))
+    with _lock():
+        if not args.allow_offline_nonterminal:
+            _production_preflight(args.db)
+        print(json.dumps(migrate_v2_to_v3(args.db, args.backup, commit=args.commit, implementation=Path(__file__), allow_live_nonterminal=args.allow_offline_nonterminal), sort_keys=True))
     return 0
 
 

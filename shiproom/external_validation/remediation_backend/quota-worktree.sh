@@ -9,6 +9,13 @@ action=${1:?allocate|report|release}
 attempt=${2:?attempt-id-required}
 [[ "$attempt" =~ ^[a-z0-9][a-z0-9_-]{0,63}$ ]] || die attempt_id
 tree="$MOUNT/worktrees/$attempt"; quarantine="$MOUNT/quarantine"
+# A qualification run is authority carried by the production reservation path,
+# not an unindexed doctor-side counter.  Normal remediation leaves it empty.
+qualification_args=()
+if [[ -n "${SHIPROOM_QUALIFICATION_RUN_ID:-}" ]]; then
+  [[ "$SHIPROOM_QUALIFICATION_RUN_ID" =~ ^qualification_[a-f0-9]{32}$ ]] || die qualification_run_id
+  qualification_args=(--qualification-run-id "$SHIPROOM_QUALIFICATION_RUN_ID")
+fi
 
 projection_append() {
   local project=$1 bytes=$2 inodes=$3 temp
@@ -37,7 +44,7 @@ case "$action" in
     available=$(df -B1 --output=avail "$MOUNT" | tail -n 1 | tr -d '[:space:]')
     [[ "$available" =~ ^[0-9]+$ ]] || die capacity_runtime_unknown
     path_hash="sha256:$(printf %s "$tree" | sha256sum | awk '{print $1}')"
-    project=$(control reserve "$attempt" "$bytes" "$inodes" "$path_hash" "$capacity_id" --runtime-available "$available") || die capacity_reservation
+    project=$(control reserve "$attempt" "$bytes" "$inodes" "$path_hash" "$capacity_id" --runtime-available "$available" "${qualification_args[@]}") || die capacity_reservation
     create_worktree "$tree" || allocation_failure "$project" tree_create
     authority=$(python3 "$DIR/worktree_authority.py" --backend-instance "$(control instance)" --attempt "$attempt" --project "$project" --path "$tree" --source-snapshot-hash "$snapshot") || allocation_failure "$project" authority_capture
     control allocation-phase "$attempt" TREE_CREATED "$authority" --pending-json "{\"project_id\":$project,\"attempt_id\":\"$attempt\",\"phase\":\"TREE_CREATED\",\"requested_bytes\":$bytes,\"requested_inodes\":$inodes,\"worktree_path_hash\":\"$path_hash\"}" || allocation_failure "$project" state_tree

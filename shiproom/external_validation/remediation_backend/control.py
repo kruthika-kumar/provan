@@ -201,6 +201,35 @@ class Control:
         row = self.db.execute("SELECT capacity_id FROM capacity WHERE active=1").fetchone()
         return None if row is None else str(row["capacity_id"])
 
+    def start_qualification(self, qualification_run_id: str, staged_commit: str, staged_tree: str) -> None:
+        """Durably reserve the production namespace for one doctor run."""
+        if (not qualification_run_id.startswith("qualification_") or len(staged_commit) != 40
+                or len(staged_tree) != 40):
+            raise ControlError("qualification_run_invalid")
+        with self.tx():
+            self.assert_ready()
+            self.assert_no_releasing_worktree()
+            capacity_id = self.active_capacity_id()
+            if capacity_id is None:
+                raise ControlError("qualification_capacity_missing")
+            if self.db.execute("SELECT 1 FROM qualification_runs WHERE state='RUNNING'").fetchone():
+                raise ControlError("qualification_run_concurrent")
+            self.db.execute(
+                "INSERT INTO qualification_runs(qualification_run_id,staged_commit,staged_tree,capacity_id,state,created_at,completed_at) VALUES(?,?,?,?,?,?,NULL)",
+                (qualification_run_id, staged_commit, staged_tree, capacity_id, "RUNNING", time.time_ns()),
+            )
+            self.event("qualification_started", {"qualification_run_id": qualification_run_id, "capacity_id": capacity_id})
+
+    def finish_qualification(self, qualification_run_id: str, succeeded: bool) -> None:
+        """Terminally record the doctor outcome; do not silently clear failures."""
+        with self.tx():
+            row = self.db.execute("SELECT state FROM qualification_runs WHERE qualification_run_id=?", (qualification_run_id,)).fetchone()
+            if row is None or str(row["state"]) != "RUNNING":
+                raise ControlError("qualification_run_state_invalid")
+            state = "PASSED" if succeeded else "FAILED"
+            self.db.execute("UPDATE qualification_runs SET state=?,completed_at=? WHERE qualification_run_id=?", (state, time.time_ns(), qualification_run_id))
+            self.event("qualification_finished", {"qualification_run_id": qualification_run_id, "state": state})
+
     def phase(self, value: str) -> None:
         if value not in PHASES:
             raise ControlError("phase_invalid")
@@ -445,6 +474,8 @@ def main() -> int:
     p_show_auth = sub.add_parser("authorization"); p_show_auth.add_argument("authorization_id")
     p_release = sub.add_parser("release-phase"); p_release.add_argument("attempt"); p_release.add_argument("phase", choices=sorted(RELEASE_PHASES - {"RELEASE_COMMITTED"})); p_release.add_argument("--pending-json")
     p_commit = sub.add_parser("commit-release"); p_commit.add_argument("attempt")
+    p_qstart = sub.add_parser("start-qualification"); p_qstart.add_argument("qualification_run_id"); p_qstart.add_argument("staged_commit"); p_qstart.add_argument("staged_tree")
+    p_qfinish = sub.add_parser("finish-qualification"); p_qfinish.add_argument("qualification_run_id"); p_qfinish.add_argument("--succeeded", action="store_true")
     args = parser.parse_args(); control = Control(args.db)
     try:
         if args.command == "init": print(control.initialize())
@@ -463,6 +494,8 @@ def main() -> int:
         elif args.command == "authorization": print(canonical(control.authorization(args.authorization_id)).decode("utf-8"))
         elif args.command == "release-phase": control.release_phase(args.attempt, args.phase, None if args.pending_json is None else json.loads(args.pending_json))
         elif args.command == "commit-release": control.commit_release(args.attempt)
+        elif args.command == "start-qualification": control.start_qualification(args.qualification_run_id, args.staged_commit, args.staged_tree)
+        elif args.command == "finish-qualification": control.finish_qualification(args.qualification_run_id, args.succeeded)
     finally:
         control.close()
     return 0
