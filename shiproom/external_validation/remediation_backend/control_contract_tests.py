@@ -55,6 +55,10 @@ assert 'bhard=${data_limit}' in setup_quota_source
 assert 'limit=$(quota_limit_kib "$bytes")' in worktree_quota_source
 assert 'bhard=${limit}' in worktree_quota_source
 assert 'bhard=${bytes}b' not in worktree_quota_source
+# A successor capacity is authoritative only in SQLite; allocation must not
+# retain the former shell projection after a successful replacement.
+assert 'capacity_id=$(control active-capacity)' in worktree_quota_source
+assert 'capacity_id=$(state_try CAPACITY_ID)' not in worktree_quota_source
 # Allocation stdout is parsed as exactly one canonical worktree path by the
 # privileged doctor; noisy xfs_quota diagnostics must not share that channel.
 assert 'project -s -p $tree $project" "$MOUNT" >&2' in worktree_quota_source

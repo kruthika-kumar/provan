@@ -40,7 +40,12 @@ case "$action" in
     bytes=${3:?bytes-required}; inodes=${4:?inodes-required}; snapshot=${5:?source-snapshot-hash-required}
     [[ "$bytes" =~ ^[0-9]+$ && "$inodes" =~ ^[0-9]+$ && "$snapshot" =~ ^sha256:[a-f0-9]{64}$ && $bytes -ge $MIN_WORKTREE_BYTES && $bytes -le $MAX_WORKTREE_BYTES && $((bytes%1024)) -eq 0 && $inodes -ge $MIN_WORKTREE_INODES && $inodes -le $MAX_WORKTREE_INODES ]] || die allocation_input
     [[ ! -e "$tree" ]] || die attempt_reused
-    capacity_id=$(state_try CAPACITY_ID) || die capacity_unqualified
+    # SQLite is the one lifecycle authority.  A qualified successor capacity
+    # deliberately supersedes the previous record without relying on a stale
+    # shell-state projection, so allocation must ask the transactional control
+    # database for the current active capacity at reservation time.
+    capacity_id=$(control active-capacity) || die capacity_unqualified
+    [[ "$capacity_id" =~ ^capacity_[a-f0-9]{32}$ ]] || die capacity_unqualified
     available=$(df -B1 --output=avail "$MOUNT" | tail -n 1 | tr -d '[:space:]')
     [[ "$available" =~ ^[0-9]+$ ]] || die capacity_runtime_unknown
     path_hash="sha256:$(printf %s "$tree" | sha256sum | awk '{print $1}')"
