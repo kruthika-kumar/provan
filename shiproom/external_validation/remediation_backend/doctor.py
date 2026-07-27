@@ -124,7 +124,16 @@ def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: s
         return {"name": "real_git_remediation_fixture", "ok": ok, "qualification_run_id": qualification_run, "attempt_id": attempt, "source": source, "git_evidence": git_evidence, "receipt_id": receipt_id, "receipt_hash": sha(receipt_path), "authorization_hash": sha(authorization), "release": released, "postcondition": {"terminal_status": allocation["terminal_status"], "effective_state": status["effective_state"], "tree_absent": not tree.exists()}, "function_ids": function_ids()}
     except Exception as exc:
         try:
-            control = Control(db); control.finish_qualification(qualification_run, False); control.close()
+            control = Control(db)
+            # This is a production lifecycle failure, not a test-only cleanup
+            # opportunity.  Preserve its worktree/capacity reservation and
+            # create an immutable global block for an explicit recovery flow.
+            try:
+                control.allocation_phase(attempt, "INCIDENT", control.allocation(attempt).get("worktree_authority_json", {}))
+                control.incident("doctor_attempt_failure", "RECOVERY_REQUIRED", {"attempt_id": attempt, "qualification_run_id": qualification_run, "error": type(exc).__name__ + ":" + str(exc)}, qualification_run_id=qualification_run)
+            except Exception:
+                pass
+            control.finish_qualification(qualification_run, False); control.close()
         except Exception:
             pass
         return {"name": "real_git_remediation_fixture", "ok": False, "attempt_id": attempt, "qualification_run_id": qualification_run, "error": type(exc).__name__ + ":" + str(exc), "function_ids": function_ids()}

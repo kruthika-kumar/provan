@@ -371,8 +371,10 @@ class Control:
                 raise ControlError("allocation_missing")
             if phase in ALLOCATION_PREDECESSOR and current["phase"] != ALLOCATION_PREDECESSOR[phase]:
                 raise ControlError("allocation_phase_transition_invalid")
-            if phase in {"QUARANTINED", "INCIDENT"} and current["phase"] == "REGISTRY_COMMITTED":
-                raise ControlError("allocation_terminal_transition_invalid")
+            # A post-registry failure cannot be silently unwound: its project
+            # reservation remains accounted until a separately evidenced
+            # incident-resolution workflow proves a safe terminal outcome.
+            # This is deliberately not a release transition.
             self.db.execute("UPDATE allocations SET phase=?,worktree_authority_json=?,quota_evidence_json=?,pending_hash=? WHERE attempt_id=?", (phase, canonical(authority).decode("utf-8"), None if quota is None else canonical(quota).decode("utf-8"), None if pending is None else digest(pending), attempt))
             project_state = {"RESERVED": "RESERVED", "TREE_CREATED": "ALLOCATING", "PROJECT_ASSIGNED": "ALLOCATING", "LIMIT_ASSIGNED": "ALLOCATING", "REGISTRY_COMMITTED": "ACTIVE", "QUARANTINED": "QUARANTINED_PENDING", "INCIDENT": "INCIDENT_BOUND"}[phase]
             self.db.execute("UPDATE projects SET status=? WHERE attempt_id=?", (project_state, attempt))
