@@ -32,7 +32,11 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 loop=$(losetup --find --show "$IMAGE")
-findmnt -n -o SOURCE --target "$MOUNT" 2>/dev/null | grep -q . && die resume_mount_raced
+# ``findmnt --target`` reports the nearest ancestor filesystem as well as an
+# exact target.  mountpoint(1), checked above and again here, is the authority
+# for whether the dedicated directory itself became a mount in the small race
+# window before attaching our recorded loop.
+mountpoint -q "$MOUNT" && die resume_mount_raced
 mount -o prjquota,noatime "$loop" "$MOUNT"
 findmnt -n -o SOURCE,FSTYPE,OPTIONS --target "$MOUNT" | grep -Eq "^${loop}[[:space:]]+xfs[[:space:]].*prjquota" || die resume_quota_mount
 xfs_info "$MOUNT" | grep -q 'ftype=1' || die resume_ftype
