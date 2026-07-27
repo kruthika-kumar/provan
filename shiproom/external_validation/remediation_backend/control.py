@@ -457,6 +457,34 @@ class Control:
             self.db.execute("UPDATE releases SET phase='RELEASE_COMMITTED',terminal_status='RELEASED_RETIRED' WHERE attempt_id=?", (attempt,))
             self.event("release_committed", {"attempt_id": attempt, "project_id": project["project_id"], "capacity_released": project["reservation_bytes"], "project_status": "RELEASED_RETIRED"})
 
+    def complete_quarantine_recovery(self, attempt: str, incident_id: str, evidence_hash: str) -> str:
+        """Atomically retire a sealed forensic quarantine and resolve its block.
+
+        The caller has already descriptor-safely deleted the XFS tree and
+        verified project clearance.  This is the sole authority point where
+        the retained reservation is released; no normal release authorization
+        can be synthesized for an unsealed failed attempt.
+        """
+        if not isinstance(evidence_hash, str) or not evidence_hash.startswith("sha256:") or len(evidence_hash) != 71:
+            raise ControlError("quarantine_evidence_hash_invalid")
+        with self.tx():
+            project = self.db.execute("SELECT * FROM projects WHERE attempt_id=? AND status='INCIDENT_BOUND'", (attempt,)).fetchone()
+            allocation = self.db.execute("SELECT * FROM allocations WHERE attempt_id=? AND phase='INCIDENT'", (attempt,)).fetchone()
+            incident = self.db.execute("SELECT * FROM incidents WHERE incident_id=? AND blocking=1 AND resolved_by IS NULL", (incident_id,)).fetchone()
+            if project is None or allocation is None or incident is None or self.db.execute("SELECT 1 FROM releases WHERE attempt_id=?", (attempt,)).fetchone():
+                raise ControlError("quarantine_recovery_state_invalid")
+            if project["incident_id"] not in {None, incident_id}:
+                raise ControlError("quarantine_recovery_incident_mismatch")
+            now=time.time_ns(); successor="incident_"+secrets.token_hex(16)
+            payload={"attempt_id":attempt,"evidence_hash":evidence_hash,"project_id":int(project["project_id"]),"terminal_status":"QUARANTINED_RETIRED"}
+            self.db.execute("UPDATE projects SET status='QUARANTINED_RETIRED',incident_id=?,retired_at=? WHERE attempt_id=?", (incident_id,now,attempt))
+            self.db.execute("UPDATE allocations SET terminal_status='QUARANTINED_RETIRED' WHERE attempt_id=?", (attempt,))
+            self.db.execute("INSERT INTO incidents(incident_id,predecessor_incident_id,incident_type,blocking,blocking_state,payload_hash,payload_json,resolved_by,created_at,qualification_run_id) VALUES(?,?,?,?,?,?,?,?,?,?)", (successor,incident_id,"RESOLUTION",0,"READY",digest(payload),canonical(payload).decode("utf-8"),None,now,incident["qualification_run_id"]))
+            self.db.execute("UPDATE incidents SET resolved_by=? WHERE incident_id=?", (successor,incident_id))
+            effective=self._persist_effective_state()
+            self.event("quarantine_recovery_committed", {**payload,"incident_id":incident_id,"resolution_id":successor,"effective_state":effective["effective_state"]})
+            return successor
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -476,6 +504,7 @@ def main() -> int:
     p_show_auth = sub.add_parser("authorization"); p_show_auth.add_argument("authorization_id")
     p_release = sub.add_parser("release-phase"); p_release.add_argument("attempt"); p_release.add_argument("phase", choices=sorted(RELEASE_PHASES - {"RELEASE_COMMITTED"})); p_release.add_argument("--pending-json")
     p_commit = sub.add_parser("commit-release"); p_commit.add_argument("attempt")
+    p_quarantine = sub.add_parser("complete-quarantine-recovery"); p_quarantine.add_argument("attempt"); p_quarantine.add_argument("incident_id"); p_quarantine.add_argument("evidence_hash")
     p_qstart = sub.add_parser("start-qualification"); p_qstart.add_argument("qualification_run_id"); p_qstart.add_argument("staged_commit"); p_qstart.add_argument("staged_tree")
     p_qfinish = sub.add_parser("finish-qualification"); p_qfinish.add_argument("qualification_run_id"); p_qfinish.add_argument("--succeeded", action="store_true")
     args = parser.parse_args(); control = Control(args.db)
@@ -496,6 +525,7 @@ def main() -> int:
         elif args.command == "authorization": print(canonical(control.authorization(args.authorization_id)).decode("utf-8"))
         elif args.command == "release-phase": control.release_phase(args.attempt, args.phase, None if args.pending_json is None else json.loads(args.pending_json))
         elif args.command == "commit-release": control.commit_release(args.attempt)
+        elif args.command == "complete-quarantine-recovery": print(control.complete_quarantine_recovery(args.attempt,args.incident_id,args.evidence_hash))
         elif args.command == "start-qualification": control.start_qualification(args.qualification_run_id, args.staged_commit, args.staged_tree)
         elif args.command == "finish-qualification": control.finish_qualification(args.qualification_run_id, args.succeeded)
     finally:
