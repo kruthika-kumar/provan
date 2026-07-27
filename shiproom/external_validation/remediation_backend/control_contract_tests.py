@@ -82,6 +82,10 @@ assert 'parser.add_argument("--run-remediation-fixture", action="store_true")' i
 assert 'real_git_remediation_fixture' in doctor_source
 assert 'prepare_fixture_source' in doctor_source and 'materialize_fixture' in doctor_source
 assert 'seal_and_finalize' in doctor_source and 'validate_release_authorization' in doctor_source
+assert 'parser.add_argument("--source-tree"' in doctor_source
+assert 'parser.add_argument("--package-tree-hash"' in doctor_source
+assert 'package_tree_hash=package_tree_hash' in doctor_source
+assert 'source_tree)' in doctor_source
 assert '"0" * 64' not in doctor_source and '"a" * 64' not in doctor_source
 assert 'tree != Path(str(authority["canonical_path"])) or not tree.is_dir()' in doctor_source
 assert '_STAGED_MODULE_DIRECTORY' in doctor_source
@@ -474,7 +478,7 @@ with tempfile.TemporaryDirectory() as raw:
         document["canonical_path"]=str(root/"other")
         expect("doctor_allocation_authority_mismatch",lambda: doctor.allocated_tree(root/"control.sqlite3","doctor-fixture",result))
     with mock.patch.object(doctor,"invocation",side_effect=AssertionError("unqualified doctor invoked allocation")):
-        blocked=doctor.real_git_remediation_fixture(root/"not-authoritative.sqlite3","example/runner@sha256:"+"a"*64,"b"*40,"sha256:"+"c"*64)
+        blocked=doctor.real_git_remediation_fixture(root/"not-authoritative.sqlite3","example/runner@sha256:"+"a"*64,"b"*40,"c"*40,"sha256:"+"d"*64)
     assert blocked == {"name":"real_git_remediation_fixture","ok":False,"reason":"doctor_paths_not_qualified"}
 
 print("control and contract behavioral tests passed")
