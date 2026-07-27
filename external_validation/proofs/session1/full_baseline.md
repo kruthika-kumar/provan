@@ -1,19 +1,19 @@
 # Full regression baseline — control-plane repair
 
 The final full repository baseline ran from a clean canonical worktree at
-commit `6f66930` on 2026-07-27. The root-staged runtime doctor remains bound
+commit `289b48e` on 2026-07-27. The root-staged runtime doctor remains bound
 to its production implementation commit `48fa698d1395b4d2d503394c64d82761f4ee885d`;
-`6f66930` contains only post-doctor status-attestation hardening and its
+`289b48e` contains only post-doctor status-attestation hardening and its
 regression coverage.
 
 ```text
 python -m pytest -q
 ```
 
-The completed command exited `0` after 2305.95 seconds:
+The completed command exited `0` after 2318.72 seconds:
 
 ```text
-804 passed, 3 skipped in 2305.95s (0:38:25)
+804 passed, 3 skipped in 2318.72s (0:38:38)
 ```
 
 An earlier detached-worktree run failed only because that checkout converted an
