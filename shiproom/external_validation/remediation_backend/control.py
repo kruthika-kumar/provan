@@ -190,7 +190,10 @@ class Control:
 
     def assert_no_releasing_worktree(self) -> None:
         """A sealed attempt is exclusive until its retirement transaction commits."""
-        row = self.db.execute("SELECT attempt_id FROM releases WHERE phase != 'RELEASE_COMMITTED' LIMIT 1").fetchone()
+        # Normal and supervised-recovery terminal releases have distinct phase
+        # labels, but both persist a terminal status.  Phase-name matching
+        # would permanently block later qualification after a valid recovery.
+        row = self.db.execute("SELECT attempt_id FROM releases WHERE terminal_status IS NULL LIMIT 1").fetchone()
         if row is not None:
             raise ControlError("backend_execution_blocked:RELEASING")
 

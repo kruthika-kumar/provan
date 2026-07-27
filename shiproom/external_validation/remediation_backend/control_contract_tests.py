@@ -492,6 +492,7 @@ with tempfile.TemporaryDirectory() as raw:
     assert control.allocation("attempt-b")["terminal_status"] == "QUARANTINED_RETIRED"
     assert control.db.execute("SELECT phase,terminal_status FROM releases WHERE attempt_id='attempt-b'").fetchone()["phase"] == "RECOVERY_COMMITTED"
     control.assert_ready()
+    control.assert_no_releasing_worktree()
     bad = authorization(instance, "attempt-b", second)
     bad["worktree_authority"]["attempt_id"] = "other"  # type: ignore[index]
     expect("worktree_binding_mismatch", lambda: validate_release_authorization(bad))
