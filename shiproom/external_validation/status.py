@@ -53,6 +53,27 @@ def _git_blob(root: Path, revision: str, relative: str) -> str:
     return result.stdout.strip()
 
 
+def _committed_content_hash(root: Path, path: Path) -> str:
+    """SHA-256 the canonical committed bytes, never checkout line endings."""
+    try:
+        relative = path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError as exc:
+        raise V2ValidationError("status_authority_path_outside_repository") from exc
+    try:
+        result = subprocess.run(
+            ["git", "-c", "safe.directory=" + str(root.resolve()), "show", "HEAD:" + relative],
+            cwd=root,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
+    if result.returncode != 0:
+        raise V2ValidationError("status_attestation_proof_binding_invalid")
+    return "sha256:" + hashlib.sha256(result.stdout).hexdigest()
+
+
 def _validate_external_attestation(
     *, root: Path, authority_path: Path, current_path: Path, profiles: dict[str, dict[str, Any]], attestation: Path
 ) -> None:
@@ -81,7 +102,7 @@ def _validate_external_attestation(
     ):
         raise V2ValidationError("status_attestation_proof_binding_invalid")
     proof_path = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
-    if not proof_path.is_file() or _hash(proof_path) != data["proof_bundle_hash"]:
+    if not proof_path.is_file() or _committed_content_hash(root, proof_path) != data["proof_bundle_hash"]:
         raise V2ValidationError("status_attestation_proof_binding_invalid")
     try:
         proof = json.loads(proof_path.read_text(encoding="utf-8"))

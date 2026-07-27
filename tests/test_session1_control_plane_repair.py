@@ -161,7 +161,6 @@ def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> N
     root = Path.cwd()
     authority = root / "external_validation/status/session1-status-authority.v1.json"
     chain = root / "external_validation/status/session1-profile-status-chain.v2.json"
-    proof = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip()
     attestation = tmp_path / "attestation.json"
@@ -170,7 +169,10 @@ def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> N
         "schema_version": "1",
         "commit_b": head,
         "commit_b_tree": tree,
-        "proof_bundle_hash": "sha256:" + hashlib.sha256(proof.read_bytes()).hexdigest(),
+        # The attestation binds the profile chain's canonical proof hash.  A
+        # Windows checkout may represent this public JSON with CRLF, while
+        # the staged/root authority sees the committed LF blob.
+        "proof_bundle_hash": json.loads(chain.read_text(encoding="utf-8"))["profiles"]["detection"][-1]["proof_bundle_hash"],
         "status_authority_hash": "sha256:" + hashlib.sha256(authority.read_bytes()).hexdigest(),
         "status_chain_hash": "sha256:" + hashlib.sha256(chain.read_bytes()).hexdigest(),
     }), encoding="utf-8")
