@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 STAGE_ROOT=Path("/run/shiproom-remediation-bootstrap")
-STAGE_FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+STAGE_FILES=("lib.sh","setup.sh","start.sh","status.sh","resume.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 STAGE_SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 STAGE_PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
 

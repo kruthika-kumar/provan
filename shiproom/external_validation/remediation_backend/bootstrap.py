@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT=Path("/run/shiproom-remediation-bootstrap")
 APPROVED_SOURCE=Path("/mnt/c/Users/Kruthika Kumar/Documents/Projects/Hermes buildathon - Shiproom/shiproom/external_validation/remediation_backend")
-FILES=("lib.sh","setup.sh","start.sh","status.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
+FILES=("lib.sh","setup.sh","start.sh","status.sh","resume.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
