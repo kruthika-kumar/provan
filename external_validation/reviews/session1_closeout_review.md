@@ -16,8 +16,8 @@ Its private canonical report is bound by
 `control_plane_repair_proof_manifest.json`; public material is not the
 qualification authority.
 
-The final complete canonical baseline at `ece6234` completed with **804
-passed, 3 skipped in 2285.70 seconds**. The post-doctor changes are limited to
+The final complete canonical baseline at `6f66930` completed with **804
+passed, 3 skipped in 2305.95 seconds**. The post-doctor changes are limited to
 status-attestation hardening and regression coverage; they do not alter the
 staged remediation runtime bundle qualified at `48fa698…`.
 
