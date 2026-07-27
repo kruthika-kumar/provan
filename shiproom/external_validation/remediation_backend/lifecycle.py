@@ -144,7 +144,8 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
             raise LifecycleError("runner_image_config_digest_mismatch")
         started = subprocess.run([docker, "--host", "unix://" + str(socket), "start", container_id], capture_output=True, text=True, timeout=60, check=False)
         if started.returncode != 0:
-            raise LifecycleError("trusted_supervisor_start_failed")
+            detail = (started.stderr or started.stdout).strip().replace("\n", " | ")[-1200:]
+            raise LifecycleError("trusted_supervisor_start_failed:" + detail)
         # PID 1 remains the immutable supervisor.  The untrusted command is
         # introduced only through a separately authenticated exec under its
         # own UID and dedicated process-group launcher.
