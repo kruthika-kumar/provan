@@ -148,7 +148,12 @@ def rerun_privileged_gate(staged:Path, repository:Path)->None:
             os.setgroups([]); os.setgid(65534); os.setuid(65534)
         is_git=command[0]==str(git)
         result=subprocess.run(command,cwd=repository if is_git else staged,text=True,capture_output=True,check=False,env=git_environment(repository) if is_git else None,preexec_fn=demote if dropped else None,timeout=120)
-        if result.returncode: raise RuntimeError("bootstrap_gate_failed:"+Path(command[0]).name)
+        if result.returncode:
+            # Preserve bounded diagnostic context without treating it as
+            # authority.  The staged bundle is retained for inspection after
+            # a failed gate; a caller still receives a fail-closed status.
+            detail=(result.stderr or result.stdout).strip().replace("\n"," | ")[-1200:]
+            raise RuntimeError("bootstrap_gate_failed:"+Path(command[0]).name+":"+detail)
     required([str(bash),"-n",*shells])
     required([str(shellcheck),"-S","warning",*shells])
     required([str(git),"diff","--check"])
