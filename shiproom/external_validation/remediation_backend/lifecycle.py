@@ -105,11 +105,11 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
     name = "shiproom-remediation-" + hashlib.sha256((label + str(time.time_ns())).encode()).hexdigest()[:20]
     argv = [docker, "--host", "unix://" + str(socket), "create", "--name", name,
             "--network=none", "--read-only", "--cap-drop=ALL",
-            "--security-opt=no-new-privileges", "--user", "65533:65533",
+            "--security-opt=no-new-privileges", "--user", "65532:65532",
             "--pids-limit", "64", "--memory", "256m", "--memory-swap", "256m",
             "--cpus", "0.5", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m",
             "--mount", f"type=bind,src={tree},dst=/remediation,rw", "--workdir",
-            "/remediation", runner_image, *command]
+            "/remediation", runner_image]
     started_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     created = subprocess.run(argv, capture_output=True, text=True, timeout=60, check=False)
     if created.returncode != 0:
@@ -124,7 +124,16 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
         effective = json.loads(inspected.stdout)
         if not isinstance(effective, list) or len(effective) != 1:
             raise LifecycleError("patient_effective_inspect_invalid")
-        finished = subprocess.run([docker, "--host", "unix://" + str(socket), "start", "-a", container_id], capture_output=True, timeout=180, check=False)
+        started = subprocess.run([docker, "--host", "unix://" + str(socket), "start", container_id], capture_output=True, text=True, timeout=60, check=False)
+        if started.returncode != 0:
+            raise LifecycleError("trusted_supervisor_start_failed")
+        # PID 1 remains the immutable supervisor.  The untrusted command is
+        # introduced only through a separately authenticated exec under its
+        # own UID and dedicated process-group launcher.
+        finished = subprocess.run([docker, "--host", "unix://" + str(socket), "exec", "--user", "65533:65533", container_id, "/gateway/patient-launcher", *command], capture_output=True, timeout=180, check=False)
+        quiescent = subprocess.run([docker, "--host", "unix://" + str(socket), "exec", "--user", "65532:65532", container_id, "/supervisor/quiescence_probe.py", "65533"], capture_output=True, timeout=30, check=False)
+        if quiescent.returncode != 0:
+            raise LifecycleError("patient_process_tree_not_quiescent")
     finally:
         removed = subprocess.run([docker, "--host", "unix://" + str(socket), "rm", "-f", container_id], capture_output=True, text=True, timeout=60, check=False)
     if removed.returncode != 0:
