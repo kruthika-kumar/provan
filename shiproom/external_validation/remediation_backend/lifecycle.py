@@ -90,7 +90,7 @@ def run_checked_command(*, argv: list[str], worktree: Path, label: str) -> dict[
 
 
 def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_image: str,
-                            command: list[str], label: str) -> tuple[dict[str, Any], dict[str, Any]]:
+                            command: list[str], label: str, runner_ref: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Run one patient command through the production custom-daemon policy.
 
     This deliberately owns the Docker argv and effective-inspect capture.  The
@@ -100,6 +100,9 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
     """
     if not runner_image or "@sha256:" not in runner_image:
         raise LifecycleError("runner_image_digest_required")
+    image_ref = runner_ref or runner_image
+    if not image_ref:
+        raise LifecycleError("runner_image_ref_required")
     if not tree.is_dir() or not socket.is_socket():
         raise LifecycleError("patient_execution_authority_missing")
     name = "shiproom-remediation-" + hashlib.sha256((label + str(time.time_ns())).encode()).hexdigest()[:20]
@@ -109,7 +112,7 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
             "--pids-limit", "64", "--memory", "256m", "--memory-swap", "256m",
             "--cpus", "0.5", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m",
             "--mount", f"type=bind,src={tree},dst=/remediation,rw", "--workdir",
-            "/remediation", runner_image]
+            "/remediation", image_ref]
     started_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     created = subprocess.run(argv, capture_output=True, text=True, timeout=60, check=False)
     if created.returncode != 0:
@@ -124,6 +127,12 @@ def execute_patient_command(*, docker: str, socket: Path, tree: Path, runner_ima
         effective = json.loads(inspected.stdout)
         if not isinstance(effective, list) or len(effective) != 1:
             raise LifecycleError("patient_effective_inspect_invalid")
+        # A locally-built runner has no registry RepoDigest.  Its immutable
+        # Docker config hash is the reviewed identity; the mutable local tag
+        # is merely an address and must resolve to that exact config object.
+        expected_config = runner_image.rsplit("@sha256:", 1)[1]
+        if str(effective[0].get("Image", "")).removeprefix("sha256:") != expected_config:
+            raise LifecycleError("runner_image_config_digest_mismatch")
         started = subprocess.run([docker, "--host", "unix://" + str(socket), "start", container_id], capture_output=True, text=True, timeout=60, check=False)
         if started.returncode != 0:
             raise LifecycleError("trusted_supervisor_start_failed")

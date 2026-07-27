@@ -9,7 +9,7 @@ APPROVED_SOURCE=Path("/mnt/c/Users/Kruthika Kumar/Documents/Projects/Hermes buil
 FILES=("lib.sh","setup.sh","start.sh","status.sh","resume.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
-RUNNER_FILES=("Dockerfile","patient-launcher.c","patient-reaper.c","supervisor.py","quiescence_probe.py","transfer_helper.py")
+RUNNER_FILES=("Dockerfile","patient_launcher.py","patient_reaper.py","supervisor.py","quiescence_probe.py","transfer_helper.py")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
 def trusted_host_executable(path:Path)->None:

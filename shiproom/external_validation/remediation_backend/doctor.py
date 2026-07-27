@@ -83,7 +83,7 @@ def _authorization(control: Control, attempt: str, source: dict[str, str], recei
     path = ROOT / "supervisor-owned" / "authorizations" / (document["authorization_id"] + ".json"); write_root_owned(path, canonical(document)); control.authorize_release(document, str(path)); return path
 
 
-def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: str, tree_hash: str) -> dict[str, object]:
+def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: str, tree_hash: str, runner_ref: str | None = None) -> dict[str, object]:
     if db.resolve() != (ROOT / "control.sqlite3").resolve() or not MOUNT.is_mount() or not RUN.is_dir(): return {"name": "real_git_remediation_fixture", "ok": False, "reason": "doctor_paths_not_qualified"}
     allocation_script = Path(__file__).with_name("quota-worktree.sh"); require_staged_script(allocation_script)
     qualification_run = "qualification_" + secrets.token_hex(16); attempt = "doctor-git-" + secrets.token_hex(8)
@@ -102,11 +102,11 @@ def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: s
         # patient gets ownership only of its dedicated, quota-controlled tree.
         for candidate in [tree, *tree.rglob("*")]: os.chown(candidate, 65533, 65533, follow_symlinks=False)
         docker, socket = _state_value(ROOT / "backend.state", "DOCKER_CLI"), Path(_state_value(ROOT / "backend.state", "RUN")) / "docker.sock"
-        before_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "target_test.py"], label="target_before")
-        before_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "protected_test.py"], label="protected_before")
-        repair, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "-c", "p='calculator.py';s=open(p).read();open(p,'w').write(s.replace('return a - b','return a + b'))"], label="controlled_repair")
-        after_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "target_test.py"], label="target_after")
-        after_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, command=["python3", "protected_test.py"], label="protected_after")
+        before_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, runner_ref=runner_ref, command=["python3", "target_test.py"], label="target_before")
+        before_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, runner_ref=runner_ref, command=["python3", "protected_test.py"], label="protected_before")
+        repair, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, runner_ref=runner_ref, command=["python3", "-c", "p='calculator.py';s=open(p).read();open(p,'w').write(s.replace('return a - b','return a + b'))"], label="controlled_repair")
+        after_target, container = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, runner_ref=runner_ref, command=["python3", "target_test.py"], label="target_after")
+        after_protected, _ = execute_patient_command(docker=docker, socket=socket, tree=tree, runner_image=runner_image, runner_ref=runner_ref, command=["python3", "protected_test.py"], label="protected_after")
         if before_target["exit_code"] == 0 or before_protected["exit_code"] != 0 or repair["exit_code"] != 0 or after_target["exit_code"] != 0 or after_protected["exit_code"] != 0: raise RuntimeError("doctor_real_checks_invalid")
         artifacts, git_evidence = git_artifacts(source_root=source_root, worktree=tree, artifact_root=ROOT / "supervisor-owned" / "doctor-artifacts" / attempt)
         receipt_id, receipt_path, manifest_path, receipt = seal_and_finalize(attempt=attempt, source=source, artifacts=artifacts, command_results=[before_target, before_protected, repair, after_target, after_protected], receipt_root=ROOT / "supervisor-owned", journal_root=ROOT / "supervisor-owned" / "journals", runner_image_digest=runner_image, container=container, shiproom_commit=shiproom_commit, package_tree_hash=tree_hash)
@@ -131,7 +131,7 @@ def real_git_remediation_fixture(db: Path, runner_image: str, shiproom_commit: s
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--db", type=Path, required=True); parser.add_argument("--out", type=Path, required=True); parser.add_argument("--profile", choices=("detection", "remediation", "all"), default="all"); parser.add_argument("--run-remediation-fixture", action="store_true"); parser.add_argument("--runner-image", default=os.environ.get("SHIPROOM_REMEDIATION_RUNNER_IMAGE")); parser.add_argument("--shiproom-commit", default=os.environ.get("SHIPROOM_REMEDIATION_COMMIT", "")); parser.add_argument("--package-tree-hash", default=os.environ.get("SHIPROOM_REMEDIATION_TREE", "")); args = parser.parse_args()
+    parser = argparse.ArgumentParser(); parser.add_argument("--db", type=Path, required=True); parser.add_argument("--out", type=Path, required=True); parser.add_argument("--profile", choices=("detection", "remediation", "all"), default="all"); parser.add_argument("--run-remediation-fixture", action="store_true"); parser.add_argument("--runner-image", default=os.environ.get("SHIPROOM_REMEDIATION_RUNNER_IMAGE")); parser.add_argument("--runner-image-ref", default=os.environ.get("SHIPROOM_REMEDIATION_RUNNER_REF")); parser.add_argument("--shiproom-commit", default=os.environ.get("SHIPROOM_REMEDIATION_COMMIT", "")); parser.add_argument("--package-tree-hash", default=os.environ.get("SHIPROOM_REMEDIATION_TREE", "")); args = parser.parse_args()
     if os.geteuid() != 0: raise SystemExit("doctor_root_required")
     require_staged_script(Path(__file__))
     checks = [{"name": "linux", "ok": sys.platform.startswith("linux"), "platform": platform.platform()}, {"name": "docker_binary", "ok": shutil.which("dockerd") is not None}, {"name": "xfs_tools", "ok": shutil.which("xfs_quota") is not None and shutil.which("mkfs.xfs") is not None}, {"name": "openat2", "ok": _openat2()}]
@@ -141,8 +141,8 @@ def main() -> int:
     remediation: list[dict[str, object]] = []
     if args.profile in ("remediation", "all"):
         if not args.run_remediation_fixture: remediation.append({"name": "real_git_remediation_fixture", "ok": False, "reason": "not_requested"})
-        elif not args.runner_image or "@sha256:" not in args.runner_image or len(args.shiproom_commit) != 40 or len(args.package_tree_hash) != 40: remediation.append({"name": "real_git_remediation_fixture", "ok": False, "reason": "real_runner_or_clean_commit_authority_missing"})
-        else: remediation.append(real_git_remediation_fixture(args.db, args.runner_image, args.shiproom_commit, "sha256:" + args.package_tree_hash))
+        elif not args.runner_image or "@sha256:" not in args.runner_image or not args.runner_image_ref or len(args.shiproom_commit) != 40 or len(args.package_tree_hash) != 40: remediation.append({"name": "real_git_remediation_fixture", "ok": False, "reason": "real_runner_or_clean_commit_authority_missing"})
+        else: remediation.append(real_git_remediation_fixture(args.db, args.runner_image, args.shiproom_commit, "sha256:" + args.package_tree_hash, args.runner_image_ref))
     detection_ok = all(bool(row.get("ok")) for row in checks + [readiness]); remediation_ok = detection_ok and bool(remediation) and all(bool(row.get("ok")) for row in remediation)
     report = {"schema_id": "remediation_doctor_report.v2", "schema_version": "2", "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "backend_instance_id": backend, "proof_classification": {"privileged_runtime": remediation, "static_contract": checks + [readiness], "non_privileged_semantic_adversarial": "recorded by focused control tests"}, "detection_profile": {"status": "QUALIFIED" if detection_ok else "BLOCKED", "checks": checks + [readiness]}, "remediation_profile": {"status": "QUALIFIED" if remediation_ok else "BLOCKED", "checks": remediation}, "overall_status": "QUALIFIED" if remediation_ok else ("PARTIALLY_QUALIFIED" if detection_ok else "FAILED")}; report["report_hash"] = digest(report)
     args.out.parent.mkdir(parents=True, exist_ok=True); args.out.write_bytes(canonical(report)); os.chmod(args.out, 0o600); print(json.dumps({"detection_profile": report["detection_profile"]["status"], "remediation_profile": report["remediation_profile"]["status"], "overall_status": report["overall_status"], "report_hash": report["report_hash"]}, sort_keys=True)); return 0
