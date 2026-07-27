@@ -8,6 +8,7 @@ from pathlib import Path
 FILES=("lib.sh","setup.sh","start.sh","status.sh","resume.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
+RUNNER_FILES=("Dockerfile","patient-launcher.c","patient-reaper.c","supervisor.py","quiescence_probe.py","transfer_helper.py")
 APPROVED_BUNDLE=Path("/mnt/c/Users/Kruthika Kumar/Documents/Projects/Hermes buildathon - Shiproom/shiproom/external_validation/remediation_backend")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
 def trusted_host_executable(path:Path)->Path:
@@ -40,13 +41,13 @@ def main()->int:
     if repo!=expected_repo: raise SystemExit("gate_repository_not_approved")
     if required(run([git,"rev-parse","HEAD"],repo,repo),"gate_head_missing")!=a.commit or required(run([git,"rev-parse","HEAD^{tree}"],repo,repo),"gate_tree_missing")!=a.tree: raise SystemExit("gate_commit_tree_mismatch")
     if required(run([git,"status","--porcelain"],repo,repo),"gate_status_missing"): raise SystemExit("gate_worktree_dirty")
-    bundle_files={name:sha(bundle/name) for name in FILES}; production_files={name:sha(bundle.parent/name) for name in PRODUCTION_FILES}
+    bundle_files={name:sha(bundle/name) for name in FILES}; production_files={name:sha(bundle.parent/name) for name in PRODUCTION_FILES}; runner_files={name:sha(bundle.parent/"runner_image"/name) for name in RUNNER_FILES}
     schema_dir=bundle.parent/"schemas"; schemas={name:sha(schema_dir/name) for name in SCHEMAS}
     bash=str(trusted_host_executable(Path("/usr/bin/bash")))
     shellcheck=str(trusted_host_executable(Path("/usr/bin/shellcheck")))
     commands=[run([bash,"-n",*filter(lambda x:x.endswith(".sh"),FILES)],bundle),run([bash,"tests.sh"],bundle),run([git,"diff","--check"],repo,repo),run([shellcheck,"--version"],bundle),run([shellcheck,"-S","warning",*filter(lambda x:x.endswith(".sh"),FILES)],bundle)]
     if any(item["exit_code"] for item in commands): raise SystemExit("stage0_gate_failed")
-    data={"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":a.commit,"tree":a.tree,"bundle_files":bundle_files,"schemas":schemas,"production_files":production_files,"shellcheck":{"path":shellcheck,"hash":sha(Path(shellcheck)),"version":commands[3]["stdout"]},"commands":commands,"created_at":datetime.now(timezone.utc).isoformat().replace("+00:00","Z")}
+    data={"schema_id":"remediation_stage0_attestation.v1","schema_version":"1","commit":a.commit,"tree":a.tree,"bundle_files":bundle_files,"schemas":schemas,"production_files":production_files,"runner_files":runner_files,"shellcheck":{"path":shellcheck,"hash":sha(Path(shellcheck)),"version":commands[3]["stdout"]},"commands":commands,"created_at":datetime.now(timezone.utc).isoformat().replace("+00:00","Z")}
     data["attestation_hash"]="sha256:"+hashlib.sha256(json.dumps(data,sort_keys=True,separators=(",",":")).encode()).hexdigest()
     a.out.write_text(json.dumps(data,sort_keys=True,separators=(",",":")),encoding="utf-8")
     print(data["attestation_hash"]); return 0

@@ -9,6 +9,7 @@ APPROVED_SOURCE=Path("/mnt/c/Users/Kruthika Kumar/Documents/Projects/Hermes buil
 FILES=("lib.sh","setup.sh","start.sh","status.sh","resume.sh","recover.sh","teardown.sh","quota-worktree.sh","bounded-log.py","control.py","migration.py","lifecycle.py","contracts.py","package_contract.py","path_authority.py","worktree_authority.py","release_helper.py","residual.py","xfs_project.py","lock_guard.py","release.py","doctor.py","bootstrap.py","gate.py","tests.sh","control_contract_tests.py")
 SCHEMAS=("remediation-release-authorization.v1.json","remediation-package-contract.v1.json")
 PRODUCTION_FILES=("identity.py","security.py","v2.py","receipts_v2.py")
+RUNNER_FILES=("Dockerfile","patient-launcher.c","patient-reaper.c","supervisor.py","quiescence_probe.py","transfer_helper.py")
 def canonical(value:object)->bytes: return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
 def sha(path:Path)->str: return "sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()
 def trusted_host_executable(path:Path)->None:
@@ -60,14 +61,16 @@ def source_manifest(source:Path)->dict[str,object]:
     # deliberately copied into the sealed stage.  Accept only either complete
     # layout, never a mixed fallback assembled from two authorities.
     production_root=source if all((source/name).is_file() for name in PRODUCTION_FILES) else source.parent
-    files={}; schemas={}; production={}
+    files={}; schemas={}; production={}; runner={}
     for name in FILES:
         path=source/name; regular(path); files[name]=sha(path)
     for name in SCHEMAS:
         path=schema_dir/name; regular(path); schemas[name]=sha(path)
     for name in PRODUCTION_FILES:
         path=production_root/name; regular(path); production[name]=sha(path)
-    return {"files":files,"schemas":schemas,"production_files":production}
+    for name in RUNNER_FILES:
+        path=source.parent/"runner_image"/name; regular(path); runner[name]=sha(path)
+    return {"files":files,"schemas":schemas,"production_files":production,"runner_files":runner}
 def source_root(source:Path)->Path:
     trusted_host_executable(Path("/usr/bin/git"))
     approved,expected_repo=canonical_source(source)
@@ -77,7 +80,7 @@ def source_root(source:Path)->Path:
     return repo
 def validate_attestation(path:Path,source:Path,commit:str,tree:str)->dict[str,object]:
     regular(path); data=json.loads(path.read_text(encoding="utf-8"))
-    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","shellcheck","commands","created_at","attestation_hash"}
+    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","runner_files","shellcheck","commands","created_at","attestation_hash"}
     if set(data)!=required or data["schema_id"]!="remediation_stage0_attestation.v1" or data["schema_version"]!="1": raise RuntimeError("attestation_shape_invalid")
     claimed=data.pop("attestation_hash")
     if claimed!="sha256:"+hashlib.sha256(canonical(data)).hexdigest(): raise RuntimeError("attestation_hash_invalid")
@@ -99,20 +102,20 @@ def verify_stage(target:Path)->None:
     if not target.is_absolute() or target.parent!=ROOT or len(target.name)!=64 or any(c not in "0123456789abcdef" for c in target.name): raise RuntimeError("staged_path_invalid")
     manifest_path=target/"manifest.json"; regular(manifest_path); manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("bundle_hash")!="sha256:"+target.name or manifest.get("schema_id")!="remediation_staged_bundle.v1": raise RuntimeError("staged_manifest_identity_invalid")
-    for path in [target/name for name in FILES]+[target/name for name in PRODUCTION_FILES]+[target/"schemas"/name for name in SCHEMAS]+[target/"stage0-attestation.json",manifest_path]:
+    for path in [target/name for name in FILES]+[target/name for name in PRODUCTION_FILES]+[target/"runner_image"/name for name in RUNNER_FILES]+[target/"schemas"/name for name in SCHEMAS]+[target/"stage0-attestation.json",manifest_path]:
         regular(path); item=path.stat()
         if item.st_uid!=0 or item.st_mode&0o022: raise RuntimeError("staged_ownership_invalid")
     expected=manifest["source_manifest"]
-    if {name:sha(target/name) for name in FILES}!=expected["files"] or {name:sha(target/name) for name in PRODUCTION_FILES}!=expected["production_files"] or {name:sha(target/"schemas"/name) for name in SCHEMAS}!=expected["schemas"]: raise RuntimeError("staged_hash_mismatch")
+    if {name:sha(target/name) for name in FILES}!=expected["files"] or {name:sha(target/name) for name in PRODUCTION_FILES}!=expected["production_files"] or {name:sha(target/"runner_image"/name) for name in RUNNER_FILES}!=expected["runner_files"] or {name:sha(target/"schemas"/name) for name in SCHEMAS}!=expected["schemas"]: raise RuntimeError("staged_hash_mismatch")
     # The staged bundle has no external-validation parent package tree.  Do
     # not call source_manifest(target): it would accidentally look for
     # production dependencies beside /run/..., rather than verifying their
     # already sealed manifest entries inside the bundle.
     data=json.loads((target/"stage0-attestation.json").read_text(encoding="utf-8"))
     claimed=data.pop("attestation_hash",None)
-    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","shellcheck","commands","created_at"}
+    required={"schema_id","schema_version","commit","tree","bundle_files","schemas","production_files","runner_files","shellcheck","commands","created_at"}
     if claimed!="sha256:"+hashlib.sha256(canonical(data)).hexdigest() or set(data)!=required: raise RuntimeError("staged_attestation_mismatch")
-    if data["schema_id"]!="remediation_stage0_attestation.v1" or data["schema_version"]!="1" or data["commit"]!=manifest["source_commit"] or data["tree"]!=manifest["source_tree"] or data["bundle_files"]!=expected["files"] or data["schemas"]!=expected["schemas"] or data["production_files"]!=expected["production_files"] or claimed!=manifest["attestation_hash"]: raise RuntimeError("staged_attestation_mismatch")
+    if data["schema_id"]!="remediation_stage0_attestation.v1" or data["schema_version"]!="1" or data["commit"]!=manifest["source_commit"] or data["tree"]!=manifest["source_tree"] or data["bundle_files"]!=expected["files"] or data["schemas"]!=expected["schemas"] or data["production_files"]!=expected["production_files"] or data["runner_files"]!=expected["runner_files"] or claimed!=manifest["attestation_hash"]: raise RuntimeError("staged_attestation_mismatch")
 def require_staged_script(script:Path)->None:
     verify_stage(script.resolve().parent)
 def approval_path(attestation_hash:str)->Path:
@@ -180,6 +183,9 @@ def main()->int:
         out=target/name; shutil.copyfile(source/name,out); os.chown(out,0,0); out.chmod(0o555 if out.suffix==".sh" else 0o444)
     for name in PRODUCTION_FILES:
         out=target/name; shutil.copyfile(source.parent/name,out); os.chown(out,0,0); out.chmod(0o444)
+    runner=target/"runner_image"; runner.mkdir(mode=0o755); os.chown(runner,0,0)
+    for name in RUNNER_FILES:
+        out=runner/name; shutil.copyfile(source.parent/"runner_image"/name,out); os.chown(out,0,0); out.chmod(0o444)
     schemas=target/"schemas"; schemas.mkdir(mode=0o755); os.chown(schemas,0,0)
     for name in SCHEMAS:
         out=schemas/name; shutil.copyfile(source.parent/"schemas"/name,out); os.chown(out,0,0); out.chmod(0o444)
