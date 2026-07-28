@@ -254,6 +254,8 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
     assert receipt["candidate_ids"] == ["acme/project#7"]
     assert (external / "session2" / "retrieval" / "raw" / f"{digest}.json").read_bytes() == raw
     assert "qualification" not in receipt
+    with pytest.raises(retrieval.RetrievalError, match="session2_retrieval_filter_not_honored"):
+        retrieval._candidate_ids(json.loads(raw), {"kind": "pull_request"})
 
 
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():

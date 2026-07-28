@@ -123,6 +123,8 @@ def _candidate_ids(document: dict[str, Any], filters: dict[str, str]) -> list[st
             _fail("session2_retrieval_response_invalid")
         if filters.get("kind") == "issue" and "pull_request" in item:
             _fail("session2_retrieval_filter_not_honored")
+        if filters.get("kind") == "pull_request" and "pull_request" not in item:
+            _fail("session2_retrieval_filter_not_honored")
         created = _parse_utc(item.get("created_at"))
         if "created_from" in filters and created < _parse_utc(filters["created_from"]):
             _fail("session2_retrieval_filter_not_honored")
