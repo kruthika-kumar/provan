@@ -16,9 +16,9 @@ class RequirementsAuthorityError(ValueError):
     pass
 
 
-_PIN = re.compile(r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,.-]+\])?==[^\s;]+(?:\s|\\|$)")
+_PIN = re.compile(r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,. -]+\])?==[^\s;]+(?:\s|\\|$)")
 _HASH = re.compile(r"--hash=sha256:[0-9a-f]{64}")
-_ENTRY = re.compile(r"^([A-Za-z0-9_.-]+)(?:\[[A-Za-z0-9_,.-]+\])?==([^\s;]+)")
+_ENTRY = re.compile(r"^([A-Za-z0-9_.-]+)(?:\[[A-Za-z0-9_,. -]+\])?==([^\s;]+)")
 
 
 def export_hash_pinned_requirements(raw: bytes, *, source_path: str) -> tuple[bytes, dict[str, object]]:
