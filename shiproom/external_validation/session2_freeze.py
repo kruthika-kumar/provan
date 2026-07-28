@@ -108,4 +108,6 @@ def load_trusted_session2_attestation(attestation_id: str) -> dict[str, Any]:
         result = load_trusted_attestation(attestation_id, trusted_root=SESSION2_TRUSTED_ROOT)
     except TrustedAttestationError as exc:
         _fail(str(exc))
+    if canonical_json(result.document) != result.raw_bytes:
+        _fail("session2_freeze_attestation_noncanonical")
     return validate_freeze_attestation(result.document)

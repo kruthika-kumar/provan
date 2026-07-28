@@ -83,6 +83,20 @@ def seed_order(seed: str, *parts: str) -> str:
     return sha256("".join((seed, *parts)).encode("utf-8")).hexdigest()
 
 
+def validate_public_seed(value: Any) -> dict[str, Any]:
+    required = {"schema_id", "schema_version", "seed", "generation_command", "generated_at"}
+    if not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_public_seed.v1" or value.get("schema_version") != "1":
+        fail("session2_seed_record_invalid")
+    if not isinstance(value["seed"], str) or HEX_64.fullmatch(value["seed"]) is None or not isinstance(value["generation_command"], str) or "secrets.token_hex(32)" not in value["generation_command"]:
+        fail("session2_seed_record_invalid")
+    try:
+        timestamp = datetime.fromisoformat(value["generated_at"].replace("Z", "+00:00"))
+        if timestamp.tzinfo is None: raise ValueError
+    except (AttributeError, ValueError):
+        fail("session2_seed_record_invalid")
+    return value
+
+
 def contamination_band(issue_created_at: str, fix_created_at: str, cutoff: str = "2026-03-01T00:00:00Z") -> str:
     try:
         issue = datetime.fromisoformat(issue_created_at.replace("Z", "+00:00"))
@@ -414,7 +428,16 @@ class BudgetLedger:
                 settled = float(charge)
             else:
                 fail("session2_budget_transition_invalid")
-            if state != "SUBMITTED": provider_request_id = prior_request
+            # SUBMITTED carries a durable client operation ID before the
+            # provider call.  Terminal records replace it only with the
+            # provider-issued request ID that was returned by that operation.
+            if state in {"CANCELLED_BEFORE_SEND", "FAILED_MAX_CHARGED"}:
+                provider_request_id = prior_request
+            elif state == "SETTLED":
+                if prior_state != "SUBMITTED" or not isinstance(provider_request_id, str) or not provider_request_id or PLACEHOLDER.search(provider_request_id):
+                    fail("session2_budget_provider_request_missing")
+                if self.db.execute("SELECT 1 FROM entries WHERE provider_request_id=? AND attempt_id<>?", (provider_request_id, attempt_id)).fetchone():
+                    fail("session2_budget_provider_request_duplicate")
             rows = self._rows(); body = {"sequence": len(rows) + 1, "attempt_id": attempt_id, "idempotency_key": None, "stage": stage, "state": state, "reserved": reserved, "settled": settled, "provider_request_id": provider_request_id, "predecessor_hash": predecessor}
             self._append(body); self.db.execute("COMMIT")
         except Exception: self.db.execute("ROLLBACK"); raise

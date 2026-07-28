@@ -308,6 +308,10 @@ def validate_artifact(value: Any) -> dict[str, Any]:
         from .session2_freeze import validate_freeze_attestation
         try: return validate_freeze_attestation(item)
         except ValueError as exc: _error(str(exc), "/", "Session 2 freeze attestation invalid")
+    if schema_id == "external_validation.session2_public_seed.v1":
+        from .session2 import validate_public_seed
+        try: return validate_public_seed(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 public seed invalid")
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 

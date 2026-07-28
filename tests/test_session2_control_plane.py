@@ -5,7 +5,8 @@ from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
     Session2ValidationError, contamination_band, seed_order, select_repository_slots,
     select_sol_sensitivity_case, select_subset, validate_controlled_population,
     validate_fresh_qualification, validate_model_prompt_policy_freeze,
-    validate_owner_context_case, validate_private_mutation, validate_qualifying_artifact)
+    validate_owner_context_case, validate_private_mutation, validate_public_seed,
+    validate_qualifying_artifact)
 from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
     validate_controlled_population as cross_validate_population)
@@ -13,6 +14,8 @@ from shiproom.external_validation.validators import validate_artifact
 from shiproom.external_validation.session2_freeze import (
     FREEZE_ATTESTATION_FIELDS, SESSION2_UNTESTED_CLAIMS, Session2FreezeError,
     validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
+from shiproom.external_validation.session2_gateway import (
+    ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment)
 
 
 def fresh(**changes):
@@ -32,6 +35,7 @@ def test_seed_order_rejects_noncanonical_and_is_stable():
     seed = "a" * 64
     assert seed_order(seed, "sol-sensitivity", "case_x") == seed_order(seed, "sol-sensitivity", "case_x")
     with pytest.raises(Session2ValidationError, match="session2_seed_invalid"): seed_order("A" * 64, "x")
+    assert validate_public_seed({"schema_id":"external_validation.session2_public_seed.v1", "schema_version":"1", "seed":seed, "generation_command":"python -c secrets.token_hex(32)", "generated_at":"2026-07-28T00:00:00Z"})["seed"] == seed
 
 
 def test_budget_ledger_is_append_only_and_caps_reservations(tmp_path: Path):
@@ -162,3 +166,13 @@ def test_freeze_authority_is_non_circular_and_preserves_unmeasured_claims():
     claims[0]["status"] = "ESTABLISHED"
     with pytest.raises(Session2FreezeError, match="session2_claim_audit_overstatement"):
         validate_claim_audit({"schema_id":"external_validation.session2_claim_audit.v1", "schema_version":"1", "claims":claims})
+
+
+def test_only_gateway_can_record_content_free_probe_and_usage(tmp_path: Path):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    gateway = OpenAIResponsesGateway(ledger, lambda request: {"model":"gpt-5.6-terra", "request_id":"req_probe_123", "system_fingerprint":"fingerprint-1", "provider_metadata":{"provider_version":"v1"}, "usage":{"cost_usd":0.25}})
+    probe = gateway.availability_probe()
+    assert probe.requested_model_id == "gpt-5.6-terra"
+    assert ledger.checkpoint()["committed_spend"] == 0.25
+    with pytest.raises(ModelGatewayError, match="session2_non_observation_capability_violation"):
+        assert_non_observation_worker_environment({"OPENAI_API_KEY":"should-not-be-here"})
