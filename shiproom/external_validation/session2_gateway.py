@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import os
 from typing import Any, Callable
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from .session2 import BudgetLedger, Session2ValidationError
 
@@ -24,6 +27,43 @@ FORBIDDEN_WORKER_ENV = {"OPENAI_API_KEY", "OPENAI_BASE_URL", "SHIPROOM_MODEL_GAT
 
 class ModelGatewayError(RuntimeError):
     pass
+
+
+def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, Any]:
+    """Perform the sole production Responses request without exposing its key.
+
+    This function is intentionally only usable by the root-owned gateway
+    process.  Selection/mutation workers do not import or receive it.  It
+    returns provider bytes as parsed JSON; usage normalization remains the
+    gateway's responsibility so an absent provider cost can be max-charged.
+    """
+    key = os.environ.get("OPENAI_API_KEY")
+    if not isinstance(key, str) or not key:
+        raise ModelGatewayError("session2_gateway_credential_unavailable")
+    if not isinstance(request, dict) or request.get("model") != TERRA_REQUEST["model"]:
+        raise ModelGatewayError("session2_gateway_request_invalid")
+    payload = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    http_request = Request(
+        "https://api.openai.com/v1/responses", data=payload, method="POST",
+        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "Accept": "application/json"},
+    )
+    try:
+        with urlopen(http_request, timeout=90) as response:  # nosec B310: fixed provider endpoint
+            raw = response.read()
+            request_id = response.headers.get("x-request-id")
+    except HTTPError as exc:
+        raise ModelGatewayError("session2_gateway_http_" + str(exc.code)) from exc
+    except URLError as exc:
+        raise ModelGatewayError("session2_gateway_network_failure") from exc
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ModelGatewayError("session2_gateway_response_invalid") from exc
+    if not isinstance(value, dict):
+        raise ModelGatewayError("session2_gateway_response_invalid")
+    if request_id and "request_id" not in value and "_request_id" not in value:
+        value["request_id"] = request_id
+    return value
 
 
 def assert_non_observation_worker_environment(environment: dict[str, str] | None = None) -> None:
@@ -86,9 +126,12 @@ class OpenAIResponsesGateway:
             raise
         probe = self._metadata(response)
         usage = response.get("usage")
+        # Responses returns token usage, not a provider dollar charge.  The
+        # frozen Session-2 rule therefore max-charges an unavailable/malformed
+        # charge rather than fabricating a price or releasing a sent request.
         if not isinstance(usage, dict) or not isinstance(usage.get("cost_usd"), (int, float)):
             self.ledger.transition(attempt, "FAILED_MAX_CHARGED")
-            raise ModelGatewayError("session2_provider_usage_unavailable")
+            return probe
         self.ledger.transition(attempt, "SETTLED", provider_request_id=probe.request_id, settled=float(usage["cost_usd"]))
         return probe
 

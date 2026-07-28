@@ -17,7 +17,8 @@ from shiproom.external_validation.session2_freeze import (
     FREEZE_ATTESTATION_FIELDS, SESSION2_UNTESTED_CLAIMS, Session2FreezeError,
     validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
 from shiproom.external_validation.session2_gateway import (
-    ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment)
+    ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment,
+    responses_api_sender_from_environment)
 from shiproom.external_validation.session2_storage import (
     Session2StorageError, open_budget_ledger, prepare_external_namespace)
 from shiproom.external_validation.session2_selection import (
@@ -186,6 +187,16 @@ def test_only_gateway_can_record_content_free_probe_and_usage(tmp_path: Path):
     assert ledger.checkpoint()["committed_spend"] == 0.25
     with pytest.raises(ModelGatewayError, match="session2_non_observation_capability_violation"):
         assert_non_observation_worker_environment({"OPENAI_API_KEY":"should-not-be-here"})
+
+
+def test_gateway_max_charges_missing_provider_cost_without_inventing_usage(tmp_path: Path, monkeypatch):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    probe = OpenAIResponsesGateway(ledger, lambda _request: {"model":"gpt-5.6-terra", "request_id":"req_probe_usage_missing", "usage":{"input_tokens":0, "output_tokens":0}}).availability_probe()
+    assert probe.returned_model_id == "gpt-5.6-terra"
+    assert ledger.checkpoint()["committed_spend"] == 1.0
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with pytest.raises(ModelGatewayError, match="session2_gateway_credential_unavailable"):
+        responses_api_sender_from_environment({"model":"gpt-5.6-terra"})
 
 
 def test_external_root_is_configured_once_and_session1_inventory_cannot_change(tmp_path: Path, monkeypatch):
