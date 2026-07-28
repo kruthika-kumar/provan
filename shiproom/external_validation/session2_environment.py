@@ -200,7 +200,7 @@ def _runtime_platform(base_ref: str) -> str:
     _fail("session2_environment_runtime_platform_unsupported")
 
 
-def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
+def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
     """Build exactly one image from a sealed snapshot's ``uv.lock``.
 
     The public caller provides no package specifiers: all install authority is
@@ -215,15 +215,21 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     if not lock.is_file() or lock.is_symlink():
         _fail("session2_environment_lock_missing")
     lock_bytes = lock.read_bytes()
-    export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(), additional_packages=set(additional_packages))
+    if any(not isinstance(group, str) or not group or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", group) for group in groups):
+        _fail("session2_environment_group_invalid")
+    # Test and executable-check dependencies are authority inputs.  They are
+    # deliberately not inferred from a command line and become part of both
+    # the build identity and the sealed environment receipt.
+    selected_groups = sorted(groups)
+    export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(selected_groups), additional_packages=set(additional_packages))
     base_digest = _inspect_image(base_image_ref)
     platform_tag = _runtime_platform(base_digest)
     unsupported = _unsupported_packages(export.manifest, platform_tag=platform_tag)
     if unsupported:
-        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "failure_stage": "LOCKED_WHEEL_COMPATIBILITY", "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export), "unsupported_packages": unsupported, "patient_network_policy": "none"}
+        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "failure_stage": "LOCKED_WHEEL_COMPATIBILITY", "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "project_name": project_name, "dependency_groups": selected_groups, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export), "unsupported_packages": unsupported, "patient_network_policy": "none"}
         _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
         raise EnvironmentBuildError("session2_environment_wheel_unavailable:" + digest)
-    build_identity = sha256(canonical_json({"project": project_name, "lock": _sha(lock_bytes), "requirements": export.manifest["requirements_sha256"], "base": base_digest})).hexdigest()
+    build_identity = sha256(canonical_json({"project": project_name, "lock": _sha(lock_bytes), "requirements": export.manifest["requirements_sha256"], "base": base_digest, "groups": selected_groups})).hexdigest()
     context = BUILD_ROOT / build_identity
     if context.exists():
         _fail("session2_environment_build_context_exists")
@@ -247,11 +253,11 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         stdout_path, stdout_hash = _write_once(logs, ".environment-build.stdout", stdout)
         stderr_path, stderr_hash = _write_once(logs, ".environment-build.stderr", stderr)
         if result.returncode != 0:
-            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
+            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "dependency_groups": selected_groups, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_build_failed:" + digest)
         image_digest = _inspect_image(tag)
-        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
+        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "dependency_groups": selected_groups, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
         path, digest = _write_once(receipts, ".environment-build.json", canonical_json(receipt))
         return {"receipt_path": str(path), "receipt_hash": digest, "image_ref": tag, "runner_image_digest": image_digest, "requirements_manifest_hash": receipt["requirements_manifest_hash"]}
     finally:

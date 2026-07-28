@@ -26,7 +26,7 @@ from shiproom.external_validation.session2_selection import (
     validate_retrieval_receipt)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
-from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages
+from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
 
 
 def fresh(**changes):
