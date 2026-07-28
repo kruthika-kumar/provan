@@ -198,7 +198,8 @@ def main(argv: list[str] | None = None) -> int:
         if parsed.filters_base64:
             if parsed.filters_json != "-":
                 _fail("session2_retrieval_filters_ambiguous")
-            filters = json.loads(base64.urlsafe_b64decode(parsed.filters_base64.encode("ascii")).decode("utf-8"))
+            encoded = parsed.filters_base64.encode("ascii")
+            filters = json.loads(base64.urlsafe_b64decode(encoded + b"=" * (-len(encoded) % 4)).decode("utf-8"))
         else:
             filters = json.loads(parsed.filters_json)
         result = retrieve_github_issues(Path(parsed.repository_root), query=parsed.query, filters=filters, max_pages=parsed.max_pages)
