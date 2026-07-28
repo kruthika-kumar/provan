@@ -103,6 +103,27 @@ def _canonical_record(path: Path, expected_hash: str, *, missing: str, invalid: 
     return value
 
 
+def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> None:
+    """Bind a screen to an actual candidate in the cited immutable index.
+
+    A screen is exclusion evidence, not an opportunity to mint a convenient
+    identifier.  In particular, a visually similar ``repo#issue-pr`` value
+    must never be able to suppress the canonical ``repo#issue->repo#pr`` row.
+    """
+    root = directory.parents[2]
+    index = _canonical_record(
+        root / "session2" / "cases" / (candidate_index_hash[7:] + ".candidate-index.json"),
+        candidate_index_hash,
+        missing="session2_screen_candidate_index_missing",
+        invalid="session2_screen_candidate_index_invalid",
+    )
+    candidates = index.get("candidates")
+    if (index.get("schema_id") != "external_validation.session2_github_issue_fix_candidate_index.v1"
+            or index.get("schema_version") != "1" or not isinstance(candidates, list)
+            or sum(isinstance(item, dict) and item.get("candidate_id") == candidate_id for item in candidates) != 1):
+        _fail("session2_screen_candidate_not_in_index")
+
+
 def _validate_runtime_evidence(
     directory: Path, *, candidate_id: str, fixed_sha: str,
     materialization_hash: str, execution_evidence_hash: str,
@@ -202,6 +223,7 @@ def seal_prequalification_exclusion(
         _fail("session2_screen_execution_evidence_unexpected")
     if not mirror.is_dir() or _is_reparse(mirror): _fail("session2_screen_mirror_invalid")
     directory = _root(repository_root)
+    _assert_candidate_in_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
     if runtime_reason:
         _validate_runtime_evidence(directory, candidate_id=candidate_id, fixed_sha=fixed_sha,
             materialization_hash=materialization_hash or "", execution_evidence_hash=execution_evidence_hash or "")
