@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import secrets
 import shutil
 import stat
@@ -29,6 +30,7 @@ from .session2_lockfile import export_uv_requirements, requirements_manifest_has
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
 SOCKET = Path("/run/shiproom-remediation-docker/docker.sock")
 BUILD_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor/environment-builds")
+_GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
 class EnvironmentBuildError(RuntimeError):
@@ -111,12 +113,14 @@ def _inspect_image(base_ref: str) -> str:
         raise EnvironmentBuildError("session2_environment_base_image_invalid") from exc
 
 
-def build_environment(repository: Path, *, snapshot: Path, project_name: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
+def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
     """Build exactly one image from a sealed snapshot's ``uv.lock``.
 
     The public caller provides no package specifiers: all install authority is
     derived from the snapshot's lockfile and package-group selection.
     """
+    if not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree):
+        _fail("session2_environment_implementation_authority_invalid")
     receipts = _root(repository)
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
         _fail("session2_environment_snapshot_invalid")
@@ -149,11 +153,11 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, ba
         stdout_path, stdout_hash = _write_once(logs, ".environment-build.stdout", stdout)
         stderr_path, stderr_hash = _write_once(logs, ".environment-build.stderr", stderr)
         if result.returncode != 0:
-            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "build_identity": build_identity, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
+            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_build_failed:" + digest)
         image_digest = _inspect_image(tag)
-        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "supervisor_dependency_acquisition_only", "patient_network_policy": "none"}
+        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "supervisor_dependency_acquisition_only", "patient_network_policy": "none"}
         path, digest = _write_once(receipts, ".environment-build.json", canonical_json(receipt))
         return {"receipt_path": str(path), "receipt_hash": digest, "image_ref": tag, "runner_image_digest": image_digest, "requirements_manifest_hash": receipt["requirements_manifest_hash"]}
     finally:
@@ -164,10 +168,10 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, ba
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[])
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[])
     args = parser.parse_args()
     try:
-        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, extras=set(args.extra), additional_packages=set(args.additional_package)), sort_keys=True))
+        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree, extras=set(args.extra), additional_packages=set(args.additional_package)), sort_keys=True))
     except EnvironmentBuildError as exc:
         print(str(exc)); return 2
     return 0
