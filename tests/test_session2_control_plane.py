@@ -22,6 +22,9 @@ from shiproom.external_validation.session2_storage import (
 from shiproom.external_validation.session2_selection import (
     SelectionError, pr_hash, qualify_pr, select_fresh_pairs, validate_pr_classifier_bundle,
     validate_retrieval_receipt)
+from shiproom.external_validation.session2_lockfile import (
+    LockfileError, export_uv_requirements, requirements_manifest_hash)
+from shiproom.external_validation.session2_environment import _dockerfile
 
 
 def fresh(**changes):
@@ -397,3 +400,21 @@ def test_fixed_twin_harness_and_positive_artifact_rules_reject_shortcuts():
     assert validate_harness_pair(harness)["harness"] == "BugsInPy FastAPI"
     with pytest.raises(Session2ValidationError, match="session2_placeholder_text"):
         scan_positive_artifact({"request_id":"request-A", "digest":digest, "note":"TODO"}, classification="QUALIFYING_PRIVATE_ARTIFACT")
+
+
+def test_lockfile_export_uses_target_specific_registry_hashes_only():
+    lock = b'''version = 1\nrequires-python = ">=3.12"\n\n[[package]]\nname = "demo"\nversion = "1.0"\nsource = { editable = "." }\ndependencies = [{ name = "core" }, { name = "windows-only", marker = "sys_platform == 'win32'" }]\noptional-dependencies = { test = [{ name = "pytest" }] }\ndev-dependencies = { dev = [{ name = "pytest" }] }\n\n[[package]]\nname = "core"\nversion = "2.0"\nsource = { registry = "https://pypi.org/simple" }\nsdist = { url = "https://files.pythonhosted.org/packages/core.tar.gz", hash = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" }\nwheels = []\n\n[[package]]\nname = "pytest"\nversion = "8.0"\nsource = { registry = "https://pypi.org/simple" }\nwheels = [{ url = "https://files.pythonhosted.org/packages/pytest.whl", hash = "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210" }]\n\n[[package]]\nname = "windows-only"\nversion = "1.0"\nsource = { registry = "https://pypi.org/simple" }\nwheels = [{ url = "https://files.pythonhosted.org/packages/windows.whl", hash = "sha256:0011223344556677001122334455667700112233445566770011223344556677" }]\n'''
+    exported = export_uv_requirements(lock, project_name="demo", extras={"test"}, groups=set(), additional_packages={"pytest"})
+    assert b"core==2.0" in exported.requirements and b"pytest==8.0" in exported.requirements
+    assert b"windows-only" not in exported.requirements
+    assert exported.manifest["packages"][0]["name"] == "core"
+    assert requirements_manifest_hash(exported).startswith("sha256:")
+    with pytest.raises(LockfileError, match="session2_lock_extra_missing"):
+        export_uv_requirements(lock, project_name="demo", extras={"missing"}, groups=set())
+
+
+def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_network_contract():
+    dockerfile = _dockerfile("sha256:" + "0123456789abcdef" * 4).decode("ascii")
+    assert "--require-hashes" in dockerfile
+    assert "USER 65532:65532" in dockerfile
+    assert dockerfile.startswith("FROM sha256:0123456789abcdef")
