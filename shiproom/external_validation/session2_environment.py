@@ -21,6 +21,7 @@ import shutil
 import stat
 import subprocess
 from typing import Any
+from urllib.request import Request, urlopen
 
 from .identity import canonical_json
 from .runner_v2 import immutable_image_config_digest
@@ -95,9 +96,65 @@ def _write_once(directory: Path, suffix: str, raw: bytes) -> tuple[Path, str]:
 def _dockerfile(base_digest: str) -> bytes:
     """Use the locally verified immutable config ID, never a mutable tag."""
     immutable_image_config_digest(base_digest)
-    return ("FROM " + base_digest + "\nUSER root\nCOPY requirements.txt /tmp/requirements.txt\n"
-            "RUN /usr/local/bin/python -m pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt\n"
+    return ("FROM " + base_digest + "\nUSER root\nCOPY requirements.txt /tmp/requirements.txt\nCOPY wheelhouse /wheelhouse\n"
+            "RUN /usr/local/bin/python -m pip install --no-index --find-links=/wheelhouse --no-cache-dir --require-hashes -r /tmp/requirements.txt\n"
             "USER 65532:65532\n").encode("ascii")
+
+
+def _wheel_score(url: str) -> int:
+    """Accept only a wheel that can execute on the declared CPython target."""
+    name = url.rsplit("/", 1)[-1].lower()
+    if not name.endswith(".whl") or "x86_64" not in name and "none-any" not in name:
+        return -1
+    if "cp312-cp312" in name:
+        return 30
+    if "cp312-abi3" in name or "cp311-abi3" in name or "cp310-abi3" in name or "cp39-abi3" in name:
+        return 20
+    if "py3-none-any" in name or "py2.py3-none-any" in name:
+        return 10
+    return -1
+
+
+def _select_wheels(manifest: dict[str, Any]) -> list[dict[str, str]]:
+    packages = manifest.get("packages")
+    if not isinstance(packages, list) or not packages:
+        _fail("session2_environment_requirements_manifest_invalid")
+    selected: list[dict[str, str]] = []
+    for package in packages:
+        artifacts = package.get("artifacts") if isinstance(package, dict) else None
+        if not isinstance(artifacts, list):
+            _fail("session2_environment_requirements_manifest_invalid")
+        compatible = [item for item in artifacts if isinstance(item, dict) and isinstance(item.get("url"), str) and isinstance(item.get("sha256"), str) and _wheel_score(item["url"]) >= 0]
+        if not compatible:
+            _fail("session2_environment_wheel_unavailable")
+        winner = max(compatible, key=lambda item: (_wheel_score(item["url"]), item["url"]))
+        selected.append({"name": str(package.get("name")), "version": str(package.get("version")), "url": winner["url"], "sha256": winner["sha256"]})
+    return selected
+
+
+def _download_wheelhouse(context: Path, manifest: dict[str, Any]) -> list[dict[str, str]]:
+    wheelhouse = context / "wheelhouse"; wheelhouse.mkdir(mode=0o700)
+    downloaded: list[dict[str, str]] = []
+    for item in _select_wheels(manifest):
+        filename = item["url"].rsplit("/", 1)[-1]
+        if not filename or "/" in filename or filename.startswith("."):
+            _fail("session2_environment_wheel_filename_invalid")
+        destination = wheelhouse / filename
+        request = Request(item["url"], headers={"User-Agent": "shiproom-session2-lock-fetch/1"})
+        try:
+            with urlopen(request, timeout=90) as source:
+                payload = source.read()
+        except OSError as exc:
+            raise EnvironmentBuildError("session2_environment_wheel_download_failed") from exc
+        if _sha(payload) != item["sha256"]:
+            _fail("session2_environment_wheel_hash_mismatch")
+        descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0), 0o400)
+        try:
+            os.write(descriptor, payload); os.fsync(descriptor); os.fchown(descriptor, 0, 0); os.fchmod(descriptor, 0o400)
+        finally:
+            os.close(descriptor)
+        downloaded.append({**item, "bytes": str(len(payload))})
+    return downloaded
 
 
 def _inspect_image(base_ref: str) -> str:
@@ -142,11 +199,12 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         dockerfile = _dockerfile(base_digest)
         (context / "Dockerfile").write_bytes(dockerfile)
         (context / "requirements.txt").write_bytes(export.requirements)
+        downloads = _download_wheelhouse(context, export.manifest)
         for item in context.iterdir():
             os.chown(item, 0, 0); os.chmod(item, 0o400)
         tag = "shiproom-session2-" + build_identity[:24]
         started = _utc()
-        result = _run(["/usr/bin/docker", "--host", "unix://" + str(SOCKET), "build", "--pull=false", "--network=default", "--tag", tag, str(context)], timeout=1800)
+        result = _run(["/usr/bin/docker", "--host", "unix://" + str(SOCKET), "build", "--pull=false", "--network=none", "--tag", tag, str(context)], timeout=1800)
         completed = _utc()
         stdout, stderr = result.stdout, result.stderr
         logs = receipts / "logs"; logs.mkdir(mode=0o700, exist_ok=True)
@@ -157,7 +215,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_build_failed:" + digest)
         image_digest = _inspect_image(tag)
-        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "supervisor_dependency_acquisition_only", "patient_network_policy": "none"}
+        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
         path, digest = _write_once(receipts, ".environment-build.json", canonical_json(receipt))
         return {"receipt_path": str(path), "receipt_hash": digest, "image_ref": tag, "runner_image_digest": image_digest, "requirements_manifest_hash": receipt["requirements_manifest_hash"]}
     finally:

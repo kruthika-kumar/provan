@@ -24,7 +24,7 @@ from shiproom.external_validation.session2_selection import (
     validate_retrieval_receipt)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
-from shiproom.external_validation.session2_environment import _dockerfile
+from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels
 
 
 def fresh(**changes):
@@ -416,5 +416,17 @@ def test_lockfile_export_uses_target_specific_registry_hashes_only():
 def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_network_contract():
     dockerfile = _dockerfile("sha256:" + "0123456789abcdef" * 4).decode("ascii")
     assert "--require-hashes" in dockerfile
+    assert "--no-index" in dockerfile and "COPY wheelhouse" in dockerfile
     assert "USER 65532:65532" in dockerfile
     assert dockerfile.startswith("FROM sha256:0123456789abcdef")
+
+
+def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
+    items = {"packages":[{"name":"demo","version":"1","artifacts":[
+        {"url":"https://files.pythonhosted.org/packages/demo-1.tar.gz","sha256":"sha256:" + "a" * 64},
+        {"url":"https://files.pythonhosted.org/packages/demo-1-cp312-cp312-manylinux_2_17_x86_64.whl","sha256":"sha256:" + "b" * 64},
+        {"url":"https://files.pythonhosted.org/packages/demo-1-py3-none-any.whl","sha256":"sha256:" + "c" * 64},
+    ]}]}
+    assert _select_wheels(items)[0]["sha256"] == "sha256:" + "b" * 64
+    with pytest.raises(Exception, match="session2_environment_wheel_unavailable"):
+        _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]})

@@ -196,7 +196,7 @@ def _choose(records: list[dict[str, Any]], name: str, version: object, environme
     return possible[0]
 
 
-def _artifact_hashes(record: dict[str, Any]) -> list[str]:
+def _artifacts(record: dict[str, Any]) -> list[dict[str, str]]:
     raw: list[object] = []
     if record.get("sdist") is not None:
         raw.append(record["sdist"])
@@ -204,17 +204,19 @@ def _artifact_hashes(record: dict[str, Any]) -> list[str]:
     if not isinstance(wheels, list):
         _fail("session2_lock_wheels_invalid")
     raw.extend(wheels)
-    hashes: list[str] = []
+    values: list[dict[str, str]] = []
     for artifact in raw:
         if not isinstance(artifact, dict) or not isinstance(artifact.get("url"), str) or not artifact["url"].startswith("https://files.pythonhosted.org/"):
             _fail("session2_lock_artifact_source_invalid")
         digest = artifact.get("hash")
         if not isinstance(digest, str) or not digest.startswith("sha256:") or len(digest) != 71:
             _fail("session2_lock_artifact_hash_invalid")
-        hashes.append(digest[7:])
-    if not hashes:
+        values.append({"url": artifact["url"], "sha256": digest})
+    if not values:
         _fail("session2_lock_artifacts_missing")
-    return sorted(set(hashes))
+    return sorted({(item["url"], item["sha256"]) for item in values}) and [
+        {"url": url, "sha256": digest} for url, digest in sorted({(item["url"], item["sha256"]) for item in values})
+    ]
 
 
 def export_uv_requirements(lock_bytes: bytes, *, project_name: str, extras: set[str], groups: set[str], additional_packages: set[str] = frozenset(), environment: Mapping[str, str] | None = None) -> RequirementsExport:
@@ -266,11 +268,11 @@ def export_uv_requirements(lock_bytes: bytes, *, project_name: str, extras: set[
             continue
         if not _registry_record(record):
             _fail("session2_lock_nonregistry_dependency")
-        hashes = _artifact_hashes(record)
+        artifacts = _artifacts(record); hashes = [item["sha256"][7:] for item in artifacts]
         lines.append(name + "==" + version + " \\")
         lines.extend("    --hash=sha256:" + digest + " \\" for digest in hashes[:-1])
         lines.append("    --hash=sha256:" + hashes[-1])
-        exported.append({"name": name, "version": version, "artifact_hashes": ["sha256:" + digest for digest in hashes]})
+        exported.append({"name": name, "version": version, "artifact_hashes": ["sha256:" + digest for digest in hashes], "artifacts": artifacts})
     if not lines:
         _fail("session2_lock_dependency_closure_empty")
     requirements = ("\n".join(lines) + "\n").encode("utf-8")
