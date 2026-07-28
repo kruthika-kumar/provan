@@ -32,6 +32,7 @@ EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
 SOCKET = Path("/run/shiproom-remediation-docker/docker.sock")
 BUILD_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor/environment-builds")
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
+_HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 class EnvironmentBuildError(RuntimeError):
@@ -199,13 +200,13 @@ def _runtime_platform(base_ref: str) -> str:
     _fail("session2_environment_runtime_platform_unsupported")
 
 
-def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
+def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
     """Build exactly one image from a sealed snapshot's ``uv.lock``.
 
     The public caller provides no package specifiers: all install authority is
     derived from the snapshot's lockfile and package-group selection.
     """
-    if not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree):
+    if not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree) or not _HASH.fullmatch(materialization_hash):
         _fail("session2_environment_implementation_authority_invalid")
     receipts = _root(repository)
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
@@ -219,7 +220,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     platform_tag = _runtime_platform(base_digest)
     unsupported = _unsupported_packages(export.manifest, platform_tag=platform_tag)
     if unsupported:
-        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "failure_stage": "LOCKED_WHEEL_COMPATIBILITY", "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export), "unsupported_packages": unsupported, "patient_network_policy": "none"}
+        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "failure_stage": "LOCKED_WHEEL_COMPATIBILITY", "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export), "unsupported_packages": unsupported, "patient_network_policy": "none"}
         _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
         raise EnvironmentBuildError("session2_environment_wheel_unavailable:" + digest)
     build_identity = sha256(canonical_json({"project": project_name, "lock": _sha(lock_bytes), "requirements": export.manifest["requirements_sha256"], "base": base_digest})).hexdigest()
@@ -246,11 +247,11 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         stdout_path, stdout_hash = _write_once(logs, ".environment-build.stdout", stdout)
         stderr_path, stderr_hash = _write_once(logs, ".environment-build.stderr", stderr)
         if result.returncode != 0:
-            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
+            failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout_hash": stdout_hash, "stderr_hash": stderr_hash, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export)}
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_build_failed:" + digest)
         image_digest = _inspect_image(tag)
-        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
+        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
         path, digest = _write_once(receipts, ".environment-build.json", canonical_json(receipt))
         return {"receipt_path": str(path), "receipt_hash": digest, "image_ref": tag, "runner_image_digest": image_digest, "requirements_manifest_hash": receipt["requirements_manifest_hash"]}
     finally:
@@ -261,10 +262,10 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[])
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[])
     args = parser.parse_args()
     try:
-        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree, extras=set(args.extra), additional_packages=set(args.additional_package)), sort_keys=True))
+        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree, materialization_hash=args.materialization_hash, extras=set(args.extra), additional_packages=set(args.additional_package)), sort_keys=True))
     except EnvironmentBuildError as exc:
         print(str(exc)); return 2
     return 0
