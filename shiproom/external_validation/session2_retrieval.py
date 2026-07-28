@@ -233,7 +233,10 @@ def retrieve_github_object(repository_root: Path, *, repository: str, object_kin
         document = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise RetrievalError("session2_retrieval_response_invalid") from exc
-    if not isinstance(document, dict) or document.get("number") != number or document.get("repository_url") != "https://api.github.com/repos/" + repository:
+    repository_url = document.get("repository_url") if isinstance(document, dict) else None
+    if object_kind == "pull_request" and isinstance(document, dict):
+        repository_url = ((document.get("base") or {}).get("repo") or {}).get("url")
+    if not isinstance(document, dict) or document.get("number") != number or repository_url != "https://api.github.com/repos/" + repository:
         _fail("session2_retrieval_object_identity_invalid")
     if object_kind == "pull_request" and not isinstance(document.get("merge_commit_sha"), str):
         _fail("session2_retrieval_object_kind_invalid")
