@@ -130,6 +130,7 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         _fail("session2_candidate_screen_store_invalid")
     screens_by_hash: dict[str, dict[str, str]] = {}
     screens_by_candidate: dict[str, list[dict[str, str]]] = {}
+    unbound_runtime_v1: set[str] = set()
     for path in sorted(directory.glob("*.screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes()
@@ -149,12 +150,13 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
                 or not isinstance(value.get("reason"), str)
                 or (version == "external_validation.session2_prequalification_screen.v2" and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
             _fail("session2_candidate_screen_invalid")
-        if version == "external_validation.session2_prequalification_screen.v1" and value.get("reason") == "UNQUALIFIED_LINUX_CONTAINER_PATH":
-            # v1 has no immutable linkage to a production environment receipt.
-            # It is historical diagnostic material, not final qualification
-            # authority, and must be superseded by a v2 re-screen.
-            _fail("session2_candidate_runtime_screen_unbound")
         entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
+        if version == "external_validation.session2_prequalification_screen.v1" and value.get("reason") == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+            # A v1 record is only historical diagnostic material.  It is
+            # acceptable to retain when a canonical successor explicitly
+            # reopens it, but an active v1 runtime exclusion is never final
+            # qualification authority.
+            unbound_runtime_v1.add(entry["screen_hash"])
         screens_by_hash[entry["screen_hash"]] = {"candidate_id": value["candidate_id"], **entry}
         screens_by_candidate.setdefault(value["candidate_id"], []).append(entry)
     resolved_screens: set[str] = set()
@@ -175,6 +177,8 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
                 or value.get("supersedes_screen_hash") in resolved_screens):
             _fail("session2_candidate_screen_resolution_invalid")
         resolved_screens.add(value["supersedes_screen_hash"])
+    if any(screen_hash not in resolved_screens for screen_hash in unbound_runtime_v1):
+        _fail("session2_candidate_runtime_screen_unbound")
     result: dict[str, dict[str, str]] = {}
     for candidate, entries in screens_by_candidate.items():
         active = [entry for entry in entries if entry["screen_hash"] not in resolved_screens]
