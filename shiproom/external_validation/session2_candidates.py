@@ -131,6 +131,7 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     screens_by_hash: dict[str, dict[str, str]] = {}
     screens_by_candidate: dict[str, list[dict[str, str]]] = {}
     unbound_runtime_v1: set[str] = set()
+    legacy_source_v2: set[str] = set()
     for path in sorted(directory.glob("*.screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes()
@@ -143,12 +144,19 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         required_v1 = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "buggy_sha", "fixed_sha", "stage", "decision", "reason", "source_object_receipt_hashes", "supervisor_command", "created_at"}
         required_v2 = required_v1 | {"materialization_hash", "execution_evidence_hash"}
         version = value.get("schema_id") if isinstance(value, dict) else None
-        required = required_v2 if version == "external_validation.session2_prequalification_screen.v2" else required_v1
+        # One historical producer revision labelled source-only screens v2
+        # without the required runtime-evidence fields.  Retain it only as
+        # resolvable history; it cannot remain active authority.
+        is_legacy_source_v2 = (version == "external_validation.session2_prequalification_screen.v2"
+                               and isinstance(value, dict)
+                               and value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH"
+                               and set(value) == required_v1)
+        required = required_v1 if is_legacy_source_v2 else (required_v2 if version == "external_validation.session2_prequalification_screen.v2" else required_v1)
         if (not isinstance(value, dict) or set(value) != required or version not in {"external_validation.session2_prequalification_screen.v1", "external_validation.session2_prequalification_screen.v2"}
                 or value.get("schema_version") != "1" or value.get("stage") != "SOURCE_CONTRACT_SCREEN"
                 or value.get("decision") != "EXCLUDED_PREQUALIFICATION" or not isinstance(value.get("candidate_id"), str)
                 or not isinstance(value.get("reason"), str)
-                or (version == "external_validation.session2_prequalification_screen.v2" and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
+                or (version == "external_validation.session2_prequalification_screen.v2" and not is_legacy_source_v2 and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
             _fail("session2_candidate_screen_invalid")
         entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
         if version == "external_validation.session2_prequalification_screen.v1" and value.get("reason") == "UNQUALIFIED_LINUX_CONTAINER_PATH":
@@ -157,6 +165,8 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
             # reopens it, but an active v1 runtime exclusion is never final
             # qualification authority.
             unbound_runtime_v1.add(entry["screen_hash"])
+        if is_legacy_source_v2:
+            legacy_source_v2.add(entry["screen_hash"])
         screens_by_hash[entry["screen_hash"]] = {"candidate_id": value["candidate_id"], **entry}
         screens_by_candidate.setdefault(value["candidate_id"], []).append(entry)
     resolved_screens: set[str] = set()
@@ -179,6 +189,8 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         resolved_screens.add(value["supersedes_screen_hash"])
     if any(screen_hash not in resolved_screens for screen_hash in unbound_runtime_v1):
         _fail("session2_candidate_runtime_screen_unbound")
+    if any(screen_hash not in resolved_screens for screen_hash in legacy_source_v2):
+        _fail("session2_candidate_screen_invalid")
     result: dict[str, dict[str, str]] = {}
     for candidate, entries in screens_by_candidate.items():
         active = [entry for entry in entries if entry["screen_hash"] not in resolved_screens]

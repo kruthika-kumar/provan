@@ -377,6 +377,21 @@ def test_candidate_compiler_allows_only_explicitly_resolved_legacy_runtime_scree
     assert candidates._screened_candidates(base) == {}
 
 
+def test_candidate_compiler_allows_only_resolved_historical_v2_source_schema_bug(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_candidates as candidates
+    base = tmp_path / "session2"; screens = base / "cases" / "screens"; screens.mkdir(parents=True)
+    monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    screen = {"schema_id":"external_validation.session2_prequalification_screen.v2","schema_version":"1","candidate_id":"acme/project#7->acme/project#8","candidate_index_hash":"sha256:" + "0123456789abcdef" * 4,"buggy_sha":"a" * 40,"fixed_sha":"b" * 40,"stage":"SOURCE_CONTRACT_SCREEN","decision":"EXCLUDED_PREQUALIFICATION","reason":"FIXED_TWIN_NON_MINIMAL","source_object_receipt_hashes":["sha256:" + "fedcba9876543210" * 4,"sha256:" + "0011223344556677" * 4],"supervisor_command":{},"created_at":"2026-07-28T00:00:00Z"}
+    raw = canonical_json(screen); screen_hash = "sha256:" + __import__("hashlib").sha256(raw).hexdigest()
+    (screens / (screen_hash[7:] + ".screen.json")).write_bytes(raw)
+    with pytest.raises(candidates.CandidateCompilationError, match="session2_candidate_screen_invalid"):
+        candidates._screened_candidates(base)
+    resolution = {"schema_id":"external_validation.session2_prequalification_resolution.v1","schema_version":"1","candidate_id":screen["candidate_id"],"supersedes_screen_hash":screen_hash,"prior_candidate_index_hash":"sha256:" + "89abcdef01234567" * 4,"reason":"FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED","resolution":"REOPEN_FOR_REQUALIFICATION","implementation_commit":"c" * 40,"created_at":"2026-07-28T00:00:00Z"}
+    resolution_raw = canonical_json(resolution)
+    (screens / (__import__("hashlib").sha256(resolution_raw).hexdigest() + ".resolution.json")).write_bytes(resolution_raw)
+    assert candidates._screened_candidates(base) == {}
+
+
 def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected_link_gate(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_screen as screen
     store = tmp_path / "screens"; store.mkdir(); monkeypatch.setattr(screen, "_root", lambda _repo: store)
