@@ -16,6 +16,8 @@ from shiproom.external_validation.session2_freeze import (
     validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
 from shiproom.external_validation.session2_gateway import (
     ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment)
+from shiproom.external_validation.session2_storage import (
+    Session2StorageError, open_budget_ledger, prepare_external_namespace)
 
 
 def fresh(**changes):
@@ -176,3 +178,16 @@ def test_only_gateway_can_record_content_free_probe_and_usage(tmp_path: Path):
     assert ledger.checkpoint()["committed_spend"] == 0.25
     with pytest.raises(ModelGatewayError, match="session2_non_observation_capability_violation"):
         assert_non_observation_worker_environment({"OPENAI_API_KEY":"should-not-be-here"})
+
+
+def test_external_root_is_configured_once_and_session1_inventory_cannot_change(tmp_path: Path, monkeypatch):
+    repo = tmp_path / "repo"; repo.mkdir()
+    root = tmp_path / "external"; (root / "session1").mkdir(parents=True)
+    (root / "session1" / "authority.bin").write_bytes(b"immutable-session1")
+    monkeypatch.setenv("SHIPROOM_EXTERNAL_VALIDATION_ROOT", str(root))
+    inventory = prepare_external_namespace(repo)
+    assert inventory["session1_inventory_before"] == inventory["session1_inventory_after"]
+    ledger = open_budget_ledger(repo, BudgetPolicy())
+    assert ledger.genesis_checkpoint()["opening_balance"] == 250
+    with pytest.raises(Session2StorageError, match="session2_namespace_already_exists"):
+        prepare_external_namespace(repo)
