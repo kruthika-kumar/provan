@@ -436,6 +436,12 @@ def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected
     repaired = screen.seal_prequalification_resolution(tmp_path, candidate_id=predecessor["candidate_id"], supersedes_screen_hash=other,
         prior_candidate_index_hash="sha256:" + "0011223344556677" * 4, implementation_commit="d" * 40)
     assert repaired["resolution"] == "REOPEN_FOR_REQUALIFICATION"
+    predecessor["reason"] = "DEPENDENCY_AUTHORITY_NOT_FROZEN"
+    raw = __import__("shiproom.external_validation.identity", fromlist=["canonical_json"]).canonical_json(predecessor)
+    dependency = screen._write_once(store, ".screen.json", raw)
+    reopened = screen.seal_prequalification_resolution(tmp_path, candidate_id=predecessor["candidate_id"], supersedes_screen_hash=dependency,
+        prior_candidate_index_hash="sha256:" + "8899aabbccddeeff" * 4, implementation_commit="e" * 40)
+    assert reopened["resolution"] == "REOPEN_FOR_REQUALIFICATION"
 
 
 def test_prequalification_screen_accepts_fixed_twin_nonminimal_as_distinct_gate(tmp_path: Path, monkeypatch):
@@ -551,6 +557,21 @@ def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
     for invalid in (b"demo>=1\n", b"-r other.txt\n", b"demo==1 --hash=sha256:ABC\n"):
         with pytest.raises(RequirementsAuthorityError):
             export_hash_pinned_requirements(invalid, source_path="requirements.txt")
+
+
+def test_hash_pinned_requirements_selects_only_frozen_compatible_wheel():
+    from shiproom.external_validation import session2_environment as environment
+    digest = "a" * 64
+    records = [{"name": "demo", "version": "1.2", "hashes": ["--hash=sha256:" + digest]}]
+    response = {"demo": [
+        {"url": "https://files.pythonhosted.org/packages/demo-1.2-py3-none-any.whl", "digests": {"sha256": digest}},
+        {"url": "https://files.pythonhosted.org/packages/demo-1.2.tar.gz", "digests": {"sha256": digest}},
+        {"url": "https://files.pythonhosted.org/packages/demo-1.2-py3-none-any.whl", "digests": {"sha256": "b" * 64}},
+    ]}
+    selected = environment._select_requirements_wheels(records, response, platform_tag="manylinux_2_17_x86_64")
+    assert selected == [{"name": "demo", "version": "1.2", "url": "https://files.pythonhosted.org/packages/demo-1.2-py3-none-any.whl", "sha256": "sha256:" + digest}]
+    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_wheel_unavailable"):
+        environment._select_requirements_wheels(records, {"demo": response["demo"][1:]}, platform_tag="manylinux_2_17_x86_64")
 
 
 def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
