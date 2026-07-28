@@ -582,6 +582,32 @@ def test_session2_mirror_rejects_unsealed_or_nonimmutable_inputs(tmp_path: Path,
                             head_sha="b" * 40, source_receipts=[])
 
 
+def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace(tmp_path: Path, monkeypatch):
+    """A timed-out fetch is retained as evidence and cannot silently reuse its partial mirror."""
+    import subprocess
+    from shiproom.external_validation import session2_mirror as mirror
+
+    monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    monkeypatch.setattr(mirror, "MIRRORS", tmp_path / "mirrors")
+    monkeypatch.setattr(mirror.os, "fchown", lambda *_args: None, raising=False)
+    monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
+
+    def fake_run(*args, timeout):
+        if args[0] == "init":
+            Path(args[-1]).mkdir(parents=True)
+            return subprocess.CompletedProcess(args, 0, b"", b"")
+        return subprocess.CompletedProcess(args, 1, b"partial", b"timeout")
+
+    monkeypatch.setattr(mirror, "_run", fake_run)
+    with pytest.raises(mirror.MirrorAcquisitionError, match=r"session2_mirror_fetch_failed:sha256:"):
+        mirror.acquire_pair(tmp_path, candidate_id="org/repo#1->org/repo#2", repository="org/repo",
+                            base_sha="a" * 40, head_sha="b" * 40,
+                            source_receipts=["sha256:" + "c" * 64, "sha256:" + "d" * 64])
+    assert list(tmp_path.glob("*.mirror.json"))
+    assert list(tmp_path.glob("*.mirror-attempt.stdout"))
+    assert (tmp_path / "mirrors" / "org-repo-1-org-repo-2").is_dir()
+
+
 def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
     items = {"packages":[{"name":"demo","version":"1","artifacts":[
         {"url":"https://files.pythonhosted.org/packages/demo-1.tar.gz","sha256":"sha256:" + "a" * 64},
