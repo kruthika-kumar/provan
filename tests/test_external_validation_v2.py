@@ -64,6 +64,19 @@ def test_receipt_v2_binds_runner_identity_and_never_self_hashes():
     assert receipt_id_v2(receipt).startswith("receipt_") and "receipt_id" not in receipt
 
 
+def test_receipt_v2_accepts_only_local_immutable_config_identity_not_a_tag():
+    receipt = _receipt()
+    local = "sha256:" + "c" * 64
+    receipt["observation_inputs"]["runner_image_digest"] = local
+    receipt["container"]["runner_image_digest"] = local
+    receipt["observation_key"] = observation_key_v2(receipt["observation_inputs"])
+    receipt["attempt_id"] = attempt_id(receipt["observation_key"], 1)
+    assert validate_receipt_v2(receipt)["container"]["runner_image_digest"] == local
+    receipt["container"]["runner_image_digest"] = "shiproom:mutable"
+    with pytest.raises(V2ValidationError, match="image_digest_invalid"):
+        validate_receipt_v2(receipt)
+
+
 def test_runner_accepts_only_immutable_registry_or_local_config_identity():
     digest = "a" * 64
     assert immutable_image_config_digest("registry.invalid/runner@sha256:" + digest) == "sha256:" + digest

@@ -55,7 +55,13 @@ def _sha(value: Any, path: str) -> None:
 
 
 def _image_digest(value: Any, path: str) -> None:
-    if not isinstance(value, str) or "@sha256:" not in value or len(value.rsplit("@sha256:", 1)[1]) != 64:
+    # A pulled image is bound by its registry manifest digest.  A reviewed
+    # image assembled only inside the isolated daemon has no registry name,
+    # so its Docker config ID is the equivalent immutable authority.  Tags
+    # are never accepted here.
+    local_config = isinstance(value, str) and len(value) == 71 and value.startswith(SHA) and all(c in "0123456789abcdef" for c in value[7:])
+    registry = isinstance(value, str) and "@sha256:" in value and len(value.rsplit("@sha256:", 1)[1]) == 64 and all(c in "0123456789abcdef" for c in value.rsplit("@sha256:", 1)[1])
+    if not (local_config or registry):
         _fail("image_digest_invalid", path)
 
 
