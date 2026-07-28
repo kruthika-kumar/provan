@@ -4,11 +4,14 @@
 
 The tracked public resolver deliberately reports detection `QUALIFIED`,
 remediation `BLOCKED`, and overall `PARTIALLY_QUALIFIED`: the required
-root-owned external attestation is private evidence and is not copied into
-Git. An authorized resolver may report all profiles `QUALIFIED` only after it
-validates that attestation against the committed authority chain, proof
-manifest, implementation Commit A, and proof-only Commit B. Session 2, case,
-model, mutation, and benchmark work remain outside this Session 1 closeout.
+root-owned, content-addressed attestation is private evidence and is not
+copied into Git. An authorized resolver may report all profiles `QUALIFIED`
+only after descriptor-safe loading from its fixed trusted root validates the
+committed authority chain, complete closeout manifest, implementation Commit
+A, and proof-only Commit B. Intentional remediation-root teardown removes this
+private authority and therefore returns authorized resolution to the tracked
+public state. Session 2, case, model, mutation, and benchmark work remain
+outside this Session 1 closeout.
 
 This directory is the public, version-controlled control plane for Shiproom's external validation programme. The normative methodology is [the v2 testing plan](plan/shiproom_external_validation_testing_plan_v2.md); the [Codex action plan](plan/shiproom_external_validation_codex_action_plan.md) governs execution sequencing and cannot weaken that methodology.
 

@@ -1,12 +1,66 @@
-# Session 1 claim audit
+# Session 1 final claim audit
 
-| Claim | Implemented in | Evidence class | Positive proof | Negative proof | Artifact evidence |
-| --- | --- | --- | --- | --- | --- |
-| Detection Docker isolation | receipt-v2 `doctor` / `runner_v2` | retained prior qualification | Linux Docker v2 matrix; effective inspect and five arms | unsafe policy, wrapper interference, background writer, timeout and log-limit canaries | private canonical matrix hash in `docker_qualification.md` |
-| Safe materialization | `materialize_snapshot` | non-privileged semantic/adversarial | bare-mirror immutable SHA export | branch, unknown SHA, submodule, symlink archive rejected | focused suite |
-| Evidence authority | v2 host finalizer, journal, corpus | non-privileged semantic/adversarial | sealed artifact rehash and immutable case-ledger binding | self-authored/tampered or unjournaled receipt and missing ledger rejected | focused suite and v2 matrix |
-| Scheduler integrity | `RunScheduler` | non-privileged semantic/adversarial | frozen schedule, durable attempts, terminal indexing | reseed, pre-freeze execution, late enqueue, ambiguous retry rejected | focused suite |
-| Five-arm lifecycle | `run_five_arm_v2_proof` | retained prior qualification | five distinct v2 host-finalized receipts | cache/deterministic leak, output-root escape, frame and seal failures rejected | private v2 matrix + public hash-bound view |
-| Terminal-scenario preservation | scheduler/finalizer/corpus proof | non-privileged semantic/adversarial | all synthetic terminal scenarios finalizable and indexed | receipt/evidence tampering rejected | focused suite |
-| Remediation Docker isolation | root-staged remediation backend | privileged runtime | real Linux XFS byte/inode quota, authorization, release and capacity lifecycle doctor | quota overflow, malformed authorization, residual reference, unsafe release and unsupported storage fail closed | `control_plane_repair_proof_manifest.json`, sealed private doctor hash |
-| Session 1 acceptance | remediation runtime Commit A `48fa698d1395b4d2d503394c64d82761f4ee885d`; status hardening `6f66930` | privileged runtime + static contract | refreshed root-staged production doctor passed; exact-clean full baseline: 804 passed, 3 skipped; refreshed external attestation pending | clean-materialization failure, cache-dependent proof prerequisite, malformed/tampered evidence, unsafe Docker policy, quota overflow, residual reference, release failures, and public-tree leakage reject or fail closed | `full_baseline.md`, `control_plane_repair_proof_manifest.json`, private canonical doctor report hash, public-tree gate; no benchmark work |
+The canonical authority is `session1_claim_audit.v1.json`; this is its deterministic public view.
+
+| Claim | Implemented in | Evidence class | Positive proof | Negative proof | Artifact evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| detection.docker_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.nonroot_patient | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.network_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.mount_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.capability_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.bounded_output_transfer | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.timeout_cleanup | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.background_quiescence | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.five_arm_separation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| detection.cache_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.immutable_materialization | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.source_sha_authority | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.sealed_artifact_rehash | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.receipt_v2_authority | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.corpus_journal_authority | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| evidence.scheduler_terminal_integrity | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.xfs_byte_quota | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.xfs_inode_quota | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.aggregate_admission | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.concurrent_quota_domains | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.cross_attempt_isolation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.real_git_repair_lifecycle | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.target_fail_to_pass | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.protected_pass_to_pass | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.real_patch_manifests | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.authorization_tamper | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.artifact_tamper | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.residual_cwd | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.residual_fd | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.descriptor_relative_deletion | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.project_clear | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.project_retirement | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.capacity_return | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| remediation.source_immutability | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.multi_incident_blocking | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.partial_resolution_blocked | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.final_resolution_ready | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.capacity_replacement_blocked | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.successor_capacity | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.inactive_capacity_invariant | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| control.migration_integrity | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.root_owner_enforced | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.trusted_parent_enforced | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.symlink_rejected | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.hardlink_rejected | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.arbitrary_path_rejected | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.descriptor_safe_read | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.complete_closeout_binding | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.baseline_binding | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.reviewer_go_binding | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.claim_audit_binding | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.leakage_binding | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.proof_only_scope | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.public_fail_closed | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.authorized_qualified | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.historical_chain_preservation | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.public_status_consistency | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+| attestation.no_session2_or_benchmark | Commit A 68cc556db0b56fecd46cd9db87468b80f379bc05 | typed canonical record | manifest-bound proof | manifest-bound negative proof | typed audit JSON | CLOSED |
+
+All 58 material Session 1 claims are closed. No Session 2, benchmark, case, model, mutation, merge, or tag work occurred.

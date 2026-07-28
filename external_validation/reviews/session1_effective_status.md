@@ -15,10 +15,13 @@ Overall: PARTIALLY_QUALIFIED
 ```
 
 The original qualification and reopening remain immutable history but are not
-independent current authorities. A root-owned external attestation can
-activate the final `QUALIFIED` profile records only after its status-authority,
-status-chain, proof-manifest, implementation Commit A/tree, and proof-only
-Commit B/tree bindings are verified. Cycles, missing predecessors, competing
-successors, changed historical hashes, malformed/uncommitted chain blobs, or
-any missing/mismatched attestation binding fail closed to the public state
-above.
+independent current authorities. A root-owned, content-addressed external
+attestation can activate the final `QUALIFIED` profile records only after
+descriptor-safe loading from the fixed trusted root verifies its SHA-256
+identifier, status-authority, status-chain, complete closeout manifest,
+implementation Commit A/tree, and proof-only Commit B/tree bindings. Cycles,
+missing predecessors, competing successors, changed historical hashes,
+malformed/uncommitted chain blobs, unavailable `openat2`, or any
+missing/mismatched attestation binding fail closed to the public state above.
+Intentional remediation-root teardown removes the private attestation and
+consequently returns authorized resolution to this public state.

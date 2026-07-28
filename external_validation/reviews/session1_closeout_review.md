@@ -1,27 +1,13 @@
-# Session 1 control-plane repair closeout
+# Session 1 final closeout review
 
 | Field | Value |
 | --- | --- |
-| review_verdict | Pending fresh closeout review of the updated proof bundle and external attestation |
-| qualification_status | Public resolver: PARTIALLY_QUALIFIED; externally attested result: pending refreshed attestation |
+| review_verdict | GO |
+| qualification_status | Final root-owned attestation pending; public resolver remains PARTIALLY_QUALIFIED until then |
 | detection_profile | QUALIFIED |
-| remediation_profile | Public resolver: BLOCKED; externally attested result: pending refreshed attestation |
-| overall_status | Public resolver: PARTIALLY_QUALIFIED; externally attested result: pending refreshed attestation |
+| remediation_profile | BLOCKED publicly; QUALIFIED only through a valid trusted-root attestation |
+| overall_status | PARTIALLY_QUALIFIED publicly; QUALIFIED only through authorized resolution |
+| open_p0_count | 0 |
+| open_p1_count | 0 |
 
-The refreshed production doctor for implementation commit
-`48fa698d1395b4d2d503394c64d82761f4ee885d` completed all required runtime proofs: real Git repair
-and receipt-v2 finalization, overlapping quota domains and capacity lineage,
-authorization/artifact tampering rejection, and residual cwd/FD rejection.
-Its private canonical report is bound by
-`control_plane_repair_proof_manifest.json`; public material is not the
-qualification authority.
-
-The final complete canonical baseline at `289b48e` completed with **804
-passed, 3 skipped in 2318.72 seconds**. The post-doctor changes are limited to
-status-attestation hardening and regression coverage; they do not alter the
-staged remediation runtime bundle qualified at `48fa698…`.
-
-The status authority resolves only through its profile chain and requires the
-root-owned external attestation binding the pushed proof/status commit. No
-benchmark, case-selection, model-selection, or Session 2 work is represented
-by this closeout.
+Fresh read-only re-review closed F2 and F3: typed baseline/leakage records bind the final implementation identity and transcript hashes, and all 58 claim IDs resolve to manifest-bound evidence keys. The reviewer returned GO with no open P0/P1 findings. No Session 2, benchmark, case, model, mutation, merge, or tag work occurred.
