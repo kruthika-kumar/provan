@@ -168,11 +168,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Seal one Session 2 prequalification exclusion.")
     parser.add_argument("--repository-root", required=True, type=Path)
     parser.add_argument("--candidate-id", required=True)
-    parser.add_argument("--candidate-index-hash", required=True)
-    parser.add_argument("--mirror", required=True, type=Path)
-    parser.add_argument("--buggy-sha", required=True); parser.add_argument("--fixed-sha", required=True)
-    parser.add_argument("--reason", required=True, choices=sorted(_REASONS))
-    parser.add_argument("--source-object-receipt-hash", action="append", required=True)
+    parser.add_argument("--candidate-index-hash")
+    parser.add_argument("--mirror", type=Path)
+    parser.add_argument("--buggy-sha"); parser.add_argument("--fixed-sha")
+    parser.add_argument("--reason", choices=sorted(_REASONS))
+    parser.add_argument("--source-object-receipt-hash", action="append")
     parser.add_argument("--resolve-screen-hash")
     parser.add_argument("--prior-candidate-index-hash")
     parser.add_argument("--implementation-commit")
@@ -185,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
                 supersedes_screen_hash=args.resolve_screen_hash, prior_candidate_index_hash=args.prior_candidate_index_hash,
                 implementation_commit=args.implementation_commit)
         else:
+            if any(item is None for item in (args.candidate_index_hash, args.mirror, args.buggy_sha, args.fixed_sha, args.reason, args.source_object_receipt_hash)):
+                _fail("session2_screen_input_invalid")
             result = seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash)
         print(json.dumps(result, sort_keys=True))
     except CandidateScreenError as exc:
