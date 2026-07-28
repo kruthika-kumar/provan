@@ -20,6 +20,7 @@ from typing import Any
 from .identity import canonical_json
 from .session2_storage import prepare_external_namespace
 from .trusted_attestation import TRUSTED_ROOT, load_trusted_attestation
+from . import status
 
 
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
@@ -72,18 +73,28 @@ def _git(repo: Path, argument: str) -> str:
     return _sha(completed.stdout)
 
 
-def _session1_attestations() -> list[dict[str, str]]:
+def _session1_authority(repo: Path) -> dict[str, Any]:
     root = TRUSTED_ROOT
     if not root.is_dir():
         raise ProvisionError("session2_provision_session1_attestation_missing")
     entries: list[dict[str, str]] = []
+    selected: str | None = None
     for path in sorted(root.glob("*.json")):
         identifier = path.stem
         loaded = load_trusted_attestation(identifier, trusted_root=root)
         entries.append({"attestation_id": identifier, "sha256": "sha256:" + identifier, "schema_id": str(loaded.document.get("schema_id"))})
+        if loaded.document.get("commit_b") == "d5b99293b62e907f21226ee05d541c9559f33bc8":
+            if selected is not None: raise ProvisionError("session2_provision_session1_attestation_ambiguous")
+            selected = identifier
     if not entries:
         raise ProvisionError("session2_provision_session1_attestation_missing")
-    return entries
+    if selected is None:
+        raise ProvisionError("session2_provision_session1_attestation_closeout_missing")
+    authority = repo / "external_validation/status/session1-status-authority.v1.json"
+    resolved = status.resolve_status_authority(authority, repository_root=repo, attestation_id=selected)
+    if resolved.get("profiles") != {"detection": "QUALIFIED", "remediation": "QUALIFIED", "overall": "QUALIFIED"}:
+        raise ProvisionError("session2_provision_session1_authorized_status_invalid")
+    return {"closeout_attestation_id": selected, "all_attestations": entries, "authorized_profiles": resolved["profiles"]}
 
 
 def _docker_canary(root: Path, image: str) -> dict[str, Any]:
@@ -188,16 +199,55 @@ def provision(repository: Path, *, image: str, implementation_commit: str, imple
     if config_after != config_before:
         raise ProvisionError("session2_provision_config_changed")
     session1_commit = "d5b99293b62e907f21226ee05d541c9559f33bc8"
-    document: dict[str, Any] = {"schema_id": "external_validation.session2_root_provisioning_receipt.v1", "schema_version": "1", "receipt_id": "", "created_at": _utc(), "external_root": str(root), "external_root_origin": "NEWLY_AUTHORIZED_FOR_SESSION2", "environment_variable": "SHIPROOM_EXTERNAL_VALIDATION_ROOT", "environment_value": configured, "filesystem": mount, "parent_authority": parents, "namespace": namespace, "config_before": config_before, "config_after": config_after, "git_repository": str(repo), "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "session1": {"closeout_commit": session1_commit, "status_authority_hash": _git(repo, session1_commit + ":external_validation/status/session1-status-authority.v1.json"), "proof_bundle_hash": _git(repo, session1_commit + ":external_validation/proofs/session1/session1_closeout_manifest.v1.json"), "root_attestations": _session1_attestations()}, "patient_root_overlap": False, "patient_canary": canary, "evaluated_model_call_count": 0, "shiproom_evaluated_output_count": 0, "comparator_evaluated_output_count": 0}
+    document: dict[str, Any] = {"schema_id": "external_validation.session2_root_provisioning_receipt.v1", "schema_version": "1", "receipt_id": "", "created_at": _utc(), "external_root": str(root), "external_root_origin": "NEWLY_AUTHORIZED_FOR_SESSION2", "environment_variable": "SHIPROOM_EXTERNAL_VALIDATION_ROOT", "environment_value": configured, "filesystem": mount, "parent_authority": parents, "namespace": namespace, "config_before": config_before, "config_after": config_after, "git_repository": str(repo), "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "session1": {"closeout_commit": session1_commit, "status_authority_hash": _git(repo, session1_commit + ":external_validation/status/session1-status-authority.v1.json"), "proof_bundle_hash": _git(repo, session1_commit + ":external_validation/proofs/session1/session1_closeout_manifest.v1.json"), **_session1_authority(repo)}, "patient_root_overlap": False, "patient_canary": canary, "evaluated_model_call_count": 0, "shiproom_evaluated_output_count": 0, "comparator_evaluated_output_count": 0}
     content = dict(document); content.pop("receipt_id")
     document["receipt_id"] = "sha256:" + sha256(canonical_json(content)).hexdigest()
     final, digest = _seal_provisioning_event(session2 / "provisioning", document)
     return {"receipt_id": document["receipt_id"], "path": str(final), "sha256": digest}
 
 
+def verify_existing_provisioning(repository: Path, *, implementation_commit: str, implementation_tree: str) -> dict[str, str]:
+    """Seal a successor verification without re-running an already sealed canary."""
+    if os.geteuid() != 0 or os.environ.get("SHIPROOM_EXTERNAL_VALIDATION_ROOT") != str(EXPECTED_ROOT):
+        raise ProvisionError("session2_provision_environment_authority_invalid")
+    root = EXPECTED_ROOT; directory = root / "session2/provisioning"
+    if not directory.is_dir(): raise ProvisionError("session2_provision_receipt_missing")
+    predecessors = []
+    for path in sorted(directory.glob("*.json")):
+        raw = path.read_bytes(); item = json.loads(raw)
+        if item.get("schema_id") != "external_validation.session2_root_provisioning_receipt.v1": continue
+        body = dict(item); claimed = body.pop("receipt_id", None)
+        if claimed != "sha256:" + sha256(canonical_json(body)).hexdigest() or _sha(raw)[7:] != path.stem:
+            raise ProvisionError("session2_provision_predecessor_identity_invalid")
+        predecessors.append((path, item, _sha(raw)))
+    if len(predecessors) != 1: raise ProvisionError("session2_provision_predecessor_ambiguous")
+    path, predecessor, digest = predecessors[0]
+    parents = {str(item): _stat(item, directory=True) for item in (Path("/var"), Path("/var/lib"), root)}
+    if parents[str(root)]["mode"] != 0o700 or _mount(root) != predecessor["filesystem"]:
+        raise ProvisionError("session2_provision_reverification_failed")
+    if predecessor.get("external_root_origin") != "NEWLY_AUTHORIZED_FOR_SESSION2" or predecessor.get("namespace", {}).get("session1_namespace_inventory_check") != "NOT_APPLICABLE":
+        raise ProvisionError("session2_provision_reverification_failed")
+    canary = predecessor.get("patient_canary", {})
+    if canary.get("exit_code") != 0 or canary.get("network_policy") != "none" or canary.get("read_only_root") is not True or canary.get("patient_uid") != PATIENT_UID or canary.get("mounts") != []:
+        raise ProvisionError("session2_provision_reverification_failed")
+    docker = _run(["/usr/bin/docker", "--host", "unix://" + str(CUSTOM_SOCKET), "ps", "-aq"])
+    if docker.returncode != 0 or docker.stdout.strip(): raise ProvisionError("session2_provision_canary_residual")
+    repo = repository.resolve()
+    verification = {"schema_id": "external_validation.session2_root_provisioning_verification.v1", "schema_version": "1", "created_at": _utc(), "predecessor_path": str(path), "predecessor_hash": digest, "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "parent_authority": parents, "session1": _session1_authority(repo), "evaluated_model_call_count": 0, "shiproom_evaluated_output_count": 0, "comparator_evaluated_output_count": 0, "residual_container_count": 0}
+    final, final_digest = _seal_provisioning_event(directory, verification)
+    return {"path": str(final), "sha256": final_digest}
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--image", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True)
-    args = parser.parse_args(); print(json.dumps(provision(args.repository, image=args.image, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree), sort_keys=True)); return 0
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--image"); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--verify-existing", action="store_true")
+    args = parser.parse_args()
+    if args.verify_existing:
+        if args.image: raise SystemExit("session2_provision_verify_image_forbidden")
+        result = verify_existing_provisioning(args.repository, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree)
+    else:
+        if not args.image: raise SystemExit("session2_provision_image_required")
+        result = provision(args.repository, image=args.image, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree)
+    print(json.dumps(result, sort_keys=True)); return 0
 
 
 if __name__ == "__main__":
