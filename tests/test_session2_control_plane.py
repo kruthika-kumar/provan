@@ -5,7 +5,8 @@ from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
     Session2ValidationError, contamination_band, seed_order, select_repository_slots,
     select_sol_sensitivity_case, select_subset, validate_controlled_population,
     validate_fresh_qualification, validate_model_prompt_policy_freeze,
-    validate_owner_context_case, validate_private_mutation, validate_public_seed,
+    validate_fixed_twin, validate_harness_pair, validate_owner_context_case,
+    validate_private_mutation, validate_public_seed, scan_positive_artifact,
     validate_qualifying_artifact)
 from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
@@ -229,3 +230,16 @@ def test_pr_classifier_bundle_is_complete_before_pr_selection():
     del bundle["snapshot_registry"]
     with pytest.raises(SelectionError, match="session2_pr_classifier_bundle_invalid"):
         validate_pr_classifier_bundle(bundle)
+
+
+def test_fixed_twin_harness_and_positive_artifact_rules_reject_shortcuts():
+    digest = "sha256:" + "0123456789abcdef" * 4
+    twin = {"base_sha":"0123456789abcdef0123456789abcdef01234567", "buggy_sha":"89abcdef0123456789abcdef0123456789abcdef", "fixed_sha":"abcdef0123456789abcdef0123456789abcdef01", "changed_files":["src/repair.py"], "changed_lines":[{"path":"src/repair.py", "line":10}], "allowlisted_target_repair":{"files":["src/repair.py"], "lines":[10], "target_contract_hash":digest}, "environment_hash":digest, "dependency_authority_hash":"sha256:" + "fedcba9876543210" * 4, "protected_check_weakened":False, "oracle_deleted":False, "release_contract_changed":False, "unrelated_cleanup":False, "dependency_upgrade":False, "review_explanation":"base-to-fixed delta is the reviewed target repair"}
+    assert validate_fixed_twin(twin)["fixed_sha"] == twin["fixed_sha"]
+    twin["protected_check_weakened"] = True
+    with pytest.raises(Session2ValidationError, match="session2_fixed_twin_minimality_invalid"):
+        validate_fixed_twin(twin)
+    harness = {"harness_case_id":fresh()["case_id"], "harness":"BugsInPy FastAPI", "contamination_prone":True, "qualification":fresh()}
+    assert validate_harness_pair(harness)["harness"] == "BugsInPy FastAPI"
+    with pytest.raises(Session2ValidationError, match="session2_placeholder_text"):
+        scan_positive_artifact({"request_id":"request-A", "digest":digest, "note":"TODO"}, classification="QUALIFYING_PRIVATE_ARTIFACT")

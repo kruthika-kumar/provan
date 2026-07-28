@@ -334,6 +334,61 @@ def validate_private_mutation(value: Any) -> dict[str, Any]:
     return value
 
 
+def validate_fixed_twin(value: Any) -> dict[str, Any]:
+    """Require a bounded inverse repair, not merely two passing snapshots."""
+    required = {"base_sha", "buggy_sha", "fixed_sha", "changed_files", "changed_lines", "allowlisted_target_repair", "environment_hash", "dependency_authority_hash", "protected_check_weakened", "oracle_deleted", "release_contract_changed", "unrelated_cleanup", "dependency_upgrade", "review_explanation"}
+    if not isinstance(value, dict) or set(value) != required:
+        fail("session2_fixed_twin_invalid")
+    for key in ("base_sha", "buggy_sha", "fixed_sha"):
+        require_git_sha(value[key], "session2_fixed_twin_sha_invalid")
+    if len({value["base_sha"], value["buggy_sha"], value["fixed_sha"]}) != 3:
+        fail("session2_fixed_twin_identity_invalid")
+    for key in ("environment_hash", "dependency_authority_hash"):
+        require_sha(value[key], "session2_fixed_twin_authority_invalid")
+    if (not isinstance(value["changed_files"], list) or not value["changed_files"] or len(set(value["changed_files"])) != len(value["changed_files"])
+            or any(not isinstance(item, str) or not item or item.startswith("/") or ".." in item.split("/") for item in value["changed_files"])
+            or not isinstance(value["changed_lines"], list) or not value["changed_lines"]
+            or not isinstance(value["allowlisted_target_repair"], dict) or set(value["allowlisted_target_repair"]) != {"files", "lines", "target_contract_hash"}):
+        fail("session2_fixed_twin_delta_invalid")
+    require_sha(value["allowlisted_target_repair"]["target_contract_hash"], "session2_fixed_twin_authority_invalid")
+    if sorted(value["allowlisted_target_repair"]["files"]) != sorted(value["changed_files"]) or any(value[key] is not False for key in ("protected_check_weakened", "oracle_deleted", "release_contract_changed", "unrelated_cleanup", "dependency_upgrade")) or not isinstance(value["review_explanation"], str) or not value["review_explanation"]:
+        fail("session2_fixed_twin_minimality_invalid")
+    return value
+
+
+def validate_harness_pair(value: Any) -> dict[str, Any]:
+    required = {"harness_case_id", "harness", "contamination_prone", "qualification"}
+    if not isinstance(value, dict) or set(value) != required or value.get("harness") not in {"BugsInPy FastAPI", "BugsInPy HTTPie"} or value.get("contamination_prone") is not True:
+        fail("session2_harness_pair_invalid")
+    qualification = validate_fresh_qualification(value["qualification"])
+    if not isinstance(value["harness_case_id"], str) or not value["harness_case_id"] or qualification["case_id"] != value["harness_case_id"]:
+        fail("session2_harness_pair_invalid")
+    return value
+
+
+def scan_positive_artifact(value: Any, *, classification: str) -> None:
+    """Strict scanner for qualifying evidence, never test fixtures/examples."""
+    if classification not in {"QUALIFYING_PUBLIC_ARTIFACT", "QUALIFYING_PRIVATE_ARTIFACT"}:
+        return
+    seen_ids: set[str] = set()
+    def walk(item: Any, path: str) -> None:
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if key in {"pass", "passed", "success"} and isinstance(child, bool):
+                    fail("session2_placeholder_manual_pass_flag")
+                walk(child, path + "/" + str(key))
+        elif isinstance(item, list):
+            if not item: fail("session2_placeholder_empty_required_array")
+            for index, child in enumerate(item): walk(child, path + "/" + str(index))
+        elif isinstance(item, str):
+            if PLACEHOLDER.search(item): fail("session2_placeholder_text")
+            if item.startswith("sha256:"): require_sha(item)
+            if path.endswith(("_id", "/id", "request_id", "run_id")):
+                if item in seen_ids: fail("session2_placeholder_duplicate_id")
+                seen_ids.add(item)
+    walk(value, "")
+
+
 @dataclass(frozen=True)
 class BudgetPolicy:
     programme_budget_usd: float = 250.0
