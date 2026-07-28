@@ -188,17 +188,20 @@ def seal_prequalification_exclusion(
             or reason not in _REASONS or not isinstance(source_object_receipt_hashes, list)
             or len(source_object_receipt_hashes) < 2 or any(not _HASH.fullmatch(item) for item in source_object_receipt_hashes)):
         _fail("session2_screen_input_invalid")
-    # A container-path exclusion is a runtime fact, never a reviewer assertion.
+    # A runtime container-path or dependency-authority exclusion is a runtime
+    # fact, never a reviewer assertion.  It must bind the exact sealed
+    # materialization and production build failure for that snapshot.
     # It must bind the exact sealed materialization and the production build
     # receipt that failed for that snapshot. Other source gates omit them.
-    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+    runtime_reason = reason in {"UNQUALIFIED_LINUX_CONTAINER_PATH", "DEPENDENCY_AUTHORITY_NOT_FROZEN"}
+    if runtime_reason:
         if not (_HASH.fullmatch(materialization_hash or "") and _HASH.fullmatch(execution_evidence_hash or "")):
             _fail("session2_screen_execution_evidence_required")
     elif materialization_hash is not None or execution_evidence_hash is not None:
         _fail("session2_screen_execution_evidence_unexpected")
     if not mirror.is_dir() or _is_reparse(mirror): _fail("session2_screen_mirror_invalid")
     directory = _root(repository_root)
-    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+    if runtime_reason:
         _validate_runtime_evidence(directory, candidate_id=candidate_id, fixed_sha=fixed_sha,
             materialization_hash=materialization_hash or "", execution_evidence_hash=execution_evidence_hash or "")
     for sha in (buggy_sha, fixed_sha):
@@ -216,7 +219,7 @@ def seal_prequalification_exclusion(
         # the compact v1 contract; otherwise a fixed-twin exclusion could be
         # mistaken for an unbound runtime assertion by independent readers.
         "schema_id": ("external_validation.session2_prequalification_screen.v2"
-                      if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH"
+                      if runtime_reason
                       else "external_validation.session2_prequalification_screen.v1"),
         "schema_version": "1",
         "candidate_id": candidate_id,
@@ -230,7 +233,7 @@ def seal_prequalification_exclusion(
         "supervisor_command": {**comparison, "stdout": {"bytes": stdout_size, "sha256": stdout_hash}, "stderr": {"bytes": stderr_size, "sha256": stderr_hash}},
         "created_at": _utc(),
     }
-    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+    if runtime_reason:
         record["materialization_hash"] = materialization_hash
         record["execution_evidence_hash"] = execution_evidence_hash
     raw = canonical_json(record)
