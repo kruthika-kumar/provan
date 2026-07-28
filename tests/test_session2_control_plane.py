@@ -281,6 +281,7 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     assert result["candidate_count"] == 1
     index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
     assert index["candidates"][0]["candidate_id"] == "acme/project#7->acme/project#8"
+    assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():

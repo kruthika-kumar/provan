@@ -72,18 +72,45 @@ def _read_hash(path: Path, expected: str) -> Any:
         raise CandidateCompilationError("session2_candidate_raw_invalid") from exc
 
 
-def _receipt_documents(base: Path) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+def _document_honors_filters(document: dict[str, Any], filters: dict[str, Any]) -> bool:
+    """Independent consumer check: a sealed receipt is not blindly trusted."""
+    for item in document.get("items", []):
+        if not isinstance(item, dict):
+            return False
+        is_pull = "pull_request" in item
+        if filters.get("kind") == "issue" and is_pull:
+            return False
+        if filters.get("kind") == "pull_request" and not is_pull:
+            return False
+        try:
+            created = _time(item.get("created_at"))
+            if "created_from" in filters and created < _time(filters["created_from"]): return False
+            if "created_to" in filters and created > _time(filters["created_to"]): return False
+            if "merged_from" in filters or "merged_to" in filters:
+                merged = _time(item.get("closed_at"))
+                if "merged_from" in filters and merged < _time(filters["merged_from"]): return False
+                if "merged_to" in filters and merged > _time(filters["merged_to"]): return False
+        except CandidateCompilationError:
+            return False
+    return True
+
+
+def _receipt_documents(base: Path) -> tuple[list[tuple[dict[str, Any], list[dict[str, Any]]]], list[dict[str, str]]]:
     result: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
+    rejected: list[dict[str, str]] = []
     for path in sorted((base / "retrieval").glob("*.retrieval-receipt.json")):
         if _is_reparse(path):
             _fail("session2_candidate_receipt_reparse")
         receipt = json.loads(path.read_text(encoding="utf-8"))
         validate_retrieval_receipt(receipt)
         documents = [_read_hash(base / "retrieval" / "raw" / (page["raw_response_hash"][7:] + ".json"), page["raw_response_hash"]) for page in receipt["pages"]]
+        if not all(_document_honors_filters(document, receipt["filters"]) for document in documents):
+            rejected.append({"receipt_hash": "sha256:" + sha256(canonical_json(receipt)).hexdigest(), "reason": "raw_response_does_not_honor_declared_filters"})
+            continue
         result.append((receipt, documents))
     if not result:
         _fail("session2_candidate_retrieval_missing")
-    return result
+    return result, rejected
 
 
 def _slug(item: dict[str, Any]) -> str:
@@ -100,7 +127,8 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
     issues: dict[tuple[str, int], tuple[dict[str, Any], str]] = {}
     pulls: list[tuple[dict[str, Any], str]] = []
     source_receipts: list[str] = []
-    for receipt, documents in _receipt_documents(base):
+    receipts, receipt_exclusions = _receipt_documents(base)
+    for receipt, documents in receipts:
         digest = "sha256:" + sha256(canonical_json(receipt)).hexdigest()
         source_receipts.append(digest)
         kind = receipt["filters"].get("kind")
@@ -153,7 +181,7 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
             })
             linked_issues.add(key)
     candidates.sort(key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
-    exclusions = [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
+    exclusions = receipt_exclusions + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
     result = {
         "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v1",
         "schema_version": "1",
