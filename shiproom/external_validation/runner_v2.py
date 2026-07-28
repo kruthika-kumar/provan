@@ -237,6 +237,7 @@ class DockerSupervisorV2:
         create = create_argv(self.policy, name=name, cidfile=cidfile, patient=patient, packet=packet, backend_label=self.backend)
         docker = docker_cli(self.policy)
         started = time.time(); cleanup: list[str] = []; container_id = ""; outcome: dict[str, Any] | None = None
+        execution_binding: dict[str, Any] = {}
         try:
             result = _run(create)
             if result.returncode: raise RuntimeError("docker_create_failed")
@@ -245,6 +246,7 @@ class DockerSupervisorV2:
             if inspect.returncode: raise RuntimeError("docker_inspect_failed")
             projection = effective_projection(json.loads(inspect.stdout)[0])
             assert_effective_policy(projection, self.policy, patient, packet, self.backend)
+            execution_binding = {"requested_policy_hash": policy_hash(self.policy), "effective_inspect_hash": projection_hash(projection), "started_at": started}
             start = _run([*docker, "start", container_id])
             if start.returncode: raise RuntimeError("docker_start_failed")
             patient_result = _bounded_exec([*docker, "exec", "--user", PATIENT_UID, "--workdir", "/patient", container_id, "/gateway/patient-launcher", *command], self.policy.stdout_limit_bytes, self.policy.stderr_limit_bytes, self.policy.wall_seconds)
@@ -253,7 +255,7 @@ class DockerSupervisorV2:
             probe = _run([*docker, "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence_probe.py", PATIENT_UID.split(":")[0]], timeout=15)
             if reaper.returncode or probe.returncode:
                 patient_result["termination"] = "artifact_transfer_failed"
-                outcome = {**patient_result, "container_id": container_id, "evidence_eligible": False, "quiescence": False, "reaper_code": reaper.returncode, "probe_code": probe.returncode, "reaper_stderr": reaper.stderr, "probe_stderr": probe.stderr}
+                outcome = {**patient_result, **execution_binding, "container_id": container_id, "evidence_eligible": False, "quiescence": False, "reaper_code": reaper.returncode, "probe_code": probe.returncode, "reaper_stderr": reaper.stderr, "probe_stderr": probe.stderr}
             else:
                 transfer = _bounded_exec([*docker, "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], self.policy.output_tmpfs_bytes * 2, 64 * 1024, 30)
                 if transfer["termination"] != "completed": raise RuntimeError("transfer_helper_failed:" + transfer["termination"])
@@ -261,7 +263,7 @@ class DockerSupervisorV2:
                 manifest, archive = parse_transfer(__import__("io").BytesIO(raw), TransferLimits(self.policy.output_tmpfs_bytes, 4096, self.policy.output_tmpfs_bytes * 2))
                 sealed = seal_root / container_id; sealed.mkdir(parents=True, exist_ok=False); _safe_extract(archive, sealed, manifest)
                 outcome = {**patient_result, "container_id": container_id, "evidence_eligible": True, "artifact_manifest": manifest, "sealed_output": sealed,
-                           "requested_policy_hash": policy_hash(self.policy), "effective_inspect_hash": projection_hash(projection), "started_at": started, "completed_at": time.time()}
+                           **execution_binding}
         finally:
             absent = False
             if container_id:
@@ -283,6 +285,7 @@ class DockerSupervisorV2:
                     incident = "incident_" + sha256((self.backend + container_id + str(time.time())).encode()).hexdigest()
                     self.lock.record_incident(self.backend, incident)
             if outcome is not None:
+                outcome["completed_at"] = time.time()
                 outcome["teardown"] = "proven" if absent else "containment_failure"
                 outcome["residual_absence"] = absent
                 outcome["cleanup"] = cleanup
