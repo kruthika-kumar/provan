@@ -93,7 +93,18 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
                    "stage":"BARE_INITIALIZATION", "outcome":"FAILED", "started_at":started, "completed_at":_utc(),
                    "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", init.stdout), "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", init.stderr)}
         raise MirrorAcquisitionError("session2_mirror_init_failed:" + _write_once(store, canonical_json(failure)))
-    fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=180)
+    try:
+        fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=180)
+    except subprocess.TimeoutExpired as exc:
+        completed = _utc()
+        stdout = exc.stdout if isinstance(exc.stdout, bytes) else b""
+        stderr = exc.stderr if isinstance(exc.stderr, bytes) else b""
+        failure = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate_id,
+                   "repository":repository, "base_sha":base_sha, "head_sha":head_sha, "attempt_id":attempt_id,
+                   "stage":"EXACT_FETCH", "outcome":"TIMED_OUT", "started_at":started, "completed_at":completed,
+                   "partial_mirror_path":"supervisor_staging_only", "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", stdout),
+                   "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", stderr)}
+        raise MirrorAcquisitionError("session2_mirror_fetch_timed_out:" + _write_once(store, canonical_json(failure))) from exc
     completed = _utc()
     if fetch.returncode:
         failure = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate_id,

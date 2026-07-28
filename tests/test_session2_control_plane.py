@@ -608,6 +608,26 @@ def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace
     assert (tmp_path / "mirrors" / "org-repo-1-org-repo-2").is_dir()
 
 
+def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
+    import subprocess
+    from shiproom.external_validation import session2_mirror as mirror
+
+    monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    monkeypatch.setattr(mirror, "MIRRORS", tmp_path / "mirrors")
+    monkeypatch.setattr(mirror.os, "fchown", lambda *_args: None, raising=False)
+    monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
+    def fake_run(*args, timeout):
+        if args[0] == "init":
+            Path(args[-1]).mkdir(parents=True)
+            return subprocess.CompletedProcess(args, 0, b"", b"")
+        raise subprocess.TimeoutExpired(args, timeout, output=b"partial", stderr=b"deadline")
+    monkeypatch.setattr(mirror, "_run", fake_run)
+    with pytest.raises(mirror.MirrorAcquisitionError, match=r"session2_mirror_fetch_timed_out:sha256:"):
+        mirror.acquire_pair(tmp_path, candidate_id="org/repo#3->org/repo#4", repository="org/repo", base_sha="a" * 40,
+                            head_sha="b" * 40, source_receipts=["sha256:" + "c" * 64, "sha256:" + "d" * 64])
+    assert list(tmp_path.glob("*.mirror.json"))
+
+
 def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
     items = {"packages":[{"name":"demo","version":"1","artifacts":[
         {"url":"https://files.pythonhosted.org/packages/demo-1.tar.gz","sha256":"sha256:" + "a" * 64},
