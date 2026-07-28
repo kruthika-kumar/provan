@@ -1,0 +1,22 @@
+ARG RUNNER_IMAGE
+FROM ${RUNNER_IMAGE}
+
+# This is the glibc counterpart of Dockerfile.  Session 2 can only use it
+# after a doctor records a pinned base digest and qualifies the complete
+# supervisor/patient isolation contract for the resulting image.
+RUN groupadd --gid 65532 supervisor \
+ && useradd --uid 65532 --gid 65532 --no-create-home --shell /usr/sbin/nologin supervisor \
+ && useradd --uid 65533 --gid 65532 --no-create-home --shell /usr/sbin/nologin patient \
+ && mkdir -p /supervisor /gateway /output \
+ && chown supervisor:supervisor /supervisor \
+ && chmod 0700 /supervisor \
+ && chmod 1777 /output
+COPY patient_launcher.py /gateway/patient-launcher
+COPY patient_reaper.py /gateway/patient-reaper
+COPY supervisor.py quiescence_probe.py transfer_helper.py /supervisor/
+RUN chown supervisor:supervisor /supervisor/* \
+ && chmod 0700 /supervisor/* \
+ && chown root:root /gateway/* \
+ && chmod 0555 /gateway/*
+USER 65532:65532
+ENTRYPOINT ["/supervisor/supervisor.py"]
