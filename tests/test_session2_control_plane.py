@@ -318,6 +318,12 @@ def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected
     result = screen.seal_prequalification_resolution(tmp_path, candidate_id=predecessor["candidate_id"], supersedes_screen_hash=digest,
         prior_candidate_index_hash="sha256:" + "89abcdef01234567" * 4, implementation_commit="c" * 40)
     assert result["resolution"] == "REOPEN_FOR_REQUALIFICATION"
+    predecessor["reason"] = "FIXED_TWIN_NON_MINIMAL"
+    raw = __import__("shiproom.external_validation.identity", fromlist=["canonical_json"]).canonical_json(predecessor)
+    other = screen._write_once(store, ".screen.json", raw)
+    repaired = screen.seal_prequalification_resolution(tmp_path, candidate_id=predecessor["candidate_id"], supersedes_screen_hash=other,
+        prior_candidate_index_hash="sha256:" + "0011223344556677" * 4, implementation_commit="d" * 40)
+    assert repaired["resolution"] == "REOPEN_FOR_REQUALIFICATION"
 
 
 def test_prequalification_screen_accepts_fixed_twin_nonminimal_as_distinct_gate(tmp_path: Path, monkeypatch):

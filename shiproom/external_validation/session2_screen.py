@@ -36,6 +36,7 @@ _REASONS = {
     "FIXED_TWIN_NON_MINIMAL",
 }
 _RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
+_FIXED_TWIN_RESOLUTION_REASON = "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"
 
 
 def _fail(code: str) -> None:
@@ -108,15 +109,17 @@ def seal_prequalification_resolution(
         predecessor = json.loads(screen.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise CandidateScreenError("session2_screen_resolution_predecessor_invalid") from exc
-    if predecessor.get("candidate_id") != candidate_id or predecessor.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH":
+    predecessor_reason = predecessor.get("reason")
+    if predecessor.get("candidate_id") != candidate_id or predecessor_reason not in {"UNQUALIFIED_LINUX_CONTAINER_PATH", "FIXED_TWIN_NON_MINIMAL"}:
         _fail("session2_screen_resolution_predecessor_invalid")
+    reason = _RESOLUTION_REASON if predecessor_reason == "UNQUALIFIED_LINUX_CONTAINER_PATH" else _FIXED_TWIN_RESOLUTION_REASON
     record = {
         "schema_id": "external_validation.session2_prequalification_resolution.v1",
         "schema_version": "1",
         "candidate_id": candidate_id,
         "supersedes_screen_hash": supersedes_screen_hash,
         "prior_candidate_index_hash": prior_candidate_index_hash,
-        "reason": _RESOLUTION_REASON,
+        "reason": reason,
         "resolution": "REOPEN_FOR_REQUALIFICATION",
         "implementation_commit": implementation_commit,
         "created_at": _utc(),
