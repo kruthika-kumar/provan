@@ -542,13 +542,18 @@ def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_net
     assert dockerfile.startswith("FROM sha256:0123456789abcdef")
 
 
-def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
+def test_environment_selection_prefers_exact_cp312_wheels_and_allows_hashed_sdists():
     items = {"packages":[{"name":"demo","version":"1","artifacts":[
         {"url":"https://files.pythonhosted.org/packages/demo-1.tar.gz","sha256":"sha256:" + "a" * 64},
         {"url":"https://files.pythonhosted.org/packages/demo-1-cp312-cp312-manylinux_2_17_x86_64.whl","sha256":"sha256:" + "b" * 64},
         {"url":"https://files.pythonhosted.org/packages/demo-1-py3-none-any.whl","sha256":"sha256:" + "c" * 64},
     ]}]}
-    assert _select_wheels(items, platform_tag="manylinux_2_17_x86_64")[0]["sha256"] == "sha256:" + "b" * 64
+    chosen = _select_wheels(items, platform_tag="manylinux_2_17_x86_64")[0]
+    assert chosen["sha256"] == "sha256:" + "b" * 64
+    assert chosen["kind"] == "wheel"
+    sdist_only = {"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]}
+    selected_sdist = _select_wheels(sdist_only, platform_tag="musllinux_1_2_x86_64")[0]
+    assert selected_sdist["kind"] == "sdist"
+    assert _unsupported_packages(sdist_only, platform_tag="musllinux_1_2_x86_64") == []
     with pytest.raises(Exception, match="session2_environment_wheel_unavailable"):
-        _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]}, platform_tag="musllinux_1_2_x86_64")
-    assert _unsupported_packages({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:2]}]}, platform_tag="musllinux_1_2_x86_64") == ["demo"]
+        _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":[]}]}, platform_tag="musllinux_1_2_x86_64")

@@ -98,7 +98,10 @@ def _dockerfile(base_digest: str) -> bytes:
     """Use the locally verified immutable config ID, never a mutable tag."""
     immutable_image_config_digest(base_digest)
     return ("FROM " + base_digest + "\nUSER root\nCOPY requirements.txt /tmp/requirements.txt\nCOPY wheelhouse /wheelhouse\n"
-            "RUN /usr/local/bin/python -m pip install --no-index --find-links=/wheelhouse --no-cache-dir --require-hashes -r /tmp/requirements.txt\n"
+            # An sdist is accepted only when its exact PyPI hash occurs in
+            # the frozen requirements.  Build isolation is disabled so this
+            # network-none build cannot fetch undeclared build dependencies.
+            "RUN /usr/local/bin/python -m pip install --no-index --find-links=/wheelhouse --no-cache-dir --no-build-isolation --require-hashes -r /tmp/requirements.txt\n"
             "USER 65532:65532\n").encode("ascii")
 
 
@@ -128,10 +131,19 @@ def _select_wheels(manifest: dict[str, Any], *, platform_tag: str) -> list[dict[
         if not isinstance(artifacts, list):
             _fail("session2_environment_requirements_manifest_invalid")
         compatible = [item for item in artifacts if isinstance(item, dict) and isinstance(item.get("url"), str) and isinstance(item.get("sha256"), str) and _wheel_score(item["url"], platform_tag) >= 0]
-        if not compatible:
-            _fail("session2_environment_wheel_unavailable")
-        winner = max(compatible, key=lambda item: (_wheel_score(item["url"], platform_tag), item["url"]))
-        selected.append({"name": str(package.get("name")), "version": str(package.get("version")), "url": winner["url"], "sha256": winner["sha256"]})
+        if compatible:
+            winner = max(compatible, key=lambda item: (_wheel_score(item["url"], platform_tag), item["url"]))
+            kind = "wheel"
+        else:
+            # The locked registry manifest may have only a source archive for
+            # the target.  It remains a valid immutable authority when the
+            # archive hash is retained and pip builds it offline.
+            sources = [item for item in artifacts if isinstance(item, dict) and isinstance(item.get("url"), str) and isinstance(item.get("sha256"), str) and item["url"].lower().endswith((".tar.gz", ".zip"))]
+            if not sources:
+                _fail("session2_environment_wheel_unavailable")
+            winner = min(sources, key=lambda item: item["url"])
+            kind = "sdist"
+        selected.append({"name": str(package.get("name")), "version": str(package.get("version")), "url": winner["url"], "sha256": winner["sha256"], "kind": kind})
     return selected
 
 
@@ -144,7 +156,7 @@ def _unsupported_packages(manifest: dict[str, Any], *, platform_tag: str) -> lis
         artifacts = package.get("artifacts") if isinstance(package, dict) else None
         if not isinstance(package, dict) or not isinstance(package.get("name"), str) or not isinstance(artifacts, list):
             _fail("session2_environment_requirements_manifest_invalid")
-        if not any(isinstance(item, dict) and isinstance(item.get("url"), str) and _wheel_score(item["url"], platform_tag) >= 0 for item in artifacts):
+        if not any(isinstance(item, dict) and isinstance(item.get("url"), str) and (_wheel_score(item["url"], platform_tag) >= 0 or item["url"].lower().endswith((".tar.gz", ".zip"))) for item in artifacts):
             result.append(package["name"])
     return sorted(result)
 
