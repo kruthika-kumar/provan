@@ -56,7 +56,17 @@ def prepare_external_namespace(repository_root: Path, *, newly_authorized_for_se
         raise Session2StorageError(str(exc)) from exc
     session1 = root / "session1"
     if newly_authorized_for_session2:
-        if session1.exists() or any(root.iterdir()):
+        if session1.exists():
+            _fail("session2_new_root_not_empty")
+        existing = root / "session2"
+        expected_children = {"budget", "retrieval", "cases", "mutations", "receipts", "reviews", "freeze", "provisioning"}
+        if existing.exists():
+            if (not existing.is_dir() or _is_reparse(existing)
+                    or {child.name for child in existing.iterdir()} != expected_children
+                    or any(any(child.iterdir()) for child in existing.iterdir())):
+                _fail("session2_new_root_not_empty")
+            return {"external_root_origin": "NEWLY_AUTHORIZED_FOR_SESSION2", "session1_inventory_before": "NOT_APPLICABLE", "session1_inventory_after": "NOT_APPLICABLE", "session1_namespace_inventory_check": "NOT_APPLICABLE", "session2_namespace_id": "session2"}
+        if any(root.iterdir()):
             _fail("session2_new_root_not_empty")
         before = after = "NOT_APPLICABLE"
     else:

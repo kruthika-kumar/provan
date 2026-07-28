@@ -29,7 +29,9 @@ PATIENT_UID = "65533:65533"
 
 
 class ProvisionError(RuntimeError):
-    pass
+    def __init__(self, code: str, *, evidence: dict[str, Any] | None = None):
+        self.code, self.evidence = code, evidence
+        super().__init__(code)
 
 
 def _utc() -> str:
@@ -97,7 +99,8 @@ def _docker_canary(root: Path, image: str) -> dict[str, Any]:
     if not isinstance(image_id, str) or not image_id.startswith("sha256:"):
         raise ProvisionError("session2_provision_canary_image_identity_invalid")
     name = "session2-provision-" + secrets.token_hex(12)
-    command = [docker, "--host", "unix://" + str(CUSTOM_SOCKET), "create", "--name", name, "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--user", PATIENT_UID, "--pids-limit", "32", "--memory", "64m", "--memory-swap", "64m", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=1m", image, "/bin/sh", "-c", "test ! -e /var/lib/shiproom-external-validation && test ! -r /var/lib/shiproom-external-validation && test ! -w /var/lib/shiproom-external-validation"]
+    patient_command = ["-c", "test ! -e /var/lib/shiproom-external-validation && test ! -r /var/lib/shiproom-external-validation && test ! -w /var/lib/shiproom-external-validation"]
+    command = [docker, "--host", "unix://" + str(CUSTOM_SOCKET), "create", "--name", name, "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--user", PATIENT_UID, "--pids-limit", "32", "--memory", "64m", "--memory-swap", "64m", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=1m", "--entrypoint", "/bin/sh", image, *patient_command]
     created = False
     try:
         result = _run(command)
@@ -115,14 +118,33 @@ def _docker_canary(root: Path, image: str) -> dict[str, Any]:
         started = _utc()
         executed = _run([docker, "--host", "unix://" + str(CUSTOM_SOCKET), "start", "-a", identifier])
         completed = _utc()
+        evidence = {"supervisor_run_id": "provision-canary-" + identifier[:12], "container_id": identifier, "container_image_id": image_id, "command": patient_command, "started_at": started, "completed_at": completed, "exit_code": executed.returncode, "stdout": {"bytes": len(executed.stdout), "sha256": _sha(executed.stdout)}, "stderr": {"bytes": len(executed.stderr), "sha256": _sha(executed.stderr)}, "network_policy": "none", "read_only_root": True, "patient_uid": PATIENT_UID, "mounts": mounts}
         if executed.returncode != 0:
-            raise ProvisionError("session2_provision_patient_access_denial_failed")
-        return {"supervisor_run_id": "provision-canary-" + identifier[:12], "container_id": identifier, "container_image_id": image_id, "command": command[command.index(image) + 1 :], "started_at": started, "completed_at": completed, "exit_code": executed.returncode, "stdout": {"bytes": len(executed.stdout), "sha256": _sha(executed.stdout)}, "stderr": {"bytes": len(executed.stderr), "sha256": _sha(executed.stderr)}, "network_policy": "none", "read_only_root": True, "patient_uid": PATIENT_UID, "mounts": mounts}
+            raise ProvisionError("session2_provision_patient_access_denial_failed", evidence=evidence)
+        return evidence
     finally:
         if created:
             removed = _run([docker, "--host", "unix://" + str(CUSTOM_SOCKET), "rm", "-f", name])
             if removed.returncode != 0:
                 raise ProvisionError("session2_provision_canary_cleanup_failed")
+
+
+def _seal_provisioning_event(directory: Path, value: dict[str, Any]) -> tuple[Path, str]:
+    raw = canonical_json(value); identifier = _sha(raw)[7:]; final = directory / (identifier + ".json")
+    if final.exists():
+        if final.read_bytes() != raw: raise ProvisionError("session2_provision_event_collision")
+        return final, "sha256:" + identifier
+    temporary = final.with_name("." + final.name + ".tmp")
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC, 0o400)
+    try:
+        os.write(fd, raw); os.fsync(fd); os.fchown(fd, 0, 0); os.fchmod(fd, 0o400)
+    finally: os.close(fd)
+    os.replace(temporary, final)
+    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | os.O_CLOEXEC)
+    try: os.fsync(directory_fd)
+    finally: os.close(directory_fd)
+    _stat(final)
+    return final, "sha256:" + identifier
 
 
 def provision(repository: Path, *, image: str, implementation_commit: str, implementation_tree: str) -> dict[str, Any]:
@@ -156,7 +178,12 @@ def provision(repository: Path, *, image: str, implementation_commit: str, imple
     patient_roots = [Path("/mnt/shiproom-remediation"), Path("/run/shiproom-remediation-docker"), Path("/var/lib/shiproom-remediation")]
     if any(root == item or root in item.parents or item in root.parents for item in patient_roots):
         raise ProvisionError("session2_provision_patient_overlap")
-    canary = _docker_canary(root, image)
+    try:
+        canary = _docker_canary(root, image)
+    except ProvisionError as exc:
+        failure = {"schema_id": "external_validation.session2_root_provisioning_incident.v1", "schema_version": "1", "created_at": _utc(), "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "code": exc.code, "canary_evidence": exc.evidence, "resolved": False}
+        final, digest = _seal_provisioning_event(session2 / "provisioning", failure)
+        raise ProvisionError(exc.code + ":" + digest, evidence={"incident_path": str(final), "incident_hash": digest}) from exc
     config_after = None if not CONFIG.exists() else _sha(CONFIG.read_bytes())
     if config_after != config_before:
         raise ProvisionError("session2_provision_config_changed")
@@ -164,20 +191,8 @@ def provision(repository: Path, *, image: str, implementation_commit: str, imple
     document: dict[str, Any] = {"schema_id": "external_validation.session2_root_provisioning_receipt.v1", "schema_version": "1", "receipt_id": "", "created_at": _utc(), "external_root": str(root), "external_root_origin": "NEWLY_AUTHORIZED_FOR_SESSION2", "environment_variable": "SHIPROOM_EXTERNAL_VALIDATION_ROOT", "environment_value": configured, "filesystem": mount, "parent_authority": parents, "namespace": namespace, "config_before": config_before, "config_after": config_after, "git_repository": str(repo), "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "session1": {"closeout_commit": session1_commit, "status_authority_hash": _git(repo, session1_commit + ":external_validation/status/session1-status-authority.v1.json"), "proof_bundle_hash": _git(repo, session1_commit + ":external_validation/proofs/session1/session1_closeout_manifest.v1.json"), "root_attestations": _session1_attestations()}, "patient_root_overlap": False, "patient_canary": canary, "evaluated_model_call_count": 0, "shiproom_evaluated_output_count": 0, "comparator_evaluated_output_count": 0}
     content = dict(document); content.pop("receipt_id")
     document["receipt_id"] = "sha256:" + sha256(canonical_json(content)).hexdigest()
-    raw = canonical_json(document)
-    final = session2 / "provisioning" / (document["receipt_id"][7:] + ".json")
-    temporary = final.with_name("." + final.name + ".tmp")
-    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC, 0o400)
-    try:
-        os.write(fd, raw); os.fsync(fd); os.fchown(fd, 0, 0); os.fchmod(fd, 0o400)
-    finally:
-        os.close(fd)
-    os.replace(temporary, final)
-    directory = os.open(final.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | os.O_CLOEXEC)
-    try: os.fsync(directory)
-    finally: os.close(directory)
-    _stat(final)
-    return {"receipt_id": document["receipt_id"], "path": str(final), "sha256": _sha(raw)}
+    final, digest = _seal_provisioning_event(session2 / "provisioning", document)
+    return {"receipt_id": document["receipt_id"], "path": str(final), "sha256": digest}
 
 
 def main() -> int:
