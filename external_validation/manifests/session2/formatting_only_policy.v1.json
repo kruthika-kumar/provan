@@ -1,0 +1,1 @@
+{"schema_id":"external_validation.session2_formatting_only_policy.v1","schema_version":"1","excluded_when_all_changed_files_are":["whitespace_only","line_ending_only","formatter_output","comment_only"],"requires_independent_diff_recomputation":true}

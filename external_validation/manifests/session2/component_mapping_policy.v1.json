@@ -1,0 +1,1 @@
+{"schema_id":"external_validation.session2_component_mapping_policy.v1","schema_version":"1","precedence":["CODEOWNERS","declared_package_or_module","top_level_source_directory","second_level_directory_under_monorepo_root"],"manual_override_requires":"typed_reviewer_approved_component_override"}

@@ -1,0 +1,1 @@
+{"schema_id":"external_validation.session2_lockfile_registry.v1","schema_version":"1","filenames":["package-lock.json","yarn.lock","pnpm-lock.yaml","poetry.lock","Pipfile.lock","Cargo.lock","go.sum","Gemfile.lock","composer.lock"]}

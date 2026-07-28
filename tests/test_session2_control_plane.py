@@ -18,6 +18,9 @@ from shiproom.external_validation.session2_gateway import (
     ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment)
 from shiproom.external_validation.session2_storage import (
     Session2StorageError, open_budget_ledger, prepare_external_namespace)
+from shiproom.external_validation.session2_selection import (
+    SelectionError, pr_hash, qualify_pr, select_fresh_pairs, validate_pr_classifier_bundle,
+    validate_retrieval_receipt)
 
 
 def fresh(**changes):
@@ -191,3 +194,38 @@ def test_external_root_is_configured_once_and_session1_inventory_cannot_change(t
     assert ledger.genesis_checkpoint()["opening_balance"] == 250
     with pytest.raises(Session2StorageError, match="session2_namespace_already_exists"):
         prepare_external_namespace(repo)
+
+
+def test_primary_retrieval_pagination_and_fresh_selection_are_not_manual():
+    candidate_ids = [f"candidate_{number}" for number in range(6)]
+    receipt = {"schema_id":"external_validation.session2_retrieval_receipt.v1", "schema_version":"1", "source":"github", "query":"is:issue", "filters":{"state":"closed"}, "retrieved_at":"2026-07-28T00:00:00Z", "parser_id":"retrieval-parser-v1", "pages":[{"page":1, "raw_response_hash":"sha256:" + "0123456789abcdef" * 4, "candidate_ids":candidate_ids, "next_page":None}], "candidate_ids":candidate_ids}
+    assert validate_retrieval_receipt(receipt)["candidate_ids"] == candidate_ids
+    candidates = []
+    for number, identifier in enumerate(candidate_ids):
+        record = fresh(case_id=f"case_{number}_" + "0123456789abcdef" * 4, repository=f"org/repo{number}")
+        candidates.append({"candidate_id":identifier, "source_priority":1, **record})
+    result = select_fresh_pairs("a" * 64, receipt, candidates, reviewer_approved_fallbacks=set())
+    assert len(result["selected"]) == 6
+    receipt["pages"][0]["next_page"] = 2
+    with pytest.raises(SelectionError, match="session2_retrieval_pagination_gap"):
+        validate_retrieval_receipt(receipt)
+
+
+def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
+    large = {"pr_number":7, "merged_at":"2026-01-01T00:00:00Z", "merge_sha":"0123456789abcdef0123456789abcdef01234567", "reviewable_churn":1000, "human_source_file_count":10, "components":["api", "ui"], "release_surface":"journey", "excluded_classifications":[]}
+    assert qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z") == "LARGE"
+    assert pr_hash("a" * 64, "healthchecks/healthchecks", "large", 7, large["merge_sha"]) == pr_hash("a" * 64, "healthchecks/healthchecks", "large", 7, large["merge_sha"])
+    large["excluded_classifications"] = ["generated-heavy"]
+    with pytest.raises(SelectionError, match="session2_pr_mechanical_excluded"):
+        qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z")
+
+
+def test_pr_classifier_bundle_is_complete_before_pr_selection():
+    import json
+    root = Path("external_validation/manifests/session2")
+    names = {"source_file_registry":"source_file_registry.v1.json", "generated_path_registry":"generated_path_registry.v1.json", "vendor_path_registry":"vendor_path_registry.v1.json", "lockfile_registry":"lockfile_registry.v1.json", "snapshot_registry":"snapshot_registry.v1.json", "formatting_only_policy":"formatting_only_policy.v1.json", "component_mapping_policy":"component_mapping_policy.v1.json", "reviewable_churn_policy":"reviewable_churn_policy.v1.json"}
+    bundle = {key:json.loads((root / filename).read_text(encoding="utf-8")) for key, filename in names.items()}
+    assert validate_pr_classifier_bundle(bundle)["reviewable_churn_policy"]["large_minimum"] == 1000
+    del bundle["snapshot_registry"]
+    with pytest.raises(SelectionError, match="session2_pr_classifier_bundle_invalid"):
+        validate_pr_classifier_bundle(bundle)
