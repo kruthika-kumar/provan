@@ -101,10 +101,12 @@ def _dockerfile(base_digest: str) -> bytes:
             "USER 65532:65532\n").encode("ascii")
 
 
-def _wheel_score(url: str) -> int:
+def _wheel_score(url: str, platform_tag: str) -> int:
     """Accept only a wheel that can execute on the declared CPython target."""
     name = url.rsplit("/", 1)[-1].lower()
-    if not name.endswith(".whl") or "x86_64" not in name and "none-any" not in name:
+    if platform_tag not in {"manylinux_2_17_x86_64", "musllinux_1_2_x86_64"}:
+        _fail("session2_environment_platform_invalid")
+    if not name.endswith(".whl") or ("none-any" not in name and platform_tag not in name):
         return -1
     if "cp312-cp312" in name:
         return 30
@@ -115,7 +117,7 @@ def _wheel_score(url: str) -> int:
     return -1
 
 
-def _select_wheels(manifest: dict[str, Any]) -> list[dict[str, str]]:
+def _select_wheels(manifest: dict[str, Any], *, platform_tag: str) -> list[dict[str, str]]:
     packages = manifest.get("packages")
     if not isinstance(packages, list) or not packages:
         _fail("session2_environment_requirements_manifest_invalid")
@@ -124,18 +126,18 @@ def _select_wheels(manifest: dict[str, Any]) -> list[dict[str, str]]:
         artifacts = package.get("artifacts") if isinstance(package, dict) else None
         if not isinstance(artifacts, list):
             _fail("session2_environment_requirements_manifest_invalid")
-        compatible = [item for item in artifacts if isinstance(item, dict) and isinstance(item.get("url"), str) and isinstance(item.get("sha256"), str) and _wheel_score(item["url"]) >= 0]
+        compatible = [item for item in artifacts if isinstance(item, dict) and isinstance(item.get("url"), str) and isinstance(item.get("sha256"), str) and _wheel_score(item["url"], platform_tag) >= 0]
         if not compatible:
             _fail("session2_environment_wheel_unavailable")
-        winner = max(compatible, key=lambda item: (_wheel_score(item["url"]), item["url"]))
+        winner = max(compatible, key=lambda item: (_wheel_score(item["url"], platform_tag), item["url"]))
         selected.append({"name": str(package.get("name")), "version": str(package.get("version")), "url": winner["url"], "sha256": winner["sha256"]})
     return selected
 
 
-def _download_wheelhouse(context: Path, manifest: dict[str, Any]) -> list[dict[str, str]]:
+def _download_wheelhouse(context: Path, manifest: dict[str, Any], *, platform_tag: str) -> list[dict[str, str]]:
     wheelhouse = context / "wheelhouse"; wheelhouse.mkdir(mode=0o700)
     downloaded: list[dict[str, str]] = []
-    for item in _select_wheels(manifest):
+    for item in _select_wheels(manifest, platform_tag=platform_tag):
         filename = item["url"].rsplit("/", 1)[-1]
         if not filename or "/" in filename or filename.startswith("."):
             _fail("session2_environment_wheel_filename_invalid")
@@ -170,6 +172,19 @@ def _inspect_image(base_ref: str) -> str:
         raise EnvironmentBuildError("session2_environment_base_image_invalid") from exc
 
 
+def _runtime_platform(base_ref: str) -> str:
+    """Probe the immutable base under no-network/no-mount restrictions."""
+    result = _run(["/usr/bin/docker", "--host", "unix://" + str(SOCKET), "run", "--rm", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--user", "65532:65532", "--pids-limit", "16", "--memory", "64m", "--memory-swap", "64m", "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=1m", "--entrypoint", "/bin/sh", base_ref, "-c", "test -r /etc/os-release && cat /etc/os-release"], timeout=30)
+    if result.returncode != 0:
+        _fail("session2_environment_runtime_probe_failed")
+    lines = set(result.stdout.decode("utf-8", "strict").splitlines())
+    if "ID=alpine" in lines:
+        return "musllinux_1_2_x86_64"
+    if any(line in {"ID=debian", "ID=ubuntu"} for line in lines):
+        return "manylinux_2_17_x86_64"
+    _fail("session2_environment_runtime_platform_unsupported")
+
+
 def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), additional_packages: set[str] = frozenset()) -> dict[str, Any]:
     """Build exactly one image from a sealed snapshot's ``uv.lock``.
 
@@ -187,6 +202,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     lock_bytes = lock.read_bytes()
     export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(), additional_packages=set(additional_packages))
     base_digest = _inspect_image(base_image_ref)
+    platform_tag = _runtime_platform(base_digest)
     build_identity = sha256(canonical_json({"project": project_name, "lock": _sha(lock_bytes), "requirements": export.manifest["requirements_sha256"], "base": base_digest})).hexdigest()
     context = BUILD_ROOT / build_identity
     if context.exists():
@@ -199,7 +215,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         dockerfile = _dockerfile(base_digest)
         (context / "Dockerfile").write_bytes(dockerfile)
         (context / "requirements.txt").write_bytes(export.requirements)
-        downloads = _download_wheelhouse(context, export.manifest)
+        downloads = _download_wheelhouse(context, export.manifest, platform_tag=platform_tag)
         for item in context.iterdir():
             os.chown(item, 0, 0); os.chmod(item, 0o400)
         tag = "shiproom-session2-" + build_identity[:24]
@@ -215,7 +231,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_build_failed:" + digest)
         image_digest = _inspect_image(tag)
-        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
+        receipt = {"schema_id": "external_validation.session2_environment_build_receipt.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "build_identity": build_identity, "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "image_ref": tag, "runner_image_digest": image_digest, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest": export.manifest, "requirements_manifest_hash": requirements_manifest_hash(export), "dependency_downloads": downloads, "dockerfile_hash": _sha(dockerfile), "started_at": started, "completed_at": completed, "exit_code": result.returncode, "stdout": {"opaque_id": stdout_path.name, "bytes": len(stdout), "sha256": stdout_hash}, "stderr": {"opaque_id": stderr_path.name, "bytes": len(stderr), "sha256": stderr_hash}, "network_during_build": "none", "dependency_acquisition_network": "host_supervisor_hash_checked", "patient_network_policy": "none"}
         path, digest = _write_once(receipts, ".environment-build.json", canonical_json(receipt))
         return {"receipt_path": str(path), "receipt_hash": digest, "image_ref": tag, "runner_image_digest": image_digest, "requirements_manifest_hash": receipt["requirements_manifest_hash"]}
     finally:

@@ -427,6 +427,6 @@ def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
         {"url":"https://files.pythonhosted.org/packages/demo-1-cp312-cp312-manylinux_2_17_x86_64.whl","sha256":"sha256:" + "b" * 64},
         {"url":"https://files.pythonhosted.org/packages/demo-1-py3-none-any.whl","sha256":"sha256:" + "c" * 64},
     ]}]}
-    assert _select_wheels(items)[0]["sha256"] == "sha256:" + "b" * 64
+    assert _select_wheels(items, platform_tag="manylinux_2_17_x86_64")[0]["sha256"] == "sha256:" + "b" * 64
     with pytest.raises(Exception, match="session2_environment_wheel_unavailable"):
-        _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]})
+        _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]}, platform_tag="musllinux_1_2_x86_64")
