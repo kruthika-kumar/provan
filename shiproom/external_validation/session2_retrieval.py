@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from hashlib import sha256
 import argparse
+import base64
 import json
 import os
 from pathlib import Path
@@ -190,10 +191,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repository-root", required=True)
     parser.add_argument("--query", required=True)
     parser.add_argument("--filters-json", required=True)
+    parser.add_argument("--filters-base64", help="URL-safe base64 canonical JSON; avoids WSL argument re-parsing.")
     parser.add_argument("--max-pages", type=int, default=10)
     parsed = parser.parse_args(argv)
     try:
-        filters = json.loads(parsed.filters_json)
+        if parsed.filters_base64:
+            if parsed.filters_json != "-":
+                _fail("session2_retrieval_filters_ambiguous")
+            filters = json.loads(base64.urlsafe_b64decode(parsed.filters_base64.encode("ascii")).decode("utf-8"))
+        else:
+            filters = json.loads(parsed.filters_json)
         result = retrieve_github_issues(Path(parsed.repository_root), query=parsed.query, filters=filters, max_pages=parsed.max_pages)
     except (json.JSONDecodeError, RetrievalError) as exc:
         print(str(exc))
