@@ -197,6 +197,15 @@ def test_external_root_is_configured_once_and_session1_inventory_cannot_change(t
         prepare_external_namespace(repo)
 
 
+def test_new_authorized_session2_root_never_fabricates_session1_namespace(tmp_path: Path, monkeypatch):
+    repo = tmp_path / "repo"; repo.mkdir()
+    root = tmp_path / "external"; root.mkdir()
+    monkeypatch.setenv("SHIPROOM_EXTERNAL_VALIDATION_ROOT", str(root))
+    result = prepare_external_namespace(repo, newly_authorized_for_session2=True)
+    assert result["session1_namespace_inventory_check"] == "NOT_APPLICABLE"
+    assert not (root / "session1").exists()
+
+
 def test_primary_retrieval_pagination_and_fresh_selection_are_not_manual():
     candidate_ids = [f"candidate_{number}" for number in range(6)]
     receipt = {"schema_id":"external_validation.session2_retrieval_receipt.v1", "schema_version":"1", "source":"github", "query":"is:issue", "filters":{"state":"closed"}, "retrieved_at":"2026-07-28T00:00:00Z", "parser_id":"retrieval-parser-v1", "pages":[{"page":1, "raw_response_hash":"sha256:" + "0123456789abcdef" * 4, "candidate_ids":candidate_ids, "next_page":None}], "candidate_ids":candidate_ids}
