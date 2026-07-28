@@ -240,7 +240,7 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
     (external / "session2" / "retrieval").mkdir(parents=True)
     (external / "session2" / "retrieval" / "raw").mkdir()
     monkeypatch.setattr(retrieval, "_assert_linux_private_operation", lambda _repo: external / "session2" / "retrieval" / "raw")
-    raw = json.dumps({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 7}]}).encode()
+    raw = json.dumps({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 7, "created_at": "2026-04-01T00:00:00Z"}]}).encode()
 
     class Response:
         headers = Message()
@@ -249,7 +249,7 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
         def __exit__(self, *unused): return False
 
     monkeypatch.setattr(retrieval, "urlopen", lambda _request, timeout: Response())
-    receipt = retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed"})
+    receipt = retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed", "kind": "issue", "created_from": "2026-03-01T00:00:00Z"})
     digest = __import__("hashlib").sha256(raw).hexdigest()
     assert receipt["candidate_ids"] == ["acme/project#7"]
     assert (external / "session2" / "retrieval" / "raw" / f"{digest}.json").read_bytes() == raw

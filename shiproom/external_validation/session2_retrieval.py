@@ -101,7 +101,17 @@ def _next_page(headers: Any) -> int | None:
     return int(values[0])
 
 
-def _candidate_ids(document: dict[str, Any]) -> list[str]:
+def _parse_utc(value: Any) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError) as exc:
+        raise RetrievalError("session2_retrieval_response_invalid") from exc
+    if parsed.tzinfo is None:
+        _fail("session2_retrieval_response_invalid")
+    return parsed.astimezone(timezone.utc)
+
+
+def _candidate_ids(document: dict[str, Any], filters: dict[str, str]) -> list[str]:
     items = document.get("items")
     if not isinstance(items, list):
         _fail("session2_retrieval_response_invalid")
@@ -111,6 +121,13 @@ def _candidate_ids(document: dict[str, Any]) -> list[str]:
         number = item.get("number") if isinstance(item, dict) else None
         if not isinstance(repository, str) or not repository.startswith("https://api.github.com/repos/") or not isinstance(number, int) or number < 1:
             _fail("session2_retrieval_response_invalid")
+        if filters.get("kind") == "issue" and "pull_request" in item:
+            _fail("session2_retrieval_filter_not_honored")
+        created = _parse_utc(item.get("created_at"))
+        if "created_from" in filters and created < _parse_utc(filters["created_from"]):
+            _fail("session2_retrieval_filter_not_honored")
+        if "created_to" in filters and created > _parse_utc(filters["created_to"]):
+            _fail("session2_retrieval_filter_not_honored")
         result.append(repository.removeprefix("https://api.github.com/repos/") + "#" + str(number))
     if len(result) != len(set(result)):
         _fail("session2_retrieval_duplicate_candidate")
@@ -160,7 +177,7 @@ def retrieve_github_issues(
             document = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise RetrievalError("session2_retrieval_response_invalid") from exc
-        candidate_ids = _candidate_ids(document)
+        candidate_ids = _candidate_ids(document, filters)
         next_page = _next_page(headers)
         # GitHub must make forward progress; a loop is an incomplete frame.
         if next_page is not None and next_page != page + 1:
@@ -206,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     except (json.JSONDecodeError, RetrievalError) as exc:
         print(str(exc))
         return 2
-    print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+    print(json.dumps({"receipt_hash": result["receipt_hash"], "page_count": len(result["pages"]), "candidate_count": len(result["candidate_ids"])}, sort_keys=True, separators=(",", ":")))
     return 0
 
 
