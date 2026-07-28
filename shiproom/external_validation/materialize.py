@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os, re, shutil, subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from .security import canonical_safe_path
 
 def _git(cwd: Path, *args: str) -> str:
@@ -30,7 +30,11 @@ def materialize_snapshot(mirror: Path, commit_sha: str, destination: Path) -> Pa
         for member in members:
             if member.issym() or member.islnk() or (not member.isfile() and not member.isdir()):
                 raise ValueError("unsafe_patient_tree_entry")
-            canonical_safe_path(destination, destination/member.name)
+            # Destination does not exist yet: perform a lexical archive-name
+            # check first, then use canonical_safe_path after creation.
+            relative = PurePosixPath(member.name)
+            if relative.is_absolute() or not member.name or any(part in {"", ".", ".."} for part in relative.parts):
+                raise ValueError("unsafe_patient_tree_entry")
         destination.mkdir(parents=True)
         for member in members:
             if member.isdir():
