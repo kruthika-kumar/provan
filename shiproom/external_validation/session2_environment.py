@@ -213,7 +213,23 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         _fail("session2_environment_snapshot_invalid")
     lock = snapshot / "uv.lock"
     if not lock.is_file() or lock.is_symlink():
-        _fail("session2_environment_lock_missing")
+        # A missing authority lock is a real qualification outcome.  Seal it
+        # before returning so the candidate-screen record cannot be a manual
+        # assertion about an otherwise unobserved snapshot.
+        failure = {
+            "schema_id": "external_validation.session2_environment_build_failure.v1",
+            "schema_version": "1",
+            "implementation_commit": implementation_commit,
+            "implementation_tree": implementation_tree,
+            "materialization_hash": materialization_hash,
+            "failure_stage": "LOCKFILE_AUTHORITY",
+            "failure_code": "session2_environment_lock_missing",
+            "project_name": project_name,
+            "dependency_groups": sorted(groups),
+            "patient_network_policy": "none",
+        }
+        _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
+        raise EnvironmentBuildError("session2_environment_lock_missing:" + digest)
     lock_bytes = lock.read_bytes()
     if any(not isinstance(group, str) or not group or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", group) for group in groups):
         _fail("session2_environment_group_invalid")
