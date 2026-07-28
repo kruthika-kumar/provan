@@ -570,7 +570,7 @@ def test_hash_pinned_requirements_selects_only_frozen_compatible_wheel():
     ]}
     selected = environment._select_requirements_wheels(records, response, platform_tag="manylinux_2_17_x86_64")
     assert selected == [{"name": "demo", "version": "1.2", "url": "https://files.pythonhosted.org/packages/demo-1.2-py3-none-any.whl", "sha256": "sha256:" + digest}]
-    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_wheel_unavailable"):
+    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_wheel_unavailable:demo"):
         environment._select_requirements_wheels(records, {"demo": response["demo"][1:]}, platform_tag="manylinux_2_17_x86_64")
 
 

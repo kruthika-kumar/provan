@@ -168,7 +168,7 @@ def _select_hash_pinned_wheel(
             continue
         compatible.append({"name": name, "version": version, "url": url, "sha256": candidate_digest})
     if not compatible:
-        _fail("session2_environment_wheel_unavailable")
+        _fail("session2_environment_wheel_unavailable:" + name)
     return max(compatible, key=lambda item: (_wheel_score(item["url"], platform_tag), item["url"]))
 
 
@@ -383,9 +383,32 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
         dockerfile = _dockerfile(base_digest)
         (context / "Dockerfile").write_bytes(dockerfile)
         (context / "requirements.txt").write_bytes(requirements)
-        downloads = (_download_wheelhouse(context, dependency_manifest, platform_tag=platform_tag)
-                     if authority_kind == "uv_lock"
-                     else _download_requirements_wheelhouse(context, requirement_records, platform_tag=platform_tag))
+        try:
+            downloads = (_download_wheelhouse(context, dependency_manifest, platform_tag=platform_tag)
+                         if authority_kind == "uv_lock"
+                         else _download_requirements_wheelhouse(context, requirement_records, platform_tag=platform_tag))
+        except EnvironmentBuildError as exc:
+            failure = {
+                "schema_id": "external_validation.session2_environment_build_failure.v1",
+                "schema_version": "1",
+                "implementation_commit": implementation_commit,
+                "implementation_tree": implementation_tree,
+                "materialization_hash": materialization_hash,
+                "build_identity": build_identity,
+                "failure_stage": "LOCKED_WHEEL_COMPATIBILITY",
+                "failure_code": str(exc),
+                "base_image_ref": base_image_ref,
+                "base_image_digest": base_digest,
+                "wheel_platform_tag": platform_tag,
+                "project_name": project_name,
+                "dependency_authority_kind": authority_kind,
+                "dependency_authority_hash": authority_hash,
+                "dependency_authority_manifest": dependency_manifest,
+                "lock_hash": lock_hash,
+                "patient_network_policy": "none",
+            }
+            _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
+            raise EnvironmentBuildError(str(exc) + ":" + digest) from exc
         for item in context.iterdir():
             os.chown(item, 0, 0); os.chmod(item, 0o400)
         tag = "shiproom-session2-" + build_identity[:24]
