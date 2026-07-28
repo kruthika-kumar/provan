@@ -170,7 +170,14 @@ def validate_qualifying_artifact(value: Any) -> dict[str, Any]:
     if set(value) != required: fail("session2_qualifying_artifact_fields_invalid")
     if any(not isinstance(value[key], str) or not value[key] or PLACEHOLDER.search(value[key]) for key in {"artifact_id", "source_record_hash", "command", "container_digest", "supervisor_run_id", "result_contract_id"}): fail("session2_qualifying_artifact_placeholder")
     require_sha(value["source_record_hash"])
-    if "@sha256:" not in value["container_digest"]: fail("session2_qualifying_artifact_container_mutable")
+    # Registry manifests and isolated-daemon image config IDs are both
+    # immutable authorities.  A mutable tag is never an admissible receipt
+    # identity, even when it was the operational address used to create the
+    # container.
+    container = value["container_digest"]
+    local_config = isinstance(container, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", container)
+    registry_digest = isinstance(container, str) and re.fullmatch(r"[^\s@]+@sha256:[0-9a-f]{64}", container)
+    if not (local_config or registry_digest): fail("session2_qualifying_artifact_container_mutable")
     total_transcript_bytes = 0
     for stream in ("stdout", "stderr"):
         item = value[stream]

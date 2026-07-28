@@ -102,6 +102,15 @@ def test_qualifying_artifact_requires_sealed_nonempty_supervisor_streams():
     with pytest.raises(Session2ValidationError, match="session2_qualifying_artifact_empty_transcript"): validate_qualifying_artifact(value)
 
 
+def test_qualifying_artifact_accepts_only_immutable_local_config_or_registry_digest():
+    digest = "sha256:" + "0123456789abcdef" * 4
+    value = {"classification":"QUALIFYING_PRIVATE_ARTIFACT","artifact_id":"receipt_123","source_record_hash":digest,"command":"pytest -q","started_at":"2026-07-28T00:00:00Z","completed_at":"2026-07-28T00:00:01Z","exit_code":0,"stdout":{"opaque_id":"out_1","bytes":1,"sha256":digest},"stderr":{"opaque_id":"err_1","bytes":1,"sha256":"sha256:"+"fedcba9876543210"*4},"container_digest":digest,"supervisor_run_id":"run_123","result_contract_id":"contract_1"}
+    assert validate_qualifying_artifact(value)["container_digest"] == digest
+    value["container_digest"] = "runner:latest"
+    with pytest.raises(Session2ValidationError, match="session2_qualifying_artifact_container_mutable"):
+        validate_qualifying_artifact(value)
+
+
 def test_controlled_population_cannot_add_beta_cases():
     controlled = [f"controlled_{number}" for number in range(18)]
     harness = ["fastapi_harness", "httpie_harness"]
