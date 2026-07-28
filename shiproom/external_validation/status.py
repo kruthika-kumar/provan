@@ -216,31 +216,31 @@ def _validate_external_attestation(
     if data["status_authority_hash"] != _committed_content_hash(root, authority_path) or data["status_chain_hash"] != _committed_content_hash(root, current_path):
         raise V2ValidationError("status_attestation_binding_invalid")
     final_rows = list(profiles.values())
-    implementation_commit = final_rows[0].get("implementation_commit")
-    implementation_tree = final_rows[0].get("implementation_tree")
+    runtime_commit = final_rows[0].get("implementation_commit")
+    runtime_tree = final_rows[0].get("implementation_tree")
     proof_hash = final_rows[0].get("proof_bundle_hash")
-    if not all(row.get("implementation_commit") == implementation_commit and row.get("implementation_tree") == implementation_tree and row.get("proof_bundle_hash") == proof_hash for row in final_rows):
+    if not all(row.get("implementation_commit") == runtime_commit and row.get("implementation_tree") == runtime_tree and row.get("proof_bundle_hash") == proof_hash for row in final_rows):
         raise V2ValidationError("status_attestation_proof_binding_invalid")
-    if data["implementation_commit"] != implementation_commit or data["implementation_tree"] != implementation_tree or data["control_plane_proof_manifest_hash"] != proof_hash:
+    if data["control_plane_proof_manifest_hash"] != proof_hash:
         raise V2ValidationError("status_attestation_proof_binding_invalid")
     proof_path = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
     if _committed_content_hash(root, proof_path) != proof_hash:
         raise V2ValidationError("status_attestation_proof_binding_invalid")
     proof = _json_bytes(_committed_bytes(root, "HEAD", proof_path), "status_attestation_proof_binding_invalid")
-    if proof.get("schema_id") != "external_validation.session1_control_plane_proof_manifest.v1" or proof.get("implementation_commit") != implementation_commit or proof.get("implementation_tree") != implementation_tree or proof.get("profiles") != final_rows[0].get("expected_profiles"):
+    if proof.get("schema_id") != "external_validation.session1_control_plane_proof_manifest.v1" or proof.get("implementation_commit") != runtime_commit or proof.get("implementation_tree") != runtime_tree or proof.get("profiles") != final_rows[0].get("expected_profiles"):
         raise V2ValidationError("status_attestation_proof_binding_invalid")
     try:
         git = ["git", "-c", "safe.directory=" + str(root.resolve())]
         commit_tree = subprocess.run([*git, "rev-parse", data["commit_b"] + "^{tree}"], cwd=root, text=True, capture_output=True, check=False, timeout=10)
         ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", data["commit_b"], "HEAD"], cwd=root, capture_output=True, check=False, timeout=10)
-        implementation_tree_result = subprocess.run([*git, "rev-parse", implementation_commit + "^{tree}"], cwd=root, text=True, capture_output=True, check=False, timeout=10)
-        implementation_ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", implementation_commit, data["commit_b"]], cwd=root, capture_output=True, check=False, timeout=10)
+        implementation_tree_result = subprocess.run([*git, "rev-parse", data["implementation_commit"] + "^{tree}"], cwd=root, text=True, capture_output=True, check=False, timeout=10)
+        implementation_ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", data["implementation_commit"], data["commit_b"]], cwd=root, capture_output=True, check=False, timeout=10)
         commit_paths = subprocess.run([*git, "diff-tree", "--no-commit-id", "--name-only", "-r", data["commit_b"]], cwd=root, text=True, capture_output=True, check=False, timeout=10)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
     if commit_tree.returncode != 0 or ancestor.returncode != 0 or commit_tree.stdout.strip() != data["commit_b_tree"]:
         raise V2ValidationError("status_attestation_commit_binding_invalid")
-    if implementation_tree_result.returncode != 0 or implementation_ancestor.returncode != 0 or implementation_tree_result.stdout.strip() != implementation_tree:
+    if implementation_tree_result.returncode != 0 or implementation_ancestor.returncode != 0 or implementation_tree_result.stdout.strip() != data["implementation_tree"]:
         raise V2ValidationError("status_attestation_implementation_binding_invalid")
     proof_only_prefixes = ("external_validation/proofs/", "external_validation/reviews/", "external_validation/status/", "external_validation/README.md", "README.md")
     if commit_paths.returncode != 0 or any(path and not path.startswith(proof_only_prefixes) and path != "README.md" for path in commit_paths.stdout.splitlines()):
@@ -253,7 +253,7 @@ def _validate_external_attestation(
     if _hash_bytes(manifest_bytes) != data["closeout_manifest_hash"] or _git_blob(root, data["commit_b"], manifest_path.relative_to(root).as_posix()) != _git_blob(root, "HEAD", manifest_path.relative_to(root).as_posix()):
         raise V2ValidationError("status_attestation_closeout_binding_invalid")
     manifest = validate_closeout_manifest_document(_json_bytes(manifest_bytes, "status_attestation_closeout_manifest_invalid"))
-    if manifest["implementation_commit"] != implementation_commit or manifest["implementation_tree"] != implementation_tree:
+    if manifest["implementation_commit"] != data["implementation_commit"] or manifest["implementation_tree"] != data["implementation_tree"]:
         raise V2ValidationError("status_attestation_closeout_binding_invalid")
     artifacts = manifest["artifacts"]
     for key, reference in artifacts.items():
@@ -264,10 +264,10 @@ def _validate_external_attestation(
             relative = target.relative_to(root).as_posix()
             if _hash_bytes(raw) != row["sha256"] or _git_blob(root, data["commit_b"], relative) != _git_blob(root, "HEAD", relative):
                 raise V2ValidationError("status_attestation_closeout_binding_invalid")
-    _validate_baseline(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["baseline"]["path"]), "status_attestation_baseline_invalid"), implementation_commit=implementation_commit, implementation_tree=implementation_tree)
+    _validate_baseline(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["baseline"]["path"]), "status_attestation_baseline_invalid"), implementation_commit=data["implementation_commit"], implementation_tree=data["implementation_tree"])
     _validate_review(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["closeout_review"]["path"]), "status_attestation_review_invalid"))
-    _validate_claim_audit(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["claim_audit"]["path"]), "status_attestation_claim_audit_invalid"), root=root, implementation_commit=implementation_commit, artifact_keys=set(artifacts))
-    _validate_leakage(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["leakage_validation"]["path"]), "status_attestation_leakage_invalid"), implementation_commit=implementation_commit, implementation_tree=implementation_tree)
+    _validate_claim_audit(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["claim_audit"]["path"]), "status_attestation_claim_audit_invalid"), root=root, implementation_commit=data["implementation_commit"], artifact_keys=set(artifacts))
+    _validate_leakage(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["leakage_validation"]["path"]), "status_attestation_leakage_invalid"), implementation_commit=data["implementation_commit"], implementation_tree=data["implementation_tree"])
 
 
 def _profile_chain(value: Any, historical: dict[str, Any]) -> dict[str, Any]:
