@@ -128,7 +128,8 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         return {}
     if not directory.is_dir() or _is_reparse(directory):
         _fail("session2_candidate_screen_store_invalid")
-    result: dict[str, dict[str, str]] = {}
+    screens_by_hash: dict[str, dict[str, str]] = {}
+    screens_by_candidate: dict[str, list[dict[str, str]]] = {}
     for path in sorted(directory.glob("*.screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes()
@@ -144,10 +145,10 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
                 or value.get("decision") != "EXCLUDED_PREQUALIFICATION" or not isinstance(value.get("candidate_id"), str)
                 or not isinstance(value.get("reason"), str)):
             _fail("session2_candidate_screen_invalid")
-        if value["candidate_id"] in result:
-            _fail("session2_candidate_screen_duplicate")
-        result[value["candidate_id"]] = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
-    resolutions: set[str] = set()
+        entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
+        screens_by_hash[entry["screen_hash"]] = {"candidate_id": value["candidate_id"], **entry}
+        screens_by_candidate.setdefault(value["candidate_id"], []).append(entry)
+    resolved_screens: set[str] = set()
     for path in sorted(directory.glob("*.resolution.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
@@ -159,12 +160,19 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         candidate = value.get("candidate_id") if isinstance(value, dict) else None
         if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_prequalification_resolution.v1"
                 or value.get("schema_version") != "1" or value.get("reason") != "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
-                or value.get("resolution") != "REOPEN_FOR_REQUALIFICATION" or candidate not in result
-                or value.get("supersedes_screen_hash") != result[candidate]["screen_hash"] or candidate in resolutions):
+                or value.get("resolution") != "REOPEN_FOR_REQUALIFICATION" or candidate not in screens_by_candidate
+                or value.get("supersedes_screen_hash") not in screens_by_hash
+                or screens_by_hash[value.get("supersedes_screen_hash")].get("candidate_id") != candidate
+                or value.get("supersedes_screen_hash") in resolved_screens):
             _fail("session2_candidate_screen_resolution_invalid")
-        resolutions.add(candidate)
-    for candidate in resolutions:
-        result.pop(candidate)
+        resolved_screens.add(value["supersedes_screen_hash"])
+    result: dict[str, dict[str, str]] = {}
+    for candidate, entries in screens_by_candidate.items():
+        active = [entry for entry in entries if entry["screen_hash"] not in resolved_screens]
+        if len(active) > 1:
+            _fail("session2_candidate_screen_duplicate")
+        if active:
+            result[candidate] = active[0]
     return result
 
 
