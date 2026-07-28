@@ -10,6 +10,9 @@ from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
     validate_controlled_population as cross_validate_population)
 from shiproom.external_validation.validators import validate_artifact
+from shiproom.external_validation.session2_freeze import (
+    FREEZE_ATTESTATION_FIELDS, SESSION2_UNTESTED_CLAIMS, Session2FreezeError,
+    validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
 
 
 def fresh(**changes):
@@ -145,3 +148,17 @@ def test_cross_artifact_validator_is_separate_from_producer_and_registered():
     population = {"schema_id":"external_validation.session2_controlled_population.v1", "schema_version":"1", "controlled_pairs":18, "additional_harness_only_pairs":2, "unique_pair_count":20, "beta_pair_count":6, "beta_pairs_overlapping_controlled":4, "controlled_pair_ids":[f"case{n}" for n in range(18)], "harness_pair_ids":["harnessA", "harnessB"], "beta_pair_ids":["case0", "case1", "case2", "case3", "harnessA", "harnessB"]}
     assert cross_validate_population(population)["unique_pair_count"] == 20
     assert validate_artifact(population)["schema_id"] == population["schema_id"]
+
+
+def test_freeze_authority_is_non_circular_and_preserves_unmeasured_claims():
+    digest = "sha256:" + "0123456789abcdef" * 4
+    base = {"schema_id":"external_validation.session2_freeze_manifest.v1", "schema_version":"1", "implementation_commit":"0123456789abcdef0123456789abcdef01234567", "implementation_tree":"89abcdef0123456789abcdef0123456789abcdef", "public_seed":"a" * 64, "model_prompt_policy_manifest_hash":digest, "budget_policy_hash":"sha256:" + "fedcba9876543210" * 4, "budget_ledger_genesis_hash":"sha256:" + "1234567890abcdef" * 4, "controlled_pair_count":18, "harness_pair_count":2, "unique_pair_count":20, "natural_pr_count":15, "beta_executed":False, "controlled_executed":False, "natural_executed":False, "prohibited_work":{"session3":False}, "artifacts":{"seed":{"path":"external_validation/proofs/session2/seed.json", "sha256":digest}}}
+    assert validate_freeze_manifest(base)["unique_pair_count"] == 20
+    attestation = {field:digest for field in FREEZE_ATTESTATION_FIELDS}
+    attestation.update({"schema_id":"external_validation.session2_freeze_attestation.v1", "schema_version":"1", "implementation_commit":base["implementation_commit"], "implementation_tree":base["implementation_tree"], "freeze_commit":"abcdef0123456789abcdef0123456789abcdef01", "freeze_tree":"fedcba9876543210fedcba9876543210fedcba98", "public_freeze_manifest_path":"external_validation/proofs/session2/session2_freeze_manifest.v1.json", "model_probe_count":1, "evaluated_model_call_count":0, "shiproom_evaluated_output_count":0, "comparator_evaluated_output_count":0, "remediation_comparison_executed":False, "session3_work_performed":False})
+    assert validate_freeze_attestation(attestation)["model_probe_count"] == 1
+    claims = [{"claim_id": claim, "status":"NOT_YET_TESTED", "implementation_refs":["impl"], "positive_proof_refs":["not-run"], "negative_proof_refs":["scope-rule"], "artifact_refs":["audit"], "replay_refs":["replay"]} for claim in SESSION2_UNTESTED_CLAIMS]
+    assert validate_claim_audit({"schema_id":"external_validation.session2_claim_audit.v1", "schema_version":"1", "claims":claims})["claims"]
+    claims[0]["status"] = "ESTABLISHED"
+    with pytest.raises(Session2FreezeError, match="session2_claim_audit_overstatement"):
+        validate_claim_audit({"schema_id":"external_validation.session2_claim_audit.v1", "schema_version":"1", "claims":claims})

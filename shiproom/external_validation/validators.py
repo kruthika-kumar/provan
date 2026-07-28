@@ -300,6 +300,14 @@ def validate_artifact(value: Any) -> dict[str, Any]:
         from .session2_cross_validate import validate_owner_context_case
         try: return validate_owner_context_case(item)
         except ValueError as exc: _error(str(exc), "/", "Session 2 owner-context case invalid")
+    if schema_id == "external_validation.session2_freeze_manifest.v1":
+        from .session2_freeze import validate_freeze_manifest
+        try: return validate_freeze_manifest(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 freeze manifest invalid")
+    if schema_id == "external_validation.session2_freeze_attestation.v1":
+        from .session2_freeze import validate_freeze_attestation
+        try: return validate_freeze_attestation(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 freeze attestation invalid")
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 

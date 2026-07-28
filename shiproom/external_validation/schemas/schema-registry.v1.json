@@ -25,5 +25,7 @@
     ,{"schema_id":"external_validation.session2_model_prompt_policy_freeze.v1","version":"1","filename":"session2-model-prompt-policy-freeze.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"external_validation.session2_controlled_population.v1","version":"1","filename":"session2-controlled-population.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"external_validation.session2_owner_context_case.v1","version":"1","filename":"session2-owner-context-case.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
+    ,{"schema_id":"external_validation.session2_freeze_manifest.v1","version":"1","filename":"session2-freeze-manifest.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
+    ,{"schema_id":"external_validation.session2_freeze_attestation.v1","version":"1","filename":"session2-freeze-attestation.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
   ]
 }
