@@ -290,6 +290,21 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 
+def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_screen as screen
+    mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
+    monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    def fake_git(_mirror, *argv):
+        if argv[:2] == ("cat-file", "-e"):
+            return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z", "exit_code": 0, "stdout": b"", "stderr": b""}
+        return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:01Z", "exit_code": 0, "stdout": b"M\tsrc/help.py\n", "stderr": b""}
+    monkeypatch.setattr(screen, "_run_git", fake_git)
+    result = screen.seal_prequalification_exclusion(tmp_path, candidate_id="pypa/hatch#1->pypa/hatch#2", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="NO_AUTHORITATIVE_EXECUTABLE_TARGET_CONTRACT", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
+    assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+    record = __import__("json").loads(next(store.glob("*.screen.json")).read_text())
+    assert record["supervisor_command"]["stdout"]["bytes"] > 0
+
+
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
     large = {"pr_number":7, "merged_at":"2026-01-01T00:00:00Z", "merge_sha":"0123456789abcdef0123456789abcdef01234567", "reviewable_churn":1000, "human_source_file_count":10, "components":["api", "ui"], "release_surface":"journey", "excluded_classifications":[]}
     assert qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z") == "LARGE"
