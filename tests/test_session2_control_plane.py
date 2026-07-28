@@ -309,6 +309,17 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     assert record["supervisor_command"]["stdout"]["bytes"] > 0
 
 
+def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected_link_gate(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_screen as screen
+    store = tmp_path / "screens"; store.mkdir(); monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    predecessor = {"schema_id":"external_validation.session2_prequalification_screen.v1","schema_version":"1","candidate_id":"acme/project#7->acme/project#8","candidate_index_hash":"sha256:" + "0123456789abcdef" * 4,"buggy_sha":"a" * 40,"fixed_sha":"b" * 40,"stage":"SOURCE_CONTRACT_SCREEN","decision":"EXCLUDED_PREQUALIFICATION","reason":"UNQUALIFIED_LINUX_CONTAINER_PATH","source_object_receipt_hashes":["sha256:" + "fedcba9876543210" * 4,"sha256:" + "0011223344556677" * 4],"supervisor_command":{},"created_at":"2026-07-28T00:00:00Z"}
+    raw = __import__("shiproom.external_validation.identity", fromlist=["canonical_json"]).canonical_json(predecessor)
+    digest = screen._write_once(store, ".screen.json", raw)
+    result = screen.seal_prequalification_resolution(tmp_path, candidate_id=predecessor["candidate_id"], supersedes_screen_hash=digest,
+        prior_candidate_index_hash="sha256:" + "89abcdef01234567" * 4, implementation_commit="c" * 40)
+    assert result["resolution"] == "REOPEN_FOR_REQUALIFICATION"
+
+
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_materialize as materialize
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
@@ -329,6 +340,7 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
     assert result["tree_sha"] == "b" * 40
     receipt = __import__("json").loads(next(store.glob("*.materialization.json")).read_text())
     assert receipt["snapshot_location"] == "supervisor_staging_only"
+    assert receipt["symlink_policy"] == "relative_internal_tracked_target_only.v1"
     with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
         materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
             commit_sha="a" * 40, destination=destination,

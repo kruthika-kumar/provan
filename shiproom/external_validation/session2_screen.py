@@ -34,6 +34,7 @@ _REASONS = {
     "REQUIRES_FORBIDDEN_SERVICE_OR_CREDENTIAL",
     "UNQUALIFIED_LINUX_CONTAINER_PATH",
 }
+_RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
 
 
 def _fail(code: str) -> None:
@@ -85,6 +86,44 @@ def _write_once(directory: Path, suffix: str, raw: bytes) -> str:
     return digest
 
 
+def seal_prequalification_resolution(
+    repository_root: Path, *, candidate_id: str, supersedes_screen_hash: str,
+    prior_candidate_index_hash: str, implementation_commit: str,
+) -> dict[str, str]:
+    """Reopen only a screen caused by the corrected source-link policy.
+
+    Screens are immutable historical evidence.  This successor does not claim
+    qualification: it merely returns the candidate to the deterministic queue
+    for the complete source, dependency, and execution gates.
+    """
+    if (not isinstance(candidate_id, str) or not candidate_id or not _HASH.fullmatch(supersedes_screen_hash)
+            or not _HASH.fullmatch(prior_candidate_index_hash) or not _SHA.fullmatch(implementation_commit)):
+        _fail("session2_screen_resolution_input_invalid")
+    directory = _root(repository_root)
+    screen = directory / (supersedes_screen_hash[7:] + ".screen.json")
+    if not screen.is_file() or _is_reparse(screen) or _sha(screen.read_bytes()) != supersedes_screen_hash:
+        _fail("session2_screen_resolution_predecessor_missing")
+    try:
+        predecessor = json.loads(screen.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CandidateScreenError("session2_screen_resolution_predecessor_invalid") from exc
+    if predecessor.get("candidate_id") != candidate_id or predecessor.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH":
+        _fail("session2_screen_resolution_predecessor_invalid")
+    record = {
+        "schema_id": "external_validation.session2_prequalification_resolution.v1",
+        "schema_version": "1",
+        "candidate_id": candidate_id,
+        "supersedes_screen_hash": supersedes_screen_hash,
+        "prior_candidate_index_hash": prior_candidate_index_hash,
+        "reason": _RESOLUTION_REASON,
+        "resolution": "REOPEN_FOR_REQUALIFICATION",
+        "implementation_commit": implementation_commit,
+        "created_at": _utc(),
+    }
+    raw = canonical_json(record)
+    return {"resolution_hash": _write_once(directory, ".resolution.json", raw), "resolution": record["resolution"]}
+
+
 def seal_prequalification_exclusion(
     repository_root: Path, *, candidate_id: str, candidate_index_hash: str,
     mirror: Path, buggy_sha: str, fixed_sha: str, reason: str,
@@ -134,9 +173,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--buggy-sha", required=True); parser.add_argument("--fixed-sha", required=True)
     parser.add_argument("--reason", required=True, choices=sorted(_REASONS))
     parser.add_argument("--source-object-receipt-hash", action="append", required=True)
+    parser.add_argument("--resolve-screen-hash")
+    parser.add_argument("--prior-candidate-index-hash")
+    parser.add_argument("--implementation-commit")
     args = parser.parse_args(argv)
     try:
-        print(json.dumps(seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash), sort_keys=True))
+        if args.resolve_screen_hash is not None:
+            if args.prior_candidate_index_hash is None or args.implementation_commit is None:
+                _fail("session2_screen_resolution_input_invalid")
+            result = seal_prequalification_resolution(args.repository_root, candidate_id=args.candidate_id,
+                supersedes_screen_hash=args.resolve_screen_hash, prior_candidate_index_hash=args.prior_candidate_index_hash,
+                implementation_commit=args.implementation_commit)
+        else:
+            result = seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash)
+        print(json.dumps(result, sort_keys=True))
     except CandidateScreenError as exc:
         print(str(exc)); return 2
     return 0

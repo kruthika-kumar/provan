@@ -9,7 +9,13 @@ def _git(cwd: Path, *args: str) -> str:
     return subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", *args],cwd=cwd,text=True,capture_output=True,check=True,env=env).stdout.strip()
 
 def materialize_snapshot(mirror: Path, commit_sha: str, destination: Path) -> Path:
-    """Export only tracked bytes; no checkout, hook, filter, LFS, or submodule execution."""
+    """Export only tracked bytes; no checkout, hook, filter, LFS, or submodule execution.
+
+    A source tree may contain documentation-style links.  Those links are not
+    silently followed or flattened: only a relative, non-traversing link to a
+    tracked archive member is preserved.  Absolute, ``..``-traversing, hard,
+    special, and dangling links are rejected before the destination exists.
+    """
     if not mirror.is_dir() or not (mirror / "HEAD").exists(): raise ValueError("isolated_bare_mirror_required")
     if not re.fullmatch(r"[0-9a-f]{40,64}", commit_sha): raise ValueError("immutable_commit_required")
     try:
@@ -27,21 +33,47 @@ def materialize_snapshot(mirror: Path, commit_sha: str, destination: Path) -> Pa
         # Git archive legitimately emits directories.  Validate the entire
         # member set before creating a staging tree, so a malformed archive
         # cannot leave a partially materialized patient snapshot behind.
+        names: set[str] = set()
+        links: list[tuple[object, PurePosixPath]] = []
         for member in members:
-            if member.issym() or member.islnk() or (not member.isfile() and not member.isdir()):
+            if member.islnk() or (not member.isfile() and not member.isdir() and not member.issym()):
                 raise ValueError("unsafe_patient_tree_entry")
             # Destination does not exist yet: perform a lexical archive-name
             # check first, then use canonical_safe_path after creation.
             relative = PurePosixPath(member.name)
             if relative.is_absolute() or not member.name or any(part in {"", ".", ".."} for part in relative.parts):
                 raise ValueError("unsafe_patient_tree_entry")
+            if member.name in names:
+                raise ValueError("unsafe_patient_tree_entry")
+            names.add(member.name)
+            if member.issym():
+                link = PurePosixPath(member.linkname)
+                if (not member.linkname or link.is_absolute() or any(part in {"", ".", ".."} for part in link.parts)):
+                    raise ValueError("unsafe_patient_tree_entry")
+                resolved = relative.parent / link
+                if resolved.as_posix() not in names and resolved.as_posix() not in {item.name for item in members}:
+                    raise ValueError("unsafe_patient_tree_entry")
+                links.append((member, resolved))
         destination.mkdir(parents=True)
-        for member in members:
-            if member.isdir():
-                continue
-            target=canonical_safe_path(destination, destination/member.name)
-            target.parent.mkdir(parents=True,exist_ok=True)
-            source = tar.extractfile(member)
-            if source is None: raise ValueError("archive_member_missing")
-            with source, target.open("xb") as output: shutil.copyfileobj(source,output)
+        try:
+            for member in members:
+                if member.isdir() or member.issym():
+                    continue
+                target=canonical_safe_path(destination, destination/member.name)
+                target.parent.mkdir(parents=True,exist_ok=True)
+                source = tar.extractfile(member)
+                if source is None: raise ValueError("archive_member_missing")
+                with source, target.open("xb") as output: shutil.copyfileobj(source,output)
+            for member, resolved in links:
+                # The target was checked against the archive namespace before
+                # creation.  ``os.symlink`` stores precisely the reviewed
+                # relative bytes and never dereferences them on the host.
+                target = canonical_safe_path(destination, destination/member.name)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if not (destination / resolved).exists() and not (destination / resolved).is_symlink():
+                    raise ValueError("unsafe_patient_tree_entry")
+                os.symlink(member.linkname, target)
+        except Exception:
+            shutil.rmtree(destination)
+            raise
     return destination

@@ -137,9 +137,22 @@ def seal_materialization(
     completed = _utc()
     if not destination.is_dir() or _is_reparse(destination):
         _fail("session2_materialization_export_invalid")
-    exported_files = sorted(path.relative_to(destination).as_posix() for path in destination.rglob("*") if path.is_file())
-    if len(exported_files) != tracked_count:
+    entries: list[dict[str, str]] = []
+    for path in sorted(destination.rglob("*"), key=lambda item: item.relative_to(destination).as_posix()):
+        relative = path.relative_to(destination).as_posix()
+        value = path.lstat()
+        if stat.S_ISREG(value.st_mode):
+            entries.append({"path": relative, "type": "regular"})
+        elif stat.S_ISLNK(value.st_mode):
+            target = os.readlink(path)
+            if not target:
+                _fail("session2_materialization_export_invalid")
+            entries.append({"path": relative, "type": "relative_internal_symlink", "target": target})
+        elif not stat.S_ISDIR(value.st_mode):
+            _fail("session2_materialization_export_invalid")
+    if len(entries) != tracked_count:
         _fail("session2_materialization_tree_count_mismatch")
+    links = [item for item in entries if item["type"] == "relative_internal_symlink"]
     receipt = {
         "schema_id": "external_validation.session2_source_materialization.v1",
         "schema_version": "1",
@@ -150,7 +163,9 @@ def seal_materialization(
         "supervisor_command": ["git", "archive", "--format=tar", commit_sha],
         "snapshot_location": "supervisor_staging_only",
         "tracked_file_count": tracked_count,
-        "exported_file_count": len(exported_files),
+        "exported_file_count": len(entries),
+        "symlink_policy": "relative_internal_tracked_target_only.v1",
+        "symlink_manifest_hash": _hash(canonical_json(links)),
         "started_at": started,
         "completed_at": completed,
     }

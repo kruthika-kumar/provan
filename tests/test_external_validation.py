@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -322,7 +323,14 @@ def test_safe_materialization_exports_only_verified_commit(tmp_path: Path, monke
     with pytest.raises(ValueError, match="submodules_not_qualified"): materialize.materialize_snapshot(mirror, commit, tmp_path / "submodule")
 
 
-def test_safe_materialization_rejects_archived_symlink_entries(tmp_path: Path):
+def test_safe_materialization_preserves_only_internal_archived_symlink_entries(tmp_path: Path):
+    probe = tmp_path / "symlink-capability-probe"
+    try:
+        os.symlink("not-present", probe)
+    except OSError:
+        pytest.skip("platform does not permit creating test symlinks")
+    else:
+        probe.unlink()
     work, mirror = tmp_path / "work", tmp_path / "mirror.git"; work.mkdir()
     def git(*args: str) -> str:
         return subprocess.run(["git", *args], cwd=work, check=True, capture_output=True, text=True).stdout.strip()
@@ -330,15 +338,22 @@ def test_safe_materialization_rejects_archived_symlink_entries(tmp_path: Path):
     (work / "tracked.txt").write_text("tracked"); git("add", "tracked.txt"); git("commit", "-m", "fixture")
     parent = git("rev-parse", "HEAD")
     blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=work, input="tracked.txt", check=True, capture_output=True, text=True).stdout.strip()
-    git("update-index", "--add", "--cacheinfo", f"120000,{blob},escaped-link")
+    git("update-index", "--add", "--cacheinfo", f"120000,{blob},internal-link")
     tree = git("write-tree")
     evil = subprocess.run(["git", "commit-tree", tree, "-p", parent, "-m", "symlink"], cwd=work, check=True, capture_output=True, text=True).stdout.strip()
     git("update-ref", "refs/heads/evil", evil)
     subprocess.run(["git", "clone", "--bare", str(work), str(mirror)], check=True, capture_output=True, text=True)
-    target = tmp_path / "export"
+    target = materialize_snapshot(mirror, evil, tmp_path / "export")
+    link = target / "internal-link"
+    assert link.is_symlink() and os.readlink(link) == "tracked.txt" and link.read_text() == "tracked"
+    bad_blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=work, input="../outside", check=True, capture_output=True, text=True).stdout.strip()
+    git("update-index", "--add", "--cacheinfo", f"120000,{bad_blob},escaped-link")
+    bad_tree = git("write-tree")
+    bad = subprocess.run(["git", "commit-tree", bad_tree, "-p", evil, "-m", "bad symlink"], cwd=work, check=True, capture_output=True, text=True).stdout.strip()
+    git("update-ref", "refs/heads/evil", bad)
+    subprocess.run(["git", "clone", "--bare", str(work), str(tmp_path / "bad-mirror.git")], check=True, capture_output=True, text=True)
     with pytest.raises(ValueError, match="unsafe_patient_tree_entry"):
-        materialize_snapshot(mirror, evil, target)
-    assert not target.exists()
+        materialize_snapshot(tmp_path / "bad-mirror.git", bad, tmp_path / "bad-export")
 
 
 def test_public_synthetic_proof_receipt_is_schema_and_validator_backed():

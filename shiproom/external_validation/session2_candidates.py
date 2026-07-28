@@ -147,6 +147,24 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         if value["candidate_id"] in result:
             _fail("session2_candidate_screen_duplicate")
         result[value["candidate_id"]] = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
+    resolutions: set[str] = set()
+    for path in sorted(directory.glob("*.resolution.json")):
+        if _is_reparse(path): _fail("session2_candidate_screen_reparse")
+        raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
+        if digest != "sha256:" + path.name.removesuffix(".resolution.json"):
+            _fail("session2_candidate_screen_hash_mismatch")
+        try: value = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_candidate_screen_resolution_invalid") from exc
+        required = {"schema_id", "schema_version", "candidate_id", "supersedes_screen_hash", "prior_candidate_index_hash", "reason", "resolution", "implementation_commit", "created_at"}
+        candidate = value.get("candidate_id") if isinstance(value, dict) else None
+        if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_prequalification_resolution.v1"
+                or value.get("schema_version") != "1" or value.get("reason") != "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
+                or value.get("resolution") != "REOPEN_FOR_REQUALIFICATION" or candidate not in result
+                or value.get("supersedes_screen_hash") != result[candidate]["screen_hash"] or candidate in resolutions):
+            _fail("session2_candidate_screen_resolution_invalid")
+        resolutions.add(candidate)
+    for candidate in resolutions:
+        result.pop(candidate)
     return result
 
 
