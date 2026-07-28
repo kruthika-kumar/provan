@@ -149,6 +149,11 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
                 or not isinstance(value.get("reason"), str)
                 or (version == "external_validation.session2_prequalification_screen.v2" and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
             _fail("session2_candidate_screen_invalid")
+        if version == "external_validation.session2_prequalification_screen.v1" and value.get("reason") == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+            # v1 has no immutable linkage to a production environment receipt.
+            # It is historical diagnostic material, not final qualification
+            # authority, and must be superseded by a v2 re-screen.
+            _fail("session2_candidate_runtime_screen_unbound")
         entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
         screens_by_hash[entry["screen_hash"]] = {"candidate_id": value["candidate_id"], **entry}
         screens_by_candidate.setdefault(value["candidate_id"], []).append(entry)

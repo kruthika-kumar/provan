@@ -12,6 +12,7 @@ from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
     validate_controlled_population as cross_validate_population)
 from shiproom.external_validation.validators import validate_artifact
+from shiproom.external_validation.identity import canonical_json
 from shiproom.external_validation.session2_freeze import (
     FREEZE_ATTESTATION_FIELDS, SESSION2_UNTESTED_CLAIMS, Session2FreezeError,
     validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
@@ -325,6 +326,16 @@ def test_prequalification_screen_requires_production_execution_evidence_for_runt
     assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
     assert record["schema_id"] == "external_validation.session2_prequalification_screen.v2"
     assert record["materialization_hash"] == "sha256:" + "a1" * 32
+
+
+def test_candidate_compiler_rejects_unbound_v1_runtime_screen(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_candidates as candidates
+    base = tmp_path / "session2"; (base / "retrieval" / "raw").mkdir(parents=True); (base / "cases" / "screens").mkdir(parents=True)
+    monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    screen = {"schema_id":"external_validation.session2_prequalification_screen.v1","schema_version":"1","candidate_id":"acme/project#7->acme/project#8","candidate_index_hash":"sha256:" + "0123456789abcdef" * 4,"buggy_sha":"a" * 40,"fixed_sha":"b" * 40,"stage":"SOURCE_CONTRACT_SCREEN","decision":"EXCLUDED_PREQUALIFICATION","reason":"UNQUALIFIED_LINUX_CONTAINER_PATH","source_object_receipt_hashes":["sha256:" + "fedcba9876543210" * 4,"sha256:" + "0011223344556677" * 4],"supervisor_command":{},"created_at":"2026-07-28T00:00:00Z"}
+    raw = canonical_json(screen); (base / "cases" / "screens" / (__import__("hashlib").sha256(raw).hexdigest() + ".screen.json")).write_bytes(raw)
+    with pytest.raises(candidates.CandidateCompilationError, match="session2_candidate_runtime_screen_unbound"):
+        candidates._screened_candidates(base)
 
 
 def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected_link_gate(tmp_path: Path, monkeypatch):
