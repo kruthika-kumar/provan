@@ -550,11 +550,11 @@ def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_net
 
 
 def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
-    raw = b"demo==1.2 \\\n+    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+    raw = b"# generated\ndemo==1.2 \\\n    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n# via demo\n"
     exported, manifest = export_hash_pinned_requirements(raw, source_path="src/backend/requirements.txt")
     assert exported == raw and manifest["requirement_count"] == 1
     assert pinned_requirement_records(raw, source_path="src/backend/requirements.txt") == [{"name":"demo", "version":"1.2", "hashes":["--hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]}]
-    for invalid in (b"demo>=1\n", b"-r other.txt\n", b"demo==1 --hash=sha256:ABC\n"):
+    for invalid in (b"demo>=1\n", b"-r other.txt\n", b"--index-url https://example.invalid\n", b"demo==1 --hash=sha256:ABC\n"):
         with pytest.raises(RequirementsAuthorityError):
             export_hash_pinned_requirements(invalid, source_path="requirements.txt")
 

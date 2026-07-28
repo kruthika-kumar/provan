@@ -41,7 +41,11 @@ def export_hash_pinned_requirements(raw: bytes, *, source_path: str) -> tuple[by
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
-        if stripped.startswith(("-", "@")) or ";" in stripped or "://" in stripped:
+        # A continuation line is necessarily a ``--hash`` option.  It is the
+        # one permitted option because it is the cryptographic authority; all
+        # index/include/editable/direct-reference switches still fail closed.
+        if ((stripped.startswith("-") and not stripped.startswith("--hash=sha256:"))
+                or stripped.startswith("@") or ";" in stripped or "://" in stripped):
             raise RequirementsAuthorityError("session2_requirements_authority_noncanonical")
         current += " " + stripped
         if stripped.endswith("\\"):
