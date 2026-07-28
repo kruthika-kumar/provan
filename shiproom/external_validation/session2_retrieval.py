@@ -130,6 +130,12 @@ def _candidate_ids(document: dict[str, Any], filters: dict[str, str]) -> list[st
             _fail("session2_retrieval_filter_not_honored")
         if "created_to" in filters and created > _parse_utc(filters["created_to"]):
             _fail("session2_retrieval_filter_not_honored")
+        if "merged_from" in filters or "merged_to" in filters:
+            merged = _parse_utc(item.get("closed_at"))
+            if "merged_from" in filters and merged < _parse_utc(filters["merged_from"]):
+                _fail("session2_retrieval_filter_not_honored")
+            if "merged_to" in filters and merged > _parse_utc(filters["merged_to"]):
+                _fail("session2_retrieval_filter_not_honored")
         result.append(repository.removeprefix("https://api.github.com/repos/") + "#" + str(number))
     if len(result) != len(set(result)):
         _fail("session2_retrieval_duplicate_candidate")
