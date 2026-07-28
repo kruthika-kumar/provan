@@ -574,6 +574,14 @@ def test_hash_pinned_requirements_selects_only_frozen_compatible_wheel():
         environment._select_requirements_wheels(records, {"demo": response["demo"][1:]}, platform_tag="manylinux_2_17_x86_64")
 
 
+def test_session2_mirror_rejects_unsealed_or_nonimmutable_inputs(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_mirror as mirror
+    monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    with pytest.raises(mirror.MirrorAcquisitionError, match="session2_mirror_input_invalid"):
+        mirror.acquire_pair(tmp_path, candidate_id="case", repository="bad", base_sha="a" * 40,
+                            head_sha="b" * 40, source_receipts=[])
+
+
 def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
     items = {"packages":[{"name":"demo","version":"1","artifacts":[
         {"url":"https://files.pythonhosted.org/packages/demo-1.tar.gz","sha256":"sha256:" + "a" * 64},
