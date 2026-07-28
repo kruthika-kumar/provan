@@ -107,6 +107,18 @@ def test_runner_patient_principal_is_converted_to_numeric_reaper_argument():
     assert PATIENT_UID == "65533:65533" and PATIENT_UID.split(":")[0] == "65533"
 
 
+def test_v2_corpus_accepts_only_a_supervisor_namespace_beneath_configured_root(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation.corpus import validate_corpus_v2
+    external, shiproom, namespace = tmp_path / "external", tmp_path / "shiproom", tmp_path / "external" / "session2-proof"
+    external.mkdir(); shiproom.mkdir(); namespace.mkdir()
+    monkeypatch.setenv("SHIPROOM_EXTERNAL_VALIDATION_ROOT", str(external))
+    journal = FinalizationJournal(namespace / "journal.sqlite")
+    with pytest.raises(ValueError, match="supervisor_index_missing"):
+        validate_corpus_v2(namespace, shiproom, receipt_index=namespace / "missing.json", case_manifest_ledger={}, journal=journal)
+    with pytest.raises(PermissionError, match="path_outside_root"):
+        validate_corpus_v2(tmp_path / "outside", shiproom, receipt_index=tmp_path / "outside" / "missing.json", case_manifest_ledger={}, journal=journal)
+
+
 def test_status_resolver_fails_closed_and_journal_requires_exact_binding(tmp_path: Path):
     initial = {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"original","predecessor_status_id":None,"commit_sha":"a" * 40,"branch":"old","scope":"session1","timestamp":"2026-07-24T00:00:00Z","status":"QUALIFIED"}
     reopening = {**initial,"status_id":"reopened","predecessor_status_id":"original","branch":"repair","status":"REOPENED"}

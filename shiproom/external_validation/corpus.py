@@ -31,7 +31,13 @@ def validate_corpus(root: Path, shiproom_root: Path, patient_root: Path | None =
 
 def validate_corpus_v2(root: Path, shiproom_root: Path, *, receipt_index: Path, case_manifest_ledger: dict[str, dict], journal: FinalizationJournal) -> dict:
     """Validate only a supervisor-produced index, never arbitrary patient bytes."""
-    evidence_root = external_root(str(root), shiproom_root)
+    # Session-qualified proof runs live in a supervisor-owned namespace below
+    # the one configured external root.  The namespace is not a second root:
+    # it is descriptor/canonical-path constrained beneath that authority.
+    configured_root = external_root(None, shiproom_root)
+    evidence_root = canonical_safe_path(configured_root, root, allow_missing_leaf=False)
+    if not evidence_root.is_dir():
+        raise ValueError("supervisor_namespace_missing")
     index_path = canonical_safe_path(evidence_root, receipt_index, allow_missing_leaf=False)
     if not index_path.is_file(): raise ValueError("supervisor_index_missing")
     index = json.loads(index_path.read_text(encoding="utf-8"))
