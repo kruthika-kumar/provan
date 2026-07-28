@@ -320,6 +320,19 @@ def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected
     assert result["resolution"] == "REOPEN_FOR_REQUALIFICATION"
 
 
+def test_prequalification_screen_accepts_fixed_twin_nonminimal_as_distinct_gate(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_screen as screen
+    mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
+    monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    def fake_git(_mirror, *argv):
+        if argv[:2] == ("cat-file", "-e"):
+            return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z", "exit_code": 0, "stdout": b"", "stderr": b""}
+        return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:01Z", "exit_code": 0, "stdout": b"M\tsrc/unrelated.py\n", "stderr": b""}
+    monkeypatch.setattr(screen, "_run_git", fake_git)
+    result = screen.seal_prequalification_exclusion(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="FIXED_TWIN_NON_MINIMAL", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
+    assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+
+
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_materialize as materialize
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
