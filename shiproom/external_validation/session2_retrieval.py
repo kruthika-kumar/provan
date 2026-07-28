@@ -37,6 +37,7 @@ class RetrievalError(RuntimeError):
 
 _NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next"')
 _SHA = re.compile(r"^[0-9a-f]{64}$")
+_GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _API = "https://api.github.com/search/issues"
 _PARSER_ID = "session2_github_issue_retrieval.v1"
 _OBJECT_PARSER_ID = "session2_github_object_retrieval.v1"
@@ -238,8 +239,15 @@ def retrieve_github_object(repository_root: Path, *, repository: str, object_kin
         repository_url = ((document.get("base") or {}).get("repo") or {}).get("url")
     if not isinstance(document, dict) or document.get("number") != number or repository_url != "https://api.github.com/repos/" + repository:
         _fail("session2_retrieval_object_identity_invalid")
-    if object_kind == "pull_request" and not isinstance(document.get("merge_commit_sha"), str):
-        _fail("session2_retrieval_object_kind_invalid")
+    if object_kind == "pull_request":
+        # A GitHub merge commit is not the fixed-twin authority: it can include
+        # changes made after the PR branch was created.  Qualification always
+        # materializes the immutable PR head against this exact base.
+        base_sha = (document.get("base") or {}).get("sha")
+        head_sha = (document.get("head") or {}).get("sha")
+        if not (isinstance(base_sha, str) and _GIT_SHA.fullmatch(base_sha) and
+                isinstance(head_sha, str) and _GIT_SHA.fullmatch(head_sha)):
+            _fail("session2_retrieval_pr_head_authority_invalid")
     if object_kind == "issue" and "pull_request" in document:
         _fail("session2_retrieval_object_kind_invalid")
     receipt = {"schema_id": "external_validation.session2_github_object_receipt.v1", "schema_version": "1", "repository": repository, "object_kind": object_kind, "number": number, "retrieved_at": _utc(), "parser_id": _OBJECT_PARSER_ID, "raw_response_hash": digest}

@@ -262,12 +262,18 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
         retrieval._candidate_ids(json.loads(raw), {"kind": "pull_request"})
     pull = {"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 8, "created_at": "2026-01-01T00:00:00Z", "closed_at": "2026-04-02T00:00:00Z", "pull_request": {}}]}
     assert retrieval._candidate_ids(pull, {"kind": "pull_request", "merged_from": "2026-03-01T00:00:00Z", "merged_to": "2026-04-30T00:00:00Z"}) == ["acme/project#8"]
-    object_raw = json.dumps({"number": 8, "base": {"repo": {"url": "https://api.github.com/repos/acme/project"}}, "merge_commit_sha": "0123456789abcdef0123456789abcdef01234567"}).encode()
+    object_raw = json.dumps({"number": 8, "base": {"repo": {"url": "https://api.github.com/repos/acme/project"}, "sha": "0123456789abcdef0123456789abcdef01234567"}, "head": {"sha": "89abcdef0123456789abcdef0123456789abcdef"}, "merge_commit_sha": "0123456789abcdef0123456789abcdef01234567"}).encode()
     class ObjectResponse(Response):
         def read(self): return object_raw
     monkeypatch.setattr(retrieval, "urlopen", lambda _request, timeout: ObjectResponse())
     object_receipt = retrieval.retrieve_github_object(tmp_path, repository="acme/project", object_kind="pull_request", number=8)
     assert object_receipt["raw_response_hash"] == "sha256:" + __import__("hashlib").sha256(object_raw).hexdigest()
+    malformed_pr = json.dumps({"number": 8, "base": {"repo": {"url": "https://api.github.com/repos/acme/project"}}, "merge_commit_sha": "0123456789abcdef0123456789abcdef01234567"}).encode()
+    class MalformedObjectResponse(Response):
+        def read(self): return malformed_pr
+    monkeypatch.setattr(retrieval, "urlopen", lambda _request, timeout: MalformedObjectResponse())
+    with pytest.raises(retrieval.RetrievalError, match="session2_retrieval_pr_head_authority_invalid"):
+        retrieval.retrieve_github_object(tmp_path, repository="acme/project", object_kind="pull_request", number=8)
 
 
 def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_path: Path, monkeypatch):
