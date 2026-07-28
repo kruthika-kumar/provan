@@ -147,16 +147,17 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         # One historical producer revision labelled source-only screens v2
         # without the required runtime-evidence fields.  Retain it only as
         # resolvable history; it cannot remain active authority.
+        runtime_reasons = {"UNQUALIFIED_LINUX_CONTAINER_PATH", "DEPENDENCY_AUTHORITY_NOT_FROZEN"}
         is_legacy_source_v2 = (version == "external_validation.session2_prequalification_screen.v2"
                                and isinstance(value, dict)
-                               and value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH"
+                               and value.get("reason") not in runtime_reasons
                                and set(value) == required_v1)
         required = required_v1 if is_legacy_source_v2 else (required_v2 if version == "external_validation.session2_prequalification_screen.v2" else required_v1)
         if (not isinstance(value, dict) or set(value) != required or version not in {"external_validation.session2_prequalification_screen.v1", "external_validation.session2_prequalification_screen.v2"}
                 or value.get("schema_version") != "1" or value.get("stage") != "SOURCE_CONTRACT_SCREEN"
                 or value.get("decision") != "EXCLUDED_PREQUALIFICATION" or not isinstance(value.get("candidate_id"), str)
                 or not isinstance(value.get("reason"), str)
-                or (version == "external_validation.session2_prequalification_screen.v2" and not is_legacy_source_v2 and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
+                or (version == "external_validation.session2_prequalification_screen.v2" and not is_legacy_source_v2 and (value.get("reason") not in runtime_reasons or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
             _fail("session2_candidate_screen_invalid")
         entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
         if version == "external_validation.session2_prequalification_screen.v1" and value.get("reason") == "UNQUALIFIED_LINUX_CONTAINER_PATH":
