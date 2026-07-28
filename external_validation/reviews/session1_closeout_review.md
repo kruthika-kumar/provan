@@ -10,4 +10,4 @@
 | open_p0_count | 0 |
 | open_p1_count | 0 |
 
-Fresh read-only re-review closed F2 and F3: typed baseline/leakage records bind the final implementation identity and transcript hashes, and all 58 claim IDs resolve to manifest-bound evidence keys. The reviewer returned GO with no open P0/P1 findings. No Session 2, benchmark, case, model, mutation, merge, or tag work occurred.
+Fresh read-only review of Commit A `b47555af09714ee67cd8b024947c7fc7233e5502` (tree `c79bcab6b4e12f43a43c3cc3627ba21d7bf11131`) returned GO with no open P0/P1 findings. It rechecked the distinct retained-runtime and final-closeout provenance bindings, the final typed baseline/leakage identities, and the 58 manifest-bound claim IDs. No Session 2, benchmark, case, model, mutation, merge, or tag work occurred.
