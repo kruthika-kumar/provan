@@ -260,6 +260,29 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
     assert retrieval._candidate_ids(pull, {"kind": "pull_request", "merged_from": "2026-03-01T00:00:00Z", "merged_to": "2026-04-30T00:00:00Z"}) == ["acme/project#8"]
 
 
+def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_path: Path, monkeypatch):
+    import json
+    from hashlib import sha256
+    from shiproom.external_validation.identity import canonical_json
+    from shiproom.external_validation import session2_candidates as candidates
+
+    base = tmp_path / "external" / "session2"
+    raw_dir = base / "retrieval" / "raw"; raw_dir.mkdir(parents=True)
+    (base / "cases").mkdir()
+    issue_raw = canonical_json({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 7, "created_at": "2026-03-05T00:00:00Z"}]})
+    pr_raw = canonical_json({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 8, "created_at": "2026-03-06T00:00:00Z", "closed_at": "2026-03-07T00:00:00Z", "body": "Fixes #7", "pull_request": {}}]})
+    for raw, kind, candidate_id in ((issue_raw, "issue", "acme/project#7"), (pr_raw, "pull_request", "acme/project#8")):
+        digest = "sha256:" + sha256(raw).hexdigest()
+        (raw_dir / (digest[7:] + ".json")).write_bytes(raw)
+        receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q", "filters": {"kind": kind}, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": digest, "candidate_ids": [candidate_id], "next_page": None}], "candidate_ids": [candidate_id]}
+        (base / "retrieval" / (sha256(canonical_json(receipt)).hexdigest() + ".retrieval-receipt.json")).write_bytes(canonical_json(receipt))
+    monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    result = candidates.compile_github_issue_fix_candidates(tmp_path)
+    assert result["candidate_count"] == 1
+    index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
+    assert index["candidates"][0]["candidate_id"] == "acme/project#7->acme/project#8"
+
+
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
     large = {"pr_number":7, "merged_at":"2026-01-01T00:00:00Z", "merge_sha":"0123456789abcdef0123456789abcdef01234567", "reviewable_churn":1000, "human_source_file_count":10, "components":["api", "ui"], "release_surface":"journey", "excluded_classifications":[]}
     assert qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z") == "LARGE"
