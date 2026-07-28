@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external_validation.session2_owner_context_case.v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "beta_context_case_id", "repository", "base_sha", "target_sha", "pr_number_or_release_id", "merge_sha", "release_surface", "context_packet_hash", "selection_method", "selection_timestamp", "execution_environment_hash", "assessability_status"],
+  "properties": {
+    "schema_id": {"const": "external_validation.session2_owner_context_case.v1"}, "schema_version": {"const": "1"},
+    "beta_context_case_id": {"type": "string", "minLength": 1}, "repository": {"enum": ["healthchecks/healthchecks", "pretalx/pretalx", "dlt-hub/dlt", "pypa/hatch"]},
+    "base_sha": {"pattern": "^[0-9a-f]{40}$"}, "target_sha": {"pattern": "^[0-9a-f]{40}$"}, "merge_sha": {"pattern": "^[0-9a-f]{40}$"},
+    "pr_number_or_release_id": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "integer", "minimum": 1}]}, "release_surface": {"type": "string", "minLength": 1},
+    "context_packet_hash": {"pattern": "^sha256:[0-9a-f]{64}$"}, "selection_method": {"type": "string", "minLength": 1}, "selection_timestamp": {"type": "string", "format": "date-time"}, "execution_environment_hash": {"pattern": "^sha256:[0-9a-f]{64}$"}, "assessability_status": {"enum": ["ASSESSABLE", "NOT_ASSESSABLE"]}
+  }
+}

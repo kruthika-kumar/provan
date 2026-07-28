@@ -27,6 +27,24 @@ TERMINAL_LEDGER_STATES = {"SETTLED", "CANCELLED_BEFORE_SEND", "FAILED_MAX_CHARGE
 STAGES = {"session2_probes", "session3_beta", "beta_rerun_reserve", "session4_controlled", "session5_remediation", "session6_natural", "single_sol_sensitivity", "retry_contingency"}
 CONTAMINATION_BANDS = {"FRESH_A", "FRESH_B", "FALLBACK_RECENT"}
 PRIMARY_MODEL_ARMS = {"SHIPROOM_FULL", "SOTA_AGENT", "SHIPROOM_NO_DETERMINISTIC_CORE"}
+REPOSITORY_SLOTS = (
+    "ordinary_workflow_1", "ordinary_workflow_2", "ordinary_workflow_3",
+    "engineering_developer", "data_contract_pipeline", "product_measurement_privacy",
+)
+PRIMARY_POOL = (
+    "healthchecks/healthchecks", "pretix/pretix", "pretalx/pretalx",
+    "inventree/InvenTree", "pypa/hatch", "dlt-hub/dlt", "formbricks/formbricks",
+)
+MATURE_POOL = ("streamlit/streamlit", "pytest-dev/pytest", "dbt-labs/dbt-core")
+BACKUP_POOL = ("documenso/documenso", "paperless-ngx/paperless-ngx", "sqlfluff/sqlfluff", "evidentlyai/evidently")
+PRIVATE_MUTATION_CATALOGUE = {
+    "engineering.absent_claimed_artifact", "engineering.public_response_schema_drift", "engineering.swallowed_failure_false_success",
+    "journey.returned_share_or_result_url_broken", "journey.required_state_lost_after_navigation", "journey.backend_failure_false_success",
+    "measurement.success_failure_indistinguishable", "measurement.required_success_event_missing_or_premature",
+    "data.grain_changing_join_duplicates", "data.required_key_null_or_referential_failure",
+    "ai_eval.random_cases_instead_of_frozen_ids", "ai_eval.unsupported_output_lacks_fallback_or_false_success",
+}
+OWNER_CONTEXT_REPOSITORIES = ("healthchecks/healthchecks", "pretalx/pretalx", "dlt-hub/dlt")
 
 
 class Session2ValidationError(ValueError):
@@ -139,16 +157,166 @@ def validate_qualifying_artifact(value: Any) -> dict[str, Any]:
     if any(not isinstance(value[key], str) or not value[key] or PLACEHOLDER.search(value[key]) for key in {"artifact_id", "source_record_hash", "command", "container_digest", "supervisor_run_id", "result_contract_id"}): fail("session2_qualifying_artifact_placeholder")
     require_sha(value["source_record_hash"])
     if "@sha256:" not in value["container_digest"]: fail("session2_qualifying_artifact_container_mutable")
+    total_transcript_bytes = 0
     for stream in ("stdout", "stderr"):
         item = value[stream]
         if not isinstance(item, dict) or set(item) != {"opaque_id", "bytes", "sha256"} or not isinstance(item["opaque_id"], str) or not item["opaque_id"] or not isinstance(item["bytes"], int) or item["bytes"] < 0: fail("session2_qualifying_artifact_stream_invalid")
         require_sha(item["sha256"])
-        if item["bytes"] == 0: fail("session2_qualifying_artifact_empty_transcript")
+        total_transcript_bytes += item["bytes"]
+    if total_transcript_bytes == 0: fail("session2_qualifying_artifact_empty_transcript")
     if not isinstance(value["exit_code"], int): fail("session2_qualifying_artifact_exit_invalid")
     try:
         started = datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")); completed = datetime.fromisoformat(value["completed_at"].replace("Z", "+00:00"))
         if started.tzinfo is None or completed.tzinfo is None or completed < started: raise ValueError
     except (AttributeError, ValueError): fail("session2_qualifying_artifact_time_invalid")
+    return value
+
+
+def validate_controlled_population(value: Any) -> dict[str, Any]:
+    """Freeze the two beta populations without allowing count drift."""
+    required = {"controlled_pairs", "additional_harness_only_pairs", "unique_pair_count", "beta_pair_count", "beta_pairs_overlapping_controlled", "controlled_pair_ids", "harness_pair_ids", "beta_pair_ids"}
+    if not isinstance(value, dict) or set(value) != required:
+        fail("session2_population_invalid")
+    counts = {key: value[key] for key in required - {"controlled_pair_ids", "harness_pair_ids", "beta_pair_ids"}}
+    expected = {"controlled_pairs": 18, "additional_harness_only_pairs": 2, "unique_pair_count": 20, "beta_pair_count": 6, "beta_pairs_overlapping_controlled": 4}
+    if counts != expected:
+        fail("session2_population_counts_invalid")
+    controlled, harness, beta = value["controlled_pair_ids"], value["harness_pair_ids"], value["beta_pair_ids"]
+    if any(not isinstance(items, list) or len(items) != expected_count or len(set(items)) != expected_count or any(not isinstance(item, str) or not item for item in items)
+           for items, expected_count in ((controlled, 18), (harness, 2), (beta, 6))):
+        fail("session2_population_ids_invalid")
+    if set(controlled) & set(harness) or len(set(beta) & set(controlled)) != 4 or len(set(beta) & set(harness)) != 2:
+        fail("session2_population_overlap_invalid")
+    return value
+
+
+def validate_owner_context_case(value: Any) -> dict[str, Any]:
+    required = {"beta_context_case_id", "repository", "base_sha", "target_sha", "pr_number_or_release_id", "merge_sha", "release_surface", "context_packet_hash", "selection_method", "selection_timestamp", "execution_environment_hash", "assessability_status"}
+    if not isinstance(value, dict) or set(value) != required:
+        fail("session2_owner_context_fields_invalid")
+    if value["repository"] not in set(OWNER_CONTEXT_REPOSITORIES) | {"pypa/hatch"}:
+        fail("session2_owner_context_repository_invalid")
+    for key in ("base_sha", "target_sha", "merge_sha"):
+        require_git_sha(value[key], "session2_owner_context_sha_invalid")
+    for key in ("context_packet_hash", "execution_environment_hash"):
+        require_sha(value[key], "session2_owner_context_hash_invalid")
+    if (not isinstance(value["beta_context_case_id"], str) or not value["beta_context_case_id"]
+            or not isinstance(value["pr_number_or_release_id"], (str, int)) or not str(value["pr_number_or_release_id"])
+            or not isinstance(value["release_surface"], str) or not value["release_surface"]
+            or not isinstance(value["selection_method"], str) or not value["selection_method"]
+            or value["assessability_status"] not in {"ASSESSABLE", "NOT_ASSESSABLE"}):
+        fail("session2_owner_context_value_invalid")
+    try:
+        timestamp = datetime.fromisoformat(value["selection_timestamp"].replace("Z", "+00:00"))
+        if timestamp.tzinfo is None: raise ValueError
+    except (AttributeError, ValueError):
+        fail("session2_owner_context_time_invalid")
+    return value
+
+
+def _repository_gate(candidate: dict[str, Any]) -> bool:
+    gates = {"usable_license", "active_development", "immutable_checkout", "qualified_execution_path", "no_mandatory_secret", "no_gpu", "no_paid_service"}
+    signals = candidate.get("consequence_signals")
+    return (all(candidate.get(gate) is True for gate in gates)
+            and isinstance(signals, list) and len(signals) >= 2
+            and len({item.get("category") for item in signals if isinstance(item, dict) and item.get("category") not in {None, "stars"}}) >= 2)
+
+
+def select_repository_slots(seed: str, candidates: list[dict[str, Any]], *, measurement_qualified: bool) -> dict[str, Any]:
+    """Apply the frozen six-slot algorithm and preserve every exclusion."""
+    if not isinstance(candidates, list): fail("session2_repository_frame_invalid")
+    known = set(PRIMARY_POOL) | set(MATURE_POOL) | set(BACKUP_POOL)
+    by_slug: dict[str, dict[str, Any]] = {}
+    exclusions: list[dict[str, str]] = []
+    for item in candidates:
+        if not isinstance(item, dict) or set(item) != {"repository", "eligible_slots", "usable_license", "active_development", "immutable_checkout", "qualified_execution_path", "no_mandatory_secret", "no_gpu", "no_paid_service", "consequence_signals", "review_saturation"}:
+            fail("session2_repository_frame_invalid")
+        slug = item["repository"]
+        if not isinstance(slug, str) or slug not in known or slug in by_slug or not isinstance(item["eligible_slots"], list) or not set(item["eligible_slots"]).issubset(REPOSITORY_SLOTS):
+            fail("session2_repository_frame_invalid")
+        by_slug[slug] = item
+    selected: dict[str, str] = {}
+    used: set[str] = set()
+    for slot in REPOSITORY_SLOTS:
+        required_slot = slot if measurement_qualified or slot != "product_measurement_privacy" else "ordinary_workflow_fallback"
+        eligible = []
+        for slug, item in by_slug.items():
+            slot_ok = slot in item["eligible_slots"] if required_slot != "ordinary_workflow_fallback" else any(candidate_slot.startswith("ordinary_workflow") for candidate_slot in item["eligible_slots"])
+            if slug in used or not slot_ok:
+                continue
+            if _repository_gate(item):
+                eligible.append(slug)
+            else:
+                exclusions.append({"repository": slug, "slot": slot, "reason": "repository_hard_gate_failed"})
+        if not eligible:
+            fail("session2_repository_slot_exhausted")
+        winner = min(eligible, key=lambda slug: seed_order(seed, slug, slot))
+        selected[slot] = winner; used.add(winner)
+    return {"selected": selected, "exclusions": sorted(exclusions, key=lambda item: (item["slot"], item["repository"])), "coverage_unavailable": [] if measurement_qualified else ["product_measurement_privacy"]}
+
+
+def validate_review_saturation(value: Any) -> dict[str, Any]:
+    required = {"recent_pr_volume", "typical_reviewer_count", "review_comment_density", "ci_check_breadth", "codeowners_present", "merge_latency_hours", "active_contributor_count", "release_process_maturity", "classification"}
+    if not isinstance(value, dict) or set(value) != required or value.get("classification") not in {"LOW", "MEDIUM", "HIGH"}:
+        fail("session2_review_saturation_invalid")
+    numeric = required - {"codeowners_present", "release_process_maturity", "classification"}
+    if any(not isinstance(value[key], (int, float)) or isinstance(value[key], bool) or value[key] < 0 for key in numeric):
+        fail("session2_review_saturation_invalid")
+    if value["codeowners_present"] not in {True, False} or not isinstance(value["release_process_maturity"], str) or not value["release_process_maturity"]:
+        fail("session2_review_saturation_invalid")
+    return value
+
+
+def select_subset(seed: str, subset_id: str, family_id: str, cases: list[dict[str, Any]], *, count: int) -> list[dict[str, Any]]:
+    if not isinstance(subset_id, str) or not isinstance(family_id, str) or count < 1 or len(cases) < count:
+        fail("session2_subset_input_invalid")
+    ids: set[str] = set()
+    for case in cases:
+        if not isinstance(case, dict) or not isinstance(case.get("case_id"), str) or not case["case_id"] or case["case_id"] in ids:
+            fail("session2_subset_case_invalid")
+        ids.add(case["case_id"])
+    return sorted(cases, key=lambda case: seed_order(seed, subset_id, family_id, case["case_id"]))[:count]
+
+
+def select_sol_sensitivity_case(seed: str, cases: list[dict[str, Any]]) -> str:
+    """Select exactly one beta-controlled case under the published priority."""
+    eligible = [case for case in cases if case.get("beta_controlled") is True]
+    if len(eligible) != 4:
+        fail("session2_sol_population_invalid")
+    ranks = {"Product Journey": 0, "Product Measurement": 1, "Data Contract/Pipeline": 1, "Engineering": 2}
+    if any(case.get("family") not in ranks or not isinstance(case.get("case_id"), str) for case in eligible):
+        fail("session2_sol_population_invalid")
+    best = min(ranks[case["family"]] for case in eligible)
+    candidates = [case for case in eligible if ranks[case["family"]] == best]
+    if best == 2:
+        maximum = max(case.get("release_surface_count", -1) for case in candidates)
+        if not isinstance(maximum, int) or maximum < 0: fail("session2_sol_population_invalid")
+        candidates = [case for case in candidates if case["release_surface_count"] == maximum]
+    return min(candidates, key=lambda case: seed_order(seed, "sol-sensitivity", case["case_id"]))["case_id"]
+
+
+def validate_private_mutation(value: Any) -> dict[str, Any]:
+    required = {"mutation_id", "family", "source_packet_hash", "source_packet_created_at", "worktree_created_at", "contract", "real_incident_pattern_ref"}
+    if not isinstance(value, dict) or set(value) != required or value.get("mutation_id") not in PRIVATE_MUTATION_CATALOGUE:
+        fail("session2_private_mutation_invalid")
+    require_sha(value["source_packet_hash"], "session2_private_mutation_source_invalid")
+    if not isinstance(value["real_incident_pattern_ref"], str) or not value["real_incident_pattern_ref"]:
+        fail("session2_private_mutation_incident_invalid")
+    try:
+        source_time = datetime.fromisoformat(value["source_packet_created_at"].replace("Z", "+00:00")); worktree_time = datetime.fromisoformat(value["worktree_created_at"].replace("Z", "+00:00"))
+        if source_time.tzinfo is None or worktree_time.tzinfo is None or source_time >= worktree_time: raise ValueError
+    except (AttributeError, ValueError):
+        fail("session2_private_mutation_contract_predates_worktree")
+    contract = value["contract"]
+    required_by_family = {
+        "journey": {"actor", "preconditions", "action", "expected_durable_outcome", "failure_behavior", "source_refs"},
+        "measurement": {"event_name", "durable_outcome_represented", "success_failure_distinction", "emission_timing", "required_properties", "privacy_constraints", "non_goals", "source_refs"},
+        "data": {"entity", "grain", "primary_key", "nullability", "relationship_cardinality", "transformation", "integrity_invariants", "source_refs"},
+        "ai_eval": {"case_set_id", "case_set_version", "frozen_case_ids", "oracle_or_rubric_ref", "accepted_output_contract", "unsupported_output_behavior", "fallback_behavior", "malformed_output_behavior", "unavailable_model_behavior", "release_gate_rule", "source_refs"},
+    }
+    family = value["family"]
+    if family in required_by_family and (not isinstance(contract, dict) or set(contract) != required_by_family[family] or any(not contract[key] for key in contract)):
+        fail("session2_private_mutation_contract_invalid")
     return value
 
 
@@ -201,11 +369,20 @@ class BudgetLedger:
     def _append(self, body: dict[str, Any]) -> None:
         self.db.execute("INSERT INTO entries VALUES(?,?,?,?,?,?,?,?,?,?)", (*body.values(), canonical_hash(body)))
 
-    def reserve(self, attempt_id: str, idempotency_key: str, stage: str, amount: float) -> int:
-        if stage not in STAGES or not isinstance(amount, (int, float)) or amount <= 0 or amount > self.policy.absolute_per_call_cap_usd: fail("session2_budget_reservation_invalid")
+    def reserve(self, attempt_id: str, idempotency_key: str, stage: str, amount: float, *, input_tokens: int = 0) -> int:
+        if (stage not in STAGES or not isinstance(attempt_id, str) or not attempt_id
+                or not isinstance(idempotency_key, str) or not idempotency_key
+                or not isinstance(amount, (int, float)) or amount <= 0
+                or amount > self.policy.absolute_per_call_cap_usd
+                or not isinstance(input_tokens, int) or input_tokens < 0
+                or input_tokens > self.policy.absolute_input_ceiling):
+            fail("session2_budget_reservation_invalid")
         self.db.execute("BEGIN IMMEDIATE")
         try:
-            rows = self._rows(); current = self._current(rows); active = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"}); settled = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"})
+            rows = self._rows(); current = self._current(rows)
+            if attempt_id in current or self.db.execute("SELECT 1 FROM entries WHERE idempotency_key=?", (idempotency_key,)).fetchone():
+                fail("session2_budget_duplicate_attempt")
+            active = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"}); settled = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"})
             stage_spend = sum((row["settled"] if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"} else row["reserved"]) or 0 for row in current.values() if row["stage"] == stage and row["state"] != "CANCELLED_BEFORE_SEND")
             if settled + active + amount > self.policy.hard_stop_usd: fail("session2_budget_programme_cap_exceeded")
             if stage_spend + amount > dict(self.policy.stage_caps)[stage]: fail("session2_budget_stage_cap_exceeded")
@@ -257,3 +434,15 @@ class BudgetLedger:
         current = self._current(rows); committed = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"}); reserved = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"})
         stages = {stage: dict(self.policy.stage_caps)[stage] - sum((row["settled"] if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"} else row["reserved"]) or 0 for row in current.values() if row["stage"] == stage and row["state"] != "CANCELLED_BEFORE_SEND") for stage in STAGES}
         return {"schema_id": "external_validation.session2_budget_checkpoint.v1", "schema_version": "1", "first_sequence": 1 if rows else 0, "last_sequence": len(rows), "entry_count": len(rows), "previous_checkpoint_hash": "", "entries_root_hash": canonical_hash(rows), "committed_spend": committed, "reserved_spend": reserved, "remaining_budget": self.policy.hard_stop_usd - committed - reserved, "stage_balances": stages, "policy_hash": self.policy.hash, "latest_entry_hash": prior}
+
+    def genesis_checkpoint(self) -> dict[str, Any]:
+        """Canonical Session-2 anchor; never hash SQLite/WAL bytes."""
+        checkpoint = self.checkpoint()
+        return {"schema_id": "external_validation.session2_budget_genesis.v1", "schema_version": "1", "programme_id": "external_validation.session2", "policy_hash": self.policy.hash, "opening_balance": self.policy.hard_stop_usd, "stage_balances": checkpoint["stage_balances"], "latest_canonical_sequence": checkpoint["last_sequence"], "prior_entry_hash": checkpoint["latest_entry_hash"], "ledger_checkpoint": checkpoint}
+
+    def projected_total(self, *, mandatory_remaining_run_reservations: float, frozen_retry_reserve: float, sol_sensitivity_reserve: float) -> float:
+        if any(not isinstance(item, (int, float)) or item < 0 for item in (mandatory_remaining_run_reservations, frozen_retry_reserve, sol_sensitivity_reserve)):
+            fail("session2_budget_projection_invalid")
+        checkpoint = self.checkpoint()
+        unresolved_submitted_max_charge = sum(row["reserved"] for row in self._current(self._rows()).values() if row["state"] == "SUBMITTED")
+        return checkpoint["committed_spend"] + unresolved_submitted_max_charge + checkpoint["reserved_spend"] + float(mandatory_remaining_run_reservations) + float(frozen_retry_reserve) + float(sol_sensitivity_reserve)

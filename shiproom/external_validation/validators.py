@@ -284,6 +284,22 @@ def validate_artifact(value: Any) -> dict[str, Any]:
     if schema_id == "external_validation.status_attestation.v2":
         from .status import validate_status_attestation_document
         return validate_status_attestation_document(item)
+    if schema_id == "external_validation.session2_budget_policy.v1":
+        from .session2_cross_validate import validate_budget_policy
+        try: return validate_budget_policy(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 budget policy invalid")
+    if schema_id == "external_validation.session2_model_prompt_policy_freeze.v1":
+        from .session2_cross_validate import validate_model_prompt_policy_freeze
+        try: return validate_model_prompt_policy_freeze(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 model/prompt/policy freeze invalid")
+    if schema_id == "external_validation.session2_controlled_population.v1":
+        from .session2_cross_validate import validate_controlled_population
+        try: return validate_controlled_population(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 population invalid")
+    if schema_id == "external_validation.session2_owner_context_case.v1":
+        from .session2_cross_validate import validate_owner_context_case
+        try: return validate_owner_context_case(item)
+        except ValueError as exc: _error(str(exc), "/", "Session 2 owner-context case invalid")
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 

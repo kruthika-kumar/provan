@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external_validation.session2_controlled_population.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "controlled_pairs", "additional_harness_only_pairs", "unique_pair_count", "beta_pair_count", "beta_pairs_overlapping_controlled", "controlled_pair_ids", "harness_pair_ids", "beta_pair_ids"],
+  "properties": {
+    "schema_id": {"const": "external_validation.session2_controlled_population.v1"}, "schema_version": {"const": "1"},
+    "controlled_pairs": {"const": 18}, "additional_harness_only_pairs": {"const": 2}, "unique_pair_count": {"const": 20}, "beta_pair_count": {"const": 6}, "beta_pairs_overlapping_controlled": {"const": 4},
+    "controlled_pair_ids": {"type": "array", "minItems": 18, "maxItems": 18, "items": {"type": "string", "minLength": 1}},
+    "harness_pair_ids": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "string", "minLength": 1}},
+    "beta_pair_ids": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "string", "minLength": 1}}
+  }
+}

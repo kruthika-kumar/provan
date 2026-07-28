@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external_validation.session2_model_prompt_policy_freeze.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "terra", "artifacts", "arm_equivalence"],
+  "properties": {
+    "schema_id": {"const": "external_validation.session2_model_prompt_policy_freeze.v1"},
+    "schema_version": {"const": "1"},
+    "terra": {"type": "object"},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["artifact_id", "path", "git_blob", "sha256", "semantic_version", "used_by_arms"]}},
+    "arm_equivalence": {"type": "object", "additionalProperties": false, "required": ["SHIPROOM_FULL", "SOTA_AGENT", "SHIPROOM_NO_DETERMINISTIC_CORE"]}
+  }
+}

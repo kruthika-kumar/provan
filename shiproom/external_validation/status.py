@@ -169,9 +169,14 @@ def _validate_baseline(value: dict[str, Any], *, implementation_commit: str, imp
         raise V2ValidationError("status_attestation_baseline_invalid")
 
 
-def _validate_review(value: dict[str, Any]) -> None:
+def _validate_review(value: dict[str, Any], *, implementation_commit: str, implementation_tree: str) -> None:
     required = {"schema_id", "schema_version", "review_verdict", "qualification_status", "open_p0_count", "open_p1_count", "findings", "reviewed_commit", "reviewed_tree"}
-    if set(value) != required or value.get("schema_id") != "external_validation.session1_closeout_review.v1" or value.get("schema_version") != "1" or value.get("review_verdict") != "GO" or value.get("open_p0_count") != 0 or value.get("open_p1_count") != 0 or not isinstance(value.get("findings"), list):
+    if (set(value) != required or value.get("schema_id") != "external_validation.session1_closeout_review.v1"
+            or value.get("schema_version") != "1" or value.get("review_verdict") != "GO"
+            or value.get("open_p0_count") != 0 or value.get("open_p1_count") != 0
+            or value.get("reviewed_commit") != implementation_commit
+            or value.get("reviewed_tree") != implementation_tree
+            or not isinstance(value.get("findings"), list)):
         raise V2ValidationError("status_attestation_review_invalid")
 
 
@@ -235,7 +240,11 @@ def _validate_external_attestation(
         ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", data["commit_b"], "HEAD"], cwd=root, capture_output=True, check=False, timeout=10)
         implementation_tree_result = subprocess.run([*git, "rev-parse", data["implementation_commit"] + "^{tree}"], cwd=root, text=True, capture_output=True, check=False, timeout=10)
         implementation_ancestor = subprocess.run([*git, "merge-base", "--is-ancestor", data["implementation_commit"], data["commit_b"]], cwd=root, capture_output=True, check=False, timeout=10)
-        commit_paths = subprocess.run([*git, "diff-tree", "--no-commit-id", "--name-only", "-r", data["commit_b"]], cwd=root, text=True, capture_output=True, check=False, timeout=10)
+        # Commit B may follow implementation commits.  Only the *range* from
+        # the explicitly bound implementation Commit A to Commit B is allowed
+        # to contain proof/status material; inspecting Commit B alone would
+        # silently miss executable changes made in an intermediate commit.
+        commit_paths = subprocess.run([*git, "diff", "--name-only", data["implementation_commit"] + ".." + data["commit_b"]], cwd=root, text=True, capture_output=True, check=False, timeout=10)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise V2ValidationError("status_attestation_commit_check_unavailable") from exc
     if commit_tree.returncode != 0 or ancestor.returncode != 0 or commit_tree.stdout.strip() != data["commit_b_tree"]:
@@ -265,7 +274,10 @@ def _validate_external_attestation(
             if _hash_bytes(raw) != row["sha256"] or _git_blob(root, data["commit_b"], relative) != _git_blob(root, "HEAD", relative):
                 raise V2ValidationError("status_attestation_closeout_binding_invalid")
     _validate_baseline(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["baseline"]["path"]), "status_attestation_baseline_invalid"), implementation_commit=data["implementation_commit"], implementation_tree=data["implementation_tree"])
-    _validate_review(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["closeout_review"]["path"]), "status_attestation_review_invalid"))
+    _validate_review(
+        _json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["closeout_review"]["path"]), "status_attestation_review_invalid"),
+        implementation_commit=data["implementation_commit"], implementation_tree=data["implementation_tree"],
+    )
     _validate_claim_audit(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["claim_audit"]["path"]), "status_attestation_claim_audit_invalid"), root=root, implementation_commit=data["implementation_commit"], artifact_keys=set(artifacts))
     _validate_leakage(_json_bytes(_committed_bytes(root, data["commit_b"], root / artifacts["leakage_validation"]["path"]), "status_attestation_leakage_invalid"), implementation_commit=data["implementation_commit"], implementation_tree=data["implementation_tree"])
 
