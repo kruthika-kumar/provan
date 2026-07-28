@@ -26,6 +26,7 @@ LEDGER_STATES = {"RESERVED", "SUBMITTED", "SETTLED", "CANCELLED_BEFORE_SEND", "F
 TERMINAL_LEDGER_STATES = {"SETTLED", "CANCELLED_BEFORE_SEND", "FAILED_MAX_CHARGED", "BLOCKED"}
 STAGES = {"session2_probes", "session3_beta", "beta_rerun_reserve", "session4_controlled", "session5_remediation", "session6_natural", "single_sol_sensitivity", "retry_contingency"}
 CONTAMINATION_BANDS = {"FRESH_A", "FRESH_B", "FALLBACK_RECENT"}
+PRIMARY_MODEL_ARMS = {"SHIPROOM_FULL", "SOTA_AGENT", "SHIPROOM_NO_DETERMINISTIC_CORE"}
 
 
 class Session2ValidationError(ValueError):
@@ -99,6 +100,55 @@ def validate_fresh_qualification(value: Any) -> dict[str, Any]:
         fail("session2_fresh_runtime_invalid")
     if any(value[key] is not False for key in {"paid_credentials_required", "gpu_required", "proprietary_service_required", "uncontrolled_patient_network_required"}):
         fail("session2_fresh_execution_gate_failed")
+    return value
+
+
+def validate_model_prompt_policy_freeze(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict): fail("session2_policy_freeze_invalid")
+    required = {"schema_id", "schema_version", "terra", "artifacts", "arm_equivalence"}
+    if set(value) != required or value.get("schema_id") != "external_validation.session2_model_prompt_policy_freeze.v1" or value.get("schema_version") != "1":
+        fail("session2_policy_freeze_header_invalid")
+    terra = value["terra"]
+    expected_terra = {"provider": "OpenAI", "api": "Responses API", "model": "gpt-5.6-terra", "knowledge_cutoff": "2026-02-16", "reasoning_effort": "high", "max_output_tokens": 16384, "store": False, "temperature": None, "service_tier": "standard", "hosted_web_search": False, "hosted_shell": False, "hosted_code_interpreter": False}
+    if terra != expected_terra: fail("session2_terra_policy_invalid")
+    if not isinstance(value["artifacts"], list) or not value["artifacts"]: fail("session2_policy_artifacts_missing")
+    ids = set()
+    for item in value["artifacts"]:
+        if not isinstance(item, dict) or set(item) != {"artifact_id", "path", "git_blob", "sha256", "semantic_version", "used_by_arms"}: fail("session2_policy_artifact_invalid")
+        if not isinstance(item["artifact_id"], str) or not item["artifact_id"] or item["artifact_id"] in ids or not isinstance(item["path"], str) or not item["path"] or item["path"].startswith("/") or PLACEHOLDER.search(item["path"]): fail("session2_policy_artifact_invalid")
+        ids.add(item["artifact_id"]); require_git_sha(item["git_blob"]); require_sha(item["sha256"])
+        if not isinstance(item["semantic_version"], str) or not item["semantic_version"] or not isinstance(item["used_by_arms"], list) or not set(item["used_by_arms"]).issubset(PRIMARY_MODEL_ARMS) or not item["used_by_arms"]: fail("session2_policy_artifact_invalid")
+    table = value["arm_equivalence"]
+    if not isinstance(table, dict) or set(table) != PRIMARY_MODEL_ARMS: fail("session2_arm_equivalence_invalid")
+    properties = {"patient_snapshot_hash", "release_packet_hash", "model_settings_hash", "output_contract_hash", "tool_classes_hash", "network_policy_hash", "wall_time_policy_hash", "cost_policy_hash", "retry_policy_hash"}
+    rows = []
+    for arm in sorted(PRIMARY_MODEL_ARMS):
+        row = table[arm]
+        if not isinstance(row, dict) or set(row) != properties: fail("session2_arm_equivalence_invalid")
+        for prop in properties: require_sha(row[prop], "session2_arm_equivalence_hash_invalid")
+        rows.append(row)
+    if any(row != rows[0] for row in rows[1:]): fail("session2_arm_equivalence_mismatch")
+    return value
+
+
+def validate_qualifying_artifact(value: Any) -> dict[str, Any]:
+    """Reject authored success claims and placeholder-bearing qualifying evidence."""
+    if not isinstance(value, dict) or value.get("classification") not in {"QUALIFYING_PUBLIC_ARTIFACT", "QUALIFYING_PRIVATE_ARTIFACT"}: fail("session2_qualifying_artifact_classification_invalid")
+    required = {"classification", "artifact_id", "source_record_hash", "command", "started_at", "completed_at", "exit_code", "stdout", "stderr", "container_digest", "supervisor_run_id", "result_contract_id"}
+    if set(value) != required: fail("session2_qualifying_artifact_fields_invalid")
+    if any(not isinstance(value[key], str) or not value[key] or PLACEHOLDER.search(value[key]) for key in {"artifact_id", "source_record_hash", "command", "container_digest", "supervisor_run_id", "result_contract_id"}): fail("session2_qualifying_artifact_placeholder")
+    require_sha(value["source_record_hash"])
+    if "@sha256:" not in value["container_digest"]: fail("session2_qualifying_artifact_container_mutable")
+    for stream in ("stdout", "stderr"):
+        item = value[stream]
+        if not isinstance(item, dict) or set(item) != {"opaque_id", "bytes", "sha256"} or not isinstance(item["opaque_id"], str) or not item["opaque_id"] or not isinstance(item["bytes"], int) or item["bytes"] < 0: fail("session2_qualifying_artifact_stream_invalid")
+        require_sha(item["sha256"])
+        if item["bytes"] == 0: fail("session2_qualifying_artifact_empty_transcript")
+    if not isinstance(value["exit_code"], int): fail("session2_qualifying_artifact_exit_invalid")
+    try:
+        started = datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")); completed = datetime.fromisoformat(value["completed_at"].replace("Z", "+00:00"))
+        if started.tzinfo is None or completed.tzinfo is None or completed < started: raise ValueError
+    except (AttributeError, ValueError): fail("session2_qualifying_artifact_time_invalid")
     return value
 
 

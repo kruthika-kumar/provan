@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 
-from shiproom.external_validation.session2 import BudgetLedger, BudgetPolicy, Session2ValidationError, contamination_band, seed_order, validate_fresh_qualification
+from shiproom.external_validation.session2 import BudgetLedger, BudgetPolicy, Session2ValidationError, contamination_band, seed_order, validate_fresh_qualification, validate_model_prompt_policy_freeze, validate_qualifying_artifact
 
 
 def fresh(**changes):
@@ -43,3 +43,21 @@ def test_budget_submission_recovery_is_max_charged_and_cancellation_is_proven(tm
     with pytest.raises(Session2ValidationError, match="session2_budget_cancel_invalid"):
         ledger.transition("attempt_2", "CANCELLED_BEFORE_SEND")
     ledger.transition("attempt_2", "CANCELLED_BEFORE_SEND", provably_not_sent=True)
+
+
+def test_model_freeze_and_arm_equivalence_reject_accidental_differences():
+    sha = "sha256:" + "0123456789abcdef" * 4
+    model = {"provider":"OpenAI","api":"Responses API","model":"gpt-5.6-terra","knowledge_cutoff":"2026-02-16","reasoning_effort":"high","max_output_tokens":16384,"store":False,"temperature":None,"service_tier":"standard","hosted_web_search":False,"hosted_shell":False,"hosted_code_interpreter":False}
+    row = {key: sha for key in ("patient_snapshot_hash","release_packet_hash","model_settings_hash","output_contract_hash","tool_classes_hash","network_policy_hash","wall_time_policy_hash","cost_policy_hash","retry_policy_hash")}
+    value = {"schema_id":"external_validation.session2_model_prompt_policy_freeze.v1","schema_version":"1","terra":model,"artifacts":[{"artifact_id":"prompt","path":"external_validation/prompts/main.txt","git_blob":"0123456789abcdef0123456789abcdef01234567","sha256":sha,"semantic_version":"1","used_by_arms":["SOTA_AGENT"]}],"arm_equivalence":{arm:dict(row) for arm in ("SHIPROOM_FULL","SOTA_AGENT","SHIPROOM_NO_DETERMINISTIC_CORE")}}
+    assert validate_model_prompt_policy_freeze(value)["terra"]["model"] == "gpt-5.6-terra"
+    value["arm_equivalence"]["SOTA_AGENT"]["retry_policy_hash"] = "sha256:" + "fedcba9876543210" * 4
+    with pytest.raises(Session2ValidationError, match="session2_arm_equivalence_mismatch"): validate_model_prompt_policy_freeze(value)
+
+
+def test_qualifying_artifact_requires_sealed_nonempty_supervisor_streams():
+    digest = "sha256:" + "0123456789abcdef" * 4
+    value = {"classification":"QUALIFYING_PRIVATE_ARTIFACT","artifact_id":"receipt_123","source_record_hash":digest,"command":"pytest -q","started_at":"2026-07-28T00:00:00Z","completed_at":"2026-07-28T00:00:01Z","exit_code":0,"stdout":{"opaque_id":"out_1","bytes":1,"sha256":digest},"stderr":{"opaque_id":"err_1","bytes":1,"sha256":"sha256:"+"fedcba9876543210"*4},"container_digest":"runner@"+digest,"supervisor_run_id":"run_123","result_contract_id":"contract_1"}
+    assert validate_qualifying_artifact(value)["exit_code"] == 0
+    value["stdout"]["bytes"] = 0
+    with pytest.raises(Session2ValidationError, match="session2_qualifying_artifact_empty_transcript"): validate_qualifying_artifact(value)
