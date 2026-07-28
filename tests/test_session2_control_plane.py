@@ -230,6 +230,32 @@ def test_primary_retrieval_pagination_and_fresh_selection_are_not_manual():
         validate_retrieval_receipt(receipt)
 
 
+def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(tmp_path: Path, monkeypatch):
+    """A retrieval receipt binds GitHub bytes; it cannot invent qualification."""
+    import json
+    from email.message import Message
+    from shiproom.external_validation import session2_retrieval as retrieval
+
+    external = tmp_path / "external"
+    (external / "session2" / "retrieval").mkdir(parents=True)
+    (external / "session2" / "retrieval" / "raw").mkdir()
+    monkeypatch.setattr(retrieval, "_assert_linux_private_operation", lambda _repo: external / "session2" / "retrieval" / "raw")
+    raw = json.dumps({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 7}]}).encode()
+
+    class Response:
+        headers = Message()
+        def read(self): return raw
+        def __enter__(self): return self
+        def __exit__(self, *unused): return False
+
+    monkeypatch.setattr(retrieval, "urlopen", lambda _request, timeout: Response())
+    receipt = retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed"})
+    digest = __import__("hashlib").sha256(raw).hexdigest()
+    assert receipt["candidate_ids"] == ["acme/project#7"]
+    assert (external / "session2" / "retrieval" / "raw" / f"{digest}.json").read_bytes() == raw
+    assert "qualification" not in receipt
+
+
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
     large = {"pr_number":7, "merged_at":"2026-01-01T00:00:00Z", "merge_sha":"0123456789abcdef0123456789abcdef01234567", "reviewable_churn":1000, "human_source_file_count":10, "components":["api", "ui"], "release_surface":"journey", "excluded_classifications":[]}
     assert qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z") == "LARGE"
