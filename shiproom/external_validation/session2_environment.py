@@ -435,10 +435,10 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path")
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path"); parser.add_argument("--base-image-ref", default="shiproom-session1-runner:03fe9026acb7")
     args = parser.parse_args()
     try:
-        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree, materialization_hash=args.materialization_hash, extras=set(args.extra), groups=set(args.group), additional_packages=set(args.additional_package), requirements_authority_path=args.requirements_authority_path), sort_keys=True))
+        print(json.dumps(build_environment(args.repository, snapshot=args.snapshot, project_name=args.project, implementation_commit=args.implementation_commit, implementation_tree=args.implementation_tree, materialization_hash=args.materialization_hash, base_image_ref=args.base_image_ref, extras=set(args.extra), groups=set(args.group), additional_packages=set(args.additional_package), requirements_authority_path=args.requirements_authority_path), sort_keys=True))
     except EnvironmentBuildError as exc:
         print(str(exc)); return 2
     return 0

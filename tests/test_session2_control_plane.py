@@ -592,3 +592,18 @@ def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
     with pytest.raises(Exception, match="session2_environment_wheel_unavailable"):
         _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]}, platform_tag="musllinux_1_2_x86_64")
     assert _unsupported_packages({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:2]}]}, platform_tag="musllinux_1_2_x86_64") == ["demo"]
+
+
+def test_environment_cli_binds_explicit_base_image_reference(monkeypatch, capsys, tmp_path: Path):
+    """A selected runner address is an explicit receipt-bound input, never ambient state."""
+    from shiproom.external_validation import session2_environment as environment
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(environment, "build_environment", lambda repository, **kwargs: (captured.update(kwargs), {"ok": True})[1])
+    monkeypatch.setattr("sys.argv", ["session2_environment.py", "--repository", str(tmp_path), "--snapshot", str(tmp_path),
+                                    "--project", "demo", "--implementation-commit", "a" * 40,
+                                    "--implementation-tree", "b" * 40, "--materialization-hash", "sha256:" + "c" * 64,
+                                    "--base-image-ref", "shiproom-session2-glibc:a4ccb7f"])
+    assert environment.main() == 0
+    assert captured["base_image_ref"] == "shiproom-session2-glibc:a4ccb7f"
+    assert '"ok": true' in capsys.readouterr().out
