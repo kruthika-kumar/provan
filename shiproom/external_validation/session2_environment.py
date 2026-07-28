@@ -25,7 +25,7 @@ from urllib.request import Request, urlopen
 
 from .identity import canonical_json
 from .runner_v2 import immutable_image_config_digest
-from .session2_lockfile import export_uv_requirements, requirements_manifest_hash
+from .session2_lockfile import LockfileError, export_uv_requirements, requirements_manifest_hash
 
 
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
@@ -221,7 +221,12 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     # deliberately not inferred from a command line and become part of both
     # the build identity and the sealed environment receipt.
     selected_groups = sorted(groups)
-    export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(selected_groups), additional_packages=set(additional_packages))
+    try:
+        export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(selected_groups), additional_packages=set(additional_packages))
+    except LockfileError as exc:
+        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "materialization_hash": materialization_hash, "failure_stage": "LOCKFILE_EXPORT", "failure_code": str(exc), "project_name": project_name, "dependency_groups": selected_groups, "lock_hash": _sha(lock_bytes), "patient_network_policy": "none"}
+        _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
+        raise EnvironmentBuildError("session2_environment_lock_export_failed:" + digest) from exc
     base_digest = _inspect_image(base_image_ref)
     platform_tag = _runtime_platform(base_digest)
     unsupported = _unsupported_packages(export.manifest, platform_tag=platform_tag)
