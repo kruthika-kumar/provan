@@ -27,6 +27,7 @@ from shiproom.external_validation.session2_selection import (
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
+from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements
 
 
 def fresh(**changes):
@@ -540,6 +541,15 @@ def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_net
     assert "--no-index" in dockerfile and "COPY wheelhouse" in dockerfile
     assert "USER 65532:65532" in dockerfile
     assert dockerfile.startswith("FROM sha256:0123456789abcdef")
+
+
+def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
+    raw = b"demo==1.2 \\\n+    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+    exported, manifest = export_hash_pinned_requirements(raw, source_path="src/backend/requirements.txt")
+    assert exported == raw and manifest["requirement_count"] == 1
+    for invalid in (b"demo>=1\n", b"-r other.txt\n", b"demo==1 --hash=sha256:ABC\n"):
+        with pytest.raises(RequirementsAuthorityError):
+            export_hash_pinned_requirements(invalid, source_path="requirements.txt")
 
 
 def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
