@@ -328,6 +328,7 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
     monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    monkeypatch.setattr(screen, "_assert_candidate_in_index", lambda *_args, **_kwargs: None)
     def fake_git(_mirror, *argv):
         if argv[:2] == ("cat-file", "-e"):
             return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z", "exit_code": 0, "stdout": b"", "stderr": b""}
@@ -344,6 +345,7 @@ def test_prequalification_screen_requires_production_execution_evidence_for_runt
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
     monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    monkeypatch.setattr(screen, "_assert_candidate_in_index", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(screen, "_validate_runtime_evidence", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(screen, "_run_git", lambda *_args: {"exit_code": 0, "stdout": b"", "stderr": b"", "argv": [], "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z"})
     common = dict(candidate_id="pypa/hatch#1->pypa/hatch#2", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="UNQUALIFIED_LINUX_CONTAINER_PATH", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
@@ -439,6 +441,7 @@ def test_prequalification_screen_accepts_fixed_twin_nonminimal_as_distinct_gate(
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
     monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    monkeypatch.setattr(screen, "_assert_candidate_in_index", lambda *_args, **_kwargs: None)
     def fake_git(_mirror, *argv):
         if argv[:2] == ("cat-file", "-e"):
             return {"argv": list(argv), "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z", "exit_code": 0, "stdout": b"", "stderr": b""}
@@ -446,6 +449,18 @@ def test_prequalification_screen_accepts_fixed_twin_nonminimal_as_distinct_gate(
     monkeypatch.setattr(screen, "_run_git", fake_git)
     result = screen.seal_prequalification_exclusion(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="FIXED_TWIN_NON_MINIMAL", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
     assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+
+
+def test_prequalification_screen_requires_exact_candidate_from_canonical_index(tmp_path: Path):
+    from hashlib import sha256
+    from shiproom.external_validation import session2_screen as screen
+    root = tmp_path / "root"; screens = root / "session2" / "cases" / "screens"; screens.mkdir(parents=True)
+    record = {"schema_id":"external_validation.session2_github_issue_fix_candidate_index.v1", "schema_version":"1", "source_receipt_hashes":[], "exclusions":[], "candidates":[{"candidate_id":"acme/project#7->acme/project#8"}]}
+    raw = canonical_json(record); digest = "sha256:" + sha256(raw).hexdigest()
+    (screens.parent / (digest[7:] + ".candidate-index.json")).write_bytes(raw)
+    screen._assert_candidate_in_index(screens, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)
+    with pytest.raises(screen.CandidateScreenError, match="session2_screen_candidate_not_in_index"):
+        screen._assert_candidate_in_index(screens, candidate_id="acme/project#7-acme/project#8", candidate_index_hash=digest)
 
 
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
