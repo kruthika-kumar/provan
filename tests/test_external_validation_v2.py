@@ -17,6 +17,7 @@ from shiproom.external_validation.v2 import (
 from shiproom.external_validation.scheduler import RunScheduler
 from shiproom.external_validation.proof_views import public_doctor_view, sanitize_proof
 from shiproom.external_validation.status import resolve_status
+from shiproom.external_validation.runner_v2 import ExecutionPolicyV2, immutable_image_config_digest
 
 H = "sha256:" + "a" * 64
 
@@ -61,6 +62,22 @@ def test_receipt_v2_binds_runner_identity_and_never_self_hashes():
     with pytest.raises(V2ValidationError, match="observation_identity_mismatch"):
         validate_receipt_v2(changed)
     assert receipt_id_v2(receipt).startswith("receipt_") and "receipt_id" not in receipt
+
+
+def test_runner_accepts_only_immutable_registry_or_local_config_identity():
+    digest = "a" * 64
+    assert immutable_image_config_digest("registry.invalid/runner@sha256:" + digest) == "sha256:" + digest
+    assert immutable_image_config_digest("sha256:" + digest) == "sha256:" + digest
+    with pytest.raises(ValueError, match="immutable_runner_image_required"):
+        immutable_image_config_digest("shiproom-session1-runner:latest")
+
+
+def test_runner_rejects_non_socket_custom_daemon_path(tmp_path: Path):
+    seccomp, not_socket = tmp_path / "seccomp.json", tmp_path / "not-a-socket"
+    seccomp.write_text("{}", encoding="utf-8"); not_socket.write_text("not a socket", encoding="utf-8")
+    policy = ExecutionPolicyV2(image_digest="sha256:" + "a" * 64, runner_image_digest="sha256:" + "a" * 64, security_policy_hash=H, resource_policy_hash=H, seccomp_profile=seccomp, docker_socket=not_socket)
+    with pytest.raises(ValueError, match="docker_socket_invalid"):
+        policy.validate()
 
 
 def test_status_resolver_fails_closed_and_journal_requires_exact_binding(tmp_path: Path):

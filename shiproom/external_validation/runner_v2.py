@@ -18,6 +18,8 @@ import tempfile
 import time
 import threading
 import queue
+import re
+import stat
 from typing import Any
 
 from .identity import canonical_json
@@ -27,6 +29,25 @@ from .v2 import BackendLock, TransferLimits, parse_transfer, validate_artifact_m
 SUPERVISOR_UID = "65532:65532"
 PATIENT_UID = "65533:65533"
 SUPERVISOR_DIR = "/supervisor"
+_IMAGE_CONFIG = re.compile(r"^sha256:([0-9a-f]{64})$")
+_REGISTRY_DIGEST = re.compile(r"^[^\s@]+@sha256:([0-9a-f]{64})$")
+
+
+def immutable_image_config_digest(reference: str) -> str:
+    """Return the immutable Docker config ID from a digest reference.
+
+    Registry manifests use ``repository@sha256:...``.  A reviewed image built
+    directly on the isolated daemon has no registry manifest, so its local
+    Docker config ID (``sha256:<64hex>``) is the only non-mutable authority.
+    A tag can be an operational address only and is checked against this ID
+    through ``docker inspect`` before the container starts.
+    """
+    if not isinstance(reference, str):
+        raise ValueError("immutable_runner_image_required")
+    matched = _REGISTRY_DIGEST.fullmatch(reference) or _IMAGE_CONFIG.fullmatch(reference)
+    if not matched:
+        raise ValueError("immutable_runner_image_required")
+    return "sha256:" + matched.group(1)
 
 
 @dataclass(frozen=True)
@@ -36,6 +57,8 @@ class ExecutionPolicyV2:
     security_policy_hash: str
     resource_policy_hash: str
     seccomp_profile: Path
+    image_ref: str | None = None
+    docker_socket: Path | None = None
     cpus: float = 1.0
     memory: str = "1g"
     pids: int = 128
@@ -46,8 +69,13 @@ class ExecutionPolicyV2:
     grace_seconds: int = 5
 
     def validate(self) -> None:
-        if self.image_digest != self.runner_image_digest or not all("@sha256:" in value for value in (self.image_digest, self.runner_image_digest)):
+        if self.image_digest != self.runner_image_digest:
             raise ValueError("immutable_runner_image_required")
+        immutable_image_config_digest(self.image_digest)
+        if self.image_ref is not None and (not isinstance(self.image_ref, str) or not self.image_ref or any(char.isspace() for char in self.image_ref)):
+            raise ValueError("runner_image_reference_invalid")
+        if self.docker_socket is not None and (not self.docker_socket.is_absolute() or not self.docker_socket.exists() or not stat.S_ISSOCK(self.docker_socket.stat().st_mode)):
+            raise ValueError("docker_socket_invalid")
         if self.cpus <= 0 or self.pids < 2 or min(self.output_tmpfs_bytes, self.stdout_limit_bytes, self.stderr_limit_bytes, self.wall_seconds, self.grace_seconds) < 1:
             raise ValueError("execution_policy_invalid")
         if not self.seccomp_profile.is_file(): raise ValueError("seccomp_profile_missing")
@@ -63,19 +91,25 @@ def policy_hash(policy: ExecutionPolicyV2) -> str:
     })).hexdigest()
 
 
+def docker_cli(policy: ExecutionPolicyV2) -> list[str]:
+    """Build the Docker argument prefix without inheriting host environment."""
+    docker = docker_executable()
+    if not docker:
+        raise RuntimeError("docker_cli_unavailable")
+    return [docker, "--host", "unix://" + str(policy.docker_socket)] if policy.docker_socket is not None else [docker]
+
+
 def create_argv(policy: ExecutionPolicyV2, *, name: str, cidfile: Path, patient: Path, packet: Path, backend_label: str) -> list[str]:
     policy.validate()
-    docker = docker_executable()
-    if not docker: raise RuntimeError("docker_cli_unavailable")
     if not all(path.is_absolute() for path in (cidfile, patient, packet, policy.seccomp_profile)): raise ValueError("absolute_paths_required")
-    args = [docker, "create", "--name", name, "--cidfile", str(cidfile), "--pull=never", "--network=none", "--read-only",
+    args = [*docker_cli(policy), "create", "--name", name, "--cidfile", str(cidfile), "--pull=never", "--network=none", "--read-only",
             "--cap-drop=ALL", "--security-opt=no-new-privileges", "--security-opt", f"seccomp={policy.seccomp_profile}",
             "--user", SUPERVISOR_UID, "--cpus", str(policy.cpus), "--memory", policy.memory, "--memory-swap", policy.memory,
             "--pids-limit", str(policy.pids), "--restart=no", "--log-driver=none", "--label", f"shiproom.external_validation.backend={backend_label}",
             "--label", f"shiproom.external_validation.policy={policy_hash(policy)}",
             "--tmpfs", f"/tmp:rw,nosuid,nodev,noexec,size=16m", "--tmpfs", f"/output:rw,nosuid,nodev,noexec,size={policy.output_tmpfs_bytes}",
             "--mount", f"type=bind,src={patient},dst=/patient,readonly=true", "--mount", f"type=bind,src={packet},dst=/release,readonly=true",
-            policy.image_digest, f"{SUPERVISOR_DIR}/supervisor"]
+            policy.image_ref or policy.image_digest, f"{SUPERVISOR_DIR}/supervisor"]
     validate_create_argv(args)
     return args
 
@@ -92,7 +126,7 @@ def validate_create_argv(argv: list[str]) -> None:
 def effective_projection(inspect: dict[str, Any]) -> dict[str, Any]:
     host = inspect.get("HostConfig", {}); config = inspect.get("Config", {})
     return {
-        "image": config.get("Image"), "user": config.get("User"), "readonly": host.get("ReadonlyRootfs"), "network": host.get("NetworkMode"),
+        "image": config.get("Image"), "image_id": inspect.get("Image"), "user": config.get("User"), "readonly": host.get("ReadonlyRootfs"), "network": host.get("NetworkMode"),
         "cap_drop": sorted(host.get("CapDrop") or []), "cap_add": sorted(host.get("CapAdd") or []), "privileged": bool(host.get("Privileged")), "security": sorted(host.get("SecurityOpt") or []),
         "pid": host.get("PidMode"), "ipc": host.get("IpcMode"), "userns": host.get("UsernsMode"), "devices": host.get("Devices") or [],
         "memory": host.get("Memory"), "memory_swap": host.get("MemorySwap"), "pids": host.get("PidsLimit"),
@@ -110,7 +144,7 @@ def assert_effective_policy(projection: dict[str, Any], policy: ExecutionPolicyV
     mounts = {item["destination"]: item for item in projection["mounts"]}
     required_security = {"no-new-privileges"}
     security = " ".join(projection["security"])
-    if projection["image"] != policy.image_digest or projection["network"] != "none" or not projection["readonly"] or projection["user"] != SUPERVISOR_UID:
+    if projection["image_id"] != immutable_image_config_digest(policy.image_digest) or projection["network"] != "none" or not projection["readonly"] or projection["user"] != SUPERVISOR_UID:
         raise RuntimeError("effective_docker_policy_mismatch")
     if "ALL" not in projection["cap_drop"] or projection["cap_add"] or projection["privileged"] or not all(word in security for word in required_security) or "seccomp=" not in security:
         raise RuntimeError("effective_docker_policy_mismatch")
@@ -195,26 +229,27 @@ class DockerSupervisorV2:
         """Run one patient only after backend lock/effective-policy verification."""
         self.lock.acquire(self.backend, owner)
         create = create_argv(self.policy, name=name, cidfile=cidfile, patient=patient, packet=packet, backend_label=self.backend)
+        docker = docker_cli(self.policy)
         started = time.time(); cleanup: list[str] = []; container_id = ""; outcome: dict[str, Any] | None = None
         try:
             result = _run(create)
             if result.returncode: raise RuntimeError("docker_create_failed")
             container_id = cidfile.read_text(encoding="utf-8").strip()
-            inspect = _run([docker_executable(), "inspect", container_id])
+            inspect = _run([*docker, "inspect", container_id])
             if inspect.returncode: raise RuntimeError("docker_inspect_failed")
             projection = effective_projection(json.loads(inspect.stdout)[0])
             assert_effective_policy(projection, self.policy, patient, packet, self.backend)
-            start = _run([docker_executable(), "start", container_id])
+            start = _run([*docker, "start", container_id])
             if start.returncode: raise RuntimeError("docker_start_failed")
-            patient_result = _bounded_exec([docker_executable(), "exec", "--user", PATIENT_UID, "--workdir", "/patient", container_id, "/gateway/patient-launcher", *command], self.policy.stdout_limit_bytes, self.policy.stderr_limit_bytes, self.policy.wall_seconds)
+            patient_result = _bounded_exec([*docker, "exec", "--user", PATIENT_UID, "--workdir", "/patient", container_id, "/gateway/patient-launcher", *command], self.policy.stdout_limit_bytes, self.policy.stderr_limit_bytes, self.policy.wall_seconds)
             # The reaper is a separate exec with no patient-inherited descriptor.
-            reaper = _run([docker_executable(), "exec", "--user", PATIENT_UID, container_id, "/gateway/patient-reaper", PATIENT_UID], timeout=self.policy.grace_seconds + 10)
-            probe = _run([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence_probe.py", PATIENT_UID.split(":")[0]], timeout=15)
+            reaper = _run([*docker, "exec", "--user", PATIENT_UID, container_id, "/gateway/patient-reaper", PATIENT_UID], timeout=self.policy.grace_seconds + 10)
+            probe = _run([*docker, "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence_probe.py", PATIENT_UID.split(":")[0]], timeout=15)
             if reaper.returncode or probe.returncode:
                 patient_result["termination"] = "artifact_transfer_failed"
                 outcome = {**patient_result, "container_id": container_id, "evidence_eligible": False, "quiescence": False, "reaper_code": reaper.returncode, "probe_code": probe.returncode, "reaper_stderr": reaper.stderr, "probe_stderr": probe.stderr}
             else:
-                transfer = _bounded_exec([docker_executable(), "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], self.policy.output_tmpfs_bytes * 2, 64 * 1024, 30)
+                transfer = _bounded_exec([*docker, "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/transfer_helper.py"], self.policy.output_tmpfs_bytes * 2, 64 * 1024, 30)
                 if transfer["termination"] != "completed": raise RuntimeError("transfer_helper_failed:" + transfer["termination"])
                 raw = transfer["stdout"]
                 manifest, archive = parse_transfer(__import__("io").BytesIO(raw), TransferLimits(self.policy.output_tmpfs_bytes, 4096, self.policy.output_tmpfs_bytes * 2))
@@ -224,16 +259,16 @@ class DockerSupervisorV2:
         finally:
             absent = False
             if container_id:
-                for argv, label in (([docker_executable(), "stop", "--time", str(self.policy.grace_seconds), container_id], "stop"), ([docker_executable(), "kill", container_id], "kill"), ([docker_executable(), "rm", "--force", container_id], "remove")):
+                for argv, label in (([*docker, "stop", "--time", str(self.policy.grace_seconds), container_id], "stop"), ([*docker, "kill", container_id], "kill"), ([*docker, "rm", "--force", container_id], "remove")):
                     try: _run(argv, timeout=self.policy.grace_seconds + 10); cleanup.append(label)
                     except Exception: cleanup.append(label + "_failed")
                 try:
-                    absent = _run([docker_executable(), "inspect", container_id], timeout=10).returncode != 0
+                    absent = _run([*docker, "inspect", container_id], timeout=10).returncode != 0
                 except Exception:
                     absent = False
                 # Scope the sweep to this backend label; never prune unrelated containers.
                 try:
-                    listed = _run([docker_executable(), "ps", "-aq", "--filter", f"label=shiproom.external_validation.backend={self.backend}"], timeout=10)
+                    listed = _run([*docker, "ps", "-aq", "--filter", f"label=shiproom.external_validation.backend={self.backend}"], timeout=10)
                     residual = [line for line in listed.stdout.splitlines() if line.strip()] if listed.returncode == 0 else [container_id]
                     absent = absent and not residual
                 except Exception:
