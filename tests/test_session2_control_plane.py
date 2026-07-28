@@ -310,6 +310,7 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     result = screen.seal_prequalification_exclusion(tmp_path, candidate_id="pypa/hatch#1->pypa/hatch#2", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="NO_AUTHORITATIVE_EXECUTABLE_TARGET_CONTRACT", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
     assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
     record = __import__("json").loads(next(store.glob("*.screen.json")).read_text())
+    assert record["schema_id"] == "external_validation.session2_prequalification_screen.v1"
     assert record["supervisor_command"]["stdout"]["bytes"] > 0
 
 

@@ -211,7 +211,13 @@ def seal_prequalification_exclusion(
     stdout_size = (directory / (stdout_hash[7:] + ".stdout")).stat().st_size
     stderr_size = (directory / (stderr_hash[7:] + ".stderr")).stat().st_size
     record = {
-        "schema_id": "external_validation.session2_prequalification_screen.v2",
+        # v2 is deliberately reserved for a runtime exclusion whose two
+        # supervisor records are cross-bound below.  Source-only gates remain
+        # the compact v1 contract; otherwise a fixed-twin exclusion could be
+        # mistaken for an unbound runtime assertion by independent readers.
+        "schema_id": ("external_validation.session2_prequalification_screen.v2"
+                      if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH"
+                      else "external_validation.session2_prequalification_screen.v1"),
         "schema_version": "1",
         "candidate_id": candidate_id,
         "candidate_index_hash": candidate_index_hash,
