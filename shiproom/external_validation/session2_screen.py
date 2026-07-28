@@ -79,7 +79,9 @@ def _write_once(directory: Path, suffix: str, raw: bytes) -> str:
     else:
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(raw); handle.flush(); os.fsync(handle.fileno())
-        os.chown(path, 0, 0); os.chmod(path, 0o400)
+        if hasattr(os, "chown"):
+            os.chown(path, 0, 0)
+        os.chmod(path, 0o400)
     return digest
 
 
