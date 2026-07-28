@@ -134,6 +134,20 @@ def _select_wheels(manifest: dict[str, Any], *, platform_tag: str) -> list[dict[
     return selected
 
 
+def _unsupported_packages(manifest: dict[str, Any], *, platform_tag: str) -> list[str]:
+    packages = manifest.get("packages")
+    if not isinstance(packages, list):
+        _fail("session2_environment_requirements_manifest_invalid")
+    result: list[str] = []
+    for package in packages:
+        artifacts = package.get("artifacts") if isinstance(package, dict) else None
+        if not isinstance(package, dict) or not isinstance(package.get("name"), str) or not isinstance(artifacts, list):
+            _fail("session2_environment_requirements_manifest_invalid")
+        if not any(isinstance(item, dict) and isinstance(item.get("url"), str) and _wheel_score(item["url"], platform_tag) >= 0 for item in artifacts):
+            result.append(package["name"])
+    return sorted(result)
+
+
 def _download_wheelhouse(context: Path, manifest: dict[str, Any], *, platform_tag: str) -> list[dict[str, str]]:
     wheelhouse = context / "wheelhouse"; wheelhouse.mkdir(mode=0o700)
     downloaded: list[dict[str, str]] = []
@@ -203,6 +217,11 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     export = export_uv_requirements(lock_bytes, project_name=project_name, extras=set(extras), groups=set(), additional_packages=set(additional_packages))
     base_digest = _inspect_image(base_image_ref)
     platform_tag = _runtime_platform(base_digest)
+    unsupported = _unsupported_packages(export.manifest, platform_tag=platform_tag)
+    if unsupported:
+        failure = {"schema_id": "external_validation.session2_environment_build_failure.v1", "schema_version": "1", "implementation_commit": implementation_commit, "implementation_tree": implementation_tree, "failure_stage": "LOCKED_WHEEL_COMPATIBILITY", "base_image_ref": base_image_ref, "base_image_digest": base_digest, "wheel_platform_tag": platform_tag, "project_name": project_name, "lock_hash": _sha(lock_bytes), "requirements_manifest_hash": requirements_manifest_hash(export), "unsupported_packages": unsupported, "patient_network_policy": "none"}
+        _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
+        raise EnvironmentBuildError("session2_environment_wheel_unavailable:" + digest)
     build_identity = sha256(canonical_json({"project": project_name, "lock": _sha(lock_bytes), "requirements": export.manifest["requirements_sha256"], "base": base_digest})).hexdigest()
     context = BUILD_ROOT / build_identity
     if context.exists():

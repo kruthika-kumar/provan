@@ -24,7 +24,7 @@ from shiproom.external_validation.session2_selection import (
     validate_retrieval_receipt)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
-from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels
+from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages
 
 
 def fresh(**changes):
@@ -430,3 +430,4 @@ def test_environment_wheel_selection_rejects_sdists_and_prefers_exact_cp312():
     assert _select_wheels(items, platform_tag="manylinux_2_17_x86_64")[0]["sha256"] == "sha256:" + "b" * 64
     with pytest.raises(Exception, match="session2_environment_wheel_unavailable"):
         _select_wheels({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:1]}]}, platform_tag="musllinux_1_2_x86_64")
+    assert _unsupported_packages({"packages":[{"name":"demo","version":"1","artifacts":items["packages"][0]["artifacts"][:2]}]}, platform_tag="musllinux_1_2_x86_64") == ["demo"]
