@@ -335,8 +335,10 @@ def test_safe_materialization_rejects_archived_symlink_entries(tmp_path: Path):
     evil = subprocess.run(["git", "commit-tree", tree, "-p", parent, "-m", "symlink"], cwd=work, check=True, capture_output=True, text=True).stdout.strip()
     git("update-ref", "refs/heads/evil", evil)
     subprocess.run(["git", "clone", "--bare", str(work), str(mirror)], check=True, capture_output=True, text=True)
+    target = tmp_path / "export"
     with pytest.raises(ValueError, match="unsafe_patient_tree_entry"):
-        materialize_snapshot(mirror, evil, tmp_path / "export")
+        materialize_snapshot(mirror, evil, target)
+    assert not target.exists()
 
 
 def test_public_synthetic_proof_receipt_is_schema_and_validator_backed():

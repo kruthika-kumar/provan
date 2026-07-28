@@ -19,14 +19,25 @@ def materialize_snapshot(mirror: Path, commit_sha: str, destination: Path) -> Pa
     if resolved != commit_sha: raise ValueError("immutable_checkout_mismatch")
     if any(line.startswith("160000 ") for line in _git(mirror, "ls-tree", "-r", commit_sha).splitlines()): raise ValueError("submodules_not_qualified")
     if destination.exists(): raise FileExistsError("patient_snapshot_destination_exists")
-    destination.mkdir(parents=True)
     env=os.environ.copy(); env.update({"GIT_CONFIG_NOSYSTEM":"1","GIT_CONFIG_GLOBAL":os.devnull,"GIT_LFS_SKIP_SMUDGE":"1","GIT_CONFIG_COUNT":"3","GIT_CONFIG_KEY_0":"core.hooksPath","GIT_CONFIG_VALUE_0":os.devnull,"GIT_CONFIG_KEY_1":"submodule.recurse","GIT_CONFIG_VALUE_1":"false","GIT_CONFIG_KEY_2":"filter.lfs.smudge","GIT_CONFIG_VALUE_2":"cat"})
     archive = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "archive", "--format=tar", commit_sha], cwd=mirror, capture_output=True, check=True, env=env).stdout
     import tarfile, io
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        for member in tar.getmembers():
-            if member.issym() or member.islnk() or not member.isfile(): raise ValueError("unsafe_patient_tree_entry")
+        members = tar.getmembers()
+        # Git archive legitimately emits directories.  Validate the entire
+        # member set before creating a staging tree, so a malformed archive
+        # cannot leave a partially materialized patient snapshot behind.
+        for member in members:
+            if member.issym() or member.islnk() or (not member.isfile() and not member.isdir()):
+                raise ValueError("unsafe_patient_tree_entry")
+            canonical_safe_path(destination, destination/member.name)
+        destination.mkdir(parents=True)
+        for member in members:
+            if member.isdir():
+                continue
             target=canonical_safe_path(destination, destination/member.name)
             target.parent.mkdir(parents=True,exist_ok=True)
-            with tar.extractfile(member) as source, target.open("wb") as output: shutil.copyfileobj(source,output)
+            source = tar.extractfile(member)
+            if source is None: raise ValueError("archive_member_missing")
+            with source, target.open("xb") as output: shutil.copyfileobj(source,output)
     return destination
