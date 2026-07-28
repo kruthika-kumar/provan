@@ -37,6 +37,7 @@ _REASONS = {
 }
 _RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
 _FIXED_TWIN_RESOLUTION_REASON = "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"
+_RUNNER_RESOLUTION_REASON = "QUALIFIED_RUNNER_COMPATIBILITY_SUPERSEDED"
 
 
 def _fail(code: str) -> None:
@@ -160,7 +161,7 @@ def seal_prequalification_resolution(
     predecessor_reason = predecessor.get("reason")
     if predecessor.get("candidate_id") != candidate_id or predecessor_reason not in {"UNQUALIFIED_LINUX_CONTAINER_PATH", "FIXED_TWIN_NON_MINIMAL"}:
         _fail("session2_screen_resolution_predecessor_invalid")
-    reason = _RESOLUTION_REASON if predecessor_reason == "UNQUALIFIED_LINUX_CONTAINER_PATH" else _FIXED_TWIN_RESOLUTION_REASON
+    reason = _RUNNER_RESOLUTION_REASON if predecessor_reason == "UNQUALIFIED_LINUX_CONTAINER_PATH" else _FIXED_TWIN_RESOLUTION_REASON
     record = {
         "schema_id": "external_validation.session2_prequalification_resolution.v1",
         "schema_version": "1",

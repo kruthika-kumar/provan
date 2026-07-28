@@ -181,7 +181,7 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         required = {"schema_id", "schema_version", "candidate_id", "supersedes_screen_hash", "prior_candidate_index_hash", "reason", "resolution", "implementation_commit", "created_at"}
         candidate = value.get("candidate_id") if isinstance(value, dict) else None
         if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_prequalification_resolution.v1"
-                or value.get("schema_version") != "1" or value.get("reason") not in {"MATERIALIZATION_POLICY_NARROWING_CORRECTED", "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"}
+                or value.get("schema_version") != "1" or value.get("reason") not in {"MATERIALIZATION_POLICY_NARROWING_CORRECTED", "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED", "QUALIFIED_RUNNER_COMPATIBILITY_SUPERSEDED"}
                 or value.get("resolution") != "REOPEN_FOR_REQUALIFICATION" or candidate not in screens_by_candidate
                 or value.get("supersedes_screen_hash") not in screens_by_hash
                 or screens_by_hash[value.get("supersedes_screen_hash")].get("candidate_id") != candidate
