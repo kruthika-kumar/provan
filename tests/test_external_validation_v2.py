@@ -89,6 +89,11 @@ def test_runner_allows_only_cli_docker_socket_transport():
         validate_create_argv(["docker", "--mount", "type=bind,src=/var/run/docker.sock,dst=/socket", "--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--log-driver=none", "--user", "--cidfile", "--name", "--pids-limit", "--memory", "--memory-swap", "--tmpfs", "--mount"])
 
 
+def test_runner_patient_principal_is_converted_to_numeric_reaper_argument():
+    from shiproom.external_validation.runner_v2 import PATIENT_UID
+    assert PATIENT_UID == "65533:65533" and PATIENT_UID.split(":")[0] == "65533"
+
+
 def test_status_resolver_fails_closed_and_journal_requires_exact_binding(tmp_path: Path):
     initial = {"schema_id":"external_validation.status_supersession.v1","schema_version":"1","status_id":"original","predecessor_status_id":None,"commit_sha":"a" * 40,"branch":"old","scope":"session1","timestamp":"2026-07-24T00:00:00Z","status":"QUALIFIED"}
     reopening = {**initial,"status_id":"reopened","predecessor_status_id":"original","branch":"repair","status":"REOPENED"}

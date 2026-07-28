@@ -251,7 +251,7 @@ class DockerSupervisorV2:
             if start.returncode: raise RuntimeError("docker_start_failed")
             patient_result = _bounded_exec([*docker, "exec", "--user", PATIENT_UID, "--workdir", "/patient", container_id, "/gateway/patient-launcher", *command], self.policy.stdout_limit_bytes, self.policy.stderr_limit_bytes, self.policy.wall_seconds)
             # The reaper is a separate exec with no patient-inherited descriptor.
-            reaper = _run([*docker, "exec", "--user", PATIENT_UID, container_id, "/gateway/patient-reaper", PATIENT_UID], timeout=self.policy.grace_seconds + 10)
+            reaper = _run([*docker, "exec", "--user", PATIENT_UID, container_id, "/gateway/patient-reaper", PATIENT_UID.split(":")[0]], timeout=self.policy.grace_seconds + 10)
             probe = _run([*docker, "exec", "--user", SUPERVISOR_UID, container_id, f"{SUPERVISOR_DIR}/quiescence_probe.py", PATIENT_UID.split(":")[0]], timeout=15)
             if reaper.returncode or probe.returncode:
                 patient_result["termination"] = "artifact_transfer_failed"
