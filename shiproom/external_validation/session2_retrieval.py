@@ -39,6 +39,8 @@ _NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next"')
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 _API = "https://api.github.com/search/issues"
 _PARSER_ID = "session2_github_issue_retrieval.v1"
+_OBJECT_PARSER_ID = "session2_github_object_retrieval.v1"
+_REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 
 def _fail(code: str) -> None:
@@ -211,15 +213,58 @@ def retrieve_github_issues(
     return {**receipt, "receipt_hash": "sha256:" + receipt_hash}
 
 
+def retrieve_github_object(repository_root: Path, *, repository: str, object_kind: str, number: int, timeout_seconds: int = 30) -> dict[str, Any]:
+    """Seal exact public issue/PR metadata by its non-user-configurable API URL."""
+    if not _REPOSITORY.fullmatch(repository) or object_kind not in {"issue", "pull_request"} or not isinstance(number, int) or number < 1 or not 1 <= timeout_seconds <= 60:
+        _fail("session2_retrieval_object_input_invalid")
+    raw_store = _assert_linux_private_operation(repository_root)
+    endpoint = "issues" if object_kind == "issue" else "pulls"
+    request = Request(f"https://api.github.com/repos/{repository}/{endpoint}/{number}", headers={"Accept": "application/vnd.github+json", "User-Agent": "shiproom-session2-retrieval/1"})
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:  # nosec B310: fixed HTTPS GitHub API
+            raw = response.read()
+    except HTTPError as exc:
+        raise RetrievalError("session2_retrieval_http_" + str(exc.code)) from exc
+    except URLError as exc:
+        raise RetrievalError("session2_retrieval_network_failure") from exc
+    digest = _sha(raw)
+    _write_once(raw_store / (digest[7:] + ".json"), raw)
+    try:
+        document = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RetrievalError("session2_retrieval_response_invalid") from exc
+    if not isinstance(document, dict) or document.get("number") != number or document.get("repository_url") != "https://api.github.com/repos/" + repository:
+        _fail("session2_retrieval_object_identity_invalid")
+    if object_kind == "pull_request" and not isinstance(document.get("merge_commit_sha"), str):
+        _fail("session2_retrieval_object_kind_invalid")
+    if object_kind == "issue" and "pull_request" in document:
+        _fail("session2_retrieval_object_kind_invalid")
+    receipt = {"schema_id": "external_validation.session2_github_object_receipt.v1", "schema_version": "1", "repository": repository, "object_kind": object_kind, "number": number, "retrieved_at": _utc(), "parser_id": _OBJECT_PARSER_ID, "raw_response_hash": digest}
+    payload = canonical_json(receipt); receipt_hash = sha256(payload).hexdigest()
+    _write_once(raw_store.parent / (receipt_hash + ".object-receipt.json"), payload)
+    return {**receipt, "receipt_hash": "sha256:" + receipt_hash}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Seal primary GitHub issue retrieval for Session 2.")
     parser.add_argument("--repository-root", required=True)
-    parser.add_argument("--query", required=True)
-    parser.add_argument("--filters-json", required=True)
+    parser.add_argument("--query")
+    parser.add_argument("--filters-json")
     parser.add_argument("--filters-base64", help="URL-safe base64 canonical JSON; avoids WSL argument re-parsing.")
     parser.add_argument("--max-pages", type=int, default=10)
+    parser.add_argument("--object-repository")
+    parser.add_argument("--object-kind", choices=("issue", "pull_request"))
+    parser.add_argument("--object-number", type=int)
     parsed = parser.parse_args(argv)
     try:
+        if parsed.object_repository or parsed.object_kind or parsed.object_number:
+            if not (parsed.object_repository and parsed.object_kind and parsed.object_number):
+                _fail("session2_retrieval_object_input_invalid")
+            result = retrieve_github_object(Path(parsed.repository_root), repository=parsed.object_repository, object_kind=parsed.object_kind, number=parsed.object_number)
+            print(json.dumps({"receipt_hash": result["receipt_hash"], "raw_response_hash": result["raw_response_hash"]}, sort_keys=True, separators=(",", ":")))
+            return 0
+        if not parsed.query or parsed.filters_json is None:
+            _fail("session2_retrieval_query_invalid")
         if parsed.filters_base64:
             if parsed.filters_json != "-":
                 _fail("session2_retrieval_filters_ambiguous")
