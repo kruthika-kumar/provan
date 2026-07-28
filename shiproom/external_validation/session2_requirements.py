@@ -18,6 +18,7 @@ class RequirementsAuthorityError(ValueError):
 
 _PIN = re.compile(r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,.-]+\])?==[^\s;]+(?:\s|\\|$)")
 _HASH = re.compile(r"--hash=sha256:[0-9a-f]{64}")
+_ENTRY = re.compile(r"^([A-Za-z0-9_.-]+)(?:\[[A-Za-z0-9_,.-]+\])?==([^\s;]+)")
 
 
 def export_hash_pinned_requirements(raw: bytes, *, source_path: str) -> tuple[bytes, dict[str, object]]:
@@ -57,3 +58,23 @@ def export_hash_pinned_requirements(raw: bytes, *, source_path: str) -> tuple[by
 
 def requirements_authority_hash(manifest: dict[str, object]) -> str:
     return "sha256:" + sha256(canonical_json(manifest)).hexdigest()
+
+
+def pinned_requirement_records(raw: bytes, *, source_path: str) -> list[dict[str, object]]:
+    """Expose only exact name/version/hash tuples for supervised fetching."""
+    export_hash_pinned_requirements(raw, source_path=source_path)
+    records: list[dict[str, object]] = []
+    current = ""
+    for line in raw.decode("utf-8").splitlines():
+        value = line.strip()
+        if not value or value.startswith("#"):
+            continue
+        current += " " + value
+        if value.endswith("\\"):
+            continue
+        match = _ENTRY.match(current.strip())
+        if match is None:  # established by the parser above
+            raise RequirementsAuthorityError("session2_requirements_authority_invalid")
+        records.append({"name": match.group(1).lower().replace("_", "-"), "version": match.group(2), "hashes": sorted(set(_HASH.findall(current)))})
+        current = ""
+    return records

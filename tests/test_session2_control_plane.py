@@ -27,7 +27,7 @@ from shiproom.external_validation.session2_selection import (
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
-from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements
+from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements, pinned_requirement_records
 
 
 def fresh(**changes):
@@ -547,6 +547,7 @@ def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
     raw = b"demo==1.2 \\\n+    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
     exported, manifest = export_hash_pinned_requirements(raw, source_path="src/backend/requirements.txt")
     assert exported == raw and manifest["requirement_count"] == 1
+    assert pinned_requirement_records(raw, source_path="src/backend/requirements.txt") == [{"name":"demo", "version":"1.2", "hashes":["--hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]}]
     for invalid in (b"demo>=1\n", b"-r other.txt\n", b"demo==1 --hash=sha256:ABC\n"):
         with pytest.raises(RequirementsAuthorityError):
             export_hash_pinned_requirements(invalid, source_path="requirements.txt")
