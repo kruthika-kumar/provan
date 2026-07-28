@@ -317,6 +317,7 @@ def test_prequalification_screen_requires_production_execution_evidence_for_runt
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
     monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    monkeypatch.setattr(screen, "_validate_runtime_evidence", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(screen, "_run_git", lambda *_args: {"exit_code": 0, "stdout": b"", "stderr": b"", "argv": [], "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z"})
     common = dict(candidate_id="pypa/hatch#1->pypa/hatch#2", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="UNQUALIFIED_LINUX_CONTAINER_PATH", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
     with pytest.raises(screen.CandidateScreenError, match="session2_screen_execution_evidence_required"):
@@ -326,6 +327,30 @@ def test_prequalification_screen_requires_production_execution_evidence_for_runt
     assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
     assert record["schema_id"] == "external_validation.session2_prequalification_screen.v2"
     assert record["materialization_hash"] == "sha256:" + "a1" * 32
+
+
+def test_runtime_screen_evidence_must_bind_the_exact_materialization(tmp_path: Path):
+    from shiproom.external_validation import session2_screen as screen
+    root = tmp_path / "external"; store = root / "session2" / "cases" / "screens"
+    materializations = root / "session2" / "cases" / "materializations"
+    receipts = root / "session2" / "receipts" / "environments"
+    store.mkdir(parents=True); materializations.mkdir(); receipts.mkdir(parents=True)
+    candidate = "acme/project#7->acme/project#8"; fixed = "b" * 40
+    materialization = {"schema_id":"external_validation.session2_source_materialization.v1", "schema_version":"1", "candidate_id":candidate, "commit_sha":fixed}
+    materialization_raw = canonical_json(materialization)
+    materialization_hash = "sha256:" + __import__("hashlib").sha256(materialization_raw).hexdigest()
+    (materializations / (materialization_hash[7:] + ".materialization.json")).write_bytes(materialization_raw)
+    failure = {"schema_id":"external_validation.session2_environment_build_failure.v1", "schema_version":"1", "materialization_hash":materialization_hash, "failure_stage":"LOCKED_WHEEL_COMPATIBILITY"}
+    failure_raw = canonical_json(failure)
+    failure_hash = "sha256:" + __import__("hashlib").sha256(failure_raw).hexdigest()
+    (receipts / (failure_hash[7:] + ".environment-build-failure.json")).write_bytes(failure_raw)
+    screen._validate_runtime_evidence(store, candidate_id=candidate, fixed_sha=fixed,
+        materialization_hash=materialization_hash, execution_evidence_hash=failure_hash)
+    failure["materialization_hash"] = "sha256:" + "a" * 64
+    (receipts / (failure_hash[7:] + ".environment-build-failure.json")).write_bytes(canonical_json(failure))
+    with pytest.raises(screen.CandidateScreenError, match="session2_screen_execution_receipt_invalid"):
+        screen._validate_runtime_evidence(store, candidate_id=candidate, fixed_sha=fixed,
+            materialization_hash=materialization_hash, execution_evidence_hash=failure_hash)
 
 
 def test_candidate_compiler_rejects_unbound_v1_runtime_screen(tmp_path: Path, monkeypatch):

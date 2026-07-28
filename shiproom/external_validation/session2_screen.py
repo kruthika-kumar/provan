@@ -88,6 +88,54 @@ def _write_once(directory: Path, suffix: str, raw: bytes) -> str:
     return digest
 
 
+def _canonical_record(path: Path, expected_hash: str, *, missing: str, invalid: str) -> dict[str, Any]:
+    """Load one sealed private record without treating a filename as authority."""
+    if not path.is_file() or _is_reparse(path):
+        _fail(missing)
+    try:
+        raw = path.read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CandidateScreenError(invalid) from exc
+    if _sha(raw) != expected_hash or not isinstance(value, dict) or canonical_json(value) != raw:
+        _fail(invalid)
+    return value
+
+
+def _validate_runtime_evidence(
+    directory: Path, *, candidate_id: str, fixed_sha: str,
+    materialization_hash: str, execution_evidence_hash: str,
+) -> None:
+    """Bind a runtime exclusion to the exact staged snapshot and build result.
+
+    A caller-supplied pair of hashes is deliberately insufficient: both sealed
+    records must be canonical, addressable from the Session 2 root, and agree
+    on the same candidate/snapshot.  This keeps an old build failure from
+    excluding a later corrected materialization.
+    """
+    root = directory.parents[2]
+    materialization = _canonical_record(
+        root / "session2" / "cases" / "materializations" / (materialization_hash[7:] + ".materialization.json"),
+        materialization_hash,
+        missing="session2_screen_execution_materialization_missing",
+        invalid="session2_screen_execution_materialization_invalid",
+    )
+    if (materialization.get("schema_id") != "external_validation.session2_source_materialization.v1"
+            or materialization.get("candidate_id") != candidate_id
+            or materialization.get("commit_sha") != fixed_sha):
+        _fail("session2_screen_execution_materialization_mismatch")
+    execution = _canonical_record(
+        root / "session2" / "receipts" / "environments" / (execution_evidence_hash[7:] + ".environment-build-failure.json"),
+        execution_evidence_hash,
+        missing="session2_screen_execution_receipt_missing",
+        invalid="session2_screen_execution_receipt_invalid",
+    )
+    if (execution.get("schema_id") != "external_validation.session2_environment_build_failure.v1"
+            or execution.get("materialization_hash") != materialization_hash
+            or not isinstance(execution.get("failure_stage"), str)):
+        _fail("session2_screen_execution_receipt_mismatch")
+
+
 def seal_prequalification_resolution(
     repository_root: Path, *, candidate_id: str, supersedes_screen_hash: str,
     prior_candidate_index_hash: str, implementation_commit: str,
@@ -150,6 +198,9 @@ def seal_prequalification_exclusion(
         _fail("session2_screen_execution_evidence_unexpected")
     if not mirror.is_dir() or _is_reparse(mirror): _fail("session2_screen_mirror_invalid")
     directory = _root(repository_root)
+    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+        _validate_runtime_evidence(directory, candidate_id=candidate_id, fixed_sha=fixed_sha,
+            materialization_hash=materialization_hash or "", execution_evidence_hash=execution_evidence_hash or "")
     for sha in (buggy_sha, fixed_sha):
         check = _run_git(mirror, "cat-file", "-e", sha + "^{commit}")
         if check["exit_code"] != 0: _fail("session2_screen_snapshot_missing")
