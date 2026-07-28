@@ -75,10 +75,11 @@ def _write_blob(directory: Path, suffix: str, raw: bytes) -> str:
 
 
 def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: str, head_sha: str,
-                 source_receipts: list[str], attempt_id: str = "initial") -> dict[str,str]:
+                 source_receipts: list[str], attempt_id: str = "initial", fetch_timeout_seconds: int = 180) -> dict[str,str]:
     if (not candidate_id or not _SLUG.fullmatch(repository) or not _SHA.fullmatch(base_sha) or not _SHA.fullmatch(head_sha)
             or base_sha == head_sha or len(source_receipts) != 2 or any(not re.fullmatch(r"sha256:[0-9a-f]{64}", x) for x in source_receipts)
-            or not _ATTEMPT.fullmatch(attempt_id)):
+            or not _ATTEMPT.fullmatch(attempt_id) or not isinstance(fetch_timeout_seconds, int)
+            or not 30 <= fetch_timeout_seconds <= 600):
         _fail("session2_mirror_input_invalid")
     store = _store(repo); name = re.sub(r"[^a-z0-9]+", "-", candidate_id.lower()).strip("-")
     if attempt_id != "initial":
@@ -94,14 +95,14 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
                    "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", init.stdout), "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", init.stderr)}
         raise MirrorAcquisitionError("session2_mirror_init_failed:" + _write_once(store, canonical_json(failure)))
     try:
-        fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=180)
+        fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=fetch_timeout_seconds)
     except subprocess.TimeoutExpired as exc:
         completed = _utc()
         stdout = exc.stdout if isinstance(exc.stdout, bytes) else b""
         stderr = exc.stderr if isinstance(exc.stderr, bytes) else b""
         failure = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate_id,
                    "repository":repository, "base_sha":base_sha, "head_sha":head_sha, "attempt_id":attempt_id,
-                   "stage":"EXACT_FETCH", "outcome":"TIMED_OUT", "started_at":started, "completed_at":completed,
+                   "stage":"EXACT_FETCH", "outcome":"TIMED_OUT", "fetch_timeout_seconds":fetch_timeout_seconds, "started_at":started, "completed_at":completed,
                    "partial_mirror_path":"supervisor_staging_only", "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", stdout),
                    "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", stderr)}
         raise MirrorAcquisitionError("session2_mirror_fetch_timed_out:" + _write_once(store, canonical_json(failure))) from exc
@@ -109,7 +110,7 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
     if fetch.returncode:
         failure = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate_id,
                    "repository":repository, "base_sha":base_sha, "head_sha":head_sha, "attempt_id":attempt_id,
-                   "stage":"EXACT_FETCH", "outcome":"FAILED", "started_at":started, "completed_at":completed,
+                   "stage":"EXACT_FETCH", "outcome":"FAILED", "fetch_timeout_seconds":fetch_timeout_seconds, "started_at":started, "completed_at":completed,
                    "partial_mirror_path":"supervisor_staging_only", "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", fetch.stdout),
                    "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", fetch.stderr)}
         raise MirrorAcquisitionError("session2_mirror_fetch_failed:" + _write_once(store, canonical_json(failure)))
@@ -120,13 +121,13 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
         tree = _run("-C", str(target), "rev-parse", "--verify", commit + "^{tree}", timeout=30)
         if tree.returncode or not _SHA.fullmatch(tree.stdout.decode("ascii","ignore").strip()): _fail("session2_mirror_tree_verification_failed")
         verified.append({"commit":commit,"tree":tree.stdout.decode("ascii").strip()})
-    record={"schema_id":"external_validation.session2_source_mirror_receipt.v1","schema_version":"1","candidate_id":candidate_id,"repository":repository,"base_sha":base_sha,"head_sha":head_sha,"source_object_receipt_hashes":sorted(source_receipts),"remote":"https://github.com/"+repository+".git","fetch_policy":"bare_exact_commit_no_tags_no_submodules.v1","verified_commits":verified,"started_at":started,"completed_at":completed,"fetch_stdout_hash":_hash(fetch.stdout),"fetch_stderr_hash":_hash(fetch.stderr)}
+    record={"schema_id":"external_validation.session2_source_mirror_receipt.v1","schema_version":"1","candidate_id":candidate_id,"repository":repository,"base_sha":base_sha,"head_sha":head_sha,"source_object_receipt_hashes":sorted(source_receipts),"remote":"https://github.com/"+repository+".git","fetch_policy":"bare_exact_commit_no_tags_no_submodules.v1","fetch_timeout_seconds":fetch_timeout_seconds,"verified_commits":verified,"started_at":started,"completed_at":completed,"fetch_stdout_hash":_hash(fetch.stdout),"fetch_stderr_hash":_hash(fetch.stderr)}
     return {"mirror_path":str(target),"mirror_receipt_hash":_write_once(store,canonical_json(record))}
 
 
 def main() -> int:
-    p=argparse.ArgumentParser(); p.add_argument("--repository-root",type=Path,required=True); p.add_argument("--candidate-id",required=True); p.add_argument("--repository",required=True); p.add_argument("--base-sha",required=True); p.add_argument("--head-sha",required=True); p.add_argument("--source-object-receipt-hash",action="append",required=True); p.add_argument("--attempt-id", default="initial"); a=p.parse_args()
-    try: print(json.dumps(acquire_pair(a.repository_root,candidate_id=a.candidate_id,repository=a.repository,base_sha=a.base_sha,head_sha=a.head_sha,source_receipts=a.source_object_receipt_hash,attempt_id=a.attempt_id),sort_keys=True))
+    p=argparse.ArgumentParser(); p.add_argument("--repository-root",type=Path,required=True); p.add_argument("--candidate-id",required=True); p.add_argument("--repository",required=True); p.add_argument("--base-sha",required=True); p.add_argument("--head-sha",required=True); p.add_argument("--source-object-receipt-hash",action="append",required=True); p.add_argument("--attempt-id", default="initial"); p.add_argument("--fetch-timeout-seconds", type=int, default=180); a=p.parse_args()
+    try: print(json.dumps(acquire_pair(a.repository_root,candidate_id=a.candidate_id,repository=a.repository,base_sha=a.base_sha,head_sha=a.head_sha,source_receipts=a.source_object_receipt_hash,attempt_id=a.attempt_id,fetch_timeout_seconds=a.fetch_timeout_seconds),sort_keys=True))
     except MirrorAcquisitionError as exc: print(str(exc)); return 2
     return 0
 
