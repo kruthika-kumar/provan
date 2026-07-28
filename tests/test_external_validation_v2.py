@@ -17,7 +17,7 @@ from shiproom.external_validation.v2 import (
 from shiproom.external_validation.scheduler import RunScheduler
 from shiproom.external_validation.proof_views import public_doctor_view, sanitize_proof
 from shiproom.external_validation.status import resolve_status
-from shiproom.external_validation.runner_v2 import ExecutionPolicyV2, immutable_image_config_digest
+from shiproom.external_validation.runner_v2 import ExecutionPolicyV2, immutable_image_config_digest, validate_create_argv
 
 H = "sha256:" + "a" * 64
 
@@ -78,6 +78,15 @@ def test_runner_rejects_non_socket_custom_daemon_path(tmp_path: Path):
     policy = ExecutionPolicyV2(image_digest="sha256:" + "a" * 64, runner_image_digest="sha256:" + "a" * 64, security_policy_hash=H, resource_policy_hash=H, seccomp_profile=seccomp, docker_socket=not_socket)
     with pytest.raises(ValueError, match="docker_socket_invalid"):
         policy.validate()
+
+
+def test_runner_allows_only_cli_docker_socket_transport():
+    argv = ["docker", "--host", "unix:///run/shiproom-remediation-docker/docker.sock", "create", "image@sha256:" + "a" * 64]
+    # The test isolates the secret boundary; the complete argv contract is
+    # covered by create_argv tests and deliberately has more required flags.
+    validate_create_argv(argv + ["--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--log-driver=none", "--user", "--cidfile", "--name", "--pids-limit", "--memory", "--memory-swap", "--tmpfs", "--mount"])
+    with pytest.raises(ValueError, match="docker_secret_exposure"):
+        validate_create_argv(["docker", "--mount", "type=bind,src=/var/run/docker.sock,dst=/socket", "--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--log-driver=none", "--user", "--cidfile", "--name", "--pids-limit", "--memory", "--memory-swap", "--tmpfs", "--mount"])
 
 
 def test_status_resolver_fails_closed_and_journal_requires_exact_binding(tmp_path: Path):

@@ -120,7 +120,13 @@ def validate_create_argv(argv: list[str]) -> None:
     if any(option in argv or option + "=" in joined for option in forbidden): raise ValueError("forbidden_docker_option")
     required = {"--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--log-driver=none", "--user", "--cidfile", "--name", "--pids-limit", "--memory", "--memory-swap", "--tmpfs", "--mount"}
     if not required.issubset(argv): raise ValueError("docker_security_option_missing")
-    if any("docker.sock" in token.lower() or token.startswith(("HOME=", "SSH_", "AWS_", "HTTP_", "HTTPS_", "ALL_PROXY=")) for token in argv): raise ValueError("docker_secret_exposure")
+    for index, token in enumerate(argv):
+        # The only permitted socket occurrence is the explicit Docker CLI
+        # transport selector.  A mount or environment value exposing a socket
+        # to the container remains a hard failure.
+        transport_socket = index > 0 and argv[index - 1] == "--host" and token.startswith("unix://")
+        if ("docker.sock" in token.lower() and not transport_socket) or token.startswith(("HOME=", "SSH_", "AWS_", "HTTP_", "HTTPS_", "ALL_PROXY=")):
+            raise ValueError("docker_secret_exposure")
 
 
 def effective_projection(inspect: dict[str, Any]) -> dict[str, Any]:
