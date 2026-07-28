@@ -121,12 +121,42 @@ def _slug(item: dict[str, Any]) -> str:
     return source.removeprefix(prefix)
 
 
+def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
+    """Load only canonical supervisor-owned prequalification exclusions."""
+    directory = base / "cases" / "screens"
+    if not directory.exists():
+        return {}
+    if not directory.is_dir() or _is_reparse(directory):
+        _fail("session2_candidate_screen_store_invalid")
+    result: dict[str, dict[str, str]] = {}
+    for path in sorted(directory.glob("*.screen.json")):
+        if _is_reparse(path): _fail("session2_candidate_screen_reparse")
+        raw = path.read_bytes()
+        if "sha256:" + sha256(raw).hexdigest() != "sha256:" + path.name.removesuffix(".screen.json"):
+            _fail("session2_candidate_screen_hash_mismatch")
+        try:
+            value = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CandidateCompilationError("session2_candidate_screen_invalid") from exc
+        required = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "buggy_sha", "fixed_sha", "stage", "decision", "reason", "source_object_receipt_hashes", "supervisor_command", "created_at"}
+        if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_prequalification_screen.v1"
+                or value.get("schema_version") != "1" or value.get("stage") != "SOURCE_CONTRACT_SCREEN"
+                or value.get("decision") != "EXCLUDED_PREQUALIFICATION" or not isinstance(value.get("candidate_id"), str)
+                or not isinstance(value.get("reason"), str)):
+            _fail("session2_candidate_screen_invalid")
+        if value["candidate_id"] in result:
+            _fail("session2_candidate_screen_duplicate")
+        result[value["candidate_id"]] = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
+    return result
+
+
 def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]:
     """Seal one candidate index from the existing issue/PR retrieval receipts."""
     base = _root(repository_root)
     issues: dict[tuple[str, int], tuple[dict[str, Any], str]] = {}
     pulls: list[tuple[dict[str, Any], str]] = []
     source_receipts: list[str] = []
+    screened = _screened_candidates(base)
     receipts, receipt_exclusions = _receipt_documents(base)
     for receipt, documents in receipts:
         digest = "sha256:" + sha256(canonical_json(receipt)).hexdigest()
@@ -167,6 +197,9 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
             issue_at = str(issue.get("created_at")); _time(issue_at)
             band = contamination_band(issue_at, str(fixed_at))
             candidate_id = target_slug + "#" + str(key[1]) + "->" + slug + "#" + str(pull["number"])
+            if candidate_id in screened:
+                linked_issues.add(key)
+                continue
             candidates.append({
                 "candidate_id": candidate_id,
                 "source_priority": 2,
@@ -181,7 +214,10 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
             })
             linked_issues.add(key)
     candidates.sort(key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
-    exclusions = receipt_exclusions + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
+    exclusions = receipt_exclusions + [
+        {"candidate_id": candidate_id, **screened[candidate_id]}
+        for candidate_id in sorted(screened)
+    ] + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
     result = {
         "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v1",
         "schema_version": "1",
