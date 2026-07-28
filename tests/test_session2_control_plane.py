@@ -309,6 +309,32 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     assert record["supervisor_command"]["stdout"]["bytes"] > 0
 
 
+def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_materialize as materialize
+    mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
+    mirror.mkdir(); (mirror / "HEAD").write_text("ref: refs/heads/main\n", encoding="ascii"); store.mkdir()
+    monkeypatch.setattr(materialize, "_root", lambda _repo: store)
+    monkeypatch.setattr(materialize, "_git", lambda _mirror, *argv: {
+        ("rev-parse", "--verify", "a" * 40 + "^{commit}"): ("a" * 40 + "\n").encode(),
+        ("rev-parse", "--verify", "a" * 40 + "^{tree}"): ("b" * 40 + "\n").encode(),
+        ("ls-tree", "-r", "--name-only", "a" * 40): b"src/main.py\n",
+    }[argv])
+    def fake_export(_mirror, _sha, target):
+        target.mkdir(); (target / "src").mkdir(); (target / "src" / "main.py").write_text("pass\n", encoding="utf-8")
+        return target
+    monkeypatch.setattr(materialize, "materialize_snapshot", fake_export)
+    result = materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
+        commit_sha="a" * 40, destination=destination,
+        source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4])
+    assert result["tree_sha"] == "b" * 40
+    receipt = __import__("json").loads(next(store.glob("*.materialization.json")).read_text())
+    assert receipt["snapshot_location"] == "supervisor_staging_only"
+    with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
+        materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
+            commit_sha="a" * 40, destination=destination,
+            source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4])
+
+
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
     large = {"pr_number":7, "merged_at":"2026-01-01T00:00:00Z", "merge_sha":"0123456789abcdef0123456789abcdef01234567", "reviewable_churn":1000, "human_source_file_count":10, "components":["api", "ui"], "release_surface":"journey", "excluded_classifications":[]}
     assert qualify_pr(large, window_start="2025-02-03T00:00:00Z", window_end="2026-03-30T23:59:59Z") == "LARGE"
