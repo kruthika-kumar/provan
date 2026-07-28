@@ -157,57 +157,16 @@ def test_status_authority_has_one_profile_current_chain():
     assert result["profiles"] == {"detection": "QUALIFIED", "remediation": "BLOCKED", "overall": "PARTIALLY_QUALIFIED"}
 
 
-def test_status_attestation_rejects_a_non_proof_only_commit(tmp_path: Path) -> None:
-    """Commit B cannot be forged by pointing an attestation at code changes."""
-    root = Path.cwd()
-    authority = root / "external_validation/status/session1-status-authority.v1.json"
-    authority_document = json.loads(authority.read_text(encoding="utf-8"))
-    chain = root / authority_document["current_chain"]["path"]
-    head = "ece6234a0e893c6d51848b90af046c7da00b8569"
-    tree = subprocess.check_output(["git", "rev-parse", head + "^{tree}"], text=True).strip()
-    attestation = tmp_path / "attestation.json"
-    attestation.write_text(json.dumps({
-        "schema_id": "external_validation.status_attestation.v1",
-        "schema_version": "1",
-        "commit_b": head,
-        "commit_b_tree": tree,
-        # The attestation binds the profile chain's canonical proof hash.  A
-        # Windows checkout may represent this public JSON with CRLF, while
-        # the staged/root authority sees the committed LF blob.
-        "proof_bundle_hash": json.loads(chain.read_text(encoding="utf-8"))["profiles"]["detection"][-1]["proof_bundle_hash"],
-        "status_authority_hash": status_module._committed_content_hash(root, authority),
-        "status_chain_hash": status_module._committed_content_hash(root, chain),
-    }), encoding="utf-8")
-    attestation.chmod(0o400)
-    with pytest.raises(V2ValidationError, match="status_attestation_commit_scope_invalid"):
-        resolve_status_authority(authority, repository_root=root, attestation=attestation)
+def test_authorized_status_rejects_noncanonical_attestation_identifier() -> None:
+    authority = Path("external_validation/status/session1-status-authority.v1.json")
+    with pytest.raises(V2ValidationError, match="status_attestation_id_invalid"):
+        resolve_status_authority(authority, attestation_id="A" * 64)
 
 
-def test_status_attestation_activates_and_committed_checks_the_proof_manifest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A valid Commit-B attestation activates profiles and checks proof bytes."""
-    root = Path.cwd()
-    authority = root / "external_validation/status/session1-status-authority.v1.json"
-    authority_document = json.loads(authority.read_text(encoding="utf-8"))
-    chain = root / authority_document["current_chain"]["path"]
-    proof = root / "external_validation/proofs/session1/control_plane_repair_proof_manifest.json"
-    current = json.loads(chain.read_text(encoding="utf-8"))
-    attestation = tmp_path / "valid-attestation.json"
-    attestation.write_text(json.dumps({
-        "schema_id": "external_validation.status_attestation.v1",
-        "schema_version": "1",
-        "commit_b": "049f95ada0d7bb07bf096cf94bd1893bae8b5331",
-        "commit_b_tree": "4b30e125870e27cd10b80cb412d183db458d136a",
-        "proof_bundle_hash": current["profiles"]["detection"][-1]["proof_bundle_hash"],
-        "status_authority_hash": status_module._committed_content_hash(root, authority),
-        "status_chain_hash": status_module._committed_content_hash(root, chain),
-    }), encoding="utf-8")
-    attestation.chmod(0o400)
-    called: list[Path] = []
-    original = status_module._committed_file
-    def recording_commit_check(repository: Path, path: Path) -> None:
-        called.append(path.resolve())
-        original(repository, path)
-    monkeypatch.setattr(status_module, "_committed_file", recording_commit_check)
-    resolved = resolve_status_authority(authority, repository_root=root, attestation=attestation)
-    assert resolved["profiles"] == {"detection": "QUALIFIED", "remediation": "QUALIFIED", "overall": "QUALIFIED"}
-    assert proof.resolve() in called
+def test_attestation_v2_and_closeout_manifest_reject_self_binding_and_missing_claims() -> None:
+    bad = {"schema_id": "external_validation.status_attestation.v2", "schema_version": "2", "attestation_hash": "sha256:" + "0" * 64}
+    with pytest.raises(V2ValidationError, match="status_attestation_invalid"):
+        status_module.validate_status_attestation_document(bad)
+    manifest = {"schema_id": "external_validation.session1_closeout_manifest.v1", "schema_version": "1", "implementation_commit": "a" * 40, "implementation_tree": "b" * 40, "artifacts": {}, "profiles": {}, "prohibited_work": {}}
+    with pytest.raises(V2ValidationError, match="status_attestation_closeout_manifest_invalid"):
+        status_module.validate_closeout_manifest_document(manifest)

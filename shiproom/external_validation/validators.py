@@ -278,6 +278,12 @@ def validate_artifact(value: Any) -> dict[str, Any]:
     if schema_id == "external_validation.profile_status_chain.v2":
         from .status import validate_profile_status_chain
         return validate_profile_status_chain(item)
+    if schema_id == "external_validation.session1_closeout_manifest.v1":
+        from .status import validate_closeout_manifest_document
+        return validate_closeout_manifest_document(item)
+    if schema_id == "external_validation.status_attestation.v2":
+        from .status import validate_status_attestation_document
+        return validate_status_attestation_document(item)
     _error("schema_id_invalid", "/schema_id", "unsupported artifact")
 
 
