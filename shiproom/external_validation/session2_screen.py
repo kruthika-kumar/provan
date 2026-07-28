@@ -131,7 +131,8 @@ def seal_prequalification_resolution(
 def seal_prequalification_exclusion(
     repository_root: Path, *, candidate_id: str, candidate_index_hash: str,
     mirror: Path, buggy_sha: str, fixed_sha: str, reason: str,
-    source_object_receipt_hashes: list[str],
+    source_object_receipt_hashes: list[str], materialization_hash: str | None = None,
+    execution_evidence_hash: str | None = None,
 ) -> dict[str, str]:
     """Seal actual Git evidence before recording one typed failing source gate."""
     if (not isinstance(candidate_id, str) or not candidate_id or not _HASH.fullmatch(candidate_index_hash)
@@ -139,6 +140,14 @@ def seal_prequalification_exclusion(
             or reason not in _REASONS or not isinstance(source_object_receipt_hashes, list)
             or len(source_object_receipt_hashes) < 2 or any(not _HASH.fullmatch(item) for item in source_object_receipt_hashes)):
         _fail("session2_screen_input_invalid")
+    # A container-path exclusion is a runtime fact, never a reviewer assertion.
+    # It must bind the exact sealed materialization and the production build
+    # receipt that failed for that snapshot. Other source gates omit them.
+    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+        if not (_HASH.fullmatch(materialization_hash or "") and _HASH.fullmatch(execution_evidence_hash or "")):
+            _fail("session2_screen_execution_evidence_required")
+    elif materialization_hash is not None or execution_evidence_hash is not None:
+        _fail("session2_screen_execution_evidence_unexpected")
     if not mirror.is_dir() or _is_reparse(mirror): _fail("session2_screen_mirror_invalid")
     directory = _root(repository_root)
     for sha in (buggy_sha, fixed_sha):
@@ -151,7 +160,7 @@ def seal_prequalification_exclusion(
     stdout_size = (directory / (stdout_hash[7:] + ".stdout")).stat().st_size
     stderr_size = (directory / (stderr_hash[7:] + ".stderr")).stat().st_size
     record = {
-        "schema_id": "external_validation.session2_prequalification_screen.v1",
+        "schema_id": "external_validation.session2_prequalification_screen.v2",
         "schema_version": "1",
         "candidate_id": candidate_id,
         "candidate_index_hash": candidate_index_hash,
@@ -164,6 +173,9 @@ def seal_prequalification_exclusion(
         "supervisor_command": {**comparison, "stdout": {"bytes": stdout_size, "sha256": stdout_hash}, "stderr": {"bytes": stderr_size, "sha256": stderr_hash}},
         "created_at": _utc(),
     }
+    if reason == "UNQUALIFIED_LINUX_CONTAINER_PATH":
+        record["materialization_hash"] = materialization_hash
+        record["execution_evidence_hash"] = execution_evidence_hash
     raw = canonical_json(record)
     return {"screen_hash": _write_once(directory, ".screen.json", raw), "decision": record["decision"]}
 
@@ -177,6 +189,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--buggy-sha"); parser.add_argument("--fixed-sha")
     parser.add_argument("--reason", choices=sorted(_REASONS))
     parser.add_argument("--source-object-receipt-hash", action="append")
+    parser.add_argument("--materialization-hash")
+    parser.add_argument("--execution-evidence-hash")
     parser.add_argument("--resolve-screen-hash")
     parser.add_argument("--prior-candidate-index-hash")
     parser.add_argument("--implementation-commit")
@@ -191,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if any(item is None for item in (args.candidate_index_hash, args.mirror, args.buggy_sha, args.fixed_sha, args.reason, args.source_object_receipt_hash)):
                 _fail("session2_screen_input_invalid")
-            result = seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash)
+            result = seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash, materialization_hash=args.materialization_hash, execution_evidence_hash=args.execution_evidence_hash)
         print(json.dumps(result, sort_keys=True))
     except CandidateScreenError as exc:
         print(str(exc)); return 2

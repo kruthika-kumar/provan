@@ -312,6 +312,21 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     assert record["supervisor_command"]["stdout"]["bytes"] > 0
 
 
+def test_prequalification_screen_requires_production_execution_evidence_for_runtime_exclusion(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_screen as screen
+    mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
+    monkeypatch.setattr(screen, "_root", lambda _repo: store)
+    monkeypatch.setattr(screen, "_run_git", lambda *_args: {"exit_code": 0, "stdout": b"", "stderr": b"", "argv": [], "started_at": "2026-07-28T00:00:00Z", "completed_at": "2026-07-28T00:00:00Z"})
+    common = dict(candidate_id="pypa/hatch#1->pypa/hatch#2", candidate_index_hash="sha256:" + "0123456789abcdef" * 4, mirror=mirror, buggy_sha="a" * 40, fixed_sha="b" * 40, reason="UNQUALIFIED_LINUX_CONTAINER_PATH", source_object_receipt_hashes=["sha256:" + "fedcba9876543210" * 4, "sha256:" + "0011223344556677" * 4])
+    with pytest.raises(screen.CandidateScreenError, match="session2_screen_execution_evidence_required"):
+        screen.seal_prequalification_exclusion(tmp_path, **common)
+    result = screen.seal_prequalification_exclusion(tmp_path, **common, materialization_hash="sha256:" + "a1" * 32, execution_evidence_hash="sha256:" + "b2" * 32)
+    record = __import__("json").loads(next(store.glob("*.screen.json")).read_text())
+    assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+    assert record["schema_id"] == "external_validation.session2_prequalification_screen.v2"
+    assert record["materialization_hash"] == "sha256:" + "a1" * 32
+
+
 def test_prequalification_resolution_preserves_screen_and_reopens_only_corrected_link_gate(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_screen as screen
     store = tmp_path / "screens"; store.mkdir(); monkeypatch.setattr(screen, "_root", lambda _repo: store)

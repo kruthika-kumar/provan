@@ -139,11 +139,15 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
             value = json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise CandidateCompilationError("session2_candidate_screen_invalid") from exc
-        required = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "buggy_sha", "fixed_sha", "stage", "decision", "reason", "source_object_receipt_hashes", "supervisor_command", "created_at"}
-        if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_prequalification_screen.v1"
+        required_v1 = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "buggy_sha", "fixed_sha", "stage", "decision", "reason", "source_object_receipt_hashes", "supervisor_command", "created_at"}
+        required_v2 = required_v1 | {"materialization_hash", "execution_evidence_hash"}
+        version = value.get("schema_id") if isinstance(value, dict) else None
+        required = required_v2 if version == "external_validation.session2_prequalification_screen.v2" else required_v1
+        if (not isinstance(value, dict) or set(value) != required or version not in {"external_validation.session2_prequalification_screen.v1", "external_validation.session2_prequalification_screen.v2"}
                 or value.get("schema_version") != "1" or value.get("stage") != "SOURCE_CONTRACT_SCREEN"
                 or value.get("decision") != "EXCLUDED_PREQUALIFICATION" or not isinstance(value.get("candidate_id"), str)
-                or not isinstance(value.get("reason"), str)):
+                or not isinstance(value.get("reason"), str)
+                or (version == "external_validation.session2_prequalification_screen.v2" and (value.get("reason") != "UNQUALIFIED_LINUX_CONTAINER_PATH" or not all(isinstance(value.get(key), str) and value[key].startswith("sha256:") for key in ("materialization_hash", "execution_evidence_hash"))))):
             _fail("session2_candidate_screen_invalid")
         entry = {"reason": value["reason"], "screen_hash": "sha256:" + path.name.removesuffix(".screen.json")}
         screens_by_hash[entry["screen_hash"]] = {"candidate_id": value["candidate_id"], **entry}
