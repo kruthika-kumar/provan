@@ -541,6 +541,20 @@ def test_lockfile_export_uses_target_specific_registry_hashes_only():
         export_uv_requirements(lock, project_name="demo", extras={"missing"}, groups=set())
 
 
+def test_source_metadata_overlay_is_static_snapshot_derived_and_does_not_write_patient(tmp_path: Path):
+    from shiproom.external_validation.session2_project_overlay import ProjectOverlayError, project_metadata_overlay
+    snapshot = (tmp_path / "snapshot").resolve(); snapshot.mkdir()
+    (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\nversion = '1.2.3'\n", encoding="utf-8")
+    overlay = project_metadata_overlay(snapshot, ["python", "-m", "pytest", "tests/test_demo.py"])
+    assert overlay["project_name"] == "demo-project"
+    assert overlay["patient_tree_write_policy"] == "forbidden"
+    assert overlay["wrapped_argv"][:3] == ["sh", "-ec", overlay["wrapped_argv"][2]]
+    assert "/tmp/shiproom-project-metadata" in overlay["wrapped_argv"][2]
+    (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\ndynamic = ['version']\n", encoding="utf-8")
+    with pytest.raises(ProjectOverlayError, match="session2_project_metadata_overlay_version_not_static"):
+        project_metadata_overlay(snapshot, ["python", "-m", "pytest"])
+
+
 def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_network_contract():
     dockerfile = _dockerfile("sha256:" + "0123456789abcdef" * 4).decode("ascii")
     assert "--require-hashes" in dockerfile
