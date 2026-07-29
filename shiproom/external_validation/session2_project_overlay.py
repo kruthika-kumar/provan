@@ -27,6 +27,9 @@ class ProjectOverlayError(ValueError):
 
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
+_ENTRY_GROUP = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_ENTRY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_ENTRY_VALUE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*(?::[A-Za-z_][A-Za-z0-9_.]*)?$")
 
 
 def _fail(code: str) -> None:
@@ -64,6 +67,26 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
     if not isinstance(version, str) or not _VERSION.fullmatch(version) or "dynamic" in project:
         _fail("session2_project_metadata_overlay_version_not_static")
     metadata = ("Metadata-Version: 2.1\nName: " + name + "\nVersion: " + version + "\n").encode("utf-8")
+    raw_entry_points = project.get("entry-points", {})
+    if raw_entry_points is None:
+        raw_entry_points = {}
+    if not isinstance(raw_entry_points, dict):
+        _fail("session2_project_metadata_overlay_entry_points_invalid")
+    entry_lines: list[str] = []
+    for group in sorted(raw_entry_points):
+        entries = raw_entry_points[group]
+        if (not isinstance(group, str) or not _ENTRY_GROUP.fullmatch(group)
+                or not isinstance(entries, dict) or not entries):
+            _fail("session2_project_metadata_overlay_entry_points_invalid")
+        entry_lines.append("[" + group + "]")
+        for entry_name in sorted(entries):
+            target = entries[entry_name]
+            if (not isinstance(entry_name, str) or not _ENTRY_NAME.fullmatch(entry_name)
+                    or not isinstance(target, str) or not _ENTRY_VALUE.fullmatch(target)):
+                _fail("session2_project_metadata_overlay_entry_points_invalid")
+            entry_lines.append(entry_name + " = " + target)
+        entry_lines.append("")
+    entry_points = ("\n".join(entry_lines)).encode("utf-8")
     # The directory name is only an importlib discovery convention.  Both
     # fields were strictly validated above, so it cannot influence the shell.
     overlay_root = "/tmp/shiproom-project-metadata"
@@ -72,7 +95,8 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
         "set -eu; umask 077; d=" + shlex.quote(dist_info) + "; "
         "mkdir -p \"$d\"; printf '%s' " + shlex.quote(metadata.decode("utf-8"))
         + " > \"$d/METADATA\"; "
-        "exec env PYTHONPATH=" + shlex.quote(overlay_root)
+        + ("printf '%s' " + shlex.quote(entry_points.decode("utf-8")) + " > \"$d/entry_points.txt\"; " if entry_points else "")
+        + "exec env PYTHONPATH=" + shlex.quote(overlay_root)
         + "\"${PYTHONPATH:+:$PYTHONPATH}\" \"$@\""
     )
     wrapper = ["sh", "-ec", script, "shiproom-project-metadata-overlay", *command]
@@ -83,6 +107,7 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
         "project_name": name,
         "project_version": version,
         "metadata_sha256": _sha(metadata),
+        "entry_points_sha256": _sha(entry_points),
         "overlay_root": overlay_root,
         "patient_tree_write_policy": "forbidden",
         "network_policy": "none",

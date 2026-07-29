@@ -544,10 +544,12 @@ def test_lockfile_export_uses_target_specific_registry_hashes_only():
 def test_source_metadata_overlay_is_static_snapshot_derived_and_does_not_write_patient(tmp_path: Path):
     from shiproom.external_validation.session2_project_overlay import ProjectOverlayError, project_metadata_overlay
     snapshot = (tmp_path / "snapshot").resolve(); snapshot.mkdir()
-    (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\nversion = '1.2.3'\n", encoding="utf-8")
+    (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\nversion = '1.2.3'\n[project.entry-points.demo]\nentry = 'demo_project.plugin'\n", encoding="utf-8")
     overlay = project_metadata_overlay(snapshot, ["python", "-m", "pytest", "tests/test_demo.py"])
     assert overlay["project_name"] == "demo-project"
     assert overlay["patient_tree_write_policy"] == "forbidden"
+    assert overlay["entry_points_sha256"].startswith("sha256:")
+    assert "entry_points.txt" in overlay["wrapped_argv"][2]
     assert overlay["wrapped_argv"][:3] == ["sh", "-ec", overlay["wrapped_argv"][2]]
     assert "/tmp/shiproom-project-metadata" in overlay["wrapped_argv"][2]
     (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\ndynamic = ['version']\n", encoding="utf-8")
