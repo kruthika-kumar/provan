@@ -79,6 +79,20 @@ def _directory(path: Path) -> None:
         _fail("session2_case_runner_staging_invalid")
 
 
+def _release_directory(path: Path) -> None:
+    """Create a patient-readable, immutable release-packet directory.
+
+    The release packet intentionally contains only declared visible authority.
+    Its confidentiality is therefore not a security control; patient read
+    access is required for an upstream target test supplied by the packet.
+    """
+    path.mkdir(parents=True, exist_ok=True, mode=0o755)
+    value = path.stat(follow_symlinks=False)
+    if (path.is_symlink() or not stat.S_ISDIR(value.st_mode) or value.st_uid != 0
+            or value.st_gid != 0 or stat.S_IMODE(value.st_mode) != 0o755):
+        _fail("session2_case_runner_release_packet_invalid")
+
+
 def _environment(receipt_hash: str) -> dict[str, Any]:
     value = _canonical(ROOT / "session2" / "receipts" / "environments" / (receipt_hash[7:] + ".environment-build.json"), receipt_hash, code="session2_case_runner_environment_invalid")
     required = {"schema_id", "schema_version", "materialization_hash", "image_ref", "runner_image_digest", "dependency_authority_hash"}
@@ -89,13 +103,13 @@ def _environment(receipt_hash: str) -> dict[str, Any]:
     return value
 
 
-def _write_once(path: Path, raw: bytes) -> None:
+def _write_once(path: Path, raw: bytes, *, mode: int) -> None:
     try:
         descriptor = os.open(
             path,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0)
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0) | getattr(os, "O_CLOEXEC", 0)
             | getattr(os, "O_NOFOLLOW", 0),
-            0o400,
+            mode,
         )
     except FileExistsError:
         if path.is_symlink() or path.read_bytes() != raw:
@@ -108,7 +122,7 @@ def _write_once(path: Path, raw: bytes) -> None:
         if hasattr(os, "fchown"):
             os.fchown(descriptor, 0, 0)
         if hasattr(os, "fchmod"):
-            os.fchmod(descriptor, 0o400)
+            os.fchmod(descriptor, mode)
         if os.write(descriptor, raw) != len(raw):
             _fail("session2_case_runner_packet_short_write")
         os.fsync(descriptor)
@@ -122,22 +136,64 @@ def _write_once(path: Path, raw: bytes) -> None:
             os.close(parent)
 
 
-def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], result_contract_id: str, expected_exit_code: int) -> tuple[Path, str]:
+def _target_artifact(
+    *, snapshot: Path | None, materialization_hash: str | None, relative_path: str | None,
+) -> tuple[dict[str, Any] | None, bytes | None, Path | None]:
+    if (snapshot is None) != (materialization_hash is None) or (snapshot is None) != (relative_path is None):
+        _fail("session2_case_runner_target_artifact_incomplete")
+    if snapshot is None:
+        return None, None, None
+    if (not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink()
+            or not SECCOMP.fullmatch(materialization_hash or "")
+            or not isinstance(relative_path, str) or not relative_path
+            or Path(relative_path).is_absolute() or ".." in Path(relative_path).parts):
+        _fail("session2_case_runner_target_artifact_invalid")
+    source = snapshot / relative_path
+    try:
+        resolved = source.resolve(strict=True)
+        snapshot_resolved = snapshot.resolve(strict=True)
+        resolved.relative_to(snapshot_resolved)
+    except (OSError, ValueError) as exc:
+        raise CaseRunnerError("session2_case_runner_target_artifact_invalid") from exc
+    item = source.lstat()
+    if source.is_symlink() or not stat.S_ISREG(item.st_mode) or item.st_size <= 0 or item.st_size > 1_048_576:
+        _fail("session2_case_runner_target_artifact_invalid")
+    raw = source.read_bytes()
+    release_path = "targets/" + sha256(canonical_json({"path": relative_path, "sha256": _sha(raw)})).hexdigest() + ".py"
+    return {
+        "source_materialization_hash": materialization_hash,
+        "source_relative_path": relative_path,
+        "release_path": release_path,
+        "sha256": _sha(raw),
+        "bytes": len(raw),
+    }, raw, Path(release_path)
+
+
+def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], result_contract_id: str, expected_exit_code: int, target_artifact: dict[str, Any] | None, target_bytes: bytes | None, target_path: Path | None) -> tuple[Path, str]:
     if not OPAQUE.fullmatch(case_id) or not OPAQUE.fullmatch(result_contract_id) or not isinstance(expected_exit_code, int):
         _fail("session2_case_runner_contract_invalid")
     if not isinstance(command, list) or not command or any(not isinstance(item, str) or not item for item in command):
         _fail("session2_case_runner_contract_invalid")
+    if target_artifact is not None and (target_bytes is None or target_path is None or "/release/" + target_artifact["release_path"] not in command):
+        _fail("session2_case_runner_target_artifact_not_executed")
     record = {
         "schema_id": "external_validation.session2_command_contract.v1", "schema_version": "1",
         "case_id": case_id, "materialization_hash": materialization_hash,
         "environment_receipt_hash": environment_hash, "argv": command,
         "result_contract_id": result_contract_id, "expected_exit_code": expected_exit_code,
         "network_policy": "none", "patient_tree_write_policy": "readonly",
+        "target_artifact": target_artifact,
     }
     raw = canonical_json(record); digest = _sha(raw)
+    _directory(STAGING)
+    _release_directory(STAGING / "release-packets")
     directory = STAGING / "release-packets" / digest[7:]
-    _directory(directory)
-    target = directory / "release.json"; _write_once(target, raw)
+    _release_directory(directory)
+    target = directory / "release.json"; _write_once(target, raw, mode=0o444)
+    if target_artifact is not None and target_bytes is not None and target_path is not None:
+        artifact_directory = directory / target_path.parent
+        _release_directory(artifact_directory)
+        _write_once(directory / target_path, target_bytes, mode=0o444)
     return directory, digest
 
 
@@ -165,6 +221,9 @@ def run_case(
     repository_root: Path, *, case_id: str, snapshot: Path, environment_receipt_hash: str,
     command: list[str], result_contract_id: str, expected_exit_code: int,
     seccomp_profile: Path, seccomp_hash: str, wall_seconds: int = 900,
+    target_source_snapshot: Path | None = None,
+    target_source_materialization_hash: str | None = None,
+    target_source_relative_path: str | None = None,
 ) -> dict[str, Any]:
     """Run a single frozen command and return its supervisor-authored receipt."""
     _root()
@@ -175,7 +234,12 @@ def run_case(
         _fail("session2_case_runner_environment_invalid")
     if not seccomp_profile.is_absolute() or not seccomp_profile.is_file() or not SECCOMP.fullmatch(seccomp_hash) or _sha(seccomp_profile.read_bytes()) != seccomp_hash:
         _fail("session2_case_runner_seccomp_invalid")
-    packet, packet_hash = _packet(case_id=case_id, materialization_hash=environment["materialization_hash"], environment_hash=environment_receipt_hash, command=command, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
+    artifact, artifact_bytes, artifact_path = _target_artifact(
+        snapshot=target_source_snapshot,
+        materialization_hash=target_source_materialization_hash,
+        relative_path=target_source_relative_path,
+    )
+    packet, packet_hash = _packet(case_id=case_id, materialization_hash=environment["materialization_hash"], environment_hash=environment_receipt_hash, command=command, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
     run_id = uuid.uuid4().hex
     cidfiles = STAGING / "cidfiles"; sealed = STAGING / "sealed-output" / run_id
     _directory(cidfiles); _directory(sealed)
@@ -188,7 +252,7 @@ def run_case(
     with _backend_lock():
         runner = DockerSupervisorV2(policy, "shiproom-remediation", BackendLock(lock_database))
         receipt = execute_contract(repository_root, runner=runner, owner="session2-" + run_id, name="shiproom-s2-" + run_id[:20], cidfile=cidfiles / (run_id + ".cid"), patient=snapshot, packet=packet, command=command, seal_root=sealed, source_record_hash=environment["materialization_hash"], result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
-    return {"receipt_id": receipt["receipt_id"], "receipt_hash": _sha(canonical_json(receipt)), "packet_hash": packet_hash, "contract_satisfied": receipt["contract_satisfied"], "exit_code": receipt["exit_code"]}
+    return {"receipt_id": receipt["receipt_id"], "receipt_hash": _sha(canonical_json(receipt)), "packet_hash": packet_hash, "target_artifact": artifact, "contract_satisfied": receipt["contract_satisfied"], "exit_code": receipt["exit_code"]}
 
 
 def _command(encoded: str) -> list[str]:
@@ -209,10 +273,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--environment-receipt-hash", required=True); parser.add_argument("--command-base64", required=True)
     parser.add_argument("--result-contract-id", required=True); parser.add_argument("--expected-exit-code", required=True, type=int)
     parser.add_argument("--seccomp-profile", required=True, type=Path); parser.add_argument("--seccomp-hash", required=True)
+    parser.add_argument("--target-source-snapshot", type=Path)
+    parser.add_argument("--target-source-materialization-hash")
+    parser.add_argument("--target-source-relative-path")
     parser.add_argument("--wall-seconds", type=int, default=900)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path), sort_keys=True, separators=(",", ":")))
     except (CaseRunnerError, Session2ExecutionError, RuntimeError, ValueError) as exc:
         print(str(exc)); return 2
     return 0

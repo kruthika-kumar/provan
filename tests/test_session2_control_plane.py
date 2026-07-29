@@ -854,6 +854,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     monkeypatch.setattr(runner, "ROOT", tmp_path / "external")
     monkeypatch.setattr(runner, "_root", lambda: None)
     monkeypatch.setattr(runner, "_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
+    monkeypatch.setattr(runner, "_release_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
     monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
     @contextmanager
     def lock():
@@ -888,3 +889,38 @@ def test_case_runner_rejects_a_changed_seccomp_profile_before_execution(tmp_path
                         environment_receipt_hash="sha256:" + "d" * 64, command=["true"],
                         result_contract_id="dlt-target", expected_exit_code=0,
                         seccomp_profile=seccomp, seccomp_hash="sha256:" + "0" * 64)
+
+
+def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_path: Path, monkeypatch):
+    """A post-fix upstream regression test is visible authority, not a worker file."""
+    from shiproom.external_validation import session2_case_runner as runner
+
+    staging, buggy, fixed, seccomp = tmp_path / "staging", tmp_path / "buggy", tmp_path / "fixed", tmp_path / "seccomp.json"
+    (fixed / "tests").mkdir(parents=True); buggy.mkdir(); seccomp.write_bytes(b"seccomp")
+    source = fixed / "tests" / "upstream_regression.py"; source.write_bytes(b"assert True\n")
+    artifact, _, _ = runner._target_artifact(snapshot=fixed, materialization_hash="sha256:" + "e" * 64,
+                                               relative_path="tests/upstream_regression.py")
+    assert artifact is not None
+    monkeypatch.setattr(runner, "STAGING", staging)
+    monkeypatch.setattr(runner, "ROOT", tmp_path / "external")
+    monkeypatch.setattr(runner, "_root", lambda: None)
+    monkeypatch.setattr(runner, "_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
+    monkeypatch.setattr(runner, "_release_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
+    monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    @contextmanager
+    def lock():
+        yield
+    monkeypatch.setattr(runner, "_backend_lock", lock)
+    monkeypatch.setattr(runner, "execute_contract", lambda *_args, **_kwargs: {"receipt_id": "sha256:" + "c" * 64, "contract_satisfied": True, "exit_code": 0})
+    result = runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=buggy,
+                             environment_receipt_hash="sha256:" + "d" * 64,
+                             command=["python", "-m", "pytest", "/release/" + artifact["release_path"]],
+                             result_contract_id="dlt-target-buggy", expected_exit_code=1,
+                             seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest(),
+                             target_source_snapshot=fixed, target_source_materialization_hash="sha256:" + "e" * 64,
+                             target_source_relative_path="tests/upstream_regression.py")
+    assert result["target_artifact"] == artifact
+    packet = next((staging / "release-packets").glob("*/release.json"))
+    record = __import__("json").loads(packet.read_text(encoding="utf-8"))
+    assert record["target_artifact"] == artifact
+    assert (packet.parent / artifact["release_path"]).read_bytes() == source.read_bytes()
