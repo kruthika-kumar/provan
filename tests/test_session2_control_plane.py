@@ -907,6 +907,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     monkeypatch.setattr(runner, "_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
     monkeypatch.setattr(runner, "_release_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
     monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    monkeypatch.setattr(runner, "_materialization", lambda _digest: {"candidate_id": "fixture", "commit_sha": "a" * 40})
     @contextmanager
     def lock():
         yield
@@ -918,6 +919,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     monkeypatch.setattr(runner, "execute_contract", fake_execute)
     result = runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
                              environment_receipt_hash="sha256:" + "d" * 64,
+                             patient_materialization_hash="sha256:" + "e" * 64,
                              command=["python", "-m", "pytest", "tests/target.py"],
                              result_contract_id="dlt-target-buggy", expected_exit_code=1,
                              seccomp_profile=seccomp, working_directory="/tmp/shiproom-case",
@@ -927,7 +929,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     assert record["declared_argv"] == ["python", "-m", "pytest", "tests/target.py"]
     assert record["argv"][:3] == ["sh", "-ec", record["argv"][2]]
     assert captured["command"] == record["argv"]
-    assert record["materialization_hash"] == "sha256:" + "a" * 64
+    assert record["materialization_hash"] == "sha256:" + "e" * 64
     assert record["project_metadata_overlay"]["working_directory"] == "/tmp/shiproom-case"
     assert result["contract_satisfied"] is False and result["exit_code"] == 9
 
@@ -940,9 +942,24 @@ def test_case_runner_rejects_a_changed_seccomp_profile_before_execution(tmp_path
     monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
     with pytest.raises(runner.CaseRunnerError, match="session2_case_runner_seccomp_invalid"):
         runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
-                        environment_receipt_hash="sha256:" + "d" * 64, command=["true"],
+                        environment_receipt_hash="sha256:" + "d" * 64, patient_materialization_hash="sha256:" + "e" * 64, command=["true"],
                         result_contract_id="dlt-target", expected_exit_code=0,
                         seccomp_profile=seccomp, seccomp_hash="sha256:" + "0" * 64)
+
+
+def test_case_runner_rejects_environment_from_another_candidate(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_case_runner as runner
+
+    snapshot, seccomp = tmp_path / "snapshot", tmp_path / "seccomp.json"
+    snapshot.mkdir(); snapshot.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8"); seccomp.write_bytes(b"seccomp")
+    monkeypatch.setattr(runner, "_root", lambda: None)
+    monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    monkeypatch.setattr(runner, "_materialization", lambda digest: {"candidate_id": "candidate-a" if digest.endswith("a" * 64) else "candidate-b", "commit_sha": "a" * 40})
+    with pytest.raises(runner.CaseRunnerError, match="session2_case_runner_environment_patient_candidate_mismatch"):
+        runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
+                        environment_receipt_hash="sha256:" + "d" * 64, patient_materialization_hash="sha256:" + "e" * 64,
+                        command=["true"], result_contract_id="dlt-target", expected_exit_code=0,
+                        seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
 
 
 def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_path: Path, monkeypatch):
@@ -963,6 +980,7 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     monkeypatch.setattr(runner, "_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
     monkeypatch.setattr(runner, "_release_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
     monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    monkeypatch.setattr(runner, "_materialization", lambda _digest: {"candidate_id": "fixture", "commit_sha": "a" * 40})
     @contextmanager
     def lock():
         yield
@@ -970,6 +988,7 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     monkeypatch.setattr(runner, "execute_contract", lambda *_args, **_kwargs: {"receipt_id": "sha256:" + "c" * 64, "contract_satisfied": True, "exit_code": 0})
     result = runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=buggy,
                              environment_receipt_hash="sha256:" + "d" * 64,
+                             patient_materialization_hash="sha256:" + "f" * 64,
                              command=["python", "-m", "pytest", "/release/" + artifact["release_path"]],
                              result_contract_id="dlt-target-buggy", expected_exit_code=1,
                              seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest(),

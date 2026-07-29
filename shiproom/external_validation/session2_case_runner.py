@@ -107,6 +107,27 @@ def _environment(receipt_hash: str) -> dict[str, Any]:
     return value
 
 
+def _materialization(materialization_hash: str) -> dict[str, Any]:
+    """Load the canonical source authority for the patient tree.
+
+    The runner image may be built from a fixed twin while an upstream target
+    test is exercised against the buggy twin.  The execution receipt must
+    therefore bind the *actual patient* materialization separately from the
+    environment build's materialization; otherwise a receipt can incorrectly
+    describe the snapshot that was executed.
+    """
+    value = _canonical(
+        ROOT / "session2" / "cases" / "materializations" / (materialization_hash[7:] + ".materialization.json"),
+        materialization_hash,
+        code="session2_case_runner_patient_materialization_invalid",
+    )
+    if (value.get("schema_id") != "external_validation.session2_source_materialization.v1"
+            or not isinstance(value.get("candidate_id"), str)
+            or not isinstance(value.get("commit_sha"), str)):
+        _fail("session2_case_runner_patient_materialization_invalid")
+    return value
+
+
 def _write_once(path: Path, raw: bytes, *, mode: int) -> None:
     try:
         descriptor = os.open(
@@ -224,6 +245,7 @@ def _backend_lock() -> Iterator[None]:
 
 def run_case(
     repository_root: Path, *, case_id: str, snapshot: Path, environment_receipt_hash: str,
+    patient_materialization_hash: str,
     command: list[str], result_contract_id: str, expected_exit_code: int,
     seccomp_profile: Path, seccomp_hash: str, wall_seconds: int = 900,
     target_source_snapshot: Path | None = None,
@@ -241,6 +263,10 @@ def run_case(
         _fail("session2_case_runner_environment_invalid")
     if not seccomp_profile.is_absolute() or not seccomp_profile.is_file() or not SECCOMP.fullmatch(seccomp_hash) or _sha(seccomp_profile.read_bytes()) != seccomp_hash:
         _fail("session2_case_runner_seccomp_invalid")
+    patient_materialization = _materialization(patient_materialization_hash)
+    environment_materialization = _materialization(environment["materialization_hash"])
+    if patient_materialization["candidate_id"] != environment_materialization["candidate_id"]:
+        _fail("session2_case_runner_environment_patient_candidate_mismatch")
     artifact, artifact_bytes, artifact_path = _target_artifact(
         snapshot=target_source_snapshot,
         materialization_hash=target_source_materialization_hash,
@@ -252,7 +278,7 @@ def run_case(
     except ProjectOverlayError as exc:
         raise CaseRunnerError(str(exc)) from exc
     effective_command = overlay["wrapped_argv"]
-    packet, packet_hash = _packet(case_id=case_id, materialization_hash=environment["materialization_hash"], environment_hash=environment_receipt_hash, command=command, effective_command=effective_command, overlay=overlay, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
+    packet, packet_hash = _packet(case_id=case_id, materialization_hash=patient_materialization_hash, environment_hash=environment_receipt_hash, command=command, effective_command=effective_command, overlay=overlay, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
     run_id = uuid.uuid4().hex
     cidfiles = STAGING / "cidfiles"; sealed = STAGING / "sealed-output" / run_id
     _directory(cidfiles); _directory(sealed)
@@ -264,7 +290,7 @@ def run_case(
     _directory(lock_database.parent)
     with _backend_lock():
         runner = DockerSupervisorV2(policy, "shiproom-remediation", BackendLock(lock_database))
-        receipt = execute_contract(repository_root, runner=runner, owner="session2-" + run_id, name="shiproom-s2-" + run_id[:20], cidfile=cidfiles / (run_id + ".cid"), patient=snapshot, packet=packet, command=effective_command, seal_root=sealed, source_record_hash=environment["materialization_hash"], result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
+        receipt = execute_contract(repository_root, runner=runner, owner="session2-" + run_id, name="shiproom-s2-" + run_id[:20], cidfile=cidfiles / (run_id + ".cid"), patient=snapshot, packet=packet, command=effective_command, seal_root=sealed, source_record_hash=patient_materialization_hash, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
     return {"receipt_id": receipt["receipt_id"], "receipt_hash": _sha(canonical_json(receipt)), "packet_hash": packet_hash, "target_artifact": artifact, "project_metadata_overlay": overlay, "contract_satisfied": receipt["contract_satisfied"], "exit_code": receipt["exit_code"]}
 
 
@@ -296,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run one frozen Session 2 qualification command.")
     parser.add_argument("--repository-root", required=True, type=Path)
     parser.add_argument("--case-id", required=True); parser.add_argument("--snapshot", required=True, type=Path)
-    parser.add_argument("--environment-receipt-hash", required=True); parser.add_argument("--command-base64", required=True)
+    parser.add_argument("--environment-receipt-hash", required=True); parser.add_argument("--patient-materialization-hash", required=True); parser.add_argument("--command-base64", required=True)
     parser.add_argument("--result-contract-id", required=True); parser.add_argument("--expected-exit-code", required=True, type=int)
     parser.add_argument("--seccomp-profile", required=True, type=Path); parser.add_argument("--seccomp-hash", required=True)
     parser.add_argument("--target-source-snapshot", type=Path)
@@ -307,7 +333,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wall-seconds", type=int, default=900)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path, runtime_environment=_runtime_environment(parsed.runtime_environment_base64), working_directory=parsed.working_directory), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, patient_materialization_hash=parsed.patient_materialization_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path, runtime_environment=_runtime_environment(parsed.runtime_environment_base64), working_directory=parsed.working_directory), sort_keys=True, separators=(",", ":")))
     except (CaseRunnerError, Session2ExecutionError, RuntimeError, ValueError) as exc:
         print(str(exc)); return 2
     return 0
