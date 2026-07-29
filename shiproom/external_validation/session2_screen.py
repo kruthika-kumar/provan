@@ -105,6 +105,16 @@ def _canonical_record(path: Path, expected_hash: str, *, missing: str, invalid: 
     return value
 
 
+def _sealed_raw_json(path: Path, expected_hash: str, *, missing: str, invalid: str) -> None:
+    """Validate an immutable raw API page without imposing canonical JSON bytes."""
+    if not path.is_file() or _is_reparse(path): _fail(missing)
+    try:
+        raw = path.read_bytes(); json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CandidateScreenError(invalid) from exc
+    if _sha(raw) != expected_hash: _fail(invalid)
+
+
 def _candidate_from_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> dict[str, Any]:
     """Bind a screen to an actual candidate in the cited immutable index.
 
@@ -178,7 +188,7 @@ def resolve_primary_retrieval_reference(repository_root: Path, *, candidate_id: 
         for page in pages:
             raw_hash = page.get("raw_response_hash") if isinstance(page, dict) else None
             if not isinstance(raw_hash, str) or not _HASH.fullmatch(raw_hash): _fail("session2_screen_resolution_primary_receipt_invalid")
-            _canonical_record(root / "raw" / (raw_hash[7:] + ".json"), raw_hash, missing="session2_screen_resolution_primary_raw_missing", invalid="session2_screen_resolution_primary_raw_invalid")
+            _sealed_raw_json(root / "raw" / (raw_hash[7:] + ".json"), raw_hash, missing="session2_screen_resolution_primary_raw_missing", invalid="session2_screen_resolution_primary_raw_invalid")
     successor = {"schema_id":"external_validation.session2_candidate_provenance_resolution.v1", "schema_version":"1", "candidate_id":candidate_id,
                  "supersedes_screen_hash":supersedes_screen_hash, "reason":"PRIMARY_RETRIEVAL_REFERENCE_TYPE_CORRECTED",
                  "resolution":"REOPEN_FOR_REQUALIFICATION", "created_at":_utc()}
