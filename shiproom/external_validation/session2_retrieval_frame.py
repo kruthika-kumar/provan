@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import stat
 from typing import Any
 
 from .identity import canonical_json
@@ -32,6 +33,21 @@ def _fail(code: str) -> None:
 
 def _hash(raw: bytes) -> str:
     return "sha256:" + sha256(raw).hexdigest()
+
+
+def _assert_root_authority(path: Path, *, directory: bool) -> None:
+    """Require the immutable receipt object and its store to be root-owned."""
+    if os.name != "posix":  # Unit tests exercise semantics on Windows; production is Linux-only.
+        return
+    try:
+        value = path.lstat()
+    except OSError as exc:
+        raise RetrievalFrameError("session2_retrieval_frame_authority_invalid") from exc
+    wanted_type = stat.S_ISDIR if directory else stat.S_ISREG
+    if (not wanted_type(value.st_mode) or stat.S_ISLNK(value.st_mode) or value.st_uid != 0 or value.st_gid != 0
+            or stat.S_IMODE(value.st_mode) != (0o700 if directory else 0o400)
+            or (not directory and value.st_nlink != 1)):
+        _fail("session2_retrieval_frame_authority_invalid")
 
 
 def _root(repository_root: Path) -> Path:
@@ -133,12 +149,14 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
     payload = canonical_json(record); digest = _hash(payload)
     directory = root / "session2" / "retrieval" / "frames"
     directory.mkdir(mode=0o700, exist_ok=True)
+    _assert_root_authority(directory, directory=True)
     target = directory / (digest[7:] + ".retrieval-frame-receipts.json")
     try:
         descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0), 0o400)
     except FileExistsError:
         if _is_reparse(target) or target.read_bytes() != payload:
             _fail("session2_retrieval_frame_collision")
+        _assert_root_authority(target, directory=False)
     else:
         try:
             if os.write(descriptor, payload) != len(payload):
@@ -156,4 +174,5 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
                 os.fsync(directory_fd)
             finally:
                 os.close(directory_fd)
+        _assert_root_authority(target, directory=False)
     return {"retrieval_frame_receipt_hash": digest, "retrieval_frame_receipt_opaque_id": target.name}
