@@ -28,7 +28,8 @@ from shiproom.external_validation.session2_selection import (
     SelectionError, pr_hash, qualify_pr, select_fresh_pairs, validate_pr_classifier_bundle,
     validate_retrieval_receipt)
 from shiproom.external_validation.session2_transition import (
-    Session2TransitionError, compile_pair_transition, validate_pair_transition_spec)
+    Session2TransitionError, compile_pair_transition, seal_pair_transition,
+    validate_pair_transition_spec)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
@@ -963,6 +964,9 @@ def test_pair_transition_derives_status_from_rehashed_supervisor_receipts(tmp_pa
     assert validate_pair_transition_spec(specs) == specs
     result = compile_pair_transition(specs, receipts)
     assert result["buggy_target_oracle"] == "EXPECTED_FAILURE"
+    spec_raw = canonical_json(specs); spec_path = tmp_path / (sha256(spec_raw).hexdigest() + ".pair-transition-spec.json")
+    spec_path.write_bytes(spec_raw)
+    assert seal_pair_transition(spec_path, receipts, tmp_path / "sealed")["record"] == result
     (receipts / (specs["target_buggy_receipt_hash"][7:] + ".execution-receipt.json")).write_bytes(b"{}")
     with pytest.raises(Session2TransitionError, match="session2_transition_receipt_hash_mismatch"):
         compile_pair_transition(specs, receipts)
