@@ -14,6 +14,14 @@ from .identity import canonical_json
 
 _SHA = re.compile(r"^sha256:[0-9a-f]{64}$")
 _GIT = re.compile(r"^[0-9a-f]{40}$")
+_REQUIRED_POLICY_ARTIFACT_IDS = {
+    "direct_agent_comparator_prompt", "shiproom_semantic_prompts", "shiproom_role_definitions",
+    "no_deterministic_core_prompt_policy", "deterministic_core_version", "evidence_policy",
+    "applicability_policy", "severity_blocker_policy", "recommendation_policy",
+    "findings_output_schema", "tool_permissions_policy", "network_policy", "retry_policy",
+    "termination_policy", "arm_visible_context_rules", "container_freeze_manifest",
+    "dependency_freeze_manifest", "price_table", "arm_fairness_contract",
+}
 
 
 class CrossArtifactError(ValueError):
@@ -51,6 +59,7 @@ def validate_model_prompt_policy_freeze(value: Any) -> dict[str, Any]:
         _digest(row["sha256"], "session2_policy_artifacts_invalid")
         if not isinstance(row["semantic_version"], str) or not row["semantic_version"] or not isinstance(row["used_by_arms"], list) or not row["used_by_arms"] or not set(row["used_by_arms"]).issubset(arms): _fail("session2_policy_artifacts_invalid")
         seen.add(row["artifact_id"])
+    if seen != _REQUIRED_POLICY_ARTIFACT_IDS: _fail("session2_policy_artifact_bundle_incomplete")
     table = value["arm_equivalence"]
     if not isinstance(table, dict) or set(table) != arms: _fail("session2_arm_equivalence_invalid")
     rows = []

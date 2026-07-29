@@ -27,6 +27,14 @@ TERMINAL_LEDGER_STATES = {"SETTLED", "CANCELLED_BEFORE_SEND", "FAILED_MAX_CHARGE
 STAGES = {"session2_probes", "session3_beta", "beta_rerun_reserve", "session4_controlled", "session5_remediation", "session6_natural", "single_sol_sensitivity", "retry_contingency"}
 CONTAMINATION_BANDS = {"FRESH_A", "FRESH_B", "FALLBACK_RECENT"}
 PRIMARY_MODEL_ARMS = {"SHIPROOM_FULL", "SOTA_AGENT", "SHIPROOM_NO_DETERMINISTIC_CORE"}
+REQUIRED_POLICY_ARTIFACT_IDS = {
+    "direct_agent_comparator_prompt", "shiproom_semantic_prompts", "shiproom_role_definitions",
+    "no_deterministic_core_prompt_policy", "deterministic_core_version", "evidence_policy",
+    "applicability_policy", "severity_blocker_policy", "recommendation_policy",
+    "findings_output_schema", "tool_permissions_policy", "network_policy", "retry_policy",
+    "termination_policy", "arm_visible_context_rules", "container_freeze_manifest",
+    "dependency_freeze_manifest", "price_table", "arm_fairness_contract",
+}
 REPOSITORY_SLOTS = (
     "ordinary_workflow_1", "ordinary_workflow_2", "ordinary_workflow_3",
     "engineering_developer", "data_contract_pipeline", "product_measurement_privacy",
@@ -75,6 +83,15 @@ def require_git_sha(value: Any, code: str = "session2_git_sha_invalid") -> str:
     return value
 
 
+def require_opaque_artifact_id(value: Any, code: str = "session2_opaque_artifact_id_invalid") -> str:
+    """Accept an evidence handle without permitting a private-root path leak."""
+    if (not isinstance(value, str) or not value or len(value) > 200
+            or any(char.isspace() for char in value)
+            or "/" in value or "\\" in value or PLACEHOLDER.search(value)):
+        fail(code)
+    return value
+
+
 def seed_order(seed: str, *parts: str) -> str:
     if not isinstance(seed, str) or not HEX_64.fullmatch(seed):
         fail("session2_seed_invalid")
@@ -115,7 +132,7 @@ def contamination_band(issue_created_at: str, fix_created_at: str, cutoff: str =
 
 def validate_fresh_qualification(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict): fail("session2_fresh_receipt_invalid")
-    required = {"case_id", "repository", "buggy_sha", "fixed_sha", "issue_created_at", "fix_created_at", "contamination_band", "cutoff_compliant", "fallback_reason", "public_repository", "usable_license", "authoritative_issue_or_requirement", "buggy_target_oracle", "fixed_target_oracle", "buggy_protected_checks", "fixed_protected_checks", "target_runtime_minutes", "paid_credentials_required", "gpu_required", "proprietary_service_required", "uncontrolled_patient_network_required", "qualified_linux_container_path", "dependency_authority_frozen", "production_supervisor_receipt_present", "independent_replay_present"}
+    required = {"case_id", "repository", "buggy_sha", "fixed_sha", "issue_created_at", "fix_created_at", "contamination_band", "cutoff_compliant", "fallback_reason", "public_repository", "usable_license", "authoritative_issue_or_requirement", "buggy_target_oracle", "fixed_target_oracle", "buggy_protected_checks", "fixed_protected_checks", "target_runtime_minutes", "paid_credentials_required", "gpu_required", "proprietary_service_required", "uncontrolled_patient_network_required", "qualified_linux_container_path", "dependency_authority_frozen", "production_supervisor_receipt_present", "production_supervisor_receipt_opaque_id", "production_supervisor_receipt_hash", "independent_replay_present", "independent_replay_receipt_opaque_id", "independent_replay_receipt_hash"}
     if set(value) != required: fail("session2_fresh_receipt_fields_invalid")
     require_git_sha(value["buggy_sha"]); require_git_sha(value["fixed_sha"])
     if value["buggy_sha"] == value["fixed_sha"]: fail("session2_fresh_pair_identical")
@@ -132,6 +149,15 @@ def validate_fresh_qualification(value: Any) -> dict[str, Any]:
         fail("session2_fresh_runtime_invalid")
     if any(value[key] is not False for key in {"paid_credentials_required", "gpu_required", "proprietary_service_required", "uncontrolled_patient_network_required"}):
         fail("session2_fresh_execution_gate_failed")
+    # A qualifying case cannot merely self-assert that a receipt exists.  Its
+    # two independently produced receipts must be addressable without exposing
+    # a private-root path, and cannot be aliases of one another.
+    supervisor_id = require_opaque_artifact_id(value["production_supervisor_receipt_opaque_id"], "session2_fresh_receipt_authority_invalid")
+    replay_id = require_opaque_artifact_id(value["independent_replay_receipt_opaque_id"], "session2_fresh_receipt_authority_invalid")
+    supervisor_hash = require_sha(value["production_supervisor_receipt_hash"], "session2_fresh_receipt_authority_invalid")
+    replay_hash = require_sha(value["independent_replay_receipt_hash"], "session2_fresh_receipt_authority_invalid")
+    if supervisor_id == replay_id or supervisor_hash == replay_hash:
+        fail("session2_fresh_receipt_authority_invalid")
     return value
 
 
@@ -150,6 +176,8 @@ def validate_model_prompt_policy_freeze(value: Any) -> dict[str, Any]:
         if not isinstance(item["artifact_id"], str) or not item["artifact_id"] or item["artifact_id"] in ids or not isinstance(item["path"], str) or not item["path"] or item["path"].startswith("/") or PLACEHOLDER.search(item["path"]): fail("session2_policy_artifact_invalid")
         ids.add(item["artifact_id"]); require_git_sha(item["git_blob"]); require_sha(item["sha256"])
         if not isinstance(item["semantic_version"], str) or not item["semantic_version"] or not isinstance(item["used_by_arms"], list) or not set(item["used_by_arms"]).issubset(PRIMARY_MODEL_ARMS) or not item["used_by_arms"]: fail("session2_policy_artifact_invalid")
+    if ids != REQUIRED_POLICY_ARTIFACT_IDS:
+        fail("session2_policy_artifact_bundle_incomplete")
     table = value["arm_equivalence"]
     if not isinstance(table, dict) or set(table) != PRIMARY_MODEL_ARMS: fail("session2_arm_equivalence_invalid")
     properties = {"patient_snapshot_hash", "release_packet_hash", "model_settings_hash", "output_contract_hash", "tool_classes_hash", "network_policy_hash", "wall_time_policy_hash", "cost_policy_hash", "retry_policy_hash"}

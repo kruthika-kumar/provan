@@ -10,7 +10,8 @@ from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
     validate_qualifying_artifact)
 from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
-    validate_controlled_population as cross_validate_population)
+    validate_controlled_population as cross_validate_population,
+    validate_model_prompt_policy_freeze as cross_validate_policy_freeze)
 from shiproom.external_validation.validators import validate_artifact
 from shiproom.external_validation.identity import canonical_json
 from shiproom.external_validation.session2_freeze import (
@@ -31,7 +32,7 @@ from shiproom.external_validation.session2_requirements import RequirementsAutho
 
 
 def fresh(**changes):
-    value = {"case_id":"case_"+"0123456789abcdef"*4,"repository":"org/repo","buggy_sha":"0123456789abcdef0123456789abcdef01234567","fixed_sha":"89abcdef0123456789abcdef0123456789abcdef","issue_created_at":"2026-03-02T00:00:00Z","fix_created_at":"2026-03-03T00:00:00Z","contamination_band":"FRESH_A","cutoff_compliant":True,"fallback_reason":None,"public_repository":True,"usable_license":True,"authoritative_issue_or_requirement":True,"buggy_target_oracle":"EXPECTED_FAILURE","fixed_target_oracle":"PASSED","buggy_protected_checks":"PASSED","fixed_protected_checks":"PASSED","target_runtime_minutes":15,"paid_credentials_required":False,"gpu_required":False,"proprietary_service_required":False,"uncontrolled_patient_network_required":False,"qualified_linux_container_path":True,"dependency_authority_frozen":True,"production_supervisor_receipt_present":True,"independent_replay_present":True}; value.update(changes); return value
+    value = {"case_id":"case_"+"0123456789abcdef"*4,"repository":"org/repo","buggy_sha":"0123456789abcdef0123456789abcdef01234567","fixed_sha":"89abcdef0123456789abcdef0123456789abcdef","issue_created_at":"2026-03-02T00:00:00Z","fix_created_at":"2026-03-03T00:00:00Z","contamination_band":"FRESH_A","cutoff_compliant":True,"fallback_reason":None,"public_repository":True,"usable_license":True,"authoritative_issue_or_requirement":True,"buggy_target_oracle":"EXPECTED_FAILURE","fixed_target_oracle":"PASSED","buggy_protected_checks":"PASSED","fixed_protected_checks":"PASSED","target_runtime_minutes":15,"paid_credentials_required":False,"gpu_required":False,"proprietary_service_required":False,"uncontrolled_patient_network_required":False,"qualified_linux_container_path":True,"dependency_authority_frozen":True,"production_supervisor_receipt_present":True,"production_supervisor_receipt_opaque_id":"receipt-supervisor-001","production_supervisor_receipt_hash":"sha256:"+"0123456789abcdef"*4,"independent_replay_present":True,"independent_replay_receipt_opaque_id":"receipt-replay-001","independent_replay_receipt_hash":"sha256:"+"fedcba9876543210"*4}; value.update(changes); return value
 
 
 def test_fresh_bands_and_full_gate():
@@ -41,6 +42,10 @@ def test_fresh_bands_and_full_gate():
     assert validate_fresh_qualification(fresh())["case_id"].startswith("case_")
     with pytest.raises(Session2ValidationError, match="session2_fresh_execution_gate_failed"): validate_fresh_qualification(fresh(gpu_required=True))
     with pytest.raises(Session2ValidationError, match="session2_fresh_band_invalid"): validate_fresh_qualification(fresh(contamination_band="FRESH_B"))
+    with pytest.raises(Session2ValidationError, match="session2_fresh_receipt_authority_invalid"):
+        validate_fresh_qualification(fresh(independent_replay_receipt_hash=fresh()["production_supervisor_receipt_hash"]))
+    with pytest.raises(Session2ValidationError, match="session2_fresh_receipt_authority_invalid"):
+        validate_fresh_qualification(fresh(production_supervisor_receipt_opaque_id="/private/receipt"))
 
 
 def test_seed_order_rejects_noncanonical_and_is_stable():
@@ -88,8 +93,17 @@ def test_model_freeze_and_arm_equivalence_reject_accidental_differences():
     sha = "sha256:" + "0123456789abcdef" * 4
     model = {"provider":"OpenAI","api":"Responses API","model":"gpt-5.6-terra","knowledge_cutoff":"2026-02-16","reasoning_effort":"high","max_output_tokens":16384,"store":False,"temperature":None,"service_tier":"standard","hosted_web_search":False,"hosted_shell":False,"hosted_code_interpreter":False}
     row = {key: sha for key in ("patient_snapshot_hash","release_packet_hash","model_settings_hash","output_contract_hash","tool_classes_hash","network_policy_hash","wall_time_policy_hash","cost_policy_hash","retry_policy_hash")}
-    value = {"schema_id":"external_validation.session2_model_prompt_policy_freeze.v1","schema_version":"1","terra":model,"artifacts":[{"artifact_id":"prompt","path":"external_validation/prompts/main.txt","git_blob":"0123456789abcdef0123456789abcdef01234567","sha256":sha,"semantic_version":"1","used_by_arms":["SOTA_AGENT"]}],"arm_equivalence":{arm:dict(row) for arm in ("SHIPROOM_FULL","SOTA_AGENT","SHIPROOM_NO_DETERMINISTIC_CORE")}}
+    artifact_ids = ["direct_agent_comparator_prompt", "shiproom_semantic_prompts", "shiproom_role_definitions", "no_deterministic_core_prompt_policy", "deterministic_core_version", "evidence_policy", "applicability_policy", "severity_blocker_policy", "recommendation_policy", "findings_output_schema", "tool_permissions_policy", "network_policy", "retry_policy", "termination_policy", "arm_visible_context_rules", "container_freeze_manifest", "dependency_freeze_manifest", "price_table", "arm_fairness_contract"]
+    artifacts = [{"artifact_id":artifact_id,"path":"external_validation/frozen/" + artifact_id + ".json","git_blob":"0123456789abcdef0123456789abcdef01234567","sha256":sha,"semantic_version":"1","used_by_arms":["SHIPROOM_FULL", "SOTA_AGENT", "SHIPROOM_NO_DETERMINISTIC_CORE"]} for artifact_id in artifact_ids]
+    value = {"schema_id":"external_validation.session2_model_prompt_policy_freeze.v1","schema_version":"1","terra":model,"artifacts":artifacts,"arm_equivalence":{arm:dict(row) for arm in ("SHIPROOM_FULL","SOTA_AGENT","SHIPROOM_NO_DETERMINISTIC_CORE")}}
     assert validate_model_prompt_policy_freeze(value)["terra"]["model"] == "gpt-5.6-terra"
+    assert cross_validate_policy_freeze(value)["terra"]["model"] == "gpt-5.6-terra"
+    value["artifacts"] = value["artifacts"][:-1]
+    with pytest.raises(Session2ValidationError, match="session2_policy_artifact_bundle_incomplete"):
+        validate_model_prompt_policy_freeze(value)
+    with pytest.raises(CrossArtifactError, match="session2_policy_artifact_bundle_incomplete"):
+        cross_validate_policy_freeze(value)
+    value["artifacts"] = artifacts
     value["arm_equivalence"]["SOTA_AGENT"]["retry_policy_hash"] = "sha256:" + "fedcba9876543210" * 4
     with pytest.raises(Session2ValidationError, match="session2_arm_equivalence_mismatch"): validate_model_prompt_policy_freeze(value)
 
@@ -269,6 +283,10 @@ def test_primary_retrieval_pagination_and_fresh_selection_are_not_manual():
     assert len(result["selected"]) == 6
     receipt["pages"][0]["next_page"] = 2
     with pytest.raises(SelectionError, match="session2_retrieval_pagination_gap"):
+        validate_retrieval_receipt(receipt)
+    receipt["pages"][0]["next_page"] = None
+    receipt["pages"][0]["raw_response_hash"] = "sha256:" + "0" * 64
+    with pytest.raises(SelectionError, match="session2_placeholder_hash"):
         validate_retrieval_receipt(receipt)
 
 
@@ -712,4 +730,18 @@ def test_environment_cli_binds_explicit_base_image_reference(monkeypatch, capsys
                                     "--base-image-ref", "shiproom-session2-glibc:a4ccb7f"])
     assert environment.main() == 0
     assert captured["base_image_ref"] == "shiproom-session2-glibc:a4ccb7f"
+    assert '"ok": true' in capsys.readouterr().out
+
+
+def test_environment_cli_defaults_to_the_qualified_session2_glibc_runner(monkeypatch, capsys, tmp_path: Path):
+    """Omitting the optional flag must not silently restore the Session 1 musl image."""
+    from shiproom.external_validation import session2_environment as environment
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(environment, "build_environment", lambda repository, **kwargs: (captured.update(kwargs), {"ok": True})[1])
+    monkeypatch.setattr("sys.argv", ["session2_environment.py", "--repository", str(tmp_path), "--snapshot", str(tmp_path),
+                                    "--project", "demo", "--implementation-commit", "a" * 40,
+                                    "--implementation-tree", "b" * 40, "--materialization-hash", "sha256:" + "c" * 64])
+    assert environment.main() == 0
+    assert captured["base_image_ref"] == environment.DEFAULT_BASE_IMAGE_REF == "shiproom-session2-glibc:a4ccb7f"
     assert '"ok": true' in capsys.readouterr().out

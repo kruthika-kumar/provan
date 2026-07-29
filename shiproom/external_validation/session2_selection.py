@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any
 
-from .session2 import CONTAMINATION_BANDS, Session2ValidationError, contamination_band, seed_order, validate_fresh_qualification
+from .session2 import CONTAMINATION_BANDS, Session2ValidationError, contamination_band, require_sha, seed_order, validate_fresh_qualification
 
 
 class SelectionError(ValueError):
@@ -43,8 +43,12 @@ def validate_retrieval_receipt(value: Any) -> dict[str, Any]:
         _fail("session2_retrieval_pagination_missing")
     ids: list[str] = []
     for expected, page in enumerate(pages, 1):
-        if not isinstance(page, dict) or set(page) != {"page", "raw_response_hash", "candidate_ids", "next_page"} or page["page"] != expected or not isinstance(page["raw_response_hash"], str) or not page["raw_response_hash"].startswith("sha256:") or not isinstance(page["candidate_ids"], list):
+        if not isinstance(page, dict) or set(page) != {"page", "raw_response_hash", "candidate_ids", "next_page"} or page["page"] != expected or not isinstance(page["candidate_ids"], list):
             _fail("session2_retrieval_pagination_invalid")
+        try:
+            require_sha(page["raw_response_hash"], "session2_retrieval_response_hash_invalid")
+        except Session2ValidationError as exc:
+            _fail(exc.code)
         ids.extend(page["candidate_ids"])
         if any(not isinstance(item, str) or not item for item in page["candidate_ids"]):
             _fail("session2_retrieval_pagination_invalid")

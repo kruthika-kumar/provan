@@ -37,6 +37,10 @@ from .session2_requirements import (
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
 SOCKET = Path("/run/shiproom-remediation-docker/docker.sock")
 BUILD_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor/environment-builds")
+# Session 2 qualification is bound to the reviewed glibc runner.  The former
+# Session 1 musl image cannot be an implicit fallback: its wheel platform can
+# reject otherwise reproducible locked dependencies.
+DEFAULT_BASE_IMAGE_REF = "shiproom-session2-glibc:a4ccb7f"
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -289,7 +293,7 @@ def _runtime_platform(base_ref: str) -> str:
     _fail("session2_environment_runtime_platform_unsupported")
 
 
-def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = "shiproom-session1-runner:03fe9026acb7", extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset(), requirements_authority_path: str | None = None) -> dict[str, Any]:
+def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = DEFAULT_BASE_IMAGE_REF, extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset(), requirements_authority_path: str | None = None) -> dict[str, Any]:
     """Build exactly one image from a sealed dependency authority.
 
     The public caller provides no package specifiers: all install authority is
@@ -476,7 +480,7 @@ def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path"); parser.add_argument("--node-yarn-authority-path"); parser.add_argument("--base-image-ref", default="shiproom-session1-runner:03fe9026acb7")
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path"); parser.add_argument("--node-yarn-authority-path"); parser.add_argument("--base-image-ref", default=DEFAULT_BASE_IMAGE_REF)
     args = parser.parse_args()
     try:
         if args.node_yarn_authority_path is not None:
