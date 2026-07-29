@@ -102,9 +102,35 @@ def _write_once(directory: Path, raw: bytes) -> str:
     return digest
 
 
+def _validate_mirror_receipt(
+    store: Path, *, mirror: Path, mirror_receipt_hash: str, candidate_id: str,
+    source_object_receipt_hashes: list[str],
+) -> None:
+    """Bind an export to the production exact-fetch mirror authority."""
+    if not _HASH.fullmatch(mirror_receipt_hash):
+        _fail("session2_materialization_mirror_receipt_invalid")
+    receipt_path = store.parent / "mirrors" / (mirror_receipt_hash[7:] + ".mirror.json")
+    if not receipt_path.is_file() or _is_reparse(receipt_path):
+        _fail("session2_materialization_mirror_receipt_missing")
+    raw = receipt_path.read_bytes()
+    if _hash(raw) != mirror_receipt_hash:
+        _fail("session2_materialization_mirror_receipt_invalid")
+    try:
+        receipt = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise MaterializationError("session2_materialization_mirror_receipt_invalid") from exc
+    if (not isinstance(receipt, dict) or canonical_json(receipt) != raw
+            or receipt.get("schema_id") != "external_validation.session2_source_mirror_receipt.v1"
+            or receipt.get("schema_version") != "1"
+            or receipt.get("candidate_id") != candidate_id
+            or receipt.get("staging_mirror_name") != mirror.name
+            or receipt.get("source_object_receipt_hashes") != sorted(source_object_receipt_hashes)):
+        _fail("session2_materialization_mirror_receipt_mismatch")
+
+
 def seal_materialization(
     repository_root: Path, *, candidate_id: str, mirror: Path, commit_sha: str,
-    destination: Path, source_object_receipt_hashes: list[str],
+    destination: Path, source_object_receipt_hashes: list[str], mirror_receipt_hash: str,
 ) -> dict[str, str]:
     """Materialize one commit and seal the verified source authority.
 
@@ -121,6 +147,8 @@ def seal_materialization(
     if destination.exists() or _is_reparse(destination) or not destination.is_absolute():
         _fail("session2_materialization_destination_invalid")
     store = _root(repository_root)
+    _validate_mirror_receipt(store, mirror=mirror, mirror_receipt_hash=mirror_receipt_hash,
+                             candidate_id=candidate_id, source_object_receipt_hashes=source_object_receipt_hashes)
     try:
         resolved = _git(mirror, "rev-parse", "--verify", commit_sha + "^{commit}").decode("ascii").strip()
         tree = _git(mirror, "rev-parse", "--verify", commit_sha + "^{tree}").decode("ascii").strip()
@@ -160,6 +188,7 @@ def seal_materialization(
         "commit_sha": commit_sha,
         "tree_sha": tree,
         "source_object_receipt_hashes": sorted(source_object_receipt_hashes),
+        "mirror_receipt_hash": mirror_receipt_hash,
         "supervisor_command": ["git", "archive", "--format=tar", commit_sha],
         "snapshot_location": "supervisor_staging_only",
         "tracked_file_count": tracked_count,
@@ -180,11 +209,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--commit-sha", required=True)
     parser.add_argument("--destination", required=True, type=Path)
     parser.add_argument("--source-object-receipt-hash", required=True, action="append")
+    parser.add_argument("--mirror-receipt-hash", required=True)
     args = parser.parse_args(argv)
     try:
         print(json.dumps(seal_materialization(args.repository_root, candidate_id=args.candidate_id, mirror=args.mirror,
               commit_sha=args.commit_sha, destination=args.destination,
-              source_object_receipt_hashes=args.source_object_receipt_hash), sort_keys=True, separators=(",", ":")))
+              source_object_receipt_hashes=args.source_object_receipt_hash,
+              mirror_receipt_hash=args.mirror_receipt_hash), sort_keys=True, separators=(",", ":")))
     except MaterializationError as exc:
         print(str(exc))
         return 2

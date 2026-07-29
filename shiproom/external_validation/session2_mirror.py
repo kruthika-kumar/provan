@@ -159,7 +159,7 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
         tree = _run("-C", str(target), "rev-parse", "--verify", commit + "^{tree}", timeout=30)
         if tree.returncode or not _SHA.fullmatch(tree.stdout.decode("ascii","ignore").strip()): _fail("session2_mirror_tree_verification_failed")
         verified.append({"commit":commit,"tree":tree.stdout.decode("ascii").strip()})
-    record={"schema_id":"external_validation.session2_source_mirror_receipt.v1","schema_version":"1","candidate_id":candidate_id,"repository":repository,"base_sha":base_sha,"head_sha":head_sha,"source_object_receipt_hashes":sorted(source_receipts),"remote":"https://github.com/"+repository+".git","fetch_policy":"bare_exact_commit_no_tags_no_submodules.v1","fetch_timeout_seconds":fetch_timeout_seconds,"verified_commits":verified,"started_at":started,"completed_at":completed,"fetch_stdout_hash":_hash(fetch.stdout),"fetch_stderr_hash":_hash(fetch.stderr)}
+    record={"schema_id":"external_validation.session2_source_mirror_receipt.v1","schema_version":"1","candidate_id":candidate_id,"repository":repository,"base_sha":base_sha,"head_sha":head_sha,"source_object_receipt_hashes":sorted(source_receipts),"staging_mirror_name":target.name,"remote":"https://github.com/"+repository+".git","fetch_policy":"bare_exact_commit_no_tags_no_submodules.v1","fetch_timeout_seconds":fetch_timeout_seconds,"verified_commits":verified,"started_at":started,"completed_at":completed,"fetch_stdout_hash":_hash(fetch.stdout),"fetch_stderr_hash":_hash(fetch.stderr)}
     return {"mirror_path":str(target),"mirror_receipt_hash":_write_once(store,canonical_json(record))}
 
 

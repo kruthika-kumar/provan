@@ -581,6 +581,7 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
     mirror.mkdir(); (mirror / "HEAD").write_text("ref: refs/heads/main\n", encoding="ascii"); store.mkdir()
     monkeypatch.setattr(materialize, "_root", lambda _repo: store)
+    monkeypatch.setattr(materialize, "_validate_mirror_receipt", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(materialize, "_git", lambda _mirror, *argv: {
         ("rev-parse", "--verify", "a" * 40 + "^{commit}"): ("a" * 40 + "\n").encode(),
         ("rev-parse", "--verify", "a" * 40 + "^{tree}"): ("b" * 40 + "\n").encode(),
@@ -592,7 +593,8 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
     monkeypatch.setattr(materialize, "materialize_snapshot", fake_export)
     result = materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
         commit_sha="a" * 40, destination=destination,
-        source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4])
+        source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
+        mirror_receipt_hash="sha256:" + "a1" * 32)
     assert result["tree_sha"] == "b" * 40
     receipt = __import__("json").loads(next(store.glob("*.materialization.json")).read_text())
     assert receipt["snapshot_location"] == "supervisor_staging_only"
@@ -600,7 +602,26 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
     with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
         materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
             commit_sha="a" * 40, destination=destination,
-            source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4])
+            source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
+            mirror_receipt_hash="sha256:" + "a1" * 32)
+
+
+def test_source_materialization_requires_matching_sealed_mirror_authority(tmp_path: Path):
+    from shiproom.external_validation import session2_materialize as materialize
+
+    cases = tmp_path / "session2" / "cases"; store = cases / "materializations"; mirrors = cases / "mirrors"
+    store.mkdir(parents=True); mirrors.mkdir(); mirror = tmp_path / "candidate-mirror"; mirror.mkdir()
+    source = ["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4]
+    value = {"schema_id": "external_validation.session2_source_mirror_receipt.v1", "schema_version": "1",
+             "candidate_id": "acme/project#7->acme/project#8", "staging_mirror_name": mirror.name,
+             "source_object_receipt_hashes": sorted(source)}
+    raw = canonical_json(value); digest = "sha256:" + sha256(raw).hexdigest()
+    (mirrors / (digest[7:] + ".mirror.json")).write_bytes(raw)
+    materialize._validate_mirror_receipt(store, mirror=mirror, mirror_receipt_hash=digest,
+                                         candidate_id=value["candidate_id"], source_object_receipt_hashes=source)
+    with pytest.raises(materialize.MaterializationError, match="session2_materialization_mirror_receipt_mismatch"):
+        materialize._validate_mirror_receipt(store, mirror=mirror, mirror_receipt_hash=digest,
+                                             candidate_id="different", source_object_receipt_hashes=source)
 
 
 def test_natural_pr_classification_uses_recomputed_churn_and_frozen_hashes():
