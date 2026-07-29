@@ -162,6 +162,22 @@ def test_node_yarn_capability_gap_is_sealed_without_reclassifying_the_lock(tmp_p
     assert captured["failure_code"] == "session2_environment_node_runner_unqualified"
 
 
+def test_node_capability_gap_accepts_an_application_lock_without_package_name(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_environment as environment
+    store = tmp_path / "receipts"; store.mkdir()
+    snapshot = tmp_path / "snapshot"; frontend = snapshot / "frontend"; frontend.mkdir(parents=True)
+    (frontend / "package.json").write_text("{}", encoding="utf-8")
+    (frontend / "package-lock.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(environment, "_root", lambda _repository: store)
+    captured = {}
+    monkeypatch.setattr(environment, "_write_once", lambda _directory, _suffix, raw: (captured.update(__import__("json").loads(raw)), store / "receipt.json", "sha256:" + "d2" * 32)[1:])
+    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_node_runner_unqualified"):
+        environment.node_runtime_unqualified(tmp_path, snapshot=snapshot, implementation_commit="a" * 40,
+            implementation_tree="b" * 40, materialization_hash="sha256:" + "c1" * 32,
+            yarn_authority_path="frontend/package-lock.json")
+    assert captured["project_name"] == "node-authority"
+
+
 def test_environment_project_root_is_derived_from_the_sealed_snapshot(tmp_path: Path):
     from shiproom.external_validation import session2_environment as environment
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()

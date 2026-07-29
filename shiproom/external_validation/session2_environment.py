@@ -543,7 +543,14 @@ def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: 
             or not (yarn or npm)):
         _fail("session2_environment_node_authority_invalid")
     sealed_project_name = package_value.get("name")
-    if not isinstance(sealed_project_name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._@/-]*", sealed_project_name):
+    if sealed_project_name is None:
+        # A frontend lockfile can be an application-local authority rather
+        # than a publishable package.  Its absence of an npm package name
+        # must not conceal an otherwise valid Node-runner capability gap.
+        if project_name is not None:
+            _fail("session2_environment_project_name_assertion_mismatch")
+        sealed_project_name = "node-authority"
+    elif not isinstance(sealed_project_name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._@/-]*", sealed_project_name):
         _fail("session2_environment_node_project_name_missing")
     if project_name is not None and project_name != sealed_project_name:
         _fail("session2_environment_project_name_assertion_mismatch")
