@@ -705,6 +705,30 @@ def test_session2_mirror_blocks_before_creating_a_partial_repo_when_staging_is_f
     assert '"stage":"STAGING_CAPACITY_PREFLIGHT"' in receipt and '"outcome":"BLOCKED"' in receipt
 
 
+def test_staging_inventory_is_read_only_and_only_allows_exact_failed_mirror_attempts(tmp_path: Path, monkeypatch):
+    """Snapshots and successful/unknown mirrors can never enter the cleanup allowlist."""
+    from shiproom.external_validation import session2_staging_inventory as inventory
+    import json
+
+    root = tmp_path / "external"; authority = root / "session2" / "cases" / "mirrors"; authority.mkdir(parents=True)
+    staging = tmp_path / "staging"; mirrors = staging / "mirrors"; snapshots = staging / "snapshots"; mirrors.mkdir(parents=True); snapshots.mkdir()
+    candidate = "org/repo#1->org/repo#2"; name = "org-repo-1-org-repo-2--attempt-network"
+    record = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate, "attempt_id":"network", "outcome":"FAILED"}
+    raw = canonical_json(record); (authority / (inventory._hash(raw)[7:] + ".mirror.json")).write_bytes(raw)
+    (mirrors / name).mkdir(); (mirrors / name / "pack").write_bytes(b"x")
+    (mirrors / "unknown").mkdir(); (snapshots / "retained").mkdir()
+    monkeypatch.setattr(inventory, "EXPECTED_ROOT", root); monkeypatch.setattr(inventory, "STAGING_ROOT", staging); monkeypatch.setattr(inventory, "MIRRORS", mirrors); monkeypatch.setattr(inventory, "SNAPSHOTS", snapshots)
+    monkeypatch.setattr(inventory.os, "geteuid", lambda: 0, raising=False)
+    monkeypatch.setattr(inventory.os, "fchown", lambda *_args: None, raising=False)
+    monkeypatch.setattr(inventory.os, "fchmod", lambda *_args: None, raising=False)
+    monkeypatch.setattr(inventory, "external_root", lambda _value, _repository: root)
+    monkeypatch.setattr(inventory, "_capacity", lambda: {"free_bytes": 3, "free_inodes": 3, "total_bytes": 4, "total_inodes": 4})
+    result = inventory.inventory(tmp_path, implementation_commit="a" * 40, implementation_tree="b" * 40)
+    sealed = json.loads(Path(result["path"]).read_text(encoding="utf-8"))
+    assert sealed["deletion_allowlist"] == ["mirrors/" + name]
+    assert {item["relative_path"] for item in sealed["entries"] if not item["deletion_eligible"]} == {"mirrors/unknown", "snapshots/retained"}
+
+
 def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
     import subprocess
     from shiproom.external_validation import session2_mirror as mirror
