@@ -30,6 +30,8 @@ from shiproom.external_validation.session2_selection import (
 from shiproom.external_validation.session2_transition import (
     Session2TransitionError, compile_pair_transition, seal_pair_transition,
     validate_pair_transition_spec)
+from shiproom.external_validation.session2_fresh_case import (
+    FreshQualificationError, validate_fresh_qualification_artifact)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
@@ -51,6 +53,18 @@ def test_fresh_bands_and_full_gate():
         validate_fresh_qualification(fresh(independent_replay_receipt_hash=fresh()["production_supervisor_receipt_hash"]))
     with pytest.raises(Session2ValidationError, match="session2_fresh_receipt_authority_invalid"):
         validate_fresh_qualification(fresh(production_supervisor_receipt_opaque_id="/private/receipt"))
+
+
+def test_fresh_qualification_artifact_rejects_duplicate_transition_authority():
+    artifact = {"schema_id":"external_validation.session2_fresh_qualification.v1", "schema_version":"1",
+                "qualification":fresh(), "candidate_index_hash":"sha256:" + "a1" * 32,
+                "primary_transition_hash":"sha256:" + "b2" * 32,
+                "replay_transition_hash":"sha256:" + "c3" * 32,
+                "license_relative_path":"LICENSE", "license_sha256":"sha256:" + "d4" * 32}
+    assert validate_fresh_qualification_artifact(artifact)["qualification"]["case_id"] == artifact["qualification"]["case_id"]
+    artifact["replay_transition_hash"] = artifact["primary_transition_hash"]
+    with pytest.raises(FreshQualificationError, match="session2_fresh_replay_not_independent"):
+        validate_fresh_qualification_artifact(artifact)
 
 
 def test_seed_order_rejects_noncanonical_and_is_stable():
