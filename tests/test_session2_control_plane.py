@@ -513,7 +513,7 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     frame_bytes = canonical_json(frame); frame_hash = "sha256:" + sha256(frame_bytes).hexdigest()
     (frames / (frame_hash[7:] + ".retrieval-frame-receipts.json")).write_bytes(frame_bytes)
     monkeypatch.setattr(candidates, "_root", lambda _repo: base)
-    result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)
+    result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=[frame_hash])
     assert result["candidate_count"] == 1
     index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
     assert index["candidates"][0]["candidate_id"] == "acme/project#7->acme/project#8"
@@ -521,7 +521,7 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     # second observation or gain selection weight.
     duplicate_pr_receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q-duplicate", "filters": {"kind": "pull_request"}, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": "sha256:" + sha256(pr_raw).hexdigest(), "candidate_ids": ["acme/project#8"], "next_page": None}], "candidate_ids": ["acme/project#8"]}
     (base / "retrieval" / (sha256(canonical_json(duplicate_pr_receipt)).hexdigest() + ".retrieval-receipt.json")).write_bytes(canonical_json(duplicate_pr_receipt))
-    duplicate_result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)
+    duplicate_result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=[frame_hash])
     duplicate_index = json.loads((base / "cases" / (duplicate_result["candidate_index_hash"][7:] + ".candidate-index.json")).read_text())
     assert duplicate_result["candidate_count"] == 1
     assert len(duplicate_index["candidates"]) == 1
@@ -531,7 +531,7 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     raw = canonical_json(screen); (screens / (__import__("hashlib").sha256(raw).hexdigest() + ".screen.json")).write_bytes(raw)
     # Historical screens bind the index they cite; they cannot suppress a
     # newly compiled complete source frame.
-    assert candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)["candidate_count"] == 1
+    assert candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=[frame_hash])["candidate_count"] == 1
     assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 

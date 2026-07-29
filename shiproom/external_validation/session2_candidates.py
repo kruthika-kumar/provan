@@ -308,8 +308,12 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     return result
 
 
-def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_frame_receipt_hash: str) -> dict[str, Any]:
-    """Seal one candidate index from one complete sealed primary-retrieval frame."""
+def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_frame_receipt_hashes: list[str]) -> dict[str, Any]:
+    """Seal one candidate index from complete sealed primary-retrieval frames.
+
+    Every source repository is independently frame-complete.  Combining those
+    complete frames is allowed; accepting arbitrary retained receipts is not.
+    """
     base = _root(repository_root)
     issues: dict[tuple[str, int], tuple[dict[str, Any], str]] = {}
     pulls: list[tuple[dict[str, Any], str]] = []
@@ -321,7 +325,29 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
     # denial of service for future collection).  Screens are enforced later,
     # at qualification, against their exact cited index.  This compilation is
     # intentionally a pure complete-retrieval projection.
-    allowed_receipts = _frame_receipt_hashes(base, retrieval_frame_receipt_hash)
+    if (not isinstance(retrieval_frame_receipt_hashes, list) or not retrieval_frame_receipt_hashes
+            or retrieval_frame_receipt_hashes != sorted(set(retrieval_frame_receipt_hashes))):
+        _fail("session2_candidate_retrieval_frame_set_invalid")
+    allowed_receipts: dict[str, dict[str, Any]] = {}
+    frame_repositories: set[str] = set()
+    for frame_hash in retrieval_frame_receipt_hashes:
+        frame_receipts = _frame_receipt_hashes(base, frame_hash)
+        # Frame receipt records are independently validated on load.  A
+        # receipt hash may occur in exactly one frame; reusing it would give
+        # that observation duplicate source weight.
+        if set(allowed_receipts).intersection(frame_receipts):
+            _fail("session2_candidate_retrieval_frame_overlap")
+        for entry in frame_receipts.values():
+            receipt_path = base / "retrieval" / "frames" / (frame_hash[7:] + ".retrieval-frame-receipts.json")
+            value = json.loads(receipt_path.read_text(encoding="utf-8"))
+            repository = value["repository"]
+            break
+        else:  # The semantic frame loader already rejects an empty frame.
+            _fail("session2_candidate_retrieval_frame_invalid")
+        if repository in frame_repositories:
+            _fail("session2_candidate_retrieval_frame_repository_duplicate")
+        frame_repositories.add(repository)
+        allowed_receipts.update(frame_receipts)
     receipts, receipt_exclusions = _receipt_documents(base, allowed_receipts)
     for receipt, documents in receipts:
         digest = "sha256:" + sha256(canonical_json(receipt)).hexdigest()
@@ -393,9 +419,9 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
     candidates = sorted(candidates_by_id.values(), key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
     exclusions = receipt_exclusions + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
     result = {
-        "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v2",
+        "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v3",
         "schema_version": "1",
-        "retrieval_frame_receipt_hash": retrieval_frame_receipt_hash,
+        "retrieval_frame_receipt_hashes": retrieval_frame_receipt_hashes,
         "source_receipt_hashes": sorted(set(source_receipts)),
         "candidates": candidates,
         "exclusions": exclusions,
@@ -417,10 +443,10 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Compile Session 2 candidates from sealed GitHub retrieval receipts.")
     parser.add_argument("--repository-root", required=True)
-    parser.add_argument("--retrieval-frame-receipt-hash", required=True)
+    parser.add_argument("--retrieval-frame-receipt-hash", action="append", required=True)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(compile_github_issue_fix_candidates(Path(parsed.repository_root), retrieval_frame_receipt_hash=parsed.retrieval_frame_receipt_hash), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(compile_github_issue_fix_candidates(Path(parsed.repository_root), retrieval_frame_receipt_hashes=parsed.retrieval_frame_receipt_hash), sort_keys=True, separators=(",", ":")))
     except CandidateCompilationError as exc:
         print(str(exc)); return 2
     return 0

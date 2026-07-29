@@ -131,7 +131,7 @@ def _candidate_from_index(directory: Path, *, candidate_id: str, candidate_index
     )
     candidates = index.get("candidates")
     matches = [item for item in candidates if isinstance(item, dict) and item.get("candidate_id") == candidate_id] if isinstance(candidates, list) else []
-    if (index.get("schema_id") not in {"external_validation.session2_github_issue_fix_candidate_index.v1", "external_validation.session2_github_issue_fix_candidate_index.v2"}
+    if (index.get("schema_id") not in {"external_validation.session2_github_issue_fix_candidate_index.v1", "external_validation.session2_github_issue_fix_candidate_index.v2", "external_validation.session2_github_issue_fix_candidate_index.v3"}
             or index.get("schema_version") != "1" or len(matches) != 1):
         _fail("session2_screen_candidate_not_in_index")
     return matches[0]
