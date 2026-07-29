@@ -697,6 +697,13 @@ def test_source_metadata_overlay_is_static_snapshot_derived_and_does_not_write_p
     assert "entry_points.txt" in overlay["wrapped_argv"][2]
     assert overlay["wrapped_argv"][:3] == ["sh", "-ec", overlay["wrapped_argv"][2]]
     assert "/tmp/shiproom-project-metadata" in overlay["wrapped_argv"][2]
+    gitpython_overlay = project_metadata_overlay(
+        snapshot, ["python", "-m", "pytest"],
+        runtime_environment={"GIT_PYTHON_REFRESH": "quiet"},
+    )
+    assert gitpython_overlay["runtime_environment"] == {"GIT_PYTHON_REFRESH": "quiet"}
+    with pytest.raises(ProjectOverlayError, match="session2_project_metadata_overlay_runtime_environment_invalid"):
+        project_metadata_overlay(snapshot, ["python"], runtime_environment={"GIT_PYTHON_REFRESH": "warn"})
     (snapshot / "pyproject.toml").write_text("[project]\nname = 'demo-project'\ndynamic = ['version']\n", encoding="utf-8")
     with pytest.raises(ProjectOverlayError, match="session2_project_metadata_overlay_version_not_static"):
         project_metadata_overlay(snapshot, ["python", "-m", "pytest"])

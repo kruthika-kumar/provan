@@ -32,6 +32,14 @@ _ENTRY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _ENTRY_VALUE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*(?::[A-Za-z_][A-Za-z0-9_.]*)?$")
 _RUNTIME_KEY = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
 _RUNTIME_VALUE = re.compile(r"^/tmp/shiproom-[a-z0-9-]{1,64}$")
+# Runtime configuration is deliberately capability-minimal.  Most values may
+# name only a disposable container directory.  The one non-path exception is
+# GitPython's documented import policy: ``quiet`` permits importing metadata
+# types in an immutable snapshot that contains GitPython but intentionally has
+# no Git executable.  It does *not* supply Git, relax the network policy, or
+# make a later Git operation succeed.  Any test that actually invokes Git
+# still fails as a normal production receipt.
+_FIXED_RUNTIME_VALUES = {"GIT_PYTHON_REFRESH": {"quiet"}}
 
 
 def _fail(code: str) -> None:
@@ -55,9 +63,15 @@ def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_envi
     if runtime_environment is None:
         runtime_environment = {}
     if (not isinstance(runtime_environment, dict)
-            or any(not isinstance(key, str) or not isinstance(value, str)
-                   or not _RUNTIME_KEY.fullmatch(key) or not _RUNTIME_VALUE.fullmatch(value)
-                   for key, value in runtime_environment.items())):
+            or any(
+                not isinstance(key, str) or not isinstance(value, str)
+                or not _RUNTIME_KEY.fullmatch(key)
+                or not (
+                    _RUNTIME_VALUE.fullmatch(value)
+                    or value in _FIXED_RUNTIME_VALUES.get(key, set())
+                )
+                for key, value in runtime_environment.items()
+            )):
         _fail("session2_project_metadata_overlay_runtime_environment_invalid")
     if working_directory is not None and (not isinstance(working_directory, str) or not _RUNTIME_VALUE.fullmatch(working_directory)):
         _fail("session2_project_metadata_overlay_working_directory_invalid")
