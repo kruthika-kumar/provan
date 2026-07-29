@@ -143,11 +143,17 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
         try:
             if os.write(descriptor, payload) != len(payload):
                 _fail("session2_retrieval_frame_short_write")
-                os.fsync(descriptor)
-                if hasattr(os, "fchown"):
-                    os.fchown(descriptor, 0, 0)
-                if hasattr(os, "fchmod"):
-                    os.fchmod(descriptor, 0o400)
+            os.fsync(descriptor)
+            if hasattr(os, "fchown"):
+                os.fchown(descriptor, 0, 0)
+            if hasattr(os, "fchmod"):
+                os.fchmod(descriptor, 0o400)
         finally:
             os.close(descriptor)
+        if os.name == "posix":
+            directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0))
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
     return {"retrieval_frame_receipt_hash": digest, "retrieval_frame_receipt_opaque_id": target.name}
