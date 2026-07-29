@@ -498,29 +498,38 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     (base / "cases").mkdir()
     issue_raw = canonical_json({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 7, "created_at": "2026-03-05T00:00:00Z"}]})
     pr_raw = canonical_json({"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 8, "created_at": "2026-03-06T00:00:00Z", "closed_at": "2026-03-07T00:00:00Z", "body": "Fixes #7", "pull_request": {}}]})
+    receipt_hashes = []
     for raw, kind, candidate_id in ((issue_raw, "issue", "acme/project#7"), (pr_raw, "pull_request", "acme/project#8")):
         digest = "sha256:" + sha256(raw).hexdigest()
         (raw_dir / (digest[7:] + ".json")).write_bytes(raw)
-        receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q", "filters": {"kind": kind}, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": digest, "candidate_ids": [candidate_id], "next_page": None}], "candidate_ids": [candidate_id]}
-        (base / "retrieval" / (sha256(canonical_json(receipt)).hexdigest() + ".retrieval-receipt.json")).write_bytes(canonical_json(receipt))
+        filters = ({"kind": kind, "created_from": "2026-03-01T00:00:00Z", "created_to": "2026-03-31T23:59:59Z"} if kind == "issue" else {"kind": kind, "merged_from": "2026-03-01T00:00:00Z", "merged_to": "2026-03-31T23:59:59Z"})
+        receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q", "filters": filters, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": digest, "candidate_ids": [candidate_id], "next_page": None}], "candidate_ids": [candidate_id]}
+        receipt_bytes = canonical_json(receipt)
+        receipt_hash = "sha256:" + sha256(receipt_bytes).hexdigest()
+        (base / "retrieval" / (receipt_hash[7:] + ".retrieval-receipt.json")).write_bytes(receipt_bytes)
+        receipt_hashes.append((kind, receipt_hash))
+    frames = base / "retrieval" / "frames"; frames.mkdir()
+    frame = {"schema_id":"external_validation.session2_retrieval_frame_receipts.v1", "schema_version":"1", "frame_relative_path":"external_validation/manifests/session2/test.v1.json", "frame_hash":"sha256:" + "11" * 32, "frame_git_blob":"a" * 40, "repository":"acme/project", "predecessor_candidate_index_hash":"sha256:" + "22" * 32, "receipts":[{"kind":kind, "start":"2026-03-01T00:00:00Z", "end":"2026-03-31T23:59:59Z", "receipt_hash":digest, "candidate_count":1} for kind, digest in receipt_hashes]}
+    frame_bytes = canonical_json(frame); frame_hash = "sha256:" + sha256(frame_bytes).hexdigest()
+    (frames / (frame_hash[7:] + ".retrieval-frame-receipts.json")).write_bytes(frame_bytes)
     monkeypatch.setattr(candidates, "_root", lambda _repo: base)
-    result = candidates.compile_github_issue_fix_candidates(tmp_path)
+    result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)
     assert result["candidate_count"] == 1
     index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
     assert index["candidates"][0]["candidate_id"] == "acme/project#7->acme/project#8"
-    # The same PR may be present in more than one retained query frame.  It
-    # must not become a second observation or gain selection weight.
+    # A retained receipt outside the cited complete frame must not become a
+    # second observation or gain selection weight.
     duplicate_pr_receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q-duplicate", "filters": {"kind": "pull_request"}, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": "sha256:" + sha256(pr_raw).hexdigest(), "candidate_ids": ["acme/project#8"], "next_page": None}], "candidate_ids": ["acme/project#8"]}
     (base / "retrieval" / (sha256(canonical_json(duplicate_pr_receipt)).hexdigest() + ".retrieval-receipt.json")).write_bytes(canonical_json(duplicate_pr_receipt))
-    duplicate_result = candidates.compile_github_issue_fix_candidates(tmp_path)
+    duplicate_result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)
     duplicate_index = json.loads((base / "cases" / (duplicate_result["candidate_index_hash"][7:] + ".candidate-index.json")).read_text())
     assert duplicate_result["candidate_count"] == 1
     assert len(duplicate_index["candidates"]) == 1
-    assert len(duplicate_index["source_receipt_hashes"]) == 3
+    assert len(duplicate_index["source_receipt_hashes"]) == 2
     screens = base / "cases" / "screens"; screens.mkdir()
     screen = {"schema_id":"external_validation.session2_prequalification_screen.v1","schema_version":"1","candidate_id":"acme/project#7->acme/project#8","candidate_index_hash":"sha256:" + "0123456789abcdef" * 4,"buggy_sha":"a" * 40,"fixed_sha":"b" * 40,"stage":"SOURCE_CONTRACT_SCREEN","decision":"EXCLUDED_PREQUALIFICATION","reason":"NO_AUTHORITATIVE_EXECUTABLE_TARGET_CONTRACT","source_object_receipt_hashes":["sha256:" + "fedcba9876543210" * 4,"sha256:" + "0011223344556677" * 4],"supervisor_command":{},"created_at":"2026-07-28T00:00:00Z"}
     raw = canonical_json(screen); (screens / (__import__("hashlib").sha256(raw).hexdigest() + ".screen.json")).write_bytes(raw)
-    assert candidates.compile_github_issue_fix_candidates(tmp_path)["candidate_count"] == 0
+    assert candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hash=frame_hash)["candidate_count"] == 0
     assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 

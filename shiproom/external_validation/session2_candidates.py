@@ -95,19 +95,78 @@ def _document_honors_filters(document: dict[str, Any], filters: dict[str, Any]) 
     return True
 
 
-def _receipt_documents(base: Path) -> tuple[list[tuple[dict[str, Any], list[dict[str, Any]]]], list[dict[str, str]]]:
+def _frame_receipt_hashes(base: Path, receipt_hash: str) -> dict[str, dict[str, Any]]:
+    """Load the sole complete retrieval-frame authority for compilation.
+
+    A search receipt proves one query happened.  It does not prove that every
+    query in the precommitted frame completed.  Selection must therefore be
+    rooted in the content-addressed frame receipt emitted by the supervisor,
+    never in a convenient subset of retained receipt files.
+    """
+    if not isinstance(receipt_hash, str) or not _HEX.fullmatch(receipt_hash.removeprefix("sha256:")) or not receipt_hash.startswith("sha256:"):
+        _fail("session2_candidate_retrieval_frame_hash_invalid")
+    path = base / "retrieval" / "frames" / (receipt_hash[7:] + ".retrieval-frame-receipts.json")
+    if not path.is_file() or _is_reparse(path):
+        _fail("session2_candidate_retrieval_frame_missing")
+    raw = path.read_bytes()
+    if "sha256:" + sha256(raw).hexdigest() != receipt_hash:
+        _fail("session2_candidate_retrieval_frame_hash_mismatch")
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CandidateCompilationError("session2_candidate_retrieval_frame_invalid") from exc
+    if canonical_json(value) != raw:
+        _fail("session2_candidate_retrieval_frame_noncanonical")
+    required = {"schema_id", "schema_version", "frame_relative_path", "frame_hash", "frame_git_blob", "repository", "predecessor_candidate_index_hash", "receipts"}
+    entries = value.get("receipts") if isinstance(value, dict) else None
+    if (not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_retrieval_frame_receipts.v1"
+            or value.get("schema_version") != "1" or not isinstance(entries, list) or not entries):
+        _fail("session2_candidate_retrieval_frame_invalid")
+    hashes: dict[str, dict[str, Any]] = {}
+    identities: set[tuple[str, str, str]] = set()
+    for entry in entries:
+        if (not isinstance(entry, dict) or set(entry) != {"kind", "start", "end", "receipt_hash", "candidate_count"}
+                or entry.get("kind") not in {"issue", "pull_request"}
+                or not isinstance(entry.get("start"), str) or not isinstance(entry.get("end"), str)
+                or not isinstance(entry.get("candidate_count"), int) or entry["candidate_count"] < 0
+                or not isinstance(entry.get("receipt_hash"), str) or not _HEX.fullmatch(entry["receipt_hash"].removeprefix("sha256:"))
+                or not entry["receipt_hash"].startswith("sha256:")):
+            _fail("session2_candidate_retrieval_frame_invalid")
+        identity = (entry["kind"], entry["start"], entry["end"])
+        if identity in identities or entry["receipt_hash"] in hashes:
+            _fail("session2_candidate_retrieval_frame_duplicate")
+        identities.add(identity); hashes[entry["receipt_hash"]] = entry
+    return hashes
+
+
+def _receipt_documents(base: Path, allowed_hashes: dict[str, dict[str, Any]]) -> tuple[list[tuple[dict[str, Any], list[dict[str, Any]]]], list[dict[str, str]]]:
     result: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
     rejected: list[dict[str, str]] = []
+    seen: set[str] = set()
     for path in sorted((base / "retrieval").glob("*.retrieval-receipt.json")):
         if _is_reparse(path):
             _fail("session2_candidate_receipt_reparse")
-        receipt = json.loads(path.read_text(encoding="utf-8"))
+        raw = path.read_bytes()
+        digest = "sha256:" + sha256(raw).hexdigest()
+        if digest not in allowed_hashes:
+            continue
+        seen.add(digest)
+        receipt = json.loads(raw.decode("utf-8"))
         validate_retrieval_receipt(receipt)
+        declared = allowed_hashes[digest]
+        filter_kind = receipt["filters"].get("kind")
+        if (filter_kind != declared["kind"] or len(receipt["candidate_ids"]) != declared["candidate_count"]
+                or (filter_kind == "issue" and (receipt["filters"].get("created_from") != declared["start"] or receipt["filters"].get("created_to") != declared["end"]))
+                or (filter_kind == "pull_request" and (receipt["filters"].get("merged_from") != declared["start"] or receipt["filters"].get("merged_to") != declared["end"]))):
+            _fail("session2_candidate_retrieval_frame_receipt_mismatch")
         documents = [_read_hash(base / "retrieval" / "raw" / (page["raw_response_hash"][7:] + ".json"), page["raw_response_hash"]) for page in receipt["pages"]]
         if not all(_document_honors_filters(document, receipt["filters"]) for document in documents):
-            rejected.append({"receipt_hash": "sha256:" + sha256(canonical_json(receipt)).hexdigest(), "reason": "raw_response_does_not_honor_declared_filters"})
+            rejected.append({"receipt_hash": digest, "reason": "raw_response_does_not_honor_declared_filters"})
             continue
         result.append((receipt, documents))
+    if seen != set(allowed_hashes):
+        _fail("session2_candidate_retrieval_frame_receipt_missing")
     if not result:
         _fail("session2_candidate_retrieval_missing")
     return result, rejected
@@ -249,14 +308,15 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     return result
 
 
-def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]:
-    """Seal one candidate index from the existing issue/PR retrieval receipts."""
+def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_frame_receipt_hash: str) -> dict[str, Any]:
+    """Seal one candidate index from one complete sealed primary-retrieval frame."""
     base = _root(repository_root)
     issues: dict[tuple[str, int], tuple[dict[str, Any], str]] = {}
     pulls: list[tuple[dict[str, Any], str]] = []
     source_receipts: list[str] = []
     screened = _screened_candidates(base)
-    receipts, receipt_exclusions = _receipt_documents(base)
+    allowed_receipts = _frame_receipt_hashes(base, retrieval_frame_receipt_hash)
+    receipts, receipt_exclusions = _receipt_documents(base, allowed_receipts)
     for receipt, documents in receipts:
         digest = "sha256:" + sha256(canonical_json(receipt)).hexdigest()
         source_receipts.append(digest)
@@ -333,8 +393,9 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
         for candidate_id in sorted(screened)
     ] + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
     result = {
-        "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v1",
+        "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v2",
         "schema_version": "1",
+        "retrieval_frame_receipt_hash": retrieval_frame_receipt_hash,
         "source_receipt_hashes": sorted(set(source_receipts)),
         "candidates": candidates,
         "exclusions": exclusions,
@@ -356,9 +417,10 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Compile Session 2 candidates from sealed GitHub retrieval receipts.")
     parser.add_argument("--repository-root", required=True)
+    parser.add_argument("--retrieval-frame-receipt-hash", required=True)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(compile_github_issue_fix_candidates(Path(parsed.repository_root)), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(compile_github_issue_fix_candidates(Path(parsed.repository_root), retrieval_frame_receipt_hash=parsed.retrieval_frame_receipt_hash), sort_keys=True, separators=(",", ":")))
     except CandidateCompilationError as exc:
         print(str(exc)); return 2
     return 0
