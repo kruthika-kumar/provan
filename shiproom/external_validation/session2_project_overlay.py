@@ -42,7 +42,7 @@ def _sha(raw: bytes) -> str:
     return "sha256:" + sha256(raw).hexdigest()
 
 
-def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_environment: dict[str, str] | None = None) -> dict[str, Any]:
+def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_environment: dict[str, str] | None = None, working_directory: str | None = None) -> dict[str, Any]:
     """Return a frozen wrapper argv and the source-derived authority record.
 
     Dynamic project versions are rejected: a qualification command cannot
@@ -59,6 +59,8 @@ def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_envi
                    or not _RUNTIME_KEY.fullmatch(key) or not _RUNTIME_VALUE.fullmatch(value)
                    for key, value in runtime_environment.items())):
         _fail("session2_project_metadata_overlay_runtime_environment_invalid")
+    if working_directory is not None and (not isinstance(working_directory, str) or not _RUNTIME_VALUE.fullmatch(working_directory)):
+        _fail("session2_project_metadata_overlay_working_directory_invalid")
     pyproject = snapshot / "pyproject.toml"
     if not pyproject.is_file() or pyproject.is_symlink():
         _fail("session2_project_metadata_overlay_pyproject_missing")
@@ -105,7 +107,8 @@ def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_envi
         "mkdir -p \"$d\"; printf '%s' " + shlex.quote(metadata.decode("utf-8"))
         + " > \"$d/METADATA\"; "
         + ("printf '%s' " + shlex.quote(entry_points.decode("utf-8")) + " > \"$d/entry_points.txt\"; " if entry_points else "")
-        + "exec env PYTHONPATH=" + shlex.quote(overlay_root)
+        + ("mkdir -p " + shlex.quote(working_directory) + "; cd " + shlex.quote(working_directory) + "; " if working_directory else "")
+        + "exec env PYTHONPATH=" + shlex.quote(overlay_root + ":/patient")
         + "\"${PYTHONPATH:+:$PYTHONPATH}\" \"$@\""
     )
     if runtime_environment:
@@ -121,6 +124,7 @@ def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_envi
         "metadata_sha256": _sha(metadata),
         "entry_points_sha256": _sha(entry_points),
         "runtime_environment": {key: runtime_environment[key] for key in sorted(runtime_environment)},
+        "working_directory": working_directory,
         "overlay_root": overlay_root,
         "patient_tree_write_policy": "forbidden",
         "network_policy": "none",
