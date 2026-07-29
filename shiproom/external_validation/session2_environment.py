@@ -85,7 +85,7 @@ def _run(argv: list[str], *, timeout: int) -> subprocess.CompletedProcess[bytes]
 def _write_once(directory: Path, suffix: str, raw: bytes) -> tuple[Path, str]:
     digest = _sha(raw); path = directory / (digest[7:] + suffix)
     try:
-        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0), 0o400)
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0), 0o400)
     except FileExistsError:
         if path.is_symlink() or path.read_bytes() != raw:
             _fail("session2_environment_receipt_collision")
