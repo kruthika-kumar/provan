@@ -27,6 +27,8 @@ from shiproom.external_validation.session2_storage import (
 from shiproom.external_validation.session2_selection import (
     SelectionError, pr_hash, qualify_pr, select_fresh_pairs, validate_pr_classifier_bundle,
     validate_retrieval_receipt)
+from shiproom.external_validation.session2_transition import (
+    Session2TransitionError, compile_pair_transition, validate_pair_transition_spec)
 from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
@@ -942,3 +944,25 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     assert record["target_artifact"] == artifact
     assert record["project_metadata_overlay"]["runtime_environment"] == {"DLT_TEST_STORAGE_ROOT": "/tmp/shiproom-dlt-test"}
     assert (packet.parent / artifact["release_path"]).read_bytes() == source.read_bytes()
+
+
+def test_pair_transition_derives_status_from_rehashed_supervisor_receipts(tmp_path: Path):
+    receipts = tmp_path / "receipts"; receipts.mkdir()
+    buggy, fixed = "sha256:" + "a1" * 32, "sha256:" + "b2" * 32
+    specs = {"schema_id":"external_validation.session2_pair_transition_spec.v1","schema_version":"1","case_id":"dlt-4066","candidate_id":"dlt-hub/dlt#4066->dlt-hub/dlt#4067","candidate_index_hash":"sha256:" + "c3" * 32,"buggy_materialization_hash":buggy,"fixed_materialization_hash":fixed}
+    roles = (("target_buggy", buggy, 1), ("target_fixed", fixed, 0), ("protected_buggy", buggy, 0), ("protected_fixed", fixed, 0))
+    for role, materialization, code in roles:
+        stdout = b"target output"; stderr = b""
+        stdout_hash, stderr_hash = "sha256:" + sha256(stdout).hexdigest(), "sha256:" + sha256(stderr).hexdigest()
+        (receipts / (stdout_hash[7:] + ".patient.stdout")).write_bytes(stdout)
+        (receipts / (stderr_hash[7:] + ".patient.stderr")).write_bytes(stderr)
+        receipt = {"schema_id":"external_validation.session2_execution_receipt.v1","schema_version":"1","source_record_hash":materialization,"exit_code":code,"expected_exit_code":code,"contract_satisfied":True,"container_digest":"sha256:" + "d4" * 32,"network_policy":"none","stdout":{"opaque_id":stdout_hash[7:] + ".patient.stdout","bytes":len(stdout),"sha256":stdout_hash},"stderr":{"opaque_id":stderr_hash[7:] + ".patient.stderr","bytes":0,"sha256":stderr_hash},"result_contract_id":"dlt-" + role}
+        raw = canonical_json(receipt); digest = "sha256:" + sha256(raw).hexdigest()
+        (receipts / (digest[7:] + ".execution-receipt.json")).write_bytes(raw)
+        specs[role + "_receipt_hash"] = digest
+    assert validate_pair_transition_spec(specs) == specs
+    result = compile_pair_transition(specs, receipts)
+    assert result["buggy_target_oracle"] == "EXPECTED_FAILURE"
+    (receipts / (specs["target_buggy_receipt_hash"][7:] + ".execution-receipt.json")).write_bytes(b"{}")
+    with pytest.raises(Session2TransitionError, match="session2_transition_receipt_hash_mismatch"):
+        compile_pair_transition(specs, receipts)
