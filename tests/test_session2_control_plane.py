@@ -513,6 +513,10 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     frame_bytes = canonical_json(frame); frame_hash = "sha256:" + sha256(frame_bytes).hexdigest()
     (frames / (frame_hash[7:] + ".retrieval-frame-receipts.json")).write_bytes(frame_bytes)
     monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    with pytest.raises(candidates.CandidateCompilationError, match="session2_candidate_retrieval_frame_set_invalid"):
+        candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=[frame_hash, frame_hash])
+    with pytest.raises(candidates.CandidateCompilationError, match="session2_candidate_retrieval_frame_missing"):
+        candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=["sha256:" + "ab" * 32])
     result = candidates.compile_github_issue_fix_candidates(tmp_path, retrieval_frame_receipt_hashes=[frame_hash])
     assert result["candidate_count"] == 1
     index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
