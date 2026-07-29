@@ -1051,7 +1051,7 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     result = runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=buggy,
                              environment_receipt_hash="sha256:" + "d" * 64,
                              patient_materialization_hash="sha256:" + "f" * 64,
-                             command=["python", "-m", "pytest", "/release/" + artifact["release_path"]],
+                             command=["python", "-m", "pytest", "/release/" + artifact["release_path"] + "::test_regression"],
                              result_contract_id="dlt-target-buggy", expected_exit_code=1,
                              seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest(),
                              target_source_snapshot=fixed, target_source_materialization_hash="sha256:" + "e" * 64,

@@ -232,8 +232,14 @@ def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, c
     # than silently carrying a test that the command never uses.
     if references_target_release and target_artifact is None:
         _fail("session2_case_runner_target_artifact_authority_missing")
-    if target_artifact is not None and (not target_files or "/release/" + target_artifact["release_path"] not in command):
-        _fail("session2_case_runner_target_artifact_not_executed")
+    if target_artifact is not None:
+        sealed_target = "/release/" + target_artifact["release_path"]
+        # pytest node IDs append ``::test_name`` to the immutable test-file
+        # path.  Permit that precise selector form, but no suffix that could
+        # select another file or turn the sealed path into a prefix authority.
+        executes_target = any(item == sealed_target or item.startswith(sealed_target + "::") for item in command)
+        if not target_files or not executes_target:
+            _fail("session2_case_runner_target_artifact_not_executed")
     record = {
         "schema_id": "external_validation.session2_command_contract.v1", "schema_version": "1",
         "case_id": case_id, "materialization_hash": materialization_hash,
