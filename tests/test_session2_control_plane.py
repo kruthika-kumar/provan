@@ -1,6 +1,7 @@
 from pathlib import Path
 from contextlib import contextmanager
 from hashlib import sha256
+import json
 import pytest
 
 from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
@@ -36,6 +37,7 @@ from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
 from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements, pinned_requirement_records
+from shiproom.external_validation import session2_retrieval_frame as retrieval_frame
 
 
 def fresh(**changes):
@@ -80,6 +82,40 @@ def test_retrieval_frame_requires_contiguous_complete_windows():
     value["query_windows"][1]["start"] = "2026-03-02T00:00:01Z"
     with pytest.raises(Session2ValidationError, match="session2_retrieval_frame_invalid"):
         validate_retrieval_frame(value)
+
+
+def test_retrieval_frame_finalizer_requires_every_declared_receipt_and_raw_page(tmp_path: Path, monkeypatch):
+    root = tmp_path / "private"
+    retrieval = root / "session2" / "retrieval"
+    (retrieval / "raw").mkdir(parents=True)
+    stage = tmp_path / "stage"
+    manifest_path = "external_validation/manifests/session2/frame.v1.json"
+    frame_path = stage / manifest_path
+    frame_path.parent.mkdir(parents=True)
+    frame = {"schema_id":"external_validation.session2_retrieval_frame.v1", "schema_version":"1", "purpose":"fresh_case_candidate_completion", "predecessor_candidate_index_hash":"sha256:" + "0123456789abcdef" * 4, "repository":"acme/project", "coverage_start":"2026-03-01T00:00:00Z", "coverage_end":"2026-03-01T23:59:59Z", "query_windows":[{"start":"2026-03-01T00:00:00Z", "end":"2026-03-01T23:59:59Z"}], "kinds":["issue", "pull_request"], "page_size":30, "max_pages":10, "selection_effect":"candidate_collection_only"}
+    frame_raw = canonical_json(frame) + b"\n"
+    frame_path.write_bytes(frame_raw)
+    (stage / "stage-provenance.json").write_bytes(json.dumps({"files":[{"path":manifest_path, "sha256":"sha256:" + sha256(frame_raw).hexdigest(), "git_blob":"0123456789abcdef0123456789abcdef01234567"}]}).encode())
+    monkeypatch.setattr(retrieval_frame, "_root", lambda _repo: root)
+
+    def receipt(kind: str) -> None:
+        raw = json.dumps({"items": []}).encode()
+        digest = "sha256:" + sha256(raw).hexdigest()
+        (retrieval / "raw" / (digest[7:] + ".json")).write_bytes(raw)
+        query = "repo:acme/project is:issue is:closed created:2026-03-01..2026-03-01" if kind == "issue" else "repo:acme/project is:pr is:merged merged:2026-03-01..2026-03-01"
+        filters = {"kind":"issue", "state":"closed", "created_from":"2026-03-01T00:00:00Z", "created_to":"2026-03-01T23:59:59Z"} if kind == "issue" else {"kind":"pull_request", "state":"merged", "merged_from":"2026-03-01T00:00:00Z", "merged_to":"2026-03-01T23:59:59Z"}
+        value = {"schema_id":"external_validation.session2_retrieval_receipt.v1", "schema_version":"1", "source":"github_search_issues_api", "query":query, "filters":filters, "retrieved_at":"2026-07-29T00:00:00Z", "parser_id":"test", "pages":[{"page":1, "raw_response_hash":digest, "candidate_ids":[], "next_page":None}], "candidate_ids":[]}
+        data = canonical_json(value); (retrieval / (sha256(data).hexdigest() + ".retrieval-receipt.json")).write_bytes(data)
+
+    receipt("issue")
+    with pytest.raises(retrieval_frame.RetrievalFrameError, match="session2_retrieval_frame_receipts_incomplete"):
+        retrieval_frame.seal_retrieval_frame(stage, frame_relative_path=manifest_path)
+    receipt("pull_request")
+    sealed = retrieval_frame.seal_retrieval_frame(stage, frame_relative_path=manifest_path)
+    assert sealed["retrieval_frame_receipt_hash"].startswith("sha256:")
+    (retrieval / "raw" / next((retrieval / "raw").iterdir()).name).unlink()
+    with pytest.raises(retrieval_frame.RetrievalFrameError, match="session2_retrieval_frame_raw_missing"):
+        retrieval_frame.seal_retrieval_frame(stage, frame_relative_path=manifest_path)
 
 
 def test_budget_ledger_is_append_only_and_caps_reservations(tmp_path: Path):
