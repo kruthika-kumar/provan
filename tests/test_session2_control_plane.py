@@ -1,4 +1,6 @@
 from pathlib import Path
+from contextlib import contextmanager
+from hashlib import sha256
 import pytest
 
 from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
@@ -841,3 +843,48 @@ def test_environment_cli_defaults_to_the_qualified_session2_glibc_runner(monkeyp
     assert environment.main() == 0
     assert captured["base_image_ref"] == environment.DEFAULT_BASE_IMAGE_REF == "shiproom-session2-glibc:a4ccb7f"
     assert '"ok": true' in capsys.readouterr().out
+
+
+def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_case_runner as runner
+
+    staging, snapshot, seccomp = tmp_path / "staging", tmp_path / "snapshot", tmp_path / "seccomp.json"
+    snapshot.mkdir(); seccomp.write_bytes(b'{"defaultAction":"SCMP_ACT_ERRNO"}')
+    monkeypatch.setattr(runner, "STAGING", staging)
+    monkeypatch.setattr(runner, "ROOT", tmp_path / "external")
+    monkeypatch.setattr(runner, "_root", lambda: None)
+    monkeypatch.setattr(runner, "_directory", lambda path: path.mkdir(parents=True, exist_ok=True))
+    monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    @contextmanager
+    def lock():
+        yield
+    monkeypatch.setattr(runner, "_backend_lock", lock)
+    captured: dict[str, object] = {}
+    def fake_execute(_repository, **kwargs):
+        captured.update(kwargs)
+        return {"receipt_id": "sha256:" + "c" * 64, "contract_satisfied": False, "exit_code": 9}
+    monkeypatch.setattr(runner, "execute_contract", fake_execute)
+    result = runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
+                             environment_receipt_hash="sha256:" + "d" * 64,
+                             command=["python", "-m", "pytest", "tests/target.py"],
+                             result_contract_id="dlt-target-buggy", expected_exit_code=1,
+                             seccomp_profile=seccomp,
+                             seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
+    packet = Path(captured["packet"]) / "release.json"
+    record = __import__("json").loads(packet.read_text(encoding="utf-8"))
+    assert record["argv"] == ["python", "-m", "pytest", "tests/target.py"]
+    assert record["materialization_hash"] == "sha256:" + "a" * 64
+    assert result["contract_satisfied"] is False and result["exit_code"] == 9
+
+
+def test_case_runner_rejects_a_changed_seccomp_profile_before_execution(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_case_runner as runner
+
+    snapshot, seccomp = tmp_path / "snapshot", tmp_path / "seccomp.json"; snapshot.mkdir(); seccomp.write_bytes(b"one")
+    monkeypatch.setattr(runner, "_root", lambda: None)
+    monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    with pytest.raises(runner.CaseRunnerError, match="session2_case_runner_seccomp_invalid"):
+        runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
+                        environment_receipt_hash="sha256:" + "d" * 64, command=["true"],
+                        result_contract_id="dlt-target", expected_exit_code=0,
+                        seccomp_profile=seccomp, seccomp_hash="sha256:" + "0" * 64)
