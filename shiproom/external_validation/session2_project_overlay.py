@@ -30,6 +30,8 @@ _VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
 _ENTRY_GROUP = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _ENTRY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _ENTRY_VALUE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*(?::[A-Za-z_][A-Za-z0-9_.]*)?$")
+_RUNTIME_KEY = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
+_RUNTIME_VALUE = re.compile(r"^/tmp/shiproom-[a-z0-9-]{1,64}$")
 
 
 def _fail(code: str) -> None:
@@ -40,7 +42,7 @@ def _sha(raw: bytes) -> str:
     return "sha256:" + sha256(raw).hexdigest()
 
 
-def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, Any]:
+def project_metadata_overlay(snapshot: Path, command: list[str], *, runtime_environment: dict[str, str] | None = None) -> dict[str, Any]:
     """Return a frozen wrapper argv and the source-derived authority record.
 
     Dynamic project versions are rejected: a qualification command cannot
@@ -50,6 +52,13 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
             or not isinstance(command, list) or not command
             or any(not isinstance(item, str) or not item for item in command)):
         _fail("session2_project_metadata_overlay_input_invalid")
+    if runtime_environment is None:
+        runtime_environment = {}
+    if (not isinstance(runtime_environment, dict)
+            or any(not isinstance(key, str) or not isinstance(value, str)
+                   or not _RUNTIME_KEY.fullmatch(key) or not _RUNTIME_VALUE.fullmatch(value)
+                   for key, value in runtime_environment.items())):
+        _fail("session2_project_metadata_overlay_runtime_environment_invalid")
     pyproject = snapshot / "pyproject.toml"
     if not pyproject.is_file() or pyproject.is_symlink():
         _fail("session2_project_metadata_overlay_pyproject_missing")
@@ -99,6 +108,9 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
         + "exec env PYTHONPATH=" + shlex.quote(overlay_root)
         + "\"${PYTHONPATH:+:$PYTHONPATH}\" \"$@\""
     )
+    if runtime_environment:
+        assignments = " ".join(key + "=" + shlex.quote(value) for key, value in sorted(runtime_environment.items()))
+        script = script.replace("exec env PYTHONPATH=", "exec env " + assignments + " PYTHONPATH=", 1)
     wrapper = ["sh", "-ec", script, "shiproom-project-metadata-overlay", *command]
     authority = {
         "schema_id": "external_validation.session2_project_metadata_overlay.v1",
@@ -108,6 +120,7 @@ def project_metadata_overlay(snapshot: Path, command: list[str]) -> dict[str, An
         "project_version": version,
         "metadata_sha256": _sha(metadata),
         "entry_points_sha256": _sha(entry_points),
+        "runtime_environment": {key: runtime_environment[key] for key in sorted(runtime_environment)},
         "overlay_root": overlay_root,
         "patient_tree_write_policy": "forbidden",
         "network_policy": "none",
