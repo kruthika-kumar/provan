@@ -331,6 +331,17 @@ def _declared_test_packages(snapshot: Path, packages: set[str]) -> None:
         _fail("session2_environment_additional_package_undeclared")
 
 
+def _normalized_package_names(packages: set[str]) -> set[str]:
+    """Return the canonical package keys used by ``uv.lock``.
+
+    Declaration validation is case-insensitive by Python packaging convention.
+    The exact same normalized keys must be passed to the lock exporter; doing
+    otherwise makes a valid declared package (for example ``PyJWT``) appear
+    absent solely because a caller used its display spelling.
+    """
+    return {item.lower().replace("_", "-") for item in packages}
+
+
 def _authoritative_python_project_name(snapshot: Path, requested_project_name: str | None) -> str:
     """Derive the lockfile root from sealed project metadata, never a label.
 
@@ -367,6 +378,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str | N
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
         _fail("session2_environment_snapshot_invalid")
     _declared_test_packages(snapshot, additional_packages)
+    additional_packages = _normalized_package_names(additional_packages)
     if requirements_authority_path is not None and (extras or groups or additional_packages):
         # A requirements authority is complete as committed.  Injecting a
         # group or an extra would be an unrecorded dependency-resolution step.

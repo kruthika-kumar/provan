@@ -726,6 +726,12 @@ def test_environment_rejects_an_additional_package_not_declared_by_patient_metad
         environment._declared_test_packages(tmp_path, {"requests"})
 
 
+def test_environment_uses_normalized_declared_package_keys_for_lock_resolution():
+    from shiproom.external_validation import session2_environment as environment
+
+    assert environment._normalized_package_names({"PyJWT", "requests_mock"}) == {"pyjwt", "requests-mock"}
+
+
 def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
     raw = b"# generated\ndemo[headless, mfa]==1.2 \\\n    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n# via demo\n"
     exported, manifest = export_hash_pinned_requirements(raw, source_path="src/backend/requirements.txt")
