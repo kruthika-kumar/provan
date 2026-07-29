@@ -30,7 +30,10 @@ from .v2 import BackendLock
 
 
 ROOT = Path("/var/lib/shiproom-external-validation")
-STAGING = Path("/mnt/shiproom-remediation/session2-supervisor")
+# Do not inherit the older shared staging directory's world-readable mode.
+# This entry point owns a separate root-only subtree; only its deliberately
+# visible release-packet leaves become patient-readable.
+STAGING = Path("/mnt/shiproom-remediation/session2-supervisor/case-runner")
 BACKEND_LOCK = Path("/run/lock/shiproom-remediation.backend.lock")
 SECCOMP = re.compile(r"^sha256:[0-9a-f]{64}$")
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
