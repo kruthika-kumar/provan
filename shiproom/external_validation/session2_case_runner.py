@@ -224,6 +224,14 @@ def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, c
     if (not isinstance(command, list) or not command or any(not isinstance(item, str) or not item for item in command)
             or not isinstance(effective_command, list) or not effective_command or any(not isinstance(item, str) or not item for item in effective_command)):
         _fail("session2_case_runner_contract_invalid")
+    references_target_release = any(item.startswith("/release/targets/") for item in command)
+    # A release-target path is a capability-bearing input.  Do not let a
+    # caller point at an unsealed location and merely receive a later pytest
+    # collection error: reject it before a container is created.  Conversely,
+    # an artifact-bearing packet must execute its exact primary target rather
+    # than silently carrying a test that the command never uses.
+    if references_target_release and target_artifact is None:
+        _fail("session2_case_runner_target_artifact_authority_missing")
     if target_artifact is not None and (not target_files or "/release/" + target_artifact["release_path"] not in command):
         _fail("session2_case_runner_target_artifact_not_executed")
     record = {

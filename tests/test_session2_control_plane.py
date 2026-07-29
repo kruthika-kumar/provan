@@ -1005,6 +1005,25 @@ def test_case_runner_rejects_environment_from_another_candidate(tmp_path: Path, 
                         seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
 
 
+def test_case_runner_rejects_an_unsealed_release_target_before_execution(tmp_path: Path, monkeypatch):
+    """A command cannot reference a release target that packet creation did not seal."""
+    from shiproom.external_validation import session2_case_runner as runner
+
+    snapshot, seccomp = tmp_path / "snapshot", tmp_path / "seccomp.json"
+    snapshot.mkdir(); snapshot.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8")
+    seccomp.write_bytes(b"seccomp")
+    monkeypatch.setattr(runner, "_root", lambda: None)
+    monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
+    monkeypatch.setattr(runner, "_materialization", lambda _digest: {"candidate_id": "fixture", "commit_sha": "a" * 40})
+    with pytest.raises(runner.CaseRunnerError, match="session2_case_runner_target_artifact_authority_missing"):
+        runner.run_case(tmp_path, case_id="case-dlt-4066", snapshot=snapshot,
+                        environment_receipt_hash="sha256:" + "d" * 64,
+                        patient_materialization_hash="sha256:" + "e" * 64,
+                        command=["python", "-m", "pytest", "/release/targets/unsealed/test_target.py"],
+                        result_contract_id="dlt-target", expected_exit_code=0,
+                        seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
+
+
 def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_path: Path, monkeypatch):
     """A post-fix upstream regression test is visible authority, not a worker file."""
     from shiproom.external_validation import session2_case_runner as runner
