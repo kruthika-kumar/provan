@@ -682,6 +682,21 @@ def test_lockfile_export_uses_target_specific_registry_hashes_only():
     assert requirements_manifest_hash(exported).startswith("sha256:")
     with pytest.raises(LockfileError, match="session2_lock_extra_missing"):
         export_uv_requirements(lock, project_name="demo", extras={"missing"}, groups=set())
+    dynamic_local_root = lock.replace(
+        b'name = "demo"\nversion = "1.0"\nsource = { editable = "." }',
+        b'name = "demo"\nsource = { editable = "." }',
+        1,
+    )
+    assert b"core==2.0" in export_uv_requirements(
+        dynamic_local_root, project_name="demo", extras={"test"}, groups=set(),
+    ).requirements
+    invalid_versionless_registry = dynamic_local_root.replace(
+        b'name = "core"\nversion = "2.0"\nsource = { registry',
+        b'name = "core"\nsource = { registry',
+        1,
+    )
+    with pytest.raises(LockfileError, match="session2_lock_package_invalid"):
+        export_uv_requirements(invalid_versionless_registry, project_name="demo", extras=set(), groups=set())
 
 
 def test_source_metadata_overlay_is_static_snapshot_derived_and_does_not_write_patient(tmp_path: Path):

@@ -236,7 +236,25 @@ def export_uv_requirements(lock_bytes: bytes, *, project_name: str, extras: set[
     if document.get("version") != 1 or not isinstance(document.get("package"), list):
         _fail("session2_lock_header_invalid")
     records = document["package"]
-    if not all(isinstance(record, dict) and isinstance(record.get("name"), str) and isinstance(record.get("version"), str) for record in records):
+    # uv permits exactly one versionless package record: the editable local
+    # project when its PEP 621 version is dynamic.  It is never exported to
+    # pip (the immutable patient snapshot supplies it), but its pinned
+    # registry dependency closure is still authoritative.  Do not generalize
+    # this to a versionless third-party record.
+    if not all(
+        isinstance(record, dict)
+        and isinstance(record.get("name"), str)
+        and (
+            isinstance(record.get("version"), str)
+            or (
+                record.get("name") == project_name
+                and record.get("version") is None
+                and isinstance(record.get("source"), dict)
+                and record["source"].get("editable") == "."
+            )
+        )
+        for record in records
+    ):
         _fail("session2_lock_package_invalid")
     root = _choose(records, project_name, None, target)
     if _registry_record(root):
@@ -249,7 +267,7 @@ def export_uv_requirements(lock_bytes: bytes, *, project_name: str, extras: set[
         queued.append((_choose(records, name, None, target), set(), set()))
     while queued:
         record, required_extras, required_groups = queued.popleft()
-        name, version = record["name"], record["version"]
+        name, version = record["name"], record.get("version")
         key = (name, version)
         if key in selected:
             continue
@@ -266,6 +284,8 @@ def export_uv_requirements(lock_bytes: bytes, *, project_name: str, extras: set[
     for (name, version), record in sorted(selected.items()):
         if name == project_name:
             continue
+        if not isinstance(version, str):
+            _fail("session2_lock_package_invalid")
         if not _registry_record(record):
             _fail("session2_lock_nonregistry_dependency")
         artifacts = _artifacts(record); hashes = [item["sha256"][7:] for item in artifacts]
