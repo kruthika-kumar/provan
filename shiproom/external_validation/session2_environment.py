@@ -366,13 +366,19 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str | N
     receipts = _root(repository)
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
         _fail("session2_environment_snapshot_invalid")
-    project_name = _authoritative_python_project_name(snapshot, project_name)
     _declared_test_packages(snapshot, additional_packages)
     if requirements_authority_path is not None and (extras or groups or additional_packages):
         # A requirements authority is complete as committed.  Injecting a
         # group or an extra would be an unrecorded dependency-resolution step.
         _fail("session2_environment_requirements_authority_augmented")
     if requirements_authority_path is not None:
+        # A hash-pinned requirements file can be the complete dependency
+        # authority for repositories that do not expose a PEP 621 project at
+        # their checkout root (for example a Django monorepo).  Do not invent
+        # a caller project label in that mode: its authority is the committed
+        # requirements path and bytes, recorded below.
+        if project_name is not None:
+            _fail("session2_environment_requirements_project_assertion_forbidden")
         if (not isinstance(requirements_authority_path, str) or not requirements_authority_path
                 or requirements_authority_path.startswith("/") or ".." in requirements_authority_path.split("/")):
             _fail("session2_environment_requirements_authority_path_invalid")
@@ -388,11 +394,13 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str | N
             _, digest = _write_once(receipts, ".environment-build-failure.json", canonical_json(failure))
             raise EnvironmentBuildError("session2_environment_requirements_authority_invalid:" + digest) from exc
         authority_kind = "hash_pinned_requirements"
+        project_name = "requirements-authority"
         authority_hash = requirements_authority_hash(authority_manifest)
         dependency_manifest: dict[str, Any] = authority_manifest
         lock_hash: str | None = None
         selected_groups: list[str] = []
     else:
+        project_name = _authoritative_python_project_name(snapshot, project_name)
         lock = snapshot / "uv.lock"
         if not lock.is_file() or lock.is_symlink():
         # A missing authority lock is a real qualification outcome.  Seal it
