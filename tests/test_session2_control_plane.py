@@ -376,6 +376,29 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
         retrieval.retrieve_github_object(tmp_path, repository="acme/project", object_kind="pull_request", number=8)
 
 
+def test_linux_primary_retrieval_rejects_incomplete_http_body_without_receipt(tmp_path: Path, monkeypatch):
+    """A truncated public response is a typed network failure, never a page."""
+    from http.client import IncompleteRead
+    from shiproom.external_validation import session2_retrieval as retrieval
+
+    external = tmp_path / "external"
+    raw_store = external / "session2" / "retrieval" / "raw"
+    raw_store.mkdir(parents=True)
+    monkeypatch.setattr(retrieval, "_assert_linux_private_operation", lambda _repo: raw_store)
+
+    class Response:
+        headers = {}
+        def read(self):
+            raise IncompleteRead(b'{"items":[]}', 10)
+        def __enter__(self): return self
+        def __exit__(self, *unused): return False
+
+    monkeypatch.setattr(retrieval, "urlopen", lambda _request, timeout: Response())
+    with pytest.raises(retrieval.RetrievalError, match="session2_retrieval_network_failure"):
+        retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed", "kind": "issue"})
+    assert list(raw_store.iterdir()) == []
+
+
 def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_path: Path, monkeypatch):
     import json
     from hashlib import sha256

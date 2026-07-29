@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
+from http.client import IncompleteRead
 import argparse
 import base64
 import json
@@ -177,7 +178,7 @@ def retrieve_github_issues(
                 headers = response.headers
         except HTTPError as exc:
             raise RetrievalError("session2_retrieval_http_" + str(exc.code)) from exc
-        except URLError as exc:
+        except (URLError, IncompleteRead, OSError) as exc:
             raise RetrievalError("session2_retrieval_network_failure") from exc
         digest = _sha(raw)
         hex_digest = digest[7:]
@@ -226,7 +227,7 @@ def retrieve_github_object(repository_root: Path, *, repository: str, object_kin
             raw = response.read()
     except HTTPError as exc:
         raise RetrievalError("session2_retrieval_http_" + str(exc.code)) from exc
-    except URLError as exc:
+    except (URLError, IncompleteRead, OSError) as exc:
         raise RetrievalError("session2_retrieval_network_failure") from exc
     digest = _sha(raw)
     _write_once(raw_store / (digest[7:] + ".json"), raw)
