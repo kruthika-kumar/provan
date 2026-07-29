@@ -911,7 +911,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
                              environment_receipt_hash="sha256:" + "d" * 64,
                              command=["python", "-m", "pytest", "tests/target.py"],
                              result_contract_id="dlt-target-buggy", expected_exit_code=1,
-                             seccomp_profile=seccomp,
+                             seccomp_profile=seccomp, working_directory="/tmp/shiproom-case",
                              seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
     packet = Path(captured["packet"]) / "release.json"
     record = __import__("json").loads(packet.read_text(encoding="utf-8"))
@@ -919,6 +919,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     assert record["argv"][:3] == ["sh", "-ec", record["argv"][2]]
     assert captured["command"] == record["argv"]
     assert record["materialization_hash"] == "sha256:" + "a" * 64
+    assert record["project_metadata_overlay"]["working_directory"] == "/tmp/shiproom-case"
     assert result["contract_satisfied"] is False and result["exit_code"] == 9
 
 

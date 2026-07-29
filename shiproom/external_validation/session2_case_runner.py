@@ -230,6 +230,7 @@ def run_case(
     target_source_materialization_hash: str | None = None,
     target_source_relative_path: str | None = None,
     runtime_environment: dict[str, str] | None = None,
+    working_directory: str | None = None,
 ) -> dict[str, Any]:
     """Run a single frozen command and return its supervisor-authored receipt."""
     _root()
@@ -246,7 +247,8 @@ def run_case(
         relative_path=target_source_relative_path,
     )
     try:
-        overlay = project_metadata_overlay(snapshot, command, runtime_environment=runtime_environment)
+        overlay = project_metadata_overlay(snapshot, command, runtime_environment=runtime_environment,
+                                           working_directory=working_directory)
     except ProjectOverlayError as exc:
         raise CaseRunnerError(str(exc)) from exc
     effective_command = overlay["wrapped_argv"]
@@ -301,10 +303,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-source-materialization-hash")
     parser.add_argument("--target-source-relative-path")
     parser.add_argument("--runtime-environment-base64")
+    parser.add_argument("--working-directory")
     parser.add_argument("--wall-seconds", type=int, default=900)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path, runtime_environment=_runtime_environment(parsed.runtime_environment_base64)), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path, runtime_environment=_runtime_environment(parsed.runtime_environment_base64), working_directory=parsed.working_directory), sort_keys=True, separators=(",", ":")))
     except (CaseRunnerError, Session2ExecutionError, RuntimeError, ValueError) as exc:
         print(str(exc)); return 2
     return 0
