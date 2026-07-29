@@ -353,6 +353,15 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     assert result["candidate_count"] == 1
     index = json.loads(next((base / "cases").glob("*.candidate-index.json")).read_text())
     assert index["candidates"][0]["candidate_id"] == "acme/project#7->acme/project#8"
+    # The same PR may be present in more than one retained query frame.  It
+    # must not become a second observation or gain selection weight.
+    duplicate_pr_receipt = {"schema_id": "external_validation.session2_retrieval_receipt.v1", "schema_version": "1", "source": "github_search_issues_api", "query": "q-duplicate", "filters": {"kind": "pull_request"}, "retrieved_at": "2026-07-28T00:00:00Z", "parser_id": "test", "pages": [{"page": 1, "raw_response_hash": "sha256:" + sha256(pr_raw).hexdigest(), "candidate_ids": ["acme/project#8"], "next_page": None}], "candidate_ids": ["acme/project#8"]}
+    (base / "retrieval" / (sha256(canonical_json(duplicate_pr_receipt)).hexdigest() + ".retrieval-receipt.json")).write_bytes(canonical_json(duplicate_pr_receipt))
+    duplicate_result = candidates.compile_github_issue_fix_candidates(tmp_path)
+    duplicate_index = json.loads((base / "cases" / (duplicate_result["candidate_index_hash"][7:] + ".candidate-index.json")).read_text())
+    assert duplicate_result["candidate_count"] == 1
+    assert len(duplicate_index["candidates"]) == 1
+    assert len(duplicate_index["source_receipt_hashes"]) == 3
     screens = base / "cases" / "screens"; screens.mkdir()
     screen = {"schema_id":"external_validation.session2_prequalification_screen.v1","schema_version":"1","candidate_id":"acme/project#7->acme/project#8","candidate_index_hash":"sha256:" + "0123456789abcdef" * 4,"buggy_sha":"a" * 40,"fixed_sha":"b" * 40,"stage":"SOURCE_CONTRACT_SCREEN","decision":"EXCLUDED_PREQUALIFICATION","reason":"NO_AUTHORITATIVE_EXECUTABLE_TARGET_CONTRACT","source_object_receipt_hashes":["sha256:" + "fedcba9876543210" * 4,"sha256:" + "0011223344556677" * 4],"supervisor_command":{},"created_at":"2026-07-28T00:00:00Z"}
     raw = canonical_json(screen); (screens / (__import__("hashlib").sha256(raw).hexdigest() + ".screen.json")).write_bytes(raw)

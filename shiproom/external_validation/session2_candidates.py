@@ -277,7 +277,13 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
                     issues[key] = (item, digest)
                 else:
                     pulls.append((item, digest))
-    candidates: list[dict[str, Any]] = []
+    # A search receipt is append-only evidence, so the same public issue/PR
+    # can legitimately appear in more than one retained query frame.  The
+    # candidate population, however, is a set of observations: duplicating a
+    # pair would silently change its selection weight.  Retain every receipt at
+    # index level while deriving one deterministic representative provenance
+    # pair for each semantically identical candidate.
+    candidates_by_id: dict[str, dict[str, Any]] = {}
     linked_issues: set[tuple[str, int]] = set()
     for pull, pull_receipt in pulls:
         slug = _slug(pull)
@@ -299,7 +305,7 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
             if candidate_id in screened:
                 linked_issues.add(key)
                 continue
-            candidates.append({
+            candidate = {
                 "candidate_id": candidate_id,
                 "source_priority": 2,
                 "repository": target_slug,
@@ -310,9 +316,18 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
                 "contamination_band": band,
                 "issue_retrieval_receipt_hash": issue_receipt,
                 "fix_retrieval_receipt_hash": pull_receipt,
-            })
+            }
+            existing = candidates_by_id.get(candidate_id)
+            if existing is None:
+                candidates_by_id[candidate_id] = candidate
+            else:
+                semantic_fields = set(candidate) - {"issue_retrieval_receipt_hash", "fix_retrieval_receipt_hash"}
+                if any(existing[field] != candidate[field] for field in semantic_fields):
+                    _fail("session2_candidate_duplicate_pair_conflict")
+                existing["issue_retrieval_receipt_hash"] = min(existing["issue_retrieval_receipt_hash"], issue_receipt)
+                existing["fix_retrieval_receipt_hash"] = min(existing["fix_retrieval_receipt_hash"], pull_receipt)
             linked_issues.add(key)
-    candidates.sort(key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
+    candidates = sorted(candidates_by_id.values(), key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
     exclusions = receipt_exclusions + [
         {"candidate_id": candidate_id, **screened[candidate_id]}
         for candidate_id in sorted(screened)
@@ -320,7 +335,7 @@ def compile_github_issue_fix_candidates(repository_root: Path) -> dict[str, Any]
     result = {
         "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v1",
         "schema_version": "1",
-        "source_receipt_hashes": sorted(source_receipts),
+        "source_receipt_hashes": sorted(set(source_receipts)),
         "candidates": candidates,
         "exclusions": exclusions,
     }
