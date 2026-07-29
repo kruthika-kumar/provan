@@ -551,7 +551,12 @@ def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: 
             _fail("session2_environment_project_name_assertion_mismatch")
         sealed_project_name = "node-authority"
     elif not isinstance(sealed_project_name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._@/-]*", sealed_project_name):
-        _fail("session2_environment_node_project_name_missing")
+        # The package identity is not executable authority here.  Keep an
+        # unusual application-local name out of an asserted provenance field
+        # while still sealing the exact package.json and lock bytes.
+        if project_name is not None:
+            _fail("session2_environment_project_name_assertion_mismatch")
+        sealed_project_name = "node-authority"
     if project_name is not None and project_name != sealed_project_name:
         _fail("session2_environment_project_name_assertion_mismatch")
     failure = {
