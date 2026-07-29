@@ -314,7 +314,13 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
     issues: dict[tuple[str, int], tuple[dict[str, Any], str]] = {}
     pulls: list[tuple[dict[str, Any], str]] = []
     source_receipts: list[str] = []
-    screened = _screened_candidates(base)
+    # A screen is bound to the candidate-index hash that existed when the
+    # screen was produced.  Applying every historical screen while compiling
+    # a new source frame would let an old, unrelated index silently suppress
+    # new observations (and make a retained malformed historical record a
+    # denial of service for future collection).  Screens are enforced later,
+    # at qualification, against their exact cited index.  This compilation is
+    # intentionally a pure complete-retrieval projection.
     allowed_receipts = _frame_receipt_hashes(base, retrieval_frame_receipt_hash)
     receipts, receipt_exclusions = _receipt_documents(base, allowed_receipts)
     for receipt, documents in receipts:
@@ -362,9 +368,6 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
             issue_at = str(issue.get("created_at")); _time(issue_at)
             band = contamination_band(issue_at, str(fixed_at))
             candidate_id = target_slug + "#" + str(key[1]) + "->" + slug + "#" + str(pull["number"])
-            if candidate_id in screened:
-                linked_issues.add(key)
-                continue
             candidate = {
                 "candidate_id": candidate_id,
                 "source_priority": 2,
@@ -388,10 +391,7 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
                 existing["fix_retrieval_receipt_hash"] = min(existing["fix_retrieval_receipt_hash"], pull_receipt)
             linked_issues.add(key)
     candidates = sorted(candidates_by_id.values(), key=lambda item: (_time(item["issue_created_at"]), item["candidate_id"]))
-    exclusions = receipt_exclusions + [
-        {"candidate_id": candidate_id, **screened[candidate_id]}
-        for candidate_id in sorted(screened)
-    ] + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
+    exclusions = receipt_exclusions + [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"} for slug, number in sorted(set(issues) - linked_issues)]
     result = {
         "schema_id": "external_validation.session2_github_issue_fix_candidate_index.v2",
         "schema_version": "1",
