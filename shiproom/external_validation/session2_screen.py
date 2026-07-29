@@ -137,8 +137,60 @@ def _candidate_from_index(directory: Path, *, candidate_id: str, candidate_index
     return matches[0]
 
 
-def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> None:
-    _candidate_from_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> dict[str, Any]:
+    """Return the canonical candidate after proving index membership.
+
+    The candidate frame records *paginated retrieval* receipts.  Later
+    materialization records bind a different authority: exact issue/PR object
+    receipts.  Callers must carry both layers rather than substituting one
+    digest type for the other.
+    """
+    return _candidate_from_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+
+
+def _validate_source_object_receipts(
+    directory: Path, *, candidate_id: str, materialization: dict[str, Any],
+    source_object_receipt_hashes: list[str],
+) -> None:
+    """Validate exact GitHub objects independently of the candidate frame.
+
+    Candidate-frame retrieval receipts prove complete, paginated discovery;
+    these exact-object receipts prove the issue and PR subsequently staged.
+    They are intentionally different contracts and must never be compared as
+    if they were interchangeable hashes.
+    """
+    try:
+        issue_part, fix_part = candidate_id.split("->", 1)
+        repository, issue_number = issue_part.rsplit("#", 1)
+        fix_repository, fix_number = fix_part.rsplit("#", 1)
+    except ValueError:
+        _fail("session2_screen_candidate_identifier_invalid")
+    if repository != fix_repository or not issue_number.isdigit() or not fix_number.isdigit():
+        _fail("session2_screen_candidate_identifier_invalid")
+    expected = materialization.get("source_object_receipt_hashes")
+    if not isinstance(expected, list) or sorted(expected) != sorted(source_object_receipt_hashes):
+        _fail("session2_screen_source_object_receipt_mismatch")
+    root = directory.parents[2] / "session2" / "retrieval"
+    expected_objects = (("issue", int(issue_number)), ("pull_request", int(fix_number)))
+    observed: list[tuple[str, int]] = []
+    for digest in source_object_receipt_hashes:
+        receipt = _canonical_record(
+            root / (digest[7:] + ".object-receipt.json"), digest,
+            missing="session2_screen_source_object_receipt_missing",
+            invalid="session2_screen_source_object_receipt_invalid",
+        )
+        kind, number = receipt.get("object_kind"), receipt.get("number")
+        if receipt.get("schema_id") != "external_validation.session2_github_object_receipt.v1" or receipt.get("repository") != repository or not isinstance(kind, str) or not isinstance(number, int):
+            _fail("session2_screen_source_object_receipt_invalid")
+        raw_hash = receipt.get("raw_response_hash")
+        if not isinstance(raw_hash, str) or not _HASH.fullmatch(raw_hash):
+            _fail("session2_screen_source_object_receipt_invalid")
+        _sealed_raw_json(root / "raw" / (raw_hash[7:] + ".json"), raw_hash,
+                         missing="session2_screen_source_object_raw_missing",
+                         invalid="session2_screen_source_object_raw_invalid")
+        observed.append((kind, number))
+    if sorted(observed) != sorted(expected_objects):
+        _fail("session2_screen_source_object_identity_mismatch")
 
 
 def seal_primary_retrieval_unavailable(repository_root: Path, *, candidate_id: str, candidate_index_hash: str) -> dict[str, str]:
@@ -198,6 +250,7 @@ def resolve_primary_retrieval_reference(repository_root: Path, *, candidate_id: 
 def _validate_runtime_evidence(
     directory: Path, *, candidate_id: str, fixed_sha: str,
     materialization_hash: str, execution_evidence_hash: str,
+    source_object_receipt_hashes: list[str],
 ) -> None:
     """Bind a runtime exclusion to the exact staged snapshot and build result.
 
@@ -217,6 +270,9 @@ def _validate_runtime_evidence(
             or materialization.get("candidate_id") != candidate_id
             or materialization.get("commit_sha") != fixed_sha):
         _fail("session2_screen_execution_materialization_mismatch")
+    _validate_source_object_receipts(directory, candidate_id=candidate_id,
+                                     materialization=materialization,
+                                     source_object_receipt_hashes=source_object_receipt_hashes)
     execution = _canonical_record(
         root / "session2" / "receipts" / "environments" / (execution_evidence_hash[7:] + ".environment-build-failure.json"),
         execution_evidence_hash,
@@ -296,10 +352,11 @@ def seal_prequalification_exclusion(
         _fail("session2_screen_execution_evidence_unexpected")
     if not mirror.is_dir() or _is_reparse(mirror): _fail("session2_screen_mirror_invalid")
     directory = _root(repository_root)
-    _assert_candidate_in_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+    candidate = _assert_candidate_in_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
     if runtime_reason:
         _validate_runtime_evidence(directory, candidate_id=candidate_id, fixed_sha=fixed_sha,
-            materialization_hash=materialization_hash or "", execution_evidence_hash=execution_evidence_hash or "")
+            materialization_hash=materialization_hash or "", execution_evidence_hash=execution_evidence_hash or "",
+            source_object_receipt_hashes=source_object_receipt_hashes)
     for sha in (buggy_sha, fixed_sha):
         check = _run_git(mirror, "cat-file", "-e", sha + "^{commit}")
         if check["exit_code"] != 0: _fail("session2_screen_snapshot_missing")
@@ -332,6 +389,15 @@ def seal_prequalification_exclusion(
     if runtime_reason:
         record["materialization_hash"] = materialization_hash
         record["execution_evidence_hash"] = execution_evidence_hash
+        # These are the paginated primary retrieval receipts from the frozen
+        # candidate frame.  They deliberately remain distinct from the exact
+        # object receipts above, which are validated against materialization.
+        if not isinstance(candidate, dict):
+            _fail("session2_screen_candidate_not_in_index")
+        primary = [candidate.get("issue_retrieval_receipt_hash"), candidate.get("fix_retrieval_receipt_hash")]
+        if any(not isinstance(value, str) or not _HASH.fullmatch(value) for value in primary):
+            _fail("session2_screen_candidate_primary_receipt_fields_invalid")
+        record["candidate_primary_retrieval_receipt_hashes"] = sorted(primary)
     raw = canonical_json(record)
     return {"screen_hash": _write_once(directory, ".screen.json", raw), "decision": record["decision"]}
 
