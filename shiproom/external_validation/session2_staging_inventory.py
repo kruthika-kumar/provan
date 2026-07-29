@@ -57,7 +57,7 @@ def _authority_records(root: Path) -> dict[str, dict[str, Any]]:
     directory = root / "session2" / "cases" / "mirrors"
     if not directory.is_dir() or _is_reparse(directory):
         _fail("session2_staging_inventory_authority_missing")
-    result: dict[str, dict[str, Any]] = {}
+    collected: dict[str, list[dict[str, Any]]] = {}
     for path in sorted(directory.glob("*.mirror.json")):
         if _is_reparse(path) or not path.is_file() or path.stat(follow_symlinks=False).st_uid != 0:
             _fail("session2_staging_inventory_authority_invalid")
@@ -76,9 +76,16 @@ def _authority_records(root: Path) -> dict[str, dict[str, Any]]:
                 or not _ATTEMPT.fullmatch(item.get("attempt_id", "initial"))):
             _fail("session2_staging_inventory_authority_invalid")
         name = _normal_name(item["candidate_id"], item.get("attempt_id", "initial"))
-        if name in result:
-            _fail("session2_staging_inventory_authority_ambiguous")
-        result[name] = {"receipt_hash": _hash(raw), "candidate_id": item["candidate_id"], "attempt_id": item.get("attempt_id", "initial"), "outcome": item.get("outcome", "SUCCEEDED")}
+        collected.setdefault(name, []).append({"receipt_hash": _hash(raw), "candidate_id": item["candidate_id"], "attempt_id": item.get("attempt_id", "initial"), "outcome": item.get("outcome", "SUCCEEDED")})
+    # Historical duplicate records are evidence of uncertain staging lineage,
+    # not a reason to lose the inventory.  They are represented explicitly and
+    # can never become deletion-eligible.
+    result: dict[str, dict[str, Any]] = {}
+    for name, records in collected.items():
+        if len(records) == 1:
+            result[name] = records[0]
+        else:
+            result[name] = {"ambiguous": True, "receipt_hashes": sorted(item["receipt_hash"] for item in records)}
     return result
 
 
@@ -104,7 +111,7 @@ def _entry(path: Path, *, kind: str, authority: dict[str, Any] | None) -> dict[s
     # Failed exact-attempt mirrors are the only objects ever eligible for a
     # later deletion allowlist.  Snapshots and any unlinked/ambiguous entry
     # remain retained by construction.
-    record["deletion_eligible"] = bool(kind == "mirror" and authority and authority["outcome"] in {"FAILED", "TIMED_OUT", "BLOCKED"})
+    record["deletion_eligible"] = bool(kind == "mirror" and authority and authority.get("ambiguous") is not True and authority.get("outcome") in {"FAILED", "TIMED_OUT", "BLOCKED"})
     return record
 
 

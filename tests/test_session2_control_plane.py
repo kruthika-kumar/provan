@@ -729,6 +729,23 @@ def test_staging_inventory_is_read_only_and_only_allows_exact_failed_mirror_atte
     assert {item["relative_path"] for item in sealed["entries"] if not item["deletion_eligible"]} == {"mirrors/unknown", "snapshots/retained"}
 
 
+def test_staging_inventory_preserves_ambiguous_historical_mirror_authority(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_staging_inventory as inventory
+
+    root = tmp_path / "external"; authority = root / "session2" / "cases" / "mirrors"; authority.mkdir(parents=True)
+    staging = tmp_path / "staging"; mirrors = staging / "mirrors"; snapshots = staging / "snapshots"; mirrors.mkdir(parents=True); snapshots.mkdir()
+    candidate = "org/repo#1->org/repo#2"; name = "org-repo-1-org-repo-2"
+    for number in (1, 2):
+        raw = canonical_json({"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1", "candidate_id":candidate, "attempt_id":"initial", "outcome":"FAILED", "record":number})
+        (authority / (inventory._hash(raw)[7:] + ".mirror.json")).write_bytes(raw)
+    (mirrors / name).mkdir()
+    monkeypatch.setattr(inventory, "EXPECTED_ROOT", root); monkeypatch.setattr(inventory, "STAGING_ROOT", staging); monkeypatch.setattr(inventory, "MIRRORS", mirrors); monkeypatch.setattr(inventory, "SNAPSHOTS", snapshots)
+    monkeypatch.setattr(inventory.os, "geteuid", lambda: 0, raising=False); monkeypatch.setattr(inventory.os, "fchown", lambda *_args: None, raising=False); monkeypatch.setattr(inventory.os, "fchmod", lambda *_args: None, raising=False)
+    monkeypatch.setattr(inventory, "external_root", lambda _value, _repository: root); monkeypatch.setattr(inventory, "_capacity", lambda: {"free_bytes": 3, "free_inodes": 3, "total_bytes": 4, "total_inodes": 4})
+    sealed = __import__("json").loads(Path(inventory.inventory(tmp_path, implementation_commit="a" * 40, implementation_tree="b" * 40)["path"]).read_text(encoding="utf-8"))
+    assert sealed["deletion_allowlist"] == [] and sealed["entries"][0]["authority"]["ambiguous"] is True
+
+
 def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
     import subprocess
     from shiproom.external_validation import session2_mirror as mirror
