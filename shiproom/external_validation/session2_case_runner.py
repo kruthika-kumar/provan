@@ -163,11 +163,11 @@ def _write_once(path: Path, raw: bytes, *, mode: int) -> None:
 
 def _target_artifact(
     *, snapshot: Path | None, materialization_hash: str | None, relative_path: str | None,
-) -> tuple[dict[str, Any] | None, bytes | None, Path | None]:
+) -> tuple[dict[str, Any] | None, list[tuple[Path, bytes]]]:
     if (snapshot is None) != (materialization_hash is None) or (snapshot is None) != (relative_path is None):
         _fail("session2_case_runner_target_artifact_incomplete")
     if snapshot is None:
-        return None, None, None
+        return None, []
     if (not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink()
             or not SECCOMP.fullmatch(materialization_hash or "")
             or not isinstance(relative_path, str) or not relative_path
@@ -184,23 +184,47 @@ def _target_artifact(
     if source.is_symlink() or not stat.S_ISREG(item.st_mode) or item.st_size <= 0 or item.st_size > 1_048_576:
         _fail("session2_case_runner_target_artifact_invalid")
     raw = source.read_bytes()
-    release_path = "targets/" + sha256(canonical_json({"path": relative_path, "sha256": _sha(raw)})).hexdigest() + ".py"
+    # A fixed upstream regression test is often a module rather than a
+    # standalone script.  Seal the smallest package-local closure required
+    # for normal Python test imports: the target itself, its local package
+    # marker/conftest, and regular non-Python fixture files in that directory.
+    # We deliberately do not copy neighbouring Python tests, hidden source
+    # trees, symlinks, or an arbitrary recursive directory.
+    closure: list[tuple[str, bytes]] = [(source.name, raw)]
+    for sibling in sorted(source.parent.iterdir(), key=lambda item: item.name):
+        if sibling == source or sibling.is_symlink() or not sibling.is_file():
+            continue
+        if sibling.name in {"__init__.py", "conftest.py"} or sibling.suffix != ".py":
+            value = sibling.read_bytes()
+            if len(value) > 1_048_576:
+                _fail("session2_case_runner_target_artifact_invalid")
+            closure.append((sibling.name, value))
+    closure.sort(key=lambda item: item[0])
+    closure_hash = _sha(canonical_json([
+        {"name": name, "sha256": _sha(value), "bytes": len(value)} for name, value in closure
+    ]))
+    release_root = "targets/" + sha256(canonical_json({"path": relative_path, "closure_hash": closure_hash})).hexdigest()
+    release_path = release_root + "/" + source.name
+    files = [{"name": name, "release_path": release_root + "/" + name,
+              "sha256": _sha(value), "bytes": len(value)} for name, value in closure]
     return {
         "source_materialization_hash": materialization_hash,
         "source_relative_path": relative_path,
         "release_path": release_path,
         "sha256": _sha(raw),
         "bytes": len(raw),
-    }, raw, Path(release_path)
+        "closure_hash": closure_hash,
+        "closure_files": files,
+    }, [(Path(release_root + "/" + name), value) for name, value in closure]
 
 
-def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], effective_command: list[str], overlay: dict[str, Any], result_contract_id: str, expected_exit_code: int, target_artifact: dict[str, Any] | None, target_bytes: bytes | None, target_path: Path | None) -> tuple[Path, str]:
+def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], effective_command: list[str], overlay: dict[str, Any], result_contract_id: str, expected_exit_code: int, target_artifact: dict[str, Any] | None, target_files: list[tuple[Path, bytes]]) -> tuple[Path, str]:
     if not OPAQUE.fullmatch(case_id) or not OPAQUE.fullmatch(result_contract_id) or not isinstance(expected_exit_code, int):
         _fail("session2_case_runner_contract_invalid")
     if (not isinstance(command, list) or not command or any(not isinstance(item, str) or not item for item in command)
             or not isinstance(effective_command, list) or not effective_command or any(not isinstance(item, str) or not item for item in effective_command)):
         _fail("session2_case_runner_contract_invalid")
-    if target_artifact is not None and (target_bytes is None or target_path is None or "/release/" + target_artifact["release_path"] not in command):
+    if target_artifact is not None and (not target_files or "/release/" + target_artifact["release_path"] not in command):
         _fail("session2_case_runner_target_artifact_not_executed")
     record = {
         "schema_id": "external_validation.session2_command_contract.v1", "schema_version": "1",
@@ -216,10 +240,11 @@ def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, c
     directory = STAGING / "release-packets" / digest[7:]
     _release_directory(directory)
     target = directory / "release.json"; _write_once(target, raw, mode=0o444)
-    if target_artifact is not None and target_bytes is not None and target_path is not None:
-        artifact_directory = directory / target_path.parent
-        _release_directory(artifact_directory)
-        _write_once(directory / target_path, target_bytes, mode=0o444)
+    if target_artifact is not None:
+        for target_path, target_bytes in target_files:
+            artifact_directory = directory / target_path.parent
+            _release_directory(artifact_directory)
+            _write_once(directory / target_path, target_bytes, mode=0o444)
     return directory, digest
 
 
@@ -267,7 +292,7 @@ def run_case(
     environment_materialization = _materialization(environment["materialization_hash"])
     if patient_materialization["candidate_id"] != environment_materialization["candidate_id"]:
         _fail("session2_case_runner_environment_patient_candidate_mismatch")
-    artifact, artifact_bytes, artifact_path = _target_artifact(
+    artifact, artifact_files = _target_artifact(
         snapshot=target_source_snapshot,
         materialization_hash=target_source_materialization_hash,
         relative_path=target_source_relative_path,
@@ -278,7 +303,7 @@ def run_case(
     except ProjectOverlayError as exc:
         raise CaseRunnerError(str(exc)) from exc
     effective_command = overlay["wrapped_argv"]
-    packet, packet_hash = _packet(case_id=case_id, materialization_hash=patient_materialization_hash, environment_hash=environment_receipt_hash, command=command, effective_command=effective_command, overlay=overlay, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
+    packet, packet_hash = _packet(case_id=case_id, materialization_hash=patient_materialization_hash, environment_hash=environment_receipt_hash, command=command, effective_command=effective_command, overlay=overlay, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_files=artifact_files)
     run_id = uuid.uuid4().hex
     cidfiles = STAGING / "cidfiles"; sealed = STAGING / "sealed-output" / run_id
     _directory(cidfiles); _directory(sealed)

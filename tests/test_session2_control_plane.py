@@ -1008,8 +1008,8 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     for item in (buggy, fixed): item.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8")
     seccomp.write_bytes(b"seccomp")
     source = fixed / "tests" / "upstream_regression.py"; source.write_bytes(b"assert True\n")
-    artifact, _, _ = runner._target_artifact(snapshot=fixed, materialization_hash="sha256:" + "e" * 64,
-                                               relative_path="tests/upstream_regression.py")
+    artifact, artifact_files = runner._target_artifact(snapshot=fixed, materialization_hash="sha256:" + "e" * 64,
+                                                        relative_path="tests/upstream_regression.py")
     assert artifact is not None
     monkeypatch.setattr(runner, "STAGING", staging)
     monkeypatch.setattr(runner, "ROOT", tmp_path / "external")
@@ -1038,6 +1038,31 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     assert record["target_artifact"] == artifact
     assert record["project_metadata_overlay"]["runtime_environment"] == {"DLT_TEST_STORAGE_ROOT": "/tmp/shiproom-dlt-test"}
     assert (packet.parent / artifact["release_path"]).read_bytes() == source.read_bytes()
+    assert artifact_files == [(Path(artifact["release_path"]), source.read_bytes())]
+
+
+def test_target_artifact_seals_a_minimal_local_test_package_closure(tmp_path: Path):
+    """Fixed tests with relative imports retain only their local support files."""
+    from shiproom.external_validation import session2_case_runner as runner
+
+    snapshot = tmp_path / "fixed"
+    package = snapshot / "tests" / "component"
+    package.mkdir(parents=True)
+    target = package / "test_regression.py"
+    target.write_bytes(b"from .conftest import VALUE\nassert VALUE == 1\n")
+    package.joinpath("__init__.py").write_bytes(b"")
+    package.joinpath("conftest.py").write_bytes(b"VALUE = 1\n")
+    package.joinpath("fixture.pem").write_bytes(b"public-test-fixture")
+    package.joinpath("test_neighbour.py").write_bytes(b"raise AssertionError\n")
+    artifact, files = runner._target_artifact(snapshot=snapshot,
+                                               materialization_hash="sha256:" + "f" * 64,
+                                               relative_path="tests/component/test_regression.py")
+    assert artifact is not None
+    names = [Path(path).name for path, _ in files]
+    assert names == ["__init__.py", "conftest.py", "fixture.pem", "test_regression.py"]
+    assert "test_neighbour.py" not in names
+    assert artifact["release_path"].endswith("/test_regression.py")
+    assert {item["name"] for item in artifact["closure_files"]} == set(names)
 
 
 def test_pair_transition_derives_status_from_rehashed_supervisor_receipts(tmp_path: Path):
