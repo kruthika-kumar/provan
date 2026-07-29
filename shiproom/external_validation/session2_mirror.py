@@ -20,6 +20,7 @@ MIRRORS = Path("/mnt/shiproom-remediation/session2-supervisor/mirrors")
 MIN_STAGING_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MIN_STAGING_FREE_INODES = 4096
 _SHA = re.compile(r"^[0-9a-f]{40}$")
+_HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 _SLUG = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _ATTEMPT = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
@@ -100,14 +101,88 @@ def _staging_capacity() -> dict[str, int | bool]:
     }
 
 
-def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: str, head_sha: str,
+def _record(path: Path, digest: str, *, code: str) -> dict[str, object]:
+    if not _HASH.fullmatch(digest) or not path.is_file() or _is_reparse(path):
+        _fail(code)
+    raw = path.read_bytes()
+    if _hash(raw) != digest:
+        _fail(code)
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise MirrorAcquisitionError(code) from exc
+    if not isinstance(value, dict) or canonical_json(value) != raw:
+        _fail(code)
+    return value
+
+
+def _authoritative_candidate(
+    store: Path, *, candidate_id: str, candidate_index_hash: str,
+    repository: str, base_sha: str, head_sha: str, source_receipts: list[str],
+) -> None:
+    """Bind a fetch to the frozen pair and primary GitHub object records.
+
+    Search receipts establish the candidate frame; object receipts establish
+    the exact immutable PR base/head.  Neither a visually similar identifier
+    nor caller-selected commit IDs may become source authority.
+    """
+    cases = store.parent
+    index = _record(cases / (candidate_index_hash[7:] + ".candidate-index.json"), candidate_index_hash,
+                    code="session2_mirror_candidate_index_invalid")
+    candidates = index.get("candidates")
+    matches = [item for item in candidates if isinstance(item, dict) and item.get("candidate_id") == candidate_id] if isinstance(candidates, list) else []
+    if len(matches) != 1:
+        _fail("session2_mirror_candidate_not_in_frozen_index")
+    candidate = matches[0]
+    issue_number, fix_number = candidate.get("issue_number"), candidate.get("fix_pr_number")
+    expected_search = {candidate.get("issue_retrieval_receipt_hash"), candidate.get("fix_retrieval_receipt_hash")}
+    if (candidate.get("repository") != repository or not isinstance(issue_number, int) or not isinstance(fix_number, int)
+            or not all(isinstance(item, str) and _HASH.fullmatch(item) for item in expected_search)):
+        _fail("session2_mirror_candidate_index_invalid")
+    for digest, identifier in ((candidate["issue_retrieval_receipt_hash"], repository + "#" + str(issue_number)),
+                               (candidate["fix_retrieval_receipt_hash"], repository + "#" + str(fix_number))):
+        search = _record(store.parent.parent / "retrieval" / (digest[7:] + ".retrieval-receipt.json"), digest,
+                         code="session2_mirror_search_receipt_invalid")
+        if identifier not in search.get("candidate_ids", []):
+            _fail("session2_mirror_search_receipt_mismatch")
+    objects: list[dict[str, object]] = []
+    for digest in source_receipts:
+        objects.append(_record(store.parent.parent / "retrieval" / (digest[7:] + ".object-receipt.json"), digest,
+                               code="session2_mirror_object_receipt_invalid"))
+    if len(objects) != 2:
+        _fail("session2_mirror_object_receipt_invalid")
+    issue = next((item for item in objects if item.get("object_kind") == "issue"), None)
+    pull = next((item for item in objects if item.get("object_kind") == "pull_request"), None)
+    if (issue is None or pull is None or issue.get("repository") != repository or pull.get("repository") != repository
+            or issue.get("number") != issue_number or pull.get("number") != fix_number):
+        _fail("session2_mirror_object_receipt_mismatch")
+    raw_hash = pull.get("raw_response_hash")
+    if not isinstance(raw_hash, str) or not _HASH.fullmatch(raw_hash):
+        _fail("session2_mirror_object_receipt_invalid")
+    raw_path = store.parent.parent / "retrieval" / "raw" / (raw_hash[7:] + ".json")
+    if not raw_path.is_file() or _is_reparse(raw_path) or _hash(raw_path.read_bytes()) != raw_hash:
+        _fail("session2_mirror_object_raw_invalid")
+    try:
+        document = json.loads(raw_path.read_bytes().decode("utf-8"))
+        authoritative_base = document["base"]["sha"]
+        authoritative_head = document["head"]["sha"]
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise MirrorAcquisitionError("session2_mirror_object_raw_invalid") from exc
+    if authoritative_base != base_sha or authoritative_head != head_sha:
+        _fail("session2_mirror_commit_authority_mismatch")
+
+
+def acquire_pair(repo: Path, *, candidate_id: str, candidate_index_hash: str, repository: str, base_sha: str, head_sha: str,
                  source_receipts: list[str], attempt_id: str = "initial", fetch_timeout_seconds: int = 180) -> dict[str,str]:
     if (not candidate_id or not _SLUG.fullmatch(repository) or not _SHA.fullmatch(base_sha) or not _SHA.fullmatch(head_sha)
-            or base_sha == head_sha or len(source_receipts) != 2 or any(not re.fullmatch(r"sha256:[0-9a-f]{64}", x) for x in source_receipts)
+            or not _HASH.fullmatch(candidate_index_hash) or base_sha == head_sha or len(source_receipts) != 2 or any(not _HASH.fullmatch(x) for x in source_receipts)
             or not _ATTEMPT.fullmatch(attempt_id) or not isinstance(fetch_timeout_seconds, int)
             or not 30 <= fetch_timeout_seconds <= 600):
         _fail("session2_mirror_input_invalid")
-    store = _store(repo); name = re.sub(r"[^a-z0-9]+", "-", candidate_id.lower()).strip("-")
+    store = _store(repo)
+    _authoritative_candidate(store, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash,
+                             repository=repository, base_sha=base_sha, head_sha=head_sha, source_receipts=source_receipts)
+    name = re.sub(r"[^a-z0-9]+", "-", candidate_id.lower()).strip("-")
     if attempt_id != "initial":
         name += "--attempt-" + attempt_id
     target = MIRRORS / name
@@ -164,8 +239,8 @@ def acquire_pair(repo: Path, *, candidate_id: str, repository: str, base_sha: st
 
 
 def main() -> int:
-    p=argparse.ArgumentParser(); p.add_argument("--repository-root",type=Path,required=True); p.add_argument("--candidate-id",required=True); p.add_argument("--repository",required=True); p.add_argument("--base-sha",required=True); p.add_argument("--head-sha",required=True); p.add_argument("--source-object-receipt-hash",action="append",required=True); p.add_argument("--attempt-id", default="initial"); p.add_argument("--fetch-timeout-seconds", type=int, default=180); a=p.parse_args()
-    try: print(json.dumps(acquire_pair(a.repository_root,candidate_id=a.candidate_id,repository=a.repository,base_sha=a.base_sha,head_sha=a.head_sha,source_receipts=a.source_object_receipt_hash,attempt_id=a.attempt_id,fetch_timeout_seconds=a.fetch_timeout_seconds),sort_keys=True))
+    p=argparse.ArgumentParser(); p.add_argument("--repository-root",type=Path,required=True); p.add_argument("--candidate-id",required=True); p.add_argument("--candidate-index-hash",required=True); p.add_argument("--repository",required=True); p.add_argument("--base-sha",required=True); p.add_argument("--head-sha",required=True); p.add_argument("--source-object-receipt-hash",action="append",required=True); p.add_argument("--attempt-id", default="initial"); p.add_argument("--fetch-timeout-seconds", type=int, default=180); a=p.parse_args()
+    try: print(json.dumps(acquire_pair(a.repository_root,candidate_id=a.candidate_id,candidate_index_hash=a.candidate_index_hash,repository=a.repository,base_sha=a.base_sha,head_sha=a.head_sha,source_receipts=a.source_object_receipt_hash,attempt_id=a.attempt_id,fetch_timeout_seconds=a.fetch_timeout_seconds),sort_keys=True))
     except MirrorAcquisitionError as exc: print(str(exc)); return 2
     return 0
 

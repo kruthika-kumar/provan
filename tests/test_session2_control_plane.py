@@ -761,8 +761,30 @@ def test_session2_mirror_rejects_unsealed_or_nonimmutable_inputs(tmp_path: Path,
     from shiproom.external_validation import session2_mirror as mirror
     monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
     with pytest.raises(mirror.MirrorAcquisitionError, match="session2_mirror_input_invalid"):
-        mirror.acquire_pair(tmp_path, candidate_id="case", repository="bad", base_sha="a" * 40,
-                            head_sha="b" * 40, source_receipts=[])
+        mirror.acquire_pair(tmp_path, candidate_id="case", candidate_index_hash="sha256:" + "e" * 64, repository="bad", base_sha="a" * 40,
+                                head_sha="b" * 40, source_receipts=[])
+
+
+def test_session2_mirror_binds_index_search_and_pr_object_authority(tmp_path: Path):
+    """A lookalike ID or caller-selected SHA cannot reach Git acquisition."""
+    from shiproom.external_validation import session2_mirror as mirror
+
+    root, store = tmp_path / "root", tmp_path / "root" / "session2" / "cases" / "mirrors"
+    retrieval = root / "session2" / "retrieval"; retrieval.mkdir(parents=True); store.mkdir(parents=True)
+    def seal(directory: Path, suffix: str, value: object) -> str:
+        raw = canonical_json(value) if not isinstance(value, bytes) else value
+        digest = "sha256:" + sha256(raw).hexdigest(); (directory / (digest[7:] + suffix)).write_bytes(raw); return digest
+    issue_search = seal(retrieval, ".retrieval-receipt.json", {"candidate_ids":["org/repo#7"]})
+    fix_search = seal(retrieval, ".retrieval-receipt.json", {"candidate_ids":["org/repo#8"]})
+    index = seal(store.parent, ".candidate-index.json", {"schema_id":"external_validation.session2_github_issue_fix_candidate_index.v1", "schema_version":"1", "candidates":[{"candidate_id":"org/repo#7->org/repo#8", "repository":"org/repo", "issue_number":7, "fix_pr_number":8, "issue_retrieval_receipt_hash":issue_search, "fix_retrieval_receipt_hash":fix_search}]})
+    issue_object = seal(retrieval, ".object-receipt.json", {"object_kind":"issue", "repository":"org/repo", "number":7, "raw_response_hash":"sha256:" + "a" * 64})
+    raw = canonical_json({"base":{"sha":"a" * 40}, "head":{"sha":"b" * 40}}); raw_hash = "sha256:" + sha256(raw).hexdigest(); (retrieval / "raw").mkdir(); (retrieval / "raw" / (raw_hash[7:] + ".json")).write_bytes(raw)
+    pull_object = seal(retrieval, ".object-receipt.json", {"object_kind":"pull_request", "repository":"org/repo", "number":8, "raw_response_hash":raw_hash})
+    mirror._authoritative_candidate(store, candidate_id="org/repo#7->org/repo#8", candidate_index_hash=index, repository="org/repo", base_sha="a" * 40, head_sha="b" * 40, source_receipts=[issue_object, pull_object])
+    with pytest.raises(mirror.MirrorAcquisitionError, match="session2_mirror_candidate_not_in_frozen_index"):
+        mirror._authoritative_candidate(store, candidate_id="org/repo#7-org/repo#8", candidate_index_hash=index, repository="org/repo", base_sha="a" * 40, head_sha="b" * 40, source_receipts=[issue_object, pull_object])
+    with pytest.raises(mirror.MirrorAcquisitionError, match="session2_mirror_commit_authority_mismatch"):
+        mirror._authoritative_candidate(store, candidate_id="org/repo#7->org/repo#8", candidate_index_hash=index, repository="org/repo", base_sha="c" * 40, head_sha="b" * 40, source_receipts=[issue_object, pull_object])
 
 
 def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace(tmp_path: Path, monkeypatch):
@@ -771,6 +793,7 @@ def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace
     from shiproom.external_validation import session2_mirror as mirror
 
     monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    monkeypatch.setattr(mirror, "_authoritative_candidate", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(mirror, "MIRRORS", tmp_path / "mirrors")
     monkeypatch.setattr(mirror.os, "fchown", lambda *_args: None, raising=False)
     monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
@@ -784,7 +807,7 @@ def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace
 
     monkeypatch.setattr(mirror, "_run", fake_run)
     with pytest.raises(mirror.MirrorAcquisitionError, match=r"session2_mirror_fetch_failed:sha256:"):
-        mirror.acquire_pair(tmp_path, candidate_id="org/repo#1->org/repo#2", repository="org/repo",
+        mirror.acquire_pair(tmp_path, candidate_id="org/repo#1->org/repo#2", candidate_index_hash="sha256:" + "e" * 64, repository="org/repo",
                             base_sha="a" * 40, head_sha="b" * 40,
                             source_receipts=["sha256:" + "c" * 64, "sha256:" + "d" * 64])
     assert list(tmp_path.glob("*.mirror.json"))
@@ -797,13 +820,14 @@ def test_session2_mirror_blocks_before_creating_a_partial_repo_when_staging_is_f
     from shiproom.external_validation import session2_mirror as mirror
 
     monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    monkeypatch.setattr(mirror, "_authoritative_candidate", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(mirror, "MIRRORS", tmp_path / "mirrors")
     monkeypatch.setattr(mirror.os, "fchown", lambda *_args: None, raising=False)
     monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
     monkeypatch.setattr(mirror, "_staging_capacity", lambda: {"free_bytes": 4096, "free_inodes": 1, "minimum_free_bytes": 2 * 1024**3, "minimum_free_inodes": 4096, "sufficient": False})
     monkeypatch.setattr(mirror, "_run", lambda *_args, **_kwargs: pytest.fail("Git must not run below the staging capacity floor"))
     with pytest.raises(mirror.MirrorAcquisitionError, match=r"session2_mirror_staging_capacity_insufficient:sha256:"):
-        mirror.acquire_pair(tmp_path, candidate_id="org/repo#5->org/repo#6", repository="org/repo", base_sha="a" * 40,
+        mirror.acquire_pair(tmp_path, candidate_id="org/repo#5->org/repo#6", candidate_index_hash="sha256:" + "e" * 64, repository="org/repo", base_sha="a" * 40,
                             head_sha="b" * 40, source_receipts=["sha256:" + "c" * 64, "sha256:" + "d" * 64])
     assert not (tmp_path / "mirrors" / "org-repo-5-org-repo-6").exists()
     receipt = next(tmp_path.glob("*.mirror.json")).read_text(encoding="utf-8")
@@ -882,6 +906,7 @@ def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_mirror as mirror
 
     monkeypatch.setattr(mirror, "_store", lambda _repo: tmp_path)
+    monkeypatch.setattr(mirror, "_authoritative_candidate", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(mirror, "MIRRORS", tmp_path / "mirrors")
     monkeypatch.setattr(mirror.os, "fchown", lambda *_args: None, raising=False)
     monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
@@ -893,7 +918,7 @@ def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
         raise subprocess.TimeoutExpired(args, timeout, output=b"partial", stderr=b"deadline")
     monkeypatch.setattr(mirror, "_run", fake_run)
     with pytest.raises(mirror.MirrorAcquisitionError, match=r"session2_mirror_fetch_timed_out:sha256:"):
-        mirror.acquire_pair(tmp_path, candidate_id="org/repo#3->org/repo#4", repository="org/repo", base_sha="a" * 40,
+        mirror.acquire_pair(tmp_path, candidate_id="org/repo#3->org/repo#4", candidate_index_hash="sha256:" + "e" * 64, repository="org/repo", base_sha="a" * 40,
                             head_sha="b" * 40, source_receipts=["sha256:" + "c" * 64, "sha256:" + "d" * 64])
     assert list(tmp_path.glob("*.mirror.json"))
 
