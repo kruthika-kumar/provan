@@ -486,7 +486,7 @@ def test_primary_retrieval_unavailable_screen_binds_missing_candidate_receipts(t
     assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
     assert value["missing_source_object_receipt_hashes"] == expected
     for value_hash in expected:
-        (root / "session2" / "retrieval" / (value_hash[7:] + ".object-receipt.json")).write_text("{}")
+        (root / "session2" / "retrieval" / (value_hash[7:] + ".retrieval-receipt.json")).write_text("{}")
     with pytest.raises(screen.CandidateScreenError, match="session2_screen_candidate_primary_receipts_present"):
         screen.seal_primary_retrieval_unavailable(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)
 

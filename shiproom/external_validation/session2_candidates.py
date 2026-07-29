@@ -133,6 +133,7 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     unbound_runtime_v1: set[str] = set()
     legacy_source_v2: set[str] = set()
     provenance_by_candidate: dict[str, dict[str, str]] = {}
+    resolved_provenance: set[str] = set()
     for path in sorted(directory.glob("*.provenance-screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
@@ -153,6 +154,25 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
                 or not set(missing).issubset(expected) or value["candidate_id"] in provenance_by_candidate):
             _fail("session2_candidate_screen_invalid")
         provenance_by_candidate[value["candidate_id"]] = {"reason": value["reason"], "screen_hash": digest}
+    for path in sorted(directory.glob("*.provenance-resolution.json")):
+        if _is_reparse(path): _fail("session2_candidate_screen_reparse")
+        raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
+        if digest != "sha256:" + path.name.removesuffix(".provenance-resolution.json"):
+            _fail("session2_candidate_screen_hash_mismatch")
+        try: value = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_candidate_screen_resolution_invalid") from exc
+        required = {"schema_id", "schema_version", "candidate_id", "supersedes_screen_hash", "reason", "resolution", "created_at"}
+        target = value.get("supersedes_screen_hash") if isinstance(value, dict) else None
+        if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_candidate_provenance_resolution.v1"
+                or value.get("schema_version") != "1" or value.get("reason") != "PRIMARY_RETRIEVAL_REFERENCE_TYPE_CORRECTED"
+                or value.get("resolution") != "REOPEN_FOR_REQUALIFICATION" or target in resolved_provenance
+                or not isinstance(target, str)):
+            _fail("session2_candidate_screen_resolution_invalid")
+        candidate = value.get("candidate_id")
+        entry = provenance_by_candidate.get(candidate)
+        if entry is None or entry["screen_hash"] != target:
+            _fail("session2_candidate_screen_resolution_invalid")
+        resolved_provenance.add(target)
     for path in sorted(directory.glob("*.screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes()
@@ -221,6 +241,8 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
         if active:
             result[candidate] = active[0]
     for candidate, entry in provenance_by_candidate.items():
+        if entry["screen_hash"] in resolved_provenance:
+            continue
         if candidate in result:
             _fail("session2_candidate_screen_duplicate")
         result[candidate] = entry

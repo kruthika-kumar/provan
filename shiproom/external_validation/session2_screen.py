@@ -141,7 +141,10 @@ def seal_primary_retrieval_unavailable(repository_root: Path, *, candidate_id: s
     if any(not isinstance(value, str) or not _HASH.fullmatch(value) for value in expected):
         _fail("session2_screen_candidate_primary_receipt_fields_invalid")
     receipt_root = directory.parents[2] / "session2" / "retrieval"
-    missing = [value for value in expected if not (receipt_root / (value[7:] + ".object-receipt.json")).is_file()]
+    # Candidate-frame hashes bind the paginated primary retrieval receipts
+    # (query, filters, pagination and raw pages), not later per-object detail
+    # receipts.  Keep those authorities distinct.
+    missing = [value for value in expected if not (receipt_root / (value[7:] + ".retrieval-receipt.json")).is_file()]
     if not missing:
         _fail("session2_screen_candidate_primary_receipts_present")
     record = {
@@ -154,6 +157,32 @@ def seal_primary_retrieval_unavailable(repository_root: Path, *, candidate_id: s
         "missing_source_object_receipt_hashes": sorted(missing), "created_at": _utc(),
     }
     return {"screen_hash": _write_once(directory, ".provenance-screen.json", canonical_json(record)), "decision": record["decision"]}
+
+
+def resolve_primary_retrieval_reference(repository_root: Path, *, candidate_id: str, supersedes_screen_hash: str) -> dict[str, str]:
+    """Reopen only an historical screen created by the object/receipt type bug."""
+    if not isinstance(candidate_id, str) or not _HASH.fullmatch(supersedes_screen_hash):
+        _fail("session2_screen_resolution_input_invalid")
+    directory = _root(repository_root); path = directory / (supersedes_screen_hash[7:] + ".provenance-screen.json")
+    record = _canonical_record(path, supersedes_screen_hash, missing="session2_screen_resolution_predecessor_missing", invalid="session2_screen_resolution_predecessor_invalid")
+    expected = record.get("expected_source_object_receipt_hashes")
+    if (record.get("schema_id") != "external_validation.session2_candidate_provenance_screen.v1" or record.get("candidate_id") != candidate_id
+            or record.get("reason") != _PRIMARY_RETRIEVAL_UNAVAILABLE or not isinstance(expected, list) or len(expected) != 2):
+        _fail("session2_screen_resolution_predecessor_invalid")
+    root = directory.parents[2] / "session2" / "retrieval"
+    for digest in expected:
+        receipt = _canonical_record(root / (digest[7:] + ".retrieval-receipt.json"), digest, missing="session2_screen_resolution_primary_receipt_missing", invalid="session2_screen_resolution_primary_receipt_invalid")
+        pages = receipt.get("pages")
+        if not isinstance(pages, list) or not pages:
+            _fail("session2_screen_resolution_primary_receipt_invalid")
+        for page in pages:
+            raw_hash = page.get("raw_response_hash") if isinstance(page, dict) else None
+            if not isinstance(raw_hash, str) or not _HASH.fullmatch(raw_hash): _fail("session2_screen_resolution_primary_receipt_invalid")
+            _canonical_record(root / "raw" / (raw_hash[7:] + ".json"), raw_hash, missing="session2_screen_resolution_primary_raw_missing", invalid="session2_screen_resolution_primary_raw_invalid")
+    successor = {"schema_id":"external_validation.session2_candidate_provenance_resolution.v1", "schema_version":"1", "candidate_id":candidate_id,
+                 "supersedes_screen_hash":supersedes_screen_hash, "reason":"PRIMARY_RETRIEVAL_REFERENCE_TYPE_CORRECTED",
+                 "resolution":"REOPEN_FOR_REQUALIFICATION", "created_at":_utc()}
+    return {"resolution_hash": _write_once(directory, ".provenance-resolution.json", canonical_json(successor)), "resolution": successor["resolution"]}
 
 
 def _validate_runtime_evidence(
@@ -309,11 +338,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--materialization-hash")
     parser.add_argument("--execution-evidence-hash")
     parser.add_argument("--resolve-screen-hash")
+    parser.add_argument("--resolve-provenance-screen-hash")
     parser.add_argument("--prior-candidate-index-hash")
     parser.add_argument("--implementation-commit")
     args = parser.parse_args(argv)
     try:
-        if args.resolve_screen_hash is not None:
+        if args.resolve_provenance_screen_hash is not None:
+            if any(item is not None for item in (args.candidate_index_hash, args.mirror, args.buggy_sha, args.fixed_sha, args.reason, args.source_object_receipt_hash, args.materialization_hash, args.execution_evidence_hash, args.resolve_screen_hash, args.prior_candidate_index_hash, args.implementation_commit)):
+                _fail("session2_screen_resolution_input_invalid")
+            result = resolve_primary_retrieval_reference(args.repository_root, candidate_id=args.candidate_id, supersedes_screen_hash=args.resolve_provenance_screen_hash)
+        elif args.resolve_screen_hash is not None:
             if args.prior_candidate_index_hash is None or args.implementation_commit is None:
                 _fail("session2_screen_resolution_input_invalid")
             result = seal_prequalification_resolution(args.repository_root, candidate_id=args.candidate_id,
