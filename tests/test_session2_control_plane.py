@@ -8,7 +8,7 @@ from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
     select_sol_sensitivity_case, select_subset, validate_controlled_population,
     validate_fresh_qualification, validate_model_prompt_policy_freeze,
     validate_fixed_twin, validate_harness_pair, validate_owner_context_case,
-    validate_private_mutation, validate_public_seed, scan_positive_artifact,
+    validate_private_mutation, validate_public_seed, validate_retrieval_frame, scan_positive_artifact,
     validate_qualifying_artifact)
 from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
@@ -72,6 +72,14 @@ def test_seed_order_rejects_noncanonical_and_is_stable():
     assert seed_order(seed, "sol-sensitivity", "case_x") == seed_order(seed, "sol-sensitivity", "case_x")
     with pytest.raises(Session2ValidationError, match="session2_seed_invalid"): seed_order("A" * 64, "x")
     assert validate_public_seed({"schema_id":"external_validation.session2_public_seed.v1", "schema_version":"1", "seed":seed, "generation_command":"python -c secrets.token_hex(32)", "generated_at":"2026-07-28T00:00:00Z"})["seed"] == seed
+
+
+def test_retrieval_frame_requires_contiguous_complete_windows():
+    value = {"schema_id":"external_validation.session2_retrieval_frame.v1", "schema_version":"1", "purpose":"fresh_case_candidate_completion", "predecessor_candidate_index_hash":"sha256:" + "0123456789abcdef" * 4, "repository":"acme/project", "coverage_start":"2026-03-01T00:00:00Z", "coverage_end":"2026-03-02T23:59:59Z", "query_windows":[{"start":"2026-03-01T00:00:00Z", "end":"2026-03-01T23:59:59Z"}, {"start":"2026-03-02T00:00:00Z", "end":"2026-03-02T23:59:59Z"}], "kinds":["issue", "pull_request"], "page_size":30, "max_pages":10, "selection_effect":"candidate_collection_only"}
+    assert validate_retrieval_frame(value)["repository"] == "acme/project"
+    value["query_windows"][1]["start"] = "2026-03-02T00:00:01Z"
+    with pytest.raises(Session2ValidationError, match="session2_retrieval_frame_invalid"):
+        validate_retrieval_frame(value)
 
 
 def test_budget_ledger_is_append_only_and_caps_reservations(tmp_path: Path):

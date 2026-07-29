@@ -7,7 +7,7 @@ control-plane rules required before those activities can begin.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -111,6 +111,43 @@ def validate_public_seed(value: Any) -> dict[str, Any]:
         if timestamp.tzinfo is None: raise ValueError
     except (AttributeError, ValueError):
         fail("session2_seed_record_invalid")
+    return value
+
+
+def validate_retrieval_frame(value: Any) -> dict[str, Any]:
+    """Validate a predeclared, complete primary-source retrieval frame."""
+    required = {"schema_id", "schema_version", "purpose", "predecessor_candidate_index_hash", "repository", "coverage_start", "coverage_end", "query_windows", "kinds", "page_size", "max_pages", "selection_effect"}
+    if (not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_retrieval_frame.v1"
+            or value.get("schema_version") != "1"
+            or value.get("purpose") != "fresh_case_candidate_completion"
+            or value.get("selection_effect") != "candidate_collection_only"
+            or not isinstance(value.get("repository"), str) or "/" not in value["repository"]):
+        fail("session2_retrieval_frame_invalid")
+    require_sha(value["predecessor_candidate_index_hash"], "session2_retrieval_frame_invalid")
+    if value.get("kinds") != ["issue", "pull_request"] or not isinstance(value.get("page_size"), int) or not 1 <= value["page_size"] <= 100 or not isinstance(value.get("max_pages"), int) or not 1 <= value["max_pages"] <= 10:
+        fail("session2_retrieval_frame_invalid")
+    try:
+        start = datetime.fromisoformat(value["coverage_start"].replace("Z", "+00:00"))
+        end = datetime.fromisoformat(value["coverage_end"].replace("Z", "+00:00"))
+    except (AttributeError, ValueError):
+        fail("session2_retrieval_frame_invalid")
+    if start.tzinfo is None or end.tzinfo is None or start >= end or not isinstance(value["query_windows"], list) or not value["query_windows"]:
+        fail("session2_retrieval_frame_invalid")
+    cursor = start
+    for window in value["query_windows"]:
+        if not isinstance(window, dict) or set(window) != {"start", "end"}:
+            fail("session2_retrieval_frame_invalid")
+        try:
+            window_start = datetime.fromisoformat(window["start"].replace("Z", "+00:00"))
+            window_end = datetime.fromisoformat(window["end"].replace("Z", "+00:00"))
+        except (AttributeError, ValueError):
+            fail("session2_retrieval_frame_invalid")
+        if window_start.tzinfo is None or window_end.tzinfo is None or window_start != cursor or window_end < window_start:
+            fail("session2_retrieval_frame_invalid")
+        cursor = window_end + timedelta(seconds=1)
+    if cursor != end + timedelta(seconds=1):
+        fail("session2_retrieval_frame_invalid")
     return value
 
 
