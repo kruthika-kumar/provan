@@ -132,6 +132,27 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     screens_by_candidate: dict[str, list[dict[str, str]]] = {}
     unbound_runtime_v1: set[str] = set()
     legacy_source_v2: set[str] = set()
+    provenance_by_candidate: dict[str, dict[str, str]] = {}
+    for path in sorted(directory.glob("*.provenance-screen.json")):
+        if _is_reparse(path): _fail("session2_candidate_screen_reparse")
+        raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
+        if digest != "sha256:" + path.name.removesuffix(".provenance-screen.json"):
+            _fail("session2_candidate_screen_hash_mismatch")
+        try: value = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_candidate_screen_invalid") from exc
+        required = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "stage", "decision", "reason", "expected_source_object_receipt_hashes", "missing_source_object_receipt_hashes", "created_at"}
+        expected = value.get("expected_source_object_receipt_hashes") if isinstance(value, dict) else None
+        missing = value.get("missing_source_object_receipt_hashes") if isinstance(value, dict) else None
+        if (not isinstance(value, dict) or set(value) != required or value.get("schema_id") != "external_validation.session2_candidate_provenance_screen.v1"
+                or value.get("schema_version") != "1" or not isinstance(value.get("candidate_id"), str)
+                or value.get("stage") != "PRIMARY_RETRIEVAL_AUTHORITY" or value.get("decision") != "EXCLUDED_PREQUALIFICATION"
+                or value.get("reason") != "PRIMARY_RETRIEVAL_RECEIPT_UNAVAILABLE"
+                or not isinstance(expected, list) or len(expected) != 2 or expected != sorted(expected)
+                or not isinstance(missing, list) or not missing or missing != sorted(missing)
+                or any(not isinstance(item, str) or not item.startswith("sha256:") for item in expected + missing)
+                or not set(missing).issubset(expected) or value["candidate_id"] in provenance_by_candidate):
+            _fail("session2_candidate_screen_invalid")
+        provenance_by_candidate[value["candidate_id"]] = {"reason": value["reason"], "screen_hash": digest}
     for path in sorted(directory.glob("*.screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes()
@@ -199,6 +220,10 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
             _fail("session2_candidate_screen_duplicate")
         if active:
             result[candidate] = active[0]
+    for candidate, entry in provenance_by_candidate.items():
+        if candidate in result:
+            _fail("session2_candidate_screen_duplicate")
+        result[candidate] = entry
     return result
 
 

@@ -470,6 +470,27 @@ def test_prequalification_screen_requires_exact_candidate_from_canonical_index(t
         screen._assert_candidate_in_index(screens, candidate_id="acme/project#7-acme/project#8", candidate_index_hash=digest)
 
 
+def test_primary_retrieval_unavailable_screen_binds_missing_candidate_receipts(tmp_path: Path, monkeypatch):
+    from hashlib import sha256
+    import json
+    from shiproom.external_validation import session2_screen as screen
+    root = tmp_path / "root"; screens = root / "session2" / "cases" / "screens"; screens.mkdir(parents=True)
+    (root / "session2" / "retrieval").mkdir()
+    expected = ["sha256:" + "a1" * 32, "sha256:" + "b2" * 32]
+    index = {"schema_id":"external_validation.session2_github_issue_fix_candidate_index.v1", "schema_version":"1", "source_receipt_hashes":[], "exclusions":[], "candidates":[{"candidate_id":"acme/project#7->acme/project#8", "issue_retrieval_receipt_hash":expected[0], "fix_retrieval_receipt_hash":expected[1]}]}
+    raw = canonical_json(index); digest = "sha256:" + sha256(raw).hexdigest()
+    (screens.parent / (digest[7:] + ".candidate-index.json")).write_bytes(raw)
+    monkeypatch.setattr(screen, "_root", lambda _repo: screens)
+    result = screen.seal_primary_retrieval_unavailable(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)
+    value = json.loads(next(screens.glob("*.provenance-screen.json")).read_text())
+    assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+    assert value["missing_source_object_receipt_hashes"] == expected
+    for value_hash in expected:
+        (root / "session2" / "retrieval" / (value_hash[7:] + ".object-receipt.json")).write_text("{}")
+    with pytest.raises(screen.CandidateScreenError, match="session2_screen_candidate_primary_receipts_present"):
+        screen.seal_primary_retrieval_unavailable(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)
+
+
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_materialize as materialize
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"

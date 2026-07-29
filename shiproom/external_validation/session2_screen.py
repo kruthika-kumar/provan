@@ -35,6 +35,7 @@ _REASONS = {
     "UNQUALIFIED_LINUX_CONTAINER_PATH",
     "FIXED_TWIN_NON_MINIMAL",
 }
+_PRIMARY_RETRIEVAL_UNAVAILABLE = "PRIMARY_RETRIEVAL_RECEIPT_UNAVAILABLE"
 _RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
 _FIXED_TWIN_RESOLUTION_REASON = "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"
 _RUNNER_RESOLUTION_REASON = "QUALIFIED_RUNNER_COMPATIBILITY_SUPERSEDED"
@@ -104,7 +105,7 @@ def _canonical_record(path: Path, expected_hash: str, *, missing: str, invalid: 
     return value
 
 
-def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> None:
+def _candidate_from_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> dict[str, Any]:
     """Bind a screen to an actual candidate in the cited immutable index.
 
     A screen is exclusion evidence, not an opportunity to mint a convenient
@@ -119,10 +120,40 @@ def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_
         invalid="session2_screen_candidate_index_invalid",
     )
     candidates = index.get("candidates")
+    matches = [item for item in candidates if isinstance(item, dict) and item.get("candidate_id") == candidate_id] if isinstance(candidates, list) else []
     if (index.get("schema_id") != "external_validation.session2_github_issue_fix_candidate_index.v1"
-            or index.get("schema_version") != "1" or not isinstance(candidates, list)
-            or sum(isinstance(item, dict) and item.get("candidate_id") == candidate_id for item in candidates) != 1):
+            or index.get("schema_version") != "1" or len(matches) != 1):
         _fail("session2_screen_candidate_not_in_index")
+    return matches[0]
+
+
+def _assert_candidate_in_index(directory: Path, *, candidate_id: str, candidate_index_hash: str) -> None:
+    _candidate_from_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+
+
+def seal_primary_retrieval_unavailable(repository_root: Path, *, candidate_id: str, candidate_index_hash: str) -> dict[str, str]:
+    """Seal missing candidate-frame primary evidence without substituting re-fetches."""
+    if not isinstance(candidate_id, str) or not candidate_id or not _HASH.fullmatch(candidate_index_hash):
+        _fail("session2_screen_input_invalid")
+    directory = _root(repository_root)
+    candidate = _candidate_from_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+    expected = [candidate.get("issue_retrieval_receipt_hash"), candidate.get("fix_retrieval_receipt_hash")]
+    if any(not isinstance(value, str) or not _HASH.fullmatch(value) for value in expected):
+        _fail("session2_screen_candidate_primary_receipt_fields_invalid")
+    receipt_root = directory.parents[2] / "session2" / "retrieval"
+    missing = [value for value in expected if not (receipt_root / (value[7:] + ".object-receipt.json")).is_file()]
+    if not missing:
+        _fail("session2_screen_candidate_primary_receipts_present")
+    record = {
+        "schema_id": "external_validation.session2_candidate_provenance_screen.v1",
+        "schema_version": "1", "candidate_id": candidate_id,
+        "candidate_index_hash": candidate_index_hash,
+        "stage": "PRIMARY_RETRIEVAL_AUTHORITY", "decision": "EXCLUDED_PREQUALIFICATION",
+        "reason": _PRIMARY_RETRIEVAL_UNAVAILABLE,
+        "expected_source_object_receipt_hashes": sorted(expected),
+        "missing_source_object_receipt_hashes": sorted(missing), "created_at": _utc(),
+    }
+    return {"screen_hash": _write_once(directory, ".provenance-screen.json", canonical_json(record)), "decision": record["decision"]}
 
 
 def _validate_runtime_evidence(
@@ -273,7 +304,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-index-hash")
     parser.add_argument("--mirror", type=Path)
     parser.add_argument("--buggy-sha"); parser.add_argument("--fixed-sha")
-    parser.add_argument("--reason", choices=sorted(_REASONS))
+    parser.add_argument("--reason", choices=sorted(_REASONS | {_PRIMARY_RETRIEVAL_UNAVAILABLE}))
     parser.add_argument("--source-object-receipt-hash", action="append")
     parser.add_argument("--materialization-hash")
     parser.add_argument("--execution-evidence-hash")
@@ -289,6 +320,11 @@ def main(argv: list[str] | None = None) -> int:
                 supersedes_screen_hash=args.resolve_screen_hash, prior_candidate_index_hash=args.prior_candidate_index_hash,
                 implementation_commit=args.implementation_commit)
         else:
+            if args.reason == _PRIMARY_RETRIEVAL_UNAVAILABLE:
+                if any(item is not None for item in (args.mirror, args.buggy_sha, args.fixed_sha, args.source_object_receipt_hash, args.materialization_hash, args.execution_evidence_hash)) or args.candidate_index_hash is None:
+                    _fail("session2_screen_input_invalid")
+                result = seal_primary_retrieval_unavailable(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash)
+                print(json.dumps(result, sort_keys=True)); return 0
             if any(item is None for item in (args.candidate_index_hash, args.mirror, args.buggy_sha, args.fixed_sha, args.reason, args.source_object_receipt_hash)):
                 _fail("session2_screen_input_invalid")
             result = seal_prequalification_exclusion(args.repository_root, candidate_id=args.candidate_id, candidate_index_hash=args.candidate_index_hash, mirror=args.mirror, buggy_sha=args.buggy_sha, fixed_sha=args.fixed_sha, reason=args.reason, source_object_receipt_hashes=args.source_object_receipt_hash, materialization_hash=args.materialization_hash, execution_evidence_hash=args.execution_evidence_hash)
