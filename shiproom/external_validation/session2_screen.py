@@ -273,15 +273,29 @@ def _validate_runtime_evidence(
     _validate_source_object_receipts(directory, candidate_id=candidate_id,
                                      materialization=materialization,
                                      source_object_receipt_hashes=source_object_receipt_hashes)
+    environment_path = root / "session2" / "receipts" / "environments" / (execution_evidence_hash[7:] + ".environment-build-failure.json")
+    if environment_path.is_file():
+        execution = _canonical_record(environment_path, execution_evidence_hash,
+            missing="session2_screen_execution_receipt_missing", invalid="session2_screen_execution_receipt_invalid")
+        if (execution.get("schema_id") != "external_validation.session2_environment_build_failure.v1"
+                or execution.get("materialization_hash") != materialization_hash
+                or not isinstance(execution.get("failure_stage"), str)):
+            _fail("session2_screen_execution_receipt_mismatch")
+        return
+    # A real supervisor receipt may prove a qualified runner cannot execute a
+    # repository's declared contract even though dependency construction did
+    # succeed.  This is distinct from a target oracle: it must be a failed
+    # command contract on this exact fixed snapshot, with network disabled.
     execution = _canonical_record(
-        root / "session2" / "receipts" / "environments" / (execution_evidence_hash[7:] + ".environment-build-failure.json"),
+        root / "session2" / "receipts" / "executions" / (execution_evidence_hash[7:] + ".execution-receipt.json"),
         execution_evidence_hash,
-        missing="session2_screen_execution_receipt_missing",
-        invalid="session2_screen_execution_receipt_invalid",
-    )
-    if (execution.get("schema_id") != "external_validation.session2_environment_build_failure.v1"
-            or execution.get("materialization_hash") != materialization_hash
-            or not isinstance(execution.get("failure_stage"), str)):
+        missing="session2_screen_execution_receipt_missing", invalid="session2_screen_execution_receipt_invalid")
+    if (execution.get("schema_id") != "external_validation.session2_execution_receipt.v1"
+            or execution.get("source_record_hash") != materialization_hash
+            or execution.get("network_policy") != "none"
+            or execution.get("contract_satisfied") is not False
+            or not isinstance(execution.get("exit_code"), int)
+            or execution.get("exit_code") == execution.get("expected_exit_code")):
         _fail("session2_screen_execution_receipt_mismatch")
 
 
