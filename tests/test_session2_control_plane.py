@@ -934,9 +934,11 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
                              result_contract_id="dlt-target-buggy", expected_exit_code=1,
                              seccomp_profile=seccomp, seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest(),
                              target_source_snapshot=fixed, target_source_materialization_hash="sha256:" + "e" * 64,
-                             target_source_relative_path="tests/upstream_regression.py")
+                             target_source_relative_path="tests/upstream_regression.py",
+                             runtime_environment={"DLT_TEST_STORAGE_ROOT": "/tmp/shiproom-dlt-test"})
     assert result["target_artifact"] == artifact
     packet = next((staging / "release-packets").glob("*/release.json"))
     record = __import__("json").loads(packet.read_text(encoding="utf-8"))
     assert record["target_artifact"] == artifact
+    assert record["project_metadata_overlay"]["runtime_environment"] == {"DLT_TEST_STORAGE_ROOT": "/tmp/shiproom-dlt-test"}
     assert (packet.parent / artifact["release_path"]).read_bytes() == source.read_bytes()

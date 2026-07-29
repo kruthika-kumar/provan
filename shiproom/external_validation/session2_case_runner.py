@@ -229,6 +229,7 @@ def run_case(
     target_source_snapshot: Path | None = None,
     target_source_materialization_hash: str | None = None,
     target_source_relative_path: str | None = None,
+    runtime_environment: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run a single frozen command and return its supervisor-authored receipt."""
     _root()
@@ -245,7 +246,7 @@ def run_case(
         relative_path=target_source_relative_path,
     )
     try:
-        overlay = project_metadata_overlay(snapshot, command)
+        overlay = project_metadata_overlay(snapshot, command, runtime_environment=runtime_environment)
     except ProjectOverlayError as exc:
         raise CaseRunnerError(str(exc)) from exc
     effective_command = overlay["wrapped_argv"]
@@ -276,6 +277,19 @@ def _command(encoded: str) -> list[str]:
     return value
 
 
+def _runtime_environment(encoded: str | None) -> dict[str, str] | None:
+    if encoded is None:
+        return None
+    try:
+        raw = base64.urlsafe_b64decode(encoded.encode("ascii") + b"=" * (-len(encoded) % 4))
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+        raise CaseRunnerError("session2_case_runner_runtime_environment_invalid") from exc
+    if not isinstance(value, dict) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in value.items()):
+        _fail("session2_case_runner_runtime_environment_invalid")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run one frozen Session 2 qualification command.")
     parser.add_argument("--repository-root", required=True, type=Path)
@@ -286,10 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-source-snapshot", type=Path)
     parser.add_argument("--target-source-materialization-hash")
     parser.add_argument("--target-source-relative-path")
+    parser.add_argument("--runtime-environment-base64")
     parser.add_argument("--wall-seconds", type=int, default=900)
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path), sort_keys=True, separators=(",", ":")))
+        print(json.dumps(run_case(parsed.repository_root, case_id=parsed.case_id, snapshot=parsed.snapshot, environment_receipt_hash=parsed.environment_receipt_hash, command=_command(parsed.command_base64), result_contract_id=parsed.result_contract_id, expected_exit_code=parsed.expected_exit_code, seccomp_profile=parsed.seccomp_profile, seccomp_hash=parsed.seccomp_hash, wall_seconds=parsed.wall_seconds, target_source_snapshot=parsed.target_source_snapshot, target_source_materialization_hash=parsed.target_source_materialization_hash, target_source_relative_path=parsed.target_source_relative_path, runtime_environment=_runtime_environment(parsed.runtime_environment_base64)), sort_keys=True, separators=(",", ":")))
     except (CaseRunnerError, Session2ExecutionError, RuntimeError, ValueError) as exc:
         print(str(exc)); return 2
     return 0
