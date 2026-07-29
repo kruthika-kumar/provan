@@ -116,9 +116,17 @@ def compile_fresh_qualification(
     if primary_transition_hash == replay_transition_hash: _fail("session2_fresh_replay_not_independent")
     materialization = _record(root / "session2" / "cases" / "materializations" / (fixed_materialization_hash[7:] + ".materialization.json"), fixed_materialization_hash, ".materialization.json")
     if materialization.get("candidate_id") != candidate_id: _fail("session2_fresh_materialization_mismatch")
-    staging = Path("/mnt/shiproom-remediation/session2-supervisor/snapshots")
+    # ``session2_materialize`` owns the root-only ``materializations``
+    # subtree.  Older qualification records used ``snapshots``; both are
+    # supervisor staging locations and neither is patient-writable.  Accept
+    # those exact authorities only, rather than requiring callers to copy or
+    # relocate an already sealed materialization merely for finalization.
+    staging_roots = {
+        Path("/mnt/shiproom-remediation/session2-supervisor/snapshots"),
+        Path("/mnt/shiproom-remediation/session2-supervisor/materializations"),
+    }
     if (not fixed_snapshot.is_dir() or _is_reparse(fixed_snapshot)
-            or staging not in fixed_snapshot.parents):
+            or not any(root in fixed_snapshot.parents for root in staging_roots)):
         _fail("session2_fresh_license_snapshot_missing")
     license_file = fixed_snapshot / license_relative_path
     if not license_file.is_file() or license_file.is_symlink() or _digest(license_file.read_bytes()) != license_sha256:
