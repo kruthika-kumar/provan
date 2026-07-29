@@ -638,6 +638,18 @@ def test_environment_builder_dockerfile_uses_hash_checked_pip_and_nonpatient_net
     assert dockerfile.startswith("FROM sha256:0123456789abcdef")
 
 
+def test_environment_rejects_an_additional_package_not_declared_by_patient_metadata(tmp_path: Path):
+    from shiproom.external_validation import session2_environment as environment
+
+    (tmp_path / "pyproject.toml").write_text(
+        "[dependency-groups]\ntest = ['pytest>=8,<9']\n[project.optional-dependencies]\napi = ['httpx>=0.1']\n",
+        encoding="utf-8",
+    )
+    environment._declared_test_packages(tmp_path, {"pytest", "httpx"})
+    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_additional_package_undeclared"):
+        environment._declared_test_packages(tmp_path, {"requests"})
+
+
 def test_hash_pinned_requirements_authority_rejects_loose_or_indirect_inputs():
     raw = b"# generated\ndemo[headless, mfa]==1.2 \\\n    --hash=sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n# via demo\n"
     exported, manifest = export_hash_pinned_requirements(raw, source_path="src/backend/requirements.txt")

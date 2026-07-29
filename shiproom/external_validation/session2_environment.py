@@ -20,6 +20,7 @@ import secrets
 import shutil
 import stat
 import subprocess
+import tomllib
 from typing import Any
 from urllib.request import Request, urlopen
 
@@ -43,6 +44,7 @@ BUILD_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor/environment-bui
 DEFAULT_BASE_IMAGE_REF = "shiproom-session2-glibc:a4ccb7f"
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
+_DECLARED_REQUIREMENT = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)")
 
 
 class EnvironmentBuildError(RuntimeError):
@@ -293,17 +295,54 @@ def _runtime_platform(base_ref: str) -> str:
     _fail("session2_environment_runtime_platform_unsupported")
 
 
+def _declared_test_packages(snapshot: Path, packages: set[str]) -> None:
+    """Reject a command-specific package unless patient metadata declares it.
+
+    The exact bytes remain pinned by ``uv.lock``; this guard prevents a caller
+    from injecting an otherwise-lock-resolvable package merely because it
+    happens to occur somewhere in the lock graph.  It intentionally supports
+    a minimal test-runner subset when a broad development group also contains
+    a prohibited VCS dependency.
+    """
+    if not packages:
+        return
+    metadata = snapshot / "pyproject.toml"
+    if not metadata.is_file() or metadata.is_symlink():
+        _fail("session2_environment_project_metadata_missing")
+    try:
+        document = tomllib.loads(metadata.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        raise EnvironmentBuildError("session2_environment_project_metadata_invalid") from exc
+    declared: set[str] = set()
+    groups = document.get("dependency-groups", {})
+    optional = document.get("project", {}).get("optional-dependencies", {}) if isinstance(document.get("project"), dict) else {}
+    values: list[object] = []
+    if isinstance(groups, dict):
+        values.extend(item for group in groups.values() if isinstance(group, list) for item in group)
+    if isinstance(optional, dict):
+        values.extend(item for group in optional.values() if isinstance(group, list) for item in group)
+    for value in values:
+        if isinstance(value, str):
+            match = _DECLARED_REQUIREMENT.match(value)
+            if match:
+                declared.add(match.group(1).lower().replace("_", "-"))
+    requested = {item.lower().replace("_", "-") for item in packages}
+    if not requested.issubset(declared):
+        _fail("session2_environment_additional_package_undeclared")
+
+
 def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = DEFAULT_BASE_IMAGE_REF, extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset(), requirements_authority_path: str | None = None) -> dict[str, Any]:
     """Build exactly one image from a sealed dependency authority.
 
-    The public caller provides no package specifiers: all install authority is
-    derived from the snapshot's lockfile and package-group selection.
+    All install authority is derived from the snapshot's lockfile.  A narrow
+    test-runner package is permitted only when patient metadata declares it.
     """
     if not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree) or not _HASH.fullmatch(materialization_hash):
         _fail("session2_environment_implementation_authority_invalid")
     receipts = _root(repository)
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
         _fail("session2_environment_snapshot_invalid")
+    _declared_test_packages(snapshot, additional_packages)
     if requirements_authority_path is not None and (extras or groups or additional_packages):
         # A requirements authority is complete as committed.  Injecting a
         # group or an extra would be an unrecorded dependency-resolution step.
