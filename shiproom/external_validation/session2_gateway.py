@@ -9,12 +9,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from hashlib import sha256
 import os
+from pathlib import Path
+import platform
 from typing import Any, Callable
 import json
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from .identity import canonical_json
+from .security import _is_reparse, external_root
 from .session2 import BudgetLedger, Session2ValidationError
 
 
@@ -134,6 +139,59 @@ class OpenAIResponsesGateway:
             return probe
         self.ledger.transition(attempt, "SETTLED", provider_request_id=probe.request_id, settled=float(usage["cost_usd"]))
         return probe
+
+
+def _probe_root(repository_root: Path) -> Path:
+    if os.name != "posix" or platform.system() != "Linux" or os.geteuid() != 0:
+        raise ModelGatewayError("session2_model_probe_requires_root_linux_wsl")
+    try:
+        root = external_root(None, repository_root)
+    except PermissionError as exc:
+        raise ModelGatewayError("session2_model_probe_external_root_invalid") from exc
+    if root != Path("/var/lib/shiproom-external-validation") or _is_reparse(root):
+        raise ModelGatewayError("session2_model_probe_external_root_invalid")
+    target = root / "session2" / "model" / "probes"
+    target.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if _is_reparse(target):
+        raise ModelGatewayError("session2_model_probe_external_root_invalid")
+    return target
+
+
+def seal_availability_probe(repository_root: Path, gateway: OpenAIResponsesGateway) -> dict[str, str]:
+    """Perform and content-address the sole content-free Session-2 probe.
+
+    The private receipt binds the real provider response and the append-only
+    logical ledger checkpoint.  A failed provider request deliberately leaves
+    its max-charged ledger authority intact but cannot yield a probe receipt.
+    """
+    target = _probe_root(repository_root)
+    if list(target.glob("*.model-probe.json")):
+        raise ModelGatewayError("session2_model_probe_already_attempted")
+    probe = gateway.availability_probe()
+    document = {**probe.document(), "evaluated_model_call_count": 0,
+                "shiproom_evaluated_output_count": 0,
+                "comparator_evaluated_output_count": 0,
+                "budget_ledger_checkpoint": gateway.ledger.checkpoint()}
+    raw = canonical_json(document)
+    digest = "sha256:" + sha256(raw).hexdigest()
+    path = target / (digest[7:] + ".model-probe.json")
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0), 0o400)
+    except FileExistsError:
+        if _is_reparse(path) or path.read_bytes() != raw:
+            raise ModelGatewayError("session2_model_probe_collision")
+    else:
+        try:
+            if os.write(descriptor, raw) != len(raw):
+                raise ModelGatewayError("session2_model_probe_short_write")
+            os.fsync(descriptor)
+            if hasattr(os, "fchown"):
+                os.fchown(descriptor, 0, 0)
+            if hasattr(os, "fchmod"):
+                os.fchmod(descriptor, 0o400)
+        finally:
+            os.close(descriptor)
+    return {"model_probe_hash": digest, "model_probe_opaque_id": path.name}
 
 
 def assert_pre_execution_model_drift(session2_probe: ModelProbe, session3_probe: ModelProbe) -> None:

@@ -22,7 +22,7 @@ from shiproom.external_validation.session2_freeze import (
     validate_claim_audit, validate_freeze_attestation, validate_freeze_manifest)
 from shiproom.external_validation.session2_gateway import (
     ModelGatewayError, OpenAIResponsesGateway, assert_non_observation_worker_environment,
-    responses_api_sender_from_environment)
+    responses_api_sender_from_environment, seal_availability_probe)
 from shiproom.external_validation.session2_storage import (
     Session2StorageError, open_budget_ledger, prepare_external_namespace)
 from shiproom.external_validation.session2_selection import (
@@ -316,6 +316,20 @@ def test_only_gateway_can_record_content_free_probe_and_usage(tmp_path: Path):
     assert ledger.checkpoint()["committed_spend"] == 0.25
     with pytest.raises(ModelGatewayError, match="session2_non_observation_capability_violation"):
         assert_non_observation_worker_environment({"OPENAI_API_KEY":"should-not-be-here"})
+
+
+def test_content_free_probe_is_sealed_once_with_ledger_checkpoint(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_gateway as gateway_module
+    target = tmp_path / "model" / "probes"; target.mkdir(parents=True)
+    monkeypatch.setattr(gateway_module, "_probe_root", lambda _repo: target)
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    gateway = OpenAIResponsesGateway(ledger, lambda _request: {"model":"gpt-5.6-terra", "request_id":"req_probe_sealed", "usage":{"cost_usd":0.25}})
+    sealed = seal_availability_probe(tmp_path, gateway)
+    document = json.loads((target / sealed["model_probe_opaque_id"]).read_text())
+    assert document["evaluated_model_call_count"] == 0
+    assert document["budget_ledger_checkpoint"]["committed_spend"] == 0.25
+    with pytest.raises(ModelGatewayError, match="session2_model_probe_already_attempted"):
+        seal_availability_probe(tmp_path, gateway)
 
 
 def test_gateway_max_charges_missing_provider_cost_without_inventing_usage(tmp_path: Path, monkeypatch):
