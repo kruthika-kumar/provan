@@ -746,6 +746,32 @@ def test_staging_inventory_preserves_ambiguous_historical_mirror_authority(tmp_p
     assert sealed["deletion_allowlist"] == [] and sealed["entries"][0]["authority"]["ambiguous"] is True
 
 
+def test_staging_inventory_retains_untrusted_historical_entry_without_deletion(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_staging_inventory as inventory
+
+    root = tmp_path / "external"; (root / "session2" / "cases" / "mirrors").mkdir(parents=True)
+    staging = tmp_path / "staging"; mirrors = staging / "mirrors"; snapshots = staging / "snapshots"; mirrors.mkdir(parents=True); snapshots.mkdir()
+    (mirrors / "legacy").mkdir()
+    monkeypatch.setattr(inventory, "EXPECTED_ROOT", root); monkeypatch.setattr(inventory, "STAGING_ROOT", staging); monkeypatch.setattr(inventory, "MIRRORS", mirrors); monkeypatch.setattr(inventory, "SNAPSHOTS", snapshots)
+    monkeypatch.setattr(inventory.os, "geteuid", lambda: 0, raising=False); monkeypatch.setattr(inventory.os, "fchown", lambda *_args: None, raising=False); monkeypatch.setattr(inventory.os, "fchmod", lambda *_args: None, raising=False)
+    monkeypatch.setattr(inventory, "external_root", lambda _value, _repository: root); monkeypatch.setattr(inventory, "_capacity", lambda: {"free_bytes": 3, "free_inodes": 3, "total_bytes": 4, "total_inodes": 4})
+    legacy = mirrors / "legacy"
+    original_stat = Path.stat
+    original = original_stat(legacy)
+
+    class LegacyStat:
+        st_mode = original.st_mode; st_uid = 77; st_gid = 77; st_dev = original.st_dev; st_ino = original.st_ino
+
+    def fake_stat(self, *args, **kwargs):
+        if self == legacy:
+            return LegacyStat()
+        return original_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", fake_stat)
+    sealed = __import__("json").loads(Path(inventory.inventory(tmp_path, implementation_commit="a" * 40, implementation_tree="b" * 40)["path"]).read_text(encoding="utf-8"))
+    assert sealed["deletion_allowlist"] == [] and sealed["entries"][0]["entry_state"] == "UNTRUSTED_OWNERSHIP"
+
+
 def test_session2_mirror_seals_fetch_timeout(tmp_path: Path, monkeypatch):
     import subprocess
     from shiproom.external_validation import session2_mirror as mirror

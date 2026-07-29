@@ -91,8 +91,13 @@ def _authority_records(root: Path) -> dict[str, dict[str, Any]]:
 
 def _entry(path: Path, *, kind: str, authority: dict[str, Any] | None) -> dict[str, Any]:
     value = path.stat(follow_symlinks=False)
-    if _is_reparse(path) or not stat.S_ISDIR(value.st_mode) or value.st_uid != 0 or value.st_gid != 0:
-        _fail("session2_staging_inventory_entry_invalid")
+    record = {"relative_path": path.relative_to(STAGING_ROOT).as_posix(), "kind": kind, "device": value.st_dev, "inode": value.st_ino, "allocated_bytes": 0, "inode_count": 1, "authority": authority, "entry_state": "VERIFIED_DIRECTORY"}
+    if _is_reparse(path) or not stat.S_ISDIR(value.st_mode):
+        record["entry_state"] = "UNSAFE_ENTRY_TYPE"; record["deletion_eligible"] = False
+        return record
+    if value.st_uid != 0 or value.st_gid != 0:
+        record["entry_state"] = "UNTRUSTED_OWNERSHIP"; record["deletion_eligible"] = False
+        return record
     total_bytes = 0
     inode_count = 1
     for parent, directories, files in os.walk(path, topdown=True, followlinks=False):
@@ -100,14 +105,15 @@ def _entry(path: Path, *, kind: str, authority: dict[str, Any] | None) -> dict[s
             child = Path(parent) / name
             child_stat = child.lstat()
             if stat.S_ISLNK(child_stat.st_mode) or not (stat.S_ISDIR(child_stat.st_mode) or stat.S_ISREG(child_stat.st_mode)):
-                _fail("session2_staging_inventory_entry_invalid")
+                record["entry_state"] = "UNSAFE_DESCENDANT"; record["deletion_eligible"] = False
+                return record
             inode_count += 1
             if stat.S_ISREG(child_stat.st_mode):
                 # POSIX records allocated blocks.  The Windows test harness
                 # lacks ``st_blocks``, for which rounded byte size is the
                 # conservative portable stand-in.
                 total_bytes += getattr(child_stat, "st_blocks", (child_stat.st_size + 511) // 512) * 512
-    record = {"relative_path": path.relative_to(STAGING_ROOT).as_posix(), "kind": kind, "device": value.st_dev, "inode": value.st_ino, "allocated_bytes": total_bytes, "inode_count": inode_count, "authority": authority}
+    record["allocated_bytes"] = total_bytes; record["inode_count"] = inode_count
     # Failed exact-attempt mirrors are the only objects ever eligible for a
     # later deletion allowlist.  Snapshots and any unlinked/ambiguous entry
     # remain retained by construction.
