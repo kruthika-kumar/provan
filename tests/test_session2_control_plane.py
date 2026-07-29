@@ -861,7 +861,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
     from shiproom.external_validation import session2_case_runner as runner
 
     staging, snapshot, seccomp = tmp_path / "staging", tmp_path / "snapshot", tmp_path / "seccomp.json"
-    snapshot.mkdir(); seccomp.write_bytes(b'{"defaultAction":"SCMP_ACT_ERRNO"}')
+    snapshot.mkdir(); snapshot.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8"); seccomp.write_bytes(b'{"defaultAction":"SCMP_ACT_ERRNO"}')
     monkeypatch.setattr(runner, "STAGING", staging)
     monkeypatch.setattr(runner, "ROOT", tmp_path / "external")
     monkeypatch.setattr(runner, "_root", lambda: None)
@@ -885,7 +885,9 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
                              seccomp_hash="sha256:" + sha256(seccomp.read_bytes()).hexdigest())
     packet = Path(captured["packet"]) / "release.json"
     record = __import__("json").loads(packet.read_text(encoding="utf-8"))
-    assert record["argv"] == ["python", "-m", "pytest", "tests/target.py"]
+    assert record["declared_argv"] == ["python", "-m", "pytest", "tests/target.py"]
+    assert record["argv"][:3] == ["sh", "-ec", record["argv"][2]]
+    assert captured["command"] == record["argv"]
     assert record["materialization_hash"] == "sha256:" + "a" * 64
     assert result["contract_satisfied"] is False and result["exit_code"] == 9
 
@@ -893,7 +895,7 @@ def test_case_runner_binds_a_frozen_packet_and_uses_only_supervisor_result(tmp_p
 def test_case_runner_rejects_a_changed_seccomp_profile_before_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_case_runner as runner
 
-    snapshot, seccomp = tmp_path / "snapshot", tmp_path / "seccomp.json"; snapshot.mkdir(); seccomp.write_bytes(b"one")
+    snapshot, seccomp = tmp_path / "snapshot", tmp_path / "seccomp.json"; snapshot.mkdir(); snapshot.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8"); seccomp.write_bytes(b"one")
     monkeypatch.setattr(runner, "_root", lambda: None)
     monkeypatch.setattr(runner, "_environment", lambda _digest: {"materialization_hash": "sha256:" + "a" * 64, "runner_image_digest": "sha256:" + "b" * 64, "image_ref": "shiproom-session2-test"})
     with pytest.raises(runner.CaseRunnerError, match="session2_case_runner_seccomp_invalid"):
@@ -908,7 +910,9 @@ def test_case_runner_binds_an_upstream_target_test_to_the_fixed_snapshot(tmp_pat
     from shiproom.external_validation import session2_case_runner as runner
 
     staging, buggy, fixed, seccomp = tmp_path / "staging", tmp_path / "buggy", tmp_path / "fixed", tmp_path / "seccomp.json"
-    (fixed / "tests").mkdir(parents=True); buggy.mkdir(); seccomp.write_bytes(b"seccomp")
+    (fixed / "tests").mkdir(parents=True); buggy.mkdir();
+    for item in (buggy, fixed): item.joinpath("pyproject.toml").write_text("[project]\nname='demo'\nversion='1.0'\n", encoding="utf-8")
+    seccomp.write_bytes(b"seccomp")
     source = fixed / "tests" / "upstream_regression.py"; source.write_bytes(b"assert True\n")
     artifact, _, _ = runner._target_artifact(snapshot=fixed, materialization_hash="sha256:" + "e" * 64,
                                                relative_path="tests/upstream_regression.py")

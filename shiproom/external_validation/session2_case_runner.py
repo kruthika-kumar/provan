@@ -26,6 +26,7 @@ from typing import Any, Iterator
 from .identity import canonical_json
 from .runner_v2 import DockerSupervisorV2, ExecutionPolicyV2
 from .session2_execution import Session2ExecutionError, execute_contract
+from .session2_project_overlay import ProjectOverlayError, project_metadata_overlay
 from .v2 import BackendLock
 
 
@@ -172,20 +173,21 @@ def _target_artifact(
     }, raw, Path(release_path)
 
 
-def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], result_contract_id: str, expected_exit_code: int, target_artifact: dict[str, Any] | None, target_bytes: bytes | None, target_path: Path | None) -> tuple[Path, str]:
+def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, command: list[str], effective_command: list[str], overlay: dict[str, Any], result_contract_id: str, expected_exit_code: int, target_artifact: dict[str, Any] | None, target_bytes: bytes | None, target_path: Path | None) -> tuple[Path, str]:
     if not OPAQUE.fullmatch(case_id) or not OPAQUE.fullmatch(result_contract_id) or not isinstance(expected_exit_code, int):
         _fail("session2_case_runner_contract_invalid")
-    if not isinstance(command, list) or not command or any(not isinstance(item, str) or not item for item in command):
+    if (not isinstance(command, list) or not command or any(not isinstance(item, str) or not item for item in command)
+            or not isinstance(effective_command, list) or not effective_command or any(not isinstance(item, str) or not item for item in effective_command)):
         _fail("session2_case_runner_contract_invalid")
     if target_artifact is not None and (target_bytes is None or target_path is None or "/release/" + target_artifact["release_path"] not in command):
         _fail("session2_case_runner_target_artifact_not_executed")
     record = {
         "schema_id": "external_validation.session2_command_contract.v1", "schema_version": "1",
         "case_id": case_id, "materialization_hash": materialization_hash,
-        "environment_receipt_hash": environment_hash, "argv": command,
+        "environment_receipt_hash": environment_hash, "declared_argv": command, "argv": effective_command,
         "result_contract_id": result_contract_id, "expected_exit_code": expected_exit_code,
         "network_policy": "none", "patient_tree_write_policy": "readonly",
-        "target_artifact": target_artifact,
+        "target_artifact": target_artifact, "project_metadata_overlay": overlay,
     }
     raw = canonical_json(record); digest = _sha(raw)
     _directory(STAGING)
@@ -242,7 +244,12 @@ def run_case(
         materialization_hash=target_source_materialization_hash,
         relative_path=target_source_relative_path,
     )
-    packet, packet_hash = _packet(case_id=case_id, materialization_hash=environment["materialization_hash"], environment_hash=environment_receipt_hash, command=command, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
+    try:
+        overlay = project_metadata_overlay(snapshot, command)
+    except ProjectOverlayError as exc:
+        raise CaseRunnerError(str(exc)) from exc
+    effective_command = overlay["wrapped_argv"]
+    packet, packet_hash = _packet(case_id=case_id, materialization_hash=environment["materialization_hash"], environment_hash=environment_receipt_hash, command=command, effective_command=effective_command, overlay=overlay, result_contract_id=result_contract_id, expected_exit_code=expected_exit_code, target_artifact=artifact, target_bytes=artifact_bytes, target_path=artifact_path)
     run_id = uuid.uuid4().hex
     cidfiles = STAGING / "cidfiles"; sealed = STAGING / "sealed-output" / run_id
     _directory(cidfiles); _directory(sealed)
@@ -254,8 +261,8 @@ def run_case(
     _directory(lock_database.parent)
     with _backend_lock():
         runner = DockerSupervisorV2(policy, "shiproom-remediation", BackendLock(lock_database))
-        receipt = execute_contract(repository_root, runner=runner, owner="session2-" + run_id, name="shiproom-s2-" + run_id[:20], cidfile=cidfiles / (run_id + ".cid"), patient=snapshot, packet=packet, command=command, seal_root=sealed, source_record_hash=environment["materialization_hash"], result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
-    return {"receipt_id": receipt["receipt_id"], "receipt_hash": _sha(canonical_json(receipt)), "packet_hash": packet_hash, "target_artifact": artifact, "contract_satisfied": receipt["contract_satisfied"], "exit_code": receipt["exit_code"]}
+        receipt = execute_contract(repository_root, runner=runner, owner="session2-" + run_id, name="shiproom-s2-" + run_id[:20], cidfile=cidfiles / (run_id + ".cid"), patient=snapshot, packet=packet, command=effective_command, seal_root=sealed, source_record_hash=environment["materialization_hash"], result_contract_id=result_contract_id, expected_exit_code=expected_exit_code)
+    return {"receipt_id": receipt["receipt_id"], "receipt_hash": _sha(canonical_json(receipt)), "packet_hash": packet_hash, "target_artifact": artifact, "project_metadata_overlay": overlay, "contract_satisfied": receipt["contract_satisfied"], "exit_code": receipt["exit_code"]}
 
 
 def _command(encoded: str) -> list[str]:
