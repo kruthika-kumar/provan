@@ -399,6 +399,36 @@ def test_linux_primary_retrieval_rejects_incomplete_http_body_without_receipt(tm
     assert list(raw_store.iterdir()) == []
 
 
+def test_linux_primary_retrieval_uses_declared_bounded_page_size(tmp_path: Path, monkeypatch):
+    """A caller can reduce an API page safely without weakening pagination."""
+    import json
+    from email.message import Message
+    from shiproom.external_validation import session2_retrieval as retrieval
+
+    external = tmp_path / "external"
+    raw_store = external / "session2" / "retrieval" / "raw"
+    raw_store.mkdir(parents=True)
+    monkeypatch.setattr(retrieval, "_assert_linux_private_operation", lambda _repo: raw_store)
+    seen = []
+    raw = json.dumps({"items": []}).encode()
+
+    class Response:
+        headers = Message()
+        def read(self): return raw
+        def __enter__(self): return self
+        def __exit__(self, *unused): return False
+
+    def fake_urlopen(request, timeout):
+        seen.append(request.full_url)
+        return Response()
+
+    monkeypatch.setattr(retrieval, "urlopen", fake_urlopen)
+    retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed", "kind": "issue"}, page_size=30)
+    assert "per_page=30" in seen[0]
+    with pytest.raises(retrieval.RetrievalError, match="session2_retrieval_bounds_invalid"):
+        retrieval.retrieve_github_issues(tmp_path, query="repo:acme/project is:issue", filters={"state": "closed", "kind": "issue"}, page_size=0)
+
+
 def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_path: Path, monkeypatch):
     import json
     from hashlib import sha256

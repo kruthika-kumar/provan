@@ -152,12 +152,15 @@ def retrieve_github_issues(
     query: str,
     filters: dict[str, str],
     max_pages: int = 10,
+    page_size: int = 100,
     timeout_seconds: int = 30,
 ) -> dict[str, Any]:
     """Retrieve complete paginated GitHub search pages and seal their bytes."""
     if not isinstance(query, str) or not query or not isinstance(filters, dict) or not filters:
         _fail("session2_retrieval_query_invalid")
-    if not isinstance(max_pages, int) or not 1 <= max_pages <= 10 or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= 60:
+    if (not isinstance(max_pages, int) or not 1 <= max_pages <= 10
+            or not isinstance(page_size, int) or not 1 <= page_size <= 100
+            or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= 60):
         _fail("session2_retrieval_bounds_invalid")
     raw_store = _assert_linux_private_operation(repository_root)
     page = 1
@@ -168,7 +171,7 @@ def retrieve_github_issues(
             _fail("session2_retrieval_pagination_limit_reached")
         request_url = _API + "?" + "&".join((
             "q=" + quote(query, safe=""),
-            "per_page=100",
+            "per_page=" + str(page_size),
             "page=" + str(page),
         ))
         request = Request(request_url, headers={"Accept": "application/vnd.github+json", "User-Agent": "shiproom-session2-retrieval/1"})
@@ -264,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--filters-json")
     parser.add_argument("--filters-base64", help="URL-safe base64 canonical JSON; avoids WSL argument re-parsing.")
     parser.add_argument("--max-pages", type=int, default=10)
+    parser.add_argument("--page-size", type=int, default=100)
     parser.add_argument("--object-repository")
     parser.add_argument("--object-kind", choices=("issue", "pull_request"))
     parser.add_argument("--object-number", type=int)
@@ -284,7 +288,7 @@ def main(argv: list[str] | None = None) -> int:
             filters = json.loads(base64.urlsafe_b64decode(encoded + b"=" * (-len(encoded) % 4)).decode("utf-8"))
         else:
             filters = json.loads(parsed.filters_json)
-        result = retrieve_github_issues(Path(parsed.repository_root), query=parsed.query, filters=filters, max_pages=parsed.max_pages)
+        result = retrieve_github_issues(Path(parsed.repository_root), query=parsed.query, filters=filters, max_pages=parsed.max_pages, page_size=parsed.page_size)
     except (json.JSONDecodeError, RetrievalError) as exc:
         print(str(exc))
         return 2
