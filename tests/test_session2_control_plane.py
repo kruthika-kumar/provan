@@ -157,9 +157,18 @@ def test_node_yarn_capability_gap_is_sealed_without_reclassifying_the_lock(tmp_p
         captured.update(__import__("json").loads(raw)); return store / "receipt.json", "sha256:" + "d1" * 32
     monkeypatch.setattr(environment, "_write_once", write_once)
     with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_node_runner_unqualified"):
-        environment.node_runtime_unqualified(tmp_path, snapshot=snapshot, project_name="frontend", implementation_commit="a" * 40, implementation_tree="b" * 40, materialization_hash="sha256:" + "c1" * 32, yarn_authority_path="frontend/yarn.lock")
+        environment.node_runtime_unqualified(tmp_path, snapshot=snapshot, project_name="fixture", implementation_commit="a" * 40, implementation_tree="b" * 40, materialization_hash="sha256:" + "c1" * 32, yarn_authority_path="frontend/yarn.lock")
     assert captured["failure_stage"] == "NODE_RUNTIME_CAPABILITY"
     assert captured["failure_code"] == "session2_environment_node_runner_unqualified"
+
+
+def test_environment_project_root_is_derived_from_the_sealed_snapshot(tmp_path: Path):
+    from shiproom.external_validation import session2_environment as environment
+    snapshot = tmp_path / "snapshot"; snapshot.mkdir()
+    (snapshot / "pyproject.toml").write_text('[project]\nname = "sealed-project"\n', encoding="utf-8")
+    assert environment._authoritative_python_project_name(snapshot, None) == "sealed-project"
+    with pytest.raises(environment.EnvironmentBuildError, match="session2_environment_project_name_assertion_mismatch"):
+        environment._authoritative_python_project_name(snapshot, "case-label")
 
 
 def test_controlled_population_cannot_add_beta_cases():

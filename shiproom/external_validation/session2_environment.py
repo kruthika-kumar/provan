@@ -331,7 +331,31 @@ def _declared_test_packages(snapshot: Path, packages: set[str]) -> None:
         _fail("session2_environment_additional_package_undeclared")
 
 
-def build_environment(repository: Path, *, snapshot: Path, project_name: str, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = DEFAULT_BASE_IMAGE_REF, extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset(), requirements_authority_path: str | None = None) -> dict[str, Any]:
+def _authoritative_python_project_name(snapshot: Path, requested_project_name: str | None) -> str:
+    """Derive the lockfile root from sealed project metadata, never a label.
+
+    An earlier qualification invocation accidentally supplied a case label as
+    ``project_name``.  That made a valid lockfile look malformed.  The caller
+    may retain a project-name assertion for ergonomics, but the snapshot's
+    committed ``[project].name`` is the only dependency-root authority.
+    """
+    metadata = snapshot / "pyproject.toml"
+    if not metadata.is_file() or metadata.is_symlink():
+        _fail("session2_environment_project_metadata_missing")
+    try:
+        document = tomllib.loads(metadata.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        raise EnvironmentBuildError("session2_environment_project_metadata_invalid") from exc
+    project = document.get("project")
+    name = project.get("name") if isinstance(project, dict) else None
+    if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
+        _fail("session2_environment_project_name_missing")
+    if requested_project_name is not None and requested_project_name != name:
+        _fail("session2_environment_project_name_assertion_mismatch")
+    return name
+
+
+def build_environment(repository: Path, *, snapshot: Path, project_name: str | None = None, implementation_commit: str, implementation_tree: str, materialization_hash: str, base_image_ref: str = DEFAULT_BASE_IMAGE_REF, extras: set[str] = frozenset(), groups: set[str] = frozenset(), additional_packages: set[str] = frozenset(), requirements_authority_path: str | None = None) -> dict[str, Any]:
     """Build exactly one image from a sealed dependency authority.
 
     All install authority is derived from the snapshot's lockfile.  A narrow
@@ -342,6 +366,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
     receipts = _root(repository)
     if not snapshot.is_absolute() or not snapshot.is_dir() or snapshot.is_symlink():
         _fail("session2_environment_snapshot_invalid")
+    project_name = _authoritative_python_project_name(snapshot, project_name)
     _declared_test_packages(snapshot, additional_packages)
     if requirements_authority_path is not None and (extras or groups or additional_packages):
         # A requirements authority is complete as committed.  Injecting a
@@ -477,7 +502,7 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str, im
             shutil.rmtree(context)
 
 
-def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: str,
+def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: str | None = None,
                              implementation_commit: str, implementation_tree: str,
                              materialization_hash: str, yarn_authority_path: str) -> None:
     """Seal the absence of a qualified Node/Yarn runner without mislabelling it.
@@ -509,12 +534,17 @@ def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: 
             or (npm and not lock_bytes.lstrip().startswith(b"{"))
             or not (yarn or npm)):
         _fail("session2_environment_node_authority_invalid")
+    sealed_project_name = package_value.get("name")
+    if not isinstance(sealed_project_name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._@/-]*", sealed_project_name):
+        _fail("session2_environment_node_project_name_missing")
+    if project_name is not None and project_name != sealed_project_name:
+        _fail("session2_environment_project_name_assertion_mismatch")
     failure = {
         "schema_id": "external_validation.session2_environment_build_failure.v1",
         "schema_version": "1", "implementation_commit": implementation_commit,
         "implementation_tree": implementation_tree, "materialization_hash": materialization_hash,
         "failure_stage": "NODE_RUNTIME_CAPABILITY", "failure_code": "session2_environment_node_runner_unqualified",
-        "project_name": project_name, "node_package_json_hash": _sha(package.read_bytes()),
+        "project_name": sealed_project_name, "node_package_json_hash": _sha(package.read_bytes()),
         "node_lock_kind": "yarn_v1" if yarn else "npm_package_lock", "node_lock_hash": _sha(lock_bytes), "node_authority_path": yarn_authority_path,
         "patient_network_policy": "none",
     }
@@ -523,7 +553,7 @@ def node_runtime_unqualified(repository: Path, *, snapshot: Path, project_name: 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", required=True); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path"); parser.add_argument("--node-yarn-authority-path"); parser.add_argument("--base-image-ref", default=DEFAULT_BASE_IMAGE_REF)
+    parser = argparse.ArgumentParser(); parser.add_argument("--repository", type=Path, required=True); parser.add_argument("--snapshot", type=Path, required=True); parser.add_argument("--project", help="Optional assertion; the sealed project metadata is authoritative."); parser.add_argument("--implementation-commit", required=True); parser.add_argument("--implementation-tree", required=True); parser.add_argument("--materialization-hash", required=True); parser.add_argument("--extra", action="append", default=[]); parser.add_argument("--group", action="append", default=[]); parser.add_argument("--additional-package", action="append", default=[]); parser.add_argument("--requirements-authority-path"); parser.add_argument("--node-yarn-authority-path"); parser.add_argument("--base-image-ref", default=DEFAULT_BASE_IMAGE_REF)
     args = parser.parse_args()
     try:
         if args.node_yarn_authority_path is not None:
