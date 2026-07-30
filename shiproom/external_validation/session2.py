@@ -151,6 +151,60 @@ def validate_retrieval_frame(value: Any) -> dict[str, Any]:
     return value
 
 
+def validate_fresh_b_retrieval_frame(value: Any) -> dict[str, Any]:
+    """Validate the asymmetric, bounded FRESH_B primary-retrieval frame.
+
+    FRESH_B is intentionally not expressed as a variant of the original
+    symmetric issue/PR frame: issue age and fix age have different, frozen
+    windows.  Keeping the contract distinct prevents a caller from silently
+    collecting another band or using the issue window as a fix window.
+    """
+    required = {
+        "schema_id", "schema_version", "purpose", "fresh_b_authority_path",
+        "fresh_b_authority_hash", "fresh_a_exhaustion_hash",
+        "predecessor_candidate_index_hash", "repository", "issue_bands",
+        "fix_window", "page_size", "max_pages", "selection_effect",
+    }
+    if (not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_fresh_b_retrieval_frame.v1"
+            or value.get("schema_version") != "1"
+            or value.get("purpose") != "fresh_b_higher_contamination_candidate_collection"
+            or value.get("selection_effect") != "candidate_collection_only"
+            or value.get("fresh_b_authority_path") != "external_validation/manifests/session2/fresh_b_population_authority.v1.json"
+            or not isinstance(value.get("repository"), str) or "/" not in value["repository"]):
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    for field in ("fresh_b_authority_hash", "fresh_a_exhaustion_hash", "predecessor_candidate_index_hash"):
+        require_sha(value.get(field), "session2_fresh_b_retrieval_frame_invalid")
+    if (not isinstance(value.get("page_size"), int) or value["page_size"] != 30
+            or not isinstance(value.get("max_pages"), int) or value["max_pages"] != 10):
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    expected_bands = (
+        ("B1", "2026-02-17T00:00:00Z", "2026-02-28T23:59:59Z"),
+        ("B2", "2025-12-01T00:00:00Z", "2026-02-16T23:59:59Z"),
+        ("B3", "2025-09-01T00:00:00Z", "2025-11-30T23:59:59Z"),
+    )
+    bands = value.get("issue_bands")
+    if not isinstance(bands, list) or len(bands) != 3:
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    received = []
+    for item in bands:
+        if not isinstance(item, dict) or set(item) != {"band", "start", "end"}:
+            fail("session2_fresh_b_retrieval_frame_invalid")
+        received.append((item["band"], item["start"], item["end"]))
+    if tuple(received) != expected_bands:
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    fix = value.get("fix_window")
+    if not isinstance(fix, dict) or set(fix) != {"start", "end"} or fix.get("start") != "2026-03-01T00:00:00Z":
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    try:
+        end = datetime.fromisoformat(str(fix["end"]).replace("Z", "+00:00"))
+        if end.tzinfo is None or end <= datetime(2026, 3, 1, tzinfo=timezone.utc):
+            raise ValueError
+    except (TypeError, ValueError):
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    return value
+
+
 def contamination_band(issue_created_at: str, fix_created_at: str, cutoff: str = "2026-03-01T00:00:00Z") -> str:
     try:
         issue = datetime.fromisoformat(issue_created_at.replace("Z", "+00:00"))

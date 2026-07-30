@@ -17,7 +17,7 @@ from typing import Any
 
 from .identity import canonical_json
 from .security import _is_reparse, external_root
-from .session2 import validate_retrieval_frame
+from .session2 import validate_fresh_b_retrieval_frame, validate_retrieval_frame
 from .session2_selection import validate_retrieval_receipt
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -64,6 +64,20 @@ def _root(repository_root: Path) -> Path:
 
 def _expected(frame: dict[str, Any]) -> dict[tuple[str, str, str], tuple[str, dict[str, str]]]:
     result: dict[tuple[str, str, str], tuple[str, dict[str, str]]] = {}
+    if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1":
+        for band in frame["issue_bands"]:
+            start, end = band["start"], band["end"]
+            key = ("issue:" + band["band"], start, end)
+            result[key] = (
+                f"repo:{frame['repository']} is:issue is:closed created:{start[:10]}..{end[:10]}",
+                {"kind": "issue", "state": "closed", "created_from": start, "created_to": end},
+            )
+        start, end = frame["fix_window"]["start"], frame["fix_window"]["end"]
+        result[("pull_request", start, end)] = (
+            f"repo:{frame['repository']} is:pr is:merged merged:{start[:10]}..{end[:10]}",
+            {"kind": "pull_request", "state": "merged", "merged_from": start, "merged_to": end},
+        )
+        return result
     for window in frame["query_windows"]:
         start, end = window["start"], window["end"]
         for kind in frame["kinds"]:
@@ -94,7 +108,10 @@ def _frame_authority(repository_root: Path, frame_relative_path: str) -> tuple[d
         raise RetrievalFrameError("session2_retrieval_frame_invalid") from exc
     if canonical_json(frame) != raw.rstrip(b"\n"):
         _fail("session2_retrieval_frame_noncanonical")
-    validate_retrieval_frame(frame)
+    if frame.get("schema_id") == "external_validation.session2_fresh_b_retrieval_frame.v1":
+        validate_fresh_b_retrieval_frame(frame)
+    else:
+        validate_retrieval_frame(frame)
     provenance_path = repository_root / "stage-provenance.json"
     if not provenance_path.is_file() or _is_reparse(provenance_path):
         _fail("session2_retrieval_frame_stage_provenance_missing")
@@ -142,10 +159,15 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
         digest, receipt = found[(kind, start, end)]
         receipts.append({"kind": kind, "start": start, "end": end, "receipt_hash": digest,
                          "candidate_count": len(receipt["candidate_ids"])})
-    record = {"schema_id": "external_validation.session2_retrieval_frame_receipts.v1", "schema_version": "1",
+    record = {"schema_id": ("external_validation.session2_fresh_b_retrieval_frame_receipts.v1"
+                            if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1"
+                            else "external_validation.session2_retrieval_frame_receipts.v1"), "schema_version": "1",
               "frame_relative_path": frame_relative_path, "frame_hash": frame_hash, "frame_git_blob": frame_git_blob,
               "repository": frame["repository"], "predecessor_candidate_index_hash": frame["predecessor_candidate_index_hash"],
               "receipts": receipts}
+    if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1":
+        record["fresh_b_authority_hash"] = frame["fresh_b_authority_hash"]
+        record["fresh_a_exhaustion_hash"] = frame["fresh_a_exhaustion_hash"]
     payload = canonical_json(record); digest = _hash(payload)
     directory = root / "session2" / "retrieval" / "frames"
     directory.mkdir(mode=0o700, exist_ok=True)

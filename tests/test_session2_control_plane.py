@@ -10,7 +10,8 @@ from shiproom.external_validation.session2 import (BudgetLedger, BudgetPolicy,
     validate_fresh_qualification, validate_model_prompt_policy_freeze,
     validate_fixed_twin, validate_harness_pair, validate_owner_context_case,
     validate_private_mutation, validate_public_seed, validate_retrieval_frame, scan_positive_artifact,
-    validate_qualifying_artifact, validate_fresh_b_population_authority)
+    validate_qualifying_artifact, validate_fresh_b_population_authority,
+    validate_fresh_b_retrieval_frame)
 from shiproom.external_validation.session2_cross_validate import (
     CrossArtifactError, validate_budget_policy as cross_validate_budget,
     validate_controlled_population as cross_validate_population,
@@ -78,6 +79,14 @@ def test_fresh_b_population_authority_freezes_only_b1_b2_b3():
     value["band_order"].append("FRESH_C")
     with pytest.raises(Session2ValidationError, match="session2_fresh_b_authority_invalid"):
         validate_fresh_b_population_authority(value)
+
+
+def test_fresh_b_retrieval_frame_freezes_asymmetric_issue_and_fix_windows():
+    value = json.loads(Path("external_validation/manifests/session2/fresh_b/healthchecks_retrieval_frame.v1.json").read_text())
+    assert validate_fresh_b_retrieval_frame(value)["repository"] == "healthchecks/healthchecks"
+    value["issue_bands"][0]["start"] = "2026-02-18T00:00:00Z"
+    with pytest.raises(Session2ValidationError, match="session2_fresh_b_retrieval_frame_invalid"):
+        validate_fresh_b_retrieval_frame(value)
 
 
 def test_fresh_qualification_artifact_rejects_duplicate_transition_authority():
