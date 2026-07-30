@@ -39,6 +39,8 @@ from shiproom.external_validation.session2_lockfile import (
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
 from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements, pinned_requirement_records
 from shiproom.external_validation.session2_exhaustion import FreshExhaustionError, validate_fresh_a_exhaustion
+from shiproom.external_validation.session2_exhaustion_audit import (FreshExhaustionAuditError,
+    validate_fresh_a_exhaustion_audit)
 from shiproom.external_validation import session2_retrieval_frame as retrieval_frame
 
 
@@ -71,6 +73,23 @@ def test_fresh_a_exhaustion_requires_complete_sorted_terminal_authority():
     value["review_approval_required"] = False
     with pytest.raises(FreshExhaustionError, match="session2_fresh_exhaustion_authority_invalid"):
         validate_fresh_a_exhaustion(value)
+
+
+def test_fresh_a_exhaustion_audit_requires_all_terminal_rows_and_reason_strata():
+    digest = "sha256:" + "ab" * 32
+    screen_hashes = ["sha256:" + format(index, "064x") for index in range(1, 135)]
+    audit = {"schema_id":"external_validation.session2_fresh_a_exhaustion_audit.v1", "schema_version":"1",
+             "exhaustion_hash":digest, "candidate_count":134, "terminal_count":134,
+             "reason_counts":{"UNSAFE_PATIENT_TREE_ENTRY":134},
+             "repository_reason_counts":{"org/repo|UNSAFE_PATIENT_TREE_ENTRY":134},
+             "source_reason_counts":{"source_priority_2|UNSAFE_PATIENT_TREE_ENTRY":134},
+             "shared_cause_audit":[{"category":category,"outcome":"NO_UNRESOLVED_COMMON_CAUSE","terminal_screen_hashes":screen_hashes} for category in ("harness","dependency","container","network","lock_authority")],
+             "stratified_independent_replay":[{"reason":"UNSAFE_PATIENT_TREE_ENTRY","candidate_id":"repo/a#1->repo/a#2","terminal_screen_hash":digest,"outcome":"MATCHED_RAW_TERMINAL_SCREEN"}],
+             "original_gates_relaxed":False,"review_required":True}
+    assert validate_fresh_a_exhaustion_audit(audit)["terminal_count"] == 134
+    audit["original_gates_relaxed"] = True
+    with pytest.raises(FreshExhaustionAuditError, match="session2_fresh_exhaustion_audit_invalid"):
+        validate_fresh_a_exhaustion_audit(audit)
 
 
 def test_fresh_b_population_authority_freezes_only_b1_b2_b3():
