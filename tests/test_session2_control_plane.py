@@ -386,6 +386,12 @@ def test_probe_retry_uses_a_new_attempt_and_reservation(tmp_path: Path):
     assert ledger.checkpoint()["committed_spend"] == 1.25
 
 
+def test_approved_recovery_probe_has_fixed_append_only_attempt_identity():
+    from shiproom.external_validation.session2_content_free_probe import (
+        RECOVERY_ATTEMPT_ID, RECOVERY_IDEMPOTENCY_KEY)
+    assert (RECOVERY_ATTEMPT_ID, RECOVERY_IDEMPOTENCY_KEY) == ("session2_probe_3", "session2-probe-3")
+
+
 def test_external_root_is_configured_once_and_session1_inventory_cannot_change(tmp_path: Path, monkeypatch):
     repo = tmp_path / "repo"; repo.mkdir()
     root = tmp_path / "external"; (root / "session1").mkdir(parents=True)
