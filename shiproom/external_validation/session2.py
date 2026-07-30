@@ -489,6 +489,7 @@ class BudgetLedger:
         self.db.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         self.db.execute("CREATE TABLE IF NOT EXISTS entries (sequence INTEGER PRIMARY KEY, attempt_id TEXT NOT NULL, idempotency_key TEXT UNIQUE, stage TEXT NOT NULL, state TEXT NOT NULL, reserved REAL NOT NULL, settled REAL, provider_request_id TEXT, predecessor_hash TEXT NOT NULL, entry_hash TEXT UNIQUE NOT NULL)")
         self.db.execute("CREATE TABLE IF NOT EXISTS stage_amendments (sequence INTEGER PRIMARY KEY, amendment_id TEXT UNIQUE NOT NULL, source_stage TEXT NOT NULL, target_stage TEXT NOT NULL, amount REAL NOT NULL, authorization_ref TEXT NOT NULL, predecessor_hash TEXT NOT NULL, amendment_hash TEXT UNIQUE NOT NULL)")
+        self.db.execute("CREATE TABLE IF NOT EXISTS pre_send_failure_corrections (sequence INTEGER PRIMARY KEY, correction_id TEXT UNIQUE NOT NULL, attempt_id TEXT UNIQUE NOT NULL, evidence_ref TEXT UNIQUE NOT NULL, predecessor_hash TEXT NOT NULL, correction_hash TEXT UNIQUE NOT NULL)")
         if not self.db.execute("SELECT 1 FROM meta WHERE key='policy_hash'").fetchone():
             self.db.execute("BEGIN IMMEDIATE")
             try:
@@ -562,6 +563,38 @@ class BudgetLedger:
                     "amount": float(amount), "authorization_ref": authorization_ref,
                     "predecessor_hash": amendments[-1]["amendment_hash"] if amendments else ""}
             self.db.execute("INSERT INTO stage_amendments VALUES(?,?,?,?,?,?,?,?)",
+                            (*body.values(), canonical_hash(body)))
+            self.db.execute("COMMIT")
+        except Exception:
+            self.db.execute("ROLLBACK"); raise
+
+    def attest_pre_send_failure(self, correction_id: str, attempt_id: str, evidence_ref: str) -> None:
+        """Index evidence that a historic client-operation was never sent.
+
+        A legacy preflight defect had already written ``SUBMITTED`` with a
+        client operation ID.  This append-only correction never rewrites that
+        entry; it records the narrowly proved distinction between a client
+        operation identifier and a provider-issued request identifier.
+        """
+        if (not all(isinstance(value, str) and value and not PLACEHOLDER.search(value)
+                    for value in (correction_id, attempt_id, evidence_ref))
+                or not evidence_ref.startswith("sha256:")):
+            fail("session2_budget_pre_send_correction_invalid")
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            existing = self.db.execute("SELECT 1 FROM pre_send_failure_corrections WHERE correction_id=? OR attempt_id=? OR evidence_ref=?",
+                                       (correction_id, attempt_id, evidence_ref)).fetchone()
+            if existing:
+                fail("session2_budget_pre_send_correction_duplicate")
+            history = self.db.execute("SELECT state,provider_request_id FROM entries WHERE attempt_id=? ORDER BY sequence", (attempt_id,)).fetchall()
+            if history != [("RESERVED", None), ("SUBMITTED", "operation_" + attempt_id),
+                           ("FAILED_MAX_CHARGED", "operation_" + attempt_id)]:
+                fail("session2_budget_pre_send_correction_ineligible")
+            previous = self.db.execute("SELECT correction_hash FROM pre_send_failure_corrections ORDER BY sequence DESC LIMIT 1").fetchone()
+            body = {"sequence": (self.db.execute("SELECT COUNT(*) FROM pre_send_failure_corrections").fetchone()[0] + 1),
+                    "correction_id": correction_id, "attempt_id": attempt_id,
+                    "evidence_ref": evidence_ref, "predecessor_hash": previous[0] if previous else ""}
+            self.db.execute("INSERT INTO pre_send_failure_corrections VALUES(?,?,?,?,?,?)",
                             (*body.values(), canonical_hash(body)))
             self.db.execute("COMMIT")
         except Exception:
@@ -641,10 +674,18 @@ class BudgetLedger:
             body = {key: row[key] for key in ("sequence","attempt_id","idempotency_key","stage","state","reserved","settled","provider_request_id","predecessor_hash")}
             if row["sequence"] != expected or row["predecessor_hash"] != prior or row["entry_hash"] != canonical_hash(body): fail("session2_budget_history_invalid")
             prior = row["entry_hash"]
+        corrections = [dict(zip(("sequence", "correction_id", "attempt_id", "evidence_ref", "predecessor_hash", "correction_hash"), row)) for row in self.db.execute("SELECT sequence,correction_id,attempt_id,evidence_ref,predecessor_hash,correction_hash FROM pre_send_failure_corrections ORDER BY sequence")]
+        correction_predecessor = ""
+        for expected, correction in enumerate(corrections, 1):
+            body = {key: correction[key] for key in ("sequence", "correction_id", "attempt_id", "evidence_ref", "predecessor_hash")}
+            if (correction["sequence"] != expected or correction["predecessor_hash"] != correction_predecessor
+                    or correction["correction_hash"] != canonical_hash(body)):
+                fail("session2_budget_pre_send_correction_history_invalid")
+            correction_predecessor = correction["correction_hash"]
         amendments = self._amendments(); current = self._current(rows); committed = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"}); reserved = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"})
         caps = self._effective_stage_caps(amendments)
         stages = {stage: caps[stage] - self._stage_consumption(current, stage) for stage in STAGES}
-        return {"schema_id": "external_validation.session2_budget_checkpoint.v1", "schema_version": "1", "first_sequence": 1 if rows else 0, "last_sequence": len(rows), "entry_count": len(rows), "previous_checkpoint_hash": "", "entries_root_hash": canonical_hash(rows), "committed_spend": committed, "reserved_spend": reserved, "remaining_budget": self.policy.hard_stop_usd - committed - reserved, "stage_balances": stages, "policy_hash": self.policy.hash, "latest_entry_hash": prior, "stage_reallocation_count": len(amendments), "stage_reallocations_root_hash": canonical_hash(amendments)}
+        return {"schema_id": "external_validation.session2_budget_checkpoint.v1", "schema_version": "1", "first_sequence": 1 if rows else 0, "last_sequence": len(rows), "entry_count": len(rows), "previous_checkpoint_hash": "", "entries_root_hash": canonical_hash(rows), "committed_spend": committed, "reserved_spend": reserved, "remaining_budget": self.policy.hard_stop_usd - committed - reserved, "stage_balances": stages, "policy_hash": self.policy.hash, "latest_entry_hash": prior, "stage_reallocation_count": len(amendments), "stage_reallocations_root_hash": canonical_hash(amendments), "pre_send_failure_correction_count": len(corrections), "pre_send_failure_corrections_root_hash": canonical_hash(corrections)}
 
     def genesis_checkpoint(self) -> dict[str, Any]:
         """Canonical Session-2 anchor; never hash SQLite/WAL bytes."""

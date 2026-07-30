@@ -148,6 +148,20 @@ def test_explicit_stage_reallocation_is_hashed_and_does_not_expand_programme_cap
                                             "user-approved:session2-probe-correction-20260730")
 
 
+def test_historic_pre_send_failure_is_corrected_append_only_without_rewriting_ledger(tmp_path: Path):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    ledger.reserve("session2_probe_1", "session2-probe-1", "session2_probes", 1.0)
+    ledger.transition("session2_probe_1", "SUBMITTED", provider_request_id="operation_session2_probe_1")
+    ledger.transition("session2_probe_1", "FAILED_MAX_CHARGED")
+    before = ledger.checkpoint()["entries_root_hash"]
+    ledger.attest_pre_send_failure("probe_1_pre_send_correction", "session2_probe_1", "sha256:" + "ab" * 32)
+    after = ledger.checkpoint()
+    assert after["entries_root_hash"] == before
+    assert after["pre_send_failure_correction_count"] == 1
+    with pytest.raises(Session2ValidationError, match="session2_budget_pre_send_correction_duplicate"):
+        ledger.attest_pre_send_failure("probe_1_pre_send_correction", "session2_probe_1", "sha256:" + "ab" * 32)
+
+
 def test_budget_submission_recovery_is_max_charged_and_cancellation_is_proven(tmp_path: Path):
     ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
     ledger.reserve("attempt_1", "idem_1", "session2_probes", 1.0)
