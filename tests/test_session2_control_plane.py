@@ -353,6 +353,16 @@ def test_gateway_credential_preflight_occurs_before_budget_reservation(tmp_path:
     assert ledger.checkpoint()["entry_count"] == 0
 
 
+def test_probe_retry_uses_a_new_attempt_and_reservation(tmp_path: Path):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    first = OpenAIResponsesGateway(ledger, lambda _request: (_ for _ in ()).throw(RuntimeError("local_failure")))
+    with pytest.raises(RuntimeError, match="local_failure"):
+        first.availability_probe()
+    second = OpenAIResponsesGateway(ledger, lambda _request: {"model":"gpt-5.6-terra", "request_id":"req_probe_2", "usage":{"cost_usd":0.25}})
+    assert second.availability_probe(attempt_id="session2_probe_2", idempotency_key="session2-probe-2").request_id == "req_probe_2"
+    assert ledger.checkpoint()["committed_spend"] == 1.25
+
+
 def test_external_root_is_configured_once_and_session1_inventory_cannot_change(tmp_path: Path, monkeypatch):
     repo = tmp_path / "repo"; repo.mkdir()
     root = tmp_path / "external"; (root / "session1").mkdir(parents=True)

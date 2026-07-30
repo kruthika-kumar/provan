@@ -181,22 +181,26 @@ class OpenAIResponsesGateway:
             raise ModelGatewayError("session2_model_fingerprint_invalid")
         return ModelProbe(requested, returned, request_id, datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), response.get("api_version"), response.get("sdk_version"), fingerprint, dict(response.get("provider_metadata") or {}))
 
-    def availability_probe(self) -> ModelProbe:
+    def availability_probe(self, *, attempt_id: str = "session2_probe_1",
+                           idempotency_key: str = "session2-probe-1") -> ModelProbe:
         """One content-free, reserved Session-2 availability probe."""
-        attempt, key = "session2_probe_1", "session2-probe-1"
+        if (not isinstance(attempt_id, str) or not isinstance(idempotency_key, str)
+                or not attempt_id.startswith("session2_probe_")
+                or not idempotency_key.startswith("session2-probe-")):
+            raise ModelGatewayError("session2_model_probe_attempt_invalid")
         # A missing local credential proves no request can have been sent, so
         # it must fail before creating a reservation.  Provider/network
         # uncertainty is handled only after durable SUBMITTED authority.
         if self._preflight is not None:
             self._preflight()
-        self.ledger.reserve(attempt, key, "session2_probes", 1.0, input_tokens=0)
-        self.ledger.transition(attempt, "SUBMITTED", provider_request_id="operation_session2_probe_1")
+        self.ledger.reserve(attempt_id, idempotency_key, "session2_probes", 1.0, input_tokens=0)
+        self.ledger.transition(attempt_id, "SUBMITTED", provider_request_id="operation_" + attempt_id)
         try:
             # An empty input is intentionally not an evaluated repository or
             # benchmark prompt.  The sender is responsible for the pinned SDK.
             response = self._sender({**TERRA_REQUEST, "input": []})
         except BaseException:
-            self.ledger.transition(attempt, "FAILED_MAX_CHARGED")
+            self.ledger.transition(attempt_id, "FAILED_MAX_CHARGED")
             raise
         probe = self._metadata(response)
         usage = response.get("usage")
@@ -204,9 +208,9 @@ class OpenAIResponsesGateway:
         # frozen Session-2 rule therefore max-charges an unavailable/malformed
         # charge rather than fabricating a price or releasing a sent request.
         if not isinstance(usage, dict) or not isinstance(usage.get("cost_usd"), (int, float)):
-            self.ledger.transition(attempt, "FAILED_MAX_CHARGED")
+            self.ledger.transition(attempt_id, "FAILED_MAX_CHARGED")
             return probe
-        self.ledger.transition(attempt, "SETTLED", provider_request_id=probe.request_id, settled=float(usage["cost_usd"]))
+        self.ledger.transition(attempt_id, "SETTLED", provider_request_id=probe.request_id, settled=float(usage["cost_usd"]))
         return probe
 
 
@@ -226,7 +230,9 @@ def _probe_root(repository_root: Path) -> Path:
     return target
 
 
-def seal_availability_probe(repository_root: Path, gateway: OpenAIResponsesGateway) -> dict[str, str]:
+def seal_availability_probe(repository_root: Path, gateway: OpenAIResponsesGateway, *,
+                            attempt_id: str = "session2_probe_1",
+                            idempotency_key: str = "session2-probe-1") -> dict[str, str]:
     """Perform and content-address the sole content-free Session-2 probe.
 
     The private receipt binds the real provider response and the append-only
@@ -236,7 +242,7 @@ def seal_availability_probe(repository_root: Path, gateway: OpenAIResponsesGatew
     target = _probe_root(repository_root)
     if list(target.glob("*.model-probe.json")):
         raise ModelGatewayError("session2_model_probe_already_attempted")
-    probe = gateway.availability_probe()
+    probe = gateway.availability_probe(attempt_id=attempt_id, idempotency_key=idempotency_key)
     document = {**probe.document(), "evaluated_model_call_count": 0,
                 "shiproom_evaluated_output_count": 0,
                 "comparator_evaluated_output_count": 0,
