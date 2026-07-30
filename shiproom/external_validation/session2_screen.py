@@ -36,6 +36,7 @@ _REASONS = {
     "FIXED_TWIN_NON_MINIMAL",
 }
 _PRIMARY_RETRIEVAL_UNAVAILABLE = "PRIMARY_RETRIEVAL_RECEIPT_UNAVAILABLE"
+_MIRROR_ACQUISITION_TIMED_OUT = "MIRROR_ACQUISITION_TIMED_OUT"
 _RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
 _FIXED_TWIN_RESOLUTION_REASON = "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"
 _RUNNER_RESOLUTION_REASON = "QUALIFIED_RUNNER_COMPATIBILITY_SUPERSEDED"
@@ -219,6 +220,62 @@ def seal_primary_retrieval_unavailable(repository_root: Path, *, candidate_id: s
         "missing_source_object_receipt_hashes": sorted(missing), "created_at": _utc(),
     }
     return {"screen_hash": _write_once(directory, ".provenance-screen.json", canonical_json(record)), "decision": record["decision"]}
+
+
+def seal_mirror_acquisition_timeout(
+    repository_root: Path, *, candidate_id: str, candidate_index_hash: str,
+    mirror_attempt_hash: str,
+) -> dict[str, str]:
+    """Seal a terminal source exclusion from a production fetch timeout.
+
+    A retained, content-addressed mirror attempt is the authority here: the
+    mirror producer has already bound it to the exact candidate, public object
+    receipts and immutable commits before it begins the network fetch.  This
+    function deliberately cannot manufacture a timeout from a caller boolean
+    or a partial staging path.
+    """
+    if (not isinstance(candidate_id, str) or not candidate_id or not _HASH.fullmatch(candidate_index_hash)
+            or not _HASH.fullmatch(mirror_attempt_hash)):
+        _fail("session2_mirror_timeout_screen_input_invalid")
+    directory = _root(repository_root)
+    candidate = _candidate_from_index(directory, candidate_id=candidate_id,
+                                      candidate_index_hash=candidate_index_hash)
+    root = directory.parents[2]
+    attempt = _canonical_record(
+        root / "session2" / "cases" / "mirrors" / (mirror_attempt_hash[7:] + ".mirror.json"),
+        mirror_attempt_hash,
+        missing="session2_mirror_timeout_screen_attempt_missing",
+        invalid="session2_mirror_timeout_screen_attempt_invalid",
+    )
+    required = {"schema_id", "schema_version", "candidate_id", "repository", "base_sha", "head_sha",
+                "attempt_id", "stage", "outcome", "fetch_timeout_seconds", "started_at", "completed_at",
+                "partial_mirror_path", "stdout_hash", "stderr_hash"}
+    if (set(attempt) != required or attempt.get("schema_id") != "external_validation.session2_source_mirror_attempt.v1"
+            or attempt.get("schema_version") != "1" or attempt.get("candidate_id") != candidate_id
+            or attempt.get("repository") != candidate.get("repository") or attempt.get("stage") != "EXACT_FETCH"
+            or attempt.get("outcome") != "TIMED_OUT" or attempt.get("partial_mirror_path") != "supervisor_staging_only"
+            or not isinstance(attempt.get("attempt_id"), str) or not attempt["attempt_id"]
+            or not isinstance(attempt.get("fetch_timeout_seconds"), int) or not 30 <= attempt["fetch_timeout_seconds"] <= 600
+            or not all(isinstance(attempt.get(key), str) and _SHA.fullmatch(attempt[key]) for key in ("base_sha", "head_sha"))
+            or not all(isinstance(attempt.get(key), str) and _HASH.fullmatch(attempt[key]) for key in ("stdout_hash", "stderr_hash"))):
+        _fail("session2_mirror_timeout_screen_attempt_invalid")
+    mirror_store = root / "session2" / "cases" / "mirrors"
+    for key, suffix in (("stdout_hash", ".mirror-attempt.stdout"), ("stderr_hash", ".mirror-attempt.stderr")):
+        path = mirror_store / (attempt[key][7:] + suffix)
+        if not path.is_file() or _is_reparse(path) or _sha(path.read_bytes()) != attempt[key]:
+            _fail("session2_mirror_timeout_screen_stream_invalid")
+    record = {
+        "schema_id": "external_validation.session2_mirror_acquisition_screen.v1",
+        "schema_version": "1", "candidate_id": candidate_id,
+        "candidate_index_hash": candidate_index_hash,
+        "mirror_attempt_hash": mirror_attempt_hash,
+        "stage": "SOURCE_MIRROR_ACQUISITION",
+        "decision": "EXCLUDED_PREQUALIFICATION",
+        "reason": _MIRROR_ACQUISITION_TIMED_OUT,
+        "created_at": _utc(),
+    }
+    return {"screen_hash": _write_once(directory, ".mirror-acquisition-screen.json", canonical_json(record)),
+            "decision": record["decision"]}
 
 
 def resolve_primary_retrieval_reference(repository_root: Path, *, candidate_id: str, supersedes_screen_hash: str) -> dict[str, str]:

@@ -193,6 +193,27 @@ def _screened_candidates(base: Path) -> dict[str, dict[str, str]]:
     legacy_source_v2: set[str] = set()
     provenance_by_candidate: dict[str, dict[str, str]] = {}
     resolved_provenance: set[str] = set()
+    for path in sorted(directory.glob("*.mirror-acquisition-screen.json")):
+        if _is_reparse(path): _fail("session2_candidate_screen_reparse")
+        raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
+        if digest != "sha256:" + path.name.removesuffix(".mirror-acquisition-screen.json"):
+            _fail("session2_candidate_screen_hash_mismatch")
+        try: value = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_candidate_screen_invalid") from exc
+        required = {"schema_id", "schema_version", "candidate_id", "candidate_index_hash", "mirror_attempt_hash", "stage", "decision", "reason", "created_at"}
+        if (not isinstance(value, dict) or set(value) != required
+                or value.get("schema_id") != "external_validation.session2_mirror_acquisition_screen.v1"
+                or value.get("schema_version") != "1" or not isinstance(value.get("candidate_id"), str)
+                or not isinstance(value.get("candidate_index_hash"), str) or not isinstance(value.get("mirror_attempt_hash"), str)
+                or value.get("stage") != "SOURCE_MIRROR_ACQUISITION"
+                or value.get("decision") != "EXCLUDED_PREQUALIFICATION"
+                or value.get("reason") != "MIRROR_ACQUISITION_TIMED_OUT"
+                or not (value["candidate_index_hash"].startswith("sha256:") and _HEX.fullmatch(value["candidate_index_hash"][7:]))
+                or not (value["mirror_attempt_hash"].startswith("sha256:") and _HEX.fullmatch(value["mirror_attempt_hash"][7:]))):
+            _fail("session2_candidate_screen_invalid")
+        entry = {"reason": value["reason"], "screen_hash": digest}
+        screens_by_hash[digest] = {"candidate_id": value["candidate_id"], **entry}
+        screens_by_candidate.setdefault(value["candidate_id"], []).append(entry)
     for path in sorted(directory.glob("*.provenance-screen.json")):
         if _is_reparse(path): _fail("session2_candidate_screen_reparse")
         raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()

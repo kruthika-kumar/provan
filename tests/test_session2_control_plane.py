@@ -718,6 +718,44 @@ def test_primary_retrieval_unavailable_screen_binds_missing_candidate_receipts(t
         screen.seal_primary_retrieval_unavailable(tmp_path, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)
 
 
+def test_mirror_timeout_screen_requires_sealed_production_attempt_and_compiler_recognizes_it(tmp_path: Path, monkeypatch):
+    from hashlib import sha256
+    from shiproom.external_validation import session2_candidates as candidates
+    from shiproom.external_validation import session2_screen as screen
+
+    root = tmp_path / "external"; screens = root / "session2" / "cases" / "screens"
+    mirrors = root / "session2" / "cases" / "mirrors"
+    screens.mkdir(parents=True); mirrors.mkdir()
+    candidate_id = "acme/project#7->acme/project#8"
+    index = {"schema_id":"external_validation.session2_github_issue_fix_candidate_index.v3", "schema_version":"1",
+             "candidates":[{"candidate_id":candidate_id, "repository":"acme/project"}], "exclusions":[],
+             "retrieval_frame_receipt_hashes":[], "source_receipt_hashes":[]}
+    index_raw = canonical_json(index); index_hash = "sha256:" + sha256(index_raw).hexdigest()
+    (screens.parent / (index_hash[7:] + ".candidate-index.json")).write_bytes(index_raw)
+    stdout, stderr = b"fetch started\n", b"transport timeout\n"
+    stdout_hash, stderr_hash = "sha256:" + sha256(stdout).hexdigest(), "sha256:" + sha256(stderr).hexdigest()
+    (mirrors / (stdout_hash[7:] + ".mirror-attempt.stdout")).write_bytes(stdout)
+    (mirrors / (stderr_hash[7:] + ".mirror-attempt.stderr")).write_bytes(stderr)
+    attempt = {"schema_id":"external_validation.session2_source_mirror_attempt.v1", "schema_version":"1",
+               "candidate_id":candidate_id, "repository":"acme/project", "base_sha":"a" * 40,
+               "head_sha":"b" * 40, "attempt_id":"authority-3", "stage":"EXACT_FETCH",
+               "outcome":"TIMED_OUT", "fetch_timeout_seconds":600,
+               "started_at":"2026-07-30T00:00:00Z", "completed_at":"2026-07-30T00:10:00Z",
+               "partial_mirror_path":"supervisor_staging_only", "stdout_hash":stdout_hash, "stderr_hash":stderr_hash}
+    attempt_raw = canonical_json(attempt); attempt_hash = "sha256:" + sha256(attempt_raw).hexdigest()
+    (mirrors / (attempt_hash[7:] + ".mirror.json")).write_bytes(attempt_raw)
+    monkeypatch.setattr(screen, "_root", lambda _repo: screens)
+    result = screen.seal_mirror_acquisition_timeout(tmp_path, candidate_id=candidate_id,
+        candidate_index_hash=index_hash, mirror_attempt_hash=attempt_hash)
+    assert result["decision"] == "EXCLUDED_PREQUALIFICATION"
+    monkeypatch.setattr(candidates, "_root", lambda _repo: root / "session2")
+    assert candidates._screened_candidates(root / "session2")[candidate_id]["reason"] == "MIRROR_ACQUISITION_TIMED_OUT"
+    (mirrors / (stdout_hash[7:] + ".mirror-attempt.stdout")).write_bytes(b"tampered")
+    with pytest.raises(screen.CandidateScreenError, match="session2_mirror_timeout_screen_stream_invalid"):
+        screen.seal_mirror_acquisition_timeout(tmp_path, candidate_id=candidate_id,
+            candidate_index_hash=index_hash, mirror_attempt_hash=attempt_hash)
+
+
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_materialize as materialize
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
