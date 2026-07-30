@@ -13,6 +13,7 @@ from hashlib import sha256
 import os
 from pathlib import Path
 import platform
+import stat
 from typing import Any, Callable
 import json
 from urllib.error import HTTPError, URLError
@@ -28,6 +29,8 @@ TERRA_REQUEST = {
     "store": False, "service_tier": "standard", "tools": [],
 }
 FORBIDDEN_WORKER_ENV = {"OPENAI_API_KEY", "OPENAI_BASE_URL", "SHIPROOM_MODEL_GATEWAY"}
+GATEWAY_CREDENTIAL_FILE = Path("/etc/shiproom-external-validation/gateway.env")
+_MAX_GATEWAY_CREDENTIAL_FILE_BYTES = 8192
 
 
 class ModelGatewayError(RuntimeError):
@@ -69,12 +72,66 @@ def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, 
     return value
 
 
-def gateway_credential_from_environment() -> str:
-    """Return the gateway-only credential before a budget reservation exists."""
-    key = os.environ.get("OPENAI_API_KEY")
-    if not isinstance(key, str) or not key:
+def _read_gateway_credential_file(path: Path) -> str:
+    """Read the sole root-owned gateway credential without trusting a shell env.
+
+    The worker-facing process environment never carries the provider key.  The
+    root-only gateway opens one fixed file after checking every trusted parent
+    and the opened descriptor itself.  This deliberately has no path or
+    environment override: selection, mutation, review, and patient workers
+    cannot redirect credential authority.
+    """
+    if os.name != "posix" or platform.system() != "Linux" or os.geteuid() != 0:
         raise ModelGatewayError("session2_gateway_credential_unavailable")
+    if path != GATEWAY_CREDENTIAL_FILE or not path.is_absolute():
+        raise ModelGatewayError("session2_gateway_credential_path_invalid")
+    parents = (Path("/"), Path("/etc"), path.parent)
+    for parent in parents:
+        try:
+            parent_stat = os.lstat(parent)
+        except OSError as exc:
+            raise ModelGatewayError("session2_gateway_credential_parent_invalid") from exc
+        if not stat.S_ISDIR(parent_stat.st_mode) or stat.S_ISLNK(parent_stat.st_mode):
+            raise ModelGatewayError("session2_gateway_credential_parent_invalid")
+        if parent_stat.st_uid != 0 or parent_stat.st_gid != 0 or parent_stat.st_mode & 0o022:
+            raise ModelGatewayError("session2_gateway_credential_parent_invalid")
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise ModelGatewayError("session2_gateway_credential_unavailable") from exc
+    try:
+        file_stat = os.fstat(descriptor)
+        if (not stat.S_ISREG(file_stat.st_mode) or file_stat.st_uid != 0 or file_stat.st_gid != 0
+                or stat.S_IMODE(file_stat.st_mode) != 0o600 or file_stat.st_nlink != 1
+                or file_stat.st_size <= 0 or file_stat.st_size > _MAX_GATEWAY_CREDENTIAL_FILE_BYTES):
+            raise ModelGatewayError("session2_gateway_credential_file_invalid")
+        raw = os.read(descriptor, _MAX_GATEWAY_CREDENTIAL_FILE_BYTES + 1)
+        if len(raw) != file_stat.st_size or len(raw) > _MAX_GATEWAY_CREDENTIAL_FILE_BYTES:
+            raise ModelGatewayError("session2_gateway_credential_file_invalid")
+    finally:
+        os.close(descriptor)
+    try:
+        content = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ModelGatewayError("session2_gateway_credential_file_invalid") from exc
+    prefix = "OPENAI_API_KEY="
+    if not content.startswith(prefix) or not content.endswith("\n") or content.count("\n") != 1:
+        raise ModelGatewayError("session2_gateway_credential_file_invalid")
+    key = content[len(prefix):-1]
+    if not key or any(character in key for character in "\x00\r\n"):
+        raise ModelGatewayError("session2_gateway_credential_file_invalid")
     return key
+
+
+def gateway_credential_from_environment() -> str:
+    """Return the gateway-only credential before a budget reservation exists.
+
+    Kept under its original public name for the caller contract; production
+    authority is the fixed root-owned credential file, never an inherited
+    environment variable.
+    """
+    return _read_gateway_credential_file(GATEWAY_CREDENTIAL_FILE)
 
 
 def assert_non_observation_worker_environment(environment: dict[str, str] | None = None) -> None:
