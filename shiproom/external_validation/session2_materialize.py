@@ -72,9 +72,9 @@ def _git(mirror: Path, *args: str) -> bytes:
     ).stdout
 
 
-def _write_once(directory: Path, raw: bytes) -> str:
+def _write_once(directory: Path, raw: bytes, *, suffix: str = ".materialization.json") -> str:
     digest = _hash(raw)
-    path = directory / (digest[7:] + ".materialization.json")
+    path = directory / (digest[7:] + suffix)
     try:
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0), 0o400)
     except FileExistsError:
@@ -161,7 +161,21 @@ def seal_materialization(
     try:
         materialize_snapshot(mirror, commit_sha, destination)
     except Exception as exc:
-        raise MaterializationError("session2_materialization_export_failed") from exc
+        # Safe export rejects a forbidden patient-tree entry before any
+        # container or worktree exists.  Preserve that fact as supervisor
+        # evidence instead of leaving only an exception transcript.
+        code = "session2_materialization_unsafe_patient_tree_entry" if str(exc) == "unsafe_patient_tree_entry" else "session2_materialization_export_failed"
+        failure = {
+            "schema_id": "external_validation.session2_source_materialization_failure.v1",
+            "schema_version": "1", "candidate_id": candidate_id,
+            "commit_sha": commit_sha, "tree_sha": tree,
+            "source_object_receipt_hashes": sorted(source_object_receipt_hashes),
+            "mirror_receipt_hash": mirror_receipt_hash,
+            "failure_code": code, "snapshot_location": "supervisor_staging_only",
+            "started_at": started, "completed_at": _utc(),
+        }
+        digest = _write_once(store, canonical_json(failure), suffix=".materialization-failure.json")
+        raise MaterializationError(code + ":" + digest) from exc
     completed = _utc()
     if not destination.is_dir() or _is_reparse(destination):
         _fail("session2_materialization_export_invalid")

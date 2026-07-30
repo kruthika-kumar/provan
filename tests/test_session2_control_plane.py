@@ -790,6 +790,15 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
     receipt = __import__("json").loads(next(store.glob("*.materialization.json")).read_text())
     assert receipt["snapshot_location"] == "supervisor_staging_only"
     assert receipt["symlink_policy"] == "relative_internal_tracked_target_only.v1"
+    failed_destination = tmp_path / "unsafe-snapshot"
+    monkeypatch.setattr(materialize, "materialize_snapshot", lambda *_args: (_ for _ in ()).throw(ValueError("unsafe_patient_tree_entry")))
+    with pytest.raises(materialize.MaterializationError, match=r"session2_materialization_unsafe_patient_tree_entry:sha256:"):
+        materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
+            commit_sha="a" * 40, destination=failed_destination,
+            source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
+            mirror_receipt_hash="sha256:" + "a1" * 32)
+    failure = __import__("json").loads(next(store.glob("*.materialization-failure.json")).read_text())
+    assert failure["failure_code"] == "session2_materialization_unsafe_patient_tree_entry"
     with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
         materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
             commit_sha="a" * 40, destination=destination,
