@@ -42,9 +42,7 @@ def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, 
     returns provider bytes as parsed JSON; usage normalization remains the
     gateway's responsibility so an absent provider cost can be max-charged.
     """
-    key = os.environ.get("OPENAI_API_KEY")
-    if not isinstance(key, str) or not key:
-        raise ModelGatewayError("session2_gateway_credential_unavailable")
+    key = gateway_credential_from_environment()
     if not isinstance(request, dict) or request.get("model") != TERRA_REQUEST["model"]:
         raise ModelGatewayError("session2_gateway_request_invalid")
     payload = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -69,6 +67,14 @@ def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, 
     if request_id and "request_id" not in value and "_request_id" not in value:
         value["request_id"] = request_id
     return value
+
+
+def gateway_credential_from_environment() -> str:
+    """Return the gateway-only credential before a budget reservation exists."""
+    key = os.environ.get("OPENAI_API_KEY")
+    if not isinstance(key, str) or not key:
+        raise ModelGatewayError("session2_gateway_credential_unavailable")
+    return key
 
 
 def assert_non_observation_worker_environment(environment: dict[str, str] | None = None) -> None:
@@ -98,8 +104,9 @@ class OpenAIResponsesGateway:
     The injected sender allows the production process to use its pinned SDK
     while unit tests cannot accidentally issue provider calls.
     """
-    def __init__(self, ledger: BudgetLedger, sender: Callable[[dict[str, Any]], dict[str, Any]]):
-        self.ledger, self._sender = ledger, sender
+    def __init__(self, ledger: BudgetLedger, sender: Callable[[dict[str, Any]], dict[str, Any]],
+                 *, preflight: Callable[[], None] | None = None):
+        self.ledger, self._sender, self._preflight = ledger, sender, preflight
 
     @staticmethod
     def _metadata(response: dict[str, Any]) -> ModelProbe:
@@ -120,6 +127,11 @@ class OpenAIResponsesGateway:
     def availability_probe(self) -> ModelProbe:
         """One content-free, reserved Session-2 availability probe."""
         attempt, key = "session2_probe_1", "session2-probe-1"
+        # A missing local credential proves no request can have been sent, so
+        # it must fail before creating a reservation.  Provider/network
+        # uncertainty is handled only after durable SUBMITTED authority.
+        if self._preflight is not None:
+            self._preflight()
         self.ledger.reserve(attempt, key, "session2_probes", 1.0, input_tokens=0)
         self.ledger.transition(attempt, "SUBMITTED", provider_request_id="operation_session2_probe_1")
         try:

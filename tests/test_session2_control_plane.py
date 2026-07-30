@@ -342,6 +342,17 @@ def test_gateway_max_charges_missing_provider_cost_without_inventing_usage(tmp_p
         responses_api_sender_from_environment({"model":"gpt-5.6-terra"})
 
 
+def test_gateway_credential_preflight_occurs_before_budget_reservation(tmp_path: Path):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    sent = []
+    gateway = OpenAIResponsesGateway(ledger, lambda request: sent.append(request) or {},
+        preflight=lambda: (_ for _ in ()).throw(ModelGatewayError("session2_gateway_credential_unavailable")))
+    with pytest.raises(ModelGatewayError, match="session2_gateway_credential_unavailable"):
+        gateway.availability_probe()
+    assert sent == []
+    assert ledger.checkpoint()["entry_count"] == 0
+
+
 def test_external_root_is_configured_once_and_session1_inventory_cannot_change(tmp_path: Path, monkeypatch):
     repo = tmp_path / "repo"; repo.mkdir()
     root = tmp_path / "external"; (root / "session1").mkdir(parents=True)
