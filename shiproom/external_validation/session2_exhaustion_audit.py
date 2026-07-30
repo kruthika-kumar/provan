@@ -50,7 +50,7 @@ def _canonical(path: Path) -> tuple[dict[str, Any], str]:
 
 def _terminal_screen(cases: Path, digest: str) -> tuple[dict[str, Any], str]:
     """Resolve exactly one recognized, content-addressed terminal screen."""
-    suffixes = (".screen.json", ".mirror-acquisition-screen.json", ".provenance-screen.json")
+    suffixes = (".screen.json", ".mirror-acquisition-screen.json", ".provenance-screen.json", ".safe-export-screen.json")
     matches = [cases / "screens" / (digest[7:] + suffix) for suffix in suffixes
                if (cases / "screens" / (digest[7:] + suffix)).is_file()]
     if len(matches) != 1:
