@@ -37,6 +37,7 @@ from shiproom.external_validation.session2_lockfile import (
     LockfileError, export_uv_requirements, requirements_manifest_hash)
 from shiproom.external_validation.session2_environment import _dockerfile, _select_wheels, _unsupported_packages, EnvironmentBuildError
 from shiproom.external_validation.session2_requirements import RequirementsAuthorityError, export_hash_pinned_requirements, pinned_requirement_records
+from shiproom.external_validation.session2_exhaustion import FreshExhaustionError, validate_fresh_a_exhaustion
 from shiproom.external_validation import session2_retrieval_frame as retrieval_frame
 
 
@@ -55,6 +56,20 @@ def test_fresh_bands_and_full_gate():
         validate_fresh_qualification(fresh(independent_replay_receipt_hash=fresh()["production_supervisor_receipt_hash"]))
     with pytest.raises(Session2ValidationError, match="session2_fresh_receipt_authority_invalid"):
         validate_fresh_qualification(fresh(production_supervisor_receipt_opaque_id="/private/receipt"))
+
+
+def test_fresh_a_exhaustion_requires_complete_sorted_terminal_authority():
+    digest = "sha256:" + "ab" * 32
+    value = {"schema_id":"external_validation.session2_fresh_a_exhaustion.v1", "schema_version":"1",
+             "candidate_index_hash":digest, "band":"FRESH_A", "candidate_count":1, "qualified_count":0,
+             "status":"EXHAUSTED_PENDING_REVIEW", "review_approval_required":True,
+             "candidate_terminal_evidence":[{"candidate_id":"repo/a#1->repo/a#2", "final_terminal_screen_hash":digest,
+                 "terminal_screen_hashes":[digest], "reason":"UNSAFE_PATIENT_TREE_ENTRY"}],
+             "reason_counts":{"UNSAFE_PATIENT_TREE_ENTRY":1}}
+    assert validate_fresh_a_exhaustion(value)["candidate_count"] == 1
+    value["review_approval_required"] = False
+    with pytest.raises(FreshExhaustionError, match="session2_fresh_exhaustion_authority_invalid"):
+        validate_fresh_a_exhaustion(value)
 
 
 def test_fresh_qualification_artifact_rejects_duplicate_transition_authority():
