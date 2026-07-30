@@ -208,7 +208,11 @@ def acquire_pair(repo: Path, *, candidate_id: str, candidate_index_hash: str, re
                    "stdout_hash":_write_blob(store, ".mirror-attempt.stdout", init.stdout), "stderr_hash":_write_blob(store, ".mirror-attempt.stderr", init.stderr)}
         raise MirrorAcquisitionError("session2_mirror_init_failed:" + _write_once(store, canonical_json(failure)))
     try:
-        fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=fetch_timeout_seconds)
+        # The qualification authority is the two exact commits and their
+        # trees, not unrelated repository history.  A depth-one fetch avoids
+        # turning a source snapshot into an unbounded full-history clone while
+        # retaining Git object verification and archive-based materialization.
+        fetch = _run("-C", str(target), "-c", "core.hooksPath=/dev/null", "-c", "submodule.recurse=false", "fetch", "--depth=1", "--no-tags", "--no-recurse-submodules", "https://github.com/" + repository + ".git", base_sha, head_sha, timeout=fetch_timeout_seconds)
     except subprocess.TimeoutExpired as exc:
         completed = _utc()
         stdout = exc.stdout if isinstance(exc.stdout, bytes) else b""

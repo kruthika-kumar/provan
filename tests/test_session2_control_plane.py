@@ -996,7 +996,9 @@ def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace
     monkeypatch.setattr(mirror.os, "fchmod", lambda *_args: None, raising=False)
     monkeypatch.setattr(mirror, "_staging_capacity", lambda: {"free_bytes": 3 * 1024**3, "free_inodes": 8192, "minimum_free_bytes": 2 * 1024**3, "minimum_free_inodes": 4096, "sufficient": True})
 
+    observed = []
     def fake_run(*args, timeout):
+        observed.append(args)
         if args[0] == "init":
             Path(args[-1]).mkdir(parents=True)
             return subprocess.CompletedProcess(args, 0, b"", b"")
@@ -1010,6 +1012,7 @@ def test_session2_mirror_seals_failed_fetch_and_requires_a_new_attempt_namespace
     assert list(tmp_path.glob("*.mirror.json"))
     assert list(tmp_path.glob("*.mirror-attempt.stdout"))
     assert (tmp_path / "mirrors" / "org-repo-1-org-repo-2").is_dir()
+    assert any("--depth=1" in invocation for invocation in observed)
 
 
 def test_session2_mirror_blocks_before_creating_a_partial_repo_when_staging_is_full(tmp_path: Path, monkeypatch):
