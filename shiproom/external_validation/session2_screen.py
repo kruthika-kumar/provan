@@ -37,6 +37,7 @@ _REASONS = {
 }
 _PRIMARY_RETRIEVAL_UNAVAILABLE = "PRIMARY_RETRIEVAL_RECEIPT_UNAVAILABLE"
 _MIRROR_ACQUISITION_TIMED_OUT = "MIRROR_ACQUISITION_TIMED_OUT"
+_UNSAFE_PATIENT_TREE_ENTRY = "UNSAFE_PATIENT_TREE_ENTRY"
 _RESOLUTION_REASON = "MATERIALIZATION_POLICY_NARROWING_CORRECTED"
 _FIXED_TWIN_RESOLUTION_REASON = "FIXED_TWIN_COMMIT_AUTHORITY_CORRECTED"
 _RUNNER_RESOLUTION_REASON = "QUALIFIED_RUNNER_COMPATIBILITY_SUPERSEDED"
@@ -276,6 +277,45 @@ def seal_mirror_acquisition_timeout(
     }
     return {"screen_hash": _write_once(directory, ".mirror-acquisition-screen.json", canonical_json(record)),
             "decision": record["decision"]}
+
+
+def seal_unsafe_materialization_screen(
+    repository_root: Path, *, candidate_id: str, candidate_index_hash: str,
+    materialization_failure_hash: str,
+) -> dict[str, str]:
+    """Turn a sealed safe-export rejection into a deterministic exclusion."""
+    if (not isinstance(candidate_id, str) or not candidate_id or not _HASH.fullmatch(candidate_index_hash)
+            or not _HASH.fullmatch(materialization_failure_hash)):
+        _fail("session2_safe_export_screen_input_invalid")
+    directory = _root(repository_root)
+    _candidate_from_index(directory, candidate_id=candidate_id, candidate_index_hash=candidate_index_hash)
+    root = directory.parents[2]
+    failure = _canonical_record(
+        root / "session2" / "cases" / "materializations" / (materialization_failure_hash[7:] + ".materialization-failure.json"),
+        materialization_failure_hash,
+        missing="session2_safe_export_screen_failure_missing",
+        invalid="session2_safe_export_screen_failure_invalid",
+    )
+    required = {"schema_id", "schema_version", "candidate_id", "commit_sha", "tree_sha",
+                "source_object_receipt_hashes", "mirror_receipt_hash", "failure_code",
+                "snapshot_location", "started_at", "completed_at"}
+    if (set(failure) != required or failure.get("schema_id") != "external_validation.session2_source_materialization_failure.v1"
+            or failure.get("schema_version") != "1" or failure.get("candidate_id") != candidate_id
+            or failure.get("failure_code") != "session2_materialization_unsafe_patient_tree_entry"
+            or failure.get("snapshot_location") != "supervisor_staging_only"
+            or not all(isinstance(failure.get(key), str) and _SHA.fullmatch(failure[key]) for key in ("commit_sha", "tree_sha"))
+            or not isinstance(failure.get("source_object_receipt_hashes"), list)
+            or len(failure["source_object_receipt_hashes"]) < 2
+            or any(not isinstance(item, str) or not _HASH.fullmatch(item) for item in failure["source_object_receipt_hashes"])
+            or not isinstance(failure.get("mirror_receipt_hash"), str) or not _HASH.fullmatch(failure["mirror_receipt_hash"])):
+        _fail("session2_safe_export_screen_failure_invalid")
+    record = {"schema_id":"external_validation.session2_safe_export_screen.v1", "schema_version":"1",
+              "candidate_id":candidate_id, "candidate_index_hash":candidate_index_hash,
+              "materialization_failure_hash":materialization_failure_hash,
+              "stage":"SAFE_SOURCE_EXPORT", "decision":"EXCLUDED_PREQUALIFICATION",
+              "reason":_UNSAFE_PATIENT_TREE_ENTRY, "created_at":_utc()}
+    return {"screen_hash":_write_once(directory, ".safe-export-screen.json", canonical_json(record)),
+            "decision":record["decision"]}
 
 
 def resolve_primary_retrieval_reference(repository_root: Path, *, candidate_id: str, supersedes_screen_hash: str) -> dict[str, str]:
