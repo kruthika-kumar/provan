@@ -48,6 +48,16 @@ def _canonical(path: Path) -> tuple[dict[str, Any], str]:
     return value, _hash(raw)
 
 
+def _terminal_screen(cases: Path, digest: str) -> tuple[dict[str, Any], str]:
+    """Resolve exactly one recognized, content-addressed terminal screen."""
+    suffixes = (".screen.json", ".mirror-acquisition-screen.json", ".provenance-screen.json")
+    matches = [cases / "screens" / (digest[7:] + suffix) for suffix in suffixes
+               if (cases / "screens" / (digest[7:] + suffix)).is_file()]
+    if len(matches) != 1:
+        _fail("session2_fresh_exhaustion_audit_evidence_missing")
+    return _canonical(matches[0])
+
+
 def validate_fresh_a_exhaustion_audit(value: Any) -> dict[str, Any]:
     required = {"schema_id", "schema_version", "exhaustion_hash", "candidate_count", "terminal_count",
                 "reason_counts", "repository_reason_counts", "source_reason_counts", "shared_cause_audit",
@@ -114,7 +124,7 @@ def seal_fresh_a_exhaustion_audit(repository_root: Path, *, exhaustion_hash: str
         if (candidate is None or not isinstance(screen_hash, str) or not _HASH.fullmatch(screen_hash) or not isinstance(reason, str)
                 or not isinstance(candidate.get("repository"), str) or not isinstance(candidate.get("source_priority"), int)):
             _fail("session2_fresh_exhaustion_audit_row_invalid")
-        screen, actual_screen = _canonical(cases / "screens" / (screen_hash[7:] + ".screen.json"))
+        screen, actual_screen = _terminal_screen(cases, screen_hash)
         if actual_screen != screen_hash or screen.get("candidate_id") != candidate_id or screen.get("reason") != reason or screen.get("decision") != "EXCLUDED_PREQUALIFICATION":
             _fail("session2_fresh_exhaustion_audit_screen_mismatch")
         reason_counts[reason] += 1
