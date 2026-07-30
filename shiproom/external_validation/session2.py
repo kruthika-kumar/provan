@@ -167,6 +167,30 @@ def contamination_band(issue_created_at: str, fix_created_at: str, cutoff: str =
     return "FALLBACK_RECENT"
 
 
+def validate_fresh_b_population_authority(value: Any) -> dict[str, Any]:
+    """Validate the only approved higher-contamination fallback population."""
+    required = {"schema_id", "schema_version", "population", "exhaustion_hash", "contamination_disclosure", "issue_created_at", "fix_created_or_merged_at", "bands", "band_order", "repositories", "candidate_order", "maximum_selected_per_repository", "selection_rule", "source_link_requirement", "prohibited"}
+    if (not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_fresh_b_population_authority.v1"
+            or value.get("schema_version") != "1" or value.get("population") != "FRESH_B_HIGHER_CONTAMINATION_FALLBACK"
+            or not isinstance(value.get("contamination_disclosure"), str) or "higher-contamination" not in value["contamination_disclosure"]
+            or value.get("band_order") != ["B1", "B2", "B3"]
+            or value.get("maximum_selected_per_repository") != 2
+            or value.get("selection_rule") != "sequential_first_six_passing_all_unchanged_gates"
+            or value.get("source_link_requirement") != "issue_predates_and_authoritatively_links_to_fix"):
+        fail("session2_fresh_b_authority_invalid")
+    require_sha(value.get("exhaustion_hash"), "session2_fresh_b_authority_invalid")
+    if value.get("issue_created_at") != {"minimum":"2025-09-01T00:00:00Z", "maximum_exclusive":"2026-03-01T00:00:00Z"} or value.get("fix_created_or_merged_at") != {"minimum":"2026-03-01T00:00:00Z", "maximum_authority":"first_session2_fresh_b_retrieval_receipt_timestamp"}:
+        fail("session2_fresh_b_authority_invalid")
+    expected_bands = {"B1":{"issue_start":"2026-02-17T00:00:00Z", "issue_end_exclusive":"2026-03-01T00:00:00Z"}, "B2":{"issue_start":"2025-12-01T00:00:00Z", "issue_end_exclusive":"2026-02-17T00:00:00Z"}, "B3":{"issue_start":"2025-09-01T00:00:00Z", "issue_end_exclusive":"2025-12-01T00:00:00Z"}}
+    if value.get("bands") != expected_bands or "FRESH_C" not in value.get("prohibited", []):
+        fail("session2_fresh_b_authority_invalid")
+    if (not isinstance(value.get("repositories"), list) or len(set(value["repositories"])) != len(value["repositories"])
+            or value.get("candidate_order") != ["contamination_band_ascending", "fix_timestamp_descending", "issue_timestamp_descending", "repository_slug_ascending", "stable_task_id_ascending"]):
+        fail("session2_fresh_b_authority_invalid")
+    return value
+
+
 def validate_fresh_qualification(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict): fail("session2_fresh_receipt_invalid")
     required = {"case_id", "repository", "buggy_sha", "fixed_sha", "issue_created_at", "fix_created_at", "contamination_band", "cutoff_compliant", "fallback_reason", "public_repository", "usable_license", "authoritative_issue_or_requirement", "buggy_target_oracle", "fixed_target_oracle", "buggy_protected_checks", "fixed_protected_checks", "target_runtime_minutes", "paid_credentials_required", "gpu_required", "proprietary_service_required", "uncontrolled_patient_network_required", "qualified_linux_container_path", "dependency_authority_frozen", "production_supervisor_receipt_present", "production_supervisor_receipt_opaque_id", "production_supervisor_receipt_hash", "independent_replay_present", "independent_replay_receipt_opaque_id", "independent_replay_receipt_hash"}
