@@ -488,6 +488,7 @@ class BudgetLedger:
         self.db.execute("PRAGMA foreign_keys=ON"); self.db.execute("PRAGMA journal_mode=WAL"); self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         self.db.execute("CREATE TABLE IF NOT EXISTS entries (sequence INTEGER PRIMARY KEY, attempt_id TEXT NOT NULL, idempotency_key TEXT UNIQUE, stage TEXT NOT NULL, state TEXT NOT NULL, reserved REAL NOT NULL, settled REAL, provider_request_id TEXT, predecessor_hash TEXT NOT NULL, entry_hash TEXT UNIQUE NOT NULL)")
+        self.db.execute("CREATE TABLE IF NOT EXISTS stage_amendments (sequence INTEGER PRIMARY KEY, amendment_id TEXT UNIQUE NOT NULL, source_stage TEXT NOT NULL, target_stage TEXT NOT NULL, amount REAL NOT NULL, authorization_ref TEXT NOT NULL, predecessor_hash TEXT NOT NULL, amendment_hash TEXT UNIQUE NOT NULL)")
         if not self.db.execute("SELECT 1 FROM meta WHERE key='policy_hash'").fetchone():
             self.db.execute("BEGIN IMMEDIATE")
             try:
@@ -507,6 +508,65 @@ class BudgetLedger:
         for row in rows: current[row["attempt_id"]] = row
         return current
 
+    def _amendments(self) -> list[dict[str, Any]]:
+        """Return and independently rehash approved, append-only cap transfers."""
+        names = ("sequence", "amendment_id", "source_stage", "target_stage", "amount",
+                 "authorization_ref", "predecessor_hash", "amendment_hash")
+        values = [dict(zip(names, row)) for row in self.db.execute(
+            "SELECT sequence,amendment_id,source_stage,target_stage,amount,authorization_ref,predecessor_hash,amendment_hash FROM stage_amendments ORDER BY sequence")]
+        predecessor = ""
+        for expected, value in enumerate(values, 1):
+            body = {key: value[key] for key in names[:-1]}
+            if (value["sequence"] != expected or value["predecessor_hash"] != predecessor
+                    or value["amendment_hash"] != canonical_hash(body)):
+                fail("session2_budget_amendment_history_invalid")
+            predecessor = value["amendment_hash"]
+        return values
+
+    def _effective_stage_caps(self, amendments: list[dict[str, Any]] | None = None) -> dict[str, float]:
+        caps = {stage: float(cap) for stage, cap in self.policy.stage_caps}
+        for amendment in self._amendments() if amendments is None else amendments:
+            caps[amendment["source_stage"]] -= amendment["amount"]
+            caps[amendment["target_stage"]] += amendment["amount"]
+        return caps
+
+    @staticmethod
+    def _stage_consumption(current: dict[str, dict[str, Any]], stage: str) -> float:
+        return sum((row["settled"] if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"} else row["reserved"]) or 0
+                   for row in current.values() if row["stage"] == stage and row["state"] != "CANCELLED_BEFORE_SEND")
+
+    def authorize_stage_reallocation(self, amendment_id: str, source_stage: str,
+                                     target_stage: str, amount: float,
+                                     authorization_ref: str) -> None:
+        """Apply an explicit, non-programme-expanding cap transfer once.
+
+        The immutable policy remains the baseline.  Each approved transfer is
+        a separately hashed logical-ledger record so a future reviewer can
+        distinguish it from a silently broadened programme budget.
+        """
+        if (not all(isinstance(value, str) and value and not PLACEHOLDER.search(value)
+                    for value in (amendment_id, source_stage, target_stage, authorization_ref))
+                or source_stage not in STAGES or target_stage not in STAGES or source_stage == target_stage
+                or not isinstance(amount, (int, float)) or amount <= 0):
+            fail("session2_budget_reallocation_invalid")
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            rows, amendments = self._rows(), self._amendments()
+            if any(value["amendment_id"] == amendment_id for value in amendments):
+                fail("session2_budget_reallocation_duplicate")
+            current = self._current(rows); caps = self._effective_stage_caps(amendments)
+            if self._stage_consumption(current, source_stage) + float(amount) > caps[source_stage]:
+                fail("session2_budget_reallocation_source_insufficient")
+            body = {"sequence": len(amendments) + 1, "amendment_id": amendment_id,
+                    "source_stage": source_stage, "target_stage": target_stage,
+                    "amount": float(amount), "authorization_ref": authorization_ref,
+                    "predecessor_hash": amendments[-1]["amendment_hash"] if amendments else ""}
+            self.db.execute("INSERT INTO stage_amendments VALUES(?,?,?,?,?,?,?,?)",
+                            (*body.values(), canonical_hash(body)))
+            self.db.execute("COMMIT")
+        except Exception:
+            self.db.execute("ROLLBACK"); raise
+
     def _append(self, body: dict[str, Any]) -> None:
         self.db.execute("INSERT INTO entries VALUES(?,?,?,?,?,?,?,?,?,?)", (*body.values(), canonical_hash(body)))
 
@@ -524,9 +584,9 @@ class BudgetLedger:
             if attempt_id in current or self.db.execute("SELECT 1 FROM entries WHERE idempotency_key=?", (idempotency_key,)).fetchone():
                 fail("session2_budget_duplicate_attempt")
             active = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"}); settled = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"})
-            stage_spend = sum((row["settled"] if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"} else row["reserved"]) or 0 for row in current.values() if row["stage"] == stage and row["state"] != "CANCELLED_BEFORE_SEND")
+            stage_spend = self._stage_consumption(current, stage)
             if settled + active + amount > self.policy.hard_stop_usd: fail("session2_budget_programme_cap_exceeded")
-            if stage_spend + amount > dict(self.policy.stage_caps)[stage]: fail("session2_budget_stage_cap_exceeded")
+            if stage_spend + amount > self._effective_stage_caps()[stage]: fail("session2_budget_stage_cap_exceeded")
             prior = rows[-1]["entry_hash"] if rows else ""
             sequence = len(rows) + 1; body = {"sequence": sequence, "attempt_id": attempt_id, "idempotency_key": idempotency_key, "stage": stage, "state": "RESERVED", "reserved": float(amount), "settled": None, "provider_request_id": None, "predecessor_hash": prior}
             self._append(body); self.db.execute("COMMIT"); return sequence
@@ -581,9 +641,10 @@ class BudgetLedger:
             body = {key: row[key] for key in ("sequence","attempt_id","idempotency_key","stage","state","reserved","settled","provider_request_id","predecessor_hash")}
             if row["sequence"] != expected or row["predecessor_hash"] != prior or row["entry_hash"] != canonical_hash(body): fail("session2_budget_history_invalid")
             prior = row["entry_hash"]
-        current = self._current(rows); committed = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"}); reserved = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"})
-        stages = {stage: dict(self.policy.stage_caps)[stage] - sum((row["settled"] if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"} else row["reserved"]) or 0 for row in current.values() if row["stage"] == stage and row["state"] != "CANCELLED_BEFORE_SEND") for stage in STAGES}
-        return {"schema_id": "external_validation.session2_budget_checkpoint.v1", "schema_version": "1", "first_sequence": 1 if rows else 0, "last_sequence": len(rows), "entry_count": len(rows), "previous_checkpoint_hash": "", "entries_root_hash": canonical_hash(rows), "committed_spend": committed, "reserved_spend": reserved, "remaining_budget": self.policy.hard_stop_usd - committed - reserved, "stage_balances": stages, "policy_hash": self.policy.hash, "latest_entry_hash": prior}
+        amendments = self._amendments(); current = self._current(rows); committed = sum(row["settled"] or 0 for row in current.values() if row["state"] in {"SETTLED", "FAILED_MAX_CHARGED"}); reserved = sum(row["reserved"] for row in current.values() if row["state"] in {"RESERVED", "SUBMITTED"})
+        caps = self._effective_stage_caps(amendments)
+        stages = {stage: caps[stage] - self._stage_consumption(current, stage) for stage in STAGES}
+        return {"schema_id": "external_validation.session2_budget_checkpoint.v1", "schema_version": "1", "first_sequence": 1 if rows else 0, "last_sequence": len(rows), "entry_count": len(rows), "previous_checkpoint_hash": "", "entries_root_hash": canonical_hash(rows), "committed_spend": committed, "reserved_spend": reserved, "remaining_budget": self.policy.hard_stop_usd - committed - reserved, "stage_balances": stages, "policy_hash": self.policy.hash, "latest_entry_hash": prior, "stage_reallocation_count": len(amendments), "stage_reallocations_root_hash": canonical_hash(amendments)}
 
     def genesis_checkpoint(self) -> dict[str, Any]:
         """Canonical Session-2 anchor; never hash SQLite/WAL bytes."""

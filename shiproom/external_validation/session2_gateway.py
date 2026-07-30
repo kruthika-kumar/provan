@@ -48,11 +48,15 @@ def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, 
     key = gateway_credential_from_environment()
     if not isinstance(request, dict) or request.get("model") != TERRA_REQUEST["model"]:
         raise ModelGatewayError("session2_gateway_request_invalid")
-    payload = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    http_request = Request(
-        "https://api.openai.com/v1/responses", data=payload, method="POST",
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "Accept": "application/json"},
-    )
+    headers = {"Authorization": "Bearer " + key, "Accept": "application/json"}
+    if request.get("operation") == "model_metadata":
+        if set(request) != {"operation", "model"}:
+            raise ModelGatewayError("session2_gateway_request_invalid")
+        http_request = Request("https://api.openai.com/v1/models/" + TERRA_REQUEST["model"], method="GET", headers=headers)
+    else:
+        payload = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        http_request = Request("https://api.openai.com/v1/responses", data=payload, method="POST",
+                               headers={**headers, "Content-Type": "application/json"})
     try:
         with urlopen(http_request, timeout=90) as response:  # nosec B310: fixed provider endpoint
             raw = response.read()
@@ -67,6 +71,13 @@ def responses_api_sender_from_environment(request: dict[str, Any]) -> dict[str, 
         raise ModelGatewayError("session2_gateway_response_invalid") from exc
     if not isinstance(value, dict):
         raise ModelGatewayError("session2_gateway_response_invalid")
+    if request.get("operation") == "model_metadata":
+        model_id = value.get("id")
+        if not isinstance(model_id, str) or not model_id:
+            raise ModelGatewayError("session2_gateway_response_invalid")
+        value = {"model": model_id, "request_id": request_id,
+                 "provider_metadata": {key: value.get(key) for key in ("object", "created", "owned_by") if key in value},
+                 "usage": {"cost_usd": 0.0}, "probe_operation": "model_metadata"}
     if request_id and "request_id" not in value and "_request_id" not in value:
         value["request_id"] = request_id
     return value
@@ -196,9 +207,10 @@ class OpenAIResponsesGateway:
         self.ledger.reserve(attempt_id, idempotency_key, "session2_probes", 1.0, input_tokens=0)
         self.ledger.transition(attempt_id, "SUBMITTED", provider_request_id="operation_" + attempt_id)
         try:
-            # An empty input is intentionally not an evaluated repository or
-            # benchmark prompt.  The sender is responsible for the pinned SDK.
-            response = self._sender({**TERRA_REQUEST, "input": []})
+            # A metadata lookup is content-free: it creates no model output,
+            # sends no benchmark/patient context, and is distinct from the
+            # Responses API requests used for all evaluated model arms.
+            response = self._sender({"operation": "model_metadata", "model": TERRA_REQUEST["model"]})
         except BaseException:
             self.ledger.transition(attempt_id, "FAILED_MAX_CHARGED")
             raise

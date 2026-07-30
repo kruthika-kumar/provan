@@ -127,6 +127,27 @@ def test_budget_ledger_is_append_only_and_caps_reservations(tmp_path: Path):
     assert checkpoint["entry_count"] == 2 and checkpoint["remaining_budget"] == 248.0
 
 
+def test_explicit_stage_reallocation_is_hashed_and_does_not_expand_programme_cap(tmp_path: Path):
+    ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
+    ledger.reserve("failed_probe_1", "failed-idem-1", "session2_probes", 1.0)
+    ledger.transition("failed_probe_1", "FAILED_MAX_CHARGED")
+    ledger.reserve("failed_probe_2", "failed-idem-2", "session2_probes", 1.0)
+    ledger.transition("failed_probe_2", "FAILED_MAX_CHARGED")
+    with pytest.raises(Session2ValidationError, match="session2_budget_stage_cap_exceeded"):
+        ledger.reserve("probe_3", "probe-idem-3", "session2_probes", 1.0)
+    ledger.authorize_stage_reallocation("session2_probe_correction_20260730", "retry_contingency", "session2_probes", 1.0,
+                                        "user-approved:session2-probe-correction-20260730")
+    ledger.reserve("probe_3", "probe-idem-3", "session2_probes", 1.0)
+    checkpoint = ledger.checkpoint()
+    assert checkpoint["stage_balances"]["session2_probes"] == 0.0
+    assert checkpoint["stage_balances"]["retry_contingency"] == 14.0
+    assert checkpoint["stage_reallocation_count"] == 1
+    assert checkpoint["stage_reallocations_root_hash"].startswith("sha256:")
+    with pytest.raises(Session2ValidationError, match="session2_budget_reallocation_duplicate"):
+        ledger.authorize_stage_reallocation("session2_probe_correction_20260730", "retry_contingency", "session2_probes", 1.0,
+                                            "user-approved:session2-probe-correction-20260730")
+
+
 def test_budget_submission_recovery_is_max_charged_and_cancellation_is_proven(tmp_path: Path):
     ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
     ledger.reserve("attempt_1", "idem_1", "session2_probes", 1.0)
@@ -310,9 +331,11 @@ def test_freeze_authority_is_non_circular_and_preserves_unmeasured_claims():
 
 def test_only_gateway_can_record_content_free_probe_and_usage(tmp_path: Path):
     ledger = BudgetLedger(tmp_path / "ledger.sqlite3", BudgetPolicy())
-    gateway = OpenAIResponsesGateway(ledger, lambda request: {"model":"gpt-5.6-terra", "request_id":"req_probe_123", "system_fingerprint":"fingerprint-1", "provider_metadata":{"provider_version":"v1"}, "usage":{"cost_usd":0.25}})
+    calls = []
+    gateway = OpenAIResponsesGateway(ledger, lambda request: calls.append(request) or {"model":"gpt-5.6-terra", "request_id":"req_probe_123", "system_fingerprint":"fingerprint-1", "provider_metadata":{"provider_version":"v1"}, "usage":{"cost_usd":0.25}})
     probe = gateway.availability_probe()
     assert probe.requested_model_id == "gpt-5.6-terra"
+    assert calls == [{"operation":"model_metadata", "model":"gpt-5.6-terra"}]
     assert ledger.checkpoint()["committed_spend"] == 0.25
     with pytest.raises(ModelGatewayError, match="session2_non_observation_capability_violation"):
         assert_non_observation_worker_environment({"OPENAI_API_KEY":"should-not-be-here"})
