@@ -22,7 +22,10 @@ def retrieve_required_objects(repository_root: Path, *, reference_index_hash: st
     """Fetch only missing immutable object authorities, in fixed request order."""
     required = candidates.required_fresh_b_object_requests(repository_root, reference_index_hash=reference_index_hash)
     base = candidates._root(repository_root)  # Production private-root authority.
-    existing = candidates._object_receipt_map(base)
+    reference = candidates._read_fresh_b_reference_index(base, reference_index_hash)
+    existing = candidates._object_receipt_map(
+        base, not_before=candidates._time(reference["object_receipt_not_before"])
+    )
     fetched = 0
     for request in required:
         key = (request["repository"], request["object_kind"], request["number"])

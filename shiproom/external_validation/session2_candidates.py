@@ -577,11 +577,13 @@ def compile_fresh_b_reference_candidates(repository_root: Path, *, retrieval_fra
     pulls: list[tuple[dict[str, Any], str]] = []
     frame_repositories: set[str] = set()
     source_receipts: set[str] = set()
+    retrieval_not_before: set[str] = set()
     for frame_hash in retrieval_frame_receipt_hashes:
         frame, entries = _fresh_b_v2_frame(base, frame_hash)
         if frame["repository"] in frame_repositories:
             _fail("session2_fresh_b_reference_repository_duplicate")
         frame_repositories.add(frame["repository"])
+        retrieval_not_before.add(frame["retrieval_not_before"])
         for receipt, documents, entry, receipt_hash in _fresh_b_documents(base, entries):
             source_receipts.add(receipt_hash)
             kind = "issue" if entry["kind"].startswith("issue:") else "pull_request"
@@ -626,9 +628,10 @@ def compile_fresh_b_reference_candidates(repository_root: Path, *, retrieval_fra
             candidates[candidate_id] = candidate; linked.add(key)
     exclusions = [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"}
                   for slug, number in sorted(set(issues) - linked)]
+    if len(retrieval_not_before) != 1: _fail("session2_fresh_b_reference_timestamp_authority_invalid")
     result = {"schema_id": "external_validation.session2_fresh_b_candidate_reference_index.v1", "schema_version": "1",
               "retrieval_frame_receipt_hashes": retrieval_frame_receipt_hashes, "source_receipt_hashes": sorted(source_receipts),
-              "selection_effect": "reference_collection_only", "candidates": [candidates[key] for key in sorted(candidates)], "exclusions": exclusions}
+              "object_receipt_not_before": next(iter(retrieval_not_before)), "selection_effect": "reference_collection_only", "candidates": [candidates[key] for key in sorted(candidates)], "exclusions": exclusions}
     payload = canonical_json(result); digest = sha256(payload).hexdigest(); target = base / "cases" / (digest + ".fresh-b-reference-index.json")
     try: descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     except FileExistsError:
@@ -647,13 +650,14 @@ def _read_fresh_b_reference_index(base: Path, reference_index_hash: str) -> dict
     if sha256(raw).hexdigest() != reference_index_hash[7:]: _fail("session2_fresh_b_reference_index_hash_mismatch")
     try: value = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_fresh_b_reference_index_invalid") from exc
-    required = {"schema_id", "schema_version", "retrieval_frame_receipt_hashes", "source_receipt_hashes", "selection_effect", "candidates", "exclusions"}
+    required = {"schema_id", "schema_version", "retrieval_frame_receipt_hashes", "source_receipt_hashes", "object_receipt_not_before", "selection_effect", "candidates", "exclusions"}
     candidate_fields = {"candidate_id", "source_priority", "repository", "issue_number", "fix_repository", "fix_pr_number", "issue_created_at", "search_fix_closed_at", "fresh_b_band", "contamination_tier", "issue_retrieval_receipt_hash", "fix_retrieval_receipt_hash", "selection_status"}
     if (canonical_json(value) != raw or not isinstance(value, dict) or set(value) != required
             or value.get("schema_id") != "external_validation.session2_fresh_b_candidate_reference_index.v1" or value.get("schema_version") != "1"
             or value.get("selection_effect") != "reference_collection_only" or not isinstance(value.get("candidates"), list)
             or not isinstance(value.get("exclusions"), list) or not value["candidates"]):
         _fail("session2_fresh_b_reference_index_invalid")
+    _time(value["object_receipt_not_before"])
     identifiers: set[str] = set()
     for candidate in value["candidates"]:
         if (not isinstance(candidate, dict) or set(candidate) != candidate_fields or not isinstance(candidate.get("candidate_id"), str)
@@ -680,7 +684,7 @@ def required_fresh_b_object_requests(repository_root: Path, *, reference_index_h
     return [{"repository": repo, "object_kind": kind, "number": number} for repo, kind, number in sorted(requests)]
 
 
-def _object_receipt_map(base: Path) -> dict[tuple[str, str, int], tuple[dict[str, Any], dict[str, Any], str]]:
+def _object_receipt_map(base: Path, *, not_before: datetime | None = None) -> dict[tuple[str, str, int], tuple[dict[str, Any], dict[str, Any], str]]:
     records: dict[tuple[str, str, int], tuple[dict[str, Any], dict[str, Any], str]] = {}
     for path in sorted((base / "retrieval").glob("*.object-receipt.json")):
         if _is_reparse(path): _fail("session2_fresh_b_object_receipt_reparse")
@@ -695,7 +699,8 @@ def _object_receipt_map(base: Path) -> dict[tuple[str, str, int], tuple[dict[str
                 or not isinstance(receipt.get("number"), int) or receipt["number"] < 1 or not isinstance(receipt.get("raw_response_hash"), str)
                 or not receipt["raw_response_hash"].startswith("sha256:") or not _HEX.fullmatch(receipt["raw_response_hash"][7:])):
             _fail("session2_fresh_b_object_receipt_invalid")
-        _time(receipt["retrieved_at"])
+        if not_before is not None and _time(receipt["retrieved_at"]) < not_before:
+            continue
         document = _read_hash(base / "retrieval" / "raw" / (receipt["raw_response_hash"][7:] + ".json"), receipt["raw_response_hash"])
         key = (receipt["repository"], receipt["object_kind"], receipt["number"])
         if key in records: _fail("session2_fresh_b_object_receipt_duplicate")
@@ -717,7 +722,8 @@ def finalize_fresh_b_object_candidates(repository_root: Path, *, reference_index
     This is the first index with a real PR ``merged_at``.  It remains a source
     population, not qualification or selection evidence.
     """
-    base = _root(repository_root); references = _read_fresh_b_reference_index(base, reference_index_hash); objects = _object_receipt_map(base)
+    base = _root(repository_root); references = _read_fresh_b_reference_index(base, reference_index_hash)
+    objects = _object_receipt_map(base, not_before=_time(references["object_receipt_not_before"]))
     upper = _time("2026-07-30T10:32:18.825171Z"); cutoff = _time("2026-03-01T00:00:00Z")
     candidates: list[dict[str, Any]] = []; exclusions: list[dict[str, Any]] = []
     for reference in sorted(references["candidates"], key=lambda item: item["candidate_id"]):
