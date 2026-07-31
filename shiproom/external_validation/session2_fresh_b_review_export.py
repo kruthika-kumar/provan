@@ -112,6 +112,7 @@ def export_fresh_b_review_view(repository_root: Path, *, output_directory: Path)
                             "raw_response_hashes": raw_hashes})
         frames.append({"repository": record["repository"], "frame_receipt_hash": record_hash,
                        "frame_hash": record["frame_hash"], "frame_git_blob": record["frame_git_blob"], "receipts": entries})
+    frames.sort(key=lambda item: item["repository"])
     if [item["repository"] for item in frames] != list(_REPOSITORIES):
         _fail("session2_fresh_b_review_frame_set_invalid")
     view = {"schema_id": "external_validation.session2_fresh_b_sanitized_review_view.v1", "schema_version": "1",
