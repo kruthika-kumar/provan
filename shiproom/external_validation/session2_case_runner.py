@@ -27,6 +27,7 @@ from .identity import canonical_json
 from .runner_v2 import DockerSupervisorV2, ExecutionPolicyV2
 from .session2_execution import Session2ExecutionError, execute_contract
 from .session2_project_overlay import ProjectOverlayError, project_metadata_overlay
+from .session2_staging_guard import StagingGuardError, require_supervisor_staging
 from .v2 import BackendLock
 
 
@@ -35,6 +36,7 @@ ROOT = Path("/var/lib/shiproom-external-validation")
 # This entry point owns a separate root-only subtree; only its deliberately
 # visible release-packet leaves become patient-readable.
 STAGING = Path("/mnt/shiproom-remediation/session2-supervisor/case-runner")
+_PRODUCTION_STAGING = STAGING
 BACKEND_LOCK = Path("/run/lock/shiproom-remediation.backend.lock")
 SECCOMP = re.compile(r"^sha256:[0-9a-f]{64}$")
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -240,6 +242,11 @@ def _packet(*, case_id: str, materialization_hash: str, environment_hash: str, c
         executes_target = any(item == sealed_target or item.startswith(sealed_target + "::") for item in command)
         if not target_files or not executes_target:
             _fail("session2_case_runner_target_artifact_not_executed")
+    if STAGING == _PRODUCTION_STAGING:
+        try:
+            require_supervisor_staging(STAGING)
+        except StagingGuardError as exc:
+            raise CaseRunnerError(str(exc)) from exc
     record = {
         "schema_id": "external_validation.session2_command_contract.v1", "schema_version": "1",
         "case_id": case_id, "materialization_hash": materialization_hash,

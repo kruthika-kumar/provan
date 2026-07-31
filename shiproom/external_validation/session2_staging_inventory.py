@@ -20,10 +20,12 @@ from typing import Any
 
 from .identity import canonical_json
 from .security import _is_reparse, external_root
+from .session2_staging_guard import StagingGuardError, require_supervisor_staging
 
 
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
 STAGING_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor")
+_PRODUCTION_STAGING_ROOT = STAGING_ROOT
 MIRRORS = STAGING_ROOT / "mirrors"
 SNAPSHOTS = STAGING_ROOT / "snapshots"
 _ATTEMPT = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
@@ -156,6 +158,11 @@ def inventory(repository_root: Path, *, implementation_commit: str, implementati
     if os.geteuid() != 0 or not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree):
         _fail("session2_staging_inventory_input_invalid")
     root = external_root(None, repository_root)
+    if STAGING_ROOT == _PRODUCTION_STAGING_ROOT:
+        try:
+            require_supervisor_staging(STAGING_ROOT)
+        except StagingGuardError as exc:
+            raise StagingInventoryError(str(exc)) from exc
     if root != EXPECTED_ROOT or _is_reparse(STAGING_ROOT) or not MIRRORS.is_dir() or not SNAPSHOTS.is_dir():
         _fail("session2_staging_inventory_root_invalid")
     authority = _authority_records(root)

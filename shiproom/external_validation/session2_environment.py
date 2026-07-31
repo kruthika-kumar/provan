@@ -33,11 +33,13 @@ from .session2_requirements import (
     pinned_requirement_records,
     requirements_authority_hash,
 )
+from .session2_staging_guard import StagingGuardError, require_supervisor_staging
 
 
 EXPECTED_ROOT = Path("/var/lib/shiproom-external-validation")
 SOCKET = Path("/run/shiproom-remediation-docker/docker.sock")
 BUILD_ROOT = Path("/mnt/shiproom-remediation/session2-supervisor/environment-builds")
+_PRODUCTION_BUILD_ROOT = BUILD_ROOT
 # Session 2 qualification is bound to the reviewed glibc runner.  The former
 # Session 1 musl image cannot be an implicit fallback: its wheel platform can
 # reject otherwise reproducible locked dependencies.
@@ -372,6 +374,11 @@ def build_environment(repository: Path, *, snapshot: Path, project_name: str | N
     All install authority is derived from the snapshot's lockfile.  A narrow
     test-runner package is permitted only when patient metadata declares it.
     """
+    if BUILD_ROOT == _PRODUCTION_BUILD_ROOT:
+        try:
+            require_supervisor_staging(BUILD_ROOT)
+        except StagingGuardError as exc:
+            raise EnvironmentBuildError(str(exc)) from exc
     if not _GIT_SHA.fullmatch(implementation_commit) or not _GIT_SHA.fullmatch(implementation_tree) or not _HASH.fullmatch(materialization_hash):
         _fail("session2_environment_implementation_authority_invalid")
     receipts = _root(repository)

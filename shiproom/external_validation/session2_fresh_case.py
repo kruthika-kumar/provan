@@ -18,6 +18,7 @@ from typing import Any
 from .identity import canonical_json
 from .security import _is_reparse, external_root
 from .session2 import contamination_band, validate_fresh_qualification
+from .session2_materialize import MaterializationError, _allocation_bound_destination
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -78,6 +79,33 @@ def _duration_minutes(receipt_root: Path, transition: dict[str, Any]) -> float:
     return max(values)
 
 
+def _allocation_bound_snapshot(materialization: dict[str, Any], fixed_snapshot: Path) -> None:
+    """Revalidate the receipt's worktree and exact sealed snapshot identity."""
+    attempt = materialization.get("allocation_attempt")
+    authority_hash = materialization.get("worktree_authority_hash")
+    snapshot_authority = materialization.get("snapshot_authority")
+    if (not isinstance(attempt, str) or not isinstance(authority_hash, str)
+            or not isinstance(snapshot_authority, dict)):
+        _fail("session2_fresh_license_snapshot_authority_missing")
+    try:
+        authority = _allocation_bound_destination(fixed_snapshot, attempt)
+    except MaterializationError as exc:
+        raise FreshQualificationError("session2_fresh_license_snapshot_authority_invalid") from exc
+    if _digest(canonical_json(authority)) != authority_hash:
+        _fail("session2_fresh_license_snapshot_authority_invalid")
+    tree = Path(authority["canonical_path"])
+    try:
+        value = fixed_snapshot.stat(follow_symlinks=False)
+        relative = fixed_snapshot.relative_to(tree).as_posix()
+    except (OSError, ValueError) as exc:
+        raise FreshQualificationError("session2_fresh_license_snapshot_authority_invalid") from exc
+    expected = (snapshot_authority.get("device"), snapshot_authority.get("inode"),
+                snapshot_authority.get("uid"), snapshot_authority.get("gid"), snapshot_authority.get("relative_path"))
+    actual = (value.st_dev, value.st_ino, value.st_uid, value.st_gid, relative)
+    if fixed_snapshot.is_symlink() or expected != actual:
+        _fail("session2_fresh_license_snapshot_authority_invalid")
+
+
 def compile_fresh_qualification(
     repository_root: Path, *, case_id: str, candidate_id: str, candidate_index_hash: str,
     buggy_materialization_hash: str, fixed_materialization_hash: str,
@@ -116,18 +144,9 @@ def compile_fresh_qualification(
     if primary_transition_hash == replay_transition_hash: _fail("session2_fresh_replay_not_independent")
     materialization = _record(root / "session2" / "cases" / "materializations" / (fixed_materialization_hash[7:] + ".materialization.json"), fixed_materialization_hash, ".materialization.json")
     if materialization.get("candidate_id") != candidate_id: _fail("session2_fresh_materialization_mismatch")
-    # ``session2_materialize`` owns the root-only ``materializations``
-    # subtree.  Older qualification records used ``snapshots``; both are
-    # supervisor staging locations and neither is patient-writable.  Accept
-    # those exact authorities only, rather than requiring callers to copy or
-    # relocate an already sealed materialization merely for finalization.
-    staging_roots = {
-        Path("/mnt/shiproom-remediation/session2-supervisor/snapshots"),
-        Path("/mnt/shiproom-remediation/session2-supervisor/materializations"),
-    }
-    if (not fixed_snapshot.is_dir() or _is_reparse(fixed_snapshot)
-            or not any(root in fixed_snapshot.parents for root in staging_roots)):
+    if not fixed_snapshot.is_dir() or _is_reparse(fixed_snapshot):
         _fail("session2_fresh_license_snapshot_missing")
+    _allocation_bound_snapshot(materialization, fixed_snapshot)
     license_file = fixed_snapshot / license_relative_path
     if not license_file.is_file() or license_file.is_symlink() or _digest(license_file.read_bytes()) != license_sha256:
         _fail("session2_fresh_license_invalid")

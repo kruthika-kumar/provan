@@ -14,9 +14,11 @@ import subprocess
 
 from .identity import canonical_json
 from .security import _is_reparse, external_root
+from .session2_staging_guard import StagingGuardError, require_supervisor_staging
 
 ROOT = Path("/var/lib/shiproom-external-validation")
 MIRRORS = Path("/mnt/shiproom-remediation/session2-supervisor/mirrors")
+_PRODUCTION_MIRRORS = MIRRORS
 MIN_STAGING_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MIN_STAGING_FREE_INODES = 4096
 _SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -186,6 +188,11 @@ def acquire_pair(repo: Path, *, candidate_id: str, candidate_index_hash: str, re
     if attempt_id != "initial":
         name += "--attempt-" + attempt_id
     target = MIRRORS / name
+    if MIRRORS == _PRODUCTION_MIRRORS:
+        try:
+            require_supervisor_staging(target)
+        except StagingGuardError as exc:
+            raise MirrorAcquisitionError(str(exc)) from exc
     if target.exists() or _is_reparse(target): _fail("session2_mirror_destination_exists")
     MIRRORS.mkdir(parents=True, exist_ok=True, mode=0o700)
     capacity = _staging_capacity()

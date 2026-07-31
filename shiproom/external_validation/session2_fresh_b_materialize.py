@@ -14,6 +14,7 @@ if str(_PACKAGE_ROOT) not in sys.path:
 from shiproom.external_validation.session2_fresh_b_queue import _root  # noqa: E402
 from shiproom.external_validation.session2_materialize import MaterializationError, seal_materialization  # noqa: E402
 from shiproom.external_validation.session2_mirror import MIRRORS  # noqa: E402
+from shiproom.external_validation.session2_staging_guard import StagingGuardError, require_supervisor_staging  # noqa: E402
 
 
 class FreshBMaterializationError(RuntimeError):
@@ -24,7 +25,8 @@ def _fail(code: str) -> None:
     raise FreshBMaterializationError(code)
 
 
-def materialize_claimed(repository_root: Path, *, candidate_index_hash: str) -> dict[str, str]:
+def materialize_claimed(repository_root: Path, *, candidate_index_hash: str, allocation_attempt: str,
+                        allocated_worktree: Path) -> dict[str, str]:
     directory = _root(repository_root); root = directory.parents[2]
     db = sqlite3.connect(directory / "control.sqlite3")
     try: rows = db.execute("SELECT candidate_id,claim_id FROM queue WHERE state='IN_PROGRESS'").fetchall()
@@ -50,22 +52,34 @@ def materialize_claimed(repository_root: Path, *, candidate_index_hash: str) -> 
     if len(records) != 1: _fail("session2_fresh_b_materialize_mirror_missing")
     path, mirror_record = records[0]
     mirror = MIRRORS / mirror_record["staging_mirror_name"]
+    try:
+        require_supervisor_staging(mirror)
+    except StagingGuardError as exc:
+        raise FreshBMaterializationError(str(exc)) from exc
     if not mirror.is_dir(): _fail("session2_fresh_b_materialize_mirror_missing")
     mirror_hash = "sha256:" + path.name.removesuffix(".mirror.json")
     source = sorted(candidate["source_object_receipt_hashes"])
-    staging = Path("/mnt/shiproom-remediation/session2-supervisor/materializations") / claim_id
+    if not allocated_worktree.is_absolute(): _fail("session2_fresh_b_materialize_worktree_invalid")
+    # The allocation adapter, not this caller, supplies the worktree.  The
+    # lower materializer reopens the same SQLite allocation authority before
+    # every export, so a caller cannot redirect a recovery attempt to ext4.
+    staging = allocated_worktree / "source-materializations" / claim_id
     buggy = seal_materialization(repository_root, candidate_id=candidate_id, mirror=mirror, commit_sha=base_sha,
-                                 destination=staging / "buggy", source_object_receipt_hashes=source, mirror_receipt_hash=mirror_hash)
+                                 destination=staging / "buggy", source_object_receipt_hashes=source,
+                                 mirror_receipt_hash=mirror_hash, allocation_attempt=allocation_attempt)
     fixed = seal_materialization(repository_root, candidate_id=candidate_id, mirror=mirror, commit_sha=head_sha,
-                                 destination=staging / "fixed", source_object_receipt_hashes=source, mirror_receipt_hash=mirror_hash)
+                                 destination=staging / "fixed", source_object_receipt_hashes=source,
+                                 mirror_receipt_hash=mirror_hash, allocation_attempt=allocation_attempt)
     return {"claim_id": claim_id, "buggy_materialization_hash": buggy["materialization_hash"], "fixed_materialization_hash": fixed["materialization_hash"]}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Materialize the currently claimed Fresh B pair.")
     parser.add_argument("--repository-root", required=True, type=Path); parser.add_argument("--candidate-index-hash", required=True)
+    parser.add_argument("--allocation-attempt", required=True); parser.add_argument("--allocated-worktree", required=True, type=Path)
     parsed = parser.parse_args(argv)
-    try: result = materialize_claimed(parsed.repository_root, candidate_index_hash=parsed.candidate_index_hash)
+    try: result = materialize_claimed(parsed.repository_root, candidate_index_hash=parsed.candidate_index_hash,
+                                      allocation_attempt=parsed.allocation_attempt, allocated_worktree=parsed.allocated_worktree)
     except (FreshBMaterializationError, MaterializationError) as exc: print(str(exc)); return 2
     print(json.dumps(result, sort_keys=True, separators=(",", ":"))); return 0
 

@@ -1014,9 +1014,15 @@ def test_mirror_timeout_screen_requires_sealed_production_attempt_and_compiler_r
 
 def test_source_materialization_seals_exact_git_tree_before_patient_execution(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_materialize as materialize
+    from contextlib import contextmanager
     mirror, store, destination = tmp_path / "mirror.git", tmp_path / "materializations", tmp_path / "snapshot"
     mirror.mkdir(); (mirror / "HEAD").write_text("ref: refs/heads/main\n", encoding="ascii"); store.mkdir()
     monkeypatch.setattr(materialize, "_root", lambda _repo: store)
+    monkeypatch.setattr(materialize, "_allocation_bound_destination", lambda _destination, _attempt: {"canonical_path": str(tmp_path), "device": 0, "inode": 0, "uid": 0, "gid": 0})
+    @contextmanager
+    def prepared(destination, _authority):
+        yield destination, destination.relative_to(tmp_path).as_posix()
+    monkeypatch.setattr(materialize, "_prepared_allocation_destination", prepared)
     monkeypatch.setattr(materialize, "_validate_mirror_receipt", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(materialize, "_git", lambda _mirror, *argv: {
         ("rev-parse", "--verify", "a" * 40 + "^{commit}"): ("a" * 40 + "\n").encode(),
@@ -1024,31 +1030,37 @@ def test_source_materialization_seals_exact_git_tree_before_patient_execution(tm
         ("ls-tree", "-r", "--name-only", "a" * 40): b"src/main.py\n",
     }[argv])
     def fake_export(_mirror, _sha, target):
-        target.mkdir(); (target / "src").mkdir(); (target / "src" / "main.py").write_text("pass\n", encoding="utf-8")
+        target.mkdir(parents=True); (target / "src").mkdir(); (target / "src" / "main.py").write_text("pass\n", encoding="utf-8")
         return target
     monkeypatch.setattr(materialize, "materialize_snapshot", fake_export)
     result = materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
         commit_sha="a" * 40, destination=destination,
         source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
-        mirror_receipt_hash="sha256:" + "a1" * 32)
+        mirror_receipt_hash="sha256:" + "a1" * 32, allocation_attempt="test-allocation")
     assert result["tree_sha"] == "b" * 40
     receipt = __import__("json").loads(next(store.glob("*.materialization.json")).read_text())
-    assert receipt["snapshot_location"] == "supervisor_staging_only"
+    assert receipt["snapshot_location"] == "allocation_bound_quota_worktree_only"
     assert receipt["symlink_policy"] == "relative_internal_tracked_target_only.v1"
+    sibling = tmp_path / "twins" / "fixed"
+    second = materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
+        commit_sha="a" * 40, destination=sibling,
+        source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
+        mirror_receipt_hash="sha256:" + "a1" * 32, allocation_attempt="test-allocation")
+    assert second["tree_sha"] == "b" * 40
     failed_destination = tmp_path / "unsafe-snapshot"
     monkeypatch.setattr(materialize, "materialize_snapshot", lambda *_args: (_ for _ in ()).throw(ValueError("unsafe_patient_tree_entry")))
     with pytest.raises(materialize.MaterializationError, match=r"session2_materialization_unsafe_patient_tree_entry:sha256:"):
         materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
             commit_sha="a" * 40, destination=failed_destination,
             source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
-            mirror_receipt_hash="sha256:" + "a1" * 32)
+            mirror_receipt_hash="sha256:" + "a1" * 32, allocation_attempt="test-allocation")
     failure = __import__("json").loads(next(store.glob("*.materialization-failure.json")).read_text())
     assert failure["failure_code"] == "session2_materialization_unsafe_patient_tree_entry"
     with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
         materialize.seal_materialization(tmp_path, candidate_id="acme/project#7->acme/project#8", mirror=mirror,
             commit_sha="a" * 40, destination=destination,
             source_object_receipt_hashes=["sha256:" + "0123456789abcdef" * 4, "sha256:" + "fedcba9876543210" * 4],
-            mirror_receipt_hash="sha256:" + "a1" * 32)
+            mirror_receipt_hash="sha256:" + "a1" * 32, allocation_attempt="test-allocation")
 
 
 def test_source_materialization_requires_matching_sealed_mirror_authority(tmp_path: Path):
