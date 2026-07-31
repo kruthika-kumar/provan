@@ -7,6 +7,7 @@ does not prove that every query in a frozen frame completed.
 from __future__ import annotations
 
 from hashlib import sha256
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -17,7 +18,8 @@ from typing import Any
 
 from .identity import canonical_json
 from .security import _is_reparse, external_root
-from .session2 import validate_fresh_b_retrieval_frame, validate_retrieval_frame
+from .session2 import (validate_fresh_b_retrieval_frame, validate_fresh_b_retrieval_frame_v2,
+                       validate_retrieval_frame)
 from .session2_selection import validate_retrieval_receipt
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -62,7 +64,7 @@ def _root(repository_root: Path) -> Path:
     return root
 
 
-def _expected(frame: dict[str, Any]) -> dict[tuple[str, str, str], tuple[str, dict[str, str]]]:
+def _expected(frame: dict[str, Any], repository_root: Path | None = None) -> dict[tuple[str, str, str], tuple[str, dict[str, str]]]:
     result: dict[tuple[str, str, str], tuple[str, dict[str, str]]] = {}
     if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1":
         for band in frame["issue_bands"]:
@@ -77,6 +79,20 @@ def _expected(frame: dict[str, Any]) -> dict[tuple[str, str, str], tuple[str, di
             f"repo:{frame['repository']} is:pr is:merged merged:{start[:10]}..{end[:10]}",
             {"kind": "pull_request", "state": "merged", "merged_from": start, "merged_to": end},
         )
+        return result
+    if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v2":
+        for band in frame["issue_bands"]:
+            start, end = band["start"], band["end"]
+            result[("issue:" + band["band"], start, end)] = (
+                f"repo:{frame['repository']} is:issue is:closed created:{start[:10]}..{end[:10]}",
+                {"kind": "issue", "state": "closed", "created_from": start, "created_to": end},
+            )
+        for window in _fresh_b_fix_windows(frame, repository_root):
+            start, end = window["start"], window["end"]
+            result[("pull_request", start, end)] = (
+                f"repo:{frame['repository']} is:pr is:merged merged:{start[:10]}..{end[:10]}",
+                {"kind": "pull_request", "state": "merged", "merged_from": start, "merged_to": end},
+            )
         return result
     for window in frame["query_windows"]:
         start, end = window["start"], window["end"]
@@ -110,6 +126,9 @@ def _frame_authority(repository_root: Path, frame_relative_path: str) -> tuple[d
         _fail("session2_retrieval_frame_noncanonical")
     if frame.get("schema_id") == "external_validation.session2_fresh_b_retrieval_frame.v1":
         validate_fresh_b_retrieval_frame(frame)
+    elif frame.get("schema_id") == "external_validation.session2_fresh_b_retrieval_frame.v2":
+        validate_fresh_b_retrieval_frame_v2(frame)
+        _fresh_b_fix_windows(frame, repository_root)
     else:
         validate_retrieval_frame(frame)
     provenance_path = repository_root / "stage-provenance.json"
@@ -125,11 +144,35 @@ def _frame_authority(repository_root: Path, frame_relative_path: str) -> tuple[d
     return frame, _hash(raw), matching[0]["git_blob"]
 
 
+def _fresh_b_fix_windows(frame: dict[str, Any], repository_root: Path | None = None) -> list[dict[str, str]]:
+    root = repository_root or Path(".")
+    path = root / frame["fix_windows_authority_path"]
+    if not path.is_file() or _is_reparse(path):
+        _fail("session2_fresh_b_fix_windows_invalid")
+    raw = path.read_bytes()
+    if _hash(raw) != frame["fix_windows_authority_hash"]:
+        _fail("session2_fresh_b_fix_windows_invalid")
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RetrievalFrameError("session2_fresh_b_fix_windows_invalid") from exc
+    expected = [
+        {"start": "2026-03-01T00:00:00Z", "end": "2026-03-31T23:59:59Z"},
+        {"start": "2026-04-01T00:00:00Z", "end": "2026-04-30T23:59:59Z"},
+        {"start": "2026-05-01T00:00:00Z", "end": "2026-05-31T23:59:59Z"},
+        {"start": "2026-06-01T00:00:00Z", "end": "2026-06-30T23:59:59Z"},
+        {"start": "2026-07-01T00:00:00Z", "end": "2026-07-30T10:32:18.825171Z"},
+    ]
+    if not isinstance(value, dict) or canonical_json(value) != raw or value != {"schema_id": "external_validation.session2_fresh_b_fix_windows.v1", "schema_version": "1", "windows": expected}:
+        _fail("session2_fresh_b_fix_windows_invalid")
+    return expected
+
+
 def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> dict[str, str]:
     """Seal only after each declared query has exactly one full receipt."""
     root = _root(repository_root)
     frame, frame_hash, frame_git_blob = _frame_authority(repository_root, frame_relative_path)
-    expected = _expected(frame)
+    expected = _expected(frame, repository_root)
     found: dict[tuple[str, str, str], tuple[str, dict[str, Any]]] = {}
     for path in sorted((root / "session2" / "retrieval").glob("*.retrieval-receipt.json")):
         if _is_reparse(path):
@@ -142,6 +185,14 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
         if canonical_json(receipt) != raw:
             _fail("session2_retrieval_frame_receipt_invalid")
         validate_retrieval_receipt(receipt)
+        if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v2":
+            try:
+                retrieved = datetime.fromisoformat(receipt["retrieved_at"].replace("Z", "+00:00")).astimezone(timezone.utc)
+                minimum = datetime.fromisoformat(frame["retrieval_not_before"].replace("Z", "+00:00")).astimezone(timezone.utc)
+            except (AttributeError, ValueError):
+                _fail("session2_fresh_b_retrieval_receipt_timestamp_invalid")
+            if retrieved < minimum:
+                continue
         for page in receipt["pages"]:
             raw_path = root / "session2" / "retrieval" / "raw" / (page["raw_response_hash"][7:] + ".json")
             if not raw_path.is_file() or _is_reparse(raw_path) or _hash(raw_path.read_bytes()) != page["raw_response_hash"]:
@@ -159,7 +210,9 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
         digest, receipt = found[(kind, start, end)]
         receipts.append({"kind": kind, "start": start, "end": end, "receipt_hash": digest,
                          "candidate_count": len(receipt["candidate_ids"])})
-    record = {"schema_id": ("external_validation.session2_fresh_b_retrieval_frame_receipts.v1"
+    record = {"schema_id": ("external_validation.session2_fresh_b_retrieval_frame_receipts.v2"
+                            if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v2"
+                            else "external_validation.session2_fresh_b_retrieval_frame_receipts.v1"
                             if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1"
                             else "external_validation.session2_retrieval_frame_receipts.v1"), "schema_version": "1",
               "frame_relative_path": frame_relative_path, "frame_hash": frame_hash, "frame_git_blob": frame_git_blob,
@@ -168,6 +221,11 @@ def seal_retrieval_frame(repository_root: Path, *, frame_relative_path: str) -> 
     if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v1":
         record["fresh_b_authority_hash"] = frame["fresh_b_authority_hash"]
         record["fresh_a_exhaustion_hash"] = frame["fresh_a_exhaustion_hash"]
+    if frame["schema_id"] == "external_validation.session2_fresh_b_retrieval_frame.v2":
+        record.update({"fresh_b_authority_hash": frame["fresh_b_authority_hash"],
+                       "fresh_a_exhaustion_hash": frame["fresh_a_exhaustion_hash"],
+                       "fix_windows_authority_hash": frame["fix_windows_authority_hash"],
+                       "retrieval_not_before": frame["retrieval_not_before"]})
     payload = canonical_json(record); digest = _hash(payload)
     directory = root / "session2" / "retrieval" / "frames"
     directory.mkdir(mode=0o700, exist_ok=True)

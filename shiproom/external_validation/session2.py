@@ -205,6 +205,45 @@ def validate_fresh_b_retrieval_frame(value: Any) -> dict[str, Any]:
     return value
 
 
+def validate_fresh_b_retrieval_frame_v2(value: Any) -> dict[str, Any]:
+    """Validate the recovery frame which partitions, but never expands, fixes."""
+    required = {
+        "schema_id", "schema_version", "purpose", "fresh_b_authority_path",
+        "fresh_b_authority_hash", "fresh_a_exhaustion_hash", "predecessor_candidate_index_hash",
+        "repository", "issue_bands", "fix_windows_authority_path", "fix_windows_authority_hash",
+        "retrieval_not_before", "page_size", "max_pages", "selection_effect",
+    }
+    if (not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_fresh_b_retrieval_frame.v2"
+            or value.get("schema_version") != "1"
+            or value.get("purpose") != "fresh_b_higher_contamination_candidate_collection"
+            or value.get("selection_effect") != "candidate_collection_only"
+            or value.get("fresh_b_authority_path") != "external_validation/manifests/session2/fresh_b_population_authority.v1.json"
+            or value.get("fix_windows_authority_path") != "external_validation/manifests/session2/fresh_b/fix_windows.v1.json"
+            or not isinstance(value.get("repository"), str) or "/" not in value["repository"]):
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    for field in ("fresh_b_authority_hash", "fresh_a_exhaustion_hash", "predecessor_candidate_index_hash", "fix_windows_authority_hash"):
+        require_sha(value.get(field), "session2_fresh_b_retrieval_frame_invalid")
+    if value.get("page_size") != 100 or value.get("max_pages") != 10:
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    try:
+        started = datetime.fromisoformat(str(value.get("retrieval_not_before")).replace("Z", "+00:00"))
+        if started.tzinfo is None:
+            raise ValueError
+    except (TypeError, ValueError):
+        fail("session2_fresh_b_retrieval_frame_invalid")
+    # Delegate the immutable B1–B3 boundaries to the original contract, not
+    # to a recovery-specific interpretation of those dates.
+    original = {"schema_id": "external_validation.session2_fresh_b_retrieval_frame.v1", "schema_version": "1",
+                "purpose": value["purpose"], "fresh_b_authority_path": value["fresh_b_authority_path"],
+                "fresh_b_authority_hash": value["fresh_b_authority_hash"], "fresh_a_exhaustion_hash": value["fresh_a_exhaustion_hash"],
+                "predecessor_candidate_index_hash": value["predecessor_candidate_index_hash"], "repository": value["repository"],
+                "issue_bands": value["issue_bands"], "fix_window": {"start": "2026-03-01T00:00:00Z", "end": "2026-07-30T10:32:18.825171Z"},
+                "page_size": 30, "max_pages": 10, "selection_effect": value["selection_effect"]}
+    validate_fresh_b_retrieval_frame(original)
+    return value
+
+
 def contamination_band(issue_created_at: str, fix_created_at: str, cutoff: str = "2026-03-01T00:00:00Z") -> str:
     try:
         issue = datetime.fromisoformat(issue_created_at.replace("Z", "+00:00"))
