@@ -745,9 +745,10 @@ def test_fresh_b_finalizer_uses_authoritative_pr_merged_at_and_preserves_source_
         receipt_raw = canonical_json(receipt); (base / "retrieval" / (sha256(receipt_raw).hexdigest() + ".object-receipt.json")).write_bytes(receipt_raw)
     monkeypatch.setattr(candidates, "_root", lambda _repo: base)
     result = candidates.finalize_fresh_b_object_candidates(tmp_path, reference_index_hash=reference_hash)
-    index = json.loads((base / "cases" / (result["candidate_index_hash"][7:] + ".fresh-b-candidate-index.json")).read_text())
+    index = json.loads((base / "cases" / (result["candidate_index_hash"][7:] + ".candidate-index.json")).read_text())
     assert len(index["candidates"]) == 1
     assert index["candidates"][0]["fix_created_at"] == "2026-03-03T00:00:00Z"
+    assert len(index["candidates"][0]["source_object_receipt_hashes"]) == 2
     assert index["candidates"][0]["selection_status"] == "SOURCE_OBJECTS_SEALED_NOT_QUALIFIED"
 
 
