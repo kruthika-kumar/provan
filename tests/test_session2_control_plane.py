@@ -795,6 +795,23 @@ def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(t
     assert record["supervisor_command"]["stdout"]["bytes"] > 0
 
 
+def test_prequalification_screen_accepts_final_fresh_b_candidate_index(tmp_path: Path):
+    from shiproom.external_validation import session2_screen as screen
+    from shiproom.external_validation.identity import canonical_json
+    from hashlib import sha256
+
+    cases = tmp_path / "session2" / "cases"; cases.mkdir(parents=True)
+    index = {
+        "schema_id": "external_validation.session2_fresh_b_candidate_index.v1",
+        "schema_version": "1", "selection_effect": "source_population_only",
+        "candidates": [{"candidate_id": "acme/project#7->acme/project#8"}],
+    }
+    raw = canonical_json(index); digest = "sha256:" + sha256(raw).hexdigest()
+    (cases / (digest[7:] + ".candidate-index.json")).write_bytes(raw)
+    store = cases / "screens"; store.mkdir()
+    assert screen._candidate_from_index(store, candidate_id="acme/project#7->acme/project#8", candidate_index_hash=digest)["candidate_id"] == "acme/project#7->acme/project#8"
+
+
 def test_prequalification_screen_requires_production_execution_evidence_for_runtime_exclusion(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
