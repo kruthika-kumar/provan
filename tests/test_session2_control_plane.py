@@ -553,6 +553,8 @@ def test_linux_primary_retrieval_seals_exact_raw_pages_without_selecting_cases(t
         retrieval._candidate_ids(json.loads(raw), {"kind": "pull_request"})
     pull = {"items": [{"repository_url": "https://api.github.com/repos/acme/project", "number": 8, "created_at": "2026-01-01T00:00:00Z", "closed_at": "2026-04-02T00:00:00Z", "pull_request": {}}]}
     assert retrieval._candidate_ids(pull, {"kind": "pull_request", "merged_from": "2026-03-01T00:00:00Z", "merged_to": "2026-04-30T00:00:00Z"}) == ["acme/project#8"]
+    pull["items"][0]["closed_at"] = "2026-05-02T00:00:00Z"
+    assert retrieval._candidate_ids(pull, {"kind": "pull_request", "merged_from": "2026-03-01T00:00:00Z", "merged_to": "2026-04-30T00:00:00Z"}) == ["acme/project#8"]
     object_raw = json.dumps({"number": 8, "base": {"repo": {"url": "https://api.github.com/repos/acme/project"}, "sha": "0123456789abcdef0123456789abcdef01234567"}, "head": {"sha": "89abcdef0123456789abcdef0123456789abcdef"}, "merge_commit_sha": "0123456789abcdef0123456789abcdef01234567"}).encode()
     class ObjectResponse(Response):
         def read(self): return object_raw

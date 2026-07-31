@@ -87,9 +87,12 @@ def _document_honors_filters(document: dict[str, Any], filters: dict[str, Any]) 
             if "created_from" in filters and created < _time(filters["created_from"]): return False
             if "created_to" in filters and created > _time(filters["created_to"]): return False
             if "merged_from" in filters or "merged_to" in filters:
-                merged = _time(item.get("closed_at"))
-                if "merged_from" in filters and merged < _time(filters["merged_from"]): return False
-                if "merged_to" in filters and merged > _time(filters["merged_to"]): return False
+                # Search Issues does not expose authoritative ``merged_at``.
+                # The sealed query asserts the provider-side merged window;
+                # exact object receipts revalidate merged_at before a pair can
+                # enter qualification.  Here we only require that the search
+                # result is a well-formed closed PR observation.
+                _time(item.get("closed_at"))
         except CandidateCompilationError:
             return False
     return True
