@@ -719,6 +719,26 @@ def test_fresh_b_reference_compiler_preserves_bands_without_using_search_closed_
     assert "fix_created_at" not in index["candidates"][0]
 
 
+def test_fresh_b_finalizer_uses_authoritative_pr_merged_at_and_preserves_source_only_status(tmp_path: Path, monkeypatch):
+    from hashlib import sha256
+    from shiproom.external_validation.identity import canonical_json
+    from shiproom.external_validation import session2_candidates as candidates
+    base = tmp_path / "external" / "session2"; raw = base / "retrieval" / "raw"; raw.mkdir(parents=True); (base / "cases").mkdir()
+    reference = {"schema_id":"external_validation.session2_fresh_b_candidate_reference_index.v1","schema_version":"1","retrieval_frame_receipt_hashes":["sha256:" + "11" * 32],"source_receipt_hashes":["sha256:" + "22" * 32],"selection_effect":"reference_collection_only","candidates":[{"candidate_id":"acme/project#7->acme/project#8","source_priority":2,"repository":"acme/project","issue_number":7,"fix_repository":"acme/project","fix_pr_number":8,"issue_created_at":"2026-02-20T00:00:00Z","search_fix_closed_at":"2026-03-30T00:00:00Z","fresh_b_band":"B1","contamination_tier":"FRESH_B","issue_retrieval_receipt_hash":"sha256:" + "33" * 32,"fix_retrieval_receipt_hash":"sha256:" + "44" * 32,"selection_status":"REFERENCE_ONLY_REQUIRES_OBJECT_RECEIPTS"}],"exclusions":[]}
+    reference_raw = canonical_json(reference); reference_hash = "sha256:" + sha256(reference_raw).hexdigest(); (base / "cases" / (reference_hash[7:] + ".fresh-b-reference-index.json")).write_bytes(reference_raw)
+    documents = {("issue", 7): {"number":7,"created_at":"2026-02-20T00:00:00Z"}, ("pull_request", 8): {"number":8,"merged_at":"2026-03-03T00:00:00Z","body":"Fixes #7"}}
+    for (kind, number), document in documents.items():
+        document_raw = canonical_json(document); document_hash = "sha256:" + sha256(document_raw).hexdigest(); (raw / (document_hash[7:] + ".json")).write_bytes(document_raw)
+        receipt = {"schema_id":"external_validation.session2_github_object_receipt.v1","schema_version":"1","repository":"acme/project","object_kind":kind,"number":number,"retrieved_at":"2026-07-30T11:00:00Z","parser_id":"test","raw_response_hash":document_hash}
+        receipt_raw = canonical_json(receipt); (base / "retrieval" / (sha256(receipt_raw).hexdigest() + ".object-receipt.json")).write_bytes(receipt_raw)
+    monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    result = candidates.finalize_fresh_b_object_candidates(tmp_path, reference_index_hash=reference_hash)
+    index = json.loads((base / "cases" / (result["candidate_index_hash"][7:] + ".fresh-b-candidate-index.json")).read_text())
+    assert len(index["candidates"]) == 1
+    assert index["candidates"][0]["fix_created_at"] == "2026-03-03T00:00:00Z"
+    assert index["candidates"][0]["selection_status"] == "SOURCE_OBJECTS_SEALED_NOT_QUALIFIED"
+
+
 def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()

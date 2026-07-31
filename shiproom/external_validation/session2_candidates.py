@@ -638,6 +638,122 @@ def compile_fresh_b_reference_candidates(repository_root: Path, *, retrieval_fra
     return {"reference_index_hash": "sha256:" + digest, "reference_candidate_count": len(candidates), "exclusion_count": len(exclusions)}
 
 
+def _read_fresh_b_reference_index(base: Path, reference_index_hash: str) -> dict[str, Any]:
+    if not isinstance(reference_index_hash, str) or not reference_index_hash.startswith("sha256:") or not _HEX.fullmatch(reference_index_hash[7:]):
+        _fail("session2_fresh_b_reference_index_hash_invalid")
+    path = base / "cases" / (reference_index_hash[7:] + ".fresh-b-reference-index.json")
+    if not path.is_file() or _is_reparse(path): _fail("session2_fresh_b_reference_index_missing")
+    raw = path.read_bytes()
+    if sha256(raw).hexdigest() != reference_index_hash[7:]: _fail("session2_fresh_b_reference_index_hash_mismatch")
+    try: value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_fresh_b_reference_index_invalid") from exc
+    required = {"schema_id", "schema_version", "retrieval_frame_receipt_hashes", "source_receipt_hashes", "selection_effect", "candidates", "exclusions"}
+    candidate_fields = {"candidate_id", "source_priority", "repository", "issue_number", "fix_repository", "fix_pr_number", "issue_created_at", "search_fix_closed_at", "fresh_b_band", "contamination_tier", "issue_retrieval_receipt_hash", "fix_retrieval_receipt_hash", "selection_status"}
+    if (canonical_json(value) != raw or not isinstance(value, dict) or set(value) != required
+            or value.get("schema_id") != "external_validation.session2_fresh_b_candidate_reference_index.v1" or value.get("schema_version") != "1"
+            or value.get("selection_effect") != "reference_collection_only" or not isinstance(value.get("candidates"), list)
+            or not isinstance(value.get("exclusions"), list) or not value["candidates"]):
+        _fail("session2_fresh_b_reference_index_invalid")
+    identifiers: set[str] = set()
+    for candidate in value["candidates"]:
+        if (not isinstance(candidate, dict) or set(candidate) != candidate_fields or not isinstance(candidate.get("candidate_id"), str)
+                or candidate["candidate_id"] in identifiers or candidate.get("source_priority") != 2
+                or not isinstance(candidate.get("repository"), str) or not isinstance(candidate.get("fix_repository"), str)
+                or not isinstance(candidate.get("issue_number"), int) or candidate["issue_number"] < 1
+                or not isinstance(candidate.get("fix_pr_number"), int) or candidate["fix_pr_number"] < 1
+                or candidate.get("fresh_b_band") not in {"B1", "B2", "B3"} or candidate.get("contamination_tier") != "FRESH_B"
+                or candidate.get("selection_status") != "REFERENCE_ONLY_REQUIRES_OBJECT_RECEIPTS"):
+            _fail("session2_fresh_b_reference_index_invalid")
+        _time(candidate["issue_created_at"]); _time(candidate["search_fix_closed_at"])
+        for field in ("issue_retrieval_receipt_hash", "fix_retrieval_receipt_hash"):
+            if not isinstance(candidate.get(field), str) or not candidate[field].startswith("sha256:") or not _HEX.fullmatch(candidate[field][7:]):
+                _fail("session2_fresh_b_reference_index_invalid")
+        identifiers.add(candidate["candidate_id"])
+    return value
+
+
+def required_fresh_b_object_requests(repository_root: Path, *, reference_index_hash: str) -> list[dict[str, Any]]:
+    """Return the deterministic, non-selecting object-retrieval worklist."""
+    base = _root(repository_root); index = _read_fresh_b_reference_index(base, reference_index_hash)
+    requests = {(item["repository"], "issue", item["issue_number"]) for item in index["candidates"]}
+    requests.update((item["fix_repository"], "pull_request", item["fix_pr_number"]) for item in index["candidates"])
+    return [{"repository": repo, "object_kind": kind, "number": number} for repo, kind, number in sorted(requests)]
+
+
+def _object_receipt_map(base: Path) -> dict[tuple[str, str, int], tuple[dict[str, Any], dict[str, Any], str]]:
+    records: dict[tuple[str, str, int], tuple[dict[str, Any], dict[str, Any], str]] = {}
+    for path in sorted((base / "retrieval").glob("*.object-receipt.json")):
+        if _is_reparse(path): _fail("session2_fresh_b_object_receipt_reparse")
+        raw = path.read_bytes(); digest = "sha256:" + sha256(raw).hexdigest()
+        if path.name != digest[7:] + ".object-receipt.json": _fail("session2_fresh_b_object_receipt_hash_mismatch")
+        try: receipt = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc: raise CandidateCompilationError("session2_fresh_b_object_receipt_invalid") from exc
+        required = {"schema_id", "schema_version", "repository", "object_kind", "number", "retrieved_at", "parser_id", "raw_response_hash"}
+        if (canonical_json(receipt) != raw or not isinstance(receipt, dict) or set(receipt) != required
+                or receipt.get("schema_id") != "external_validation.session2_github_object_receipt.v1" or receipt.get("schema_version") != "1"
+                or receipt.get("object_kind") not in {"issue", "pull_request"} or not isinstance(receipt.get("repository"), str)
+                or not isinstance(receipt.get("number"), int) or receipt["number"] < 1 or not isinstance(receipt.get("raw_response_hash"), str)
+                or not receipt["raw_response_hash"].startswith("sha256:") or not _HEX.fullmatch(receipt["raw_response_hash"][7:])):
+            _fail("session2_fresh_b_object_receipt_invalid")
+        _time(receipt["retrieved_at"])
+        document = _read_hash(base / "retrieval" / "raw" / (receipt["raw_response_hash"][7:] + ".json"), receipt["raw_response_hash"])
+        key = (receipt["repository"], receipt["object_kind"], receipt["number"])
+        if key in records: _fail("session2_fresh_b_object_receipt_duplicate")
+        records[key] = (receipt, document, digest)
+    return records
+
+
+def _is_closing_link(body: Any, *, issue_repository: str, issue_number: int, pull_repository: str) -> bool:
+    if not isinstance(body, str): return False
+    for match in _CLOSES.finditer(body):
+        target = (match.group("owner") + "/" + match.group("repo")) if match.group("owner") else pull_repository
+        if target == issue_repository and int(match.group("number")) == issue_number: return True
+    return False
+
+
+def finalize_fresh_b_object_candidates(repository_root: Path, *, reference_index_hash: str) -> dict[str, Any]:
+    """Seal the strict Fresh B population from authoritative GitHub objects.
+
+    This is the first index with a real PR ``merged_at``.  It remains a source
+    population, not qualification or selection evidence.
+    """
+    base = _root(repository_root); references = _read_fresh_b_reference_index(base, reference_index_hash); objects = _object_receipt_map(base)
+    upper = _time("2026-07-30T10:32:18.825171Z"); cutoff = _time("2026-03-01T00:00:00Z")
+    candidates: list[dict[str, Any]] = []; exclusions: list[dict[str, Any]] = []
+    for reference in sorted(references["candidates"], key=lambda item: item["candidate_id"]):
+        issue_key = (reference["repository"], "issue", reference["issue_number"]); pull_key = (reference["fix_repository"], "pull_request", reference["fix_pr_number"])
+        issue = objects.get(issue_key); pull = objects.get(pull_key)
+        if issue is None or pull is None:
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "primary_object_receipt_missing"}); continue
+        issue_receipt, issue_document, issue_hash = issue; pull_receipt, pull_document, pull_hash = pull
+        try:
+            issue_at = _time(issue_document.get("created_at")); merged_at = _time(pull_document.get("merged_at"))
+        except CandidateCompilationError:
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "primary_object_timestamp_invalid"}); continue
+        if (issue_document.get("number") != reference["issue_number"] or "pull_request" in issue_document
+                or pull_document.get("number") != reference["fix_pr_number"]
+                or not _is_closing_link(pull_document.get("body"), issue_repository=reference["repository"], issue_number=reference["issue_number"], pull_repository=reference["fix_repository"])):
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "authoritative_issue_fix_link_invalid"}); continue
+        if not (cutoff <= merged_at <= upper):
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "fix_merged_at_outside_frozen_fresh_b_window"}); continue
+        if issue_at >= merged_at:
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "issue_does_not_predate_authoritative_fix"}); continue
+        expected_band = reference["fresh_b_band"]
+        if contamination_band(issue_document.get("created_at"), pull_document.get("merged_at")) != "FRESH_B" or ((expected_band == "B1" and not (_time("2026-02-17T00:00:00Z") <= issue_at < _time("2026-03-01T00:00:00Z"))) or (expected_band == "B2" and not (_time("2025-12-01T00:00:00Z") <= issue_at < _time("2026-02-17T00:00:00Z"))) or (expected_band == "B3" and not (_time("2025-09-01T00:00:00Z") <= issue_at < _time("2025-12-01T00:00:00Z")))):
+            exclusions.append({"candidate_id": reference["candidate_id"], "reason": "contamination_band_object_mismatch"}); continue
+        candidates.append({"candidate_id": reference["candidate_id"], "source_priority": 2, "repository": reference["repository"], "issue_number": reference["issue_number"], "fix_repository": reference["fix_repository"], "fix_pr_number": reference["fix_pr_number"], "issue_created_at": issue_document["created_at"], "fix_created_at": pull_document["merged_at"], "contamination_band": "FRESH_B", "fresh_b_band": expected_band, "cutoff_compliant": False, "fallback_reason": "fresh_a_exhausted_predeclared_higher_contamination_fallback", "issue_object_receipt_hash": issue_hash, "fix_object_receipt_hash": pull_hash, "selection_status": "SOURCE_OBJECTS_SEALED_NOT_QUALIFIED"})
+    band_order = {"B1": 0, "B2": 1, "B3": 2}
+    candidates.sort(key=lambda item: (band_order[item["fresh_b_band"]], -_time(item["fix_created_at"]).timestamp(), -_time(item["issue_created_at"]).timestamp(), item["repository"], item["candidate_id"]))
+    result = {"schema_id": "external_validation.session2_fresh_b_candidate_index.v1", "schema_version": "1", "reference_index_hash": reference_index_hash, "selection_effect": "source_population_only", "candidates": candidates, "exclusions": exclusions}
+    payload = canonical_json(result); digest = sha256(payload).hexdigest(); target = base / "cases" / (digest + ".fresh-b-candidate-index.json")
+    try: descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
+    except FileExistsError:
+        if _is_reparse(target) or target.read_bytes() != payload: _fail("session2_fresh_b_candidate_index_collision")
+    else:
+        with os.fdopen(descriptor, "wb") as handle: handle.write(payload); handle.flush(); os.fsync(handle.fileno())
+    return {"candidate_index_hash": "sha256:" + digest, "candidate_count": len(candidates), "exclusion_count": len(exclusions)}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Compile Session 2 candidates from sealed GitHub retrieval receipts.")
     parser.add_argument("--repository-root", required=True)
