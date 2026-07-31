@@ -694,6 +694,32 @@ def test_github_public_retrieval_token_requires_root_owned_private_file(tmp_path
         retrieval._github_headers()
 
 
+def test_fresh_b_queue_is_strictly_sequential_and_enforces_repository_cap(tmp_path: Path):
+    from shiproom.external_validation.session2_fresh_b_queue import FreshBQueue, FreshBQueueError
+    queue = FreshBQueue(tmp_path / "queue.sqlite3")
+    rows = [
+        {"ordinal": 0, "candidate_id": "a", "repository": "one/repo", "band": "B1"},
+        {"ordinal": 1, "candidate_id": "b", "repository": "one/repo", "band": "B1"},
+        {"ordinal": 2, "candidate_id": "c", "repository": "one/repo", "band": "B1"},
+        {"ordinal": 3, "candidate_id": "d", "repository": "two/repo", "band": "B2"},
+    ]
+    try:
+        queue.initialize("sha256:" + "ab" * 32, rows)
+        first = queue.claim_next()
+        assert first and first["candidate_id"] == "a"
+        with pytest.raises(FreshBQueueError, match="session2_fresh_b_queue_in_progress"):
+            queue.claim_next()
+        queue.terminal(claim_id=first["claim_id"], state="QUALIFIED", evidence_hash="sha256:" + "11" * 32, reason="qualified")
+        second = queue.claim_next(); assert second and second["candidate_id"] == "b"
+        queue.terminal(claim_id=second["claim_id"], state="QUALIFIED", evidence_hash="sha256:" + "22" * 32, reason="qualified")
+        third = queue.claim_next()
+        assert third and third["candidate_id"] == "d"
+        blocked = queue.db.execute("SELECT state,terminal_reason FROM queue WHERE candidate_id='c'").fetchone()
+        assert blocked == ("REPOSITORY_CAP_BLOCKED", "maximum_two_selected_pairs_per_repository")
+    finally:
+        queue.close()
+
+
 def test_fresh_b_reference_compiler_preserves_bands_without_using_search_closed_at_as_fix_authority(tmp_path: Path, monkeypatch):
     """The recovery-frame compiler must create references, never select a fix."""
     from hashlib import sha256
