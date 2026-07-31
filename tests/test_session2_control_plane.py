@@ -42,6 +42,7 @@ from shiproom.external_validation.session2_exhaustion import FreshExhaustionErro
 from shiproom.external_validation.session2_exhaustion_audit import (FreshExhaustionAuditError,
     validate_fresh_a_exhaustion_audit)
 from shiproom.external_validation import session2_retrieval_frame as retrieval_frame
+from shiproom.external_validation import session2_fresh_b_review_export as fresh_b_export
 
 
 def fresh(**changes):
@@ -124,6 +125,13 @@ def test_fresh_b_fix_windows_loader_accepts_canonical_repository_newline(tmp_pat
     raw = source.read_bytes(); destination.write_bytes(raw)
     frame["fix_windows_authority_hash"] = "sha256:" + sha256(raw).hexdigest()
     assert len(retrieval_frame._fresh_b_fix_windows(frame, tmp_path)) == 5
+
+
+def test_fresh_b_review_view_rejects_noncanonical_private_evidence(tmp_path: Path):
+    path = tmp_path / "not-json"
+    path.write_text("[]")
+    with pytest.raises(fresh_b_export.FreshBReviewExportError, match="session2_fresh_b_review_evidence_invalid"):
+        fresh_b_export._canonical(path)
 
 
 def test_fresh_qualification_artifact_rejects_duplicate_transition_authority():
