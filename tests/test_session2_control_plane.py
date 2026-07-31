@@ -116,6 +116,16 @@ def test_fresh_b_recovery_frame_partitions_the_same_fix_population():
         validate_fresh_b_retrieval_frame_v2(value)
 
 
+def test_fresh_b_fix_windows_loader_accepts_canonical_repository_newline(tmp_path: Path):
+    frame = json.loads(Path("external_validation/manifests/session2/fresh_b/recovery/healthchecks_retrieval_frame.v2.json").read_text())
+    source = Path("external_validation/manifests/session2/fresh_b/fix_windows.v1.json")
+    destination = tmp_path / frame["fix_windows_authority_path"]
+    destination.parent.mkdir(parents=True)
+    raw = source.read_bytes(); destination.write_bytes(raw)
+    frame["fix_windows_authority_hash"] = "sha256:" + sha256(raw).hexdigest()
+    assert len(retrieval_frame._fresh_b_fix_windows(frame, tmp_path)) == 5
+
+
 def test_fresh_qualification_artifact_rejects_duplicate_transition_authority():
     artifact = {"schema_id":"external_validation.session2_fresh_qualification.v1", "schema_version":"1",
                 "qualification":fresh(), "candidate_index_hash":"sha256:" + "a1" * 32,

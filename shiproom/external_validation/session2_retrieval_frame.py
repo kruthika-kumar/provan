@@ -163,7 +163,7 @@ def _fresh_b_fix_windows(frame: dict[str, Any], repository_root: Path | None = N
         {"start": "2026-06-01T00:00:00Z", "end": "2026-06-30T23:59:59Z"},
         {"start": "2026-07-01T00:00:00Z", "end": "2026-07-30T10:32:18.825171Z"},
     ]
-    if not isinstance(value, dict) or canonical_json(value) != raw or value != {"schema_id": "external_validation.session2_fresh_b_fix_windows.v1", "schema_version": "1", "windows": expected}:
+    if not isinstance(value, dict) or canonical_json(value) != raw.rstrip(b"\n") or value != {"schema_id": "external_validation.session2_fresh_b_fix_windows.v1", "schema_version": "1", "windows": expected}:
         _fail("session2_fresh_b_fix_windows_invalid")
     return expected
 
