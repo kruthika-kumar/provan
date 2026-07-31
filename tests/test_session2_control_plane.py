@@ -682,6 +682,18 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 
+def test_github_public_retrieval_token_requires_root_owned_private_file(tmp_path: Path, monkeypatch):
+    from shiproom.external_validation import session2_retrieval as retrieval
+    token_dir = tmp_path / "shiproom"; token_dir.mkdir(); token = token_dir / "session2-github-token"; token.write_text("github_pat_example")
+    token_dir.chmod(0o700); token.chmod(0o400)
+    monkeypatch.setattr(retrieval, "_GITHUB_TOKEN_PATH", token)
+    monkeypatch.setattr(retrieval, "_github_token_file_authorized", lambda *_args: True)
+    assert retrieval._github_headers()["Authorization"] == "Bearer github_pat_example"
+    monkeypatch.setattr(retrieval, "_github_token_file_authorized", lambda *_args: False)
+    with pytest.raises(retrieval.RetrievalError, match="session2_retrieval_github_token_invalid"):
+        retrieval._github_headers()
+
+
 def test_fresh_b_reference_compiler_preserves_bands_without_using_search_closed_at_as_fix_authority(tmp_path: Path, monkeypatch):
     """The recovery-frame compiler must create references, never select a fix."""
     from hashlib import sha256

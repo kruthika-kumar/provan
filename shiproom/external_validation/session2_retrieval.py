@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import stat
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote, urlparse
@@ -43,6 +44,7 @@ _API = "https://api.github.com/search/issues"
 _PARSER_ID = "session2_github_issue_retrieval.v1"
 _OBJECT_PARSER_ID = "session2_github_object_retrieval.v1"
 _REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_GITHUB_TOKEN_PATH = Path("/root/.config/shiproom/session2-github-token")
 
 
 def _fail(code: str) -> None:
@@ -115,6 +117,43 @@ def _parse_utc(value: Any) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
+def _github_headers() -> dict[str, str]:
+    """Return public-retrieval headers without exposing a configured token.
+
+    A GitHub token is optional for public metadata, but if provisioned it is
+    accepted only from the root-owned WSL credential path.  It is never read
+    by selection workers, included in receipts, or inherited by patient/model
+    processes.
+    """
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "shiproom-session2-retrieval/1"}
+    path = _GITHUB_TOKEN_PATH
+    if not path.exists():
+        return headers
+    try:
+        parent = path.parent.lstat(); entry = path.lstat()
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise RetrievalError("session2_retrieval_github_token_invalid") from exc
+    if not _github_token_file_authorized(parent, entry, raw):
+        _fail("session2_retrieval_github_token_invalid")
+    try:
+        token = raw.decode("ascii")
+    except UnicodeDecodeError as exc:
+        raise RetrievalError("session2_retrieval_github_token_invalid") from exc
+    if not token or token.strip() != token or any(ord(character) < 33 or ord(character) > 126 for character in token):
+        _fail("session2_retrieval_github_token_invalid")
+    headers["Authorization"] = "Bearer " + token
+    return headers
+
+
+def _github_token_file_authorized(parent: os.stat_result, entry: os.stat_result, raw: bytes) -> bool:
+    """Single OS-bound credential policy, separated for non-Linux unit tests."""
+    return (os.name == "posix" and os.geteuid() == 0 and stat.S_ISDIR(parent.st_mode) and not stat.S_ISLNK(parent.st_mode)
+            and parent.st_uid == 0 and parent.st_gid == 0 and stat.S_IMODE(parent.st_mode) == 0o700
+            and stat.S_ISREG(entry.st_mode) and not stat.S_ISLNK(entry.st_mode) and entry.st_uid == 0 and entry.st_gid == 0
+            and stat.S_IMODE(entry.st_mode) == 0o400 and entry.st_nlink == 1 and 1 <= len(raw) <= 512)
+
+
 def _candidate_ids(document: dict[str, Any], filters: dict[str, str]) -> list[str]:
     items = document.get("items")
     if not isinstance(items, list):
@@ -176,7 +215,7 @@ def retrieve_github_issues(
             "per_page=" + str(page_size),
             "page=" + str(page),
         ))
-        request = Request(request_url, headers={"Accept": "application/vnd.github+json", "User-Agent": "shiproom-session2-retrieval/1"})
+        request = Request(request_url, headers=_github_headers())
         try:
             with urlopen(request, timeout=timeout_seconds) as response:  # nosec B310: fixed HTTPS GitHub API
                 raw = response.read()
@@ -226,7 +265,7 @@ def retrieve_github_object(repository_root: Path, *, repository: str, object_kin
         _fail("session2_retrieval_object_input_invalid")
     raw_store = _assert_linux_private_operation(repository_root)
     endpoint = "issues" if object_kind == "issue" else "pulls"
-    request = Request(f"https://api.github.com/repos/{repository}/{endpoint}/{number}", headers={"Accept": "application/vnd.github+json", "User-Agent": "shiproom-session2-retrieval/1"})
+    request = Request(f"https://api.github.com/repos/{repository}/{endpoint}/{number}", headers=_github_headers())
     try:
         with urlopen(request, timeout=timeout_seconds) as response:  # nosec B310: fixed HTTPS GitHub API
             raw = response.read()
