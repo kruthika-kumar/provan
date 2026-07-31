@@ -484,13 +484,169 @@ def compile_github_issue_fix_candidates(repository_root: Path, *, retrieval_fram
     return {"candidate_index_hash": "sha256:" + digest, "candidate_count": len(candidates), "exclusion_count": len(exclusions)}
 
 
+def _fresh_b_v2_frame(base: Path, receipt_hash: str) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Load one complete recovery frame without treating search data as fixes.
+
+    GitHub's Search Issues API returns ``closed_at`` for a merged pull request,
+    not the authoritative ``merged_at``.  A v2 recovery frame can therefore
+    establish only source references.  The final Fresh B index is derived by
+    :func:`finalize_fresh_b_object_candidates` from immutable issue and PR
+    object receipts.
+    """
+    if not isinstance(receipt_hash, str) or not receipt_hash.startswith("sha256:") or not _HEX.fullmatch(receipt_hash[7:]):
+        _fail("session2_fresh_b_reference_frame_hash_invalid")
+    path = base / "retrieval" / "frames" / (receipt_hash[7:] + ".retrieval-frame-receipts.json")
+    if not path.is_file() or _is_reparse(path):
+        _fail("session2_fresh_b_reference_frame_missing")
+    raw = path.read_bytes()
+    if sha256(raw).hexdigest() != receipt_hash[7:]:
+        _fail("session2_fresh_b_reference_frame_hash_mismatch")
+    try:
+        frame = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CandidateCompilationError("session2_fresh_b_reference_frame_invalid") from exc
+    required = {"schema_id", "schema_version", "frame_relative_path", "frame_hash", "frame_git_blob", "repository", "predecessor_candidate_index_hash", "receipts", "fresh_b_authority_hash", "fresh_a_exhaustion_hash", "fix_windows_authority_hash", "retrieval_not_before"}
+    if (canonical_json(frame) != raw or not isinstance(frame, dict) or set(frame) != required
+            or frame.get("schema_id") != "external_validation.session2_fresh_b_retrieval_frame_receipts.v2"
+            or frame.get("schema_version") != "1" or not isinstance(frame.get("repository"), str)
+            or not isinstance(frame.get("receipts"), list) or len(frame["receipts"]) != 8):
+        _fail("session2_fresh_b_reference_frame_invalid")
+    expected: set[tuple[str, str, str]] = {
+        ("issue:B1", "2026-02-17T00:00:00Z", "2026-02-28T23:59:59Z"),
+        ("issue:B2", "2025-12-01T00:00:00Z", "2026-02-16T23:59:59Z"),
+        ("issue:B3", "2025-09-01T00:00:00Z", "2025-11-30T23:59:59Z"),
+        ("pull_request", "2026-03-01T00:00:00Z", "2026-03-31T23:59:59Z"),
+        ("pull_request", "2026-04-01T00:00:00Z", "2026-04-30T23:59:59Z"),
+        ("pull_request", "2026-05-01T00:00:00Z", "2026-05-31T23:59:59Z"),
+        ("pull_request", "2026-06-01T00:00:00Z", "2026-06-30T23:59:59Z"),
+        ("pull_request", "2026-07-01T00:00:00Z", "2026-07-30T10:32:18.825171Z"),
+    }
+    entries: dict[str, dict[str, Any]] = {}
+    identities: set[tuple[str, str, str]] = set()
+    for entry in frame["receipts"]:
+        if (not isinstance(entry, dict) or set(entry) != {"kind", "start", "end", "receipt_hash", "candidate_count"}
+                or not isinstance(entry.get("kind"), str) or not isinstance(entry.get("start"), str)
+                or not isinstance(entry.get("end"), str) or not isinstance(entry.get("candidate_count"), int)
+                or entry["candidate_count"] < 0 or not isinstance(entry.get("receipt_hash"), str)
+                or not entry["receipt_hash"].startswith("sha256:") or not _HEX.fullmatch(entry["receipt_hash"][7:])):
+            _fail("session2_fresh_b_reference_frame_invalid")
+        identity = (entry["kind"], entry["start"], entry["end"])
+        if identity not in expected or identity in identities or entry["receipt_hash"] in entries:
+            _fail("session2_fresh_b_reference_frame_invalid")
+        identities.add(identity); entries[entry["receipt_hash"]] = entry
+    if identities != expected:
+        _fail("session2_fresh_b_reference_frame_invalid")
+    return frame, entries
+
+
+def _fresh_b_documents(base: Path, entries: dict[str, dict[str, Any]]) -> list[tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any], str]]:
+    result: list[tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any], str]] = []
+    for receipt_hash, entry in sorted(entries.items()):
+        path = base / "retrieval" / (receipt_hash[7:] + ".retrieval-receipt.json")
+        if not path.is_file() or _is_reparse(path):
+            _fail("session2_fresh_b_reference_receipt_missing")
+        raw = path.read_bytes()
+        if sha256(raw).hexdigest() != receipt_hash[7:]:
+            _fail("session2_fresh_b_reference_receipt_hash_mismatch")
+        try:
+            receipt = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CandidateCompilationError("session2_fresh_b_reference_receipt_invalid") from exc
+        if canonical_json(receipt) != raw:
+            _fail("session2_fresh_b_reference_receipt_invalid")
+        validate_retrieval_receipt(receipt)
+        expected_kind = "issue" if entry["kind"].startswith("issue:") else "pull_request"
+        if (receipt["filters"].get("kind") != expected_kind or len(receipt["candidate_ids"]) != entry["candidate_count"]
+                or (expected_kind == "issue" and (receipt["filters"].get("created_from") != entry["start"] or receipt["filters"].get("created_to") != entry["end"]))
+                or (expected_kind == "pull_request" and (receipt["filters"].get("merged_from") != entry["start"] or receipt["filters"].get("merged_to") != entry["end"]))):
+            _fail("session2_fresh_b_reference_receipt_mismatch")
+        documents = [_read_hash(base / "retrieval" / "raw" / (page["raw_response_hash"][7:] + ".json"), page["raw_response_hash"]) for page in receipt["pages"]]
+        if not all(_document_honors_filters(document, receipt["filters"]) for document in documents):
+            _fail("session2_fresh_b_reference_raw_filter_invalid")
+        result.append((receipt, documents, entry, receipt_hash))
+    return result
+
+
+def compile_fresh_b_reference_candidates(repository_root: Path, *, retrieval_frame_receipt_hashes: list[str]) -> dict[str, Any]:
+    """Create a non-selecting Fresh B reference index from complete v2 frames."""
+    base = _root(repository_root)
+    if (not isinstance(retrieval_frame_receipt_hashes, list) or len(retrieval_frame_receipt_hashes) != 7
+            or retrieval_frame_receipt_hashes != sorted(set(retrieval_frame_receipt_hashes))):
+        _fail("session2_fresh_b_reference_frame_set_invalid")
+    issues: dict[tuple[str, int], tuple[dict[str, Any], str, str]] = {}
+    pulls: list[tuple[dict[str, Any], str]] = []
+    frame_repositories: set[str] = set()
+    source_receipts: set[str] = set()
+    for frame_hash in retrieval_frame_receipt_hashes:
+        frame, entries = _fresh_b_v2_frame(base, frame_hash)
+        if frame["repository"] in frame_repositories:
+            _fail("session2_fresh_b_reference_repository_duplicate")
+        frame_repositories.add(frame["repository"])
+        for receipt, documents, entry, receipt_hash in _fresh_b_documents(base, entries):
+            source_receipts.add(receipt_hash)
+            kind = "issue" if entry["kind"].startswith("issue:") else "pull_request"
+            for document in documents:
+                for item in document["items"]:
+                    if not isinstance(item, dict): _fail("session2_fresh_b_reference_raw_invalid")
+                    slug, number = _slug(item), item.get("number")
+                    if not isinstance(number, int) or number < 1 or slug != frame["repository"]:
+                        _fail("session2_fresh_b_reference_raw_invalid")
+                    if kind == "issue":
+                        key = (slug, number)
+                        previous = issues.get(key)
+                        candidate = (item, receipt_hash, entry["kind"].split(":", 1)[1])
+                        if previous is not None and previous != candidate:
+                            _fail("session2_fresh_b_reference_issue_duplicate_conflict")
+                        issues[key] = candidate
+                    else:
+                        pulls.append((item, receipt_hash))
+    candidates: dict[str, dict[str, Any]] = {}
+    linked: set[tuple[str, int]] = set()
+    for pull, pull_receipt in pulls:
+        slug = _slug(pull); body = pull.get("body")
+        if not isinstance(body, str): continue
+        search_closed_at = str(pull.get("closed_at")); _time(search_closed_at)
+        for match in _CLOSES.finditer(body):
+            target_slug = (match.group("owner") + "/" + match.group("repo")) if match.group("owner") else slug
+            key = (target_slug, int(match.group("number")))
+            issue_tuple = issues.get(key)
+            if issue_tuple is None: continue
+            issue, issue_receipt, band = issue_tuple
+            issue_at = str(issue.get("created_at")); _time(issue_at)
+            candidate_id = target_slug + "#" + str(key[1]) + "->" + slug + "#" + str(pull["number"])
+            candidate = {"candidate_id": candidate_id, "source_priority": 2, "repository": target_slug,
+                         "issue_number": key[1], "fix_repository": slug, "fix_pr_number": pull["number"],
+                         "issue_created_at": issue_at, "search_fix_closed_at": search_closed_at,
+                         "fresh_b_band": band, "contamination_tier": "FRESH_B",
+                         "issue_retrieval_receipt_hash": issue_receipt, "fix_retrieval_receipt_hash": pull_receipt,
+                         "selection_status": "REFERENCE_ONLY_REQUIRES_OBJECT_RECEIPTS"}
+            existing = candidates.get(candidate_id)
+            if existing is not None and existing != candidate:
+                _fail("session2_fresh_b_reference_pair_conflict")
+            candidates[candidate_id] = candidate; linked.add(key)
+    exclusions = [{"repository": slug, "issue_number": number, "reason": "no_public_closing_merged_pr_in_retrieved_frame"}
+                  for slug, number in sorted(set(issues) - linked)]
+    result = {"schema_id": "external_validation.session2_fresh_b_candidate_reference_index.v1", "schema_version": "1",
+              "retrieval_frame_receipt_hashes": retrieval_frame_receipt_hashes, "source_receipt_hashes": sorted(source_receipts),
+              "selection_effect": "reference_collection_only", "candidates": [candidates[key] for key in sorted(candidates)], "exclusions": exclusions}
+    payload = canonical_json(result); digest = sha256(payload).hexdigest(); target = base / "cases" / (digest + ".fresh-b-reference-index.json")
+    try: descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
+    except FileExistsError:
+        if _is_reparse(target) or target.read_bytes() != payload: _fail("session2_fresh_b_reference_index_collision")
+    else:
+        with os.fdopen(descriptor, "wb") as handle: handle.write(payload); handle.flush(); os.fsync(handle.fileno())
+    return {"reference_index_hash": "sha256:" + digest, "reference_candidate_count": len(candidates), "exclusion_count": len(exclusions)}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Compile Session 2 candidates from sealed GitHub retrieval receipts.")
     parser.add_argument("--repository-root", required=True)
     parser.add_argument("--retrieval-frame-receipt-hash", action="append", required=True)
+    parser.add_argument("--fresh-b-reference-only", action="store_true", help="Compile v2 Fresh B source links; does not select or qualify cases.")
     parsed = parser.parse_args(argv)
     try:
-        print(json.dumps(compile_github_issue_fix_candidates(Path(parsed.repository_root), retrieval_frame_receipt_hashes=parsed.retrieval_frame_receipt_hash), sort_keys=True, separators=(",", ":")))
+        compiler = compile_fresh_b_reference_candidates if parsed.fresh_b_reference_only else compile_github_issue_fix_candidates
+        print(json.dumps(compiler(Path(parsed.repository_root), retrieval_frame_receipt_hashes=parsed.retrieval_frame_receipt_hash), sort_keys=True, separators=(",", ":")))
     except CandidateCompilationError as exc:
         print(str(exc)); return 2
     return 0

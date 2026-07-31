@@ -682,6 +682,43 @@ def test_candidate_compiler_derives_only_public_issue_to_pr_closure_links(tmp_pa
     assert not candidates._document_honors_filters({"items": [{"created_at": "2019-01-01T00:00:00Z"}]}, {"created_from": "2026-03-01T00:00:00Z"})
 
 
+def test_fresh_b_reference_compiler_preserves_bands_without_using_search_closed_at_as_fix_authority(tmp_path: Path, monkeypatch):
+    """The recovery-frame compiler must create references, never select a fix."""
+    from hashlib import sha256
+    from shiproom.external_validation.identity import canonical_json
+    from shiproom.external_validation import session2_candidates as candidates
+
+    base = tmp_path / "external" / "session2"; raw_dir = base / "retrieval" / "raw"
+    raw_dir.mkdir(parents=True); (base / "cases").mkdir(); (base / "retrieval" / "frames").mkdir()
+    windows = [("B1", "2026-02-17T00:00:00Z", "2026-02-28T23:59:59Z"), ("B2", "2025-12-01T00:00:00Z", "2026-02-16T23:59:59Z"), ("B3", "2025-09-01T00:00:00Z", "2025-11-30T23:59:59Z")]
+    months = [("2026-03-01T00:00:00Z", "2026-03-31T23:59:59Z"), ("2026-04-01T00:00:00Z", "2026-04-30T23:59:59Z"), ("2026-05-01T00:00:00Z", "2026-05-31T23:59:59Z"), ("2026-06-01T00:00:00Z", "2026-06-30T23:59:59Z"), ("2026-07-01T00:00:00Z", "2026-07-30T10:32:18.825171Z")]
+    frame_hashes = []
+    for repo_index in range(7):
+        repo = f"acme/project-{repo_index}"; receipts = []
+        for band, start, end in windows:
+            items = [{"repository_url": "https://api.github.com/repos/" + repo, "number": 7, "created_at": "2026-02-20T00:00:00Z"}] if band == "B1" else []
+            raw = canonical_json({"items": items})
+            raw_hash = "sha256:" + sha256(raw).hexdigest(); (raw_dir / (raw_hash[7:] + ".json")).write_bytes(raw)
+            receipt = {"schema_id":"external_validation.session2_retrieval_receipt.v1","schema_version":"1","source":"github_search_issues_api","query":"q","filters":{"kind":"issue","state":"closed","created_from":start,"created_to":end},"retrieved_at":"2026-07-30T11:00:00Z","parser_id":"test","pages":[{"page":1,"raw_response_hash":raw_hash,"candidate_ids":([repo + "#7"] if items else []),"next_page":None}],"candidate_ids":([repo + "#7"] if items else [])}
+            receipt_raw = canonical_json(receipt); receipt_hash = "sha256:" + sha256(receipt_raw).hexdigest(); (base / "retrieval" / (receipt_hash[7:] + ".retrieval-receipt.json")).write_bytes(receipt_raw)
+            receipts.append({"kind":"issue:" + band,"start":start,"end":end,"receipt_hash":receipt_hash,"candidate_count":len(items)})
+        for month_index, (start, end) in enumerate(months):
+            items = [{"repository_url": "https://api.github.com/repos/" + repo, "number": 8, "created_at": start, "closed_at": end, "body": "Fixes #7", "pull_request": {}}] if month_index == 0 else []
+            raw = canonical_json({"items": items}); raw_hash = "sha256:" + sha256(raw).hexdigest(); (raw_dir / (raw_hash[7:] + ".json")).write_bytes(raw)
+            receipt = {"schema_id":"external_validation.session2_retrieval_receipt.v1","schema_version":"1","source":"github_search_issues_api","query":"q","filters":{"kind":"pull_request","state":"merged","merged_from":start,"merged_to":end},"retrieved_at":"2026-07-30T11:00:00Z","parser_id":"test","pages":[{"page":1,"raw_response_hash":raw_hash,"candidate_ids":([repo + "#8"] if items else []),"next_page":None}],"candidate_ids":([repo + "#8"] if items else [])}
+            receipt_raw = canonical_json(receipt); receipt_hash = "sha256:" + sha256(receipt_raw).hexdigest(); (base / "retrieval" / (receipt_hash[7:] + ".retrieval-receipt.json")).write_bytes(receipt_raw)
+            receipts.append({"kind":"pull_request","start":start,"end":end,"receipt_hash":receipt_hash,"candidate_count":len(items)})
+        frame = {"schema_id":"external_validation.session2_fresh_b_retrieval_frame_receipts.v2","schema_version":"1","frame_relative_path":"external_validation/manifests/session2/fresh_b/recovery/test.v2.json","frame_hash":"sha256:" + "11" * 32,"frame_git_blob":"a" * 40,"repository":repo,"predecessor_candidate_index_hash":"sha256:" + "22" * 32,"receipts":receipts,"fresh_b_authority_hash":"sha256:" + "33" * 32,"fresh_a_exhaustion_hash":"sha256:" + "44" * 32,"fix_windows_authority_hash":"sha256:" + "55" * 32,"retrieval_not_before":"2026-07-30T10:46:32.627787Z"}
+        frame_raw = canonical_json(frame); frame_hash = "sha256:" + sha256(frame_raw).hexdigest(); (base / "retrieval" / "frames" / (frame_hash[7:] + ".retrieval-frame-receipts.json")).write_bytes(frame_raw); frame_hashes.append(frame_hash)
+    monkeypatch.setattr(candidates, "_root", lambda _repo: base)
+    result = candidates.compile_fresh_b_reference_candidates(tmp_path, retrieval_frame_receipt_hashes=sorted(frame_hashes))
+    index = json.loads((base / "cases" / (result["reference_index_hash"][7:] + ".fresh-b-reference-index.json")).read_text())
+    assert result["reference_candidate_count"] == 7
+    assert {item["fresh_b_band"] for item in index["candidates"]} == {"B1"}
+    assert all(item["selection_status"] == "REFERENCE_ONLY_REQUIRES_OBJECT_RECEIPTS" for item in index["candidates"])
+    assert "fix_created_at" not in index["candidates"][0]
+
+
 def test_prequalification_screen_seals_actual_supervisor_diff_before_exclusion(tmp_path: Path, monkeypatch):
     from shiproom.external_validation import session2_screen as screen
     mirror, store = tmp_path / "mirror.git", tmp_path / "screens"; mirror.mkdir(); store.mkdir()
