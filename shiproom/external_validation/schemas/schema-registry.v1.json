@@ -29,5 +29,6 @@
     ,{"schema_id":"external_validation.session2_freeze_attestation.v1","version":"1","filename":"session2-freeze-attestation.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"external_validation.session2_public_seed.v1","version":"1","filename":"session2-public-seed.v1.json","validator":"shiproom.external_validation.validators.validate_artifact","compatibility":"complementary","status":"current"}
     ,{"schema_id":"external_validation.session2_fresh_qualification.v1","version":"1","filename":"session2-fresh-qualification.v1.json","validator":"shiproom.external_validation.session2_fresh_case.validate_fresh_qualification_artifact","compatibility":"complementary","status":"current"}
+    ,{"schema_id":"external_validation.session2_partial_closeout.v1","version":"1","filename":"session2-partial-closeout.v1.json","validator":"shiproom.external_validation.session2_closeout.validate_partial_closeout","compatibility":"complementary","status":"current"}
   ]
 }

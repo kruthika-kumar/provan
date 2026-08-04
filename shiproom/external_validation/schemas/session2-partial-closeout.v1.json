@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external_validation.session2_partial_closeout.v1",
+  "title": "External Validation Session 2 partial closeout",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id", "schema_version", "status", "closure_reason",
+    "methodology_completed", "headline_comparative_study_completed",
+    "headline_comparative_claims_authorized", "session1_authority_retained",
+    "session1_runtime_unchanged", "implementation_commit", "implementation_tree",
+    "model_usage", "portfolio", "active_claim", "execution_counts",
+    "allocator_state", "runtime_disposition", "authority_sources",
+    "validated_assets", "incomplete_assets", "not_tested_claims",
+    "public_claim_limitations", "private_eval_candidates"
+  ],
+  "properties": {
+    "schema_id": {"const": "external_validation.session2_partial_closeout.v1"},
+    "schema_version": {"const": "1"},
+    "status": {"const": "CLOSED_PARTIAL"},
+    "closure_reason": {"const": "SUPERSEDED_BY_COMMUNITY_FIRST_PRODUCT_BLUEPRINT"},
+    "methodology_completed": {"const": false},
+    "headline_comparative_study_completed": {"const": false},
+    "headline_comparative_claims_authorized": {"const": false},
+    "session1_authority_retained": {"const": true},
+    "session1_runtime_unchanged": {"const": true},
+    "implementation_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "implementation_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "model_usage": {"$ref": "#/$defs/model_usage"},
+    "portfolio": {"$ref": "#/$defs/portfolio"},
+    "active_claim": {"$ref": "#/$defs/active_claim"},
+    "execution_counts": {"$ref": "#/$defs/execution_counts"},
+    "allocator_state": {"$ref": "#/$defs/allocator_state"},
+    "runtime_disposition": {"$ref": "#/$defs/runtime_disposition"},
+    "authority_sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence_ref"}},
+    "validated_assets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/asset"}},
+    "incomplete_assets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/asset"}},
+    "not_tested_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "public_claim_limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "private_eval_candidates": {"type": "array", "items": {"$ref": "#/$defs/asset"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "evidence_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority", "sha256"],
+      "properties": {"authority": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "asset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["asset_id", "classification", "claim_authorized", "evidence_refs", "limitations"],
+      "properties": {
+        "asset_id": {"type": "string", "minLength": 1},
+        "classification": {"enum": ["PUBLIC_SAFE_CONTROL_PLANE", "PUBLIC_SAFE_EXAMPLE", "PRIVATE_EVAL_CASE", "PRIVATE_INCIDENT_REGRESSION", "HISTORICAL_ONLY", "INCOMPLETE_NOT_FOR_CLAIMS"]},
+        "claim_authorized": {"type": "boolean"},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidence_ref"}},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "model_usage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["terra_content_free_probe_count", "evaluated_model_call_count", "openai_spend_usd", "budget_logical_hash"],
+      "properties": {
+        "terra_content_free_probe_count": {"const": 3},
+        "evaluated_model_call_count": {"const": 0},
+        "openai_spend_usd": {"const": 2.0},
+        "budget_logical_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "portfolio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fresh_a_candidates_attempted", "fresh_a_candidates_qualified", "fresh_b_fallback_invoked", "fresh_b_candidates_attempted", "fresh_b_candidates_qualified", "controlled_pair_target", "controlled_pairs_completed", "harness_pair_target", "harness_pairs_completed", "natural_pr_target", "natural_prs_completed"],
+      "properties": {
+        "fresh_a_candidates_attempted": {"const": 134}, "fresh_a_candidates_qualified": {"const": 0},
+        "fresh_b_fallback_invoked": {"const": true}, "fresh_b_candidates_attempted": {"const": 9}, "fresh_b_candidates_qualified": {"const": 0},
+        "controlled_pair_target": {"const": 18}, "controlled_pairs_completed": {"const": 0},
+        "harness_pair_target": {"const": 2}, "harness_pairs_completed": {"const": 0},
+        "natural_pr_target": {"const": 15}, "natural_prs_completed": {"const": 0}
+      }
+    },
+    "active_claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_id", "candidate", "queue_state", "programme_closeout_disposition", "candidate_outcome", "qualified", "excluded", "terminal_candidate_receipt_present", "queue_logical_hash"],
+      "properties": {
+        "claim_id": {"const": "fresh_b_claim_0fc88cf308df34ba7e6e565f"},
+        "candidate": {"const": "inventree/InvenTree#10947->inventree/InvenTree#12472"},
+        "queue_state": {"const": "IN_PROGRESS"},
+        "programme_closeout_disposition": {"const": "UNEXECUTED_AT_STRATEGIC_TERMINATION"},
+        "candidate_outcome": {"type": "null"}, "qualified": {"const": false}, "excluded": {"const": false},
+        "terminal_candidate_receipt_present": {"const": false}, "queue_logical_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "execution_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["patient_execution_count", "target_execution_count", "protected_check_execution_count", "shiproom_execution_count", "comparator_execution_count", "evaluated_model_execution_count"],
+      "properties": {
+        "patient_execution_count": {"const": 0}, "target_execution_count": {"const": 0},
+        "protected_check_execution_count": {"const": 0}, "shiproom_execution_count": {"const": 0},
+        "comparator_execution_count": {"const": 0}, "evaluated_model_execution_count": {"const": 0}
+      }
+    },
+    "allocator_state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["real_recovery_successor_created", "real_recovery_allocation_created", "real_recovery_quota_project_created", "real_recovery_worktree_created", "historical_project_count", "terminal_historical_project_count", "allocator_logical_hash"],
+      "properties": {
+        "real_recovery_successor_created": {"const": false}, "real_recovery_allocation_created": {"const": false},
+        "real_recovery_quota_project_created": {"const": false}, "real_recovery_worktree_created": {"const": false},
+        "historical_project_count": {"const": 23}, "terminal_historical_project_count": {"const": 23},
+        "allocator_logical_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "runtime_disposition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runtime_left_running", "default_docker_untouched", "custom_daemon_healthy", "default_socket_absent", "filesystem", "quota_mode", "data_project_id", "data_bytes", "data_inodes"],
+      "properties": {
+        "runtime_left_running": {"const": true}, "default_docker_untouched": {"const": true},
+        "custom_daemon_healthy": {"const": true}, "default_socket_absent": {"const": true},
+        "filesystem": {"const": "xfs"}, "quota_mode": {"const": "prjquota"},
+        "data_project_id": {"const": 10000}, "data_bytes": {"const": 8589934592}, "data_inodes": {"const": 200000}
+      }
+    }
+  }
+}
