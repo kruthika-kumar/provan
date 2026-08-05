@@ -1,0 +1,1455 @@
+{
+  "entries": [
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/A/valid",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[A-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/A/near-valid",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[A-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/A/adversarial",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "REJECT:AUTOMATIC_MUTATION_CLAIM",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[A-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/B/valid",
+      "production_function": "provan.compat.legacy_cli_main + provan.validators.validate_compatibility_surface",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.compatibility_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[B-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/B/near-valid",
+      "production_function": "provan.compat.legacy_cli_main + provan.validators.validate_compatibility_surface",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.compatibility_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[B-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/B/adversarial",
+      "production_function": "provan.compat.legacy_cli_main + provan.validators.validate_compatibility_surface",
+      "python_result": "REJECT:DUPLICATE_CANONICAL_IMPLEMENTATION",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.compatibility_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[B-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/C/valid",
+      "production_function": "provan.validators.validate_version_policy_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.version_policy_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[C-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/C/near-valid",
+      "production_function": "provan.validators.validate_version_policy_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.version_policy_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[C-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/C/adversarial",
+      "production_function": "provan.validators.validate_version_policy_semantics",
+      "python_result": "REJECT:VERSION_POLICY_AUTHORITY_MISSING",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.version_policy_decision.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[C-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/D/valid",
+      "production_function": "scripts.validate_session9.validate_historical_integrity",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.historical_protection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[D-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/D/near-valid",
+      "production_function": "scripts.validate_session9.validate_historical_integrity",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.historical_protection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[D-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/D/adversarial",
+      "production_function": "scripts.validate_session9.validate_historical_integrity",
+      "python_result": "REJECT:PROTECTED_HISTORICAL_ARTIFACT_CHANGED",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.historical_protection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[D-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/E/valid",
+      "production_function": "scripts.session9_proof_cases.validate_session2_authority",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.session2_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[E-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/E/near-valid",
+      "production_function": "scripts.session9_proof_cases.validate_session2_authority",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.session2_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[E-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/E/adversarial",
+      "production_function": "scripts.session9_proof_cases.validate_session2_authority",
+      "python_result": "REJECT:SESSION2_AUTHORITY_UPGRADE_FORBIDDEN",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.session2_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[E-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/F/valid",
+      "production_function": "scripts.session9_proof_cases.validate_public_boundary_documents",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.runtime_topology.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[F-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/F/near-valid",
+      "production_function": "scripts.session9_proof_cases.validate_public_boundary_documents",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.runtime_topology.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[F-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/F/adversarial",
+      "production_function": "scripts.session9_proof_cases.validate_public_boundary_documents",
+      "python_result": "REJECT:PRIVATE_RUNTIME_DEPENDENCY_FORBIDDEN",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.runtime_topology.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[F-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/G/valid",
+      "production_function": "provan.extensions.negotiate + provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.extension_descriptor.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[G-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/G/near-valid",
+      "production_function": "provan.extensions.negotiate + provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.extension_descriptor.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[G-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/G/adversarial",
+      "production_function": "provan.extensions.negotiate + provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_AUTHORITY_ESCALATION",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.extension_descriptor.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[G-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/H/valid",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[H-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/H/near-valid",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[H-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/H/adversarial",
+      "production_function": "provan.claims.validate_claim_text",
+      "python_result": "REJECT:SESSION2_COMPARISON_CLAIM",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.claim_contract.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[H-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/I/valid",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[I-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/I/near-valid",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[I-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/I/adversarial",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "REJECT:UNSAFE_GIT_PROTOCOL_FORBIDDEN",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[I-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/J/valid",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[J-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/J/near-valid",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[J-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/J/adversarial",
+      "production_function": "provan.repository.inspect_repository",
+      "python_result": "REJECT:QUALIFIED_SANDBOX_REQUIRED",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[J-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/K/valid",
+      "production_function": "provan.telemetry.send",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[K-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/K/near-valid",
+      "production_function": "provan.telemetry.send",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[K-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/K/adversarial",
+      "production_function": "provan.telemetry.send",
+      "python_result": "REJECT:TELEMETRY_DEFAULT_ON",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[K-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/L/valid",
+      "production_function": "provan.validators.validate_diagnostics_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.diagnostics.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[L-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/L/near-valid",
+      "production_function": "provan.validators.validate_diagnostics_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.diagnostics.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[L-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/L/adversarial",
+      "production_function": "provan.validators.validate_diagnostics_semantics",
+      "python_result": "REJECT:DIAGNOSTIC_PRIVATE_CONTENT_FORBIDDEN",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.diagnostics.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[L-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/M/valid",
+      "production_function": "provan.telemetry.send",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[M-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/M/near-valid",
+      "production_function": "provan.telemetry.send",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[M-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/M/adversarial",
+      "production_function": "provan.telemetry.send",
+      "python_result": "REJECT:TELEMETRY_PREVIEW_PAYLOAD_MISMATCH",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[M-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/N/valid",
+      "production_function": "provan.doctor.run_doctor + provan.validators.validate_doctor_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.doctor_check_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[N-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/N/near-valid",
+      "production_function": "provan.doctor.run_doctor + provan.validators.validate_doctor_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.doctor_check_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[N-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/N/adversarial",
+      "production_function": "provan.doctor.run_doctor + provan.validators.validate_doctor_semantics",
+      "python_result": "REJECT:DOCTOR_FALSE_READY",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.doctor_check_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[N-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/O/valid",
+      "production_function": "scripts.validate_session9.validate_wheel",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.wheel_validation_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[O-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/O/near-valid",
+      "production_function": "scripts.validate_session9.validate_wheel",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.wheel_validation_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[O-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/O/adversarial",
+      "production_function": "scripts.validate_session9.validate_wheel",
+      "python_result": "REJECT:COMMUNITY_PACKAGE_PRIVATE_CONTENT",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.wheel_validation_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[O-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/P/valid",
+      "production_function": "provan.validators.validate_install_origin",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.install_origin.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[P-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/P/near-valid",
+      "production_function": "provan.validators.validate_install_origin",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.install_origin.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[P-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/P/adversarial",
+      "production_function": "provan.validators.validate_install_origin",
+      "python_result": "REJECT:FRESH_INSTALL_RESOLVED_FROM_SOURCE_CHECKOUT",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.install_origin.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[P-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/Q/valid",
+      "production_function": "provan.validators.validate_remote_topology_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.publication_state.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[Q-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/Q/near-valid",
+      "production_function": "provan.validators.validate_remote_topology_semantics",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.publication_state.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[Q-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/Q/adversarial",
+      "production_function": "provan.validators.validate_remote_topology_semantics",
+      "python_result": "REJECT:REMOTE_TOPOLOGY_MISMATCH",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.publication_state.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[Q-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/R/valid",
+      "production_function": "provan.repository.inspect_repository + scripts.validate_session9.validate_runtime_reachability",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[R-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/R/near-valid",
+      "production_function": "provan.repository.inspect_repository + scripts.validate_session9.validate_runtime_reachability",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[R-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/R/adversarial",
+      "production_function": "provan.repository.inspect_repository + scripts.validate_session9.validate_runtime_reachability",
+      "python_result": "REJECT:CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.execution_request.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[R-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/S/valid",
+      "production_function": "provan.telemetry.reset_id",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[S-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/S/near-valid",
+      "production_function": "provan.telemetry.reset_id",
+      "python_result": "PASS",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[S-near-valid]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:2742fb5acaa521af3e4e7666d31e3cf3a70af26cb74e9400b4e64399f660a794",
+        "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/proof-fixtures.v1.json",
+        "artifacts/session9/proof_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_proofs.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/proof-fixtures.v1.json#/families/S/adversarial",
+      "production_function": "provan.telemetry.reset_id",
+      "python_result": "REJECT:TELEMETRY_RETENTION_BOUNDARY_VIOLATION",
+      "python_validator": "scripts.session9_proof_cases.evaluate_fixture",
+      "schema_id": "provan.telemetry_command.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_proofs.py::test_proof_fixture_production_execution[S-adversarial]",
+      "transcript_hash": "sha256:c9cd6be8ca5d0fa183b984e6f5f1f26fb05c1a97057680f9a1a4233e70810094"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/0",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_context_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[context-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/1",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_context_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[context-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/2",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_organisation_policy_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[organisation_policy-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/3",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_organisation_policy_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[organisation_policy-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/4",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_historical_challenge_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[historical_challenge-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/5",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_historical_challenge_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[historical_challenge-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/6",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_entitlement_receipt_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[entitlement_receipt-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/7",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_entitlement_receipt_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[entitlement_receipt-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/8",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_report_section_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[report_section-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/9",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_report_section_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[report_section-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/10",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_deployment_diagnostics_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[deployment_diagnostics-valid]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:a1e229c54cf35549ed8c96bf8dca4267c978acc6543c1d5832918e77d8684ed9",
+        "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/extension-contract-fixtures.v1.json",
+        "artifacts/session9/extension_contract_execution.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_extension_contracts.py",
+      "exit_code": 0,
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/extension-contract-fixtures.v1.json#/fixtures/11",
+      "production_function": "provan.validators.validate_extension_overlay_semantics",
+      "python_result": "REJECT:EXTENSION_PROVENANCE_INVALID",
+      "python_validator": "provan.validators.validate_extension_overlay_semantics",
+      "schema_id": "provan.extension_deployment_diagnostics_overlay.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_extension_contracts.py::test_extension_contract_fixture[deployment_diagnostics-adversarial]",
+      "transcript_hash": "sha256:9ecd3687c13c7ea0c91c7aedbd77d729daaef2e196e6b47103b080c8b0557eca"
+    }
+  ],
+  "schema_id": "provan.proof_registry.v1",
+  "sensitivity": "PUBLIC_SAFE"
+}

@@ -3,37 +3,31 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "shiproom"
-version = "0.1.0"
-description = "Evidence-gated release assurance operated by Hermes"
+name = "provan-assurance"
+version = "0.2.0"
+description = "Read-only, evidence-gated repository assurance"
 requires-python = ">=3.11"
-dependencies = ["PyYAML>=6.0"]
+dependencies = ["jsonschema>=4.23", "PyYAML>=6.0"]
 
 [project.optional-dependencies]
-dev = ["pytest>=9.0"]
+dev = ["pytest>=9.0", "jsonschema>=4.23", "build>=1.2"]
 telemetry = ["opentelemetry-api>=1.30", "opentelemetry-sdk>=1.30", "opentelemetry-exporter-otlp>=1.30"]
 convex = ["convex>=0.7"]
 voice = ["elevenlabs>=2.0"]
 
 [project.scripts]
-shiproom = "shiproom.cli:main"
+provan = "provan.cli:main"
+shiproom = "provan.compat:legacy_cli_main"
+
+[project.entry-points."provan.extensions"]
+noop = "provan.extensions:noop_provider"
 
 [tool.setuptools.packages.find]
-include = ["shiproom*", "demo_patient*"]
+include = ["provan*"]
 exclude = ["skills*", "tests*"]
 
 [tool.setuptools.package-data]
-"shiproom" = ["*.json"]
-"shiproom.assessment_roles" = ["*.json"]
-"shiproom.assessment_schemas" = ["*.json"]
-"shiproom.measurement_ai_roles" = ["*.json"]
-"shiproom.measurement_guidance" = ["*.json", "*.md"]
-"shiproom.measurement_ai_schemas" = ["*.json"]
-"shiproom.remediation_schemas" = ["*.json"]
-"shiproom.review_organisation" = ["*.json"]
-"shiproom.contestability_schemas" = ["*.json"]
-"shiproom.management_artifacts" = ["*.json"]
-"shiproom.external_validation" = ["schemas/*.json", "seccomp-v2.json", "runner_image/*"]
+"provan" = ["schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

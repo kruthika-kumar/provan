@@ -1,0 +1,19 @@
+COMMAND: python -m pip wheel . --no-deps --no-build-isolation --wheel-dir .provan-record-b
+EXECUTION_COMMIT: 6b42545e6e40f52d901361d0f0fece3407186b4e
+EXECUTION_TREE: d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11
+STARTED_AT: 2026-08-05T16:34:37.205714+00:00
+COMPLETED_AT: 2026-08-05T16:34:40.877414+00:00
+SOURCE_DATE_EPOCH: 1785888000
+PYTHONPATH: NOT_SET
+EXIT_CODE: 0
+TIMED_OUT: false
+--- OUTPUT ---
+Processing .\.
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: provan-assurance
+  Building wheel for provan-assurance (pyproject.toml): started
+  Building wheel for provan-assurance (pyproject.toml): finished with status 'done'
+  Created wheel for provan-assurance: filename=provan_assurance-0.2.0-py3-none-any.whl size=34186 sha256=23e60bf46af7c0f5b7874a0c2fa6f1c0ef3f82d1462d27ea80c53d040ef04b0f
+  Stored in directory: <USER_HOME>\AppData\Local\Temp\pip-ephem-wheel-cache-3r04sgix\wheels\32\19\aa\12b8f10c0d0f1defee5dee8a1e00253b31d7cab4257abfd432
+Successfully built provan-assurance

@@ -1,0 +1,202 @@
+COMMAND: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.2.0-py3-none-any.whl
+EXECUTION_COMMIT: 19379adf31f6a371577e681b0175e66684b577e0
+EXECUTION_TREE: 5fec6f4144407f06cb72ed47a78202d6eb45b39f
+STARTED_AT: 2026-08-05T21:06:58.975450+00:00
+COMPLETED_AT: 2026-08-05T21:07:26.712338+00:00
+SOURCE_DATE_EPOCH: NOT_SET
+PYTHONPATH: NOT_SET
+EXIT_CODE: 0
+TIMED_OUT: false
+--- OUTPUT ---
+$ "<USER_PATH>" -m venv "<COMMUNITY_WORKSPACE>\.provan-fresh-install"
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\python.exe" -m pip install --no-deps "<COMMUNITY_WORKSPACE>\dist\provan_assurance-0.2.0-py3-none-any.whl"
+Processing <USER_PATH>
+Installing collected packages: provan-assurance
+Successfully installed provan-assurance-0.2.0
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" --help
+usage: provan [-h] {doctor,repository,telemetry} ...
+
+Read-only repository assurance
+
+positional arguments:
+  {doctor,repository,telemetry}
+
+options:
+  -h, --help            show this help message and exit
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" doctor --format json
+{
+  "checks": [
+    {
+      "id": "python",
+      "status": "READY"
+    },
+    {
+      "id": "git",
+      "status": "READY"
+    },
+    {
+      "id": "source_only_inspection",
+      "status": "READY"
+    },
+    {
+      "id": "qualified_execution_sandbox",
+      "status": "NOT_CONFIGURED"
+    },
+    {
+      "id": "telemetry_transport",
+      "status": "NOT_CONFIGURED"
+    }
+  ],
+  "limitations": [
+    "qualified_execution_sandbox_not_configured",
+    "telemetry_transport_not_configured"
+  ],
+  "product_version": "0.2.0",
+  "schema_id": "provan.doctor_report.v1",
+  "status": "READY_WITH_LIMITATIONS"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry status
+{
+  "enabled": false,
+  "identifier_policy": "per_envelope_non_persistent",
+  "schema_id": "provan.telemetry_status.v1",
+  "transport": "NOT_CONFIGURED"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry schema
+{
+  "additional_fields": false,
+  "events": [
+    "doctor_completed",
+    "inspection_completed"
+  ],
+  "schema_id": "provan.telemetry_schema_index.v1"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry preview
+{
+  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-05T21:07:16.602278+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"000a4151-a17c-440e-b2de-7f3b6ef8caed\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
+  "envelope_digest": "sha256:e8678b0281e0c0c84e9379eeba18f8b14cf636dacc67acbd4ed2a1993f5c940e",
+  "schema_id": "provan.telemetry_preview.v1",
+  "transport_metadata": {
+    "endpoint_configured": false,
+    "headers": [
+      "Content-Type",
+      "Provan-Envelope-Digest"
+    ],
+    "ip_visible_to_transport": true
+  }
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry enable
+{
+  "enabled": true,
+  "identifier_policy": "per_envelope_non_persistent",
+  "schema_id": "provan.telemetry_status.v1",
+  "transport": "NOT_CONFIGURED"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry preview
+{
+  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-05T21:07:17.005900+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"5dbc4c05-088f-402c-98e8-b5bf8b16606d\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
+  "envelope_digest": "sha256:195cfd3c6fcda85b6a125760f7609ba10df5ae1d073f4bd298bc1069e213af85",
+  "schema_id": "provan.telemetry_preview.v1",
+  "transport_metadata": {
+    "endpoint_configured": false,
+    "headers": [
+      "Content-Type",
+      "Provan-Envelope-Digest"
+    ],
+    "ip_visible_to_transport": true
+  }
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry reset-id
+{
+  "pending_envelopes_invalidated": 2,
+  "schema_id": "provan.telemetry_reset.v1",
+  "timed_rotation": "NOT_APPLICABLE"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry disable
+{
+  "enabled": false,
+  "identifier_policy": "per_envelope_non_persistent",
+  "schema_id": "provan.telemetry_status.v1",
+  "transport": "NOT_CONFIGURED"
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\python.exe" -c "import os; from provan.telemetry import configure,preview,send; os.environ['PROVAN_TELEMETRY_ENDPOINT']='https://collector.example.test'; configure(True); p=preview(); seen=[]; send(p['envelope_digest'],lambda b,d:seen.append((b,d))); assert seen==[(p['canonical_bytes_utf8'].encode(),p['envelope_digest'])]; print('TRANSPORT_SPY_PARITY_OK')"
+TRANSPORT_SPY_PARITY_OK
+$ git ls-remote https://github.com/octocat/Hello-World.git HEAD
+7fd1a60b01f91b314f59955a4e4d4e80d8edf11d	HEAD
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" repository inspect --repo https://github.com/octocat/Hello-World.git --base 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d --head 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d --mode source-only --output <USER_PATH>
+{
+  "blob_content_bytes": 13,
+  "blob_content_count": 1,
+  "blob_content_digest": "sha256:c5ce1b8a42af8fc74fd8056e04dd9c800ca229e5ae7e6d49a17f4551a7b8b167",
+  "command_ledger": [
+    [
+      "-c",
+      "core.hooksPath=<USER_PATH>",
+      "-c",
+      "protocol.file.allow=never",
+      "-c",
+      "protocol.ext.allow=never",
+      "clone",
+      "--bare",
+      "--no-tags",
+      "--filter=blob:none",
+      "--",
+      "https://github.com/octocat/Hello-World.git",
+      "<USER_PATH>"
+    ],
+    [
+      "--git-dir",
+      "<USER_PATH>",
+      "rev-parse",
+      "--verify",
+      "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d^{commit}"
+    ],
+    [
+      "--git-dir",
+      "<USER_PATH>",
+      "rev-parse",
+      "--verify",
+      "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d^{commit}"
+    ],
+    [
+      "--git-dir",
+      "<USER_PATH>",
+      "ls-tree",
+      "-rz",
+      "-r",
+      "-l",
+      "--full-tree",
+      "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
+    ],
+    [
+      "cat-file",
+      "--batch"
+    ]
+  ],
+  "completed_at": "2026-08-05T21:07:25.292856+00:00",
+  "executed_repository_code": false,
+  "mode": "source-only",
+  "requested": {
+    "base": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+    "head": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
+  },
+  "resolved": {
+    "base": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+    "head": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
+  },
+  "schema_id": "provan.repository_inspection.v1",
+  "status": "SOURCE_ONLY_INSPECTED",
+  "target_unchanged": true,
+  "tree_entry_count": 1,
+  "verdict": null
+}
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\python.exe" -c "import provan,pathlib; print(pathlib.Path(provan.__file__).resolve())"
+<COMMUNITY_WORKSPACE>\.provan-fresh-install\Lib\site-packages\provan\__init__.py
+$ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\python.exe" -m pip uninstall -y provan-assurance
+Found existing installation: provan-assurance 0.2.0
+Uninstalling provan-assurance-0.2.0:
+  Successfully uninstalled provan-assurance-0.2.0
+FRESH_INSTALL_GATE_OK
+
+[notice] A new release of pip is available: 24.0 -> 26.2.1
+[notice] To update, run: <COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\python.exe -m pip install --upgrade pip

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.runtime_topology.v1","type":"object","required":["community_private_dependency"],"properties":{"community_private_dependency":{"type":"boolean"},"private_projection":{"type":"string"}},"additionalProperties":false}

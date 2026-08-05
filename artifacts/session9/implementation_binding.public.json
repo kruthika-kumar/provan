@@ -1,0 +1,16 @@
+{
+  "community_version": "0.2.0",
+  "extension_api_major": 1,
+  "final_proof_commit": {
+    "separate_from_implementation_binding": true,
+    "status": "POST_COMMIT_REMOTE_RECEIPT"
+  },
+  "implementation_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+  "implementation_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "schema_id": "provan.implementation_binding.v1",
+  "schema_registry_hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+  "schema_registry_sha256": "sha256:ef2b93dfc5a6bbd6b51c4e9a878053044d3f1a3f02710a38fc066f52531a5d43",
+  "sensitivity": "PUBLIC_SAFE",
+  "wheel_content_root_hash": "sha256:00eac1935a1ee8fd10cf9d25c88de810cd2e43dfcdde3930bdae7bd02cff307c",
+  "wheel_sha256": "sha256:23e60bf46af7c0f5b7874a0c2fa6f1c0ef3f82d1462d27ea80c53d040ef04b0f"
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "provan.repository_inspection.v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_id", "mode", "status", "tree_entry_count", "blob_content_count", "blob_content_bytes", "blob_content_digest", "executed_repository_code", "target_unchanged", "verdict"],
+  "properties": {
+    "schema_id": {"const": "provan.repository_inspection.v1"},
+    "mode": {"const": "source-only"},
+    "status": {"const": "SOURCE_ONLY_INSPECTED"},
+    "tree_entry_count": {"type": "integer", "minimum": 0},
+    "blob_content_count": {"type": "integer", "minimum": 0},
+    "blob_content_bytes": {"type": "integer", "minimum": 0},
+    "blob_content_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "executed_repository_code": {"const": false},
+    "target_unchanged": {"const": true},
+    "verdict": {"type": "null"}
+  }
+}

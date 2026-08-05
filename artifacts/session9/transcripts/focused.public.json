@@ -1,0 +1,15 @@
+{
+  "command": "python -m pytest -q tests/test_session9.py tests/test_session9_proofs.py tests/test_session9_extension_contracts.py",
+  "completed_at": "2026-08-05T16:35:29.755679+00:00",
+  "environment": {
+    "PYTHONPATH": "NOT_SET",
+    "SOURCE_DATE_EPOCH": "NOT_SET"
+  },
+  "execution_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+  "execution_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "exit_code": 0,
+  "started_at": "2026-08-05T16:35:05.808731+00:00",
+  "timed_out": false,
+  "transcript_hash": "sha256:a5340075dcf2a4db06514a0fe4d5d2fef94078eaa4edb10284ba3fa43a581047",
+  "transcript_path": "artifacts/session9/transcripts/focused.public.txt"
+}

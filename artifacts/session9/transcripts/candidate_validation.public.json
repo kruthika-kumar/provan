@@ -1,0 +1,15 @@
+{
+  "command": "python scripts/validate_session9.py --allow-pending-review --skip-closeout-bindings --wheel dist/provan_assurance-0.2.0-py3-none-any.whl",
+  "completed_at": "2026-08-05T16:40:32.997611+00:00",
+  "environment": {
+    "PYTHONPATH": "NOT_SET",
+    "SOURCE_DATE_EPOCH": "NOT_SET"
+  },
+  "execution_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+  "execution_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "exit_code": 0,
+  "started_at": "2026-08-05T16:40:16.038959+00:00",
+  "timed_out": false,
+  "transcript_hash": "sha256:fac24c87dc2dd6f3f829e793e03d0a59a8eeeea3fad22a8b17ea0e5e480469d5",
+  "transcript_path": "artifacts/session9/transcripts/candidate_validation.public.txt"
+}

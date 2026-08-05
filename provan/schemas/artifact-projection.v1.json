@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.artifact_projection.v1","type":"object","additionalProperties":true,"required":["schema_id","sensitivity"],"properties":{"schema_id":{"type":"string"},"sensitivity":{"enum":["PUBLIC_SAFE","PRIVATE_MAINTAINER","HISTORICAL_PUBLIC","LOCAL_EPHEMERAL"]}}}

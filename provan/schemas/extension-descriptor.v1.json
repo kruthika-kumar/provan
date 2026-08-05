@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.extension_descriptor.v1","type":"object","additionalProperties":false,"required":["provider_id","kind","api_major","authority","may_mutate"],"properties":{"provider_id":{"type":"string"},"kind":{"type":"string"},"api_major":{"type":"integer"},"authority":{"type":"string"},"may_mutate":{"type":"boolean"}}}

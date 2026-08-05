@@ -1,0 +1,259 @@
+{
+  "artifacts": [
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/artifact_sensitivity.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:273916021004ec741967c6b64617c688fdae67d56b473e34b2dc085acb3b1fd2"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/capability_audit.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:c2d2ae1ac227fa8bf72ac868e81787b1628804e589bc34721324d9fdb2424501"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/claim_audit.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:b9714df070b8d3796060939190b7e403a359266c9815cc5e24e241adb581acf8"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/cloudflare_history.public.json",
+      "sensitivity": "HISTORICAL_PUBLIC",
+      "sha256": "sha256:5820f607eb71e81a64f9101441a7501c6ee9171d82977998f661830bf3a91103"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/extension_contract_execution.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:c3acbaab2306c0dae714d40da745b876663bee5998bb7d04a92961f01cca2cec"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/implementation_binding.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:2c6fe3399ae7fea4b6842bf5e77edb1b6e92c3a8e4f6a88ccd4711e5fa45104c"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/implementation_plan.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:61eb9b7f146900602394e8978940c6d1ca3fccda526803bb27730f2444cafb38"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/layer4_claim_matrix.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:a8b165110d5cb0c8947ad12ecea6b2b44bf6cede701f304c18eb5b9cc83f6caa"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/proof_execution.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:2b7ddb7e3b01282ca0db4b6811b47f38934a953afe387c04722b076bf9bdcac9"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/proof_registry.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:51d9c2f0a2ee82b9f9fcdc193cd6b962c7e89a3224a582cbfb5d3a7b20a46cfb"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/publication_audit.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:06e1faee48a8b6052ce336a5290176a9f60149b501cfd72e99d83832bcd917a4"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/schema_registry.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:ef2b93dfc5a6bbd6b51c4e9a878053044d3f1a3f02710a38fc066f52531a5d43"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/session2_harvest.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:deaa88a9658cd3cfeeaa847db77114a0a15b22de37e737233eb66c619a1fc4d2"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/candidate_validation.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:8df324fe8c78b7dd43498727c4c54690df2e0116ff5f3832876bbffef6a5c779"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/candidate_validation.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:fac24c87dc2dd6f3f829e793e03d0a59a8eeeea3fad22a8b17ea0e5e480469d5"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/diff_check.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:d0f16eb20374b68fa678d76d3b1edf4556df5e93ccc1e152170c51f5e3161914"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/diff_check.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:43b5f66a41dec89ceca286014f29a57abbd152e2ec1527b03c182f82691fde77"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/evals.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:5b732eb276e4cf2ca8890b3c2f45035c0c46f5438593a318b098de3501806408"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/evals.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:eab3fbfa15b5394c842259902ad0631c980c14683b9cd800fbd2ac147c17b040"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/focused.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:5b689e4b092d52cca77fb79abbb0d91b9ac934e1cae072e517f78eb64d9e2d76"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/focused.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:a5340075dcf2a4db06514a0fe4d5d2fef94078eaa4edb10284ba3fa43a581047"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/fresh_install.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:f34f378ddd8992e1e76f288bb4bf3ff91f05bf2f7612e945de368b421e1f5388"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/fresh_install.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:ab6b71c99a37a154c9200ecf36d52865621116750883b0df09a89ce2c304d959"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/full_pytest.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:913571479e7995c297874276ac80896d673cd3680609eb4e277687312767c90b"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/full_pytest.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:5b426a9adf1f9df3f2745839ee217d687555c3b3c26c9b391d7b67b6362f0081"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/integration.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:3f441a71fa0919c7eadf68be4c56c9bd5f465f747a8eec854fa400594935ee48"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/integration.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:12d6935777f8cea3b51c8170c64219381c416635022bd6c052a5892311ac3e67"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/wheel_build.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:fcc7eb3072394120b0ec618a4ee0ec6f61ed5c26ebbdc15baeeb212a217426c5"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/wheel_build.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:3c5637fb62026119eff454555971fcc62234e18114c4ab5a8df0adb93276287f"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/wheel_rebuild.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:4a15bc43b20377947da29f9ea04caaa024d2b8c4e29de047a3eded15f8f0821f"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/transcripts/wheel_rebuild.public.txt",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:5f080e7b010b0c304072230e16b2fa117b8c896bdc8b13191361507384222f0d"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/validation_baseline.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:7943f229c77ff0072ada2891bd339dd86c0be85d6c6452fc010e80f1d91de5d5"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/version_policy.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:d43f3c778dbcce84d711056058f6ac4b27df5eed572d7fd9a3616816fd851073"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "artifacts/session9/wheel_content_manifest.public.json",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:adb216015c3e5498b3d9a87e2441f5dc45b0101a6b656b2cd4911c626b397e1f"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "docs/extensions.md",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:dd46dafc3758cec355be3a1cb460679f4730309180b45aecfdb261846a9ba0d5"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "docs/licensing-boundary.md",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:848e760ccc34f0ec49af318bb70f317fa561d14819a73716edf93337e4690b1c"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "docs/product-boundary.md",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:f0d0acea843103e00ae2e580ddf350c16911e26195bf2fd6a482e03167701a6c"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "docs/repository-package-workspace-environment.md",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:0a2d61b160aa788b5a6233015a4e93c6bf2b2945fc3e068eb34e5f8f2b514105"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "provan/extensions.py",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:6fd3e27e6e56e0cc2d4a0d29121a95d07d5d8192aab69321ce8b481a0e1e6638"
+    },
+    {
+      "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+      "path": "pyproject.toml",
+      "sensitivity": "PUBLIC_SAFE",
+      "sha256": "sha256:36e2d8c9a52edf2ec2c8583638dfdf22b4924e8238faf92ce9d2eb79e4af245c"
+    }
+  ],
+  "implementation_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+  "implementation_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "invented_outcomes": false,
+  "proof_set_root_hash": "sha256:6216eb4da6534c0221cbedfe4752d573a1c5c8d324916af2683e875d5c521370",
+  "publication": {
+    "state": "PENDING"
+  },
+  "review": {
+    "result": "PENDING"
+  },
+  "schema_id": "provan.session9_closeout_manifest.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "session": 9,
+  "session10_started": false,
+  "session2_comparison_completed": false
+}

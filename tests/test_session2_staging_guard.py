@@ -139,6 +139,8 @@ def test_descriptor_preparation_rejects_traversal_and_symlinked_ancestors(monkey
         with pytest.raises(materialize.MaterializationError, match="session2_materialization_destination_invalid"):
             with materialize._prepared_allocation_destination(destination, authority):
                 pass
+    if os.name != "posix":
+        pytest.skip("symlink ancestor assertion requires the production POSIX dirfd semantics")
     linked = tree / "linked"
     try:
         linked.symlink_to(tmp_path, target_is_directory=True)

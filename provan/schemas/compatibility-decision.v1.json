@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.compatibility_decision.v1","type":"object","required":["canonical_import","legacy_mode"],"properties":{"canonical_import":{"type":"string"},"legacy_mode":{"type":"string"},"consumer_evidence":{"type":"string"}},"additionalProperties":false}

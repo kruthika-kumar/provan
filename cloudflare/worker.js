@@ -1,5 +1,8 @@
 import { INDEX_HTML, REPORT_HTML, INDEX_ETAG, REPORT_ETAG } from "./generated_public.js";
 
+const HISTORICAL_BANNER = `<aside role="status" style="padding:16px;background:#fff3cd;border:2px solid #8a6500;color:#302400;font:700 16px/1.4 system-ui">Historical Shiproom buildathon evidence. This is not the current Provan product or a hosted Provan service. <a href="https://github.com/kruthika-kumar/provan">Open Provan Community</a>. <a href="/archive/pre-provan-session9/index.html">Open the immutable pre-transition page</a>.</aside>`;
+const HISTORICAL_INDEX = INDEX_HTML.replace("<body>", `<body>${HISTORICAL_BANNER}`);
+
 const staticHtml = (request, body, etag) => {
   if (request.headers.get("If-None-Match") === etag) return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=0, must-revalidate, no-transform" } });
   return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, must-revalidate, no-transform", ETag: etag } });
@@ -15,8 +18,9 @@ export default {
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     };
     if (url.pathname === "/") {
-      return staticHtml(request, INDEX_HTML, INDEX_ETAG);
+      return staticHtml(request, HISTORICAL_INDEX, '"provan-historical-banner-v1"');
     }
+    if (url.pathname === "/archive/pre-provan-session9/index.html") return staticHtml(request, INDEX_HTML, INDEX_ETAG);
     if (url.pathname === "/health") {
       return Response.json({ status: "ok", service: "shiproom-demo" });
     }

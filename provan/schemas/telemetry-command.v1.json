@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.telemetry_command.v1","type":"object","properties":{"enabled":{"type":"boolean"},"endpoint":{"type":"boolean"},"exact_digest":{"type":"boolean"},"mode":{"type":"string"},"transport_spy":{"type":"boolean"},"pending_entry_kind":{"type":"string"}},"additionalProperties":false}

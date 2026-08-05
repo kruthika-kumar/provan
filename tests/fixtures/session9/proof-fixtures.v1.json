@@ -1,0 +1,635 @@
+{
+  "families": {
+    "A": {
+      "adversarial": {
+        "expected_error": "AUTOMATIC_MUTATION_CLAIM",
+        "family": "A",
+        "fixture_class": "adversarial",
+        "input": {
+          "text": "Provan automatically fixes repositories."
+        },
+        "scenario": "Proof Family A authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "A",
+        "fixture_class": "near-valid",
+        "input": {
+          "text": "Provan does not automatically fix repositories."
+        },
+        "scenario": "Proof Family A adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "A",
+        "fixture_class": "valid",
+        "input": {
+          "text": "Provan inspects source without executing it."
+        },
+        "scenario": "Proof Family A supported production case"
+      }
+    },
+    "B": {
+      "adversarial": {
+        "expected_error": "DUPLICATE_CANONICAL_IMPLEMENTATION",
+        "family": "B",
+        "fixture_class": "adversarial",
+        "input": {
+          "canonical_import": "shiproom",
+          "legacy_mode": "functional"
+        },
+        "scenario": "Proof Family B authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "B",
+        "fixture_class": "near-valid",
+        "input": {
+          "canonical_import": "provan",
+          "consumer_evidence": "public CLI audit",
+          "legacy_mode": "migration-only"
+        },
+        "scenario": "Proof Family B adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "B",
+        "fixture_class": "valid",
+        "input": {
+          "canonical_import": "provan",
+          "legacy_mode": "migration-only"
+        },
+        "scenario": "Proof Family B supported production case"
+      }
+    },
+    "C": {
+      "adversarial": {
+        "expected_error": "VERSION_POLICY_AUTHORITY_MISSING",
+        "family": "C",
+        "fixture_class": "adversarial",
+        "input": {
+          "basis": [],
+          "community_version": "0.2.0",
+          "extension_api_major": 1,
+          "schema_id": "provan.version_policy_decision.v1",
+          "telemetry_timed_rotation": {
+            "status": "NOT_APPLICABLE"
+          }
+        },
+        "scenario": "Proof Family C authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "C",
+        "fixture_class": "near-valid",
+        "input": {
+          "basis": [
+            "unreleased 0.1.0",
+            "pre-1.0 namespace change",
+            "no release contract",
+            "first extension generation"
+          ],
+          "community_version": "0.2.0",
+          "extension_api_major": 1,
+          "schema_id": "provan.version_policy_decision.v1",
+          "telemetry_timed_rotation": {
+            "status": "NOT_APPLICABLE"
+          }
+        },
+        "scenario": "Proof Family C adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "C",
+        "fixture_class": "valid",
+        "input": {
+          "basis": [
+            "unreleased 0.1.0",
+            "pre-1.0 namespace change",
+            "no release contract"
+          ],
+          "community_version": "0.2.0",
+          "extension_api_major": 1,
+          "schema_id": "provan.version_policy_decision.v1",
+          "telemetry_timed_rotation": {
+            "status": "NOT_APPLICABLE"
+          }
+        },
+        "scenario": "Proof Family C supported production case"
+      }
+    },
+    "D": {
+      "adversarial": {
+        "expected_error": "PROTECTED_HISTORICAL_ARTIFACT_CHANGED",
+        "family": "D",
+        "fixture_class": "adversarial",
+        "input": {
+          "base_preserved": false,
+          "current_runtime_imports_historical": true
+        },
+        "scenario": "Proof Family D authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "D",
+        "fixture_class": "near-valid",
+        "input": {
+          "base_preserved": true,
+          "current_runtime_imports_historical": false,
+          "preservation_mode": "immutable-lineage"
+        },
+        "scenario": "Proof Family D adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "D",
+        "fixture_class": "valid",
+        "input": {
+          "base_preserved": true,
+          "current_runtime_imports_historical": false
+        },
+        "scenario": "Proof Family D supported production case"
+      }
+    },
+    "E": {
+      "adversarial": {
+        "expected_error": "SESSION2_AUTHORITY_UPGRADE_FORBIDDEN",
+        "family": "E",
+        "fixture_class": "adversarial",
+        "input": {
+          "comparison_completed": true,
+          "status": "COMPLETE"
+        },
+        "scenario": "Proof Family E authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "E",
+        "fixture_class": "near-valid",
+        "input": {
+          "comparison_completed": false,
+          "limitation": "no headline claim",
+          "status": "CLOSED_PARTIAL"
+        },
+        "scenario": "Proof Family E adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "E",
+        "fixture_class": "valid",
+        "input": {
+          "comparison_completed": false,
+          "status": "CLOSED_PARTIAL"
+        },
+        "scenario": "Proof Family E supported production case"
+      }
+    },
+    "F": {
+      "adversarial": {
+        "expected_error": "PRIVATE_RUNTIME_DEPENDENCY_FORBIDDEN",
+        "family": "F",
+        "fixture_class": "adversarial",
+        "input": {
+          "community_private_dependency": true
+        },
+        "scenario": "Proof Family F authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "F",
+        "fixture_class": "near-valid",
+        "input": {
+          "community_private_dependency": false,
+          "private_projection": "aggregate-only"
+        },
+        "scenario": "Proof Family F adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "F",
+        "fixture_class": "valid",
+        "input": {
+          "community_private_dependency": false
+        },
+        "scenario": "Proof Family F supported production case"
+      }
+    },
+    "G": {
+      "adversarial": {
+        "expected_error": "EXTENSION_AUTHORITY_ESCALATION",
+        "family": "G",
+        "fixture_class": "adversarial",
+        "input": {
+          "api_major": 1,
+          "authority": "canonical_mutation",
+          "kind": "context",
+          "may_mutate": true,
+          "provider_id": "fixture"
+        },
+        "scenario": "Proof Family G authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "G",
+        "fixture_class": "near-valid",
+        "input": {
+          "api_major": 1,
+          "authority": "bounded_overlay",
+          "kind": "report_section",
+          "may_mutate": false,
+          "provider_id": "fixture"
+        },
+        "scenario": "Proof Family G adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "G",
+        "fixture_class": "valid",
+        "input": {
+          "api_major": 1,
+          "authority": "bounded_overlay",
+          "kind": "context",
+          "may_mutate": false,
+          "provider_id": "fixture"
+        },
+        "scenario": "Proof Family G supported production case"
+      }
+    },
+    "H": {
+      "adversarial": {
+        "expected_error": "SESSION2_COMPARISON_CLAIM",
+        "family": "H",
+        "fixture_class": "adversarial",
+        "input": {
+          "text": "Session 2 completed and proved a comparison."
+        },
+        "scenario": "Proof Family H authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "H",
+        "fixture_class": "near-valid",
+        "input": {
+          "text": "Session 2 did not complete a comparison."
+        },
+        "scenario": "Proof Family H adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "H",
+        "fixture_class": "valid",
+        "input": {
+          "text": "Session 2 is CLOSED_PARTIAL."
+        },
+        "scenario": "Proof Family H supported production case"
+      }
+    },
+    "I": {
+      "adversarial": {
+        "expected_error": "UNSAFE_GIT_PROTOCOL_FORBIDDEN",
+        "family": "I",
+        "fixture_class": "adversarial",
+        "input": {
+          "source_kind": "unsafe_matrix"
+        },
+        "scenario": "Proof Family I authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "I",
+        "fixture_class": "near-valid",
+        "input": {
+          "local_config_attack": true,
+          "source_kind": "local"
+        },
+        "scenario": "Proof Family I adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "I",
+        "fixture_class": "valid",
+        "input": {},
+        "scenario": "Proof Family I supported production case"
+      }
+    },
+    "J": {
+      "adversarial": {
+        "expected_error": "QUALIFIED_SANDBOX_REQUIRED",
+        "family": "J",
+        "fixture_class": "adversarial",
+        "input": {
+          "allow_exec": true
+        },
+        "scenario": "Proof Family J authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "J",
+        "fixture_class": "near-valid",
+        "input": {
+          "allow_exec": false
+        },
+        "scenario": "Proof Family J adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "J",
+        "fixture_class": "valid",
+        "input": {},
+        "scenario": "Proof Family J supported production case"
+      }
+    },
+    "K": {
+      "adversarial": {
+        "expected_error": "TELEMETRY_DEFAULT_ON",
+        "family": "K",
+        "fixture_class": "adversarial",
+        "input": {
+          "enabled": true,
+          "endpoint": true,
+          "mode": "assert_default_off"
+        },
+        "scenario": "Proof Family K authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "K",
+        "fixture_class": "near-valid",
+        "input": {
+          "endpoint": true,
+          "mode": "assert_default_off"
+        },
+        "scenario": "Proof Family K adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "K",
+        "fixture_class": "valid",
+        "input": {
+          "endpoint": false,
+          "mode": "assert_default_off"
+        },
+        "scenario": "Proof Family K supported production case"
+      }
+    },
+    "L": {
+      "adversarial": {
+        "expected_error": "DIAGNOSTIC_PRIVATE_CONTENT_FORBIDDEN",
+        "family": "L",
+        "fixture_class": "adversarial",
+        "input": {
+          "code": "INSPECTION_LIMITATION",
+          "message": "Qualified execution is not configured.",
+          "repository_content": "forbidden",
+          "schema_id": "provan.diagnostics.v1",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "Proof Family L authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "L",
+        "fixture_class": "near-valid",
+        "input": {
+          "code": "DOCTOR_LIMITATION",
+          "message": "Qualified execution is not configured.",
+          "schema_id": "provan.diagnostics.v1",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "Proof Family L adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "L",
+        "fixture_class": "valid",
+        "input": {
+          "code": "INSPECTION_LIMITATION",
+          "message": "Qualified execution is not configured.",
+          "schema_id": "provan.diagnostics.v1",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "Proof Family L supported production case"
+      }
+    },
+    "M": {
+      "adversarial": {
+        "expected_error": "TELEMETRY_PREVIEW_PAYLOAD_MISMATCH",
+        "family": "M",
+        "fixture_class": "adversarial",
+        "input": {
+          "exact_digest": false
+        },
+        "scenario": "Proof Family M authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "M",
+        "fixture_class": "near-valid",
+        "input": {
+          "exact_digest": true,
+          "transport_spy": true
+        },
+        "scenario": "Proof Family M adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "M",
+        "fixture_class": "valid",
+        "input": {
+          "exact_digest": true
+        },
+        "scenario": "Proof Family M supported production case"
+      }
+    },
+    "N": {
+      "adversarial": {
+        "expected_error": "DOCTOR_FALSE_READY",
+        "family": "N",
+        "fixture_class": "adversarial",
+        "input": {
+          "require_ready": true
+        },
+        "scenario": "Proof Family N authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "N",
+        "fixture_class": "near-valid",
+        "input": {
+          "accept_blocked": true,
+          "accept_limited": true
+        },
+        "scenario": "Proof Family N adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "N",
+        "fixture_class": "valid",
+        "input": {
+          "accept_limited": true
+        },
+        "scenario": "Proof Family N supported production case"
+      }
+    },
+    "O": {
+      "adversarial": {
+        "expected_error": "COMMUNITY_PACKAGE_PRIVATE_CONTENT",
+        "family": "O",
+        "fixture_class": "adversarial",
+        "input": {
+          "include_forbidden": true
+        },
+        "scenario": "Proof Family O authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "O",
+        "fixture_class": "near-valid",
+        "input": {
+          "include_forbidden": false,
+          "include_schema": true
+        },
+        "scenario": "Proof Family O adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "O",
+        "fixture_class": "valid",
+        "input": {
+          "include_forbidden": false
+        },
+        "scenario": "Proof Family O supported production case"
+      }
+    },
+    "P": {
+      "adversarial": {
+        "expected_error": "FRESH_INSTALL_RESOLVED_FROM_SOURCE_CHECKOUT",
+        "family": "P",
+        "fixture_class": "adversarial",
+        "input": {
+          "module_path": "/checkout/provan/__init__.py",
+          "site_packages": "/venv/site-packages"
+        },
+        "scenario": "Proof Family P authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "P",
+        "fixture_class": "near-valid",
+        "input": {
+          "module_path": "C:/venv/site-packages/provan/__init__.py",
+          "site_packages": "C:/venv/site-packages"
+        },
+        "scenario": "Proof Family P adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "P",
+        "fixture_class": "valid",
+        "input": {
+          "module_path": "/venv/site-packages/provan/__init__.py",
+          "site_packages": "/venv/site-packages"
+        },
+        "scenario": "Proof Family P supported production case"
+      }
+    },
+    "Q": {
+      "adversarial": {
+        "expected_error": "REMOTE_TOPOLOGY_MISMATCH",
+        "family": "Q",
+        "fixture_class": "adversarial",
+        "input": {
+          "community_visibility": "PUBLIC",
+          "history_rewrite_required": true,
+          "private_visibility_valid": true
+        },
+        "scenario": "Proof Family Q authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "Q",
+        "fixture_class": "near-valid",
+        "input": {
+          "community_visibility": "PUBLIC",
+          "history_rewrite_required": false,
+          "integration": "merge",
+          "private_visibility_valid": true
+        },
+        "scenario": "Proof Family Q adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "Q",
+        "fixture_class": "valid",
+        "input": {
+          "community_visibility": "PUBLIC",
+          "history_rewrite_required": false,
+          "private_visibility_valid": true
+        },
+        "scenario": "Proof Family Q supported production case"
+      }
+    },
+    "R": {
+      "adversarial": {
+        "expected_error": "CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN",
+        "family": "R",
+        "fixture_class": "adversarial",
+        "input": {
+          "mutation_matrix": true
+        },
+        "scenario": "Proof Family R authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "R",
+        "fixture_class": "near-valid",
+        "input": {
+          "output_in_target": false
+        },
+        "scenario": "Proof Family R adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "R",
+        "fixture_class": "valid",
+        "input": {},
+        "scenario": "Proof Family R supported production case"
+      }
+    },
+    "S": {
+      "adversarial": {
+        "expected_error": "TELEMETRY_RETENTION_BOUNDARY_VIOLATION",
+        "family": "S",
+        "fixture_class": "adversarial",
+        "input": {
+          "endpoint": true,
+          "mode": "retention_attack",
+          "pending_entry_kind": "directory"
+        },
+        "scenario": "Proof Family S authority bypass rejected"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "family": "S",
+        "fixture_class": "near-valid",
+        "input": {
+          "endpoint": true,
+          "mode": "reset_empty"
+        },
+        "scenario": "Proof Family S adjacent bounded production case"
+      },
+      "valid": {
+        "expected_error": null,
+        "family": "S",
+        "fixture_class": "valid",
+        "input": {
+          "endpoint": true,
+          "mode": "reset_pending"
+        },
+        "scenario": "Proof Family S supported production case"
+      }
+    }
+  },
+  "schema_id": "provan.proof_fixture_bundle.v1",
+  "sensitivity": "PUBLIC_SAFE"
+}

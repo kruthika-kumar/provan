@@ -1,0 +1,120 @@
+from __future__ import annotations
+
+import re
+import subprocess
+import tarfile
+import zipfile
+from pathlib import Path, PurePosixPath
+
+from .errors import ProvanError
+
+PRIVATE_PATTERNS = {
+    # Match both ordinary Windows home paths and their JSON-escaped textual
+    # representation. Public proof transcripts must be checked as raw text.
+    "ABSOLUTE_USER_PATH": re.compile(r"(?:[A-Za-z]:(?:\\\\|\\)Users(?:\\\\|\\)|/Users/|/home/)", re.I),
+    "EMAIL_ADDRESS": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I),
+    "CREDENTIAL_BEARING_URL": re.compile(r"https?://[^\s/@]+:[^\s/@]+@|https?://[^\s/@]+@", re.I),
+    "PRIVATE_REPOSITORY_REFERENCE": re.compile(r"provan-(?:evals|enterprise)", re.I),
+    "PRIVATE_RUNTIME_PATH": re.compile("/var/" + r"lib/shiproom|/mnt/shiproom|/run/shiproom", re.I),
+    "PRIVATE_ASSET_IDENTITY": re.compile("qualification_" + r"artifact_[0-9a-f]+|recovery_(?:incident|input_manifest)|quarantine_receipt", re.I),
+}
+
+TEXT_SUFFIXES = {".py", ".md", ".json", ".toml", ".yml", ".yaml", ".txt", ".rst"}
+
+
+def _rule_literal(relative: str, line: str) -> bool:
+    return (relative == "provan/leakage.py" and "re.compile(" in line) or (relative == "provan/validators.py" and "re.search(" in line)
+
+
+def _text_violations(relative: str, text: str) -> list[dict]:
+    result=[]
+    for line in text.splitlines():
+        if _rule_literal(relative,line): continue
+        for code,pattern in PRIVATE_PATTERNS.items():
+            if pattern.search(line) and not _allowed_historical(code,relative): result.append({"path":relative,"error":code})
+    return result
+
+
+def _allowed_historical(code: str, relative: str) -> bool:
+    """Permit only identifiers already exposed in immutable historical trees."""
+    historical = relative.startswith(("historical/", "shiproom/", "external_validation/", "docs/validation/"))
+    return historical and code in {"PRIVATE_RUNTIME_PATH", "PRIVATE_ASSET_IDENTITY"}
+
+
+def validate_public_tree(root: Path, paths: list[Path] | None = None) -> list[dict]:
+    targets = paths or [p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES and ".git" not in p.parts]
+    violations = []
+    for path in targets:
+        relative = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        violations.extend(_text_violations(relative,text))
+    if violations:
+        raise ProvanError("COMMUNITY_PRIVATE_LEAKAGE", str(violations[:10]))
+    return []
+
+
+def _archive_violations(archive_path: Path) -> list[dict]:
+    """Inspect archive members in place; never extract repository-controlled paths."""
+    result=[]
+    def logical_name(name: str) -> str:
+        parts=PurePosixPath(name).parts
+        return PurePosixPath(*parts[1:]).as_posix() if len(parts)>1 and parts[0].startswith("provan_assurance-") else name
+    if zipfile.is_zipfile(archive_path):
+        with zipfile.ZipFile(archive_path) as archive:
+            for name in archive.namelist():
+                if name.endswith("/"): continue
+                path=PurePosixPath(name)
+                if path.is_absolute() or ".." in path.parts:
+                    result.append({"path":"archive:"+name,"error":"ARCHIVE_UNSAFE_MEMBER"}); continue
+                if path.suffix.lower() in TEXT_SUFFIXES:
+                    text=archive.read(name).decode("utf-8",errors="replace")
+                    result.extend({**item,"path":"archive:"+name} for item in _text_violations(logical_name(name),text))
+        return result
+    if tarfile.is_tarfile(archive_path):
+        with tarfile.open(archive_path,"r:*") as archive:
+            for member in archive.getmembers():
+                path=PurePosixPath(member.name)
+                if path.is_absolute() or ".." in path.parts or member.issym() or member.islnk():
+                    result.append({"path":"archive:"+member.name,"error":"ARCHIVE_UNSAFE_MEMBER"}); continue
+                if not member.isfile() or path.suffix.lower() not in TEXT_SUFFIXES: continue
+                stream=archive.extractfile(member)
+                if stream is not None:
+                    text=stream.read().decode("utf-8",errors="replace")
+                    result.extend({**item,"path":"archive:"+member.name} for item in _text_violations(logical_name(member.name),text))
+        return result
+    return [{"path":"archive:"+archive_path.name,"error":"ARCHIVE_FORMAT_UNSUPPORTED"}]
+
+
+def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None) -> None:
+    base="09c5fbab239a6dcb87eee3697f25aaff2929111f"; violations=[]
+    history=subprocess.run(["git","rev-list","--reverse",base+"..HEAD"],cwd=root,text=True,capture_output=True,check=True).stdout.splitlines()
+    for commit in history:
+        metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,capture_output=True,check=True).stdout
+        if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata):
+            violations.append({"path":f"commit:{commit}","error":"EMAIL_ADDRESS"})
+    commands=[["git","show","--format=","--unified=0",commit] for commit in history]
+    commands.extend((["git","diff","--unified=0"],["git","diff","--cached","--unified=0"]))
+    for command in commands:
+        result=subprocess.run(command,cwd=root,text=True,capture_output=True,check=False); current=""
+        for line in result.stdout.splitlines():
+            if line.startswith("+++ b/"): current=line[6:]
+            elif line.startswith("+") and not line.startswith("+++") and current and not _rule_literal(current,line[1:]):
+                for code,pattern in PRIVATE_PATTERNS.items():
+                    if pattern.search(line[1:]) and not _allowed_historical(code,current):
+                        text=line[1:]; reserved_fixture=current.startswith(("tests/","scripts/")) and ("@example.test" in text or "@example.invalid" in text or ("https"+"://"+"token"+"@github.com/o/r") in text)
+                        if not reserved_fixture: violations.append({"path":current,"error":code})
+    status=subprocess.run(["git","status","--porcelain"],cwd=root,text=True,capture_output=True,check=False)
+    paths=[]
+    for line in status.stdout.splitlines():
+        if line.startswith("?? "):
+            path=root/line[3:]
+            if path.is_file() and path.suffix.lower() in TEXT_SUFFIXES: paths.append(path)
+    build=root/"build"
+    if build.exists(): paths.extend(p for p in build.rglob("*") if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES)
+    for path in paths:
+        relative=path.relative_to(root).as_posix()
+        text=path.read_text(encoding="utf-8",errors="replace")
+        violations.extend(_text_violations(relative,text))
+    for archive_path in archive_paths or []:
+        violations.extend(_archive_violations(archive_path))
+    if violations: raise ProvanError("COMMUNITY_PRIVATE_LEAKAGE",str(violations[:10]))

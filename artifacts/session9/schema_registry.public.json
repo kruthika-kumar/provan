@@ -1,0 +1,152 @@
+{
+  "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
+  "schema_id": "provan.schema_registry.v1",
+  "schemas": [
+    {
+      "path": "provan/schemas/artifact-projection.v1.json",
+      "schema_id": "provan.artifact_projection.v1",
+      "sha256": "sha256:4fec6e605b5ac95a03f748101e97599de8f9e95f273034487293aacb16307d6a"
+    },
+    {
+      "path": "provan/schemas/claim-contract.v1.json",
+      "schema_id": "provan.claim_contract.v1",
+      "sha256": "sha256:16b8c564911fb58078428f40d8bd5fcf2f10bcb585a43ae84058553003412dec"
+    },
+    {
+      "path": "provan/schemas/compatibility-decision.v1.json",
+      "schema_id": "provan.compatibility_decision.v1",
+      "sha256": "sha256:d42c9210086e82cef6639b4afbc49fade495c486bedb714f81bf20bf1cb11dab"
+    },
+    {
+      "path": "provan/schemas/diagnostics.v1.json",
+      "schema_id": "provan.diagnostics.v1",
+      "sha256": "sha256:5c59d371940ec90c30e9ee1b6a53c2f6bfbbe73775f648acd4a3639a55edab7c"
+    },
+    {
+      "path": "provan/schemas/doctor-check-request.v1.json",
+      "schema_id": "provan.doctor_check_request.v1",
+      "sha256": "sha256:934495f4c77403aac17e3c8e9523900f7a0d56e924e9fecca62da3635f19a600"
+    },
+    {
+      "path": "provan/schemas/doctor-report.v1.json",
+      "schema_id": "provan.doctor_report.v1",
+      "sha256": "sha256:0ff4fb2176ef781f300d09debeca6b445d3e6d48a791429b22b01d4e9fb9f971"
+    },
+    {
+      "path": "provan/schemas/execution-request.v1.json",
+      "schema_id": "provan.execution_request.v1",
+      "sha256": "sha256:d59b96976daf945b60d10f6c46a1cdd1f300d7ce99ab6a7ecc08613fe4231439"
+    },
+    {
+      "path": "provan/schemas/extension-context-overlay.v1.json",
+      "schema_id": "provan.extension_context_overlay.v1",
+      "sha256": "sha256:56afbdec21aea26ecc99151e5e5639da2644c0bab211fdc95e006232c39ca454"
+    },
+    {
+      "path": "provan/schemas/extension-deployment-diagnostics-overlay.v1.json",
+      "schema_id": "provan.extension_deployment_diagnostics_overlay.v1",
+      "sha256": "sha256:62dbbefe4435b1f800b44c26b5b03173c30a11f89d9359a58a090b0af582e202"
+    },
+    {
+      "path": "provan/schemas/extension-descriptor.v1.json",
+      "schema_id": "provan.extension_descriptor.v1",
+      "sha256": "sha256:a0298d3daa8b67eccdb6c4d6decafddf31c1a664abc8a7d25e3a75a51b2c26b5"
+    },
+    {
+      "path": "provan/schemas/extension-entitlement-receipt-overlay.v1.json",
+      "schema_id": "provan.extension_entitlement_receipt_overlay.v1",
+      "sha256": "sha256:a1caa6f19bd1d330d86c0803be0d9d1f124b57f8058faaabcfa347a2f88132af"
+    },
+    {
+      "path": "provan/schemas/extension-historical-challenge-overlay.v1.json",
+      "schema_id": "provan.extension_historical_challenge_overlay.v1",
+      "sha256": "sha256:d56999601f82ddc3bb3f2fc2c922f7adc3fa9c571650b2552da2a8c21fe8d537"
+    },
+    {
+      "path": "provan/schemas/extension-organisation-policy-overlay.v1.json",
+      "schema_id": "provan.extension_organisation_policy_overlay.v1",
+      "sha256": "sha256:b4d58047ab71e37d0cc6ebdb667bc200bd87772f356bede8824840689fabdf54"
+    },
+    {
+      "path": "provan/schemas/extension-report-section-overlay.v1.json",
+      "schema_id": "provan.extension_report_section_overlay.v1",
+      "sha256": "sha256:feab603ebcc2d838da36c677fff66237fc0d21f93772cf1385ab9e2f6cb71182"
+    },
+    {
+      "path": "provan/schemas/historical-protection.v1.json",
+      "schema_id": "provan.historical_protection.v1",
+      "sha256": "sha256:0ea9b3ef138eb3f96d543f8ebaba1e7f92fb00d936dd3e82dbc99647b5ff3009"
+    },
+    {
+      "path": "provan/schemas/install-origin.v1.json",
+      "schema_id": "provan.install_origin.v1",
+      "sha256": "sha256:8e2f878e600c2f0e7159cc45a4d8f79c5082ba4cdd6f23775f579c6fa5fd943b"
+    },
+    {
+      "path": "provan/schemas/layer4-claim-matrix.v1.json",
+      "schema_id": "provan.layer4_claim_matrix.v1",
+      "sha256": "sha256:937b75657249b263cc1c813171c8d48986e77cad2c829632cd10eb74a877b648"
+    },
+    {
+      "path": "provan/schemas/capability-audit.v1.json",
+      "schema_id": "provan.operational_capability_audit_projection.v1",
+      "sha256": "sha256:99be1f9c377fef4a332de7dbd5674b676d808dc00c49d134d2f9ed050ebdd8f3"
+    },
+    {
+      "path": "provan/schemas/proof-fixture.v1.json",
+      "schema_id": "provan.proof_fixture.v1",
+      "sha256": "sha256:d4aa6064491309c807ee85f755f1e593488e5e08cd0aee1c55b3abaf12ef158f"
+    },
+    {
+      "path": "provan/schemas/proof-registry.v1.json",
+      "schema_id": "provan.proof_registry.v1",
+      "sha256": "sha256:2b0e28085ea1d2821563493f9e64deb756a8d32dac000988319b5ab1431dc1d9"
+    },
+    {
+      "path": "provan/schemas/publication-state.v1.json",
+      "schema_id": "provan.publication_state.v1",
+      "sha256": "sha256:26b7d5ac6f5d6ee3a684e5410a83301d85730417b8b7d8f1c599e612ee73aa1f"
+    },
+    {
+      "path": "provan/schemas/repository-inspection.v1.json",
+      "schema_id": "provan.repository_inspection.v1",
+      "sha256": "sha256:229a86bb0e1bf9a1c33ad192f70b6980d7ad8539a646cc618d042fa2c755bf38"
+    },
+    {
+      "path": "provan/schemas/runtime-topology.v1.json",
+      "schema_id": "provan.runtime_topology.v1",
+      "sha256": "sha256:318cad9da07dd817efde193fe016fbe3d22f7185471cbbcaaed73d54f7589f36"
+    },
+    {
+      "path": "provan/schemas/session2-projection.v1.json",
+      "schema_id": "provan.session2_projection.v1",
+      "sha256": "sha256:5a9bb5557f5a48c0b859545e8000081f9f65b00a1403d9bc99e78b4ea11cdcf7"
+    },
+    {
+      "path": "provan/schemas/session9-closeout-manifest.v1.json",
+      "schema_id": "provan.session9_closeout_manifest.v1",
+      "sha256": "sha256:7eb3658cc36d331a9173c69f7208cf532ded3817b2285b7225ebc544d8ac3f80"
+    },
+    {
+      "path": "provan/schemas/telemetry-command.v1.json",
+      "schema_id": "provan.telemetry_command.v1",
+      "sha256": "sha256:10f3b2d7a8a6fb57cec0b165a0525c4eee90da75a8d4f9f0f73ecae354610444"
+    },
+    {
+      "path": "provan/schemas/telemetry-pending-envelope.v1.json",
+      "schema_id": "provan.telemetry_pending_envelope.v1",
+      "sha256": "sha256:e34997759d3eae10716f7b904d0f0a9b2f802697e96b00875e31c10ca6bf14ba"
+    },
+    {
+      "path": "provan/schemas/version-policy.v1.json",
+      "schema_id": "provan.version_policy_decision.v1",
+      "sha256": "sha256:63c2626af974eb1262e5fdd8ad0cb1c1158c3d7266fa93e45ff277290e0351ba"
+    },
+    {
+      "path": "provan/schemas/wheel-validation-request.v1.json",
+      "schema_id": "provan.wheel_validation_request.v1",
+      "sha256": "sha256:b0627cc1f305890bff4f634ae91f283116dabe7c87b63f6b9b2ac4e21e552060"
+    }
+  ],
+  "sensitivity": "PUBLIC_SAFE"
+}

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.wheel_validation_request.v1","type":"object","required":["include_forbidden"],"properties":{"include_forbidden":{"type":"boolean"},"include_schema":{"type":"boolean"}},"additionalProperties":false}

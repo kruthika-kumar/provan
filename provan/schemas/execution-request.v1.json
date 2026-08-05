@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.execution_request.v1","type":"object","properties":{"allow_exec":{"type":"boolean"},"source_kind":{"type":"string"},"output_in_target":{"type":"boolean"},"local_config_attack":{"type":"boolean"},"mutation_matrix":{"type":"boolean"}},"additionalProperties":false}

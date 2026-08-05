@@ -1,0 +1,244 @@
+{
+  "content_root_hash": "sha256:00eac1935a1ee8fd10cf9d25c88de810cd2e43dfcdde3930bdae7bd02cff307c",
+  "implementation_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+  "implementation_member_match_count": 43,
+  "members": [
+    {
+      "path": "provan/__init__.py",
+      "sha256": "sha256:f29bdc97caa5a1628d607179dd5934d6e3e8427acd0d6ef4e32aaf257d8acb5a"
+    },
+    {
+      "path": "provan/canonical.py",
+      "sha256": "sha256:3eac5e21f24c622bf75740e13c011815af4e3fd1025eefe524477a4443032c9a"
+    },
+    {
+      "path": "provan/claims.py",
+      "sha256": "sha256:c568d77d0b9a83f158abcd7cdabe791578ddd2370ce32b21dc7ba539b4dff7ad"
+    },
+    {
+      "path": "provan/cli.py",
+      "sha256": "sha256:5e27cafb02968ced6fa489cdc127a4450a3a3ef50ea80f13b077fa3d166b25c9"
+    },
+    {
+      "path": "provan/compat.py",
+      "sha256": "sha256:f3fbf986b5f12beafaee17c06d893c6a2da72fad50149f2ff0d3e4212b3f52bf"
+    },
+    {
+      "path": "provan/doctor.py",
+      "sha256": "sha256:6b06d04a8fb261ba190ffc3108354ed6b6d02e1556868b9c333f242c6b9a3c10"
+    },
+    {
+      "path": "provan/errors.py",
+      "sha256": "sha256:82a4cc9d5105f8ac0963c7f50f0522b5fa79d8f646520603040c811a0f74834f"
+    },
+    {
+      "path": "provan/extensions.py",
+      "sha256": "sha256:6fd3e27e6e56e0cc2d4a0d29121a95d07d5d8192aab69321ce8b481a0e1e6638"
+    },
+    {
+      "path": "provan/guard.py",
+      "sha256": "sha256:41dcc37f0033d45460beca4f0b1dc0f915eff1ad4a5a06ae8ab0722f04f29b5a"
+    },
+    {
+      "path": "provan/leakage.py",
+      "sha256": "sha256:ae113dcd65e363909e8e6471b1b496a5bafd2d0f5eddaf63f4ae82e14b38ba10"
+    },
+    {
+      "path": "provan/repository.py",
+      "sha256": "sha256:34f7b0ef39dc34f77aa6e0cfe5cd5fa3f3e87a6db5cb694576cf15983f15c776"
+    },
+    {
+      "path": "provan/schemas/artifact-projection.v1.json",
+      "sha256": "sha256:4fec6e605b5ac95a03f748101e97599de8f9e95f273034487293aacb16307d6a"
+    },
+    {
+      "path": "provan/schemas/capability-audit.v1.json",
+      "sha256": "sha256:99be1f9c377fef4a332de7dbd5674b676d808dc00c49d134d2f9ed050ebdd8f3"
+    },
+    {
+      "path": "provan/schemas/claim-contract.v1.json",
+      "sha256": "sha256:16b8c564911fb58078428f40d8bd5fcf2f10bcb585a43ae84058553003412dec"
+    },
+    {
+      "path": "provan/schemas/compatibility-decision.v1.json",
+      "sha256": "sha256:d42c9210086e82cef6639b4afbc49fade495c486bedb714f81bf20bf1cb11dab"
+    },
+    {
+      "path": "provan/schemas/diagnostics.v1.json",
+      "sha256": "sha256:5c59d371940ec90c30e9ee1b6a53c2f6bfbbe73775f648acd4a3639a55edab7c"
+    },
+    {
+      "path": "provan/schemas/doctor-check-request.v1.json",
+      "sha256": "sha256:934495f4c77403aac17e3c8e9523900f7a0d56e924e9fecca62da3635f19a600"
+    },
+    {
+      "path": "provan/schemas/doctor-report.v1.json",
+      "sha256": "sha256:0ff4fb2176ef781f300d09debeca6b445d3e6d48a791429b22b01d4e9fb9f971"
+    },
+    {
+      "path": "provan/schemas/execution-request.v1.json",
+      "sha256": "sha256:d59b96976daf945b60d10f6c46a1cdd1f300d7ce99ab6a7ecc08613fe4231439"
+    },
+    {
+      "path": "provan/schemas/extension-context-overlay.v1.json",
+      "sha256": "sha256:56afbdec21aea26ecc99151e5e5639da2644c0bab211fdc95e006232c39ca454"
+    },
+    {
+      "path": "provan/schemas/extension-deployment-diagnostics-overlay.v1.json",
+      "sha256": "sha256:62dbbefe4435b1f800b44c26b5b03173c30a11f89d9359a58a090b0af582e202"
+    },
+    {
+      "path": "provan/schemas/extension-descriptor.v1.json",
+      "sha256": "sha256:a0298d3daa8b67eccdb6c4d6decafddf31c1a664abc8a7d25e3a75a51b2c26b5"
+    },
+    {
+      "path": "provan/schemas/extension-entitlement-receipt-overlay.v1.json",
+      "sha256": "sha256:a1caa6f19bd1d330d86c0803be0d9d1f124b57f8058faaabcfa347a2f88132af"
+    },
+    {
+      "path": "provan/schemas/extension-historical-challenge-overlay.v1.json",
+      "sha256": "sha256:d56999601f82ddc3bb3f2fc2c922f7adc3fa9c571650b2552da2a8c21fe8d537"
+    },
+    {
+      "path": "provan/schemas/extension-organisation-policy-overlay.v1.json",
+      "sha256": "sha256:b4d58047ab71e37d0cc6ebdb667bc200bd87772f356bede8824840689fabdf54"
+    },
+    {
+      "path": "provan/schemas/extension-report-section-overlay.v1.json",
+      "sha256": "sha256:feab603ebcc2d838da36c677fff66237fc0d21f93772cf1385ab9e2f6cb71182"
+    },
+    {
+      "path": "provan/schemas/historical-protection.v1.json",
+      "sha256": "sha256:0ea9b3ef138eb3f96d543f8ebaba1e7f92fb00d936dd3e82dbc99647b5ff3009"
+    },
+    {
+      "path": "provan/schemas/install-origin.v1.json",
+      "sha256": "sha256:8e2f878e600c2f0e7159cc45a4d8f79c5082ba4cdd6f23775f579c6fa5fd943b"
+    },
+    {
+      "path": "provan/schemas/layer4-claim-matrix.v1.json",
+      "sha256": "sha256:937b75657249b263cc1c813171c8d48986e77cad2c829632cd10eb74a877b648"
+    },
+    {
+      "path": "provan/schemas/proof-fixture.v1.json",
+      "sha256": "sha256:42318580f653488bb6118242b00a82e36c97a039eeb851b991fcd5b94ca54a05"
+    },
+    {
+      "path": "provan/schemas/proof-registry.v1.json",
+      "sha256": "sha256:2b0e28085ea1d2821563493f9e64deb756a8d32dac000988319b5ab1431dc1d9"
+    },
+    {
+      "path": "provan/schemas/publication-state.v1.json",
+      "sha256": "sha256:26b7d5ac6f5d6ee3a684e5410a83301d85730417b8b7d8f1c599e612ee73aa1f"
+    },
+    {
+      "path": "provan/schemas/repository-inspection.v1.json",
+      "sha256": "sha256:726108235b93110c359a2bb31f231dd8585d500cfdb1da0cea2d3300cfdc7a45"
+    },
+    {
+      "path": "provan/schemas/runtime-topology.v1.json",
+      "sha256": "sha256:318cad9da07dd817efde193fe016fbe3d22f7185471cbbcaaed73d54f7589f36"
+    },
+    {
+      "path": "provan/schemas/session2-projection.v1.json",
+      "sha256": "sha256:5a9bb5557f5a48c0b859545e8000081f9f65b00a1403d9bc99e78b4ea11cdcf7"
+    },
+    {
+      "path": "provan/schemas/session9-closeout-manifest.v1.json",
+      "sha256": "sha256:7eb3658cc36d331a9173c69f7208cf532ded3817b2285b7225ebc544d8ac3f80"
+    },
+    {
+      "path": "provan/schemas/telemetry-command.v1.json",
+      "sha256": "sha256:10f3b2d7a8a6fb57cec0b165a0525c4eee90da75a8d4f9f0f73ecae354610444"
+    },
+    {
+      "path": "provan/schemas/telemetry-pending-envelope.v1.json",
+      "sha256": "sha256:e34997759d3eae10716f7b904d0f0a9b2f802697e96b00875e31c10ca6bf14ba"
+    },
+    {
+      "path": "provan/schemas/version-policy.v1.json",
+      "sha256": "sha256:63c2626af974eb1262e5fdd8ad0cb1c1158c3d7266fa93e45ff277290e0351ba"
+    },
+    {
+      "path": "provan/schemas/wheel-validation-request.v1.json",
+      "sha256": "sha256:b0627cc1f305890bff4f634ae91f283116dabe7c87b63f6b9b2ac4e21e552060"
+    },
+    {
+      "path": "provan/state.py",
+      "sha256": "sha256:a3fbaebdad3a4b34311c4cc093060fc04958d85f302ae5675046e66521c7891a"
+    },
+    {
+      "path": "provan/telemetry.py",
+      "sha256": "sha256:57c0abde131778b614e44983e56777a4cd0371ca775edc64514a4cd4aa4c028f"
+    },
+    {
+      "path": "provan/validators.py",
+      "sha256": "sha256:ca92386b3b856dca9c4ddf379f0d9d299e6356b01d868dea038692ad90ef7257"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/METADATA",
+      "sha256": "sha256:0e4aaf6dbe72894e24ab4d890e2816a8b6f38bd1d738f808b6557a47ec0db54b"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/RECORD",
+      "sha256": "sha256:653c688a329bce47732aa5089327b57e345cb6a864f58465fe767dbb2a55083e"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/WHEEL",
+      "sha256": "sha256:69e6228a0d35958183cc1812f07c565ce837b95eb51bd8a33acba9fa4f68d6c9"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/entry_points.txt",
+      "sha256": "sha256:8e8b3f258f7508a99ee2e1f4c266b0c20bd6820ce29613de502d0a08b88e3d23"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/licenses/LICENSE",
+      "sha256": "sha256:79537049d5f61f4f0e01d635cbc77b8e146dcd7bd8fa37a5835fde506f368172"
+    },
+    {
+      "path": "provan_assurance-0.2.0.dist-info/top_level.txt",
+      "sha256": "sha256:28159b79250f4a3f5d5be42a809c3c625c55fd6c5d25850098004d32bfc63e33"
+    }
+  ],
+  "reproducible_builds": {
+    "byte_identical": true,
+    "source_date_epoch": "1785888000",
+    "transcripts": [
+      {
+        "command": "python -m pip wheel . --no-deps --no-build-isolation --wheel-dir .provan-record-a",
+        "completed_at": "2026-08-05T16:34:16.070152+00:00",
+        "environment": {
+          "PYTHONPATH": "NOT_SET",
+          "SOURCE_DATE_EPOCH": "1785888000"
+        },
+        "execution_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+        "execution_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+        "exit_code": 0,
+        "started_at": "2026-08-05T16:34:12.092022+00:00",
+        "timed_out": false,
+        "transcript_hash": "sha256:3c5637fb62026119eff454555971fcc62234e18114c4ab5a8df0adb93276287f",
+        "transcript_path": "artifacts/session9/transcripts/wheel_build.public.txt"
+      },
+      {
+        "command": "python -m pip wheel . --no-deps --no-build-isolation --wheel-dir .provan-record-b",
+        "completed_at": "2026-08-05T16:34:40.877414+00:00",
+        "environment": {
+          "PYTHONPATH": "NOT_SET",
+          "SOURCE_DATE_EPOCH": "1785888000"
+        },
+        "execution_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
+        "execution_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+        "exit_code": 0,
+        "started_at": "2026-08-05T16:34:37.205714+00:00",
+        "timed_out": false,
+        "transcript_hash": "sha256:5f080e7b010b0c304072230e16b2fa117b8c896bdc8b13191361507384222f0d",
+        "transcript_path": "artifacts/session9/transcripts/wheel_rebuild.public.txt"
+      }
+    ],
+    "wheel_sha256": "sha256:23e60bf46af7c0f5b7874a0c2fa6f1c0ef3f82d1462d27ea80c53d040ef04b0f"
+  },
+  "schema_id": "provan.wheel_content_manifest.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "wheel_filename": "provan_assurance-0.2.0-py3-none-any.whl",
+  "wheel_sha256": "sha256:23e60bf46af7c0f5b7874a0c2fa6f1c0ef3f82d1462d27ea80c53d040ef04b0f"
+}

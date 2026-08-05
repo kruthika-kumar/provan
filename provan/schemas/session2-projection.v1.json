@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.session2_projection.v1","type":"object","required":["status","comparison_completed"],"properties":{"status":{"type":"string"},"comparison_completed":{"type":"boolean"},"limitation":{"type":"string"}},"additionalProperties":false}

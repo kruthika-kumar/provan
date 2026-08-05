@@ -1,1 +1,1 @@
-"""Shared Shiproom script helpers."""
+"""Repository-only validation helpers; excluded from the Community wheel."""

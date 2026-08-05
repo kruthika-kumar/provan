@@ -1,0 +1,82 @@
+COMMAND: python scripts/run_evals.py
+EXECUTION_COMMIT: 6b42545e6e40f52d901361d0f0fece3407186b4e
+EXECUTION_TREE: d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11
+STARTED_AT: 2026-08-05T16:35:05.914466+00:00
+COMPLETED_AT: 2026-08-05T16:38:14.969928+00:00
+SOURCE_DATE_EPOCH: NOT_SET
+PYTHONPATH: .
+EXIT_CODE: 0
+TIMED_OUT: false
+--- OUTPUT ---
+GRAPH_CONTROLLED_PATIENT_PRE_SHOW
+Requirement: Public launch cards provide a returned public URL.
+Criterion: criterion_3a909446b95ca78c
+Journey context: Open returned public URL
+Direct journeys: none
+Implementation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Test evidence: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Instrumentation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Runtime: actual [model_mapped_candidate / model_mapped_candidate] check=hist-404 kind=runtime_http status=404 /result/demo
+Sources: current_release_source
+Findings: hist-finding blocker=True [model_mapped_candidate / model_mapped_candidate]
+Decisions: none
+Remediation: none
+Closure: not_inspected
+Missing slots: none
+Not inspected slots: none
+Model judgments: gap_757b0453abe7f84f, gap_765fcb3f3c35e68c
+Gaps: instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), test_evidence_gap=unknown (Qualifying deterministic test evidence.), implementation_gap=unknown (Qualifying deterministic implementation evidence.), specification_gap=open (Owner-confirmed Product Intent.), runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.)
+GRAPH_CONTROLLED_PATIENT_POST_SHOW
+Requirement: Public launch cards provide a returned public URL.
+Criterion: criterion_3a909446b95ca78c
+Journey context: Open returned public URL
+Direct journeys: none
+Implementation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Test evidence: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Instrumentation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
+Runtime: actual [model_mapped_candidate / model_mapped_candidate] check=hist-200 kind=runtime_http status=200 /result/demo, actual [model_mapped_candidate / model_mapped_candidate] check=hist-404 kind=runtime_http status=404 /result/demo
+Sources: current_release_source
+Findings: hist-finding blocker=True [model_mapped_candidate / model_mapped_candidate]
+Decisions: none
+Remediation: none
+Closure: not_inspected [deterministically_established / model_mapped_candidate] path=2
+Missing slots: none
+Not inspected slots: none
+Model judgments: gap_5bd055afe1bde1a3, gap_995cbe9ddc74891d
+Gaps: test_evidence_gap=unknown (Qualifying deterministic test evidence.), implementation_gap=unknown (Qualifying deterministic implementation evidence.), instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), specification_gap=open (Owner-confirmed Product Intent.), runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.)
+PASS registry discovers modules
+PASS irrelevant data skipped
+PASS AI selects data
+PASS blocker holds
+PASS agent report cannot close
+PASS model review cannot close
+PASS missing evidence cannot close
+PASS malformed output rejected
+PASS verified exact rerun closes
+PASS owner decision requested
+PASS owner decision preserved
+PASS owner choice cannot erase blocker
+PASS report evidence linkage contract
+PASS redacted external read-only failure
+PASS CONTEXT_HANDOFF_INTEGRITY
+PASS CONTEXT_PROJECT_ISOLATION
+PASS CONTEXT_CANNOT_OVERRIDE_VERIFIED_EVIDENCE
+PASS GRAPH_CANDIDATE_IS_NOT_PROOF
+PASS GRAPH_FOUR_SLOT_COMPLETENESS
+PASS GRAPH_CONTROLLED_PATIENT_LINEAGE
+PASS GRAPH_STALE_PRODUCT_INTENT_REJECTED
+PASS GRAPH_SEMANTIC_TAMPER_REJECTED
+PASS ASSESSMENT_PASSING_TEST_NOT_COVERAGE
+PASS ASSESSMENT_SOURCE_CANDIDATE_NOT_PROOF
+PASS ASSESSMENT_UNIT_COVERAGE_BOUNDARY_GAP
+PASS ASSESSMENT_NO_COMMAND_EXECUTION
+PASS ASSESSMENT_MANUAL_PORTABLE_WORK_ORDER
+PASS ASSESSMENT_BROWSER_PROVENANCE_BOUNDARY
+PASS ASSESSMENT_OVERLAY_NEVER_REFINES_BASE
+PASS MEASUREMENT_OUTCOME_EVENT_DECLARED_UNVERIFIED
+PASS MEASUREMENT_EVENT_PROPERTY_COMPLETENESS
+PASS MEASUREMENT_VAGUE_INTENT_AND_CONDITIONAL_COUNT_WARNING
+PASS AI_QUALIFIED_FIXED_EVAL_REQUIRED
+PASS MEASUREMENT_AI_HARNESS_NEUTRAL_PORTABILITY
+PASS MEASUREMENT_AI_CONVENTIONAL_PRODUCT_SKIP
+receipt=<COMMUNITY_WORKSPACE>\.shiproom\local\behavioral-eval-receipt.json

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.install_origin.v1","type":"object","required":["module_path","site_packages"],"properties":{"module_path":{"type":"string"},"site_packages":{"type":"string"}},"additionalProperties":false}

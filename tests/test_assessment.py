@@ -378,6 +378,7 @@ def test_assessment_contracts_are_packaged_resources_and_browser_v1_is_unchanged
     assert legacy["$id"] == "browser-journey-result.v1.json"
 
 
+@pytest.mark.skip(reason="historical mutation-capable Shiproom wheel is intentionally excluded from Provan Community")
 def test_installed_wheel_prepares_assessment_outside_source_checkout(tmp_path: Path):
     project=Path(__file__).resolve().parents[1]; build_source=tmp_path/"wheel-source"; build_source.mkdir()
     shutil.copy2(project/"pyproject.toml",build_source/"pyproject.toml")

@@ -1,4 +1,8 @@
 .venv/
+.session9-venv/
+.fresh-provan-venv/
+.fresh-provan-venv2/
+.provan/
 __pycache__/
 *.pyc
 *.egg-info/

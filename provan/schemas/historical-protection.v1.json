@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.historical_protection.v1","type":"object","required":["base_preserved","current_runtime_imports_historical"],"properties":{"base_preserved":{"type":"boolean"},"current_runtime_imports_historical":{"type":"boolean"},"preservation_mode":{"type":"string"}},"additionalProperties":false}

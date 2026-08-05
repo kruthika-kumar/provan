@@ -1,0 +1,246 @@
+{
+  "fixtures": [
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "context",
+        "may_mutate": false,
+        "overlay": {
+          "labels": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "bundled"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_context_overlay.v1"
+      },
+      "kind": "context",
+      "schema_path": "provan/schemas/extension-context-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "context",
+        "may_mutate": false,
+        "overlay": {
+          "labels": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "bundled"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_context_overlay.v1"
+      },
+      "kind": "context",
+      "schema_path": "provan/schemas/extension-context-overlay.v1.json"
+    },
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "organisation_policy",
+        "may_mutate": false,
+        "overlay": {
+          "policy_ids": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "organisation"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_organisation_policy_overlay.v1"
+      },
+      "kind": "organisation_policy",
+      "schema_path": "provan/schemas/extension-organisation-policy-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "organisation_policy",
+        "may_mutate": false,
+        "overlay": {
+          "policy_ids": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "organisation"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_organisation_policy_overlay.v1"
+      },
+      "kind": "organisation_policy",
+      "schema_path": "provan/schemas/extension-organisation-policy-overlay.v1.json"
+    },
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "historical_challenge",
+        "may_mutate": false,
+        "overlay": {
+          "challenge_refs": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "historical"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_historical_challenge_overlay.v1"
+      },
+      "kind": "historical_challenge",
+      "schema_path": "provan/schemas/extension-historical-challenge-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "historical_challenge",
+        "may_mutate": false,
+        "overlay": {
+          "challenge_refs": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "historical"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_historical_challenge_overlay.v1"
+      },
+      "kind": "historical_challenge",
+      "schema_path": "provan/schemas/extension-historical-challenge-overlay.v1.json"
+    },
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "entitlement_receipt",
+        "may_mutate": false,
+        "overlay": {
+          "entitlements": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "entitlement"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_entitlement_receipt_overlay.v1"
+      },
+      "kind": "entitlement_receipt",
+      "schema_path": "provan/schemas/extension-entitlement-receipt-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "entitlement_receipt",
+        "may_mutate": false,
+        "overlay": {
+          "entitlements": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "entitlement"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_entitlement_receipt_overlay.v1"
+      },
+      "kind": "entitlement_receipt",
+      "schema_path": "provan/schemas/extension-entitlement-receipt-overlay.v1.json"
+    },
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "report_section",
+        "may_mutate": false,
+        "overlay": {
+          "sections": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "bundled"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_report_section_overlay.v1"
+      },
+      "kind": "report_section",
+      "schema_path": "provan/schemas/extension-report-section-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "report_section",
+        "may_mutate": false,
+        "overlay": {
+          "sections": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "bundled"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_report_section_overlay.v1"
+      },
+      "kind": "report_section",
+      "schema_path": "provan/schemas/extension-report-section-overlay.v1.json"
+    },
+    {
+      "expected_error": null,
+      "fixture_class": "valid",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "deployment_diagnostics",
+        "may_mutate": false,
+        "overlay": {
+          "diagnostic_codes": []
+        },
+        "provenance": {
+          "source_ref": "public-fixture",
+          "source_type": "diagnostic"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_deployment_diagnostics_overlay.v1"
+      },
+      "kind": "deployment_diagnostics",
+      "schema_path": "provan/schemas/extension-deployment-diagnostics-overlay.v1.json"
+    },
+    {
+      "expected_error": "EXTENSION_PROVENANCE_INVALID",
+      "fixture_class": "adversarial",
+      "input": {
+        "authority": "bounded_overlay",
+        "kind": "deployment_diagnostics",
+        "may_mutate": false,
+        "overlay": {
+          "diagnostic_codes": []
+        },
+        "provenance": {
+          "source_ref": "private:fixture",
+          "source_type": "diagnostic"
+        },
+        "provider_id": "public.fixture",
+        "schema_id": "provan.extension_deployment_diagnostics_overlay.v1"
+      },
+      "kind": "deployment_diagnostics",
+      "schema_path": "provan/schemas/extension-deployment-diagnostics-overlay.v1.json"
+    }
+  ],
+  "schema_id": "provan.extension_contract_fixture_bundle.v1",
+  "sensitivity": "PUBLIC_SAFE"
+}

@@ -1,0 +1,1 @@
+{"schema_id":"provan.artifact_sensitivity_manifest.v1","sensitivity":"PUBLIC_SAFE","community_allowed":["PUBLIC_SAFE","HISTORICAL_PUBLIC"],"community_forbidden":["PRIVATE_MAINTAINER","LOCAL_EPHEMERAL"],"checks":["secrets","absolute user paths","emails","credential-bearing URLs","private repository references","private asset identities","hidden selection and oracle details"]}
