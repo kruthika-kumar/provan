@@ -1,20 +1,20 @@
-COMMAND: python scripts/validate_session9.py --allow-pending-review --skip-closeout-bindings --wheel dist/provan_assurance-0.2.0-py3-none-any.whl
-EXECUTION_COMMIT: 6b42545e6e40f52d901361d0f0fece3407186b4e
-EXECUTION_TREE: d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11
-STARTED_AT: 2026-08-05T16:40:16.038959+00:00
-COMPLETED_AT: 2026-08-05T16:40:32.997611+00:00
+COMMAND: python scripts/validate_session9.py --allow-pending-review --wheel dist/*.whl --archive dist/*.tar.gz
+EXECUTION_COMMIT: ebf293c9dc5e4ba579ef843750049f3c2e253126
+EXECUTION_TREE: 69d0077cccdb411fa35345dac35c2234becb7c5d
+STARTED_AT: 2026-08-05T23:38:09.410781+00:00
+COMPLETED_AT: 2026-08-05T23:38:22.867292+00:00
 SOURCE_DATE_EPOCH: NOT_SET
 PYTHONPATH: NOT_SET
 EXIT_CODE: 0
 TIMED_OUT: false
 --- OUTPUT ---
-{"status": "SESSION9_VALID", "proof_entries": 66, "claims": 15, "schemas": 29}
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
-warning: unable to access '<USER_HOME>
+{"status": "SESSION9_VALID", "proof_entries": 69, "claims": 15, "schemas": 29}
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>
+warning: unable to access '<USER_PATH>

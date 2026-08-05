@@ -1,13 +1,13 @@
 COMMAND: python -m pytest -q tests/test_session9.py tests/test_session9_proofs.py tests/test_session9_extension_contracts.py
-EXECUTION_COMMIT: 6b42545e6e40f52d901361d0f0fece3407186b4e
-EXECUTION_TREE: d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11
-STARTED_AT: 2026-08-05T16:35:05.808731+00:00
-COMPLETED_AT: 2026-08-05T16:35:29.755679+00:00
+EXECUTION_COMMIT: ebf293c9dc5e4ba579ef843750049f3c2e253126
+EXECUTION_TREE: 69d0077cccdb411fa35345dac35c2234becb7c5d
+STARTED_AT: 2026-08-05T22:55:30.091020+00:00
+COMPLETED_AT: 2026-08-05T22:56:27.113536+00:00
 SOURCE_DATE_EPOCH: NOT_SET
 PYTHONPATH: NOT_SET
 EXIT_CODE: 0
 TIMED_OUT: false
 --- OUTPUT ---
-........................................................................ [ 57%]
-.....................................................                    [100%]
-125 passed in 22.68s
+........................................................................ [ 54%]
+............................................................             [100%]
+132 passed in 17.27s

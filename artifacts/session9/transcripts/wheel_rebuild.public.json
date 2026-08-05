@@ -1,15 +1,15 @@
 {
-  "command": "python -m pip wheel . --no-deps --no-build-isolation --wheel-dir .provan-record-b",
-  "completed_at": "2026-08-05T16:34:40.877414+00:00",
+  "command": "python -m pip wheel . --no-deps --no-build-isolation --wheel-dir .provan-record-n",
+  "completed_at": "2026-08-05T22:54:15.488378+00:00",
   "environment": {
     "PYTHONPATH": "NOT_SET",
     "SOURCE_DATE_EPOCH": "1785888000"
   },
-  "execution_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
-  "execution_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "execution_commit": "ebf293c9dc5e4ba579ef843750049f3c2e253126",
+  "execution_tree": "69d0077cccdb411fa35345dac35c2234becb7c5d",
   "exit_code": 0,
-  "started_at": "2026-08-05T16:34:37.205714+00:00",
+  "started_at": "2026-08-05T22:54:12.091801+00:00",
   "timed_out": false,
-  "transcript_hash": "sha256:5f080e7b010b0c304072230e16b2fa117b8c896bdc8b13191361507384222f0d",
+  "transcript_hash": "sha256:d67663c42e0ec56187e177bb536ed7385b5728fea3d71e4686cfc2461ac9f821",
   "transcript_path": "artifacts/session9/transcripts/wheel_rebuild.public.txt"
 }

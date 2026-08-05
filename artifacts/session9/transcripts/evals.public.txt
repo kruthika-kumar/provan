@@ -1,8 +1,8 @@
 COMMAND: python scripts/run_evals.py
-EXECUTION_COMMIT: 6b42545e6e40f52d901361d0f0fece3407186b4e
-EXECUTION_TREE: d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11
-STARTED_AT: 2026-08-05T16:35:05.914466+00:00
-COMPLETED_AT: 2026-08-05T16:38:14.969928+00:00
+EXECUTION_COMMIT: ebf293c9dc5e4ba579ef843750049f3c2e253126
+EXECUTION_TREE: 69d0077cccdb411fa35345dac35c2234becb7c5d
+STARTED_AT: 2026-08-05T22:56:38.814366+00:00
+COMPLETED_AT: 2026-08-05T22:59:17.011858+00:00
 SOURCE_DATE_EPOCH: NOT_SET
 PYTHONPATH: .
 EXIT_CODE: 0
@@ -10,7 +10,7 @@ TIMED_OUT: false
 --- OUTPUT ---
 GRAPH_CONTROLLED_PATIENT_PRE_SHOW
 Requirement: Public launch cards provide a returned public URL.
-Criterion: criterion_3a909446b95ca78c
+Criterion: criterion_396b4abe5a69b452
 Journey context: Open returned public URL
 Direct journeys: none
 Implementation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
@@ -24,11 +24,11 @@ Remediation: none
 Closure: not_inspected
 Missing slots: none
 Not inspected slots: none
-Model judgments: gap_757b0453abe7f84f, gap_765fcb3f3c35e68c
-Gaps: instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), test_evidence_gap=unknown (Qualifying deterministic test evidence.), implementation_gap=unknown (Qualifying deterministic implementation evidence.), specification_gap=open (Owner-confirmed Product Intent.), runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.)
+Model judgments: gap_270c4d1ec966ed3f, gap_21cb459e3a76aad0
+Gaps: runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), specification_gap=open (Owner-confirmed Product Intent.), implementation_gap=unknown (Qualifying deterministic implementation evidence.), instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), test_evidence_gap=unknown (Qualifying deterministic test evidence.)
 GRAPH_CONTROLLED_PATIENT_POST_SHOW
 Requirement: Public launch cards provide a returned public URL.
-Criterion: criterion_3a909446b95ca78c
+Criterion: criterion_396b4abe5a69b452
 Journey context: Open returned public URL
 Direct journeys: none
 Implementation: candidate_present [model_mapped_candidate / model_mapped_candidate] check= kind= status=None demo_patient/server.py
@@ -42,8 +42,8 @@ Remediation: none
 Closure: not_inspected [deterministically_established / model_mapped_candidate] path=2
 Missing slots: none
 Not inspected slots: none
-Model judgments: gap_5bd055afe1bde1a3, gap_995cbe9ddc74891d
-Gaps: test_evidence_gap=unknown (Qualifying deterministic test evidence.), implementation_gap=unknown (Qualifying deterministic implementation evidence.), instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), specification_gap=open (Owner-confirmed Product Intent.), runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.)
+Model judgments: gap_1e90246837c06253, gap_33f200bca5f32db7
+Gaps: quality_judgment=unknown (Qualified assessment or deterministic evidence.), quality_judgment=unknown (Qualified assessment or deterministic evidence.), instrumentation_gap=unknown (Qualifying deterministic instrumentation evidence.), specification_gap=open (Owner-confirmed Product Intent.), runtime_evidence_gap=unknown (Qualifying deterministic runtime evidence.), test_evidence_gap=unknown (Qualifying deterministic test evidence.), implementation_gap=unknown (Qualifying deterministic implementation evidence.)
 PASS registry discovers modules
 PASS irrelevant data skipped
 PASS AI selects data

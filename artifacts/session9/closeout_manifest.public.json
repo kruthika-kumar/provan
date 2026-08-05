@@ -16,7 +16,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/claim_audit.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:b9714df070b8d3796060939190b7e403a359266c9815cc5e24e241adb581acf8"
+      "sha256": "sha256:e586d239fad73e21255828e41d9d62d4b8fd9366c427429bca7961cfd694cde7"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -34,7 +34,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/implementation_binding.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:2c6fe3399ae7fea4b6842bf5e77edb1b6e92c3a8e4f6a88ccd4711e5fa45104c"
+      "sha256": "sha256:52e6cf89b9538bed57e2586c5c5a55dceaa642492dd870c86b17f5e33987f947"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -46,19 +46,19 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/layer4_claim_matrix.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:a8b165110d5cb0c8947ad12ecea6b2b44bf6cede701f304c18eb5b9cc83f6caa"
+      "sha256": "sha256:4df094b5edabf43ebe0e6569687629aa6890d3555abbee30140917c641b3d882"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/proof_execution.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:2b7ddb7e3b01282ca0db4b6811b47f38934a953afe387c04722b076bf9bdcac9"
+      "sha256": "sha256:6edddad1017d1e89f72c199e0c532aed4eb29821b7705c4d18b2052e6b6e8387"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/proof_registry.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:51d9c2f0a2ee82b9f9fcdc193cd6b962c7e89a3224a582cbfb5d3a7b20a46cfb"
+      "sha256": "sha256:3070b207c3adcce5945475032700858beee51ccacd4109aa286257eb029577d7"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -70,7 +70,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/schema_registry.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:ef2b93dfc5a6bbd6b51c4e9a878053044d3f1a3f02710a38fc066f52531a5d43"
+      "sha256": "sha256:7c12cad42295eb1a81b5712b4332794d038002ea2a7b277fa306df4971c311da"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -82,115 +82,115 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/candidate_validation.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:8df324fe8c78b7dd43498727c4c54690df2e0116ff5f3832876bbffef6a5c779"
+      "sha256": "sha256:338e43a525765e0b700600a22dd88c24fce0b982697123f0b0afac58b54043bd"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/candidate_validation.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:fac24c87dc2dd6f3f829e793e03d0a59a8eeeea3fad22a8b17ea0e5e480469d5"
+      "sha256": "sha256:e7e1a78229cda993cb138f120938b2f20e1d3de223269fdee3e4c8cd9c730680"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/diff_check.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:d0f16eb20374b68fa678d76d3b1edf4556df5e93ccc1e152170c51f5e3161914"
+      "sha256": "sha256:5714dd96e612b7ee90ab970e7f1a090e9cbc73da487a4e0256b078001af10070"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/diff_check.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:43b5f66a41dec89ceca286014f29a57abbd152e2ec1527b03c182f82691fde77"
+      "sha256": "sha256:b9262bf39a90530fafd56f6175008ee4fe9bd07c4907feb1ba0349f7c151fd78"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/evals.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:5b732eb276e4cf2ca8890b3c2f45035c0c46f5438593a318b098de3501806408"
+      "sha256": "sha256:6689534630e9fd8316ea0671af212a39a8aa7d933b910a42de318a4777efb1a1"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/evals.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:eab3fbfa15b5394c842259902ad0631c980c14683b9cd800fbd2ac147c17b040"
+      "sha256": "sha256:ed75647c70fa9259ae6c725bd4a804f5b116c7aa79e999089b47882b195208aa"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/focused.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:5b689e4b092d52cca77fb79abbb0d91b9ac934e1cae072e517f78eb64d9e2d76"
+      "sha256": "sha256:a7e8c667447da5e3f1ccdcffbd5a9c92bcc7eb5cdce9ecdde896a7ee864cc856"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/focused.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:a5340075dcf2a4db06514a0fe4d5d2fef94078eaa4edb10284ba3fa43a581047"
+      "sha256": "sha256:c68b3270720714fb8ebf670c78b34ad5f9b135b26c339d8d0a957fc89e25a59f"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/fresh_install.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:f34f378ddd8992e1e76f288bb4bf3ff91f05bf2f7612e945de368b421e1f5388"
+      "sha256": "sha256:c4fc833cd831e5075c2e0b2557981fae9dd8038f7ad205b5e85732f05dda9d01"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/fresh_install.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:ab6b71c99a37a154c9200ecf36d52865621116750883b0df09a89ce2c304d959"
+      "sha256": "sha256:d30eb29680f0bf1a617eab246b2cb11dd0ea195a716093ee46f384e48eb31c5b"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/full_pytest.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:913571479e7995c297874276ac80896d673cd3680609eb4e277687312767c90b"
+      "sha256": "sha256:542af2f032140c3a2b834d3b75c83eda8f71778ca025d85a659b2f09474a7dae"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/full_pytest.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:5b426a9adf1f9df3f2745839ee217d687555c3b3c26c9b391d7b67b6362f0081"
+      "sha256": "sha256:4d8145ad4765f6ae93f935d067d174e5ac09361d93759ee78f0658037b8c6497"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/integration.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:3f441a71fa0919c7eadf68be4c56c9bd5f465f747a8eec854fa400594935ee48"
+      "sha256": "sha256:99ee239c0f231237a25856b1f00a32ff1737ae623741d875317d8d35dd2afa95"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/integration.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:12d6935777f8cea3b51c8170c64219381c416635022bd6c052a5892311ac3e67"
+      "sha256": "sha256:31f9786fceab5dd3af112ac4c28a231b678f3f5a9e6f176a40d9f9236823f70d"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/wheel_build.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:fcc7eb3072394120b0ec618a4ee0ec6f61ed5c26ebbdc15baeeb212a217426c5"
+      "sha256": "sha256:85f3fd6cbf07a58cc11ca496902b803119e16981f1777237fff6ae74796a2f81"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/wheel_build.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:3c5637fb62026119eff454555971fcc62234e18114c4ab5a8df0adb93276287f"
+      "sha256": "sha256:44c8c0528cb18f321e5d0fdc8dc5baf7d3eaac70e2543b2c20698d8c6ec598ba"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/wheel_rebuild.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:4a15bc43b20377947da29f9ea04caaa024d2b8c4e29de047a3eded15f8f0821f"
+      "sha256": "sha256:6f9082046e4900fb584bff2e42fa3b31dbd73527cad9937558136720c9ef5430"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/transcripts/wheel_rebuild.public.txt",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:5f080e7b010b0c304072230e16b2fa117b8c896bdc8b13191361507384222f0d"
+      "sha256": "sha256:d67663c42e0ec56187e177bb536ed7385b5728fea3d71e4686cfc2461ac9f821"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/validation_baseline.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:7943f229c77ff0072ada2891bd339dd86c0be85d6c6452fc010e80f1d91de5d5"
+      "sha256": "sha256:068f8bb06a755cccb634cacb6d594b5983607ac2a21c42098873337955bfdfdf"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -202,7 +202,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/wheel_content_manifest.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:adb216015c3e5498b3d9a87e2441f5dc45b0101a6b656b2cd4911c626b397e1f"
+      "sha256": "sha256:84eefb3ec42c63dcfc5ce8c0c734fdc2686e9678621a0ea9ad7fa197684b3a27"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -241,10 +241,10 @@
       "sha256": "sha256:36e2d8c9a52edf2ec2c8583638dfdf22b4924e8238faf92ce9d2eb79e4af245c"
     }
   ],
-  "implementation_commit": "6b42545e6e40f52d901361d0f0fece3407186b4e",
-  "implementation_tree": "d8cf5bf8cec9658ccd1698dc8581c7aa357e7d11",
+  "implementation_commit": "ebf293c9dc5e4ba579ef843750049f3c2e253126",
+  "implementation_tree": "69d0077cccdb411fa35345dac35c2234becb7c5d",
   "invented_outcomes": false,
-  "proof_set_root_hash": "sha256:6216eb4da6534c0221cbedfe4752d573a1c5c8d324916af2683e875d5c521370",
+  "proof_set_root_hash": "sha256:a3a6874b8c02db2e3effb0f4b4c9b5bebf068f98f6021854948071d3b9b153dd",
   "publication": {
     "state": "PENDING"
   },
