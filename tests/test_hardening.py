@@ -39,12 +39,14 @@ def make_repo(tmp_path: Path) -> Path:
         shutil.copy2(ROOT / name, repo / name)
     (repo/".shiproom").mkdir(); contract=json.loads((ROOT/".shiproom/project-contract.json").read_text(encoding="utf-8")); contract["default_capability_profile"]="remediate"; (repo/".shiproom/project-contract.json").write_text(json.dumps(contract,indent=2)+"\n",encoding="utf-8")
     for relative in ROUTE_TARGETS:
-        broken, fixed = ROUTE_TARGETS[relative]; baseline = ""
-        for ref in ("main", "origin/main", "HEAD^1", "HEAD"):
-            result = subprocess.run(["git", "show", f"{ref}:{relative.as_posix()}"], cwd=ROOT, text=True, capture_output=True)
-            if result.returncode == 0 and result.stdout.count(broken) == 1 and result.stdout.count(fixed) == 0:
-                baseline = result.stdout; break
-        if not baseline: raise AssertionError(f"no broken controlled-patient base revision found for {relative}")
+        broken, fixed = ROUTE_TARGETS[relative]
+        current = (repo / relative).read_text(encoding="utf-8")
+        if current.count(broken) == 1 and current.count(fixed) == 0:
+            baseline = current
+        elif current.count(fixed) == 1 and current.count(broken) == 0:
+            baseline = current.replace(fixed, broken, 1)
+        else:
+            raise AssertionError(f"controlled-patient source has an ambiguous route state for {relative}")
         (repo / relative).write_text(baseline, encoding="utf-8")
     git(repo, "init", "-b", "event-base")
     git(repo, "config", "user.email", "shiproom-test@example.invalid")
