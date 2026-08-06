@@ -1,1 +1,34 @@
-{"schema_id":"provan.publication_audit_projection.v1","sensitivity":"PUBLIC_SAFE","projection_id":"session9-publication-public-v2","public_history":{"tracked_package_versions":["0.1.0"],"package_release_count":0,"github_release_count":0,"historical_tag_count":1},"compatibility_conclusion":{"legacy_cli_publicly_documented":true,"legacy_functional_behavior_preserved":false,"migration_only_message_required":true},"limitations":["Historical branches and tags remain authoritative only for historical behavior."]}
+{
+  "compatibility_conclusion": {
+    "legacy_cli_publicly_documented": true,
+    "legacy_functional_behavior_preserved": false,
+    "migration_only_message_required": true
+  },
+  "limitations": [
+    "Historical branches and tags remain authoritative only for historical behavior."
+  ],
+  "projection_id": "session9-publication-public-v2",
+  "public_history": {
+    "github_release_count": 0,
+    "historical_tag_count": 1,
+    "package_release_count": 0,
+    "tracked_package_versions": [
+      "0.1.0"
+    ]
+  },
+  "schema_id": "provan.publication_audit_projection.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "session9_publication": {
+    "candidate_branch": "codex/session9-provan-community-reset",
+    "candidate_ci_run": "https://github.com/kruthika-kumar/provan/actions/runs/31090237211",
+    "default_branch": "main",
+    "history_preserved": true,
+    "integration": "NON_FORCE_FAST_FORWARD",
+    "legacy_repository_redirect_verified": true,
+    "merged_main_ci_run": "https://github.com/kruthika-kumar/provan/actions/runs/31091955403",
+    "package_published": false,
+    "release_created": false,
+    "repository": "https://github.com/kruthika-kumar/provan",
+    "tag_created": false
+  }
+}

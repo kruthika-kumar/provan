@@ -11,7 +11,7 @@
   "comparative_claim_authorized": false,
   "implementation_commit": "c04069922ea0da8fcdabc5bf5337d54e500ee13c",
   "invented_outcomes": false,
-  "reviewer_result": "PENDING",
+  "reviewer_result": "GO",
   "schema_id": "provan.claim_audit.v1",
   "sensitivity": "PUBLIC_SAFE"
 }

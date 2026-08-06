@@ -1,1 +1,18 @@
-{"schema_id":"provan.historical_surface_projection.v1","sensitivity":"HISTORICAL_PUBLIC","surface_class":"historical buildathon evidence","current_product_surface":false,"snapshot_status":"PRIVATE_SNAPSHOT_COMPLETE_BEFORE_CHANGE","preservation_policy":"retain evidence-bearing routes and payloads; banner changes must not rewrite evidence","immutable_archive_route":"/archive/pre-provan-session9/index.html","report_payload_change_authorized":false}
+{
+  "current_product_surface": false,
+  "deployment": {
+    "historical_banner_present": true,
+    "immutable_archive_matches_prechange_root": true,
+    "package_artifacts_exposed": false,
+    "route": "https://shiproom-demo.bookies-litany-00.workers.dev",
+    "unchanged_evidence_route_count": 9,
+    "version_id": "3ae4aa5e-d5dc-471e-836c-104e13fe9468"
+  },
+  "immutable_archive_route": "/archive/pre-provan-session9/index.html",
+  "preservation_policy": "retain evidence-bearing routes and payloads; banner changes must not rewrite evidence",
+  "report_payload_change_authorized": false,
+  "schema_id": "provan.historical_surface_projection.v1",
+  "sensitivity": "HISTORICAL_PUBLIC",
+  "snapshot_status": "PRIVATE_SNAPSHOT_COMPLETE_BEFORE_CHANGE",
+  "surface_class": "historical buildathon evidence"
+}

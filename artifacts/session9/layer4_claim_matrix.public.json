@@ -8,9 +8,9 @@
       "Negative proof": "session9.proof.R.adversarial",
       "Positive proof": "session9.proof.R.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -20,9 +20,9 @@
       "Negative proof": "session9.proof.I.adversarial",
       "Positive proof": "session9.proof.I.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -32,9 +32,9 @@
       "Negative proof": "session9.proof.R.adversarial",
       "Positive proof": "session9.proof.R.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -44,9 +44,9 @@
       "Negative proof": "session9.proof.N.adversarial",
       "Positive proof": "session9.proof.N.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -56,9 +56,9 @@
       "Negative proof": "session9.proof.K.adversarial",
       "Positive proof": "session9.proof.K.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -68,9 +68,9 @@
       "Negative proof": "session9.proof.M.adversarial",
       "Positive proof": "session9.proof.M.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -80,9 +80,9 @@
       "Negative proof": "session9.proof.L.adversarial",
       "Positive proof": "session9.proof.L.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "provan/extensions.py + docs/extensions.md + artifacts/session9/proof_registry.public.json",
@@ -92,9 +92,9 @@
       "Negative proof": "session9.proof.G.adversarial",
       "Positive proof": "session9.proof.G.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/wheel_content_manifest.public.json + artifacts/session9/implementation_binding.public.json",
@@ -104,9 +104,9 @@
       "Negative proof": "session9.proof.O.adversarial",
       "Positive proof": "session9.proof.O.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -116,9 +116,9 @@
       "Negative proof": "session9.proof.B.adversarial",
       "Positive proof": "session9.proof.B.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -128,9 +128,9 @@
       "Negative proof": "session9.proof.D.adversarial",
       "Positive proof": "session9.proof.D.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -140,9 +140,9 @@
       "Negative proof": "session9.proof.E.adversarial",
       "Positive proof": "session9.proof.E.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "docs/licensing-boundary.md + docs/product-boundary.md + artifacts/session9/closeout_manifest.public.json",
@@ -152,9 +152,9 @@
       "Negative proof": "session9.proof.F.adversarial",
       "Positive proof": "session9.proof.F.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "artifacts/session9/proof_registry.public.json",
@@ -164,9 +164,9 @@
       "Negative proof": "session9.proof.S.adversarial",
       "Positive proof": "session9.proof.S.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     },
     {
       "Artifact evidence": "docs/repository-package-workspace-environment.md + pyproject.toml + artifacts/session9/closeout_manifest.public.json",
@@ -176,9 +176,9 @@
       "Negative proof": "session9.proof.F.adversarial",
       "Positive proof": "session9.proof.F.valid",
       "Python result": "PASS / typed adversarial rejection",
-      "Reviewer result": "PENDING",
+      "Reviewer result": "ACCEPTED",
       "Schema result": "PASS for structural fixture; independent Python enforces runtime/filesystem semantics",
-      "Status": "PENDING_REVIEW"
+      "Status": "CLOSED"
     }
   ],
   "schema_id": "provan.layer4_claim_matrix.v1",

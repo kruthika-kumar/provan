@@ -16,13 +16,13 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/claim_audit.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:0e031b16b7b905cd71e2160d765b3dc89697aff875e9f6138876dca53e042579"
+      "sha256": "sha256:6f71445aeef23bb49ce9ea616c5d2e760edbbfdaa896dd583511c589c2fbe6e9"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/cloudflare_history.public.json",
       "sensitivity": "HISTORICAL_PUBLIC",
-      "sha256": "sha256:5820f607eb71e81a64f9101441a7501c6ee9171d82977998f661830bf3a91103"
+      "sha256": "sha256:55d5286d06d2a209baf72fcd0d700e260ddd77e0c338447b68ed2afebaa1ba55"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -46,7 +46,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/layer4_claim_matrix.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:4df094b5edabf43ebe0e6569687629aa6890d3555abbee30140917c641b3d882"
+      "sha256": "sha256:a4c81f30049817b9d7c2ad5d23ee12ed555863dd5bd9c4cf5d50bd56775b6c11"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -64,7 +64,7 @@
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
       "path": "artifacts/session9/publication_audit.public.json",
       "sensitivity": "PUBLIC_SAFE",
-      "sha256": "sha256:06e1faee48a8b6052ce336a5290176a9f60149b501cfd72e99d83832bcd917a4"
+      "sha256": "sha256:bcdc79eaa2bec492f61a6d0b5174d526ce78862620d8b9d52ac9f1b0cd59f95b"
     },
     {
       "hash_policy": "UTF8_LF_NORMALIZED_SHA256",
@@ -244,12 +244,27 @@
   "implementation_commit": "c04069922ea0da8fcdabc5bf5337d54e500ee13c",
   "implementation_tree": "92e4573ef6433496a7f28292ef73a883d4e4b50f",
   "invented_outcomes": false,
-  "proof_set_root_hash": "sha256:b8e009b3a86bdfe89ea5b2aa7c2be13c756696d9247e15be502a76f5f10969cf",
+  "proof_set_root_hash": "sha256:2ac4d0222e40ddb1040da83664296be95aa565d8f4cf179033a9258e307094d0",
   "publication": {
-    "state": "PENDING"
+    "candidate_ci_run_id": 31090237211,
+    "cloudflare_version_id": "3ae4aa5e-d5dc-471e-836c-104e13fe9468",
+    "default_branch": "main",
+    "integration": "NON_FORCE_FAST_FORWARD",
+    "merged_main_ci_run_id": 31091955403,
+    "package_published": false,
+    "release_created": false,
+    "repository": "https://github.com/kruthika-kumar/provan",
+    "state": "PUBLISHED",
+    "tag_created": false
   },
   "review": {
-    "result": "PENDING"
+    "invented_claim_or_outcome": false,
+    "layer4_claims_accepted": 15,
+    "p0_findings": 0,
+    "p1_findings": 0,
+    "p2_findings": 0,
+    "result": "GO",
+    "scope": "exact merged implementation and pre-review proof set"
   },
   "schema_id": "provan.session9_closeout_manifest.v1",
   "sensitivity": "PUBLIC_SAFE",
