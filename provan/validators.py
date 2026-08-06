@@ -311,14 +311,16 @@ def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[
             raise ProvanError("LAYER4_CLAIM_INCOMPLETE", "claim has an unclosed column")
         claim_id = row["Claim"].split(" — ", 1)[0]
         cited = set()
-        for column in ("Positive proof", "Near-valid proof", "Negative proof"):
+        for column, expected_kind in (("Positive proof", "valid"), ("Near-valid proof", "near-valid"), ("Negative proof", "adversarial")):
             reference = row[column]
             if reference.lower() in {"all gates passed", "all tests passed", "generic gate"}:
                 raise ProvanError("LAYER4_GENERIC_EVIDENCE_FORBIDDEN", "generic gate evidence cannot close a claim")
-            match = re.search(r"\b(C9[A-I])\b", reference)
+            match = re.fullmatch(r"session9\.(?:proof\.([A-S])|correction\.(C9[A-I]))\.(valid|near-valid|adversarial)", reference)
             if not match:
                 raise ProvanError("LAYER4_PROOF_BINDING_INVALID", "proof reference has no mapped correction invariant")
-            cited.add(match.group(1))
+            if match.group(3) != expected_kind:
+                raise ProvanError("LAYER4_PROOF_BINDING_INVALID", f"{column} does not bind a {expected_kind} fixture")
+            cited.add(match.group(1) or match.group(2))
         if not cited.issubset(mapping[claim_id]):
             raise ProvanError("LAYER4_UNRELATED_PROOF_FAMILY", "claim cites an invariant not mapped by the crosswalk")
         if row["Reviewer result"] not in {"ACCEPTED", "GO"} or row["Status"] != "CLOSED":

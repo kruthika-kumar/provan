@@ -154,7 +154,7 @@ def _crosswalk() -> dict:
 def _matrix() -> dict:
     claims=[]
     for index, wording in enumerate(CORRECTION_CLAIMS,1):
-        claims.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"public artifact","Positive proof":"C9F.valid","Near-valid proof":"C9F.near-valid","Negative proof":"C9F.adversarial","Python result":"PASS","Schema result":"PASS","Artifact evidence":"bound artifact hash","Reviewer result":"ACCEPTED","Status":"CLOSED"})
+        claims.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"public artifact","Positive proof":"session9.correction.C9F.valid","Near-valid proof":"session9.correction.C9F.near-valid","Negative proof":"session9.correction.C9F.adversarial","Python result":"PASS","Schema result":"PASS","Artifact evidence":"bound artifact hash","Reviewer result":"ACCEPTED","Status":"CLOSED"})
     return {"schema_id":"provan.layer4_claim_matrix_correction.v2","sensitivity":"PUBLIC_SAFE","claims":claims}
 
 

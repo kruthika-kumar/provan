@@ -48,7 +48,7 @@ def _matrix(shared: bool = False) -> dict[str, Any]:
     rows=[]
     for index,wording in enumerate(CORRECTION_CLAIMS,1):
         family="C9F"
-        rows.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"fixture","Positive proof":f"{family}.valid","Near-valid proof":f"{family}.near-valid","Negative proof":f"{family}.adversarial","Python result":"PASS","Schema result":"PASS","Artifact evidence":"sha256-bound fixture","Reviewer result":"ACCEPTED","Status":"CLOSED"})
+        rows.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"fixture","Positive proof":f"session9.correction.{family}.valid","Near-valid proof":f"session9.correction.{family}.near-valid","Negative proof":f"session9.correction.{family}.adversarial","Python result":"PASS","Schema result":"PASS","Artifact evidence":"sha256-bound fixture","Reviewer result":"ACCEPTED","Status":"CLOSED"})
     return {"claims":rows,"shared":shared}
 
 
