@@ -9,7 +9,7 @@
     "telemetry": "DISABLED_BY_DEFAULT_NO_COLLECTOR"
   },
   "comparative_claim_authorized": false,
-  "implementation_commit": "ebf293c9dc5e4ba579ef843750049f3c2e253126",
+  "implementation_commit": "c04069922ea0da8fcdabc5bf5337d54e500ee13c",
   "invented_outcomes": false,
   "reviewer_result": "PENDING",
   "schema_id": "provan.claim_audit.v1",

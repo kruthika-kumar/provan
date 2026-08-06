@@ -1,15 +1,15 @@
 {
   "command": "python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.2.0-py3-none-any.whl",
-  "completed_at": "2026-08-05T22:57:04.885287+00:00",
+  "completed_at": "2026-08-06T09:38:52.806547+00:00",
   "environment": {
     "PYTHONPATH": "NOT_SET",
     "SOURCE_DATE_EPOCH": "NOT_SET"
   },
-  "execution_commit": "ebf293c9dc5e4ba579ef843750049f3c2e253126",
-  "execution_tree": "69d0077cccdb411fa35345dac35c2234becb7c5d",
+  "execution_commit": "c04069922ea0da8fcdabc5bf5337d54e500ee13c",
+  "execution_tree": "92e4573ef6433496a7f28292ef73a883d4e4b50f",
   "exit_code": 0,
-  "started_at": "2026-08-05T22:56:41.379574+00:00",
+  "started_at": "2026-08-06T09:38:21.694427+00:00",
   "timed_out": false,
-  "transcript_hash": "sha256:d30eb29680f0bf1a617eab246b2cb11dd0ea195a716093ee46f384e48eb31c5b",
+  "transcript_hash": "sha256:f02734da72ce363b8adb702309cff6aece65da780721999d41827017309ff382",
   "transcript_path": "artifacts/session9/transcripts/fresh_install.public.txt"
 }

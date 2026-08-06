@@ -1,8 +1,8 @@
 COMMAND: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.2.0-py3-none-any.whl
-EXECUTION_COMMIT: ebf293c9dc5e4ba579ef843750049f3c2e253126
-EXECUTION_TREE: 69d0077cccdb411fa35345dac35c2234becb7c5d
-STARTED_AT: 2026-08-05T22:56:41.379574+00:00
-COMPLETED_AT: 2026-08-05T22:57:04.885287+00:00
+EXECUTION_COMMIT: c04069922ea0da8fcdabc5bf5337d54e500ee13c
+EXECUTION_TREE: 92e4573ef6433496a7f28292ef73a883d4e4b50f
+STARTED_AT: 2026-08-06T09:38:21.694427+00:00
+COMPLETED_AT: 2026-08-06T09:38:52.806547+00:00
 SOURCE_DATE_EPOCH: NOT_SET
 PYTHONPATH: NOT_SET
 EXIT_CODE: 0
@@ -73,8 +73,8 @@ $ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry sch
 }
 $ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry preview
 {
-  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-05T22:56:56.468327+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"e45736d4-72c3-430e-992b-b31673a58d7e\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
-  "envelope_digest": "sha256:c300a7d56a5bdabd36447a694bf09d3832b2c8be607f9e0147d3c3c4924b8e15",
+  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-06T09:38:41.209370+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"2050047d-91ff-4012-8ea0-386d6d564dbe\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
+  "envelope_digest": "sha256:692f2dd9d835656c6a64bfbee5b955cdd842f854d52a5a441c80259c1c1acd7d",
   "schema_id": "provan.telemetry_preview.v1",
   "transport_metadata": {
     "endpoint_configured": false,
@@ -94,8 +94,8 @@ $ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry ena
 }
 $ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" telemetry preview
 {
-  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-05T22:56:56.824034+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"e4a2cdc4-e15b-4853-8e8f-a2f62aab1c80\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
-  "envelope_digest": "sha256:480b6fe762a53f2aa289773ebf1e447a44461fc62510bcae7d094822b1f76c2b",
+  "canonical_bytes_utf8": "{\"created_at\":\"2026-08-06T09:38:41.529915+00:00\",\"event\":\"doctor_completed\",\"event_id\":\"d1a48cde-c4da-4615-a535-dde84d38ddbc\",\"product_version\":\"0.2.0\",\"schema_id\":\"provan.telemetry_pending_envelope.v1\"}\n",
+  "envelope_digest": "sha256:5e9c4ac511deb8cc56f3a7f91459969bae08b9de868ae4d1c3ff91aeac82e489",
   "schema_id": "provan.telemetry_preview.v1",
   "transport_metadata": {
     "endpoint_configured": false,
@@ -173,7 +173,7 @@ $ "<COMMUNITY_WORKSPACE>\.provan-fresh-install\Scripts\provan.exe" repository in
       "--batch"
     ]
   ],
-  "completed_at": "2026-08-05T22:57:03.469690+00:00",
+  "completed_at": "2026-08-06T09:38:51.446126+00:00",
   "executed_repository_code": false,
   "mode": "source-only",
   "requested": {
