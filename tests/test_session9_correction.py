@@ -31,7 +31,7 @@ from provan.validators import (
     validate_reviewer_receipt_semantics,
     validate_telemetry_status_semantics,
 )
-from scripts.session9_correction_cases import evaluate_fixture
+from scripts.session9_correction_cases import contract_fixture, evaluate_fixture
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "provan" / "schemas"
@@ -68,6 +68,24 @@ def test_c9a_nested_output_preserved_and_outside_rejected(tmp_path: Path, monkey
     assert inspect_repository(str(repo), commit, commit, nested)["output_path"] == str(nested)
     with pytest.raises(ProvanError) as raised: inspect_repository(str(repo), commit, commit, tmp_path / "outside.json")
     assert raised.value.code == "OUTPUT_PATH_OUTSIDE_PROVAN_STATE"
+
+
+def test_customer_target_output_uses_permanent_mutation_error(tmp_path: Path, monkeypatch):
+    repo, commit = repository(tmp_path); monkeypatch.setenv("PROVAN_HOME",str(tmp_path/"state"))
+    before=git(repo,"status","--porcelain=v1")
+    with pytest.raises(ProvanError) as raised: inspect_repository(str(repo),commit,commit,repo/"receipt.json")
+    assert raised.value.code == "CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN"
+    assert git(repo,"status","--porcelain=v1") == before and not (repo/"receipt.json").exists()
+
+
+def test_local_linked_git_control_path_rejected_without_outside_change(tmp_path: Path, monkeypatch):
+    real, commit=repository(tmp_path); facade=tmp_path/"facade"; facade.mkdir(); outside=real/".git"
+    try: (facade/".git").symlink_to(outside,target_is_directory=True)
+    except OSError: pytest.skip("symlink creation unavailable")
+    monkeypatch.setenv("PROVAN_HOME",str(tmp_path/"state")); before=git(real,"status","--porcelain=v1")
+    with pytest.raises(ProvanError) as raised: inspect_repository(str(facade),commit,commit)
+    assert raised.value.code == "UNSAFE_GIT_OBJECT_STORE_FORBIDDEN"
+    assert git(real,"status","--porcelain=v1") == before
 
 
 @pytest.mark.parametrize("child", ["outputs", "pending"])
@@ -147,30 +165,53 @@ def test_c9a_public_projection_rejects_absolute_path():
 
 
 def test_c9e_private_projection_schema_pass_semantic_rejects_private_path():
-    value={"schema_id":"provan.private_repository_projection.v1","sensitivity":"PUBLIC_SAFE","repository_role":"EVALUATION","repository_name":"provan-"+"evals","visibility":"PRIVATE","commit":"0"*40,"tree":"1"*40,"branch":"main","clean":True,"drift_status":"EXACT_EXPECTED_HEAD","aggregate_results":{}}
+    value={"schema_id":"provan.private_repository_projection.v1","sensitivity":"PUBLIC_SAFE","repository_role":"EVALUATION","repository_name":"provan-"+"evals","visibility":"PRIVATE","commit":"0"*40,"tree":"1"*40,"branch":"main","clean":True,"drift_status":"EXACT_EXPECTED_HEAD","aggregate_results":{"validator":"PASS","all_and_only_authorized":True,"authorized_usable_count":7,"classification_totals":{"PRIVATE_EVAL_CASE":4,"PRIVATE_INCIDENT_REGRESSION":3},"typed_exclusion_count":7,"typed_exclusion_reason_totals":{"NOT_PRIVATE_USABLE_ASSET":6,"QUARANTINED_NON_EXECUTABLE_INCIDENT_EVIDENCE":1},"customer_content_validation":"PASS","community_runtime_dependency":"ABSENT","headline_claims_authorized":False,"session2_status":"CLOSED_PARTIAL"}}
     jsonschema.validate(value,schema("private-repository-projection.v1.json")); validate_private_projection_semantics(value)
     invalid={**value,"aggregate_results":{"private_case":"C:/hidden"}}
     jsonschema.validate(invalid,schema("private-repository-projection.v1.json"))
     with pytest.raises(ProvanError) as raised: validate_private_projection_semantics(invalid)
     assert raised.value.code == "PRIVATE_REPOSITORY_RECEIPT_INVALID"
+    with pytest.raises(ProvanError) as missing: validate_private_projection_semantics({**value,"aggregate_results":{}})
+    assert missing.value.code == "PRIVATE_REPOSITORY_RECEIPT_INVALID"
+
+
+def test_c9e_enterprise_projection_requires_installed_wheel_binding():
+    aggregate={"repository_purpose":"PRIVATE_EXTENSION_CONFORMANCE_SCAFFOLD","scaffold_only":True,"installed_wheel_conformance":"PASS","installed_module_origin":"ISOLATED_SITE_PACKAGES","community_checkout_on_sys_path":False,"bounded_overlay":True,"may_weaken_evidence":False,"may_mutate_repository":False}
+    binding={"community_version":"0.2.0","extension_api_major":1,"implementation_commit":"0"*40,"implementation_tree":"1"*40,"wheel_sha256":"sha256:"+"2"*64,"schema_registry_digest":"sha256:"+"3"*64}
+    value={"schema_id":"provan.private_repository_projection.v1","sensitivity":"PUBLIC_SAFE","repository_role":"ENTERPRISE","repository_name":"provan-"+"enterprise","visibility":"PRIVATE","commit":"4"*40,"tree":"5"*40,"branch":"main","clean":True,"drift_status":"AUTHORIZED_ADDITIVE_CORRECTION_FROM_EXPECTED_HEAD","aggregate_results":aggregate,"implementation_binding":binding}
+    jsonschema.validate(value,schema("private-repository-projection.v1.json")); validate_private_projection_semantics(value)
+    with pytest.raises(ProvanError) as raised: validate_private_projection_semantics({**value,"implementation_binding":{}})
+    assert raised.value.code == "PRIVATE_REPOSITORY_RECEIPT_INVALID"
 
 
 def _crosswalk() -> dict:
-    return {"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":family,"proof_family":family,"claim_ids":[f"G9-{i:02d}" for i in range(1,41)]} for family in sorted({f"C9{x}" for x in "ABCDEFGHI"})],"claims":[{"claim_id":f"G9-{i:02d}","proof_families":["C9F"]} for i in range(1,41)]}
+    ids=[f"G9-{i:02d}" for i in range(1,41)]
+    return {"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":"forty claims","proof_family":"C9F","claim_ids":ids}],"claims":[{"claim_id":claim,"proof_families":["C9F"]} for claim in ids]}
+
+
+def _layer4_registry() -> dict:
+    digest="sha256:"+"0"*64
+    return {"entries":[{"proof_id":f"session9.correction.C9F.{kind}","fixture_class":kind,"test_id":"test","production_function":"production","python_validator":"validator","schema_result":"PASS","python_result":"REJECT:LAYER4_CLAIM_SET_INCOMPLETE" if kind=="adversarial" else "PASS","artifact_locations":["fixture"],"artifact_hashes":[digest],"transcript_hash":digest} for kind in ("valid","near-valid","adversarial")]}
 
 
 def _matrix() -> dict:
     claims=[]
     for index, wording in enumerate(CORRECTION_CLAIMS,1):
-        claims.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"public artifact","Positive proof":"session9.correction.C9F.valid","Near-valid proof":"session9.correction.C9F.near-valid","Negative proof":"session9.correction.C9F.adversarial","Python result":"PASS","Schema result":"PASS","Artifact evidence":"bound artifact hash","Reviewer result":"ACCEPTED","Status":"CLOSED"})
+        claims.append({"Claim":f"G9-{index:02d} — {wording}","Implemented in":"public artifact","Positive proof":"session9.correction.C9F.valid","Near-valid proof":"session9.correction.C9F.near-valid","Negative proof":"session9.correction.C9F.adversarial","Python result":"PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE","Schema result":"PASS","Artifact evidence":"sha256:"+"0"*64,"Reviewer result":"ACCEPTED","Status":"CLOSED"})
     return {"schema_id":"provan.layer4_claim_matrix_correction.v2","sensitivity":"PUBLIC_SAFE","claims":claims}
 
 
 def test_c9f_exact_forty_claims_allow_legitimate_proof_reuse():
-    matrix=_matrix(); crosswalk=_crosswalk(); jsonschema.validate(matrix,schema("layer4-claim-matrix-correction.v2.json")); validate_correction_layer4_semantics(matrix,crosswalk)
+    matrix=_matrix(); crosswalk=_crosswalk(); registry=_layer4_registry(); jsonschema.validate(matrix,schema("layer4-claim-matrix-correction.v2.json")); validate_correction_layer4_semantics(matrix,crosswalk,[registry])
     invalid={**matrix,"claims":matrix["claims"][:-1]}
-    with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(invalid,crosswalk)
+    with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(invalid,crosswalk,[registry])
     assert raised.value.code == "LAYER4_CLAIM_SET_INCOMPLETE"
+    broken_crosswalk={**crosswalk,"invariants":[{**crosswalk["invariants"][0],"claim_ids":crosswalk["invariants"][0]["claim_ids"][:-1]}]}
+    with pytest.raises(ProvanError) as crosswalk_error: validate_correction_layer4_semantics(matrix,broken_crosswalk,[registry])
+    assert crosswalk_error.value.code == "LAYER4_CROSSWALK_INVALID"
+    broken_matrix={**matrix,"claims":[{**matrix["claims"][0],"Artifact evidence":"bound artifact hash"},*matrix["claims"][1:]]}
+    with pytest.raises(ProvanError) as binding_error: validate_correction_layer4_semantics(broken_matrix,crosswalk,[registry])
+    assert binding_error.value.code == "LAYER4_PROOF_BINDING_INVALID"
 
 
 def test_c9g_access_warning_semantics_fail_required_and_unclassified():
@@ -214,6 +255,9 @@ def test_c9d_review_and_closeout_semantic_failures_are_independent():
 def test_correction_proof_fixture_executes_independent_semantics(family: str, fixture_class: str):
     bundle=json.loads((ROOT/"tests/fixtures/session9/correction-proof-fixtures.v1.json").read_text(encoding="utf-8"))
     case=bundle["families"][family][fixture_class]
+    schema_name,contract=contract_fixture(family,fixture_class)
+    assert case["schema_file"]==schema_name and case["input"]==contract
+    jsonschema.validate(case["input"],schema(schema_name))
     expected=case["expected_error"]
     if expected:
         with pytest.raises(ProvanError) as raised: evaluate_fixture(family,fixture_class)

@@ -1,15 +1,2672 @@
 {
-  "schema_id": "provan.session9_correction_fixture_bundle.v1",
-  "sensitivity": "PUBLIC_SAFE",
   "families": {
-    "C9A": {"valid":{"scenario":"default UUID output","expected_error":null},"near-valid":{"scenario":"nested controlled output","expected_error":null},"adversarial":{"scenario":"absolute public proof path","expected_error":"OUTPUT_PATH_OUTSIDE_PROVAN_STATE"}},
-    "C9B": {"valid":{"scenario":"executed required checks ready","expected_error":null},"near-valid":{"scenario":"optional sandbox unavailable","expected_error":null},"adversarial":{"scenario":"broken Git reported ready","expected_error":"DOCTOR_FALSE_READY"}},
-    "C9C": {"valid":{"scenario":"non-persistent identity policy","expected_error":null},"near-valid":{"scenario":"transport configured without correlation","expected_error":null},"adversarial":{"scenario":"installation identity claimed","expected_error":"TELEMETRY_IDENTITY_POLICY_INVALID"}},
-    "C9D": {"valid":{"scenario":"GO receipt bound to forty claims","expected_error":null},"near-valid":{"scenario":"GO receipt records runtime limitation","expected_error":null},"adversarial":{"scenario":"review omits one claim","expected_error":"REVIEW_RECEIPT_BINDING_INVALID"}},
-    "C9E": {"valid":{"scenario":"aggregate eval projection","expected_error":null},"near-valid":{"scenario":"authorised newer lineage projection","expected_error":null},"adversarial":{"scenario":"projection contains private case path","expected_error":"PRIVATE_REPOSITORY_RECEIPT_INVALID"}},
-    "C9F": {"valid":{"scenario":"forty mapped claims","expected_error":null},"near-valid":{"scenario":"legitimate shared proof family","expected_error":null},"adversarial":{"scenario":"one individual claim omitted","expected_error":"LAYER4_CLAIM_SET_INCOMPLETE"}},
-    "C9G": {"valid":{"scenario":"warning-free isolated Git","expected_error":null},"near-valid":{"scenario":"typed optional XDG warning history","expected_error":null},"adversarial":{"scenario":"required authority unreadable","expected_error":"REQUIRED_AUTHORITY_ACCESS_FAILED"}},
-    "C9H": {"valid":{"scenario":"real outputs directory","expected_error":null},"near-valid":{"scenario":"real pending directory","expected_error":null},"adversarial":{"scenario":"linked child not rejected","expected_error":"PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN"}},
-    "C9I": {"valid":{"scenario":"canonical publication-state digest","expected_error":null},"near-valid":{"scenario":"typed mirror failure leaves canonical immutable","expected_error":null},"adversarial":{"scenario":"publication-state digest mismatch","expected_error":"EXTERNAL_RECEIPT_BINDING_INVALID"}}
-  }
+    "C9A": {
+      "adversarial": {
+        "expected_error": "OUTPUT_PATH_OUTSIDE_PROVAN_STATE",
+        "input": {
+          "public_relative_path": "../outside/receipt.json",
+          "receipt_id": "f87e5086-80f3-5e16-9a07-3697064159c4",
+          "receipt_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.inspection_write_result.v1"
+        },
+        "scenario": "absolute public proof path",
+        "schema_file": "inspection-write-result.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "public_relative_path": "outputs/repository-inspection-4949067e-a72a-5d4d-a32c-b0c89b82a306.json",
+          "receipt_id": "4949067e-a72a-5d4d-a32c-b0c89b82a306",
+          "receipt_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.inspection_write_result.v1"
+        },
+        "scenario": "nested controlled output",
+        "schema_file": "inspection-write-result.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "public_relative_path": "outputs/repository-inspection-29435542-d6d7-5150-86a2-ae40e8b136d1.json",
+          "receipt_id": "29435542-d6d7-5150-86a2-ae40e8b136d1",
+          "receipt_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.inspection_write_result.v1"
+        },
+        "scenario": "default UUID output",
+        "schema_file": "inspection-write-result.v1.json"
+      }
+    },
+    "C9B": {
+      "adversarial": {
+        "expected_error": "DOCTOR_FALSE_READY",
+        "input": {
+          "checks": [
+            {
+              "detail": "fixture",
+              "id": "python",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "installed_version",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "packaged_schemas",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "git_local_operation",
+              "required": true,
+              "status": "BLOCKED"
+            },
+            {
+              "detail": "fixture",
+              "id": "provan_home",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_outputs",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_pending",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_output_probe",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "source_only_inspection",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "extension_registry_metadata",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_enabled",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_transport",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "qualified_execution_sandbox",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "network_policy",
+              "required": false,
+              "status": "NOT_APPLICABLE"
+            }
+          ],
+          "limitations": [
+            "qualified_execution_sandbox_not_configured"
+          ],
+          "product_version": "0.2.0",
+          "schema_id": "provan.doctor_report.v1",
+          "status": "READY_WITH_LIMITATIONS"
+        },
+        "scenario": "broken Git reported ready",
+        "schema_file": "doctor-report.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "checks": [
+            {
+              "detail": "fixture",
+              "id": "python",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "installed_version",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "packaged_schemas",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "git_local_operation",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "provan_home",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_outputs",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_pending",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_output_probe",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "source_only_inspection",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "extension_registry_metadata",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_enabled",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_transport",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "qualified_execution_sandbox",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "network_policy",
+              "required": false,
+              "status": "NOT_APPLICABLE"
+            }
+          ],
+          "limitations": [
+            "qualified_execution_sandbox_not_configured"
+          ],
+          "product_version": "0.2.0",
+          "schema_id": "provan.doctor_report.v1",
+          "status": "READY_WITH_LIMITATIONS"
+        },
+        "scenario": "optional sandbox unavailable",
+        "schema_file": "doctor-report.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "checks": [
+            {
+              "detail": "fixture",
+              "id": "python",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "installed_version",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "packaged_schemas",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "git_local_operation",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "provan_home",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_outputs",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_pending",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "state_output_probe",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "source_only_inspection",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "extension_registry_metadata",
+              "required": true,
+              "status": "READY"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_enabled",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "telemetry_transport",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "qualified_execution_sandbox",
+              "required": false,
+              "status": "NOT_CONFIGURED"
+            },
+            {
+              "detail": "fixture",
+              "id": "network_policy",
+              "required": false,
+              "status": "NOT_APPLICABLE"
+            }
+          ],
+          "limitations": [
+            "qualified_execution_sandbox_not_configured"
+          ],
+          "product_version": "0.2.0",
+          "schema_id": "provan.doctor_report.v1",
+          "status": "READY_WITH_LIMITATIONS"
+        },
+        "scenario": "executed required checks ready",
+        "schema_file": "doctor-report.v1.json"
+      }
+    },
+    "C9C": {
+      "adversarial": {
+        "expected_error": "TELEMETRY_IDENTITY_POLICY_INVALID",
+        "input": {
+          "cross_run_correlation": "UNSUPPORTED",
+          "enabled": false,
+          "identifier_policy": "per_envelope_pseudonymous_non_persistent",
+          "installation_identity_collected": true,
+          "recurring_installation_usage_measurement": "UNSUPPORTED",
+          "schema_id": "provan.telemetry_status.v1",
+          "timed_rotation": "NOT_APPLICABLE",
+          "transport": "NOT_CONFIGURED"
+        },
+        "scenario": "installation identity claimed",
+        "schema_file": "telemetry-status-policy.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "cross_run_correlation": "UNSUPPORTED",
+          "enabled": false,
+          "identifier_policy": "per_envelope_pseudonymous_non_persistent",
+          "installation_identity_collected": false,
+          "recurring_installation_usage_measurement": "UNSUPPORTED",
+          "schema_id": "provan.telemetry_status.v1",
+          "timed_rotation": "NOT_APPLICABLE",
+          "transport": "NOT_CONFIGURED"
+        },
+        "scenario": "transport configured without correlation",
+        "schema_file": "telemetry-status-policy.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "cross_run_correlation": "UNSUPPORTED",
+          "enabled": false,
+          "identifier_policy": "per_envelope_pseudonymous_non_persistent",
+          "installation_identity_collected": false,
+          "recurring_installation_usage_measurement": "UNSUPPORTED",
+          "schema_id": "provan.telemetry_status.v1",
+          "timed_rotation": "NOT_APPLICABLE",
+          "transport": "NOT_CONFIGURED"
+        },
+        "scenario": "non-persistent identity policy",
+        "schema_file": "telemetry-status-policy.v1.json"
+      }
+    },
+    "C9D": {
+      "adversarial": {
+        "expected_error": "REVIEW_RECEIPT_BINDING_INVALID",
+        "input": {
+          "claim_dispositions": [
+            {
+              "claim_id": "G9-01",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-02",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-03",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-04",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-05",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-06",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-07",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-08",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-09",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-10",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-11",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-12",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-13",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-14",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-15",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-16",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-17",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-18",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-19",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-20",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-21",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-22",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-23",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-24",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-25",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-26",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-27",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-28",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-29",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-30",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-31",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-32",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-33",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-34",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-35",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-36",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-37",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-38",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-39",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-39",
+              "result": "ACCEPTED"
+            }
+          ],
+          "findings": [],
+          "independence_limitations": [],
+          "open_p0_count": 0,
+          "open_p1_count": 0,
+          "open_p2_count": 0,
+          "review_finished_at": "2026-01-01T00:01:00Z",
+          "review_started_at": "2026-01-01T00:00:00Z",
+          "reviewed_commit": "0000000000000000000000000000000000000000",
+          "reviewed_pre_review_proof_root": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "reviewed_repository": "provan",
+          "reviewed_tree": "1111111111111111111111111111111111111111",
+          "reviewer_harness": "fixture",
+          "reviewer_mode": "read-only",
+          "reviewer_model_or_runtime": "identity unavailable",
+          "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+          "scope": [],
+          "verdict": "GO"
+        },
+        "scenario": "review omits one claim",
+        "schema_file": "reviewer-receipt-correction.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "claim_dispositions": [
+            {
+              "claim_id": "G9-01",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-02",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-03",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-04",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-05",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-06",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-07",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-08",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-09",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-10",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-11",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-12",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-13",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-14",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-15",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-16",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-17",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-18",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-19",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-20",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-21",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-22",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-23",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-24",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-25",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-26",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-27",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-28",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-29",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-30",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-31",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-32",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-33",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-34",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-35",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-36",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-37",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-38",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-39",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-40",
+              "result": "ACCEPTED"
+            }
+          ],
+          "findings": [],
+          "independence_limitations": [
+            "model identity not independently attestable"
+          ],
+          "open_p0_count": 0,
+          "open_p1_count": 0,
+          "open_p2_count": 0,
+          "review_finished_at": "2026-01-01T00:01:00Z",
+          "review_started_at": "2026-01-01T00:00:00Z",
+          "reviewed_commit": "0000000000000000000000000000000000000000",
+          "reviewed_pre_review_proof_root": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "reviewed_repository": "provan",
+          "reviewed_tree": "1111111111111111111111111111111111111111",
+          "reviewer_harness": "fixture",
+          "reviewer_mode": "read-only",
+          "reviewer_model_or_runtime": "identity unavailable",
+          "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+          "scope": [],
+          "verdict": "GO"
+        },
+        "scenario": "GO receipt records runtime limitation",
+        "schema_file": "reviewer-receipt-correction.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "claim_dispositions": [
+            {
+              "claim_id": "G9-01",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-02",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-03",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-04",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-05",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-06",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-07",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-08",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-09",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-10",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-11",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-12",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-13",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-14",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-15",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-16",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-17",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-18",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-19",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-20",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-21",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-22",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-23",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-24",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-25",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-26",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-27",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-28",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-29",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-30",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-31",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-32",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-33",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-34",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-35",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-36",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-37",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-38",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-39",
+              "result": "ACCEPTED"
+            },
+            {
+              "claim_id": "G9-40",
+              "result": "ACCEPTED"
+            }
+          ],
+          "findings": [],
+          "independence_limitations": [],
+          "open_p0_count": 0,
+          "open_p1_count": 0,
+          "open_p2_count": 0,
+          "review_finished_at": "2026-01-01T00:01:00Z",
+          "review_started_at": "2026-01-01T00:00:00Z",
+          "reviewed_commit": "0000000000000000000000000000000000000000",
+          "reviewed_pre_review_proof_root": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "reviewed_repository": "provan",
+          "reviewed_tree": "1111111111111111111111111111111111111111",
+          "reviewer_harness": "fixture",
+          "reviewer_mode": "read-only",
+          "reviewer_model_or_runtime": "identity unavailable",
+          "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+          "scope": [],
+          "verdict": "GO"
+        },
+        "scenario": "GO receipt bound to forty claims",
+        "schema_file": "reviewer-receipt-correction.v1.json"
+      }
+    },
+    "C9E": {
+      "adversarial": {
+        "expected_error": "PRIVATE_REPOSITORY_RECEIPT_INVALID",
+        "input": {
+          "aggregate_results": {
+            "all_and_only_authorized": true,
+            "authorized_usable_count": 7,
+            "classification_totals": {
+              "PRIVATE_EVAL_CASE": 4,
+              "PRIVATE_INCIDENT_REGRESSION": 3
+            },
+            "community_runtime_dependency": "ABSENT",
+            "customer_content_validation": "PASS",
+            "headline_claims_authorized": false,
+            "private_case": "C:/hidden",
+            "session2_status": "CLOSED_PARTIAL",
+            "typed_exclusion_count": 7,
+            "typed_exclusion_reason_totals": {
+              "NOT_PRIVATE_USABLE_ASSET": 6,
+              "QUARANTINED_NON_EXECUTABLE_INCIDENT_EVIDENCE": 1
+            },
+            "validator": "PASS"
+          },
+          "branch": "main",
+          "clean": true,
+          "commit": "0000000000000000000000000000000000000000",
+          "drift_status": "EXACT_EXPECTED_HEAD",
+          "repository_name": "provan-evals",
+          "repository_role": "EVALUATION",
+          "schema_id": "provan.private_repository_projection.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "tree": "1111111111111111111111111111111111111111",
+          "visibility": "PRIVATE"
+        },
+        "scenario": "projection contains private case path",
+        "schema_file": "private-repository-projection.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "aggregate_results": {
+            "all_and_only_authorized": true,
+            "authorized_usable_count": 7,
+            "classification_totals": {
+              "PRIVATE_EVAL_CASE": 4,
+              "PRIVATE_INCIDENT_REGRESSION": 3
+            },
+            "community_runtime_dependency": "ABSENT",
+            "customer_content_validation": "PASS",
+            "headline_claims_authorized": false,
+            "session2_status": "CLOSED_PARTIAL",
+            "typed_exclusion_count": 7,
+            "typed_exclusion_reason_totals": {
+              "NOT_PRIVATE_USABLE_ASSET": 6,
+              "QUARANTINED_NON_EXECUTABLE_INCIDENT_EVIDENCE": 1
+            },
+            "validator": "PASS"
+          },
+          "branch": "main",
+          "clean": true,
+          "commit": "0000000000000000000000000000000000000000",
+          "drift_status": "AUTHORIZED_ADDITIVE_CORRECTION_FROM_EXPECTED_HEAD",
+          "repository_name": "provan-evals",
+          "repository_role": "EVALUATION",
+          "schema_id": "provan.private_repository_projection.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "tree": "1111111111111111111111111111111111111111",
+          "visibility": "PRIVATE"
+        },
+        "scenario": "authorised newer lineage projection",
+        "schema_file": "private-repository-projection.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "aggregate_results": {
+            "all_and_only_authorized": true,
+            "authorized_usable_count": 7,
+            "classification_totals": {
+              "PRIVATE_EVAL_CASE": 4,
+              "PRIVATE_INCIDENT_REGRESSION": 3
+            },
+            "community_runtime_dependency": "ABSENT",
+            "customer_content_validation": "PASS",
+            "headline_claims_authorized": false,
+            "session2_status": "CLOSED_PARTIAL",
+            "typed_exclusion_count": 7,
+            "typed_exclusion_reason_totals": {
+              "NOT_PRIVATE_USABLE_ASSET": 6,
+              "QUARANTINED_NON_EXECUTABLE_INCIDENT_EVIDENCE": 1
+            },
+            "validator": "PASS"
+          },
+          "branch": "main",
+          "clean": true,
+          "commit": "0000000000000000000000000000000000000000",
+          "drift_status": "EXACT_EXPECTED_HEAD",
+          "repository_name": "provan-evals",
+          "repository_role": "EVALUATION",
+          "schema_id": "provan.private_repository_projection.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "tree": "1111111111111111111111111111111111111111",
+          "visibility": "PRIVATE"
+        },
+        "scenario": "aggregate eval projection",
+        "schema_file": "private-repository-projection.v1.json"
+      }
+    },
+    "C9F": {
+      "adversarial": {
+        "expected_error": "LAYER4_CLAIM_SET_INCOMPLETE",
+        "input": {
+          "claims": [
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-01 \u2014 Provan is the canonical current product brand.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-02 \u2014 provan is the canonical Python namespace.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-03 \u2014 provan is the canonical CLI.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-04 \u2014 provan-assurance is the package distribution metadata.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-05 \u2014 Historical Shiproom artifacts remain immutable.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-06 \u2014 Stable historical schema IDs remain compatible.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-07 \u2014 No stale current-product Shiproom references remain unclassified.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-08 \u2014 Public README reflects actual current behaviour.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-09 \u2014 Current product is read-only and packet-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-10 \u2014 Current product does not apply or approve fixes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-11 \u2014 Community, Enterprise, and eval repositories have correct purposes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-12 \u2014 Enterprise is scaffold-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-13 \u2014 Community has no Enterprise runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-14 \u2014 Community has no eval runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-15 \u2014 Private repositories have private visibility.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-16 \u2014 Already-public material is not misrepresented as secret.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-17 \u2014 Session 2 is represented as CLOSED_PARTIAL.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-18 \u2014 No Session 2 comparative claim is made.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-19 \u2014 No Session 2 public sample gallery is claimed.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-20 \u2014 Session 2 assets were harvested only within their authority.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-21 \u2014 Public GitHub source-only operation is safe by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-22 \u2014 Source-only mode performs no repository command execution.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-23 \u2014 Execution opt-in fails closed without a qualified sandbox.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-24 \u2014 provan doctor reports real capability state.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-25 \u2014 Community telemetry is off by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-26 \u2014 Declining telemetry does not reduce functionality.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-27 \u2014 Telemetry preview equals transmitted payload.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-28 \u2014 Telemetry prohibits customer and repository content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-29 \u2014 Diagnostics are separate from telemetry.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-30 \u2014 No cross-customer training on customer content is authorised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-31 \u2014 No hosted challenge API exists in the MVP.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-32 \u2014 Community package contains no private content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-33 \u2014 Fresh-clone installation is independent of the source checkout.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-34 \u2014 The public repository is named provan.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-35 \u2014 The old public URL redirects, or the exact external limitation is recorded.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-36 \u2014 The reviewed Session 9 tree is on the public default branch.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-37 \u2014 All three repositories are clean and remotely synchronised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-38 \u2014 All existing tests and evals pass without weakened coverage.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-39 \u2014 Every Gate 9 requirement is supported by artifact evidence.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-39 \u2014 Every Gate 9 requirement is supported by artifact evidence.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            }
+          ],
+          "schema_id": "provan.layer4_claim_matrix_correction.v2",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "one individual claim omitted",
+        "schema_file": "layer4-claim-matrix-correction.v2.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "claims": [
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-01 \u2014 Provan is the canonical current product brand.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-02 \u2014 provan is the canonical Python namespace.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-03 \u2014 provan is the canonical CLI.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-04 \u2014 provan-assurance is the package distribution metadata.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-05 \u2014 Historical Shiproom artifacts remain immutable.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-06 \u2014 Stable historical schema IDs remain compatible.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-07 \u2014 No stale current-product Shiproom references remain unclassified.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-08 \u2014 Public README reflects actual current behaviour.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-09 \u2014 Current product is read-only and packet-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-10 \u2014 Current product does not apply or approve fixes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-11 \u2014 Community, Enterprise, and eval repositories have correct purposes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-12 \u2014 Enterprise is scaffold-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-13 \u2014 Community has no Enterprise runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-14 \u2014 Community has no eval runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-15 \u2014 Private repositories have private visibility.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-16 \u2014 Already-public material is not misrepresented as secret.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-17 \u2014 Session 2 is represented as CLOSED_PARTIAL.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-18 \u2014 No Session 2 comparative claim is made.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-19 \u2014 No Session 2 public sample gallery is claimed.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-20 \u2014 Session 2 assets were harvested only within their authority.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-21 \u2014 Public GitHub source-only operation is safe by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-22 \u2014 Source-only mode performs no repository command execution.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-23 \u2014 Execution opt-in fails closed without a qualified sandbox.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-24 \u2014 provan doctor reports real capability state.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-25 \u2014 Community telemetry is off by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-26 \u2014 Declining telemetry does not reduce functionality.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-27 \u2014 Telemetry preview equals transmitted payload.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-28 \u2014 Telemetry prohibits customer and repository content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-29 \u2014 Diagnostics are separate from telemetry.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-30 \u2014 No cross-customer training on customer content is authorised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-31 \u2014 No hosted challenge API exists in the MVP.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-32 \u2014 Community package contains no private content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-33 \u2014 Fresh-clone installation is independent of the source checkout.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-34 \u2014 The public repository is named provan.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-35 \u2014 The old public URL redirects, or the exact external limitation is recorded.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-36 \u2014 The reviewed Session 9 tree is on the public default branch.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-37 \u2014 All three repositories are clean and remotely synchronised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-38 \u2014 All existing tests and evals pass without weakened coverage.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-39 \u2014 Every Gate 9 requirement is supported by artifact evidence.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-40 \u2014 Session 10 work has not begun.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            }
+          ],
+          "schema_id": "provan.layer4_claim_matrix_correction.v2",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "legitimate shared proof family",
+        "schema_file": "layer4-claim-matrix-correction.v2.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "claims": [
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-01 \u2014 Provan is the canonical current product brand.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-02 \u2014 provan is the canonical Python namespace.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-03 \u2014 provan is the canonical CLI.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-04 \u2014 provan-assurance is the package distribution metadata.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-05 \u2014 Historical Shiproom artifacts remain immutable.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-06 \u2014 Stable historical schema IDs remain compatible.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-07 \u2014 No stale current-product Shiproom references remain unclassified.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-08 \u2014 Public README reflects actual current behaviour.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-09 \u2014 Current product is read-only and packet-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-10 \u2014 Current product does not apply or approve fixes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-11 \u2014 Community, Enterprise, and eval repositories have correct purposes.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-12 \u2014 Enterprise is scaffold-only.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-13 \u2014 Community has no Enterprise runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-14 \u2014 Community has no eval runtime dependency.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-15 \u2014 Private repositories have private visibility.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-16 \u2014 Already-public material is not misrepresented as secret.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-17 \u2014 Session 2 is represented as CLOSED_PARTIAL.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-18 \u2014 No Session 2 comparative claim is made.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-19 \u2014 No Session 2 public sample gallery is claimed.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-20 \u2014 Session 2 assets were harvested only within their authority.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-21 \u2014 Public GitHub source-only operation is safe by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-22 \u2014 Source-only mode performs no repository command execution.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-23 \u2014 Execution opt-in fails closed without a qualified sandbox.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-24 \u2014 provan doctor reports real capability state.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-25 \u2014 Community telemetry is off by default.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-26 \u2014 Declining telemetry does not reduce functionality.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-27 \u2014 Telemetry preview equals transmitted payload.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-28 \u2014 Telemetry prohibits customer and repository content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-29 \u2014 Diagnostics are separate from telemetry.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-30 \u2014 No cross-customer training on customer content is authorised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-31 \u2014 No hosted challenge API exists in the MVP.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-32 \u2014 Community package contains no private content.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-33 \u2014 Fresh-clone installation is independent of the source checkout.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-34 \u2014 The public repository is named provan.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-35 \u2014 The old public URL redirects, or the exact external limitation is recorded.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-36 \u2014 The reviewed Session 9 tree is on the public default branch.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-37 \u2014 All three repositories are clean and remotely synchronised.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-38 \u2014 All existing tests and evals pass without weakened coverage.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-39 \u2014 Every Gate 9 requirement is supported by artifact evidence.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            },
+            {
+              "Artifact evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "Claim": "G9-40 \u2014 Session 10 work has not begun.",
+              "Implemented in": "fixture",
+              "Near-valid proof": "session9.correction.C9F.near-valid",
+              "Negative proof": "session9.correction.C9F.adversarial",
+              "Positive proof": "session9.correction.C9F.valid",
+              "Python result": "PASS; REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+              "Reviewer result": "ACCEPTED",
+              "Schema result": "PASS",
+              "Status": "CLOSED"
+            }
+          ],
+          "schema_id": "provan.layer4_claim_matrix_correction.v2",
+          "sensitivity": "PUBLIC_SAFE"
+        },
+        "scenario": "forty mapped claims",
+        "schema_file": "layer4-claim-matrix-correction.v2.json"
+      }
+    },
+    "C9G": {
+      "adversarial": {
+        "expected_error": "REQUIRED_AUTHORITY_ACCESS_FAILED",
+        "input": {
+          "records": [
+            {
+              "accessible": false,
+              "classification": "REQUIRED_AUTHORITY",
+              "description": "fixture"
+            }
+          ],
+          "schema_id": "provan.access_warning_audit.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "unclassified_stderr_count": 0
+        },
+        "scenario": "required authority unreadable",
+        "schema_file": "access-warning-audit.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "records": [
+            {
+              "accessible": true,
+              "classification": "OPTIONAL_NONAUTHORITATIVE",
+              "description": "fixture"
+            }
+          ],
+          "schema_id": "provan.access_warning_audit.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "unclassified_stderr_count": 0
+        },
+        "scenario": "typed optional XDG warning history",
+        "schema_file": "access-warning-audit.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "records": [
+            {
+              "accessible": true,
+              "classification": "OPTIONAL_NONAUTHORITATIVE",
+              "description": "fixture"
+            }
+          ],
+          "schema_id": "provan.access_warning_audit.v1",
+          "sensitivity": "PUBLIC_SAFE",
+          "unclassified_stderr_count": 0
+        },
+        "scenario": "warning-free isolated Git",
+        "schema_file": "access-warning-audit.v1.json"
+      }
+    },
+    "C9H": {
+      "adversarial": {
+        "expected_error": "PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN",
+        "input": {
+          "child": "outputs",
+          "error": "NONE",
+          "link_rejected": false,
+          "outside_after_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "outside_before_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.state_link_proof.v1"
+        },
+        "scenario": "linked child not rejected",
+        "schema_file": "state-link-proof.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "child": "pending",
+          "error": "PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN",
+          "link_rejected": true,
+          "outside_after_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "outside_before_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.state_link_proof.v1"
+        },
+        "scenario": "real pending directory",
+        "schema_file": "state-link-proof.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "child": "outputs",
+          "error": "PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN",
+          "link_rejected": true,
+          "outside_after_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "outside_before_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.state_link_proof.v1"
+        },
+        "scenario": "real outputs directory",
+        "schema_file": "state-link-proof.v1.json"
+      }
+    },
+    "C9I": {
+      "adversarial": {
+        "expected_error": "EXTERNAL_RECEIPT_BINDING_INVALID",
+        "input": {
+          "collected_at": "2026-01-01T00:00:00Z",
+          "limitations": [],
+          "publication_state": {
+            "package_published": false,
+            "release_created": false,
+            "tag_created": false
+          },
+          "publication_state_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "schema_id": "provan.external_publication_receipt.v1"
+        },
+        "scenario": "publication-state digest mismatch",
+        "schema_file": "external-publication-receipt.v1.json"
+      },
+      "near-valid": {
+        "expected_error": null,
+        "input": {
+          "canonical_file_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "retention_limitation": "bounded",
+          "schema_id": "provan.external_mirror_attestation.v1",
+          "status": "FAILED",
+          "typed_failure": "MIRROR_WORKFLOW_UNAVAILABLE"
+        },
+        "scenario": "typed mirror failure leaves canonical immutable",
+        "schema_file": "external-mirror-attestation.v1.json"
+      },
+      "valid": {
+        "expected_error": null,
+        "input": {
+          "collected_at": "2026-01-01T00:00:00Z",
+          "limitations": [],
+          "publication_state": {
+            "package_published": false,
+            "release_created": false,
+            "tag_created": false
+          },
+          "publication_state_sha256": "sha256:ec34cd140b17e964c7923f4f767b0972e8987ed1d207ac031f63126c6644646c",
+          "schema_id": "provan.external_publication_receipt.v1"
+        },
+        "scenario": "canonical publication-state digest",
+        "schema_file": "external-publication-receipt.v1.json"
+      }
+    }
+  },
+  "schema_id": "provan.session9_correction_fixture_bundle.v1",
+  "sensitivity": "PUBLIC_SAFE"
 }

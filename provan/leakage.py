@@ -49,6 +49,8 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
         "artifacts/session9/correction/enterprise_projection.v1.public.json": "provan-enterprise",
     }
     expected = allowed.get(relative)
+    if relative == "tests/fixtures/session9/correction-proof-fixtures.v1.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
+        return re.fullmatch(r'\s*"repository_name":\s*"provan-(?:evals|enterprise)",?\s*',line) is not None
     return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None
 
 

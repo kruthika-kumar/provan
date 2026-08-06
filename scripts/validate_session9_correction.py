@@ -108,7 +108,7 @@ def main() -> int:
         raise ProvanError("CORRECTION_PRE_REVIEW_SET_INCOMPLETE", "pre-review artifacts are missing")
     if not args.pre_review:
         crosswalk=load(CORRECTION/"layer4_claim_crosswalk.v1.public.json"); jsonschema.validate(crosswalk,schemas["provan.layer4_claim_crosswalk.v1"])
-        matrix=load(CORRECTION/"layer4_claim_matrix.v2.public.json"); jsonschema.validate(matrix,schemas["provan.layer4_claim_matrix_correction.v2"]); validate_correction_layer4_semantics(matrix,crosswalk)
+        matrix=load(CORRECTION/"layer4_claim_matrix.v2.public.json"); jsonschema.validate(matrix,schemas["provan.layer4_claim_matrix_correction.v2"]); validate_correction_layer4_semantics(matrix,crosswalk,[load(ROOT/"artifacts/session9/proof_registry.public.json"),load(CORRECTION/"proof_registry.v1.public.json")])
         for name in ("evals_projection.v1.public.json","enterprise_projection.v1.public.json"):
             value=load(CORRECTION/name); jsonschema.validate(value,schemas["provan.private_repository_projection.v1"]); validate_private_projection_semantics(value)
         review=load(CORRECTION/"reviewer_receipt.v1.public.json"); jsonschema.validate(review,schemas["provan.session9_correction_reviewer_receipt.v1"]); validate_reviewer_receipt_semantics(review)

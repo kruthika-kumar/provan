@@ -297,7 +297,7 @@ def validate_correction_fixture_semantics(value: dict[str, Any]) -> None:
             raise ProvanError("CORRECTION_PROOF_BINDING_INCOMPLETE", f"invalid {key}")
 
 
-def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[str, Any]) -> None:
+def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[str, Any], proof_registries: list[dict[str, Any]]) -> None:
     rows = value.get("claims", [])
     if len(rows) != 40 or {row.get("Claim") for row in rows} != CORRECTION_CLAIM_LABELS:
         raise ProvanError("LAYER4_CLAIM_SET_INCOMPLETE", "exact G9-01 through G9-40 claim set is required")
@@ -306,11 +306,16 @@ def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[
     mapping = {item.get("claim_id"): set(item.get("proof_families", [])) for item in crosswalk.get("claims", [])}
     if set(mapping) != {f"G9-{i:02d}" for i in range(1, 41)}:
         raise ProvanError("LAYER4_CROSSWALK_INVALID", "crosswalk does not cover every individual claim")
+    invariant_claims={item.get("proof_family"):set(item.get("claim_ids",[])) for item in crosswalk.get("invariants",[])}
+    if not invariant_claims or any(family not in invariant_claims or claim not in invariant_claims[family] for claim,families in mapping.items() for family in families) or any(family not in mapping.get(claim,set()) for family,claims in invariant_claims.items() for claim in claims):
+        raise ProvanError("LAYER4_CROSSWALK_INVALID","invariant and individual-claim mappings disagree")
+    entries={entry.get("proof_id"):entry for registry in proof_registries for entry in registry.get("entries",[])}
     for row in rows:
         if set(row) != LAYER4_COLUMNS or any(row[column] in (None, "") for column in LAYER4_COLUMNS):
             raise ProvanError("LAYER4_CLAIM_INCOMPLETE", "claim has an unclosed column")
         claim_id = row["Claim"].split(" — ", 1)[0]
         cited = set()
+        cited_entries=[]
         for column, expected_kind in (("Positive proof", "valid"), ("Near-valid proof", "near-valid"), ("Negative proof", "adversarial")):
             reference = row[column]
             if reference.lower() in {"all gates passed", "all tests passed", "generic gate"}:
@@ -321,8 +326,20 @@ def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[
             if match.group(3) != expected_kind:
                 raise ProvanError("LAYER4_PROOF_BINDING_INVALID", f"{column} does not bind a {expected_kind} fixture")
             cited.add(match.group(1) or match.group(2))
+            entry=entries.get(reference)
+            if not entry or entry.get("fixture_class")!=expected_kind or not entry.get("test_id") or not entry.get("production_function") or not entry.get("python_validator"):
+                raise ProvanError("LAYER4_PROOF_BINDING_INVALID","cited proof is absent or lacks its exact production/test binding")
+            locations=entry.get("artifact_locations",[]); hashes=entry.get("artifact_hashes",[])
+            if not locations or len(locations)!=len(hashes) or any(not re.fullmatch(r"sha256:[0-9a-f]{64}",digest) for digest in hashes) or entry.get("transcript_hash") not in hashes:
+                raise ProvanError("LAYER4_PROOF_BINDING_INVALID","cited proof artifact or transcript hash is incomplete")
+            cited_entries.append(entry)
         if not cited.issubset(mapping[claim_id]):
             raise ProvanError("LAYER4_UNRELATED_PROOF_FAMILY", "claim cites an invariant not mapped by the crosswalk")
+        evidence=row["Artifact evidence"]
+        if evidence.lower() in {"bound artifact hash","all gates passed","generic gate"} or any(digest not in evidence for entry in cited_entries for digest in entry["artifact_hashes"]):
+            raise ProvanError("LAYER4_PROOF_BINDING_INVALID","artifact evidence does not resolve every cited proof hash")
+        if any(entry.get("schema_result")!="PASS" for entry in cited_entries) or any(str(entry.get("python_result")) not in row["Python result"] for entry in cited_entries):
+            raise ProvanError("LAYER4_PROOF_BINDING_INVALID","schema or Python result does not match the proof registry")
         if row["Reviewer result"] not in {"ACCEPTED", "GO"} or row["Status"] != "CLOSED":
             raise ProvanError("LAYER4_REVIEW_REQUIRED", "each claim needs an individual accepted disposition")
 
@@ -333,6 +350,20 @@ def validate_private_projection_semantics(value: dict[str, Any]) -> None:
     allowed = {"schema_id", "sensitivity", "repository_role", "repository_name", "visibility", "commit", "tree", "branch", "clean", "drift_status", "aggregate_results", "implementation_binding"}
     if set(value) - allowed:
         raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID", "projection contains a non-aggregate field")
+    if value.get("clean") is not True or value.get("branch") != "main" or value.get("drift_status") not in {"EXACT_EXPECTED_HEAD","AUTHORIZED_ADDITIVE_CORRECTION_FROM_EXPECTED_HEAD"}:
+        raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID","private projection is not clean or has unclassified drift")
+    aggregate=value.get("aggregate_results",{})
+    if value.get("repository_role")=="EVALUATION":
+        required={"validator","all_and_only_authorized","authorized_usable_count","classification_totals","typed_exclusion_count","typed_exclusion_reason_totals","customer_content_validation","community_runtime_dependency","headline_claims_authorized","session2_status"}
+        if value.get("repository_name")!="provan-"+"evals" or not required.issubset(aggregate) or aggregate.get("validator")!="PASS" or aggregate.get("all_and_only_authorized") is not True or aggregate.get("customer_content_validation")!="PASS" or aggregate.get("community_runtime_dependency")!="ABSENT" or aggregate.get("headline_claims_authorized") is not False or aggregate.get("session2_status")!="CLOSED_PARTIAL" or aggregate.get("authorized_usable_count")!=sum(aggregate.get("classification_totals",{}).values()) or aggregate.get("typed_exclusion_count")!=sum(aggregate.get("typed_exclusion_reason_totals",{}).values()):
+            raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID","evaluation projection lacks all-and-only authority or exact limitations")
+    elif value.get("repository_role")=="ENTERPRISE":
+        required={"repository_purpose","scaffold_only","installed_wheel_conformance","installed_module_origin","community_checkout_on_sys_path","bounded_overlay","may_weaken_evidence","may_mutate_repository"}
+        binding=value.get("implementation_binding",{})
+        if value.get("repository_name")!="provan-"+"enterprise" or not required.issubset(aggregate) or aggregate.get("scaffold_only") is not True or aggregate.get("installed_wheel_conformance")!="PASS" or aggregate.get("installed_module_origin")!="ISOLATED_SITE_PACKAGES" or aggregate.get("community_checkout_on_sys_path") is not False or aggregate.get("bounded_overlay") is not True or aggregate.get("may_weaken_evidence") is not False or aggregate.get("may_mutate_repository") is not False or binding.get("community_version")!="0.2.0" or binding.get("extension_api_major")!=1 or not re.fullmatch(r"[0-9a-f]{40}",binding.get("implementation_commit","")) or not re.fullmatch(r"[0-9a-f]{40}",binding.get("implementation_tree","")) or not re.fullmatch(r"sha256:[0-9a-f]{64}",binding.get("wheel_sha256","")) or not re.fullmatch(r"sha256:[0-9a-f]{64}",binding.get("schema_registry_digest","")):
+            raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID","Enterprise projection lacks installed-wheel bounded-overlay binding")
+    else:
+        raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID","unknown private repository role")
     text = str(value)
     if re.search(r"([A-Za-z]:[\\/]|/home/|/Users/|private[_ -]?(fixture|case|oracle|path)|https?://|\bseed\b)", text, re.I):
         raise ProvanError("PRIVATE_REPOSITORY_RECEIPT_INVALID", "projection contains private identity or path material")

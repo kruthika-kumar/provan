@@ -6,8 +6,13 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+import jsonschema
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from provan.errors import ProvanError
+from scripts.session9_correction_cases import evaluate_fixture
+
 OUT=ROOT/"artifacts/session9/correction"
 FIXTURE=ROOT/"tests/fixtures/session9/correction-proof-fixtures.v1.json"
 
@@ -30,6 +35,17 @@ PRODUCTION={
  "C9E":"scripts.validate_session9_correction.main","C9F":"provan.validators.validate_correction_layer4_semantics",
  "C9G":"provan.repository._git_env + scripts.validate_session9_correction.main","C9H":"provan.state.secure_write",
  "C9I":".github/workflows/mirror-session9-correction-receipt.yml",
+}
+TESTS={
+ "C9A":"tests/test_session9_correction.py::test_c9a_default_output_preallocates_uuid_and_separates_digest",
+ "C9B":"tests/test_session9_correction.py::test_c9b_doctor_executes_complete_local_check_set",
+ "C9C":"tests/test_session9_correction.py::test_c9c_status_is_semantically_honest",
+ "C9D":"tests/test_session9_correction.py::test_c9d_review_and_closeout_semantic_failures_are_independent",
+ "C9E":"tests/test_session9_correction.py::test_c9e_private_projection_schema_pass_semantic_rejects_private_path",
+ "C9F":"tests/test_session9_correction.py::test_c9f_exact_forty_claims_allow_legitimate_proof_reuse",
+ "C9G":"tests/test_session9_correction.py::test_c9g_access_warning_semantics_fail_required_and_unclassified",
+ "C9H":"tests/test_session9_correction.py::test_c9h_state_child_link_rejected_without_outside_write",
+ "C9I":"tests/test_session9_correction.py::test_c9i_external_receipt_digest_is_non_self_referential",
 }
 
 
@@ -59,7 +75,12 @@ def main() -> int:
     for family,cases in sorted(bundle["families"].items()):
         for kind in ("valid","near-valid","adversarial"):
             case=cases[kind]; error=case["expected_error"]
-            entries.append({"proof_id":f"session9.correction.{family}.{kind}","family":family,"fixture_class":kind,"fixture_path":f"tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/{family}/{kind}","schema_id":SCHEMAS[family],"schema_result":"PASS","schema_error":None,"python_validator":VALIDATORS[family],"python_result":"REJECT:"+error if error else "PASS","python_error":error,"production_function":PRODUCTION[family],"test_id":f"tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[{family}-{kind}]","artifact_locations":["tests/fixtures/session9/correction-proof-fixtures.v1.json","artifacts/session9/correction/transcripts/correction_focused.public.txt"],"artifact_hashes":[fixture_hash,transcript_hash],"command":"python -m pytest -q tests/test_session9_correction.py","exit_code":run.returncode,"transcript_hash":transcript_hash})
+            schema_doc=json.loads((ROOT/"provan/schemas"/case["schema_file"]).read_text(encoding="utf-8")); jsonschema.validate(case["input"],schema_doc)
+            python_error=None
+            try: evaluate_fixture(family,kind)
+            except ProvanError as exc: python_error=exc.code
+            if python_error!=error: raise SystemExit(f"{family}/{kind} semantic result drift: {python_error} != {error}")
+            entries.append({"proof_id":f"session9.correction.{family}.{kind}","family":family,"fixture_class":kind,"fixture_path":f"tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/{family}/{kind}/input","schema_id":schema_doc["$id"],"schema_result":"PASS","schema_error":None,"python_validator":VALIDATORS[family],"python_result":"REJECT:"+python_error if python_error else "PASS","python_error":python_error,"production_function":PRODUCTION[family],"test_id":TESTS[family],"artifact_locations":["tests/fixtures/session9/correction-proof-fixtures.v1.json","artifacts/session9/correction/transcripts/correction_focused.public.txt"],"artifact_hashes":[fixture_hash,transcript_hash],"command":"python -m pytest -q tests/test_session9_correction.py","exit_code":run.returncode,"transcript_hash":transcript_hash})
     registry_path=OUT/"proof_registry.v1.public.json"; write(registry_path,{"schema_id":"provan.session9_correction_proof_registry.v1","sensitivity":"PUBLIC_SAFE","entries":entries})
     warning_path=OUT/"access_warning_audit.v1.public.json"; write(warning_path,{"schema_id":"provan.access_warning_audit.v1","sensitivity":"PUBLIC_SAFE","records":[{"classification":"OPTIONAL_NONAUTHORITATIVE","accessible":False,"description":"Git implicit XDG excludes lookup observed before isolation; validation now supplies an isolated XDG configuration and explicit excludes policy."}],"unclassified_stderr_count":0})
     wheel=next((ROOT/"dist").glob("*.whl")); schema_rows=[]

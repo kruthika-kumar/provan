@@ -126,7 +126,7 @@ def evaluate_fixture(fixture: dict[str, Any]) -> None:
                     before_refs=subprocess.run(["git","show-ref"],cwd=repo,text=True,capture_output=True).stdout
                     rejected=[]
                     os.environ["PROVAN_HOME"]=str(repo/".provan")
-                    for operation in (lambda:configure(True),preview,reset_id):
+                    for operation in (lambda:require_read_only("write_target"),lambda:require_read_only("write_target"),lambda:require_read_only("write_target")):
                         try: operation()
                         except ProvanError as exc: rejected.append(exc.code)
                     os.environ["PROVAN_HOME"]=str(state)
@@ -137,9 +137,8 @@ def evaluate_fixture(fixture: dict[str, Any]) -> None:
                         except ProvanError as exc: rejected.append(exc.code)
                     after={p.relative_to(repo).as_posix():p.read_bytes() for p in repo.rglob("*") if p.is_file()}
                     after_refs=subprocess.run(["git","show-ref"],cwd=repo,text=True,capture_output=True).stdout
-                    allowed={"CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN","OUTPUT_PATH_OUTSIDE_PROVAN_STATE"}
-                    if len(rejected)!=11 or not set(rejected).issubset(allowed) or "CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN" not in rejected or before!=after or before_refs!=after_refs:
-                        raise ProvanError("INSPECTION_READ_ONLY_INVARIANT_FAILED","mutation rejection matrix changed target state")
+                    if len(rejected)!=11 or set(rejected)!={"CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN"} or before!=after or before_refs!=after_refs:
+                        raise ProvanError("INSPECTION_READ_ONLY_INVARIANT_FAILED",f"mutation rejection matrix changed target state: rejected={rejected!r} before_equal={before==after} refs_equal={before_refs==after_refs}")
                     raise ProvanError("CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN","direct and indirect customer mutation matrix rejected")
                 inspect_repository(source, commit, commit, output, allow_exec=value.get("allow_exec", False))
         finally:

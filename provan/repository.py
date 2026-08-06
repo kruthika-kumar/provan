@@ -5,6 +5,7 @@ import json
 import os
 import re
 import signal
+import stat
 import shutil
 import subprocess
 import tempfile
@@ -218,12 +219,20 @@ def inspect_repository(source: str, base: str, head: str, output: Path | None = 
     if local is not None and (not local.is_dir() or not (local / ".git").exists()):
         raise ProvanError("LOCAL_REPOSITORY_INVALID", "local source must be a Git working tree")
     if local is not None:
-        _bounded_object_store(local / ".git")
+        git_control=local/".git"
+        control_stat=os.lstat(git_control)
+        is_reparse=os.name=="nt" and bool(getattr(control_stat,"st_file_attributes",0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+        if stat.S_ISLNK(control_stat.st_mode) or is_reparse or not stat.S_ISDIR(control_stat.st_mode):
+            raise ProvanError("UNSAFE_GIT_OBJECT_STORE_FORBIDDEN","linked, reparse-point, or gitfile .git control paths are forbidden")
+        _bounded_object_store(git_control)
     # Receipts are Provan output, never target-repository output.  Resolve both
     # paths before doing any Git work so symlinked parents cannot bypass this
     # boundary.
     receipt_id = str(uuid.uuid4())
     output = output or state_root() / "outputs" / f"repository-inspection-{receipt_id}.json"
+    raw_output=Path(output).resolve(strict=False)
+    if local is not None and (raw_output == local or local in raw_output.parents):
+        raise ProvanError(CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN,"inspection output must be outside the customer repository")
     resolved_output = trusted_output_path(output)
     if local is not None and (resolved_output == local or local in resolved_output.parents):
         raise ProvanError(
