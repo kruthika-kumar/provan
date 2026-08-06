@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .doctor import run_doctor
@@ -17,9 +18,9 @@ def _parser() -> argparse.ArgumentParser:
     repo = sub.add_parser("repository"); repo_sub = repo.add_subparsers(dest="repository_command")
     inspect = repo_sub.add_parser("inspect")
     inspect.add_argument("--repo", required=True); inspect.add_argument("--base", required=True); inspect.add_argument("--head", required=True)
-    inspect.add_argument("--mode", choices=["source-only"], default="source-only"); inspect.add_argument("--output", type=Path, required=True); inspect.add_argument("--allow-exec", action="store_true")
+    inspect.add_argument("--mode", choices=["source-only"], default="source-only"); inspect.add_argument("--output", type=Path); inspect.add_argument("--allow-exec", action="store_true")
     telem = sub.add_parser("telemetry"); telem_sub = telem.add_subparsers(dest="telemetry_command")
-    for name in ("status", "schema", "preview", "enable", "disable", "reset-id"): telem_sub.add_parser(name)
+    for name in ("status", "schema", "preview", "enable", "disable", "clear-pending", "reset-id"): telem_sub.add_parser(name)
     return parser
 
 
@@ -34,7 +35,10 @@ def main(argv: list[str] | None = None) -> int:
             elif args.telemetry_command == "preview": value = telemetry.preview()
             elif args.telemetry_command == "enable": value = telemetry.configure(True)
             elif args.telemetry_command == "disable": value = telemetry.configure(False)
-            elif args.telemetry_command == "reset-id": value = telemetry.reset_id()
+            elif args.telemetry_command == "clear-pending": value = telemetry.clear_pending()
+            elif args.telemetry_command == "reset-id":
+                print("DEPRECATED: use 'provan telemetry clear-pending'; no removal date is authorized.", file=sys.stderr)
+                value = telemetry.clear_pending()
             else: return _parser().print_help() or 2
         else: return _parser().print_help() or 2
         print(json.dumps(value, sort_keys=True, indent=2))

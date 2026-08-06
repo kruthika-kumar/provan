@@ -1,0 +1,15 @@
+{
+  "schema_id": "provan.session9_correction_fixture_bundle.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "families": {
+    "C9A": {"valid":{"scenario":"default UUID output","expected_error":null},"near-valid":{"scenario":"nested controlled output","expected_error":null},"adversarial":{"scenario":"absolute public proof path","expected_error":"OUTPUT_PATH_OUTSIDE_PROVAN_STATE"}},
+    "C9B": {"valid":{"scenario":"executed required checks ready","expected_error":null},"near-valid":{"scenario":"optional sandbox unavailable","expected_error":null},"adversarial":{"scenario":"broken Git reported ready","expected_error":"DOCTOR_FALSE_READY"}},
+    "C9C": {"valid":{"scenario":"non-persistent identity policy","expected_error":null},"near-valid":{"scenario":"transport configured without correlation","expected_error":null},"adversarial":{"scenario":"installation identity claimed","expected_error":"TELEMETRY_IDENTITY_POLICY_INVALID"}},
+    "C9D": {"valid":{"scenario":"GO receipt bound to forty claims","expected_error":null},"near-valid":{"scenario":"GO receipt records runtime limitation","expected_error":null},"adversarial":{"scenario":"review omits one claim","expected_error":"REVIEW_RECEIPT_BINDING_INVALID"}},
+    "C9E": {"valid":{"scenario":"aggregate eval projection","expected_error":null},"near-valid":{"scenario":"authorised newer lineage projection","expected_error":null},"adversarial":{"scenario":"projection contains private case path","expected_error":"PRIVATE_REPOSITORY_RECEIPT_INVALID"}},
+    "C9F": {"valid":{"scenario":"forty mapped claims","expected_error":null},"near-valid":{"scenario":"legitimate shared proof family","expected_error":null},"adversarial":{"scenario":"one individual claim omitted","expected_error":"LAYER4_CLAIM_SET_INCOMPLETE"}},
+    "C9G": {"valid":{"scenario":"warning-free isolated Git","expected_error":null},"near-valid":{"scenario":"typed optional XDG warning history","expected_error":null},"adversarial":{"scenario":"required authority unreadable","expected_error":"REQUIRED_AUTHORITY_ACCESS_FAILED"}},
+    "C9H": {"valid":{"scenario":"real outputs directory","expected_error":null},"near-valid":{"scenario":"real pending directory","expected_error":null},"adversarial":{"scenario":"linked child not rejected","expected_error":"PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN"}},
+    "C9I": {"valid":{"scenario":"canonical publication-state digest","expected_error":null},"near-valid":{"scenario":"typed mirror failure leaves canonical immutable","expected_error":null},"adversarial":{"scenario":"publication-state digest mismatch","expected_error":"EXTERNAL_RECEIPT_BINDING_INVALID"}}
+  }
+}

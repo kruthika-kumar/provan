@@ -10,7 +10,7 @@ Session 2 is historically closed as `CLOSED_PARTIAL`. Qualification and control-
 python -m pip install .
 provan --help
 provan doctor --format json
-provan repository inspect --repo C:\path\to\repository --base <full-commit-id> --head <full-commit-id> --mode source-only --output inspection.json
+provan repository inspect --repo https://github.com/kruthika-kumar/provan --base 371f1e823a94165f735db907c2853cc490d20360 --head 371f1e823a94165f735db907c2853cc490d20360 --mode source-only
 ```
 
 Telemetry is disabled by default and no collector is deployed. See [Telemetry](docs/telemetry.md) before opting in.

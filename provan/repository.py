@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ from urllib.parse import urlsplit
 
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN, QUALIFIED_SANDBOX_REQUIRED, ProvanError
-from .state import trusted_output_path
+from .state import state_root, trusted_output_path, write_output
 from .validators import validate_inspection_semantics
 
 SAFE_GITHUB = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?$")
@@ -119,10 +120,11 @@ def _git_env(home: Path) -> dict[str, str]:
     env = {
         "PATH": os.environ.get("PATH", ""),
         "HOME": str(home), "USERPROFILE": str(home),
+        "XDG_CONFIG_HOME": str(home / "xdg"),
         "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
         "GIT_CONFIG_SYSTEM": os.devnull, "GIT_LFS_SKIP_SMUDGE": "1",
         "GIT_NO_REPLACE_OBJECTS": "1", "GIT_TERMINAL_PROMPT": "0",
-        "GIT_ASKPASS": "", "GIT_SSH_COMMAND": "false",
+        "GIT_ASKPASS": "", "GIT_SSH_COMMAND": "false", "GIT_OPTIONAL_LOCKS": "0",
     }
     # Git for Windows requires these process-runtime variables for DNS and
     # helper startup. They carry no repository credentials or Git policy.
@@ -133,6 +135,7 @@ def _git_env(home: Path) -> dict[str, str]:
 
 def _run(argv: list[str], cwd: Path, home: Path, timeout: int = 60) -> subprocess.CompletedProcess[str]:
     env = _git_env(home)
+    argv = [argv[0], "-c", f"core.excludesFile={os.devnull}", *argv[1:]]
     started = time.monotonic()
     with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", dir=cwd, delete=True) as stdout, tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", dir=cwd, delete=True) as stderr:
         process = subprocess.Popen(argv, cwd=cwd, env=env, text=True, stdout=stdout, stderr=stderr,
@@ -194,7 +197,7 @@ def _inspect_blob_contents(git_dir: Path, blobs: list[tuple[str, str, int]], hom
     return len(blobs), total, "sha256:" + digest.hexdigest()
 
 
-def inspect_repository(source: str, base: str, head: str, output: Path, *, allow_exec: bool = False) -> dict[str, Any]:
+def inspect_repository(source: str, base: str, head: str, output: Path | None = None, *, allow_exec: bool = False) -> dict[str, Any]:
     if allow_exec:
         raise ProvanError(QUALIFIED_SANDBOX_REQUIRED, "repository execution is unavailable without a qualified sandbox")
     _reject_source(source)
@@ -207,6 +210,8 @@ def inspect_repository(source: str, base: str, head: str, output: Path, *, allow
     # Receipts are Provan output, never target-repository output.  Resolve both
     # paths before doing any Git work so symlinked parents cannot bypass this
     # boundary.
+    receipt_id = str(uuid.uuid4())
+    output = output or state_root() / "outputs" / f"repository-inspection-{receipt_id}.json"
     resolved_output = trusted_output_path(output)
     if local is not None and (resolved_output == local or local in resolved_output.parents):
         raise ProvanError(
@@ -264,6 +269,7 @@ def inspect_repository(source: str, base: str, head: str, output: Path, *, allow
         blob_count, blob_bytes, blob_digest = _inspect_blob_contents(mirror, blobs, home)
         receipt = {
             "schema_id": "provan.repository_inspection.v1", "mode": "source-only",
+            "receipt_id": receipt_id, "output_path": str(resolved_output),
             "status": "SOURCE_ONLY_INSPECTED", "requested": {"base": base, "head": head},
             "resolved": resolved, "tree_entry_count": entries, "blob_content_count": blob_count,
             "blob_content_bytes": blob_bytes, "blob_content_digest": blob_digest, "executed_repository_code": False,
@@ -272,9 +278,15 @@ def inspect_repository(source: str, base: str, head: str, output: Path, *, allow
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
     validate_inspection_semantics(receipt)
-    resolved_output.parent.mkdir(parents=True, exist_ok=True)
-    resolved_output.write_bytes(canonical_bytes(receipt))
+    receipt_bytes = canonical_bytes(receipt)
+    write_output(resolved_output, receipt_bytes)
     if local is not None and before != _tree_fingerprint(local):
         resolved_output.unlink(missing_ok=True)
         raise ProvanError("INSPECTION_READ_ONLY_INVARIANT_FAILED", "target changed during receipt publication")
-    return receipt
+    return {
+        **receipt,
+        "write_result": {
+            "receipt_sha256": sha256_bytes(receipt_bytes),
+            "output_path": str(resolved_output),
+        },
+    }

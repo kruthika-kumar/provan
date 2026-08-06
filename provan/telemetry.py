@@ -11,7 +11,7 @@ from typing import Callable
 from . import __version__
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import ProvanError
-from .state import state_root, write_pending
+from .state import secure_replace, state_root, write_pending
 from .validators import validate_pending_envelope_semantics
 
 
@@ -27,19 +27,15 @@ def _settings() -> dict:
 def status() -> dict:
     settings = _settings()
     endpoint = os.environ.get("PROVAN_TELEMETRY_ENDPOINT")
-    return {"schema_id": "provan.telemetry_status.v1", "enabled": bool(settings.get("enabled")), "transport": "CONFIGURED" if endpoint else "NOT_CONFIGURED", "identifier_policy": "per_envelope_non_persistent"}
+    return {"schema_id": "provan.telemetry_status.v1", "enabled": bool(settings.get("enabled")), "transport": "CONFIGURED" if endpoint else "NOT_CONFIGURED", "identifier_policy": "per_envelope_pseudonymous_non_persistent", "installation_identity_collected": False, "cross_run_correlation": "UNSUPPORTED", "timed_rotation": "NOT_APPLICABLE", "recurring_installation_usage_measurement": "UNSUPPORTED"}
 
 
 def configure(enabled: bool) -> dict:
-    root = home(); root.mkdir(parents=True, exist_ok=True)
-    path = root / "telemetry.json"
-    if path.is_symlink() or (path.exists() and not path.is_file()):
-        raise ProvanError("CUSTOMER_REPOSITORY_MUTATION_FORBIDDEN", "unsafe telemetry settings path")
-    path.write_text(json.dumps({"enabled": enabled}, sort_keys=True) + "\n", encoding="utf-8")
+    secure_replace(Path("telemetry.json"), (json.dumps({"enabled": enabled}, sort_keys=True) + "\n").encode("utf-8"))
     return status()
 
 
-def reset_id() -> dict:
+def clear_pending() -> dict:
     pending = home() / "pending"
     removed = 0
     if pending.exists():
@@ -50,7 +46,12 @@ def reset_id() -> dict:
             raise ProvanError("TELEMETRY_RETENTION_BOUNDARY_VIOLATION", "pending store contains a non-envelope entry")
         removed = len(entries)
         shutil.rmtree(pending)
-    return {"schema_id": "provan.telemetry_reset.v1", "pending_envelopes_invalidated": removed, "timed_rotation": "NOT_APPLICABLE"}
+    return {"schema_id": "provan.telemetry_clear_pending.v1", "pending_envelopes_invalidated": removed, "timed_rotation": "NOT_APPLICABLE"}
+
+
+def reset_id() -> dict:
+    """Untimed compatibility alias; the CLI supplies the migration notice."""
+    return clear_pending()
 
 
 def preview(event: str = "doctor_completed") -> dict:

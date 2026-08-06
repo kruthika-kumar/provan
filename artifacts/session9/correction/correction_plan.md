@@ -5,3 +5,5 @@ This correction is additive. It preserves the original Session 9 matrix, closeou
 The implementation repairs optional safe inspection output, local executable doctor checks, telemetry command naming and identity truth, independent review evidence, safe private-plane projections, a forty-claim crosswalk, access-warning handling, state-child link protection and a post-publication external receipt.
 
 Each repair has structural schema validation, independent Python semantics, valid/near-valid/adversarial fixtures, focused tests, artifact hashes and transcript bindings. Existing proof families may be reused where they genuinely establish multiple individual claims. Final publication is non-force and stops at Session 9.
+
+The machine-readable plan maps C9A–C9I to production files, independent validators, schemas, fixture triads, focused tests, proof artifacts and individual G9 claim rows. The bounded execution loop is focused tests, one complete implementation gate, a pre-review proof root, fresh read-only review, then a single additive proof/publication sequence. The full suite is repeated only if implementation or proof semantics change after review.

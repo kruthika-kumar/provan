@@ -26,6 +26,16 @@ from provan.validators import (
     validate_extension_overlay_semantics,
 )
 
+CORRECTION_SCHEMA_FILES = {
+    "access-warning-audit.v1.json", "correction-proof-manifest.v1.json",
+    "correction-proof-registry.v1.json", "external-mirror-attestation.v1.json",
+    "external-publication-receipt.v1.json", "inspection-write-result.v1.json",
+    "layer4-claim-crosswalk.v1.json", "layer4-claim-matrix-correction.v2.json",
+    "private-repository-projection.v1.json", "reviewer-receipt-correction.v1.json",
+    "session9-closeout-correction.v1.json", "session9-correction-fixture.v1.json",
+    "state-link-proof.v1.json", "telemetry-status-policy.v1.json",
+}
+
 
 def load(path: Path): return json.loads(path.read_text(encoding="utf-8"))
 def sha(path: Path): return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
@@ -82,13 +92,16 @@ def validate_runtime_reachability() -> None:
     mutation_calls = {"write_text", "write_bytes", "mkdir", "unlink", "rmtree", "rename", "replace", "remove"}
     allowed = {
         ("repository.py", "inspect_repository", "mkdir"),
-        ("repository.py", "inspect_repository", "write_bytes"),
         ("repository.py", "inspect_repository", "unlink"),
-        ("state.py", "write_pending", "mkdir"),
-        ("state.py", "write_pending", "open"),
-        ("telemetry.py", "configure", "mkdir"),
-        ("telemetry.py", "configure", "write_text"),
-        ("telemetry.py", "reset_id", "rmtree"),
+        ("state.py", "_ensure_state_root", "mkdir"),
+        ("state.py", "secure_write", "mkdir"),
+        ("state.py", "secure_write", "open"),
+        ("state.py", "secure_replace", "replace"),
+        ("state.py", "secure_replace", "unlink"),
+        ("state.py", "validate_state_children", "mkdir"),
+        ("telemetry.py", "clear_pending", "rmtree"),
+        ("doctor.py", "_isolated_git_check", "mkdir"),
+        ("doctor.py", "_state_checks", "unlink"),
         # These are string normalization calls, not pathlib.Path.replace.
         ("repository.py", "inspect_repository", "replace"),
         ("validators.py", "validate_install_origin", "replace"),
@@ -227,7 +240,8 @@ def main() -> int:
                 if not path.is_file(): raise ProvanError("LAYER4_ARTIFACT_BINDING_INVALID",location)
                 if not args.skip_closeout_bindings and location!="artifacts/session9/closeout_manifest.public.json" and (location not in bound or bound_sha(path)!=bound[location]):
                     raise ProvanError("LAYER4_ARTIFACT_BINDING_INVALID",location)
-    schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(registry.items())]}
+    historical_registry={key:value for key,value in registry.items() if value[0].name not in CORRECTION_SCHEMA_FILES}
+    schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(historical_registry.items())]}
     expected=json.dumps(schema_index,sort_keys=True,indent=2)+"\n"; target=artifacts/"schema_registry.public.json"
     if args.regenerate_schema_registry or not target.exists(): target.write_text(expected,encoding="utf-8")
     elif target.read_text(encoding="utf-8") != expected: raise ProvanError("SCHEMA_REGISTRY_DRIFT", "regenerate schema registry")

@@ -23,7 +23,8 @@ TEXT_SUFFIXES = {".py", ".md", ".json", ".toml", ".yml", ".yaml", ".txt", ".rst"
 
 
 def _rule_literal(relative: str, line: str) -> bool:
-    return (relative == "provan/leakage.py" and "re.compile(" in line) or (relative == "provan/validators.py" and "re.search(" in line)
+    leakage_rule = relative == "provan/leakage.py" and ("re.compile(" in line or "artifacts/session9/correction/" in line)
+    return leakage_rule or (relative == "provan/validators.py" and "re.search(" in line)
 
 
 def _text_violations(relative: str, text: str) -> list[dict]:
@@ -31,7 +32,7 @@ def _text_violations(relative: str, text: str) -> list[dict]:
     for line in text.splitlines():
         if _rule_literal(relative,line): continue
         for code,pattern in PRIVATE_PATTERNS.items():
-            if pattern.search(line) and not _allowed_historical(code,relative): result.append({"path":relative,"error":code})
+            if pattern.search(line) and not _allowed_historical(code,relative) and not _allowed_private_projection(code, relative, line): result.append({"path":relative,"error":code})
     return result
 
 
@@ -39,6 +40,16 @@ def _allowed_historical(code: str, relative: str) -> bool:
     """Permit only identifiers already exposed in immutable historical trees."""
     historical = relative.startswith(("historical/", "shiproom/", "external_validation/", "docs/validation/"))
     return historical and code in {"PRIVATE_RUNTIME_PATH", "PRIVATE_ASSET_IDENTITY"}
+
+
+def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
+    """Narrowly allow only the public repository-name field in typed receipts."""
+    allowed = {
+        "artifacts/session9/correction/evals_projection.v1.public.json": "provan-evals",
+        "artifacts/session9/correction/enterprise_projection.v1.public.json": "provan-enterprise",
+    }
+    expected = allowed.get(relative)
+    return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None
 
 
 def validate_public_tree(root: Path, paths: list[Path] | None = None) -> list[dict]:
@@ -100,7 +111,7 @@ def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = N
             if line.startswith("+++ b/"): current=line[6:]
             elif line.startswith("+") and not line.startswith("+++") and current and not _rule_literal(current,line[1:]):
                 for code,pattern in PRIVATE_PATTERNS.items():
-                    if pattern.search(line[1:]) and not _allowed_historical(code,current):
+                    if pattern.search(line[1:]) and not _allowed_historical(code,current) and not _allowed_private_projection(code,current,line[1:]):
                         text=line[1:]; reserved_fixture=current.startswith(("tests/","scripts/")) and ("@example.test" in text or "@example.invalid" in text or ("https"+"://"+"token"+"@github.com/o/r") in text)
                         if not reserved_fixture: violations.append({"path":current,"error":code})
     status=subprocess.run(["git","status","--porcelain"],cwd=root,text=True,capture_output=True,check=False)
