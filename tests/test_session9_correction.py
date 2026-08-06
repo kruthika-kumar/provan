@@ -113,6 +113,14 @@ def test_c9b_unconfigured_extension_metadata_is_not_imported(tmp_path: Path, mon
     assert "unconfigured_extension_metadata_not_runtime_qualified" in limitations
 
 
+def test_c9b_doctor_blocks_when_real_source_only_probe_fails(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("PROVAN_HOME",str(tmp_path/"state"))
+    monkeypatch.setattr(doctor_module,"inspect_repository",lambda *args,**kwargs: (_ for _ in ()).throw(ProvanError("REPOSITORY_RESOURCE_LIMIT_EXCEEDED","fixture")))
+    report=doctor_module.run_doctor()
+    assert report["status"] == "BLOCKED"
+    assert next(row for row in report["checks"] if row["id"]=="source_only_inspection")["status"] == "BLOCKED"
+
+
 def test_c9c_status_is_semantically_honest(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("PROVAN_HOME", str(tmp_path / "state")); value = status()
     jsonschema.validate(value, schema("telemetry-status-policy.v1.json")); validate_telemetry_status_semantics(value)

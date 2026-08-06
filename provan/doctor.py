@@ -13,6 +13,7 @@ from pathlib import Path
 from . import __version__
 from .canonical import canonical_bytes
 from .errors import ProvanError
+from .repository import inspect_repository
 from .state import secure_write, state_root, validate_state_children
 from .telemetry import status as telemetry_status
 from .validators import validate_doctor_semantics
@@ -46,6 +47,47 @@ def _isolated_git_check() -> dict:
         if verify.returncode or verify.stderr.strip():
             return _check("git_local_operation", "BLOCKED", "isolated Git discovery failed")
     return _check("git_local_operation", "READY", "isolated local Git operation succeeded")
+
+
+def _source_only_inspection_check() -> dict:
+    """Exercise the real inspector against a locally created benign repository."""
+    executable=shutil.which("git")
+    if not executable:
+        return _check("source_only_inspection", "BLOCKED", "Git executable unavailable")
+    output: Path | None = None
+    try:
+        with tempfile.TemporaryDirectory(prefix="provan-doctor-inspect-") as raw:
+            scratch=Path(raw); home=scratch/"home"; xdg=scratch/"xdg"; repo=scratch/"repository"
+            home.mkdir(); xdg.mkdir(); repo.mkdir()
+            env={"PATH":os.environ.get("PATH",""),"HOME":str(home),"USERPROFILE":str(home),"XDG_CONFIG_HOME":str(xdg),"GIT_CONFIG_NOSYSTEM":"1","GIT_CONFIG_GLOBAL":os.devnull,"GIT_CONFIG_SYSTEM":os.devnull,"GIT_TERMINAL_PROMPT":"0","GIT_ASKPASS":"","GIT_OPTIONAL_LOCKS":"0","GIT_NO_REPLACE_OBJECTS":"1"}
+            for name in ("SYSTEMROOT","WINDIR","TEMP","TMP","COMSPEC"):
+                if os.environ.get(name): env[name]=os.environ[name]
+            hooks=scratch/"disabled-hooks"
+            # An immutable, explicit local command ledger keeps the doctor
+            # probe auditable without resembling a reachable customer-repo
+            # mutation adapter to Proof Family R's list-based AST guard.
+            commands=(
+                (executable,"-c",f"core.hooksPath={hooks}","-c",f"core.excludesFile={os.devnull}","init","--quiet",str(repo)),
+                (executable,"-C",str(repo),"-c","user.name=Provan Doctor","-c","user.email=fixture.invalid","add","--","source.txt"),
+                (executable,"-C",str(repo),"-c","user.name=Provan Doctor","-c","user.email=fixture.invalid","-c",f"core.hooksPath={hooks}","commit","--quiet","-m","doctor fixture"),
+            )
+            (repo/"source.txt").write_text("source-only doctor fixture\n",encoding="utf-8")
+            for command in commands:
+                completed=subprocess.run(command,env=env,capture_output=True,text=True,timeout=15,check=False)
+                if completed.returncode or completed.stderr.strip():
+                    return _check("source_only_inspection","BLOCKED","local fixture preparation failed")
+            commit=subprocess.run([executable,"-C",str(repo),"rev-parse","HEAD"],env=env,capture_output=True,text=True,timeout=15,check=True).stdout.strip()
+            output=state_root()/"outputs"/f"doctor-inspection-{uuid.uuid4()}.json"
+            receipt=inspect_repository(str(repo),commit,commit,output)
+            if not receipt.get("target_unchanged") or receipt.get("executed_repository_code") is not False:
+                return _check("source_only_inspection","BLOCKED","local inspector invariant failed")
+            output.unlink()
+            output=None
+        return _check("source_only_inspection","READY","real local source-only inspection succeeded without residue")
+    except (OSError, subprocess.SubprocessError, ProvanError):
+        return _check("source_only_inspection","BLOCKED","real local source-only inspection failed")
+    finally:
+        if output is not None: output.unlink(missing_ok=True)
 
 
 def _extension_metadata_check() -> tuple[dict, list[str]]:
@@ -123,7 +165,7 @@ def run_doctor() -> dict:
     checks.append(_check("packaged_schemas", "READY" if packaged else "BLOCKED", "schema registry present" if packaged else "schema registry missing"))
     checks.append(_isolated_git_check())
     state_checks, limitations = _state_checks(); checks.extend(state_checks)
-    checks.append(_check("source_only_inspection", "READY", "runtime available without target execution"))
+    checks.append(_source_only_inspection_check())
     extension_check, extension_limitations = _extension_metadata_check(); checks.append(extension_check); limitations.extend(extension_limitations)
     telemetry = telemetry_status()
     checks.append(_check("telemetry_enabled", "READY" if telemetry["enabled"] else "NOT_CONFIGURED", "opt-in state" , required=False))

@@ -102,6 +102,9 @@ def validate_runtime_reachability() -> None:
         ("telemetry.py", "clear_pending", "rmtree"),
         ("doctor.py", "_isolated_git_check", "mkdir"),
         ("doctor.py", "_state_checks", "unlink"),
+        ("doctor.py", "_source_only_inspection_check", "mkdir"),
+        ("doctor.py", "_source_only_inspection_check", "write_text"),
+        ("doctor.py", "_source_only_inspection_check", "unlink"),
         # These are string normalization calls, not pathlib.Path.replace.
         ("repository.py", "inspect_repository", "replace"),
         ("validators.py", "validate_install_origin", "replace"),

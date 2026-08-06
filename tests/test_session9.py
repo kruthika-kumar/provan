@@ -159,6 +159,20 @@ def test_scratch_usage_bounds_directory_enumeration(tmp_path, monkeypatch):
     assert count > repository_module.MAX_OBJECT_FILES
 
 
+def test_scratch_usage_tolerates_git_removing_queued_directory(tmp_path, monkeypatch):
+    root=tmp_path/"scratch"; root.mkdir(); transient=root/"repository.git"; transient.mkdir(); (transient/"refs").mkdir()
+    original=repository_module.os.scandir; calls=0
+    def racing_scandir(path):
+        nonlocal calls
+        calls+=1
+        if calls==3 and (transient/"refs").exists():
+            (transient/"refs").rmdir()
+        return original(path)
+    monkeypatch.setattr(repository_module.os,"scandir",racing_scandir)
+    count,size=repository_module._scratch_usage(root)
+    assert count >= 1 and size == 0
+
+
 def test_source_blob_inspection_has_independent_byte_bound(tmp_path, monkeypatch):
     repo=tmp_path/"target"; repo.mkdir(); _git(repo,"init"); _git(repo,"config","user.email","fixture.invalid"); _git(repo,"config","user.name","Fixture")
     (repo/"source.bin").write_bytes(b"x"*64); _git(repo,"add","source.bin"); _git(repo,"commit","-m","fixture")

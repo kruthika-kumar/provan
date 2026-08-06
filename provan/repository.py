@@ -100,19 +100,31 @@ def _scratch_usage(root: Path) -> tuple[int, int]:
     count = 0; size = 0; deadline = time.monotonic() + FINGERPRINT_TIMEOUT_SECONDS; stack = [root]
     while stack:
         directory = stack.pop()
-        with os.scandir(directory) as iterator:
-            for entry in iterator:
-                count += 1
-                if count > MAX_OBJECT_FILES or time.monotonic() > deadline:
-                    return MAX_OBJECT_FILES + 1, size
-                if entry.is_symlink():
-                    return MAX_OBJECT_FILES + 1, size
-                if entry.is_dir(follow_symlinks=False):
-                    stack.append(Path(entry.path))
-                elif entry.is_file(follow_symlinks=False):
-                    try: size += entry.stat(follow_symlinks=False).st_size
-                    except FileNotFoundError: continue
-                    if size > MAX_REPOSITORY_BYTES: return count, size
+        try:
+            with os.scandir(directory) as iterator:
+                for entry in iterator:
+                    count += 1
+                    if count > MAX_OBJECT_FILES or time.monotonic() > deadline:
+                        return MAX_OBJECT_FILES + 1, size
+                    try:
+                        if entry.is_symlink():
+                            return MAX_OBJECT_FILES + 1, size
+                        if entry.is_dir(follow_symlinks=False):
+                            stack.append(Path(entry.path))
+                        elif entry.is_file(follow_symlinks=False):
+                            size += entry.stat(follow_symlinks=False).st_size
+                            if size > MAX_REPOSITORY_BYTES: return count, size
+                    except FileNotFoundError:
+                        # Git mutates its private scratch clone concurrently
+                        # with this resource monitor. A vanished scratch entry
+                        # consumes no remaining resource and is not a target
+                        # repository integrity signal.
+                        continue
+        except FileNotFoundError:
+            # A directory queued from the prior scan may be removed by Git
+            # before traversal. Never leak a platform exception from the
+            # source-only fail-closed monitor.
+            continue
     return count, size
 
 
