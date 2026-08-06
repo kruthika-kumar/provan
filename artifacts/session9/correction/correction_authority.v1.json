@@ -1,0 +1,21 @@
+{
+  "schema_id": "provan.session9_correction_authority.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "session": 9,
+  "starting_commit": "371f1e823a94165f735db907c2853cc490d20360",
+  "starting_tree": "a7b2fdb05866aa64b6720ef8e11933c0de41e648",
+  "original_proof_root": "sha256:2ac4d0222e40ddb1040da83664296be95aa565d8f4cf179033a9258e307094d0",
+  "branch": "codex/session9-closeout-correction",
+  "evidence_lifecycle": "ADDITIVE_SUPERSESSION",
+  "protected_original_artifacts": [
+    "artifacts/session9/layer4_claim_matrix.public.json",
+    "artifacts/session9/closeout_manifest.public.json"
+  ],
+  "boundaries": {
+    "session2_status": "CLOSED_PARTIAL",
+    "session2_execution_authorized": false,
+    "session10_started": false,
+    "package_publication_authorized": false,
+    "release_or_tag_authorized": false
+  }
+}

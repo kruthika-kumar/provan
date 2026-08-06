@@ -1,0 +1,26 @@
+{
+  "schema_id": "provan.session9_correction_plan.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "repairs": [
+    {"id": "C9A", "invariant": "safe optional inspection output", "typed_error": "OUTPUT_PATH_OUTSIDE_PROVAN_STATE", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9B", "invariant": "executed local doctor checks", "typed_error": "DOCTOR_FALSE_READY", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9C", "invariant": "honest non-persistent telemetry identity", "typed_error": "TELEMETRY_PREVIEW_PAYLOAD_MISMATCH", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9D", "invariant": "independent non-recursive review receipt", "typed_error": "REVIEW_RECEIPT_BINDING_INVALID", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9E", "invariant": "public-safe private-plane projections", "typed_error": "PRIVATE_REPOSITORY_RECEIPT_INVALID", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9F", "invariant": "forty individually disposed Layer 4 claims", "typed_error": "LAYER4_CLAIM_SET_INCOMPLETE", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9G", "invariant": "warning-free authoritative validation", "typed_error": "REQUIRED_AUTHORITY_ACCESS_FAILED", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9H", "invariant": "state-child link rejection", "typed_error": "PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN", "proof": "valid/near-valid/adversarial"},
+    {"id": "C9I", "invariant": "external publication receipt binding", "typed_error": "EXTERNAL_RECEIPT_BINDING_INVALID", "proof": "valid/near-valid/adversarial"}
+  ],
+  "validation_sequence": [
+    "focused correction tests",
+    "correction proof families",
+    "one complete implementation gate",
+    "fresh read-only review",
+    "strict additive proof validation",
+    "candidate and default-branch CI",
+    "fresh-install gate",
+    "external publication receipt and mirror attestation"
+  ],
+  "publication": "NON_FORCE_LINEAGE_PRESERVING"
+}
