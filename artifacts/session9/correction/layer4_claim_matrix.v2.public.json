@@ -85,7 +85,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71",
       "Claim": "G9-08 — Public README reflects actual current behaviour.",
       "Implemented in": "provan/repository.py; provan/state.py; provan/cli.py",
       "Near-valid proof": "session9.correction.C9A.near-valid",
@@ -121,7 +121,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:d53a6484208790304102d5bcbdf4de48555ae12ccf7ab83266c343b5f57e6c50; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
       "Claim": "G9-11 — Community, Enterprise, and eval repositories have correct purposes.",
       "Implemented in": "Enterprise/evals public-safe projections and validators",
       "Near-valid proof": "session9.correction.C9E.near-valid",
@@ -133,7 +133,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:d53a6484208790304102d5bcbdf4de48555ae12ccf7ab83266c343b5f57e6c50; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
       "Claim": "G9-12 — Enterprise is scaffold-only.",
       "Implemented in": "Enterprise/evals public-safe projections and validators",
       "Near-valid proof": "session9.correction.C9E.near-valid",
@@ -169,7 +169,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:d53a6484208790304102d5bcbdf4de48555ae12ccf7ab83266c343b5f57e6c50; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
       "Claim": "G9-15 — Private repositories have private visibility.",
       "Implemented in": "Enterprise/evals public-safe projections and validators",
       "Near-valid proof": "session9.correction.C9E.near-valid",
@@ -229,7 +229,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:d53a6484208790304102d5bcbdf4de48555ae12ccf7ab83266c343b5f57e6c50; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
       "Claim": "G9-20 — Session 2 assets were harvested only within their authority.",
       "Implemented in": "Enterprise/evals public-safe projections and validators",
       "Near-valid proof": "session9.correction.C9E.near-valid",
@@ -277,7 +277,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71",
       "Claim": "G9-24 — provan doctor reports real capability state.",
       "Implemented in": "provan/doctor.py",
       "Near-valid proof": "session9.correction.C9B.near-valid",
@@ -421,7 +421,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:1e7dd2344b33920cf4e982ccbc2ee9ba9bef6f02fc9663c566096e9235f3fa08",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:fad5a62e360d3fd6fcb7dc074076318d46160c05379faaa8aff2d93978f9dc16",
       "Claim": "G9-36 — The reviewed Session 9 tree is on the public default branch.",
       "Implemented in": "reviewer_receipt.v1.public.json; correction validator",
       "Near-valid proof": "session9.correction.C9D.near-valid",
@@ -433,7 +433,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:d53a6484208790304102d5bcbdf4de48555ae12ccf7ab83266c343b5f57e6c50; sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082",
       "Claim": "G9-37 — All three repositories are clean and remotely synchronised.",
       "Implemented in": "Enterprise/evals public-safe projections and validators",
       "Near-valid proof": "session9.correction.C9E.near-valid",
@@ -445,7 +445,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:f293fbf590c2a186f65c43f8f1d2b2e5b24c2f6b9476af0da910367026b52015; sha256:ddc5c8a0d97965229e15e61305b3061aeb10017d9faad9e99f28f89b9a3fac9e",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:f293fbf590c2a186f65c43f8f1d2b2e5b24c2f6b9476af0da910367026b52015; sha256:4cc810c214abf39b714bd2b89734bc788bbf6a856cd32f5a9e8243e4b8f9773f",
       "Claim": "G9-38 — All existing tests and evals pass without weakened coverage.",
       "Implemented in": "isolated Git environment and access-warning audit",
       "Near-valid proof": "session9.correction.C9G.near-valid",
@@ -457,7 +457,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:1e7dd2344b33920cf4e982ccbc2ee9ba9bef6f02fc9663c566096e9235f3fa08; sha256:ddc5c8a0d97965229e15e61305b3061aeb10017d9faad9e99f28f89b9a3fac9e",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:fad5a62e360d3fd6fcb7dc074076318d46160c05379faaa8aff2d93978f9dc16; sha256:4cc810c214abf39b714bd2b89734bc788bbf6a856cd32f5a9e8243e4b8f9773f",
       "Claim": "G9-39 — Every Gate 9 requirement is supported by artifact evidence.",
       "Implemented in": "Layer 4 correction matrix/crosswalk validators",
       "Near-valid proof": "session9.correction.C9F.near-valid",
@@ -469,7 +469,7 @@
       "Status": "CLOSED"
     },
     {
-      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e; sha256:1e7dd2344b33920cf4e982ccbc2ee9ba9bef6f02fc9663c566096e9235f3fa08",
+      "Artifact evidence": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904; sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71; sha256:fad5a62e360d3fd6fcb7dc074076318d46160c05379faaa8aff2d93978f9dc16",
       "Claim": "G9-40 — Session 10 work has not begun.",
       "Implemented in": "reviewer_receipt.v1.public.json; correction validator",
       "Near-valid proof": "session9.correction.C9D.near-valid",
