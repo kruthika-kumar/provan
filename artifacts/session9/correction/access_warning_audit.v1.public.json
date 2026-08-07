@@ -1,0 +1,12 @@
+{
+  "records": [
+    {
+      "accessible": false,
+      "classification": "OPTIONAL_NONAUTHORITATIVE",
+      "description": "Git implicit XDG excludes lookup observed before isolation; validation now supplies an isolated XDG configuration and explicit excludes policy."
+    }
+  ],
+  "schema_id": "provan.access_warning_audit.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "unclassified_stderr_count": 0
+}

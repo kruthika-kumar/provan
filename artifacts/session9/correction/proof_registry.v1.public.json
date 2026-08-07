@@ -1,0 +1,681 @@
+{
+  "entries": [
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9A",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9A/valid/input",
+      "production_function": "provan.validators.validate_inspection_write_result_semantics",
+      "proof_id": "session9.correction.C9A.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_inspection_write_result_semantics",
+      "schema_error": null,
+      "schema_id": "provan.inspection_write_result.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9A",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9A/near-valid/input",
+      "production_function": "provan.validators.validate_inspection_write_result_semantics",
+      "proof_id": "session9.correction.C9A.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_inspection_write_result_semantics",
+      "schema_error": null,
+      "schema_id": "provan.inspection_write_result.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9A",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9A/adversarial/input",
+      "production_function": "provan.validators.validate_inspection_write_result_semantics",
+      "proof_id": "session9.correction.C9A.adversarial",
+      "python_error": "OUTPUT_PATH_OUTSIDE_PROVAN_STATE",
+      "python_result": "REJECT:OUTPUT_PATH_OUTSIDE_PROVAN_STATE",
+      "python_validator": "provan.validators.validate_inspection_write_result_semantics",
+      "schema_error": null,
+      "schema_id": "provan.inspection_write_result.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9B",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9B/valid/input",
+      "production_function": "provan.validators.validate_doctor_semantics",
+      "proof_id": "session9.correction.C9B.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_doctor_semantics",
+      "schema_error": null,
+      "schema_id": "provan.doctor_report.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9B",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9B/near-valid/input",
+      "production_function": "provan.validators.validate_doctor_semantics",
+      "proof_id": "session9.correction.C9B.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_doctor_semantics",
+      "schema_error": null,
+      "schema_id": "provan.doctor_report.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9B",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9B/adversarial/input",
+      "production_function": "provan.validators.validate_doctor_semantics",
+      "proof_id": "session9.correction.C9B.adversarial",
+      "python_error": "DOCTOR_FALSE_READY",
+      "python_result": "REJECT:DOCTOR_FALSE_READY",
+      "python_validator": "provan.validators.validate_doctor_semantics",
+      "schema_error": null,
+      "schema_id": "provan.doctor_report.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9C",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9C/valid/input",
+      "production_function": "provan.validators.validate_telemetry_status_semantics",
+      "proof_id": "session9.correction.C9C.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_telemetry_status_semantics",
+      "schema_error": null,
+      "schema_id": "provan.telemetry_status_policy.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9C",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9C/near-valid/input",
+      "production_function": "provan.validators.validate_telemetry_status_semantics",
+      "proof_id": "session9.correction.C9C.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_telemetry_status_semantics",
+      "schema_error": null,
+      "schema_id": "provan.telemetry_status_policy.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9C",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9C/adversarial/input",
+      "production_function": "provan.validators.validate_telemetry_status_semantics",
+      "proof_id": "session9.correction.C9C.adversarial",
+      "python_error": "TELEMETRY_IDENTITY_POLICY_INVALID",
+      "python_result": "REJECT:TELEMETRY_IDENTITY_POLICY_INVALID",
+      "python_validator": "provan.validators.validate_telemetry_status_semantics",
+      "schema_error": null,
+      "schema_id": "provan.telemetry_status_policy.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9D",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9D/valid/input",
+      "production_function": "provan.validators.validate_reviewer_receipt_semantics",
+      "proof_id": "session9.correction.C9D.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_reviewer_receipt_semantics",
+      "schema_error": null,
+      "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9D",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9D/near-valid/input",
+      "production_function": "provan.validators.validate_reviewer_receipt_semantics",
+      "proof_id": "session9.correction.C9D.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_reviewer_receipt_semantics",
+      "schema_error": null,
+      "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9D",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9D/adversarial/input",
+      "production_function": "provan.validators.validate_reviewer_receipt_semantics",
+      "proof_id": "session9.correction.C9D.adversarial",
+      "python_error": "REVIEW_RECEIPT_BINDING_INVALID",
+      "python_result": "REJECT:REVIEW_RECEIPT_BINDING_INVALID",
+      "python_validator": "provan.validators.validate_reviewer_receipt_semantics",
+      "schema_error": null,
+      "schema_id": "provan.session9_correction_reviewer_receipt.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9E",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9E/valid/input",
+      "production_function": "provan.validators.validate_private_projection_semantics",
+      "proof_id": "session9.correction.C9E.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_private_projection_semantics",
+      "schema_error": null,
+      "schema_id": "provan.private_repository_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9E",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9E/near-valid/input",
+      "production_function": "provan.validators.validate_private_projection_semantics",
+      "proof_id": "session9.correction.C9E.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_private_projection_semantics",
+      "schema_error": null,
+      "schema_id": "provan.private_repository_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9E",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9E/adversarial/input",
+      "production_function": "provan.validators.validate_private_projection_semantics",
+      "proof_id": "session9.correction.C9E.adversarial",
+      "python_error": "PRIVATE_REPOSITORY_RECEIPT_INVALID",
+      "python_result": "REJECT:PRIVATE_REPOSITORY_RECEIPT_INVALID",
+      "python_validator": "provan.validators.validate_private_projection_semantics",
+      "schema_error": null,
+      "schema_id": "provan.private_repository_projection.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9F",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9F/valid/input",
+      "production_function": "provan.validators.validate_correction_layer4_semantics",
+      "proof_id": "session9.correction.C9F.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_correction_layer4_semantics",
+      "schema_error": null,
+      "schema_id": "provan.layer4_claim_matrix_correction.v2",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9F",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9F/near-valid/input",
+      "production_function": "provan.validators.validate_correction_layer4_semantics",
+      "proof_id": "session9.correction.C9F.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_correction_layer4_semantics",
+      "schema_error": null,
+      "schema_id": "provan.layer4_claim_matrix_correction.v2",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9F",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9F/adversarial/input",
+      "production_function": "provan.validators.validate_correction_layer4_semantics",
+      "proof_id": "session9.correction.C9F.adversarial",
+      "python_error": "LAYER4_CLAIM_SET_INCOMPLETE",
+      "python_result": "REJECT:LAYER4_CLAIM_SET_INCOMPLETE",
+      "python_validator": "provan.validators.validate_correction_layer4_semantics",
+      "schema_error": null,
+      "schema_id": "provan.layer4_claim_matrix_correction.v2",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9G",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9G/valid/input",
+      "production_function": "provan.validators.validate_access_warning_audit_semantics",
+      "proof_id": "session9.correction.C9G.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_access_warning_audit_semantics",
+      "schema_error": null,
+      "schema_id": "provan.access_warning_audit.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9G",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9G/near-valid/input",
+      "production_function": "provan.validators.validate_access_warning_audit_semantics",
+      "proof_id": "session9.correction.C9G.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_access_warning_audit_semantics",
+      "schema_error": null,
+      "schema_id": "provan.access_warning_audit.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9G",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9G/adversarial/input",
+      "production_function": "provan.validators.validate_access_warning_audit_semantics",
+      "proof_id": "session9.correction.C9G.adversarial",
+      "python_error": "REQUIRED_AUTHORITY_ACCESS_FAILED",
+      "python_result": "REJECT:REQUIRED_AUTHORITY_ACCESS_FAILED",
+      "python_validator": "provan.validators.validate_access_warning_audit_semantics",
+      "schema_error": null,
+      "schema_id": "provan.access_warning_audit.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9H",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9H/valid/input",
+      "production_function": "provan.validators.validate_state_link_proof_semantics",
+      "proof_id": "session9.correction.C9H.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_state_link_proof_semantics",
+      "schema_error": null,
+      "schema_id": "provan.state_link_proof.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9H",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9H/near-valid/input",
+      "production_function": "provan.validators.validate_state_link_proof_semantics",
+      "proof_id": "session9.correction.C9H.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_state_link_proof_semantics",
+      "schema_error": null,
+      "schema_id": "provan.state_link_proof.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9H",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9H/adversarial/input",
+      "production_function": "provan.validators.validate_state_link_proof_semantics",
+      "proof_id": "session9.correction.C9H.adversarial",
+      "python_error": "PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN",
+      "python_result": "REJECT:PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN",
+      "python_validator": "provan.validators.validate_state_link_proof_semantics",
+      "schema_error": null,
+      "schema_id": "provan.state_link_proof.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9I",
+      "fixture_class": "valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9I/valid/input",
+      "production_function": "provan.validators.validate_external_publication_state_semantics",
+      "proof_id": "session9.correction.C9I.valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_external_publication_state_semantics + provan.validators.validate_mirror_attestation_semantics",
+      "schema_error": null,
+      "schema_id": "provan.external_publication_receipt.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9I",
+      "fixture_class": "near-valid",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9I/near-valid/input",
+      "production_function": "provan.validators.validate_mirror_attestation_semantics",
+      "proof_id": "session9.correction.C9I.near-valid",
+      "python_error": null,
+      "python_result": "PASS",
+      "python_validator": "provan.validators.validate_external_publication_state_semantics + provan.validators.validate_mirror_attestation_semantics",
+      "schema_error": null,
+      "schema_id": "provan.external_mirror_attestation.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-near-valid]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    },
+    {
+      "artifact_hashes": [
+        "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
+        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      ],
+      "artifact_locations": [
+        "tests/fixtures/session9/correction-proof-fixtures.v1.json",
+        "artifacts/session9/correction/transcripts/correction_focused.public.txt"
+      ],
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "family": "C9I",
+      "fixture_class": "adversarial",
+      "fixture_path": "tests/fixtures/session9/correction-proof-fixtures.v1.json#/families/C9I/adversarial/input",
+      "production_function": "provan.validators.validate_external_publication_state_semantics",
+      "proof_id": "session9.correction.C9I.adversarial",
+      "python_error": "EXTERNAL_RECEIPT_BINDING_INVALID",
+      "python_result": "REJECT:EXTERNAL_RECEIPT_BINDING_INVALID",
+      "python_validator": "provan.validators.validate_external_publication_state_semantics + provan.validators.validate_mirror_attestation_semantics",
+      "schema_error": null,
+      "schema_id": "provan.external_publication_receipt.v1",
+      "schema_result": "PASS",
+      "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-adversarial]",
+      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+    }
+  ],
+  "schema_id": "provan.session9_correction_proof_registry.v1",
+  "sensitivity": "PUBLIC_SAFE"
+}

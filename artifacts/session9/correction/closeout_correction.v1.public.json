@@ -1,0 +1,30 @@
+{
+  "does_not_invalidate_historical_proof": {
+    "original_commit": "371f1e823a94165f735db907c2853cc490d20360",
+    "original_proof_root": "sha256:2ac4d0222e40ddb1040da83664296be95aa565d8f4cf179033a9258e307094d0"
+  },
+  "implementation_binding": {
+    "commit": "1e0cf161cd03c9431cacd7b51aaa83c8b58b9fd0",
+    "pre_review_proof_root": "sha256:09e1ff65334c881bb336b04c553a3ae9d6464865d504f1246429ed32d7377b15",
+    "tree": "4608d62ab3b988ae3dced575ffe4700a71d0eb66"
+  },
+  "review_binding": {
+    "open_findings": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0
+    },
+    "receipt_sha256": "sha256:1e7dd2344b33920cf4e982ccbc2ee9ba9bef6f02fc9663c566096e9235f3fa08",
+    "verdict": "GO"
+  },
+  "schema_id": "provan.session9_closeout_correction.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "session10_started": false,
+  "session2_comparative_claim_authorized": false,
+  "session2_status": "CLOSED_PARTIAL",
+  "status": "COMPLETE_PENDING_LINEAGE_PRESERVING_PUBLICATION",
+  "supersedes_for_current_session9_status": [
+    "original fifteen-row Layer 4 matrix",
+    "original Session 9 closeout"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_id": "provan.private_repository_projection.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "repository_role": "EVALUATION",
+  "repository_name": "provan-evals",
+  "visibility": "PRIVATE",
+  "commit": "680a86807775df3e1508a2f7938c6b29a6fe912e",
+  "tree": "c0dd07fd88c05c02f73c1cd0a102988741c6262d",
+  "branch": "main",
+  "clean": true,
+  "drift_status": "AUTHORIZED_ADDITIVE_CORRECTION_FROM_EXPECTED_HEAD",
+  "aggregate_results": {
+    "validator": "PASS",
+    "all_and_only_authorized": true,
+    "authorized_usable_count": 7,
+    "classification_totals": {
+      "PRIVATE_EVAL_CASE": 4,
+      "PRIVATE_INCIDENT_REGRESSION": 3
+    },
+    "typed_exclusion_count": 7,
+    "typed_exclusion_reason_totals": {
+      "NOT_PRIVATE_USABLE_ASSET": 6,
+      "QUARANTINED_NON_EXECUTABLE_INCIDENT_EVIDENCE": 1
+    },
+    "customer_content_validation": "PASS",
+    "community_runtime_dependency": "ABSENT",
+    "headline_claims_authorized": false,
+    "session2_status": "CLOSED_PARTIAL"
+  }
+}

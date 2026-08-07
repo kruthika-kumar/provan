@@ -1,0 +1,402 @@
+{
+  "claims": [
+    {
+      "claim_id": "G9-01",
+      "proof_families": [
+        "B"
+      ]
+    },
+    {
+      "claim_id": "G9-02",
+      "proof_families": [
+        "B"
+      ]
+    },
+    {
+      "claim_id": "G9-03",
+      "proof_families": [
+        "B"
+      ]
+    },
+    {
+      "claim_id": "G9-04",
+      "proof_families": [
+        "O"
+      ]
+    },
+    {
+      "claim_id": "G9-05",
+      "proof_families": [
+        "D"
+      ]
+    },
+    {
+      "claim_id": "G9-06",
+      "proof_families": [
+        "D"
+      ]
+    },
+    {
+      "claim_id": "G9-07",
+      "proof_families": [
+        "B"
+      ]
+    },
+    {
+      "claim_id": "G9-08",
+      "proof_families": [
+        "C9A"
+      ]
+    },
+    {
+      "claim_id": "G9-09",
+      "proof_families": [
+        "R"
+      ]
+    },
+    {
+      "claim_id": "G9-10",
+      "proof_families": [
+        "R"
+      ]
+    },
+    {
+      "claim_id": "G9-11",
+      "proof_families": [
+        "C9E"
+      ]
+    },
+    {
+      "claim_id": "G9-12",
+      "proof_families": [
+        "C9E"
+      ]
+    },
+    {
+      "claim_id": "G9-13",
+      "proof_families": [
+        "F"
+      ]
+    },
+    {
+      "claim_id": "G9-14",
+      "proof_families": [
+        "F"
+      ]
+    },
+    {
+      "claim_id": "G9-15",
+      "proof_families": [
+        "C9E"
+      ]
+    },
+    {
+      "claim_id": "G9-16",
+      "proof_families": [
+        "D"
+      ]
+    },
+    {
+      "claim_id": "G9-17",
+      "proof_families": [
+        "E"
+      ]
+    },
+    {
+      "claim_id": "G9-18",
+      "proof_families": [
+        "E"
+      ]
+    },
+    {
+      "claim_id": "G9-19",
+      "proof_families": [
+        "E"
+      ]
+    },
+    {
+      "claim_id": "G9-20",
+      "proof_families": [
+        "C9E"
+      ]
+    },
+    {
+      "claim_id": "G9-21",
+      "proof_families": [
+        "I"
+      ]
+    },
+    {
+      "claim_id": "G9-22",
+      "proof_families": [
+        "I"
+      ]
+    },
+    {
+      "claim_id": "G9-23",
+      "proof_families": [
+        "J"
+      ]
+    },
+    {
+      "claim_id": "G9-24",
+      "proof_families": [
+        "C9B"
+      ]
+    },
+    {
+      "claim_id": "G9-25",
+      "proof_families": [
+        "K"
+      ]
+    },
+    {
+      "claim_id": "G9-26",
+      "proof_families": [
+        "K"
+      ]
+    },
+    {
+      "claim_id": "G9-27",
+      "proof_families": [
+        "M"
+      ]
+    },
+    {
+      "claim_id": "G9-28",
+      "proof_families": [
+        "K"
+      ]
+    },
+    {
+      "claim_id": "G9-29",
+      "proof_families": [
+        "L"
+      ]
+    },
+    {
+      "claim_id": "G9-30",
+      "proof_families": [
+        "L"
+      ]
+    },
+    {
+      "claim_id": "G9-31",
+      "proof_families": [
+        "F"
+      ]
+    },
+    {
+      "claim_id": "G9-32",
+      "proof_families": [
+        "O"
+      ]
+    },
+    {
+      "claim_id": "G9-33",
+      "proof_families": [
+        "P"
+      ]
+    },
+    {
+      "claim_id": "G9-34",
+      "proof_families": [
+        "Q"
+      ]
+    },
+    {
+      "claim_id": "G9-35",
+      "proof_families": [
+        "Q"
+      ]
+    },
+    {
+      "claim_id": "G9-36",
+      "proof_families": [
+        "C9D"
+      ]
+    },
+    {
+      "claim_id": "G9-37",
+      "proof_families": [
+        "C9E"
+      ]
+    },
+    {
+      "claim_id": "G9-38",
+      "proof_families": [
+        "C9G"
+      ]
+    },
+    {
+      "claim_id": "G9-39",
+      "proof_families": [
+        "C9F"
+      ]
+    },
+    {
+      "claim_id": "G9-40",
+      "proof_families": [
+        "C9D"
+      ]
+    }
+  ],
+  "invariants": [
+    {
+      "claim_ids": [
+        "G9-01",
+        "G9-02",
+        "G9-03",
+        "G9-07"
+      ],
+      "invariant": "canonical namespace and migration-only compatibility",
+      "proof_family": "B"
+    },
+    {
+      "claim_ids": [
+        "G9-04",
+        "G9-32"
+      ],
+      "invariant": "public wheel contents and dependency isolation",
+      "proof_family": "O"
+    },
+    {
+      "claim_ids": [
+        "G9-05",
+        "G9-06",
+        "G9-16"
+      ],
+      "invariant": "immutable historical evidence and schema compatibility",
+      "proof_family": "D"
+    },
+    {
+      "claim_ids": [
+        "G9-08"
+      ],
+      "invariant": "safe optional inspection output",
+      "proof_family": "C9A"
+    },
+    {
+      "claim_ids": [
+        "G9-09",
+        "G9-10"
+      ],
+      "invariant": "permanent read-only runtime and target immutability",
+      "proof_family": "R"
+    },
+    {
+      "claim_ids": [
+        "G9-11",
+        "G9-12",
+        "G9-15",
+        "G9-20",
+        "G9-37"
+      ],
+      "invariant": "public-safe private-plane projections",
+      "proof_family": "C9E"
+    },
+    {
+      "claim_ids": [
+        "G9-13",
+        "G9-14",
+        "G9-31"
+      ],
+      "invariant": "public product and dependency boundary documents",
+      "proof_family": "F"
+    },
+    {
+      "claim_ids": [
+        "G9-17",
+        "G9-18",
+        "G9-19"
+      ],
+      "invariant": "Session 2 authority and CLOSED_PARTIAL limitations",
+      "proof_family": "E"
+    },
+    {
+      "claim_ids": [
+        "G9-21",
+        "G9-22"
+      ],
+      "invariant": "source-only Git protocol and execution isolation",
+      "proof_family": "I"
+    },
+    {
+      "claim_ids": [
+        "G9-23"
+      ],
+      "invariant": "qualified-sandbox fail-closed execution boundary",
+      "proof_family": "J"
+    },
+    {
+      "claim_ids": [
+        "G9-24"
+      ],
+      "invariant": "executed local doctor checks",
+      "proof_family": "C9B"
+    },
+    {
+      "claim_ids": [
+        "G9-25",
+        "G9-26",
+        "G9-28"
+      ],
+      "invariant": "telemetry disabled-state and consent boundary",
+      "proof_family": "K"
+    },
+    {
+      "claim_ids": [
+        "G9-27"
+      ],
+      "invariant": "immutable telemetry preview/send byte parity",
+      "proof_family": "M"
+    },
+    {
+      "claim_ids": [
+        "G9-29",
+        "G9-30"
+      ],
+      "invariant": "diagnostics and private-content separation",
+      "proof_family": "L"
+    },
+    {
+      "claim_ids": [
+        "G9-33"
+      ],
+      "invariant": "fresh-install source-checkout independence",
+      "proof_family": "P"
+    },
+    {
+      "claim_ids": [
+        "G9-34",
+        "G9-35"
+      ],
+      "invariant": "lineage-preserving public/private repository topology",
+      "proof_family": "Q"
+    },
+    {
+      "claim_ids": [
+        "G9-36",
+        "G9-40"
+      ],
+      "invariant": "independent non-recursive review receipt",
+      "proof_family": "C9D"
+    },
+    {
+      "claim_ids": [
+        "G9-38"
+      ],
+      "invariant": "warning-free authoritative validation",
+      "proof_family": "C9G"
+    },
+    {
+      "claim_ids": [
+        "G9-39"
+      ],
+      "invariant": "forty individually disposed Layer 4 claims",
+      "proof_family": "C9F"
+    }
+  ],
+  "schema_id": "provan.layer4_claim_crosswalk.v1",
+  "sensitivity": "PUBLIC_SAFE"
+}

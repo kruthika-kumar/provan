@@ -1,0 +1,63 @@
+{
+  "implementation_commit": "1e0cf161cd03c9431cacd7b51aaa83c8b58b9fd0",
+  "implementation_tree": "4608d62ab3b988ae3dced575ffe4700a71d0eb66",
+  "results": [
+    {
+      "command": "python -m pytest -q",
+      "exit_code": 0,
+      "result": "1090 passed, 26 skipped in 2554.19s"
+    },
+    {
+      "command": "python -m pytest -q tests/test_session9_correction.py",
+      "exit_code": 0,
+      "result": "...s..............................................                       [100%]\n49 passed, 1 skipped in 5.31s"
+    },
+    {
+      "command": "python scripts/run_evals.py",
+      "exit_code": 0,
+      "result": "PASS: 35 checks"
+    },
+    {
+      "command": "python scripts/run_workflow_integration_evals.py",
+      "exit_code": 0,
+      "result": "PASS: 18 checks"
+    },
+    {
+      "command": "python -m build",
+      "exit_code": 0,
+      "result": "wheel and sdist built after isolated build dependency access was available"
+    },
+    {
+      "command": "installed-wheel source-only inspection and doctor gate",
+      "exit_code": 0,
+      "result": "PASS: isolated site-packages origin, target unchanged, doctor READY_WITH_LIMITATIONS"
+    },
+    {
+      "command": "python scripts/validate_session9.py --wheel dist/*.whl --archive dist/*.tar.gz",
+      "exit_code": 0,
+      "result": "SESSION9_VALID; warning-free isolated Git environment"
+    },
+    {
+      "command": "python scripts/validate_session9_correction.py --implementation-only",
+      "exit_code": 0,
+      "result": "SESSION9_CORRECTION_VALID; warning-free isolated Git environment"
+    },
+    {
+      "command": "python scripts/validate_session9_leakage.py",
+      "exit_code": 0,
+      "result": "SESSION9_PUBLIC_LEAKAGE_VALID; warning-free isolated Git environment"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "schema_id": "provan.session9_correction_gate_summary.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "test_scope": {
+    "base_collected": 1065,
+    "baseline_nodes_missing": 0,
+    "candidate_collected": 1116
+  }
+}
