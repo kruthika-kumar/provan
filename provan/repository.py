@@ -177,6 +177,22 @@ def _run(argv: list[str], cwd: Path, home: Path, timeout: int = 60) -> subproces
         return subprocess.CompletedProcess(argv, process.returncode, out, err)
 
 
+def _remote_fetch_plan(source: str, mirror: Path, hooks: Path, base: str, head: str) -> tuple[list[str], list[str]]:
+    """Build a bounded full-blob fetch for only the requested commits.
+
+    A blob-filtered clone followed by ``ls-tree -l`` asks Git to lazily fetch
+    object sizes one at a time.  That made the documented public inspection
+    nondeterministically exceed its runtime bound.  Fetching only the two
+    pinned commits, with their blobs, keeps both network authority and storage
+    bounded while allowing tree and content inspection to remain local.
+    """
+    common = ["git", "-c", f"core.hooksPath={hooks}", "-c", "protocol.file.allow=never", "-c", "protocol.ext.allow=never"]
+    initialise = [*common, "init", "--bare", str(mirror)]
+    requested = list(dict.fromkeys((base, head)))
+    fetch = [*common, "--git-dir", str(mirror), "fetch", "--no-tags", "--no-write-fetch-head", "--depth=1", "--", source, *requested]
+    return initialise, fetch
+
+
 def _inspect_blob_contents(git_dir: Path, blobs: list[tuple[str, str, int]], home: Path) -> tuple[int, int, str]:
     total = sum(size for _, _, size in blobs)
     if total > MAX_SOURCE_INSPECTION_BYTES:
@@ -246,17 +262,19 @@ def inspect_repository(source: str, base: str, head: str, output: Path | None = 
         home = scratch / "home"; home.mkdir(); hooks = home / "hooks"; hooks.mkdir()
         mirror = scratch / "repository.git"
         clone_source = str(local) if local is not None else source
-        clone = ["git", "-c", f"core.hooksPath={hooks}", "-c", "protocol.file.allow=always" if local is not None else "protocol.file.allow=never", "-c", "protocol.ext.allow=never", "clone", "--bare", "--no-tags", "--filter=blob:none", "--", clone_source, str(mirror)]
+        clone = ["git", "-c", f"core.hooksPath={hooks}", "-c", "protocol.file.allow=always", "-c", "protocol.ext.allow=never", "clone", "--bare", "--no-tags", "--local", "--no-hardlinks", "--", clone_source, str(mirror)]
         if local is not None:
             # Local transport must not invoke upload-pack: repository config can
             # define uploadpack.packObjectsHook. A no-hardlink local copy reads
             # objects/refs as data and Git rejects symlinked object stores.
-            clone[clone.index("--filter=blob:none")] = "--local"
-            clone.insert(clone.index("--"), "--no-hardlinks")
-        ledger.append(clone[1:])
-        completed = _run(clone, scratch, home)
-        if completed.returncode:
-            raise ProvanError("REPOSITORY_FETCH_FAILED", completed.stderr.strip()[:300])
+            commands = [clone]
+        else:
+            commands = list(_remote_fetch_plan(source, mirror, hooks, base, head))
+        for command in commands:
+            ledger.append(command[1:])
+            completed = _run(command, scratch, home)
+            if completed.returncode:
+                raise ProvanError("REPOSITORY_FETCH_FAILED", completed.stderr.strip()[:300])
         _bounded_object_store(mirror)
         resolved: dict[str, str] = {}
         for label, ref in (("base", base), ("head", head)):

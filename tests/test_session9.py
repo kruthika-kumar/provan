@@ -109,6 +109,21 @@ def test_source_requires_pinned_commits(tmp_path):
     assert raised.value.code == "PINNED_COMMIT_REQUIRED"
 
 
+def test_remote_fetch_plan_avoids_partial_clone_lazy_blob_fetch(tmp_path):
+    mirror=tmp_path/"repository.git"; hooks=tmp_path/"hooks"; base="a"*40; head="b"*40
+    initialise,fetch=repository_module._remote_fetch_plan("https://github.com/example/project",mirror,hooks,base,head)
+    combined=" ".join((*initialise,*fetch))
+    assert "filter=blob:none" not in combined and "clone" not in fetch
+    assert fetch[-3:] == ["https://github.com/example/project",base,head]
+    assert "--depth=1" in fetch and "--no-write-fetch-head" in fetch and "--no-tags" in fetch
+
+
+def test_remote_fetch_plan_deduplicates_identical_pinned_commit(tmp_path):
+    commit="a"*40
+    _,fetch=repository_module._remote_fetch_plan("https://github.com/example/project",tmp_path/"repository.git",tmp_path/"hooks",commit,commit)
+    assert fetch[-2:] == ["https://github.com/example/project",commit]
+
+
 def test_source_rejects_repository_object_alternates(tmp_path):
     repo=tmp_path/"target"; repo.mkdir(); _git(repo,"init"); _git(repo,"config","user.email","fixture.invalid"); _git(repo,"config","user.name","Fixture")
     (repo/"a.txt").write_text("a\n",encoding="utf-8"); _git(repo,"add","a.txt"); _git(repo,"commit","-m","fixture")
