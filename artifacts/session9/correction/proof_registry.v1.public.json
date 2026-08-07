@@ -3,7 +3,7 @@
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -23,12 +23,12 @@
       "schema_id": "provan.inspection_write_result.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -48,12 +48,12 @@
       "schema_id": "provan.inspection_write_result.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -73,12 +73,12 @@
       "schema_id": "provan.inspection_write_result.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9A-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -98,12 +98,12 @@
       "schema_id": "provan.doctor_report.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -123,12 +123,12 @@
       "schema_id": "provan.doctor_report.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -148,12 +148,12 @@
       "schema_id": "provan.doctor_report.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9B-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -173,12 +173,12 @@
       "schema_id": "provan.telemetry_status_policy.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -198,12 +198,12 @@
       "schema_id": "provan.telemetry_status_policy.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -223,12 +223,12 @@
       "schema_id": "provan.telemetry_status_policy.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9C-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -248,12 +248,12 @@
       "schema_id": "provan.session9_correction_reviewer_receipt.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -273,12 +273,12 @@
       "schema_id": "provan.session9_correction_reviewer_receipt.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -298,12 +298,12 @@
       "schema_id": "provan.session9_correction_reviewer_receipt.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9D-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -323,12 +323,12 @@
       "schema_id": "provan.private_repository_projection.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -348,12 +348,12 @@
       "schema_id": "provan.private_repository_projection.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -373,12 +373,12 @@
       "schema_id": "provan.private_repository_projection.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9E-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -398,12 +398,12 @@
       "schema_id": "provan.layer4_claim_matrix_correction.v2",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -423,12 +423,12 @@
       "schema_id": "provan.layer4_claim_matrix_correction.v2",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -448,12 +448,12 @@
       "schema_id": "provan.layer4_claim_matrix_correction.v2",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9F-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -473,12 +473,12 @@
       "schema_id": "provan.access_warning_audit.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -498,12 +498,12 @@
       "schema_id": "provan.access_warning_audit.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -523,12 +523,12 @@
       "schema_id": "provan.access_warning_audit.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9G-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -548,12 +548,12 @@
       "schema_id": "provan.state_link_proof.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -573,12 +573,12 @@
       "schema_id": "provan.state_link_proof.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -598,12 +598,12 @@
       "schema_id": "provan.state_link_proof.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9H-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -623,12 +623,12 @@
       "schema_id": "provan.external_publication_receipt.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -648,12 +648,12 @@
       "schema_id": "provan.external_mirror_attestation.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-near-valid]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "artifact_hashes": [
         "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904",
-        "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+        "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
       ],
       "artifact_locations": [
         "tests/fixtures/session9/correction-proof-fixtures.v1.json",
@@ -673,7 +673,7 @@
       "schema_id": "provan.external_publication_receipt.v1",
       "schema_result": "PASS",
       "test_id": "tests/test_session9_correction.py::test_correction_proof_fixture_executes_independent_semantics[C9I-adversarial]",
-      "transcript_hash": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "transcript_hash": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     }
   ],
   "schema_id": "provan.session9_correction_proof_registry.v1",

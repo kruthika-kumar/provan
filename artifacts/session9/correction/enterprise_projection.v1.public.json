@@ -4,8 +4,8 @@
   "repository_role": "ENTERPRISE",
   "repository_name": "provan-enterprise",
   "visibility": "PRIVATE",
-  "commit": "86ba4c409aa0d24bac44f6bfd2f4acfd6ab4b097",
-  "tree": "b7a5691234d98eff814bd63c133b779b7bf79a27",
+  "commit": "246cb617b5a815716da2ba3cd48f5d787e211835",
+  "tree": "05e0c5ae51fcac50114045dae52a134a51470547",
   "branch": "main",
   "clean": true,
   "drift_status": "AUTHORIZED_ADDITIVE_CORRECTION_FROM_EXPECTED_HEAD",
@@ -22,9 +22,9 @@
   "implementation_binding": {
     "community_version": "0.2.0",
     "extension_api_major": 1,
-    "implementation_commit": "1e0cf161cd03c9431cacd7b51aaa83c8b58b9fd0",
-    "implementation_tree": "4608d62ab3b988ae3dced575ffe4700a71d0eb66",
-    "wheel_sha256": "sha256:794a2507f12f33ff036433c1ba152bb0810d1b95d6314381f4b6777890ac3fab",
+    "implementation_commit": "438211233eac22a51a59ddc5c56a34645a4dc15e",
+    "implementation_tree": "4f8ea421a8362402fc1a7d9d8e7d7f415fe53a60",
+    "wheel_sha256": "sha256:6a15a68880dbfdf5872e9c978b82057bfaa12caec0ae89974e607acea4318301",
     "schema_registry_digest": "sha256:7d47320f1929d059be2bcb7181d3f67ba750206f9f2ce05a3548a0da5fb3e6ac",
     "final_proof_commit": "RECORDED_SEPARATELY_AFTER_REVIEW"
   }

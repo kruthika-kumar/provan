@@ -1,16 +1,16 @@
 {
-  "implementation_commit": "1e0cf161cd03c9431cacd7b51aaa83c8b58b9fd0",
-  "implementation_tree": "4608d62ab3b988ae3dced575ffe4700a71d0eb66",
+  "implementation_commit": "438211233eac22a51a59ddc5c56a34645a4dc15e",
+  "implementation_tree": "4f8ea421a8362402fc1a7d9d8e7d7f415fe53a60",
   "results": [
     {
       "command": "python -m pytest -q",
       "exit_code": 0,
-      "result": "1090 passed, 26 skipped in 2554.19s"
+      "result": "1092 passed, 26 skipped in 3141.51s"
     },
     {
       "command": "python -m pytest -q tests/test_session9_correction.py",
       "exit_code": 0,
-      "result": "...s..............................................                       [100%]\n49 passed, 1 skipped in 5.31s"
+      "result": "...s..............................................                       [100%]\n49 passed, 1 skipped in 8.01s"
     },
     {
       "command": "python scripts/run_evals.py",
@@ -31,6 +31,11 @@
       "command": "installed-wheel source-only inspection and doctor gate",
       "exit_code": 0,
       "result": "PASS: isolated site-packages origin, target unchanged, doctor READY_WITH_LIMITATIONS"
+    },
+    {
+      "command": "README inspection command from a fresh installed wheel",
+      "exit_code": 0,
+      "result": "PASS: credential-free public GitHub pinned commit inspected with default UUID receipt path"
     },
     {
       "command": "python scripts/validate_session9.py --wheel dist/*.whl --archive dist/*.tar.gz",
@@ -58,6 +63,6 @@
   "test_scope": {
     "base_collected": 1065,
     "baseline_nodes_missing": 0,
-    "candidate_collected": 1116
+    "candidate_collected": 1118
   }
 }

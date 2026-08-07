@@ -17,37 +17,29 @@
       "sha256": "sha256:6731d8f4bf466c58d80424e9cbb62d10c95739aab698dc42d8665659dbc0c36b"
     },
     {
-      "path": "artifacts/session9/correction/enterprise_projection.v1.public.json",
-      "sha256": "sha256:9393ddf4dc49a5ff1e7a3cff3b00ee7dd45e0404983a5290da559aa10ba83c25"
-    },
-    {
-      "path": "artifacts/session9/correction/evals_projection.v1.public.json",
-      "sha256": "sha256:831458a3ae96f0f94b1f52517e6af715c6b6b214b7a6bd4a428377eec1051082"
-    },
-    {
       "path": "artifacts/session9/correction/implementation_binding.v1.public.json",
-      "sha256": "sha256:b6d4c336466b2f16e610f05872f279c834ef078bcf4aba071928652bf93aad4f"
+      "sha256": "sha256:d9017dfb61f404e5bc7bc532ceb32fab8b85c5431facb82e165df98347e99b63"
     },
     {
       "path": "artifacts/session9/correction/implementation_gate_summary.v1.public.json",
-      "sha256": "sha256:ddc5c8a0d97965229e15e61305b3061aeb10017d9faad9e99f28f89b9a3fac9e"
+      "sha256": "sha256:4cc810c214abf39b714bd2b89734bc788bbf6a856cd32f5a9e8243e4b8f9773f"
     },
     {
       "path": "artifacts/session9/correction/proof_registry.v1.public.json",
-      "sha256": "sha256:a94ce1d0da486edd0c0eb86503889dca2dc3a45c386a5cae5ff582353cd95fc3"
+      "sha256": "sha256:941766e4b72b98bbffed25dc41ddbca3f0aacc155d51e5441779234d4b14d4ee"
     },
     {
       "path": "artifacts/session9/correction/transcripts/correction_focused.public.txt",
-      "sha256": "sha256:7ff411e5ab62b1b0661de7e3e6cced42fc34bd275d7021a0b102610621fb4b7e"
+      "sha256": "sha256:6b37b96f70806fa2d77edf6405f2462c106113d7e00d39ca068d5e8e88da0b71"
     },
     {
       "path": "tests/fixtures/session9/correction-proof-fixtures.v1.json",
       "sha256": "sha256:9c2d190a5d29e2ec758eb8b79f37c23c9b61b8716485ad5eb0fcd7ddda1ac904"
     }
   ],
-  "implementation_commit": "1e0cf161cd03c9431cacd7b51aaa83c8b58b9fd0",
-  "implementation_tree": "4608d62ab3b988ae3dced575ffe4700a71d0eb66",
-  "proof_root": "sha256:09e1ff65334c881bb336b04c553a3ae9d6464865d504f1246429ed32d7377b15",
+  "implementation_commit": "438211233eac22a51a59ddc5c56a34645a4dc15e",
+  "implementation_tree": "4f8ea421a8362402fc1a7d9d8e7d7f415fe53a60",
+  "proof_root": "sha256:3c927b3fb2480355ccb94faecd440f52d9c64426c81d4a99c7d2288b7fc36065",
   "schema_id": "provan.session9_correction_proof_manifest.v1",
   "scope": "PRE_REVIEW_NON_RECURSIVE",
   "sensitivity": "PUBLIC_SAFE"
