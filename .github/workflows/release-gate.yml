@@ -20,7 +20,7 @@ jobs:
       - run: python -m pytest -q
       - run: python scripts/run_evals.py
       - run: python scripts/run_workflow_integration_evals.py
-      - run: python scripts/build_session9_proofs.py
       - run: python -m build
-      - run: python scripts/build_session9_closeout.py --pytest-exit 0 --pytest-summary "full candidate suite passed in CI"
-      - run: python scripts/validate_session9.py --allow-pending-review --wheel dist/*.whl --archive dist/*.tar.gz
+      - run: python scripts/validate_session9.py --wheel dist/*.whl --archive dist/*.tar.gz
+      - run: python scripts/validate_session9_correction.py
+      - run: python scripts/validate_session9_leakage.py
