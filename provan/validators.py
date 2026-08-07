@@ -309,7 +309,18 @@ def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[
     invariant_claims={item.get("proof_family"):set(item.get("claim_ids",[])) for item in crosswalk.get("invariants",[])}
     if not invariant_claims or any(family not in invariant_claims or claim not in invariant_claims[family] for claim,families in mapping.items() for family in families) or any(family not in mapping.get(claim,set()) for family,claims in invariant_claims.items() for claim in claims):
         raise ProvanError("LAYER4_CROSSWALK_INVALID","invariant and individual-claim mappings disagree")
-    entries={entry.get("proof_id"):entry for registry in proof_registries for entry in registry.get("entries",[])}
+    entries={}
+    for registry in proof_registries:
+        for entry in registry.get("entries",[]):
+            proof_id=entry.get("proof_id")
+            if not proof_id:
+                historical=re.fullmatch(r"tests/fixtures/session9/proof-fixtures\.v1\.json#/families/([A-S])/(valid|near-valid|adversarial)",entry.get("fixture_path",""))
+                if historical: proof_id=f"session9.proof.{historical.group(1)}.{historical.group(2)}"
+            if not proof_id:
+                continue  # Non-triad extension fixtures are not Layer 4 proof references.
+            if proof_id in entries:
+                raise ProvanError("LAYER4_PROOF_BINDING_INVALID","proof registry has a duplicate canonical identity")
+            entries[proof_id]=entry
     for row in rows:
         if set(row) != LAYER4_COLUMNS or any(row[column] in (None, "") for column in LAYER4_COLUMNS):
             raise ProvanError("LAYER4_CLAIM_INCOMPLETE", "claim has an unclosed column")

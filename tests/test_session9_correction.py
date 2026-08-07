@@ -214,6 +214,18 @@ def test_c9f_exact_forty_claims_allow_legitimate_proof_reuse():
     assert binding_error.value.code == "LAYER4_PROOF_BINDING_INVALID"
 
 
+def test_c9f_resolves_immutable_historical_registry_without_rewriting_it():
+    registry=json.loads((ROOT/"artifacts/session9/proof_registry.public.json").read_text(encoding="utf-8"))
+    triad={entry["fixture_class"]:entry for entry in registry["entries"] if "/families/R/" in entry["fixture_path"]}
+    matrix=_matrix(); ids=[f"G9-{i:02d}" for i in range(1,41)]
+    hashes=" ".join(dict.fromkeys(digest for entry in triad.values() for digest in entry["artifact_hashes"]))
+    results="; ".join(dict.fromkeys(entry["python_result"] for entry in triad.values()))
+    for row in matrix["claims"]:
+        row.update({"Positive proof":"session9.proof.R.valid","Near-valid proof":"session9.proof.R.near-valid","Negative proof":"session9.proof.R.adversarial","Artifact evidence":hashes,"Python result":results})
+    crosswalk={"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":"read-only runtime","proof_family":"R","claim_ids":ids}],"claims":[{"claim_id":claim,"proof_families":["R"]} for claim in ids]}
+    validate_correction_layer4_semantics(matrix,crosswalk,[registry])
+
+
 def test_c9g_access_warning_semantics_fail_required_and_unclassified():
     valid={"schema_id":"provan.access_warning_audit.v1","sensitivity":"PUBLIC_SAFE","records":[{"classification":"OPTIONAL_NONAUTHORITATIVE","accessible":False,"description":"implicit XDG excludes lookup isolated"}],"unclassified_stderr_count":0}
     jsonschema.validate(valid,schema("access-warning-audit.v1.json")); validate_access_warning_audit_semantics(valid)
