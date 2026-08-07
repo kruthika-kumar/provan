@@ -32,6 +32,7 @@ from provan.validators import (
     validate_telemetry_status_semantics,
 )
 from scripts.session9_correction_cases import contract_fixture, evaluate_fixture
+from scripts.session9_git_isolation import isolated_git_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "provan" / "schemas"
@@ -202,28 +203,41 @@ def _matrix() -> dict:
 
 
 def test_c9f_exact_forty_claims_allow_legitimate_proof_reuse():
-    matrix=_matrix(); crosswalk=_crosswalk(); registry=_layer4_registry(); jsonschema.validate(matrix,schema("layer4-claim-matrix-correction.v2.json")); validate_correction_layer4_semantics(matrix,crosswalk,[registry])
+    matrix=_matrix(); crosswalk=_crosswalk(); registry=_layer4_registry(); authority={f"G9-{i:02d}":["C9F"] for i in range(1,41)}; jsonschema.validate(matrix,schema("layer4-claim-matrix-correction.v2.json")); validate_correction_layer4_semantics(matrix,crosswalk,[registry],authority)
     invalid={**matrix,"claims":matrix["claims"][:-1]}
-    with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(invalid,crosswalk,[registry])
+    with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(invalid,crosswalk,[registry],authority)
     assert raised.value.code == "LAYER4_CLAIM_SET_INCOMPLETE"
     broken_crosswalk={**crosswalk,"invariants":[{**crosswalk["invariants"][0],"claim_ids":crosswalk["invariants"][0]["claim_ids"][:-1]}]}
-    with pytest.raises(ProvanError) as crosswalk_error: validate_correction_layer4_semantics(matrix,broken_crosswalk,[registry])
+    with pytest.raises(ProvanError) as crosswalk_error: validate_correction_layer4_semantics(matrix,broken_crosswalk,[registry],authority)
     assert crosswalk_error.value.code == "LAYER4_CROSSWALK_INVALID"
     broken_matrix={**matrix,"claims":[{**matrix["claims"][0],"Artifact evidence":"bound artifact hash"},*matrix["claims"][1:]]}
-    with pytest.raises(ProvanError) as binding_error: validate_correction_layer4_semantics(broken_matrix,crosswalk,[registry])
+    with pytest.raises(ProvanError) as binding_error: validate_correction_layer4_semantics(broken_matrix,crosswalk,[registry],authority)
     assert binding_error.value.code == "LAYER4_PROOF_BINDING_INVALID"
 
 
 def test_c9f_resolves_immutable_historical_registry_without_rewriting_it():
-    registry=json.loads((ROOT/"artifacts/session9/proof_registry.public.json").read_text(encoding="utf-8"))
-    triad={entry["fixture_class"]:entry for entry in registry["entries"] if "/families/R/" in entry["fixture_path"]}
-    matrix=_matrix(); ids=[f"G9-{i:02d}" for i in range(1,41)]
-    hashes=" ".join(dict.fromkeys(digest for entry in triad.values() for digest in entry["artifact_hashes"]))
-    results="; ".join(dict.fromkeys(entry["python_result"] for entry in triad.values()))
+    historical=json.loads((ROOT/"artifacts/session9/proof_registry.public.json").read_text(encoding="utf-8"))
+    correction=_layer4_registry(); triad={entry["fixture_class"]:entry for entry in historical["entries"] if "/families/R/" in entry["fixture_path"]}
+    matrix=_matrix(); ids=[f"G9-{i:02d}" for i in range(1,41)]; read_only_ids={"G9-09","G9-10"}
+    hashes=" ".join(dict.fromkeys(digest for entry in triad.values() for digest in entry["artifact_hashes"])); results="; ".join(dict.fromkeys(entry["python_result"] for entry in triad.values()))
     for row in matrix["claims"]:
-        row.update({"Positive proof":"session9.proof.R.valid","Near-valid proof":"session9.proof.R.near-valid","Negative proof":"session9.proof.R.adversarial","Artifact evidence":hashes,"Python result":results})
-    crosswalk={"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":"read-only runtime","proof_family":"R","claim_ids":ids}],"claims":[{"claim_id":claim,"proof_families":["R"]} for claim in ids]}
-    validate_correction_layer4_semantics(matrix,crosswalk,[registry])
+        if row["Claim"].split(" ",1)[0] in read_only_ids:
+            row.update({"Positive proof":"session9.proof.R.valid","Near-valid proof":"session9.proof.R.near-valid","Negative proof":"session9.proof.R.adversarial","Artifact evidence":hashes,"Python result":results})
+    c9f_ids=[claim for claim in ids if claim not in read_only_ids]
+    crosswalk={"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":"forty claims","proof_family":"C9F","claim_ids":c9f_ids},{"invariant":"read-only runtime","proof_family":"R","claim_ids":sorted(read_only_ids)}],"claims":[{"claim_id":claim,"proof_families":["R" if claim in read_only_ids else "C9F"]} for claim in ids]}
+    authority={claim:["R" if claim in read_only_ids else "C9F"] for claim in ids}
+    validate_correction_layer4_semantics(matrix,crosswalk,[historical,correction],authority)
+
+
+def test_c9f_rejects_self_consistent_unrelated_family_against_tracked_authority():
+    matrix=_matrix(); ids=[f"G9-{i:02d}" for i in range(1,41)]; digest="sha256:"+"0"*64
+    registry={"entries":[{"proof_id":f"session9.correction.C9A.{kind}","fixture_class":kind,"test_id":"test","production_function":"production","python_validator":"validator","schema_result":"PASS","python_result":"REJECT:OUTPUT_PATH_OUTSIDE_PROVAN_STATE" if kind=="adversarial" else "PASS","artifact_locations":["fixture"],"artifact_hashes":[digest],"transcript_hash":digest} for kind in ("valid","near-valid","adversarial")]}
+    for row in matrix["claims"]:
+        row.update({"Positive proof":"session9.correction.C9A.valid","Near-valid proof":"session9.correction.C9A.near-valid","Negative proof":"session9.correction.C9A.adversarial","Python result":"PASS; REJECT:OUTPUT_PATH_OUTSIDE_PROVAN_STATE"})
+    crosswalk={"schema_id":"provan.layer4_claim_crosswalk.v1","sensitivity":"PUBLIC_SAFE","invariants":[{"invariant":"unrelated output handling","proof_family":"C9A","claim_ids":ids}],"claims":[{"claim_id":claim,"proof_families":["C9A"]} for claim in ids]}
+    tracked=json.loads((ROOT/"artifacts/session9/correction/correction_plan.v1.json").read_text(encoding="utf-8"))["claim_proof_authority"]
+    with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(matrix,crosswalk,[registry],tracked)
+    assert raised.value.code == "LAYER4_UNRELATED_PROOF_FAMILY"
 
 
 def test_c9g_access_warning_semantics_fail_required_and_unclassified():
@@ -233,6 +247,15 @@ def test_c9g_access_warning_semantics_fail_required_and_unclassified():
     jsonschema.validate(invalid,schema("access-warning-audit.v1.json"))
     with pytest.raises(ProvanError) as raised: validate_access_warning_audit_semantics(invalid)
     assert raised.value.code == "REQUIRED_AUTHORITY_ACCESS_FAILED"
+
+
+def test_c9g_validation_git_environment_is_warning_free_and_restored():
+    original_home=os.environ.get("HOME")
+    with isolated_git_environment(ROOT):
+        assert os.environ["HOME"] != original_home
+        run=subprocess.run(["git","diff","--check"],cwd=ROOT,text=True,capture_output=True,check=True)
+        assert run.stderr == ""
+    assert os.environ.get("HOME") == original_home
 
 
 def test_c9i_external_receipt_digest_is_non_self_referential():

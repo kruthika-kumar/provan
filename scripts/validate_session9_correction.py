@@ -86,6 +86,27 @@ def validate_proof_registry(path: Path, schemas: dict[str, dict]) -> None:
                 raise ProvanError("CORRECTION_PROOF_HASH_MISMATCH", location)
         if entry["transcript_hash"] != entry["artifact_hashes"][-1]:
             raise ProvanError("CORRECTION_PROOF_HASH_MISMATCH", entry["proof_id"])
+        expected_test = (
+            "tests/test_session9_correction.py::"
+            f"test_correction_proof_fixture_executes_independent_semantics[{entry['family']}-{entry['fixture_class']}]"
+        )
+        expected_production = {
+            "C9A": "provan.validators.validate_inspection_write_result_semantics",
+            "C9B": "provan.validators.validate_doctor_semantics",
+            "C9C": "provan.validators.validate_telemetry_status_semantics",
+            "C9D": "provan.validators.validate_reviewer_receipt_semantics",
+            "C9E": "provan.validators.validate_private_projection_semantics",
+            "C9F": "provan.validators.validate_correction_layer4_semantics",
+            "C9G": "provan.validators.validate_access_warning_audit_semantics",
+            "C9H": "provan.validators.validate_state_link_proof_semantics",
+            "C9I": (
+                "provan.validators.validate_mirror_attestation_semantics"
+                if entry["fixture_class"] == "near-valid"
+                else "provan.validators.validate_external_publication_state_semantics"
+            ),
+        }[entry["family"]]
+        if entry["test_id"] != expected_test or entry["production_function"] != expected_production:
+            raise ProvanError("CORRECTION_PROOF_BINDING_INCOMPLETE", entry["proof_id"])
 
 
 def main() -> int:
@@ -108,7 +129,7 @@ def main() -> int:
         raise ProvanError("CORRECTION_PRE_REVIEW_SET_INCOMPLETE", "pre-review artifacts are missing")
     if not args.pre_review:
         crosswalk=load(CORRECTION/"layer4_claim_crosswalk.v1.public.json"); jsonschema.validate(crosswalk,schemas["provan.layer4_claim_crosswalk.v1"])
-        matrix=load(CORRECTION/"layer4_claim_matrix.v2.public.json"); jsonschema.validate(matrix,schemas["provan.layer4_claim_matrix_correction.v2"]); validate_correction_layer4_semantics(matrix,crosswalk,[load(ROOT/"artifacts/session9/proof_registry.public.json"),load(CORRECTION/"proof_registry.v1.public.json")])
+        matrix=load(CORRECTION/"layer4_claim_matrix.v2.public.json"); jsonschema.validate(matrix,schemas["provan.layer4_claim_matrix_correction.v2"]); validate_correction_layer4_semantics(matrix,crosswalk,[load(ROOT/"artifacts/session9/proof_registry.public.json"),load(CORRECTION/"proof_registry.v1.public.json")],load(CORRECTION/"correction_plan.v1.json")["claim_proof_authority"])
         for name in ("evals_projection.v1.public.json","enterprise_projection.v1.public.json"):
             value=load(CORRECTION/name); jsonschema.validate(value,schemas["provan.private_repository_projection.v1"]); validate_private_projection_semantics(value)
         review=load(CORRECTION/"reviewer_receipt.v1.public.json"); jsonschema.validate(review,schemas["provan.session9_correction_reviewer_receipt.v1"]); validate_reviewer_receipt_semantics(review)
@@ -119,7 +140,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try: raise SystemExit(main())
+    from scripts.session9_git_isolation import isolated_git_environment
+    try:
+        with isolated_git_environment(ROOT):
+            raise SystemExit(main())
     except (ProvanError, jsonschema.ValidationError, FileNotFoundError) as exc:
         code=exc.code if isinstance(exc,ProvanError) else type(exc).__name__
         print(json.dumps({"status":"INVALID","error":code,"message":str(exc)},sort_keys=True)); raise SystemExit(2)

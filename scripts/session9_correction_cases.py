@@ -91,7 +91,7 @@ def evaluate_fixture(family: str, fixture_class: str) -> None:
     if family=="C9D": validate_reviewer_receipt_semantics(value); return
     if family=="C9E": validate_private_projection_semantics(value); return
     if family=="C9F":
-        validate_correction_layer4_semantics(value,_crosswalk(),[_registry()]); return
+        validate_correction_layer4_semantics(value,_crosswalk(),[_registry()],{f"G9-{i:02d}":["C9F"] for i in range(1,41)}); return
     if family=="C9G":
         validate_access_warning_audit_semantics(value); return
     if family=="C9H":

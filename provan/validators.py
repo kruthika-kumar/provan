@@ -297,7 +297,12 @@ def validate_correction_fixture_semantics(value: dict[str, Any]) -> None:
             raise ProvanError("CORRECTION_PROOF_BINDING_INCOMPLETE", f"invalid {key}")
 
 
-def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[str, Any], proof_registries: list[dict[str, Any]]) -> None:
+def validate_correction_layer4_semantics(
+    value: dict[str, Any],
+    crosswalk: dict[str, Any],
+    proof_registries: list[dict[str, Any]],
+    claim_authority: dict[str, list[str] | set[str]],
+) -> None:
     rows = value.get("claims", [])
     if len(rows) != 40 or {row.get("Claim") for row in rows} != CORRECTION_CLAIM_LABELS:
         raise ProvanError("LAYER4_CLAIM_SET_INCOMPLETE", "exact G9-01 through G9-40 claim set is required")
@@ -306,6 +311,11 @@ def validate_correction_layer4_semantics(value: dict[str, Any], crosswalk: dict[
     mapping = {item.get("claim_id"): set(item.get("proof_families", [])) for item in crosswalk.get("claims", [])}
     if set(mapping) != {f"G9-{i:02d}" for i in range(1, 41)}:
         raise ProvanError("LAYER4_CROSSWALK_INVALID", "crosswalk does not cover every individual claim")
+    expected_claims = {f"G9-{i:02d}" for i in range(1, 41)}
+    if set(claim_authority) != expected_claims or any(not set(families) for families in claim_authority.values()):
+        raise ProvanError("LAYER4_CROSSWALK_INVALID", "tracked claim authority must cover every individual claim")
+    if any(not mapping[claim].issubset(set(claim_authority[claim])) for claim in expected_claims):
+        raise ProvanError("LAYER4_UNRELATED_PROOF_FAMILY", "crosswalk cites a family not authorised for the claim")
     invariant_claims={item.get("proof_family"):set(item.get("claim_ids",[])) for item in crosswalk.get("invariants",[])}
     if not invariant_claims or any(family not in invariant_claims or claim not in invariant_claims[family] for claim,families in mapping.items() for family in families) or any(family not in mapping.get(claim,set()) for family,claims in invariant_claims.items() for claim in claims):
         raise ProvanError("LAYER4_CROSSWALK_INVALID","invariant and individual-claim mappings disagree")

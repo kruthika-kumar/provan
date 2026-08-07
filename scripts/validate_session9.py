@@ -262,6 +262,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try: raise SystemExit(main())
+    from scripts.session9_git_isolation import isolated_git_environment
+    try:
+        with isolated_git_environment(ROOT):
+            raise SystemExit(main())
     except ProvanError as exc:
         print(json.dumps({"status":"INVALID","error":exc.code,"message":exc.message})); raise SystemExit(2)
