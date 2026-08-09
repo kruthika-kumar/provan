@@ -32,7 +32,7 @@ def build_final(a):
   validate_reviewer_receipt_serialized(canonical(value),expected)
   dispositions={x["claim_id"] for x in value["claim_dispositions"] if x.get("disposition")=="ACCEPTED"}
   if value["reviewer_role"]!=role or value["verdict"]!="GO" or value["open_p0_count"] or value["open_p1_count"] or value["open_p2_count"] or value["reviewed_commit"]!=a.implementation_commit or value["reviewed_tree"]!=a.implementation_tree or value["reviewed_pre_review_root"]!=pre["proof_root"] or dispositions!=expected:raise SystemExit("SESSION10_REVIEW_RECEIPT_NOT_ACCEPTABLE:"+name)
- receipts.append(path)
+  receipts.append(path)
  reviewed_matrix=BASE/"layer4_claim_matrix.v1.public.json";matrix=load(reviewed_matrix)
  for row in matrix["claims"]:row["Reviewer result"]="ACCEPTED";row["Status"]="CLOSED"
  final_matrix=BASE/"layer4_claim_matrix.final.v1.public.json";write(final_matrix,matrix)
