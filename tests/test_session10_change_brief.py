@@ -404,6 +404,14 @@ def test_final_lifecycle_outputs_are_not_recursive_claim_inventory_inputs(tmp_pa
     } & set(discovered)
 
 
+def test_session10_content_addressed_text_is_platform_independent_lf(tmp_path: Path):
+    from scripts.run_session10_proofs import write_lf_text
+
+    path = tmp_path / "proof.transcript.public.txt"
+    write_lf_text(path, "first\r\nsecond\rthird\n")
+    assert path.read_bytes() == b"first\nsecond\nthird\n"
+
+
 def test_previous_brief_manifest_is_contained_digest_bound_and_comparison_only(repository,tmp_path,monkeypatch):
     state=tmp_path/"state";monkeypatch.setenv("PROVAN_HOME",str(state));repo,base,head=repository
     first=explain(repo=str(repo),base=base,head=head,working_tree=False,brief_text="first",agent_claim=None,context_files=[],aliases=[],journeys=[],journey_files=[],previous_brief=None,previous_manifest=None,provider_id=None,no_model=True)

@@ -220,6 +220,13 @@ def sanitize(text: str) -> str:
     return text
 
 
+def write_lf_text(path: Path, value: str) -> None:
+    """Write content-addressed public text with platform-independent LF bytes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    normalized = value.replace("\r\n", "\n").replace("\r", "\n")
+    path.write_bytes(normalized.encode("utf-8"))
+
+
 def sanitize_runtime_evidence(value: dict, fixture_class: str) -> dict:
     public_value = json.loads(json.dumps(value))
     public_value["command"] = sanitize(public_value.get("command", ""))
@@ -254,7 +261,7 @@ def run_invariant(name, group, test_names, real_use, real_use_transcript, fresh_
         external.append(ledger)
         if name=="consequential_range_dogfood_completeness":external.append(dogfood_transcript)
     for path in external: transcript += "\nBOUND_EXTERNAL_ARTIFACT " + path.relative_to(ROOT).as_posix() + " " + sha(path.read_bytes())
-    output = PROOFS / f"{name}.transcript.public.txt"; output.parent.mkdir(parents=True, exist_ok=True); output.write_text(transcript, encoding="utf-8")
+    output = PROOFS / f"{name}.transcript.public.txt"; write_lf_text(output, transcript)
     return done.returncode, "python -m pytest -vv " + " ".join(nodes), output, external
 
 
@@ -269,7 +276,7 @@ def main():
     jsonschema.validate(binding, json.loads((ROOT/"provan/schemas/implementation-binding.v1.json").read_text())); validate_implementation_binding_serialized(canonical(binding)); write(ROOT/"artifacts/session10/implementation_binding.v1.public.json", binding)
     validate_real_use_serialized(args.real_use_evidence.read_bytes(),{"HTTPX_PR_3699","CLICK_PR_3721","OFFLINE_SESSION9_FALLBACK"},args.comparator_artifact.read_bytes(),args.brief_artifact.read_bytes(),binding)
     help_run=subprocess.run([sys.executable,"-m","provan.cli","--help"],cwd=ROOT,text=True,capture_output=True,check=True)
-    help_path=PROOFS/"generated_cli_help.public.txt";help_path.parent.mkdir(parents=True,exist_ok=True);help_path.write_text(sanitize(help_run.stdout),encoding="utf-8")
+    help_path=PROOFS/"generated_cli_help.public.txt";write_lf_text(help_path,sanitize(help_run.stdout))
     changed=subprocess.run(["git","diff","--name-only","origin/main.."+args.implementation_commit],cwd=ROOT,text=True,capture_output=True,check=True).stdout.splitlines()
     dogfood_brief=args.dogfood_brief_artifact.read_bytes();dogfood_value=json.loads(dogfood_brief);dogfood_projection=args.dogfood_projection_artifact.read_bytes()
     dogfood={"schema_id":"provan.session10_consequential_range_dogfood_ledger.v1","sensitivity":"PUBLIC_SAFE","baseline_commit":"22a73b13eee4bac00930c8afe24944286eac2023","implementation_commit":args.implementation_commit,"implementation_tree":args.implementation_tree,"consequential_range":"22a73b13eee4bac00930c8afe24944286eac2023.."+args.implementation_commit,"changed_paths":changed,"replay":{"case":"SESSION10_SELF_DOGFOOD","brief_id":dogfood_value["brief_id"],"candidate_digest":dogfood_value["candidate"]["candidate_digest"],"brief_digest":sha(dogfood_brief),"public_projection_sha256":sha(dogfood_projection),"production_changed_after_run":False,"status":"PASS"}}
