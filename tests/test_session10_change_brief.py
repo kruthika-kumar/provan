@@ -339,7 +339,7 @@ def test_every_renderer_rejects_private_challenge_material(repository,tmp_path,m
     "https://user:secret@example.test/model",
     "Authorization: Bearer secret-value",
     "operator@example.test",
-])
+],ids=["windows-path","unix-path","credential-url","authorization-header","email-address"])
 def test_every_renderer_rejects_case_supplied_private_references(repository,tmp_path,monkeypatch,format_name,private_value):
     state=tmp_path/"state";monkeypatch.setenv("PROVAN_HOME",str(state));repo,base,head=repository
     brief=explain(repo=str(repo),base=base,head=head,working_tree=False,brief_text="bounded",agent_claim=None,context_files=[],aliases=[],journeys=[],journey_files=[],previous_brief=None,previous_manifest=None,provider_id=None,no_model=True)
