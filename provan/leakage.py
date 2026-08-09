@@ -129,15 +129,15 @@ def _archive_violations(archive_path: Path) -> list[dict]:
 
 def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None) -> None:
     base="09c5fbab239a6dcb87eee3697f25aaff2929111f"; violations=[]
-    history=subprocess.run(["git","rev-list","--reverse",base+"..HEAD"],cwd=root,text=True,capture_output=True,check=True).stdout.splitlines()
+    history=subprocess.run(["git","rev-list","--reverse",base+"..HEAD"],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout.splitlines()
     for commit in history:
-        metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,capture_output=True,check=True).stdout
+        metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout
         if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata):
             violations.append({"path":f"commit:{commit}","error":"EMAIL_ADDRESS"})
     commands=[["git","show","--format=","--unified=0",commit] for commit in history]
     commands.extend((["git","diff","--unified=0"],["git","diff","--cached","--unified=0"]))
     for command in commands:
-        result=subprocess.run(command,cwd=root,text=True,capture_output=True,check=False); current=""
+        result=subprocess.run(command,cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=False); current=""
         for line in result.stdout.splitlines():
             if line.startswith("+++ b/"): current=line[6:]
             elif line.startswith("+") and not line.startswith("+++") and current and not _rule_literal(current,line[1:]):
@@ -145,7 +145,7 @@ def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = N
                     if pattern.search(line[1:]) and not _allowed_historical(code,current) and not _allowed_private_projection(code,current,line[1:]):
                         text=line[1:]; reserved_fixture=current.startswith(("tests/","scripts/")) and ("@example.test" in text or "@example.invalid" in text or ("https"+"://"+"token"+"@github.com/o/r") in text)
                         if not reserved_fixture: violations.append({"path":current,"error":code})
-    status=subprocess.run(["git","status","--porcelain"],cwd=root,text=True,capture_output=True,check=False)
+    status=subprocess.run(["git","status","--porcelain"],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=False)
     paths=[]
     for line in status.stdout.splitlines():
         if line.startswith("?? "):

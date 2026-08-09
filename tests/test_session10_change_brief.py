@@ -721,6 +721,22 @@ def test_generic_absence_inventory_digest_is_enumeration_order_independent(tmp_p
     assert builder.digest_inventory(forward) == builder.digest_inventory(reverse)
 
 
+def test_leakage_git_text_subprocesses_use_explicit_strict_utf8():
+    tree = ast.parse((ROOT / "provan/leakage.py").read_text(encoding="utf-8"))
+    git_text_calls = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if not (isinstance(node.func.value, ast.Name) and node.func.value.id == "subprocess" and node.func.attr == "run"):
+            continue
+        keywords = {item.arg: item.value for item in node.keywords if item.arg}
+        if isinstance(keywords.get("text"), ast.Constant) and keywords["text"].value is True:
+            git_text_calls.append(keywords)
+    assert len(git_text_calls) == 4
+    assert all(isinstance(row.get("encoding"), ast.Constant) and row["encoding"].value == "utf-8" for row in git_text_calls)
+    assert all(isinstance(row.get("errors"), ast.Constant) and row["errors"].value == "strict" for row in git_text_calls)
+
+
 def test_public_runtime_evidence_is_sanitized_before_digest_binding():
     path = ROOT / "scripts/run_session10_proofs.py"
     spec = importlib.util.spec_from_file_location("run_session10_proofs", path)
