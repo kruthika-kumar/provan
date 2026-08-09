@@ -371,6 +371,16 @@ def test_leakage_allows_only_exact_frozen_g10_63_matrix_claim(tmp_path,name):
         path.write_text(json.dumps(injected,separators=(",",":"))+"\n",encoding="utf-8")
         with pytest.raises(ProvanError) as raised:validate_public_tree(tmp_path,[path])
         assert raised.value.code == "COMMUNITY_PRIVATE_LEAKAGE"
+    escaped_eval="provan-"+chr(92)+"u0065vals"
+    escaped_enterprise="provan-"+chr(92)+"u0065nterprise"
+    encoded_claims=json.dumps([{"Claim":exact}],separators=(",",":"))
+    for encoded_tail in (
+        ',"extra":"'+escaped_eval+'"}',
+        ',"metadata":{"dependency":"'+escaped_enterprise+'"}}',
+    ):
+        path.write_text('{"claims":'+encoded_claims+encoded_tail+"\n",encoding="utf-8")
+        with pytest.raises(ProvanError) as raised:validate_public_tree(tmp_path,[path])
+        assert raised.value.code == "COMMUNITY_PRIVATE_LEAKAGE"
 
 
 def test_leakage_rejects_absolute_user_path_inside_source_archive(tmp_path):

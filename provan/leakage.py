@@ -71,11 +71,13 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
                           and ("provan-" + "enterprise" in str(row.get("Claim", ""))
                                or "provan-" + "evals" in str(row.get("Claim", "")))]
         # The frozen claim contains the only two permitted private-repository
-        # name occurrences.  Parsing the claim field alone is insufficient:
-        # another JSON field on the same compact line must not inherit the
-        # exception merely because the authorized claim is also present.
+        # name occurrences. Parsing the claim field or counting raw source
+        # text is insufficient: another field may inherit the exception, and
+        # JSON escapes can hide that semantic value from a raw regex scan.
+        # Count the canonical decoded document, including keys and values.
         pattern = PRIVATE_PATTERNS["PRIVATE_REPOSITORY_REFERENCE"]
-        return private_claims == [exact] and len(pattern.findall(line)) == len(pattern.findall(exact))
+        decoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return private_claims == [exact] and len(pattern.findall(decoded)) == len(pattern.findall(exact))
     if relative == "tests/fixtures/session9/correction-proof-fixtures.v1.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
         return re.fullmatch(r'\s*"repository_name":\s*"provan-(?:evals|enterprise)",?\s*',line) is not None
     return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None
