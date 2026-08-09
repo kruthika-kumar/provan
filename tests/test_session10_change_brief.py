@@ -721,6 +721,15 @@ def test_generic_absence_inventory_digest_is_enumeration_order_independent(tmp_p
     assert builder.digest_inventory(forward) == builder.digest_inventory(reverse)
 
 
+def test_generic_absence_inventory_digest_is_checkout_line_ending_independent(tmp_path):
+    builder = load_generic_absence_builder()
+    lf = tmp_path / "lf.txt"
+    crlf = tmp_path / "crlf.txt"
+    lf.write_bytes(b"first\nsecond\n")
+    crlf.write_bytes(b"first\r\nsecond\r\n")
+    assert builder.digest_inventory([("proof.txt", lf)]) == builder.digest_inventory([("proof.txt", crlf)])
+
+
 def test_leakage_git_text_subprocesses_use_explicit_strict_utf8():
     expected_counts = {
         "provan/leakage.py": 4,

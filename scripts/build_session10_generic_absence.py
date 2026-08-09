@@ -34,8 +34,17 @@ def digest_names(names: list[str]) -> str:
 
 
 def digest_inventory(paths: list[tuple[str, Path]]) -> str:
-    entries=[{"path":relative,"sha256":"sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()} for relative,path in sorted(paths, key=lambda item: item[0])]
+    entries=[{"path":relative,"sha256":"sha256:"+hashlib.sha256(inventory_bytes(path)).hexdigest()} for relative,path in sorted(paths, key=lambda item: item[0])]
     return "sha256:"+hashlib.sha256(canonical(entries)).hexdigest()
+
+
+def inventory_bytes(path: Path) -> bytes:
+    """Return checkout-independent bytes for public text inventory hashing."""
+    raw = path.read_bytes()
+    if path.suffix.lower() in TEXT_SUFFIXES:
+        text = raw.decode("utf-8", errors="strict")
+        return text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return raw
 
 
 def isolated_git_env(home: Path) -> dict[str, str]:
