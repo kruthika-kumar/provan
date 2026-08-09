@@ -34,7 +34,7 @@ def digest_names(names: list[str]) -> str:
 
 
 def digest_inventory(paths: list[tuple[str, Path]]) -> str:
-    entries=[{"path":relative,"sha256":"sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()} for relative,path in paths]
+    entries=[{"path":relative,"sha256":"sha256:"+hashlib.sha256(path.read_bytes()).hexdigest()} for relative,path in sorted(paths, key=lambda item: item[0])]
     return "sha256:"+hashlib.sha256(canonical(entries)).hexdigest()
 
 

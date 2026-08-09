@@ -679,6 +679,17 @@ def test_generic_absence_rejects_non_utf8_or_nul_public_text(tmp_path):
             builder.decode_public_text(path)
 
 
+def test_generic_absence_inventory_digest_is_enumeration_order_independent(tmp_path):
+    builder = load_generic_absence_builder()
+    first = tmp_path / "first.txt"
+    second = tmp_path / "second.txt"
+    first.write_bytes(b"first\n")
+    second.write_bytes(b"second\n")
+    forward = [("proofs/first.txt", first), ("proofs/second.txt", second)]
+    reverse = list(reversed(forward))
+    assert builder.digest_inventory(forward) == builder.digest_inventory(reverse)
+
+
 def test_public_runtime_evidence_is_sanitized_before_digest_binding():
     path = ROOT / "scripts/run_session10_proofs.py"
     spec = importlib.util.spec_from_file_location("run_session10_proofs", path)
