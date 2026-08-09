@@ -70,7 +70,12 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
         private_claims = [row.get("Claim") for row in claims if isinstance(row, dict)
                           and ("provan-" + "enterprise" in str(row.get("Claim", ""))
                                or "provan-" + "evals" in str(row.get("Claim", "")))]
-        return private_claims == [exact]
+        # The frozen claim contains the only two permitted private-repository
+        # name occurrences.  Parsing the claim field alone is insufficient:
+        # another JSON field on the same compact line must not inherit the
+        # exception merely because the authorized claim is also present.
+        pattern = PRIVATE_PATTERNS["PRIVATE_REPOSITORY_REFERENCE"]
+        return private_claims == [exact] and len(pattern.findall(line)) == len(pattern.findall(exact))
     if relative == "tests/fixtures/session9/correction-proof-fixtures.v1.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
         return re.fullmatch(r'\s*"repository_name":\s*"provan-(?:evals|enterprise)",?\s*',line) is not None
     return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None
