@@ -66,7 +66,7 @@ def proof_identity(value):
 def change_brief():
     candidate = {"repository_identity":"https://github.com/example/example","mode":"immutable","base":COMMIT,"head":HEAD,"working_tree_digest":None}
     candidate["candidate_digest"] = digest({k:candidate.get(k) for k in ("repository_identity","mode","base","head","working_tree_digest")})
-    usage={"schema_id":"provan.model_usage_receipt.v1","mode":"NO_MODEL","provider":None,"model":None,"prompt_id":None,"prompt_version":None,"envelope_digest":None,"calls":0,"latency_ms":None,"cost_status":"not-applicable"}
+    usage={"schema_id":"provan.model_usage_receipt.v1","mode":"NO_MODEL","provider":None,"model":None,"prompt_id":None,"prompt_version":None,"envelope_digest":None,"calls":0,"latency_ms":None,"latency_source":"not-applicable","cost_status":"not-applicable"}
     model_binding={"mode":"NO_MODEL","provider":None,"model":None,"provider_version":None,"prompt_id":"change-brief-synthesis","prompt_version":"1","instructions_digest":digest_text("Identify bounded implications and unresolved questions. Do not assert source facts or Acceptance authority.")}
     binding={"candidate":candidate["candidate_digest"],"brief":digest_text(""),"agent":digest_text(""),"context_request":digest({"file_digests":[],"aliases":[],"journey_digests":[]}),"previous":None,"model":model_binding,"policy":{"id":"community.default.v1","version":"1"},"pr":None};case=digest(binding)
     bundle={"schema_id":"provan.case_context_bundle.v1","case_id":case,"records":[],"aliases":[],"journeys":[],"omissions":[],"limitations":[]};decision={"schema_id":"provan.promotion_decision.v1","case_id":case,"policy_id":"community.default.v1","policy_version":"1","decision":"explain_only","applied_triggers":[],"unresolved_proposals":[]}
@@ -130,7 +130,7 @@ def topology():
 
 
 def model_usage():
-    return {"schema_id":"provan.model_usage_receipt.v1","mode":"NO_MODEL","provider":None,"model":None,"prompt_id":None,"prompt_version":None,"envelope_digest":None,"calls":0,"latency_ms":None,"cost_status":"not-applicable"},None
+    return {"schema_id":"provan.model_usage_receipt.v1","mode":"NO_MODEL","provider":None,"model":None,"prompt_id":None,"prompt_version":None,"envelope_digest":None,"calls":0,"latency_ms":None,"latency_source":"not-applicable","cost_status":"not-applicable"},None
 
 
 def cache():
@@ -337,7 +337,7 @@ def payload(group, fixture_class, invariant=None):
         elif group=="acceptance":value["policy_id"]=""
         elif group=="seed":value["context_digest"]=fixture_digest("adversarial-seed-context")
         elif group=="topology":value.update(rendered=True,text_fallback="")
-        elif group=="model_usage":value.update(calls=1,latency_ms=1)
+        elif group=="model_usage":value.update(calls=1,latency_ms=1,latency_source="provan_monotonic_elapsed")
         elif group=="cache":value["analysis_digest"]=fixture_digest("adversarial-cache-analysis")
         elif group=="model":value["selected_blocks"][0]["sha256"]=fixture_digest("adversarial-model-block")
         elif group=="previous":value["artifacts"][0]["path"]="C:/brief.json"
@@ -359,7 +359,7 @@ def payload(group, fixture_class, invariant=None):
         elif group=="acceptance": value["candidate_digest"]=""
         elif group=="seed": value["candidate_digest"]=fixture_digest("semantic-invalid-seed-candidate")
         elif group=="topology": value["rendered"]=True
-        elif group=="model_usage": value.update(mode="EXECUTED",provider="spy",model="local",prompt_id="p",prompt_version="1",envelope_digest=HEX,calls=1,latency_ms=1)
+        elif group=="model_usage": value.update(mode="EXECUTED",provider="spy",model="local",prompt_id="p",prompt_version="1",envelope_digest=HEX,calls=1,latency_ms=1,latency_source="unavailable");extra=HEX
         elif group=="cache": value["cache_key"]=fixture_digest("semantic-invalid-cache-key")
         elif group=="model": value["selected_blocks"][0]["content"]="undigested addition"
         elif group=="previous": value["artifacts"][0]["path"]="../brief.json"

@@ -750,7 +750,7 @@ def explain(*, repo: str, base: str | None, head: str | None, working_tree: bool
             envelope_raw=canonical_bytes(envelope);_schema_validate("model-input-envelope.v1.json",envelope);validate_model_envelope_serialized(envelope_raw,{"case_id":case_id,"candidate_digest":candidate["candidate_digest"],"provider":provider.provider_id,"model":provider.model,"provider_version":provider.version,"prompt_id":"change-brief-synthesis","prompt_version":"1","instructions":instructions});secure_write(root/"model-input-envelope.json",envelope_raw)
             try:result,usage=invoke(provider,envelope)
             except Exception:
-                attempted={"schema_id":"provan.model_usage_receipt.v1","mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"prompt_id":envelope["prompt_id"],"prompt_version":envelope["prompt_version"],"envelope_digest":sha256_bytes(envelope_raw),"calls":1,"latency_ms":None,"cost_status":"unavailable"};secure_write(root/"model-usage-receipt.json",canonical_bytes(attempted));raise
+                attempted={"schema_id":"provan.model_usage_receipt.v1","mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"prompt_id":envelope["prompt_id"],"prompt_version":envelope["prompt_version"],"envelope_digest":sha256_bytes(envelope_raw),"calls":1,"latency_ms":None,"latency_source":"unavailable","cost_status":"unavailable"};secure_write(root/"model-usage-receipt.json",canonical_bytes(attempted));raise
             secure_write(root/"model-usage-receipt.json",canonical_bytes(usage));model_implications=result.get("model_reviewed_implications",[]);analysis["limitations"].extend(result.get("unresolved",[]))
         except ProvanError as exc:
             if exc.code!="MODEL_INPUT_LIMIT_EXCEEDED":raise

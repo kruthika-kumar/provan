@@ -4,6 +4,7 @@ import os
 import re
 import uuid
 import json
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -121,8 +122,10 @@ def invoke(provider: ModelProvider, envelope: dict[str, Any]) -> tuple[dict[str,
         "permitted_output_classes": envelope["permitted_output_classes"],
     }
     semantic_bytes = canonical_bytes(semantic_request)
+    started = time.perf_counter_ns()
     result = _wire_transport(provider, semantic_bytes, envelope_digest)
-    if not isinstance(result,dict) or set(result)-{"model_reviewed_implications","unresolved","latency_ms","cost_status"}:
+    latency_ms = (time.perf_counter_ns() - started) / 1_000_000
+    if not isinstance(result,dict) or set(result)-{"model_reviewed_implications","unresolved","cost_status"}:
         raise ProvanError("MODEL_OUTPUT_AUTHORITY_INVALID","provider returned undeclared semantic fields")
     for field in ("model_reviewed_implications","unresolved"):
         values=result.get(field,[])
@@ -137,7 +140,8 @@ def invoke(provider: ModelProvider, envelope: dict[str, Any]) -> tuple[dict[str,
         "prompt_version": envelope["prompt_version"],
         "envelope_digest": envelope_digest,
         "calls": 1,
-        "latency_ms": result.get("latency_ms"),
+        "latency_ms": latency_ms,
+        "latency_source": "provan_monotonic_elapsed",
         "cost_status": result.get("cost_status", "unavailable"),
     }
 
@@ -145,4 +149,4 @@ def invoke(provider: ModelProvider, envelope: dict[str, Any]) -> tuple[dict[str,
 def zero_usage(mode: str = "DETERMINISTIC_FALLBACK") -> dict[str, Any]:
     return {"schema_id": "provan.model_usage_receipt.v1", "mode": mode, "provider": None, "model": None,
             "prompt_id": None, "prompt_version": None, "envelope_digest": None, "calls": 0,
-            "latency_ms": None, "cost_status": "not-applicable"}
+            "latency_ms": None, "latency_source": "not-applicable", "cost_status": "not-applicable"}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -219,11 +220,15 @@ def validate_acceptance_seed_serialized(raw: bytes,candidate: dict[str,Any],case
 
 
 def validate_model_usage_serialized(raw: bytes,envelope_digest: str|None) -> None:
-    value=json.loads(raw);calls=value.get("calls")
+    value=json.loads(raw);calls=value.get("calls");latency=value.get("latency_ms");source=value.get("latency_source")
     if calls==0:
-        if any(value.get(field) is not None for field in ("provider","model","prompt_id","prompt_version","envelope_digest","latency_ms")) or envelope_digest is not None:raise ProvanError("MODEL_ZERO_CALL_RECEIPT_INVALID","zero-call receipt contains execution binding")
+        if any(value.get(field) is not None for field in ("provider","model","prompt_id","prompt_version","envelope_digest","latency_ms")) or envelope_digest is not None or source!="not-applicable":raise ProvanError("MODEL_ZERO_CALL_RECEIPT_INVALID","zero-call receipt contains execution binding")
     elif calls==1:
         if not all(value.get(field) for field in ("provider","model","prompt_id","prompt_version")) or not HEX.fullmatch(value.get("envelope_digest","")) or value.get("envelope_digest")!=envelope_digest:raise ProvanError("MODEL_USAGE_BINDING_INVALID","executed model receipt lacks exact envelope binding")
+        if latency is None:
+            if source!="unavailable" or value.get("cost_status")!="unavailable":raise ProvanError("MODEL_USAGE_LATENCY_INVALID","unavailable execution latency lacks honest provenance")
+        elif not isinstance(latency,(int,float)) or isinstance(latency,bool) or not math.isfinite(latency) or not 0<=latency<=3_600_000 or source!="provan_monotonic_elapsed":
+            raise ProvanError("MODEL_USAGE_LATENCY_INVALID","execution latency is not a bounded Provan monotonic measurement")
     else:raise ProvanError("MODEL_CALL_COUNT_INVALID","at most one model call is permitted")
 
 

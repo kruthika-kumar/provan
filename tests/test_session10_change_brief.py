@@ -29,6 +29,7 @@ from provan.session10_validators import (
     validate_context_bundle_serialized,
     validate_handoff_finalization_serialized,
     validate_model_envelope_serialized,
+    validate_model_usage_serialized,
     validate_previous_export_manifest_serialized,
     validate_promotion_serialized,
     validate_session10_closeout_serialized,
@@ -270,12 +271,17 @@ def test_context_record_and_bundle_valid_controlled_case(repository,tmp_path,mon
 def test_model_envelope_transport_spy_receives_exact_semantics(monkeypatch):
     seen=[];monkeypatch.setenv("PROVAN_MODEL_ALLOWLIST","spy");monkeypatch.setenv("PROVAN_MODEL_HOST_ALLOWLIST","model.example.test")
     def wire(provider,raw,digest):
-        seen.append((provider,json.loads(raw),digest));return {"model_reviewed_implications":[],"latency_ms":1,"cost_status":"reported"}
+        seen.append((provider,json.loads(raw),digest));return {"model_reviewed_implications":[],"cost_status":"reported"}
     monkeypatch.setattr(modeling_module,"_wire_transport",wire)
     provider=ModelProvider("spy","local-spy","1","https://model.example.test/v1")
     configure_provider(provider);envelope=build_envelope(case_id=fixture_digest("model-case"),candidate_digest=fixture_digest("model-candidate"),provider=provider,instructions="Only bounded implications.",blocks=[{"category":"selected","content":"exact block"}])
     validate_model_envelope_serialized(canonical_bytes(envelope));_,receipt=invoke(provider,envelope)
-    assert seen[0][1]=={"instructions":envelope["instructions"],"selected_blocks":envelope["selected_blocks"],"permitted_output_classes":envelope["permitted_output_classes"]};assert seen[0][2]==receipt["envelope_digest"] and receipt["calls"]==1
+    assert seen[0][1]=={"instructions":envelope["instructions"],"selected_blocks":envelope["selected_blocks"],"permitted_output_classes":envelope["permitted_output_classes"]};assert seen[0][2]==receipt["envelope_digest"] and receipt["calls"]==1 and receipt["latency_ms"]>=0 and receipt["latency_source"]=="provan_monotonic_elapsed"
+    negative=json.loads(json.dumps(receipt));negative["latency_ms"]=-999999
+    with pytest.raises(jsonschema.ValidationError):jsonschema.validate(negative,json.loads((ROOT/"provan/schemas/model-usage-receipt.v1.json").read_text()))
+    with pytest.raises(ProvanError,match="MODEL_USAGE_LATENCY_INVALID"):validate_model_usage_serialized(canonical_bytes(negative),negative["envelope_digest"])
+    monkeypatch.setattr(modeling_module,"_wire_transport",lambda provider,raw,digest:{"model_reviewed_implications":[],"latency_ms":-999999,"cost_status":"reported"})
+    with pytest.raises(ProvanError,match="MODEL_OUTPUT_AUTHORITY_INVALID"):invoke(provider,envelope)
     bad=json.loads(json.dumps(envelope));bad["selected_blocks"][0]["content"]="changed"
     jsonschema.validate(bad,json.loads((ROOT/"provan/schemas/model-input-envelope.v1.json").read_text()))
     with pytest.raises(ProvanError,match="MODEL_ENVELOPE_BLOCK_DIGEST_MISMATCH"):validate_model_envelope_serialized(canonical_bytes(bad))
@@ -310,7 +316,7 @@ def test_model_wire_phase_cannot_mutate_inspected_target(repository,tmp_path,mon
     repo,base,head=repository;target=repo/"app.py";before=target.read_bytes()
     def mutating_wire(provider,raw,digest):
         target.write_text("MUTATED = True\n",encoding="utf-8")
-        return {"model_reviewed_implications":[],"latency_ms":1,"cost_status":"reported"}
+        return {"model_reviewed_implications":[],"cost_status":"reported"}
     monkeypatch.setattr(modeling_module,"_wire_transport",mutating_wire)
     configure_provider(ModelProvider("mutating-spy","local-spy","1","https://model.example.test/v1"))
     with pytest.raises(ProvanError,match="INSPECTION_READ_ONLY_INVARIANT_FAILED") as caught:
