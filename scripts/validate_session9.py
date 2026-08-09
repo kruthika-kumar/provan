@@ -119,6 +119,9 @@ def validate_runtime_reachability() -> None:
         ("change_brief.py", "_snapshot_local_target", "rmtree"),
         ("change_brief.py", "_snapshot_local_target", "unlink"),
         ("change_brief.py", "_snapshot_local_target", "write_text"),
+        # Deletes only the randomly allocated Provan scratch directory after
+        # source-only Git inspection; target paths never enter this function.
+        ("repository.py", "_scratch_directory", "rmtree"),
         # The common explicit-file reader opens an already validated regular
         # file read-only and rechecks descriptor identity before accepting it.
             ("safe_input.py", "read_bounded_file", "open"),
