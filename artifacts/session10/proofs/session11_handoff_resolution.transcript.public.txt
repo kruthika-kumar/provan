@@ -1,0 +1,17 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 7 items
+
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[valid-handoff] PASSED [ 14%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[near-valid-handoff] PASSED [ 28%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[adversarial-handoff] PASSED [ 42%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-invalid-handoff] PASSED [ 57%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-handoff] PASSED [ 71%]
+tests/test_session10_change_brief.py::test_session11_handoff_schema_valid_but_unresolvable_fails PASSED [ 85%]
+tests/test_session10_change_brief.py::test_final_lifecycle_schema_valid_but_semantically_unbound_fails PASSED [100%]
+
+============================== 7 passed in 0.29s ==============================

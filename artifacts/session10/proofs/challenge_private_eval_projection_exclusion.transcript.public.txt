@@ -1,0 +1,39 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 29 items
+
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[valid-challenge_private_eval_projection_exclusion] PASSED [  3%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[near-valid-challenge_private_eval_projection_exclusion] PASSED [  6%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-challenge_private_eval_projection_exclusion] PASSED [ 10%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-challenge_private_eval_projection_exclusion] PASSED [ 13%]
+tests/test_session10_change_brief.py::test_public_projection_rejects_challenge_and_private_eval_material PASSED [ 17%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_private_challenge_material[terminal] PASSED [ 20%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_private_challenge_material[json] PASSED [ 24%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_private_challenge_material[markdown] PASSED [ 27%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_private_challenge_material[html] PASSED [ 31%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[windows-path-terminal] PASSED [ 34%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[windows-path-json] PASSED [ 37%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[windows-path-markdown] PASSED [ 41%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[windows-path-html] PASSED [ 44%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[unix-path-terminal] PASSED [ 48%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[unix-path-json] PASSED [ 51%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[unix-path-markdown] PASSED [ 55%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[unix-path-html] PASSED [ 58%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[credential-url-terminal] PASSED [ 62%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[credential-url-json] PASSED [ 65%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[credential-url-markdown] PASSED [ 68%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[credential-url-html] PASSED [ 72%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[authorization-header-terminal] PASSED [ 75%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[authorization-header-json] PASSED [ 79%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[authorization-header-markdown] PASSED [ 82%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[authorization-header-html] PASSED [ 86%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[email-address-terminal] PASSED [ 89%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[email-address-json] PASSED [ 93%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[email-address-markdown] PASSED [ 96%]
+tests/test_session10_change_brief.py::test_every_renderer_rejects_case_supplied_private_references[email-address-html] PASSED [100%]
+
+============================= 29 passed in 49.66s =============================

@@ -1,0 +1,18 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 8 items
+
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[valid-model] PASSED [ 12%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[near-valid-model] PASSED [ 25%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[adversarial-model] PASSED [ 37%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-invalid-model] PASSED [ 50%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-model] PASSED [ 62%]
+tests/test_session10_change_brief.py::test_model_envelope_transport_spy_receives_exact_semantics PASSED [ 75%]
+tests/test_session10_change_brief.py::test_explain_persists_model_envelope_before_transport_and_failure_receipt PASSED [ 87%]
+tests/test_session10_change_brief.py::test_model_envelope_rejects_credentials_and_undeclared_output PASSED [100%]
+
+============================== 8 passed in 1.74s ==============================

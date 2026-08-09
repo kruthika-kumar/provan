@@ -1,0 +1,20 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 5 items
+
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[valid-real_use] PASSED [ 20%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[near-valid-real_use] PASSED [ 40%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[adversarial-real_use] PASSED [ 60%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-invalid-real_use] PASSED [ 80%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-real_use] PASSED [100%]
+
+============================== 5 passed in 0.16s ==============================
+
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/httpx_pr3699.real_use.v1.public.json sha256:8d2cf5a037b4287eb893636c81ef4495c7784e7c344d60044781b0a20b32b4cd
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/httpx_pr3699_final_tree_real_use.transcript.public.txt sha256:b01be828bdd70470c785a063ec061f8fac7fa774f3fe2a896440b165be21a2dc
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json sha256:adcc3c5680b020eca10eeaab0f784bbfcb1316fafe2065aa1588777688973e87
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/consequential_range_dogfood_ledger.v1.public.json sha256:a3503dcefe0e00f595894bb446518df3187444b6454da92f0958128b7676667a

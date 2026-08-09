@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 4 items
+
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[valid-authoritative_wheel_maturity_and_dependency_boundary] PASSED [ 25%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[near-valid-authoritative_wheel_maturity_and_dependency_boundary] PASSED [ 50%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-authoritative_wheel_maturity_and_dependency_boundary] PASSED [ 75%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-authoritative_wheel_maturity_and_dependency_boundary] PASSED [100%]
+
+============================== 4 passed in 2.44s ==============================
+
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:0d58af1c88fffe3c526cec8eaa2c6ba16a3f354b4a6d98d5e7b5b4874d9b13d4

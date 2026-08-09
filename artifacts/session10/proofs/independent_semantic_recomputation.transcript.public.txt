@@ -1,0 +1,15 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 5 items
+
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[valid-independent_semantic_recomputation] PASSED [ 20%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[near-valid-independent_semantic_recomputation] PASSED [ 40%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-independent_semantic_recomputation] PASSED [ 60%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-independent_semantic_recomputation] PASSED [ 80%]
+tests/test_session10_change_brief.py::test_semantic_validators_are_independent_of_schema_and_production_constructors PASSED [100%]
+
+============================== 5 passed in 2.75s ==============================

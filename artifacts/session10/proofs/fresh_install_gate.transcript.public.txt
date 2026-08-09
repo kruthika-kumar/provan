@@ -1,0 +1,7 @@
+COMMAND=python scripts/fresh_install_gate.py --wheel <AUTHORITATIVE_WHEEL>
+IMPLEMENTATION_COMMIT=62861a6d8c065bb4d4a1f0000687c9c744132d74
+IMPLEMENTATION_TREE=bad8cf000de64f3c8a17ae9fd4c34dd1bc91b55f
+WHEEL_SHA256=sha256:cd9c434cb56db305729e67c2f7ce14d8e806ab3ec5db2ce3441b0fdadeec6eb2
+EXIT_CODE=0
+RESULT=FRESH_INSTALL_GATE_OK
+COVERAGE=help,doctor,telemetry,transport-spy,credential-free-public-inspection,immutable-explain,mutable-sensitive-exclusion,renderers,previous-brief,promotion,model-envelope-spy,site-packages-origin,wheel-content,uninstall,global-git-invariance

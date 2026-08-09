@@ -1,0 +1,10 @@
+usage: provan [-h] {doctor,repository,telemetry,explain,acceptance} ...
+
+Read-only repository assurance
+
+positional arguments:
+  {doctor,repository,telemetry,explain,acceptance}
+    explain             Create a bounded Change Brief
+
+options:
+  -h, --help            show this help message and exit

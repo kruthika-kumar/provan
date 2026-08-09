@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 6 items
+
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[valid-error] PASSED [ 16%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[near-valid-error] PASSED [ 33%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[adversarial-error] PASSED [ 50%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-invalid-error] PASSED [ 66%]
+tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-error] PASSED [ 83%]
+tests/test_session10_change_brief.py::test_cli_rejects_mutable_head_conflict PASSED [100%]
+
+============================== 6 passed in 0.88s ==============================

@@ -1,0 +1,15 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 5 items
+
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[valid-claim_classes_and_renderer_fidelity] PASSED [ 20%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[near-valid-claim_classes_and_renderer_fidelity] PASSED [ 40%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-claim_classes_and_renderer_fidelity] PASSED [ 60%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-claim_classes_and_renderer_fidelity] PASSED [ 80%]
+tests/test_session10_change_brief.py::test_renderers_preserve_all_claim_classes_and_entity_evidence PASSED [100%]
+
+============================= 5 passed in 10.94s ==============================

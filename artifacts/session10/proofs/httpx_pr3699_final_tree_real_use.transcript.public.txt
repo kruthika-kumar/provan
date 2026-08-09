@@ -1,0 +1,12 @@
+COMMAND=provan explain --repo https://github.com/encode/httpx --base ca097c96f97d8d2a5da09b8ca736c7e78a2467f6 --head 4b9f63e507c4ea75fa59f6bbdfb103e2f014a6f9 --pr https://github.com/encode/httpx/pull/3699 --brief bounded-public-change --no-model --format json
+EXECUTION_ORIGIN=installed-authoritative-wheel
+IMPLEMENTATION_COMMIT=62861a6d8c065bb4d4a1f0000687c9c744132d74
+IMPLEMENTATION_TREE=bad8cf000de64f3c8a17ae9fd4c34dd1bc91b55f
+WHEEL_SHA256=sha256:cd9c434cb56db305729e67c2f7ce14d8e806ab3ec5db2ce3441b0fdadeec6eb2
+EXIT_CODE=0
+RAW_LATENCY_MS=5159
+BRIEF_SHA256=sha256:805bfed64590d6cd5558c75f0227793b305064690d47e33a0586951a21290b39
+PUBLIC_PROJECTION_SHA256=sha256:05e5ad95dd8f8e64e26f3a3620c580e5871048660983a2e94bc252096674dfd5
+MODEL_CALLS=0
+COMPARATOR=predeclared-authentic-pr-body-and-review
+RESULT=PASS

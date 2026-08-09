@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- <PYTHON_EXECUTABLE>
+cachedir: .pytest_cache
+rootdir: <REPOSITORY_ROOT>
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 9 items
+
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[valid-literal_file_disambiguation_and_safe_reader] PASSED [ 11%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[near-valid-literal_file_disambiguation_and_safe_reader] PASSED [ 22%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-literal_file_disambiguation_and_safe_reader] PASSED [ 33%]
+tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-literal_file_disambiguation_and_safe_reader] PASSED [ 44%]
+tests/test_session10_change_brief.py::test_common_safe_reader_rejects_type_size_encoding_and_link SKIPPED [ 55%]
+tests/test_session10_change_brief.py::test_safe_reader_reparse_detection_is_deterministic PASSED [ 66%]
+tests/test_session10_change_brief.py::test_safe_reader_symlink_detection_without_platform_privilege PASSED [ 77%]
+tests/test_session10_change_brief.py::test_safe_reader_revalidates_parent_components_after_open PASSED [ 88%]
+tests/test_session10_change_brief.py::test_immutable_explain_preserves_target_and_creates_proposed_seed PASSED [100%]
+
+======================== 8 passed, 1 skipped in 4.82s =========================
