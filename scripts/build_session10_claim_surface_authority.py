@@ -13,7 +13,7 @@ def main() -> int:
     if not spec or not spec.loader:raise SystemExit("SESSION10_CLAIM_SURFACE_BUILDER_UNAVAILABLE")
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     value=module.build_claim_surface_authority();output=module.CLAIM_SURFACE_AUTHORITY
-    output.write_text(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf-8")
+    output.write_bytes((json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n").encode("utf-8"))
     print("SESSION10_CLAIM_SURFACE_AUTHORITY_BUILT",len(value["surfaces"]));return 0
 
 

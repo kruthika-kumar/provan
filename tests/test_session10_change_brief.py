@@ -412,6 +412,18 @@ def test_session10_content_addressed_text_is_platform_independent_lf(tmp_path: P
     assert path.read_bytes() == b"first\nsecond\nthird\n"
 
 
+def test_session10_artifact_generators_do_not_use_platform_text_writes():
+    generators = [
+        ROOT / "scripts/build_session10_claim_surface_authority.py",
+        ROOT / "scripts/build_session10_closeout.py",
+        ROOT / "scripts/build_session10_generic_absence.py",
+        ROOT / "scripts/build_session10_registry.py",
+        ROOT / "scripts/run_session10_proofs.py",
+    ]
+    for path in generators:
+        assert ".write_text(" not in path.read_text(encoding="utf-8"), path.name
+
+
 def test_previous_brief_manifest_is_contained_digest_bound_and_comparison_only(repository,tmp_path,monkeypatch):
     state=tmp_path/"state";monkeypatch.setenv("PROVAN_HOME",str(state));repo,base,head=repository
     first=explain(repo=str(repo),base=base,head=head,working_tree=False,brief_text="first",agent_claim=None,context_files=[],aliases=[],journeys=[],journey_files=[],previous_brief=None,previous_manifest=None,provider_id=None,no_model=True)
