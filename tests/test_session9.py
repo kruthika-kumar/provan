@@ -143,6 +143,30 @@ def test_clone_scratch_is_stopped_at_storage_bound(tmp_path, monkeypatch):
     assert raised.value.code == "REPOSITORY_RESOURCE_LIMIT_EXCEEDED"
 
 
+def test_private_scratch_cleanup_retries_transient_windows_handle(tmp_path, monkeypatch):
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    (scratch / "private.tmp").write_text("private\n", encoding="utf-8")
+    attempts = 0
+    real_rmtree = repository_module.shutil.rmtree
+
+    def transient_rmtree(path):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError("simulated transient Windows child handle")
+        return real_rmtree(path)
+
+    monkeypatch.setattr(repository_module.os, "name", "nt")
+    monkeypatch.setattr(repository_module.tempfile, "mkdtemp", lambda **_: str(scratch))
+    monkeypatch.setattr(repository_module.shutil, "rmtree", transient_rmtree)
+    monkeypatch.setattr(repository_module.time, "sleep", lambda _: None)
+    with repository_module._scratch_directory() as created:
+        assert created == scratch
+    assert attempts == 3
+    assert not scratch.exists()
+
+
 def test_target_fingerprint_has_independent_byte_bound(tmp_path, monkeypatch):
     root=tmp_path/"tree"; root.mkdir(); (root/"large.bin").write_bytes(b"x"*1024)
     monkeypatch.setattr(repository_module,"MAX_FINGERPRINT_BYTES",32)

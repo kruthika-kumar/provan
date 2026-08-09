@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,33 @@ MAX_SOURCE_INSPECTION_BYTES = 64 * 1024 * 1024
 MAX_FINGERPRINT_FILES = 250_000
 MAX_FINGERPRINT_BYTES = 1024 * 1024 * 1024
 FINGERPRINT_TIMEOUT_SECONDS = 30
+SCRATCH_CLEANUP_TIMEOUT_SECONDS = 5
+
+
+@contextmanager
+def _scratch_directory():
+    """Remove private Git scratch reliably after killed child processes exit.
+
+    Git for Windows may return from ``taskkill`` just before a descendant
+    releases its working-directory handle.  Retry only that private scratch
+    cleanup for a bounded interval; never suppress a persistent cleanup
+    failure or leave it presented as successful inspection.
+    """
+    path = Path(tempfile.mkdtemp(prefix="provan-inspect-"))
+    try:
+        yield path
+    finally:
+        deadline = time.monotonic() + SCRATCH_CLEANUP_TIMEOUT_SECONDS
+        while True:
+            try:
+                shutil.rmtree(path)
+                break
+            except FileNotFoundError:
+                break
+            except PermissionError:
+                if os.name != "nt" or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
 
 
 def _reject_source(source: str) -> None:
@@ -257,8 +285,7 @@ def inspect_repository(source: str, base: str, head: str, output: Path | None = 
         )
     before = _tree_fingerprint(local) if local else None
     ledger: list[list[str]] = []
-    with tempfile.TemporaryDirectory(prefix="provan-inspect-") as temp:
-        scratch = Path(temp)
+    with _scratch_directory() as scratch:
         home = scratch / "home"; home.mkdir(); hooks = home / "hooks"; hooks.mkdir()
         mirror = scratch / "repository.git"
         clone_source = str(local) if local is not None else source
