@@ -99,11 +99,17 @@ def main() -> int:
     parser=argparse.ArgumentParser();parser.add_argument("--wheel",type=Path,required=True);parser.add_argument("--implementation-commit",required=True);parser.add_argument("--implementation-tree",required=True);args=parser.parse_args();wheel=args.wheel.resolve()
     with tempfile.TemporaryDirectory(prefix="provan-generic-absence-") as temp:
         git_env = isolated_git_env(Path(temp))
-        commits=subprocess.run(["git","rev-list","--reverse",BASELINE+".."+args.implementation_commit],cwd=ROOT,text=True,capture_output=True,check=True,env=git_env).stdout.splitlines()
-        diff=subprocess.run(["git","diff","--unified=0",BASELINE+".."+args.implementation_commit],cwd=ROOT,text=True,capture_output=True,check=True,env=git_env).stdout
+        commits=subprocess.run(
+            ["git","rev-list","--reverse",BASELINE+".."+args.implementation_commit],
+            cwd=ROOT,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True,env=git_env,
+        ).stdout.splitlines()
+        diff=subprocess.run(
+            ["git","diff","--unified=0",BASELINE+".."+args.implementation_commit],
+            cwd=ROOT,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True,env=git_env,
+        ).stdout
         changed_paths=subprocess.run(
             ["git", "diff", "--name-only", "--diff-filter=A", BASELINE + ".." + args.implementation_commit],
-            cwd=ROOT, text=True, capture_output=True, check=True, env=git_env,
+            cwd=ROOT, text=True, encoding="utf-8", errors="strict", capture_output=True, check=True, env=git_env,
         ).stdout.splitlines()
     if not commits or commits[-1]!=args.implementation_commit:raise SystemExit("SESSION10_GENERIC_ABSENCE_HISTORY_BINDING_INVALID")
     history_violations=[];current="";added=[]
