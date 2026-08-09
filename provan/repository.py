@@ -51,7 +51,7 @@ def _scratch_directory():
         deadline = time.monotonic() + SCRATCH_CLEANUP_TIMEOUT_SECONDS
         while True:
             try:
-                shutil.rmtree(path)
+                shutil.rmtree(path, onerror=_scratch_cleanup_error)
                 break
             except FileNotFoundError:
                 break
@@ -59,6 +59,16 @@ def _scratch_directory():
                 if os.name != "nt" or time.monotonic() >= deadline:
                     raise
                 time.sleep(0.05)
+
+
+def _scratch_cleanup_error(function, path, error_info):
+    """Retry read-only Git scratch entries without masking other failures."""
+    error = error_info[1]
+    if isinstance(error, PermissionError):
+        os.chmod(path, stat.S_IWRITE)
+        function(path)
+        return
+    raise error
 
 
 def _reject_source(source: str) -> None:

@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import stat
 import subprocess
 import tarfile
 from pathlib import Path
@@ -150,12 +151,12 @@ def test_private_scratch_cleanup_retries_transient_windows_handle(tmp_path, monk
     attempts = 0
     real_rmtree = repository_module.shutil.rmtree
 
-    def transient_rmtree(path):
+    def transient_rmtree(path, **kwargs):
         nonlocal attempts
         attempts += 1
         if attempts < 3:
             raise PermissionError("simulated transient Windows child handle")
-        return real_rmtree(path)
+        return real_rmtree(path, **kwargs)
 
     monkeypatch.setattr(repository_module.os, "name", "nt")
     monkeypatch.setattr(repository_module.tempfile, "mkdtemp", lambda **_: str(scratch))
@@ -164,6 +165,18 @@ def test_private_scratch_cleanup_retries_transient_windows_handle(tmp_path, monk
     with repository_module._scratch_directory() as created:
         assert created == scratch
     assert attempts == 3
+    assert not scratch.exists()
+
+
+def test_private_scratch_cleanup_removes_readonly_git_objects(tmp_path, monkeypatch):
+    scratch = tmp_path / "scratch"
+    object_file = scratch / "repository.git" / "objects" / "aa" / "object"
+    object_file.parent.mkdir(parents=True)
+    object_file.write_bytes(b"private-object")
+    object_file.chmod(stat.S_IREAD)
+    monkeypatch.setattr(repository_module.tempfile, "mkdtemp", lambda **_: str(scratch))
+    with repository_module._scratch_directory() as created:
+        assert created == scratch
     assert not scratch.exists()
 
 
