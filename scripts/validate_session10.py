@@ -15,6 +15,11 @@ sys.path.insert(0,str(ROOT))
 from provan.session10_validators import validate_authentic_comparator_serialized,validate_handoff_finalization_serialized,validate_real_use_serialized,validate_reviewer_receipt_serialized,validate_session10_closeout_serialized,validate_session10_proof_manifest_serialized
 FROZEN=ROOT/"artifacts/session10/authority/frozen_claims.v1.public.json"
 FROZEN_DIGEST="sha256:f34ca265ade712620181ffc54424ed2a9a03bb25abd4496d0dbe71427a9fb418"
+FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED=frozenset({
+    "layer4_claim_matrix.final.v1.public.json",
+    "session11_handoff_finalization.v1.public.json",
+    "closeout.v1.public.json",
+})
 
 
 def canonical(value):return (json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n").encode()
@@ -130,7 +135,7 @@ def validate_proofs(final:bool):
     required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"provan/schemas").glob("*.json")}
     required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"artifacts/session10/authority").glob("*.public.json")}
     required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"artifacts/session10/real_use").glob("*.public.*")}
-    required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"artifacts/session10").glob("*.public.json")}
+    required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"artifacts/session10").glob("*.public.json") if path.name not in FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED}
     excluded={"claim_source_inventory.v1.public.json","pre_review_proof_manifest.v1.public.json","proof_manifest.v1.public.json","reviewer_receipt_a.v1.public.json","reviewer_receipt_b.v1.public.json"}
     required_surfaces|={path.relative_to(ROOT).as_posix() for path in (ROOT/"artifacts/session10/proofs").glob("*.public.*") if path.name not in excluded}
     if set(inventory.get("scan_scope",[]))!=required_surfaces or len(inventory.get("discovery_rules",[]))<5:raise SystemExit("SESSION10_CLAIM_SOURCE_SCOPE_INCOMPLETE")

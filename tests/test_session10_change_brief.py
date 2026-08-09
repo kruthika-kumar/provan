@@ -377,6 +377,33 @@ def test_final_lifecycle_schema_valid_but_semantically_unbound_fails():
     with pytest.raises(ProvanError,match="SESSION10_CLOSEOUT_BINDING_INVALID"):validate_session10_closeout_serialized(canonical_bytes(closeout),binding,pre_root,canonical_bytes(manifest),{key:value for key,value in artifacts.items() if "reviewer_receipt" in key})
 
 
+def test_final_lifecycle_outputs_are_not_recursive_claim_inventory_inputs(tmp_path: Path, monkeypatch):
+    from scripts import run_session10_proofs, validate_session10
+
+    expected = {
+        "layer4_claim_matrix.final.v1.public.json",
+        "session11_handoff_finalization.v1.public.json",
+        "closeout.v1.public.json",
+    }
+    assert run_session10_proofs.FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED == expected
+    assert validate_session10.FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED == expected
+    session10 = tmp_path / "artifacts/session10"
+    session10.mkdir(parents=True)
+    for name in [*expected, "implementation_binding.v1.public.json"]:
+        (session10 / name).write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(run_session10_proofs, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        run_session10_proofs.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(stdout=""),
+    )
+    discovered = run_session10_proofs.discovered_claim_surfaces()
+    assert "artifacts/session10/implementation_binding.v1.public.json" in discovered
+    assert not {
+        f"artifacts/session10/{name}" for name in expected
+    } & set(discovered)
+
+
 def test_previous_brief_manifest_is_contained_digest_bound_and_comparison_only(repository,tmp_path,monkeypatch):
     state=tmp_path/"state";monkeypatch.setenv("PROVAN_HOME",str(state));repo,base,head=repository
     first=explain(repo=str(repo),base=base,head=head,working_tree=False,brief_text="first",agent_claim=None,context_files=[],aliases=[],journeys=[],journey_files=[],previous_brief=None,previous_manifest=None,provider_id=None,no_model=True)

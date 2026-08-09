@@ -21,6 +21,11 @@ CLAIM_SURFACE_AUTHORITY = ROOT / "artifacts/session10/authority/claim_surface_au
 CASE_MODULE = ROOT / "tests/test_session10_proof_invariants.py"
 CLASSES = ("valid", "near-valid", "adversarial", "schema-invalid", "schema-valid-python-invalid")
 RUNTIME_CLASSES = ("valid", "near-valid", "adversarial", "schema-invalid")
+FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED = frozenset({
+    "layer4_claim_matrix.final.v1.public.json",
+    "session11_handoff_finalization.v1.public.json",
+    "closeout.v1.public.json",
+})
 
 # Families organize the programme.  Each row below is a separately executed
 # major invariant.  Claims may share a row only when the same invariant really
@@ -131,6 +136,8 @@ def discovered_claim_surfaces() -> dict[str,list[int]]:
     for path in sorted((ROOT/"artifacts/session10/real_use").glob("*.public.*")):surfaces[path.relative_to(ROOT).as_posix()]=real_use_claims.get(path.name,[])
     root_claims={"implementation_binding.v1.public.json":[56,57,63],"layer4_claim_matrix.v1.public.json":list(range(1,72)),"layer4_claim_matrix.final.v1.public.json":list(range(1,72)),"session11_handoff.v1.public.json":[12,65],"session11_handoff_finalization.v1.public.json":[12,65],"closeout.v1.public.json":[12,57,65],"schema_registry.v1.public.json":[*range(1,16),56,58,62,65,66]}
     for path in sorted((ROOT/"artifacts/session10").glob("*.public.json")):
+        if path.name in FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED:
+            continue
         surfaces[path.relative_to(ROOT).as_posix()]=root_claims.get(path.name,[])
     excluded={"claim_source_inventory.v1.public.json","pre_review_proof_manifest.v1.public.json","proof_manifest.v1.public.json","reviewer_receipt_a.v1.public.json","reviewer_receipt_b.v1.public.json"}
     transcript_claims={invariant+".transcript.public.txt":claims for invariant,(_,_,_,claims,_) in INVARIANTS.items()}
