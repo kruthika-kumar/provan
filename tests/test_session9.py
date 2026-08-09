@@ -352,8 +352,9 @@ def test_leakage_rejects_json_escaped_windows_user_path(tmp_path):
     print(f"ADVERSARIAL_REJECTION_OBSERVED:private_planning_authority_absence:{raised.value.code}")
 
 
-def test_leakage_allows_only_exact_frozen_g10_63_matrix_claim(tmp_path):
-    path=tmp_path/"artifacts/session10/layer4_claim_matrix.v1.public.json"
+@pytest.mark.parametrize("name", ["layer4_claim_matrix.v1.public.json", "layer4_claim_matrix.final.v1.public.json"])
+def test_leakage_allows_only_exact_frozen_g10_63_matrix_claim(tmp_path,name):
+    path=tmp_path/"artifacts/session10"/name
     path.parent.mkdir(parents=True)
     exact=('G10-63 — Community runtime and wheel have no dependency on provan-'
            'enterprise, provan-'+'evals, private fixtures, or founder-local state.')

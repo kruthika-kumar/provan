@@ -55,7 +55,10 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
         exact = ('{"id":"G10-63","claim":"Community runtime and wheel have no dependency on provan-'
                  + 'enterprise, provan-' + 'evals, private fixtures, or founder-local state."},')
         return line.strip() == exact
-    if relative == "artifacts/session10/layer4_claim_matrix.v1.public.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
+    if relative in {
+        "artifacts/session10/layer4_claim_matrix.v1.public.json",
+        "artifacts/session10/layer4_claim_matrix.final.v1.public.json",
+    } and code == "PRIVATE_REPOSITORY_REFERENCE":
         exact = ('G10-63 — Community runtime and wheel have no dependency on provan-'
                  + 'enterprise, provan-' + 'evals, private fixtures, or founder-local state.')
         return exact in line and line.count("provan-"+"enterprise") == 1 and line.count("provan-"+"evals") == 1
