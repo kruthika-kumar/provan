@@ -1,0 +1,11 @@
+{
+  "schema_id": "provan.session10_real_use_predeclaration.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "selection_time": "BEFORE_PROVAN_SESSION10_OUTPUT",
+  "cases": [
+    {"priority": 1, "kind": "PRIMARY_NETWORK", "repository": "https://github.com/encode/httpx", "pull_request": 3699, "base": "ca097c96f97d8d2a5da09b8ca736c7e78a2467f6", "head": "4b9f63e507c4ea75fa59f6bbdfb103e2f014a6f9", "comparator": "AUTHENTIC_PR_BODY_AND_AUTHENTIC_AVAILABLE_REVIEW"},
+    {"priority": 2, "kind": "NETWORK_FALLBACK", "repository": "https://github.com/pallets/click", "pull_request": 3721, "base": "398f9154317f6c54bf98fe3359672ad5cb851585", "head": "0c9e836c7c22f72492e82c448d1981b59a20795e", "comparator": "AUTHENTIC_PR_BODY_AND_AUTHENTIC_AVAILABLE_REVIEW"},
+    {"priority": 3, "kind": "OFFLINE_FALLBACK", "repository": "CURRENT_PUBLIC_PROVAN_HISTORY", "range": "SESSION9_SOURCE_INSPECTION_REPAIR_RANGE", "comparator": "EXISTING_PUBLIC_REVIEWER_EVIDENCE"}
+  ],
+  "synthetic_or_post_result_comparator_forbidden": true
+}

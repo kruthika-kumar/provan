@@ -1,0 +1,11 @@
+{
+  "schema_id": "provan.session10_work_order.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "session": "SESSION_10",
+  "status": "APPROVED_FOR_EXECUTION",
+  "predecessor": {"commit": "22a73b13eee4bac00930c8afe24944286eac2023", "tree": "14dd7b7ba854ed882c98be4454c0bebb1c30ff8e"},
+  "branch": "session10/change-brief-v1",
+  "package": {"distribution": "provan-assurance", "version": "0.3.0", "publication_status": "UNPUBLISHED_MAIN_TREE_ONLY", "capability_maturity": "QUALIFIED_BOUNDED", "extension_api_major": 1},
+  "boundaries": {"session11_implementation_forbidden": true, "release_forbidden": true, "tag_forbidden": true, "pypi_publication_forbidden": true, "target_execution_forbidden": true, "target_mutation_forbidden": true, "private_planning_authority_must_remain_external": true},
+  "claim_registry": {"frozen_mandatory_first": "G10-01", "frozen_mandatory_last": "G10-71", "additive_claims_begin": "G10-72"}
+}

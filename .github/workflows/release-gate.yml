@@ -10,10 +10,10 @@ jobs:
     env:
       PYTHONPATH: .
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - run: python -m pip install -e ".[dev]"
@@ -21,6 +21,13 @@ jobs:
       - run: python scripts/run_evals.py
       - run: python scripts/run_workflow_integration_evals.py
       - run: python -m build
-      - run: python scripts/validate_session9.py --wheel dist/*.whl --archive dist/*.tar.gz
+      - run: python scripts/validate_session9.py --skip-closeout-bindings --wheel dist/*.whl --archive dist/*.tar.gz
       - run: python scripts/validate_session9_correction.py
       - run: python scripts/validate_session9_leakage.py
+      - run: python scripts/validate_session10.py --phase auto
+      - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.3.0-py3-none-any.whl
+      - uses: actions/upload-artifact@v7
+        with:
+          name: session10-wheel
+          path: dist/provan_assurance-0.3.0-py3-none-any.whl
+          if-no-files-found: error

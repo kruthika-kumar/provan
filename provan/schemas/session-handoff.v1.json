@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"provan.session_handoff.v1",
+  "type":"object",
+  "required":["schema_id","candidate","brief","analysis_evidence","source_established_claims","entities","relationships","context_bundle","promotion_decision","acceptance_seed","addressing_rules","projection_rules","limitations","session11_prerequisites","layer4_matrix","proof_root","reviewer_receipt","implementation_binding","schema_registry","wheel","provider_binding","artifact_references"],
+  "properties":{
+    "schema_id":{"const":"provan.session_handoff.v1"},
+    "candidate":{"type":"object","required":["repository_identity","mode","base","head","working_tree_digest","candidate_digest"],"properties":{"repository_identity":{"type":"string","minLength":1},"mode":{"enum":["immutable","mutable"]},"base":{"type":"string"},"head":{"type":["string","null"]},"working_tree_digest":{"type":["string","null"]},"candidate_digest":{"pattern":"^sha256:[0-9a-f]{64}$"}},"additionalProperties":false},
+    "brief":{"type":"object","required":["brief_id","sha256","storage","public_projection"],"properties":{"brief_id":{"type":"string","minLength":1},"sha256":{"pattern":"^sha256:[0-9a-f]{64}$"},"storage":{"const":"EXTERNAL_OPERATOR_STATE"},"public_projection":{"$ref":"#/$defs/reference"}},"additionalProperties":false},
+    "analysis_evidence":{"type":"array","items":{"type":"object"}},"source_established_claims":{"type":"array"},"entities":{"type":"array"},"relationships":{"type":"array"},
+    "context_bundle":{"type":"object","required":["schema_id","case_id","records","aliases","journeys","omissions","limitations"]},
+    "promotion_decision":{"type":"object","required":["schema_id","case_id","policy_id","policy_version","decision","applied_triggers","unresolved_proposals"]},
+    "acceptance_seed":{"type":"object","required":["schema_id","seed_id","case_id","candidate_digest","status","acceptance_eligible","policy_id","policy_version","decision","trigger_refs","context_digest","evidence_refs","unresolved_questions"]},
+    "addressing_rules":{"type":"object","minProperties":4},"projection_rules":{"type":"object","required":["internal","public","client_safe"]},
+    "limitations":{"type":"array"},"session11_prerequisites":{"type":"array","minItems":5,"items":{"type":"string","minLength":1}},
+    "layer4_matrix":{"$ref":"#/$defs/reference"},"proof_root":{"pattern":"^sha256:[0-9a-f]{64}$"},
+    "reviewer_receipt":{"type":"object","required":["state"],"properties":{"state":{"enum":["PENDING_EXTERNAL_NON_RECURSIVE","BOUND_REVIEWED_PRE_ROOT"]},"receipts":{"type":"array"}},"additionalProperties":true},
+    "implementation_binding":{"type":"object","required":["schema_id","implementation_commit","implementation_tree","package_version","wheel_sha256","schema_registry_digest","maturity","published"]},
+    "schema_registry":{"type":"object","required":["reference","registry_digest"]},
+    "wheel":{"type":"object","required":["reference","package_version","sha256"]},
+    "provider_binding":{"type":"object","required":["status","reason","authority"],"properties":{"status":{"enum":["BOUND","NOT_APPLICABLE"]},"reason":{"type":"string","minLength":1},"authority":{"type":"string","minLength":1}},"additionalProperties":true},
+    "artifact_references":{"type":"object","required":["canonical_brief","public_projection","real_use","layer4_matrix","proof_registry","implementation_binding","schema_registry","authoritative_wheel"],"additionalProperties":{"$ref":"#/$defs/reference"}}
+  },
+  "$defs":{"reference":{"type":"object","required":["path","sha256"],"properties":{"path":{"type":"string","minLength":1},"sha256":{"pattern":"^sha256:[0-9a-f]{64}$"}},"additionalProperties":false}},
+  "additionalProperties":false
+}

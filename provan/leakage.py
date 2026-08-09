@@ -23,7 +23,9 @@ TEXT_SUFFIXES = {".py", ".md", ".json", ".toml", ".yml", ".yaml", ".txt", ".rst"
 
 
 def _rule_literal(relative: str, line: str) -> bool:
-    leakage_rule = relative == "provan/leakage.py" and ("re.compile(" in line or "artifacts/session9/correction/" in line)
+    if relative.startswith("build/lib/"):
+        relative = relative.removeprefix("build/lib/")
+    leakage_rule = relative == "provan/leakage.py" and ("re.compile(" in line or "artifacts/session9/correction/" in line or "artifacts/session10/authority/frozen_claims.v1.public.json" in line)
     return leakage_rule or (relative == "provan/validators.py" and "re.search(" in line)
 
 
@@ -49,6 +51,14 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
         "artifacts/session9/correction/enterprise_projection.v1.public.json": "provan-enterprise",
     }
     expected = allowed.get(relative)
+    if relative == "artifacts/session10/authority/frozen_claims.v1.public.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
+        exact = ('{"id":"G10-63","claim":"Community runtime and wheel have no dependency on provan-'
+                 + 'enterprise, provan-' + 'evals, private fixtures, or founder-local state."},')
+        return line.strip() == exact
+    if relative == "artifacts/session10/layer4_claim_matrix.v1.public.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
+        exact = ('G10-63 — Community runtime and wheel have no dependency on provan-'
+                 + 'enterprise, provan-' + 'evals, private fixtures, or founder-local state.')
+        return exact in line and line.count("provan-"+"enterprise") == 1 and line.count("provan-"+"evals") == 1
     if relative == "tests/fixtures/session9/correction-proof-fixtures.v1.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
         return re.fullmatch(r'\s*"repository_name":\s*"provan-(?:evals|enterprise)",?\s*',line) is not None
     return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None

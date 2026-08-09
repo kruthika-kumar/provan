@@ -238,6 +238,7 @@ def test_c9f_rejects_self_consistent_unrelated_family_against_tracked_authority(
     tracked=json.loads((ROOT/"artifacts/session9/correction/correction_plan.v1.json").read_text(encoding="utf-8"))["claim_proof_authority"]
     with pytest.raises(ProvanError) as raised: validate_correction_layer4_semantics(matrix,crosswalk,[registry],tracked)
     assert raised.value.code == "LAYER4_UNRELATED_PROOF_FAMILY"
+    print(f"ADVERSARIAL_REJECTION_OBSERVED:session9_successor_preservation:{raised.value.code}")
 
 
 def test_c9g_access_warning_semantics_fail_required_and_unclassified():

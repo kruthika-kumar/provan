@@ -152,6 +152,60 @@ def secure_write(relative: Path, data: bytes) -> Path:
     return leaf
 
 
+def secure_read(relative: Path, *, limit: int = 32 * 1024 * 1024) -> bytes:
+    """Read a bounded Provan-owned JSON leaf without following linked components."""
+    area = relative.parts[0] if relative.parts else ""
+    parts = _validate_relative_json(relative, area)
+    root = state_root()
+    _ensure_state_root(root)
+    if os.name != "nt" and os.open in os.supports_dir_fd:
+        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(root, directory_flags)
+        try:
+            for component in parts[:-1]:
+                child = os.open(component, directory_flags, dir_fd=descriptor)
+                os.close(descriptor); descriptor = child
+            leaf = os.open(parts[-1], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=descriptor)
+            try:
+                info = os.fstat(leaf)
+                if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+                    raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE, "state leaf is not a bounded regular file")
+                chunks=[]; total=0
+                while True:
+                    chunk=os.read(leaf,min(65536,limit+1-total))
+                    if not chunk: break
+                    chunks.append(chunk);total+=len(chunk)
+                    if total>limit: raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE,"state leaf exceeds read bound")
+                after=os.fstat(leaf)
+                if (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns)!=(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns):raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN,"state leaf changed during read")
+                return b"".join(chunks)
+            finally: os.close(leaf)
+        except OSError as exc:
+            if getattr(exc,"errno",None) in {40,62}: raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN,"linked state component is forbidden") from exc
+            raise
+        finally: os.close(descriptor)
+    cursor=root
+    for component in parts[:-1]:
+        cursor/=component;_reject_unsafe_directory(cursor)
+    leaf=cursor/parts[-1];before=leaf.lstat()
+    if stat.S_ISLNK(before.st_mode) or _is_reparse(before) or not stat.S_ISREG(before.st_mode) or before.st_size>limit:
+        raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN,"linked or unbounded state leaf is forbidden")
+    descriptor=os.open(leaf,os.O_RDONLY|getattr(os,"O_BINARY",0)|getattr(os,"O_NOFOLLOW",0))
+    try:
+        opened=os.fstat(descriptor)
+        if (opened.st_dev,opened.st_ino)!=(before.st_dev,before.st_ino):raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN,"state leaf identity changed")
+        chunks=[];total=0
+        while True:
+            chunk=os.read(descriptor,min(65536,limit+1-total))
+            if not chunk:break
+            chunks.append(chunk);total+=len(chunk)
+            if total>limit:raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE,"state leaf exceeds read bound")
+        after=os.fstat(descriptor)
+        if (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns)!=(opened.st_dev,opened.st_ino,opened.st_size,opened.st_mtime_ns):raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN,"state leaf changed during read")
+        return b"".join(chunks)
+    finally:os.close(descriptor)
+
+
 def write_pending(path: Path, data: bytes) -> None:
     root = state_root()
     expected = root / "pending" / path.name

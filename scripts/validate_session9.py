@@ -96,6 +96,9 @@ def validate_runtime_reachability() -> None:
         ("state.py", "_ensure_state_root", "mkdir"),
         ("state.py", "secure_write", "mkdir"),
         ("state.py", "secure_write", "open"),
+        # Session 10 cache/output reads use bounded no-follow descriptors and
+        # do not expose a write-capable file descriptor.
+        ("state.py", "secure_read", "open"),
         ("state.py", "secure_replace", "replace"),
         ("state.py", "secure_replace", "unlink"),
         ("state.py", "validate_state_children", "mkdir"),
@@ -105,6 +108,21 @@ def validate_runtime_reachability() -> None:
         ("doctor.py", "_source_only_inspection_check", "mkdir"),
         ("doctor.py", "_source_only_inspection_check", "write_text"),
         ("doctor.py", "_source_only_inspection_check", "unlink"),
+        # Session 10 creates only isolated scratch Git directories; all
+        # canonical/cache publication still routes through state.secure_write.
+        ("change_brief.py", "_git", "mkdir"),
+        ("change_brief.py", "_bounded_remote_fetch", "mkdir"),
+        ("change_brief.py", "_copy_mutable_git_metadata", "mkdir"),
+        ("change_brief.py", "explain", "mkdir"),
+        ("change_brief.py", "_snapshot_local_target", "mkdir"),
+        ("change_brief.py", "_snapshot_local_target", "replace"),
+        ("change_brief.py", "_snapshot_local_target", "rmtree"),
+        ("change_brief.py", "_snapshot_local_target", "unlink"),
+        ("change_brief.py", "_snapshot_local_target", "write_text"),
+        # The common explicit-file reader opens an already validated regular
+        # file read-only and rechecks descriptor identity before accepting it.
+            ("safe_input.py", "read_bounded_file", "open"),
+            ("safe_input.py", "_read_posix", "open"),
         # These are string normalization calls, not pathlib.Path.replace.
         ("repository.py", "inspect_repository", "replace"),
         ("validators.py", "validate_install_origin", "replace"),
@@ -243,7 +261,18 @@ def main() -> int:
                 if not path.is_file(): raise ProvanError("LAYER4_ARTIFACT_BINDING_INVALID",location)
                 if not args.skip_closeout_bindings and location!="artifacts/session9/closeout_manifest.public.json" and (location not in bound or bound_sha(path)!=bound[location]):
                     raise ProvanError("LAYER4_ARTIFACT_BINDING_INVALID",location)
-    historical_registry={key:value for key,value in registry.items() if value[0].name not in CORRECTION_SCHEMA_FILES}
+    historical_registry={key:value for key,value in registry.items() if value[0].name not in CORRECTION_SCHEMA_FILES and key not in {
+        "provan.change_brief.v1","provan.affected_entity.v1","provan.affected_relationship.v1","provan.context_record.v1",
+        "provan.case_context_bundle.v1","provan.context_request.v1","provan.context_provider_result.v1","provan.promotion_decision.v1",
+        "provan.acceptance_seed.v1","provan.change_topology.v1","provan.model_usage_receipt.v1","provan.session_handoff.v1",
+        "provan.error.v1","provan.acceptance_preparation.v1","provan.model_input_envelope.v1","provan.session10_proof_registry.v1",
+        "provan.session10_layer4_matrix.v1","provan.session10_reviewer_receipt.v1",
+        "provan.repository_analysis_cache_fragment.v1","provan.change_brief_export_manifest.v1",
+        "provan.session10_implementation_binding.v1","provan.session10_real_use_evidence.v1",
+        "provan.change_brief_manifest.v1","provan.change_brief_public_projection.v1",
+        "provan.session10_runtime_invariant_evidence.v1","provan.session10_handoff_finalization.v1","provan.session10_generic_absence_receipt.v1","provan.session10_authentic_comparator.v1",
+        "provan.session10_consequential_range_dogfood_ledger.v1","provan.session10_proof_manifest.v1","provan.session10_closeout.v1",
+    }}
     schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(historical_registry.items())]}
     expected=json.dumps(schema_index,sort_keys=True,indent=2)+"\n"; target=artifacts/"schema_registry.public.json"
     if args.regenerate_schema_registry or not target.exists(): target.write_text(expected,encoding="utf-8")

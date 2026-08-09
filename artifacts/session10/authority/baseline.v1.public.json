@@ -1,0 +1,8 @@
+{
+  "schema_id": "provan.session10_baseline.v1",
+  "sensitivity": "PUBLIC_SAFE",
+  "predecessor_commit": "22a73b13eee4bac00930c8afe24944286eac2023",
+  "predecessor_tree": "14dd7b7ba854ed882c98be4454c0bebb1c30ff8e",
+  "results": {"session9_validator": "PASS", "session9_correction_validator": "PASS", "public_leakage_validator": "PASS", "pytest_collected": 1118, "pytest_execution": "PASS_BOUNDED_GROUPS", "evals": "35_OF_35_PASS", "workflow_integrations": "18_OF_18_PASS", "session6_8_proof_cases": "318_OF_318_PASS", "wheel_build": "PASS", "fresh_install_gate": "PASS", "git_diff_check": "PASS"},
+  "infrastructure_fact": {"code": "MONOLITHIC_TEST_COMMAND_TIME_CEILING", "effect": "The single pytest process exceeded the execution harness command ceiling without a test traceback.", "resolution": "The unchanged node inventory was executed in bounded file groups; orchestration-heavy producers and all 318 proof cases were replayed independently."}
+}

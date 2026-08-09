@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"provan.error.v1","type":"object","required":["schema_id","error","message"],"properties":{"schema_id":{"const":"provan.error.v1"},"error":{"pattern":"^[A-Z0-9_]+$"},"message":{"type":"string"}},"additionalProperties":false}

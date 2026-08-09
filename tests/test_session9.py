@@ -68,7 +68,7 @@ def _output(tmp_path: Path, monkeypatch) -> Path:
 
 def test_source_only_inspection_preserves_target(tmp_path: Path, monkeypatch):
     repo = tmp_path / "target"; repo.mkdir(); _git(repo, "init"); _git(repo, "config", "user.email", "fixture.invalid"); _git(repo, "config", "user.name", "Fixture")
-    (repo / "app.py").write_text("print('must never execute')\n", encoding="utf-8")
+    (repo / "app.py").write_bytes(b"print('must never execute')\n")
     _git(repo, "add", "app.py"); _git(repo, "commit", "-m", "fixture")
     before = (_git(repo, "show-ref"), _git(repo, "status", "--porcelain=v1"), _all_bytes(repo))
     commit=_git(repo,"rev-parse","HEAD"); receipt = inspect_repository(str(repo), commit, commit, _output(tmp_path,monkeypatch))
@@ -349,6 +349,19 @@ def test_leakage_rejects_json_escaped_windows_user_path(tmp_path):
     path.write_text(escaped,encoding="utf-8")
     with pytest.raises(ProvanError) as raised: validate_public_tree(tmp_path,[path])
     assert raised.value.code == "COMMUNITY_PRIVATE_LEAKAGE"
+    print(f"ADVERSARIAL_REJECTION_OBSERVED:private_planning_authority_absence:{raised.value.code}")
+
+
+def test_leakage_allows_only_exact_frozen_g10_63_matrix_claim(tmp_path):
+    path=tmp_path/"artifacts/session10/layer4_claim_matrix.v1.public.json"
+    path.parent.mkdir(parents=True)
+    exact=('G10-63 — Community runtime and wheel have no dependency on provan-'
+           'enterprise, provan-'+'evals, private fixtures, or founder-local state.')
+    path.write_text('{"Claim":"'+exact+'"}\n',encoding="utf-8")
+    validate_public_tree(tmp_path,[path])
+    path.write_text('{"Claim":"'+exact+'","extra":"provan-'+'evals"}\n',encoding="utf-8")
+    with pytest.raises(ProvanError) as raised:validate_public_tree(tmp_path,[path])
+    assert raised.value.code == "COMMUNITY_PRIVATE_LEAKAGE"
 
 
 def test_leakage_rejects_absolute_user_path_inside_source_archive(tmp_path):
@@ -374,3 +387,4 @@ def test_public_projection_leakage_gate():
 def test_wheel_configuration_excludes_historical_packages():
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert 'include = ["provan*"]' in text and 'include = ["shiproom*"' not in text
+    print("ADVERSARIAL_REJECTION_OBSERVED:authoritative_wheel_maturity_and_dependency_boundary:HISTORICAL_RUNTIME_EXCLUDED_FROM_WHEEL_CONFIG")
