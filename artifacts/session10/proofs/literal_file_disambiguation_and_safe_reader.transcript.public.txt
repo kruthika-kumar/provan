@@ -16,4 +16,4 @@ tests/test_session10_change_brief.py::test_safe_reader_symlink_detection_without
 tests/test_session10_change_brief.py::test_safe_reader_revalidates_parent_components_after_open PASSED [ 88%]
 tests/test_session10_change_brief.py::test_immutable_explain_preserves_target_and_creates_proposed_seed PASSED [100%]
 
-======================== 8 passed, 1 skipped in 4.91s =========================
+======================== 8 passed, 1 skipped in 4.64s =========================

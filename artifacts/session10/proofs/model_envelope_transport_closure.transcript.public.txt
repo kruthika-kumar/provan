@@ -15,4 +15,4 @@ tests/test_session10_change_brief.py::test_model_envelope_transport_spy_receives
 tests/test_session10_change_brief.py::test_explain_persists_model_envelope_before_transport_and_failure_receipt PASSED [ 87%]
 tests/test_session10_change_brief.py::test_model_envelope_rejects_credentials_and_undeclared_output PASSED [100%]
 
-============================== 8 passed in 1.61s ==============================
+============================== 8 passed in 1.73s ==============================

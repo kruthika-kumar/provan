@@ -12,9 +12,9 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[a
 tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-invalid-real_use] PASSED [ 80%]
 tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-real_use] PASSED [100%]
 
-============================== 5 passed in 0.17s ==============================
+============================== 5 passed in 0.16s ==============================
 
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/httpx_pr3699.real_use.v1.public.json sha256:e6720ee98a7097e5f17736ecd33708335988b737b744fd15a588956fffa3e114
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/httpx_pr3699_final_tree_real_use.transcript.public.txt sha256:f541219127583b1e2d1d231d6da54b76b7f2deb68832563b02e104dc63270396
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/httpx_pr3699.real_use.v1.public.json sha256:83efaaecd107332eff9259631ca3445062a058a95d9e76449bfddc0fe066a11b
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/httpx_pr3699_final_tree_real_use.transcript.public.txt sha256:03823a9e28174da40c75d3e1399224ae86e1948fa57198fa9ad96d92d5b1f0d0
 BOUND_EXTERNAL_ARTIFACT artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json sha256:adcc3c5680b020eca10eeaab0f784bbfcb1316fafe2065aa1588777688973e87
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/consequential_range_dogfood_ledger.v1.public.json sha256:1586f08d2b6f3a609c6bb947da6902bfca4603267e45adc390e814cd1369a68c
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/consequential_range_dogfood_ledger.v1.public.json sha256:5e204710198a4104cfc25f39d04c121610a5e1796183796a4c4dd5e3120421eb

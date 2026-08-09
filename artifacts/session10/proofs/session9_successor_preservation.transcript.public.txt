@@ -11,6 +11,6 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-session9_successor_preservation] PASSED [ 75%]
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-session9_successor_preservation] PASSED [100%]
 
-============================== 4 passed in 8.06s ==============================
+============================== 4 passed in 7.23s ==============================
 
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:972d06c088d8ed5bd377dc96955cfec3be1bc2fedb1c05199762e7cbf5b699a3
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:b0dfda3f036f6357b2606622a5ba211d80d4d34421a3f9eecf3f2172827ad41c

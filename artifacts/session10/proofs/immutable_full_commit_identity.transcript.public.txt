@@ -12,4 +12,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-immutable_full_commit_identity] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_immutable_full_commit_identities_valid PASSED [100%]
 
-============================= 5 passed in 10.70s ==============================
+============================= 5 passed in 10.46s ==============================
