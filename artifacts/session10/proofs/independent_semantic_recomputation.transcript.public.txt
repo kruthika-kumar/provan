@@ -12,4 +12,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-independent_semantic_recomputation] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_semantic_validators_are_independent_of_schema_and_production_constructors PASSED [100%]
 
-============================== 5 passed in 2.75s ==============================
+============================== 5 passed in 2.98s ==============================

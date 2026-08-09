@@ -77,9 +77,9 @@
   "open_p0_count": 0,
   "open_p1_count": 0,
   "open_p2_count": 0,
-  "reviewed_commit": "62861a6d8c065bb4d4a1f0000687c9c744132d74",
-  "reviewed_pre_review_root": "sha256:892fa3b35dfb50cd6fc4f832ce9fbaa2dfd7259feae2d9cd034e0e7a80ea7484",
-  "reviewed_tree": "bad8cf000de64f3c8a17ae9fd4c34dd1bc91b55f",
+  "reviewed_commit": "5cc8f201867d27aa88f82502dfac69c20ff9d3ac",
+  "reviewed_pre_review_root": "sha256:27cf0d90b04a9a5abad934ccb9e839d25deaf13554b4bff8f2515624581a3821",
+  "reviewed_tree": "a4baf548671b2a2eb45116b360cd760227b053d2",
   "reviewer_role": "IMPLEMENTATION_AND_SAFETY",
   "schema_id": "provan.session10_reviewer_receipt.v1",
   "verdict": "GO"

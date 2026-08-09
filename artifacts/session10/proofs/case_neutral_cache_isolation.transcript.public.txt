@@ -14,4 +14,4 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[s
 tests/test_session10_change_brief.py::test_cache_reuses_only_case_neutral_fragment_and_constructs_fresh_cases PASSED [ 85%]
 tests/test_session10_change_brief.py::test_forged_self_consistent_cache_analysis_is_rejected PASSED [100%]
 
-============================== 7 passed in 5.34s ==============================
+============================== 7 passed in 5.38s ==============================

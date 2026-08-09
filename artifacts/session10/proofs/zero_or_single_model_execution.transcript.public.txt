@@ -13,4 +13,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_change_brief.py::test_model_envelope_transport_spy_receives_exact_semantics PASSED [ 83%]
 tests/test_session10_change_brief.py::test_immutable_explain_preserves_target_and_creates_proposed_seed PASSED [100%]
 
-============================== 6 passed in 6.06s ==============================
+============================== 6 passed in 6.16s ==============================

@@ -13,4 +13,4 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[s
 tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-error] PASSED [ 83%]
 tests/test_session10_change_brief.py::test_cli_rejects_mutable_head_conflict PASSED [100%]
 
-============================== 6 passed in 0.88s ==============================
+============================== 6 passed in 0.90s ==============================

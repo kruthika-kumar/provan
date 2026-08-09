@@ -13,4 +13,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_change_brief.py::test_mutable_mode_excludes_sensitive_untracked_content PASSED [ 83%]
 tests/test_session10_change_brief.py::test_mutable_sensitive_classes_are_excluded_without_opening PASSED [100%]
 
-============================= 6 passed in 12.00s ==============================
+============================= 6 passed in 11.85s ==============================

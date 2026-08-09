@@ -11,6 +11,6 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[adversarial-authoritative_wheel_maturity_and_dependency_boundary] PASSED [ 75%]
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-authoritative_wheel_maturity_and_dependency_boundary] PASSED [100%]
 
-============================== 4 passed in 2.44s ==============================
+============================== 4 passed in 2.76s ==============================
 
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:0d58af1c88fffe3c526cec8eaa2c6ba16a3f354b4a6d98d5e7b5b4874d9b13d4
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:972d06c088d8ed5bd377dc96955cfec3be1bc2fedb1c05199762e7cbf5b699a3

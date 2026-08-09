@@ -14,4 +14,4 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[s
 tests/test_session10_change_brief.py::test_context_and_promotion_schema_valid_python_invalid PASSED [ 85%]
 tests/test_session10_change_brief.py::test_filename_alone_cannot_trigger_promotion PASSED [100%]
 
-============================== 7 passed in 1.92s ==============================
+============================== 7 passed in 2.01s ==============================

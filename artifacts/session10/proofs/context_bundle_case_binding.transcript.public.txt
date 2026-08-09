@@ -12,4 +12,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-context_bundle_case_binding] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_context_record_and_bundle_valid_controlled_case PASSED [100%]
 
-============================= 5 passed in 10.98s ==============================
+============================= 5 passed in 10.95s ==============================

@@ -12,6 +12,6 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-verifier_capability_absence] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_forbidden_session10_capability_is_unreachable[verifier] PASSED [100%]
 
-============================== 5 passed in 2.93s ==============================
+============================== 5 passed in 3.15s ==============================
 
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:0d58af1c88fffe3c526cec8eaa2c6ba16a3f354b4a6d98d5e7b5b4874d9b13d4
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/fresh_install_gate.transcript.public.txt sha256:972d06c088d8ed5bd377dc96955cfec3be1bc2fedb1c05199762e7cbf5b699a3

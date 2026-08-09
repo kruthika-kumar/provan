@@ -12,10 +12,10 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-consequential_range_dogfood_completeness] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_consequential_range_dogfood_semantics_use_real_controlled_replay PASSED [100%]
 
-============================= 5 passed in 11.18s ==============================
+============================= 5 passed in 11.13s ==============================
 
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/httpx_pr3699.real_use.v1.public.json sha256:8d2cf5a037b4287eb893636c81ef4495c7784e7c344d60044781b0a20b32b4cd
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/httpx_pr3699_final_tree_real_use.transcript.public.txt sha256:b01be828bdd70470c785a063ec061f8fac7fa774f3fe2a896440b165be21a2dc
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/httpx_pr3699.real_use.v1.public.json sha256:e6720ee98a7097e5f17736ecd33708335988b737b744fd15a588956fffa3e114
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/httpx_pr3699_final_tree_real_use.transcript.public.txt sha256:f541219127583b1e2d1d231d6da54b76b7f2deb68832563b02e104dc63270396
 BOUND_EXTERNAL_ARTIFACT artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json sha256:adcc3c5680b020eca10eeaab0f784bbfcb1316fafe2065aa1588777688973e87
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/consequential_range_dogfood_ledger.v1.public.json sha256:a3503dcefe0e00f595894bb446518df3187444b6454da92f0958128b7676667a
-BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/session10_self_dogfood.transcript.public.txt sha256:22630ae19c73e00c7dd81cfb1016a74a5549481d963619fd8749634381d479f0
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/real_use/consequential_range_dogfood_ledger.v1.public.json sha256:1586f08d2b6f3a609c6bb947da6902bfca4603267e45adc390e814cd1369a68c
+BOUND_EXTERNAL_ARTIFACT artifacts/session10/proofs/session10_self_dogfood.transcript.public.txt sha256:369f9bfafea594d571b24e40b55eb89cf0d7367b223ceccadd86283ef48604ea

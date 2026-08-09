@@ -13,4 +13,4 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[s
 tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[schema-valid-python-invalid-provider] PASSED [ 83%]
 tests/test_session10_change_brief.py::test_context_and_promotion_schema_valid_python_invalid PASSED [100%]
 
-============================== 6 passed in 0.20s ==============================
+============================== 6 passed in 0.22s ==============================

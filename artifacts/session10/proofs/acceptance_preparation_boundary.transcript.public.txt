@@ -14,4 +14,4 @@ tests/test_session10_proof_invariants.py::test_major_invariant_contract_layers[s
 tests/test_session10_change_brief.py::test_immutable_explain_preserves_target_and_creates_proposed_seed PASSED [ 85%]
 tests/test_session10_change_brief.py::test_mutable_mode_excludes_sensitive_untracked_content PASSED [100%]
 
-============================== 7 passed in 3.68s ==============================
+============================== 7 passed in 3.75s ==============================

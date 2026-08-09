@@ -12,4 +12,4 @@ tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers
 tests/test_session10_proof_invariants.py::test_runtime_invariant_evidence_layers[schema-invalid-claim_classes_and_renderer_fidelity] PASSED [ 80%]
 tests/test_session10_change_brief.py::test_renderers_preserve_all_claim_classes_and_entity_evidence PASSED [100%]
 
-============================= 5 passed in 10.94s ==============================
+============================= 5 passed in 12.01s ==============================
