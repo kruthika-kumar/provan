@@ -55,6 +55,15 @@ def load_generic_absence_builder():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_session10_closeout_builder():
+    path = ROOT / "scripts/build_session10_closeout.py"
+    spec = importlib.util.spec_from_file_location("build_session10_closeout", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 CONTRACTS={
     "change-brief.v1.json":"provan.change_brief.v1", "affected-entity.v1.json":"provan.affected_entity.v1",
     "affected-relationship.v1.json":"provan.affected_relationship.v1", "context-record.v1.json":"provan.context_record.v1",
@@ -422,6 +431,28 @@ def test_session10_artifact_generators_do_not_use_platform_text_writes():
     ]
     for path in generators:
         assert ".write_text(" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_pre_review_manifest_excludes_all_prior_final_lifecycle_artifacts(tmp_path, monkeypatch):
+    builder = load_session10_closeout_builder()
+    base = tmp_path / "artifacts/session10"
+    proofs = base / "proofs"
+    proofs.mkdir(parents=True)
+    for name in builder.PRE_REVIEW_EXCLUDED:
+        location = proofs if name in {
+            "pre_review_proof_manifest.v1.public.json",
+            "proof_manifest.v1.public.json",
+            "reviewer_receipt_a.v1.public.json",
+            "reviewer_receipt_b.v1.public.json",
+        } else base
+        (location / name).write_bytes(b"prior final lifecycle artifact\n")
+    retained = base / "retained-pre-review.public.json"
+    retained.write_bytes(b"bounded pre-review artifact\n")
+    monkeypatch.setattr(builder, "ROOT", tmp_path)
+    monkeypatch.setattr(builder, "BASE", base)
+    monkeypatch.setattr(builder, "PROOFS", proofs)
+    entries = builder.manifest_entries(builder.PRE_REVIEW_EXCLUDED)
+    assert [row["path"] for row in entries] == ["artifacts/session10/retained-pre-review.public.json"]
 
 
 def test_previous_brief_manifest_is_contained_digest_bound_and_comparison_only(repository,tmp_path,monkeypatch):
