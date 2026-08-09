@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import tarfile
@@ -61,7 +62,15 @@ def _allowed_private_projection(code: str, relative: str, line: str) -> bool:
     } and code == "PRIVATE_REPOSITORY_REFERENCE":
         exact = ('G10-63 — Community runtime and wheel have no dependency on provan-'
                  + 'enterprise, provan-' + 'evals, private fixtures, or founder-local state.')
-        return exact in line and line.count("provan-"+"enterprise") == 1 and line.count("provan-"+"evals") == 1
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            return False
+        claims = value.get("claims", []) if isinstance(value, dict) else []
+        private_claims = [row.get("Claim") for row in claims if isinstance(row, dict)
+                          and ("provan-" + "enterprise" in str(row.get("Claim", ""))
+                               or "provan-" + "evals" in str(row.get("Claim", "")))]
+        return private_claims == [exact]
     if relative == "tests/fixtures/session9/correction-proof-fixtures.v1.json" and code == "PRIVATE_REPOSITORY_REFERENCE":
         return re.fullmatch(r'\s*"repository_name":\s*"provan-(?:evals|enterprise)",?\s*',line) is not None
     return code == "PRIVATE_REPOSITORY_REFERENCE" and expected is not None and re.fullmatch(rf'\s*"repository_name":\s*"{re.escape(expected)}",?\s*', line) is not None
