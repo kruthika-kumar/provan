@@ -11,7 +11,8 @@ import pytest
 import jsonschema
 
 from provan.acceptance import (attest, create_contract, decide, derive_evidence_state,
-                               disposition_items, freeze_contract, reinspect, render_record)
+                               disposition_items, freeze_contract, reinspect, render_record,
+                               _session11_schema_registry_raw)
 from provan.canonical import canonical_bytes, sha256_bytes
 from provan.change_brief import explain, promote
 from provan.cli import _parser
@@ -375,9 +376,18 @@ def contract_dependencies(contract):
     return closures,invariants
 
 
+def contract_authorities(patient,contract):
+    brief=patient["brief"];preparation=patient["preparation"]
+    brief_raw=secure_read(Path("outputs/change-brief")/brief["brief_id"]/"change-brief.json")
+    preparation_raw=secure_read(Path("outputs/change-brief")/brief["brief_id"]/"acceptance-preparation.json")
+    seed=brief["acceptance_seed"];predecessors={preparation["preparation_id"]:preparation_raw,brief["brief_id"]:brief_raw,seed["seed_id"]:canonical_bytes(seed)}
+    for ref in contract["disposition_refs"]:predecessors[ref["id"]]=secure_read(Path("outputs/acceptance/dispositions")/f"{ref['id']}.json")
+    return predecessors,_session11_schema_registry_raw()
+
+
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_contract_layers(patient,fixture_class):
-    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
     if fixture_class=="near-valid":value["risk"]["tier"]={"value":"unresolved","authority":"unresolved","provenance_refs":[value["disposition_refs"][0]["id"]]}
     elif fixture_class=="adversarial":value["candidate"]["mode"]="mutable"
     elif fixture_class=="schema-invalid":del value["execution_policy"]
@@ -387,9 +397,25 @@ def test_proof_contract_layers(patient,fixture_class):
     else:
         jsonschema.validate(value,schema)
         if fixture_class in {"adversarial","schema-valid-python-invalid"}:
-            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants)
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
             assert exc.value.code==("CONTRACT_CANDIDATE_NOT_IMMUTABLE" if fixture_class=="adversarial" else "CHALLENGE_NOT_REQUIRED_CAP_NONZERO")
-        else:validate_contract_serialized(canonical_bytes(value),closures,invariants)
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+def test_proof_contract_provenance_layers(patient,fixture_class):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
+    if fixture_class=="near-valid":value["conditions"]=["canonical predecessor bindings remain unchanged"]
+    elif fixture_class=="adversarial":value["brief_ref"]["sha256"]="sha256:"+"f"*64
+    elif fixture_class=="schema-invalid":del value["provenance"]
+    elif fixture_class=="schema-valid-python-invalid":value["provenance"]["schema_registry_digest"]="sha256:"+"f"*64
+    if fixture_class=="schema-invalid":assert_schema_invalid(value,schema)
+    else:
+        jsonschema.validate(value,schema)
+        if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+            assert exc.value.code==("CONTRACT_PREDECESSOR_BINDING_MISMATCH" if fixture_class=="adversarial" else "CONTRACT_PROVENANCE_INVALID")
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
 
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
@@ -560,7 +586,7 @@ def test_proof_session12_handoff_layers(fixture_class):
     for name,filename in schema_names.items():artifacts[refs[name]["path"]]=(Path(__file__).parents[1]/"provan/schemas"/filename).read_bytes();refs[name]["sha256"]=sha256_bytes(artifacts[refs[name]["path"]])
     closure_ref={"id":"closure-1",**refs["closure"]};artifacts["artifacts/contract.json"]=canonical_bytes({"artifact":"contract","closure_requirement_refs":[{"id":"closure-1","sha256":closure_ref["sha256"]}]});refs["contract"]["sha256"]=sha256_bytes(artifacts["artifacts/contract.json"])
     claim_registry={"schema_id":"provan.session11_claim_registry.v1","claims":[{"claim_id":f"G11-{number:02d}"} for number in range(1,88)]};artifacts[refs["claims"]["path"]]=canonical_bytes(claim_registry);refs["claims"]["sha256"]=sha256_bytes(artifacts[refs["claims"]["path"]]);claim_digest=refs["claims"]["sha256"]
-    schema_registry={"schema_id":"provan.session11_schema_registry.v1","entries":[],"registry_digest":sha256_bytes(canonical_bytes([]))};artifacts[refs["schema"]["path"]]=canonical_bytes(schema_registry);refs["schema"]["sha256"]=sha256_bytes(artifacts[refs["schema"]["path"]])
+    schema_registry=json.loads(_session11_schema_registry_raw());artifacts[refs["schema"]["path"]]=canonical_bytes(schema_registry);refs["schema"]["sha256"]=sha256_bytes(artifacts[refs["schema"]["path"]])
     artifacts[refs["wheel"]["path"]]=b"qualified-wheel";refs["wheel"]["sha256"]=sha256_bytes(artifacts[refs["wheel"]["path"]])
     binding={"schema_id":"provan.session11_implementation_binding.v1","implementation_commit":"5"*40,"implementation_tree":"6"*40,"package_version":"0.4.0","wheel_sha256":refs["wheel"]["sha256"],"schema_registry_digest":schema_registry["registry_digest"],"claim_registry_digest":claim_digest,"maturity":"QUALIFIED_BOUNDED","published":False,"extension_api_major":1};artifacts[refs["implementation"]["path"]]=canonical_bytes(binding);refs["implementation"]["sha256"]=sha256_bytes(artifacts[refs["implementation"]["path"]])
     artifacts[refs["matrix"]["path"]]=canonical_bytes({"claim_registry_digest":claim_digest,"claims":[]});refs["matrix"]["sha256"]=sha256_bytes(artifacts[refs["matrix"]["path"]])
@@ -687,8 +713,8 @@ def test_proof_final_artifact_binding(binding_kind,fixture_class):
 
 def test_contract_rejects_invented_risk_authority(patient):
     value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":["invented"]}
-    closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]}
-    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants)
+    closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]};predecessors,schema_registry_raw=contract_authorities(patient,value)
+    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
     assert exc.value.code=="RISK_AUTHORITY_INVALID"
 
 

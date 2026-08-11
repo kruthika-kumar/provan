@@ -48,6 +48,14 @@ def _schema(filename: str,value: dict[str,Any]) -> None:
 def _ref(value: dict[str,Any],raw: bytes,id_key: str) -> dict[str,str]: return {"id":str(value[id_key]),"sha256":sha256_bytes(raw)}
 
 
+def _session11_schema_registry_raw() -> bytes:
+    rows=[]
+    for path in sorted(Path(__file__).with_name("schemas").glob("*.json"),key=lambda value:value.name):
+        raw=path.read_bytes();value=json.loads(raw)
+        rows.append({"schema_id":value["$id"],"path":f"provan/schemas/{path.name}","sha256":sha256_bytes(raw),"normalized_sha256":sha256_bytes(canonical_bytes(value))})
+    return canonical_bytes({"schema_id":"provan.session11_schema_registry.v1","sensitivity":"PUBLIC_SAFE","entries":rows,"registry_digest":sha256_bytes(canonical_bytes(rows))})
+
+
 def _path(kind: str, identifier: str) -> Path: return Path("outputs/acceptance")/kind/f"{identifier}.json"
 
 
@@ -79,7 +87,12 @@ def _load(kind: str, identifier: str, expected_schema: str | None = None) -> tup
 def _validate_contract_loaded(contract:dict[str,Any],contract_raw:bytes)->None:
     closures={ref["id"]:_load("closure-requirements",ref["id"],"provan.closure_requirement.v1")[1] for ref in contract["closure_requirement_refs"]}
     invariants={ref["id"]:_load("protected-invariants",ref["id"],"provan.protected_invariant.v1")[1] for ref in contract["protected_invariant_refs"]}
-    validate_contract_serialized(contract_raw,closures,invariants)
+    preparation,preparation_raw,brief,brief_raw=_resolve_preparation(contract["preparation_ref"]["id"])
+    seed=brief["acceptance_seed"];seed_raw=canonical_bytes(seed)
+    predecessors={preparation["preparation_id"]:preparation_raw,brief["brief_id"]:brief_raw,seed["seed_id"]:seed_raw}
+    for ref in contract["disposition_refs"]:
+        disposition,disposition_raw=_load("dispositions",ref["id"],"provan.seed_disposition.v1");predecessors[disposition["disposition_id"]]=disposition_raw
+    validate_contract_serialized(contract_raw,closures,invariants,predecessors=predecessors,schema_registry_raw=_session11_schema_registry_raw())
 
 
 def _store_attestation_projections(attestation:dict[str,Any],attestation_raw:bytes)->None:
@@ -193,8 +206,9 @@ def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label:
     risk=json.loads(json.dumps(risk))
     for name in ("tier","reversibility"):
         if risk.get(name,{}).get("authority")=="owner_confirmed":risk[name]["provenance_refs"]=[disp["disposition_id"]]
-    contract={"schema_id":"provan.acceptance_contract.v1","contract_id":str(uuid.uuid4()),"version":version,"supersedes":parent,"case_id":brief["case_id"],"preparation_ref":_ref(preparation,prep_raw,"preparation_id"),"seed_ref":_ref(brief["acceptance_seed"],canonical_bytes(brief["acceptance_seed"]),"seed_id"),"brief_ref":_ref(brief,brief_raw,"brief_id"),"candidate":brief["candidate"],"repository_identity":brief["candidate"]["repository_identity"],"disposition_refs":[_ref(disp,disp_raw,"disposition_id")],"intended_outcome":"\n".join(intent),"target_user":terms.get("target_user"),"journeys":journeys,"mandatory_criteria":mandatory,"conditional_criteria":conditional,"non_applicable_criteria":non_applicable,"unresolved_questions":sorted(set(unresolved)),"protected_invariant_refs":[_ref(v,r,"protected_invariant_id") for v,r in invariant_values],"closure_requirement_refs":[_ref(v,r,"closure_requirement_id") for v,r in closure_values],"allowed_evidence_classes":terms.get("allowed_evidence_classes",["source_verified","owner_confirmed","trusted_imported_receipt"]),"execution_policy":{"source_only_allowed":True,"future_verifier_requirements":terms.get("future_verifier_requirements",[]),"network_policy":terms.get("network_policy","none"),"target_access":"read_only","prohibited_actions":["target_mutation","target_execution","remediation","deployment"]},"challenge_policy":{"criteria_requiring_challenge":[r["criterion_id"] for r in mandatory+conditional if r["challenge_requirement"]=="required_future"],"challenge_budget":budget,"prohibited_actions":["challenge_generation","challenge_execution","pack_creation","seed_creation","sibling_creation"]},"risk":risk,"operator_authority":actor,"decision_policy":{"policy_id":"community.owner-decision-compatibility.v1","allowed":{k:sorted(v) for k,v in DECISIONS.items()}},"conditions":terms.get("conditions",[]),"expires_at":terms.get("expires_at"),"reinspection_triggers":terms.get("reinspection_triggers",["candidate_changed","expiry_reached"]),"provenance":{"package_version":PACKAGE_VERSION,"policy_id":POLICY_ID,"policy_version":POLICY_VERSION,"schema_registry_digest":terms.get("schema_registry_digest",_runtime_schema_digest())},"created_at":timestamp}
-    closure_map={v["closure_requirement_id"]:r for v,r in closure_values};inv_map={v["protected_invariant_id"]:r for v,r in invariant_values};validate_contract_serialized(canonical_bytes(contract),closure_map,inv_map);return _store("contracts",contract["contract_id"],contract,"acceptance-contract.v1.json")[0]
+    schema_registry_raw=_session11_schema_registry_raw();schema_registry=json.loads(schema_registry_raw)
+    contract={"schema_id":"provan.acceptance_contract.v1","contract_id":str(uuid.uuid4()),"version":version,"supersedes":parent,"case_id":brief["case_id"],"preparation_ref":_ref(preparation,prep_raw,"preparation_id"),"seed_ref":_ref(brief["acceptance_seed"],canonical_bytes(brief["acceptance_seed"]),"seed_id"),"brief_ref":_ref(brief,brief_raw,"brief_id"),"candidate":brief["candidate"],"repository_identity":brief["candidate"]["repository_identity"],"disposition_refs":[_ref(disp,disp_raw,"disposition_id")],"intended_outcome":"\n".join(intent),"target_user":terms.get("target_user"),"journeys":journeys,"mandatory_criteria":mandatory,"conditional_criteria":conditional,"non_applicable_criteria":non_applicable,"unresolved_questions":sorted(set(unresolved)),"protected_invariant_refs":[_ref(v,r,"protected_invariant_id") for v,r in invariant_values],"closure_requirement_refs":[_ref(v,r,"closure_requirement_id") for v,r in closure_values],"allowed_evidence_classes":terms.get("allowed_evidence_classes",["source_verified","owner_confirmed","trusted_imported_receipt"]),"execution_policy":{"source_only_allowed":True,"future_verifier_requirements":terms.get("future_verifier_requirements",[]),"network_policy":terms.get("network_policy","none"),"target_access":"read_only","prohibited_actions":["target_mutation","target_execution","remediation","deployment"]},"challenge_policy":{"criteria_requiring_challenge":[r["criterion_id"] for r in mandatory+conditional if r["challenge_requirement"]=="required_future"],"challenge_budget":budget,"prohibited_actions":["challenge_generation","challenge_execution","pack_creation","seed_creation","sibling_creation"]},"risk":risk,"operator_authority":actor,"decision_policy":{"policy_id":"community.owner-decision-compatibility.v1","allowed":{k:sorted(v) for k,v in DECISIONS.items()}},"conditions":terms.get("conditions",[]),"expires_at":terms.get("expires_at"),"reinspection_triggers":terms.get("reinspection_triggers",["candidate_changed","expiry_reached"]),"provenance":{"package_version":PACKAGE_VERSION,"policy_id":POLICY_ID,"policy_version":POLICY_VERSION,"schema_registry_digest":schema_registry["registry_digest"]},"created_at":timestamp}
+    closure_map={v["closure_requirement_id"]:r for v,r in closure_values};inv_map={v["protected_invariant_id"]:r for v,r in invariant_values};predecessors={preparation["preparation_id"]:prep_raw,brief["brief_id"]:brief_raw,brief["acceptance_seed"]["seed_id"]:canonical_bytes(brief["acceptance_seed"]),disp["disposition_id"]:disp_raw};validate_contract_serialized(canonical_bytes(contract),closure_map,inv_map,predecessors=predecessors,schema_registry_raw=schema_registry_raw);return _store("contracts",contract["contract_id"],contract,"acceptance-contract.v1.json")[0]
 
 
 def _json_pointer(value: Any,pointer: str) -> Any:
