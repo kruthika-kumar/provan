@@ -263,6 +263,12 @@ def test_session11_public_artifact_scan_includes_untracked_absolute_paths(tmp_pa
     assert str(exc.value)=="SESSION11_PUBLIC_PROOF_ABSOLUTE_USER_PATH_LEAK"
 
 
+def test_session11_validator_direct_invocation_imports_runtime():
+    root=Path(__file__).resolve().parents[1]
+    result=subprocess.run([os.sys.executable,"scripts/validate_session11.py","--help"],cwd=root,capture_output=True,text=True,encoding="utf-8")
+    assert result.returncode==0 and "--phase" in result.stdout
+
+
 PROOF_CLASSES=("valid","near-valid","adversarial","schema-invalid","schema-valid-python-invalid")
 PROOF_RUNTIME_CLASSES=("valid","near-valid","adversarial")
 

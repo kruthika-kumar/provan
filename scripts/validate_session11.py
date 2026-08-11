@@ -9,9 +9,11 @@ import sys
 from pathlib import Path
 
 import jsonschema
-from provan.leakage import PRIVATE_PATTERNS
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0,str(ROOT))
+from provan.leakage import PRIVATE_PATTERNS
 BASELINE = "1cdc50d05115f8385b14ad1eee62e169fec6436d"
 SESSION11_SCHEMAS = {
     "acceptance-attestation.v1.json", "acceptance-contract.v1.json", "candidate-freeze.v1.json",
