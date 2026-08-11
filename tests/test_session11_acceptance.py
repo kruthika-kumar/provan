@@ -63,7 +63,7 @@ def patient(tmp_path:Path,monkeypatch):
     brief=explain(repo=str(repo),base=base,head=original,working_tree=False,brief_text="Acceptance Record capability must become available.",agent_claim=None,context_files=[],aliases=[],journeys=[],journey_files=[],previous_brief=None,previous_manifest=None,provider_id=None,no_model=True)
     prep=promote(brief["brief_id"]);surface=disposition_items(prep["preparation_id"]);rows=[]
     for item in surface["items"]:rows.append({"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm","rationale":"fixture authority"})
-    terms={"criteria":[{"criterion_id":"patient.acceptance_record_available.v1","statement":"Acceptance Record capability is available.","class":"mandatory","material":True,"required_evidence_classes":["source_verified"],"challenge_requirement":"not_required","closure_requirement":{"check_mode":"source_only","required_evidence_class":"source_verified","check":{"type":"canonical_field_equals","path":"patient/public-contract.json","json_pointer":"/capabilities/acceptance_record","expected_value":"available"}}}],"risk":{"tier":{"value":"medium","authority":"owner_confirmed","provenance_refs":[prep["preparation_id"]]},"reversibility":{"value":"bounded","authority":"owner_confirmed","provenance_refs":[prep["preparation_id"]]}},"challenge_budget":{"class":"not_required","max_instances":0,"max_wall_seconds":0,"max_network_requests":0}}
+    terms={"criteria":[{"criterion_id":"patient.acceptance_record_available.v1","statement":"Acceptance Record capability is available.","class":"mandatory","material":True,"required_evidence_classes":["source_verified"],"challenge_requirement":"not_required","closure_requirement":{"check_mode":"source_only","required_evidence_class":"source_verified","check":{"type":"canonical_field_equals","path":"patient/public-contract.json","json_pointer":"/capabilities/acceptance_record","expected_value":"available"}}}],"risk":{"tier":{"value":"unresolved","authority":"unresolved","provenance_refs":[prep["preparation_id"]]},"reversibility":{"value":"unresolved","authority":"unresolved","provenance_refs":[prep["preparation_id"]]}},"challenge_budget":{"class":"not_required","max_instances":0,"max_wall_seconds":0,"max_network_requests":0}}
     contract=create_contract(prep["preparation_id"],{"items":rows,"contract_terms":terms},"fixture-operator",now=FIXED);freeze=freeze_contract(contract["contract_id"],str(repo),now=FIXED);att=attest(freeze["freeze_id"],[],now=FIXED)
     return {"repo":repo,"base":base,"original":original,"brief":brief,"preparation":prep,"contract":contract,"freeze":freeze,"attestation":att,"home":home}
 
@@ -419,6 +419,23 @@ def test_proof_contract_provenance_layers(patient,fixture_class):
 
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+def test_proof_contract_disposition_semantics_layers(patient,fixture_class):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
+    disposition_ref=value["disposition_refs"][0];disposition=copy.deepcopy(json.loads(predecessors[disposition_ref["id"]]));schema=json.loads((Path(__file__).parents[1]/"provan/schemas/seed-disposition.v1.json").read_text(encoding="utf-8"))
+    if fixture_class=="near-valid":disposition["items"][0]["rationale"]="independently irrelevant rationale change"
+    elif fixture_class=="adversarial":disposition["items"][0]["item_id"]="sha256:"+"f"*64;disposition["items"][0]["original_value"]="unrelated invented proposal"
+    elif fixture_class=="schema-invalid":del disposition["items"]
+    elif fixture_class=="schema-valid-python-invalid":disposition["items"][0]["original_value"]="unrelated invented proposal"
+    if fixture_class=="schema-invalid":assert_schema_invalid(disposition,schema)
+    else:
+        jsonschema.validate(disposition,schema);disposition_raw=canonical_bytes(disposition);predecessors[disposition_ref["id"]]=disposition_raw;value["disposition_refs"][0]["sha256"]=sha256_bytes(disposition_raw)
+        if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+            assert exc.value.code=="CONTRACT_DISPOSITION_SEMANTICS_MISMATCH"
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_freeze_layers(patient,fixture_class):
     value=copy.deepcopy(patient["freeze"]);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/candidate-freeze.v1.json").read_text(encoding="utf-8"));contract_raw=canonical_bytes(patient["contract"])
     if fixture_class=="near-valid":value["limitations"]=["BOUNDED_STATIC_ANALYSIS_NONCOVERAGE"]
@@ -714,6 +731,13 @@ def test_proof_final_artifact_binding(binding_kind,fixture_class):
 def test_contract_rejects_invented_risk_authority(patient):
     value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":["invented"]}
     closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]};predecessors,schema_registry_raw=contract_authorities(patient,value)
+    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+    assert exc.value.code=="RISK_AUTHORITY_INVALID"
+
+
+def test_contract_terms_cannot_silently_create_owner_confirmed_risk(patient):
+    value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":[value["disposition_refs"][0]["id"]]}
+    closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
     with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
     assert exc.value.code=="RISK_AUTHORITY_INVALID"
 

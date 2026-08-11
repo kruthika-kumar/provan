@@ -96,6 +96,27 @@ def validate_seed_disposition_serialized(raw: bytes) -> dict[str,Any]:
     return value
 
 
+def _independent_seed_disposition_items(brief: dict[str,Any], seed: dict[str,Any]) -> list[dict[str,Any]]:
+    seed_digest=sha256_bytes(canonical_bytes(seed));items=[]
+    sources=(
+        ("intended_outcome","brief:intent",brief.get("claims",{}).get("source_attributed_product_intent",[])),
+        ("journey","context:journey",brief.get("context_request",{}).get("journey_digests",[])),
+        ("criterion","promotion:trigger",brief.get("promotion_decision",{}).get("applied_triggers",[])),
+        ("context_use","context:record",brief.get("context_bundle",{}).get("records",[])),
+        ("unresolved_question","seed:unresolved",seed.get("unresolved_questions",[])),
+    )
+    for kind,prefix,values in sources:
+        for index,original_value in enumerate(values):
+            source_ref=f"{prefix}:{index}"
+            item_id=sha256_bytes(canonical_bytes({"seed":seed_digest,"kind":kind,"source_ref":source_ref,"value":original_value}))
+            items.append({"item_id":item_id,"kind":kind,"source_ref":source_ref,"original_value":original_value})
+    if not items:
+        original_value="INTENDED_OUTCOME_UNRESOLVED";source_ref="seed:empty";kind="unresolved_question"
+        item_id=sha256_bytes(canonical_bytes({"seed":seed_digest,"kind":kind,"source_ref":source_ref,"value":original_value}))
+        items.append({"item_id":item_id,"kind":kind,"source_ref":source_ref,"original_value":original_value})
+    return items
+
+
 def validate_verifier_work_order_serialized(raw: bytes) -> dict[str,Any]:
     value=_load(raw,"provan.verifier_work_order.v1");_uuid(value.get("work_order_id"),"VERIFIER_WORK_ORDER_ID_INVALID")
     criteria=value.get("criterion_refs",[]);requirements=value.get("completion_requirements",[]);capabilities=value.get("requested_capabilities",[])
@@ -212,12 +233,21 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         raise ProvanError("CONTRACT_SEED_BRIEF_BINDING_MISMATCH",value["contract_id"])
     if preparation.get("brief_id")!=brief.get("brief_id") or preparation.get("case_id")!=brief.get("case_id") or preparation.get("candidate_digest")!=brief.get("candidate",{}).get("candidate_digest"):
         raise ProvanError("CONTRACT_PREPARATION_BRIEF_BINDING_MISMATCH",value["contract_id"])
+    expected_disposition_items={row["item_id"]:row for row in _independent_seed_disposition_items(brief,seed)};resolved_dispositions=[]
     for ref in value["disposition_refs"]:
         disposition_raw=predecessors.get(ref["id"])
         if disposition_raw is None:raise ProvanError("CONTRACT_DISPOSITION_UNRESOLVED",ref["id"])
         disposition=validate_seed_disposition_serialized(disposition_raw)
         if not _ref_matches(ref,disposition,disposition_raw,"disposition_id") or disposition.get("preparation_ref")!=value["preparation_ref"] or disposition.get("seed_ref")!=value["seed_ref"] or disposition.get("case_id")!=value.get("case_id"):
             raise ProvanError("CONTRACT_DISPOSITION_BINDING_MISMATCH",ref["id"])
+        actual_items=disposition.get("items",[])
+        if len(actual_items)!=len(expected_disposition_items) or {row.get("item_id") for row in actual_items}!=set(expected_disposition_items):
+            raise ProvanError("CONTRACT_DISPOSITION_SEMANTICS_MISMATCH",ref["id"])
+        for row in actual_items:
+            expected=expected_disposition_items[row["item_id"]]
+            if any(row.get(field)!=expected[field] for field in ("kind","source_ref","original_value")):
+                raise ProvanError("CONTRACT_DISPOSITION_SEMANTICS_MISMATCH",row["item_id"])
+        resolved_dispositions.append(disposition)
     if value.get("supersedes") is not None and (value["version"]<=1 or not value["supersedes"].get("id") or not SHA.fullmatch(str(value["supersedes"].get("sha256","")))):raise ProvanError("CONTRACT_SUPERSESSION_INVALID",value["contract_id"])
     if value["candidate"].get("mode") != "immutable" or not FULL_COMMIT.fullmatch(str(value["candidate"].get("head",""))): raise ProvanError("CONTRACT_CANDIDATE_NOT_IMMUTABLE",value["contract_id"])
     if value.get("case_id")!=brief.get("case_id") or value.get("candidate")!=brief.get("candidate") or value.get("repository_identity")!=brief.get("candidate",{}).get("repository_identity"):
@@ -234,7 +264,10 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         row=value["risk"].get(name,{})
         refs=row.get("provenance_refs")
         if row.get("value") not in allowed_values or row.get("authority") not in {"source_verified","owner_confirmed","unresolved"} or not isinstance(refs,list) or not refs or not set(refs).issubset(allowed_risk_refs): raise ProvanError("RISK_AUTHORITY_INVALID",name)
-        if row["authority"]=="owner_confirmed" and not set(refs).issubset({r["id"] for r in value["disposition_refs"]}):raise ProvanError("RISK_AUTHORITY_INVALID",name)
+        if row["authority"]=="owner_confirmed":
+            if not set(refs).issubset({r["id"] for r in value["disposition_refs"]}):raise ProvanError("RISK_AUTHORITY_INVALID",name)
+            required_kind="risk_tier" if name=="tier" else "reversibility"
+            if not any(item.get("kind")==required_kind and item.get("action") in {"confirm","edit"} for disposition in resolved_dispositions for item in disposition.get("items",[])):raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]=="unresolved" and row["value"]!="unresolved":raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]!="unresolved" and row["value"]=="unresolved":raise ProvanError("RISK_AUTHORITY_INVALID",name)
     if value.get("operator_authority",{}).get("authority_type")!="case_operator" or value["operator_authority"].get("authority_scope")!="case_intent_and_meaning" or value["operator_authority"].get("identity_assurance")!="self_asserted_label":raise ProvanError("CONTRACT_OPERATOR_AUTHORITY_INVALID",value["contract_id"])
