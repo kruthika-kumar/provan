@@ -9,6 +9,8 @@ from .doctor import run_doctor
 from .errors import ProvanError
 from .repository import inspect_repository
 from .change_brief import explain, promote, render_brief
+from .acceptance import (attest, create_contract, decide, disposition_items,
+                         freeze_contract, reinspect, render_record)
 from .safe_input import read_bounded_file
 from .canonical import canonical_bytes
 from .session10_validators import validate_error_serialized
@@ -50,7 +52,21 @@ def _parser() -> argparse.ArgumentParser:
     change.add_argument("--format", choices=["terminal","json","markdown","html"], default="terminal")
     acceptance = sub.add_parser("acceptance"); acceptance_sub=acceptance.add_subparsers(dest="acceptance_command")
     promote_parser=acceptance_sub.add_parser("promote"); promote_parser.add_argument("--brief",required=True)
+    contract=acceptance_sub.add_parser("contract"); contract.add_argument("--preparation",required=True); mode=contract.add_mutually_exclusive_group(required=True); mode.add_argument("--show-items",action="store_true"); mode.add_argument("--dispositions-file",type=Path); contract.add_argument("--actor-label"); contract.add_argument("--supersedes")
+    freeze=acceptance_sub.add_parser("freeze"); freeze.add_argument("--contract",required=True); freeze.add_argument("--repo",required=True)
+    attest_parser=acceptance_sub.add_parser("attest"); attest_parser.add_argument("--freeze",required=True); attest_parser.add_argument("--evidence",type=Path,action="append",default=[])
+    decision=acceptance_sub.add_parser("decide"); decision.add_argument("--attestation",required=True); decision.add_argument("--decision-file",type=Path,required=True); decision.add_argument("--actor-label",required=True)
+    record=acceptance_sub.add_parser("record"); record.add_argument("--attestation",required=True); record.add_argument("--decision"); record.add_argument("--format",choices=["terminal","json","markdown","html"],default="terminal")
+    reinspection=sub.add_parser("reinspect"); reinspection.add_argument("--record",required=True); reinspection.add_argument("--repo",required=True); reinspection.add_argument("--head",required=True); reinspection.add_argument("--external-change-receipt-file",type=Path)
     return parser
+
+
+def _json_file(path: Path, limit: int) -> dict:
+    text,_=read_bounded_file(path,limit=limit)
+    try:value=json.loads(text)
+    except json.JSONDecodeError as exc:raise ProvanError("INPUT_FILE_STRUCTURED_INVALID","input must be canonical JSON") from exc
+    if not isinstance(value,dict):raise ProvanError("INPUT_FILE_STRUCTURED_INVALID","input JSON must be an object")
+    return value
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -69,6 +85,26 @@ def main(argv: list[str] | None = None) -> int:
             value=explain(repo=args.repo,base=args.base,head=args.head,working_tree=args.working_tree,brief_text=brief_text,agent_claim=agent_claim,context_files=args.context,aliases=args.alias,journeys=args.user_journey,journey_files=args.user_journey_file,previous_brief=args.previous_brief,previous_manifest=args.previous_brief_manifest,provider_id=args.model_provider,no_model=args.no_model,pr=args.pr)
             print(render_brief(value,args.format)); return 0
         elif args.command == "acceptance" and args.acceptance_command == "promote": value=promote(args.brief)
+        elif args.command == "acceptance" and args.acceptance_command == "contract":
+            if args.show_items:value=disposition_items(args.preparation)
+            else:
+                if not args.actor_label:raise ProvanError("ACTOR_LABEL_REQUIRED","--actor-label is required when creating a contract")
+                value=create_contract(args.preparation,_json_file(args.dispositions_file,1024*1024),args.actor_label,supersedes=args.supersedes)
+        elif args.command == "acceptance" and args.acceptance_command == "freeze": value=freeze_contract(args.contract,args.repo)
+        elif args.command == "acceptance" and args.acceptance_command == "attest":
+            if len(args.evidence)>32:raise ProvanError("EVIDENCE_INPUT_LIMIT_EXCEEDED","at most 32 evidence files are accepted")
+            evidence=[];total=0
+            for path in args.evidence:
+                text,_=read_bounded_file(path,limit=8*1024*1024);raw=text.encode("utf-8");total+=len(raw)
+                if total>32*1024*1024:raise ProvanError("EVIDENCE_INPUT_LIMIT_EXCEEDED","evidence aggregate exceeds 32 MiB")
+                evidence.append((path.name,raw))
+            value=attest(args.freeze,evidence)
+        elif args.command == "acceptance" and args.acceptance_command == "decide": value=decide(args.attestation,_json_file(args.decision_file,1024*1024),args.actor_label)
+        elif args.command == "acceptance" and args.acceptance_command == "record":
+            record_id,text=render_record(args.attestation,args.decision,args.format);print(text,end="" if text.endswith("\n") else "\n");return 0
+        elif args.command == "reinspect":
+            external=_json_file(args.external_change_receipt_file,1024*1024) if args.external_change_receipt_file else None
+            value=reinspect(args.record,args.repo,args.head,external)
         elif args.command == "telemetry":
             if args.telemetry_command == "status": value = telemetry.status()
             elif args.telemetry_command == "schema": value = {"schema_id": "provan.telemetry_schema_index.v1", "events": ["doctor_completed", "inspection_completed"], "additional_fields": False}

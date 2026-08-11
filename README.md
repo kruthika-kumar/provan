@@ -2,7 +2,7 @@
 
 Provan is a permanently read-only repository assurance tool. It inspects source structure and emits bounded evidence receipts. It does not execute repository code or modify a target repository. It never creates branches, commits, worktrees or pull requests. It cannot deploy software or remediate findings. It cannot certify a release or issue an acceptance verdict.
 
-`provan explain` is a `QUALIFIED_BOUNDED` capability on unreleased `main`. Package version `0.3.0` is not available from PyPI and is not a Community release. Session 14 remains the release gate.
+`provan explain` and the Session 11 Acceptance lifecycle are `QUALIFIED_BOUNDED` capabilities on unreleased `main`. Package version `0.4.0` is not available from PyPI and is not a Community release. Session 14 remains the release gate.
 
 Session 2 is historically closed as `CLOSED_PARTIAL`. Qualification and control-plane evidence survives as bounded historical material; no completed headline comparison, evaluated portfolio, public example gallery, or model-evaluated result is claimed.
 
@@ -18,4 +18,4 @@ provan explain --repo https://github.com/kruthika-kumar/provan --base 22a73b13ee
 
 Telemetry is disabled by default and no collector is deployed. See [Telemetry](docs/telemetry.md) before opting in.
 
-Current documentation: [Change Brief v1](docs/change-brief.md), [quick start](docs/quickstart.md), [product boundary](docs/product-boundary.md), [capability matrix](docs/capability-qualification-matrix.md), and [history](docs/history.md).
+Current documentation: [Change Brief v1](docs/change-brief.md), [Acceptance Lifecycle v1](docs/acceptance-lifecycle.md), [quick start](docs/quickstart.md), [product boundary](docs/product-boundary.md), [capability matrix](docs/capability-qualification-matrix.md), and [history](docs/history.md).

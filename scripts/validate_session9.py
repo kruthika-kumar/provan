@@ -130,6 +130,16 @@ def validate_runtime_reachability() -> None:
         ("repository.py", "inspect_repository", "replace"),
         ("validators.py", "validate_install_origin", "replace"),
         ("validators.py", "validate_layer4_semantics", "replace"),
+        # Session 11 uses str.replace only for RFC 6901 decoding, ISO timestamp
+        # parsing, record-locator normalization, and renderer text. None of
+        # these call sites receives or mutates a filesystem path.
+        ("acceptance.py", "_json_pointer", "replace"),
+        ("acceptance.py", "iso", "replace"),
+        ("acceptance.py", "reinspect", "replace"),
+        ("acceptance.py", "render_record", "replace"),
+        ("session11_validators.py", "effective_status", "replace"),
+        ("session11_validators.py", "validate_contract_serialized", "replace"),
+        ("session11_validators.py", "validate_session12_handoff_serialized", "replace"),
     }
     observed=set()
     for path in (ROOT / "provan").glob("*.py"):
