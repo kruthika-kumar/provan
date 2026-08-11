@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import PurePosixPath
 from typing import Any, Callable
 
+import jsonschema
+
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import ProvanError
 
@@ -34,6 +36,21 @@ CAPABILITY_REASON_CODES = {
     "unqualified": "CAPABILITY_UNQUALIFIED",
     "degraded": "CAPABILITY_DEGRADED",
 }
+
+FORBIDDEN_SESSION11_CAPABILITIES={"execute","verify","challenge","remediate","deploy","sandbox","enterprise"}
+
+
+def validate_session11_capability_inventory(value:dict[str,Any])->dict[str,Any]:
+    commands=value.get("commands");exports=value.get("exports");modules=value.get("modules")
+    if not all(isinstance(rows,list) and all(isinstance(row,str) for row in rows) for rows in (commands,exports,modules)):
+        raise ProvanError("SESSION11_CAPABILITY_INVENTORY_INVALID","inventory")
+    exposed={part.lower().replace("-","_") for row in commands+exports+modules for part in re.split(r"[^A-Za-z0-9_-]+",row) if part}
+    forbidden=sorted(FORBIDDEN_SESSION11_CAPABILITIES & exposed)
+    if forbidden:raise ProvanError("SESSION11_FORBIDDEN_CAPABILITY_REACHABLE",",".join(forbidden))
+    if value.get("target_access")!="read_only" or value.get("target_execution") is not False or value.get("qualified_verifier") is not False or value.get("challenge_engine") is not False or value.get("remediation") is not False or value.get("enterprise_governance") is not False:
+        raise ProvanError("SESSION11_FORBIDDEN_CAPABILITY_REACHABLE","authority flags")
+    if value.get("topology_overlay_inputs")!=0:raise ProvanError("SESSION11_TOPOLOGY_OVERLAY_UNSUPPORTED","topology overlay")
+    return value
 
 
 def _load(raw: bytes, expected_schema: str) -> dict[str, Any]:
@@ -321,9 +338,29 @@ def validate_settlement_serialized(raw: bytes, contract_raw: bytes, freeze_raw: 
 
 def validate_owner_decision_serialized(raw: bytes, attestation_raw: bytes) -> dict[str,Any]:
     value=_load(raw,"provan.owner_decision.v1"); att=json.loads(attestation_raw)
+    _uuid(value.get("decision_id"),"OWNER_DECISION_ID_INVALID")
     if not _ref_matches(value["attestation_ref"],att,attestation_raw,"attestation_id"): raise ProvanError("OWNER_DECISION_ATTESTATION_MISMATCH",value["decision_id"])
     recommendation=att["recommendation"]
     if value["provan_recommendation"]!=recommendation or value["decision"] not in DECISIONS[recommendation]: raise ProvanError("OWNER_DECISION_INCOMPATIBLE",value["decision"])
+    actor=value.get("actor")
+    if not isinstance(actor,dict) or set(actor)!={"actor_label","authority_type","identity_assurance"} or not isinstance(actor.get("actor_label"),str) or not actor["actor_label"].strip() or actor.get("authority_type")!="case_operator" or actor.get("identity_assurance")!="self_asserted_label":
+        raise ProvanError("OWNER_DECISION_ACTOR_AUTHORITY_INVALID",value["decision_id"])
+    for field in ("accepted_risks","conditions","required_reinspection"):
+        rows=value.get(field)
+        if not isinstance(rows,list) or any(not isinstance(row,str) or not row.strip() or len(row)>4096 for row in rows) or len(rows)!=len(set(rows)):
+            raise ProvanError("OWNER_DECISION_FIELD_INVALID",field)
+    allowed_reinspection={row["id"] for row in att.get("reinspection_requirements",[])}
+    if not set(value["required_reinspection"]).issubset(allowed_reinspection):raise ProvanError("OWNER_DECISION_REINSPECTION_REF_INVALID",value["decision_id"])
+    if value["decision"]=="accept_with_conditions" and not value["conditions"]:raise ProvanError("OWNER_DECISION_CONDITIONS_REQUIRED",value["decision_id"])
+    if value["decision"]=="override_accept_risk" and not value["accepted_risks"]:raise ProvanError("OWNER_DECISION_ACCEPTED_RISK_REQUIRED",value["decision_id"])
+    if value.get("rationale") is not None and (not isinstance(value["rationale"],str) or not value["rationale"].strip() or len(value["rationale"])>4096):raise ProvanError("OWNER_DECISION_RATIONALE_INVALID",value["decision_id"])
+    try:
+        created=datetime.fromisoformat(value["created_at"].replace("Z","+00:00"))
+        if created.tzinfo is None:raise ValueError
+        if value.get("expires_at"):
+            expiry=datetime.fromisoformat(value["expires_at"].replace("Z","+00:00"))
+            if expiry.tzinfo is None or expiry<=created:raise ValueError
+    except (KeyError,AttributeError,TypeError,ValueError) as exc:raise ProvanError("OWNER_DECISION_TIMESTAMP_INVALID",value["decision_id"]) from exc
     return value
 
 
@@ -400,8 +437,16 @@ def derive_reinspection_overall(items: list[dict[str,Any]], invariants: list[dic
 
 def validate_reinspection_serialized(raw: bytes, *, attestation_raw:bytes|None=None, contract_raw:bytes|None=None,
                                      original_freeze_raw:bytes|None=None, later_freeze_raw:bytes|None=None,
-                                     settlement_raw:bytes|None=None) -> dict[str,Any]:
+                                     settlement_raw:bytes|None=None, external_receipt_raw:bytes|None=None) -> dict[str,Any]:
     value=_load(raw,"provan.reinspection_record.v1")
+    _uuid(value.get("reinspection_id"),"REINSPECTION_ID_INVALID")
+    receipt_ref=value.get("external_change_receipt_ref")
+    if receipt_ref is None:
+        if external_receipt_raw is not None:raise ProvanError("REINSPECTION_EXTERNAL_RECEIPT_BINDING_MISMATCH",value["reinspection_id"])
+    else:
+        if external_receipt_raw is None:raise ProvanError("REINSPECTION_EXTERNAL_RECEIPT_UNRESOLVED",value["reinspection_id"])
+        receipt=validate_external_change_receipt_serialized(external_receipt_raw)
+        if not _ref_matches(receipt_ref,receipt,external_receipt_raw,"receipt_id"):raise ProvanError("REINSPECTION_EXTERNAL_RECEIPT_BINDING_MISMATCH",value["reinspection_id"])
     expected=derive_reinspection_overall(value["items"],value["protected_invariant_results"])
     if value["overall_status"]!=expected: raise ProvanError("REINSPECTION_AGGREGATE_STATUS_INVALID",value["reinspection_id"])
     supplied=(attestation_raw,contract_raw,original_freeze_raw,later_freeze_raw,settlement_raw)
@@ -437,7 +482,7 @@ def validate_reinspection_serialized(raw: bytes, *, attestation_raw:bytes|None=N
 
 def validate_session12_handoff_serialized(raw:bytes, artifacts:dict[str,bytes])->dict[str,Any]:
     value=_load(raw,"provan.session12_handoff.v1")
-    refs=[value["brief"],value["preparation"],*value["seed_dispositions"],value["acceptance_contract"],value["candidate_freeze"],*value["closure_requirements"],*value["verifier_contracts"],*value["receipt_contracts"],*value["protected_invariants"],value["evidence_settlement"],value["attestation"],value["reinspection"],value["layer4_matrix"],value["proof_manifest"],*value["reviewer_receipts"],value["schema_registry"]]
+    refs=[value["brief"],value["preparation"],*value["seed_dispositions"],value["acceptance_contract"],value["candidate_freeze"],*value["closure_requirements"],*value["verifier_contracts"],*value["receipt_contracts"],*value["protected_invariants"],value["evidence_settlement"],value["attestation"],value["reinspection"],value["layer4_matrix"],value["proof_manifest"],*value["reviewer_receipts"],value["schema_registry"],value["claim_registry"],value["implementation_binding_ref"],value["wheel"]]
     if len({ref["path"] for ref in refs})!=len(refs):raise ProvanError("SESSION12_HANDOFF_DUPLICATE_ARTIFACT_REF","duplicate path")
     for ref in refs:
         path=PurePosixPath(ref["path"])
@@ -450,6 +495,26 @@ def validate_session12_handoff_serialized(raw:bytes, artifacts:dict[str,bytes])-
     if policy.get("target_access")!="read_only" or policy.get("execution_available") is not False or policy.get("challenge_available") is not False:raise ProvanError("SESSION12_HANDOFF_AUTHORITY_BOUNDARY_INVALID","evidence policy")
     binding=value["implementation_binding"]
     if binding.get("package_version")!="0.4.0" or binding.get("published") is not False or binding.get("maturity")!="QUALIFIED_BOUNDED":raise ProvanError("SESSION12_HANDOFF_IMPLEMENTATION_BINDING_INVALID","implementation")
+    bound_artifact=json.loads(artifacts[value["implementation_binding_ref"]["path"]])
+    if binding!=bound_artifact:raise ProvanError("SESSION12_HANDOFF_IMPLEMENTATION_BINDING_MISMATCH","implementation")
+    if not FULL_COMMIT.fullmatch(str(binding.get("implementation_commit",""))) or not FULL_COMMIT.fullmatch(str(binding.get("implementation_tree",""))) or not SHA.fullmatch(str(binding.get("wheel_sha256",""))):raise ProvanError("SESSION12_HANDOFF_IMPLEMENTATION_BINDING_INVALID","identity")
+    if sha256_bytes(artifacts[value["wheel"]["path"]])!=binding["wheel_sha256"]:raise ProvanError("SESSION12_HANDOFF_WHEEL_BINDING_MISMATCH","wheel")
+    claim_raw=artifacts[value["claim_registry"]["path"]]
+    if sha256_bytes(claim_raw)!=value["claim_registry_digest"] or binding.get("claim_registry_digest")!=value["claim_registry_digest"]:raise ProvanError("SESSION12_HANDOFF_CLAIM_REGISTRY_MISMATCH","claim registry")
+    claim_registry=json.loads(claim_raw);claim_ids=[row.get("claim_id") for row in claim_registry.get("claims",[])]
+    if claim_ids!=[f"G11-{number:02d}" for number in range(1,88)]:raise ProvanError("SESSION12_HANDOFF_CLAIM_REGISTRY_MISMATCH","claim set")
+    schema_registry=json.loads(artifacts[value["schema_registry"]["path"]]);schema_entries=schema_registry.get("entries",[])
+    if schema_registry.get("registry_digest")!=sha256_bytes(canonical_bytes(schema_entries)) or binding.get("schema_registry_digest")!=schema_registry.get("registry_digest"):raise ProvanError("SESSION12_HANDOFF_SCHEMA_REGISTRY_MISMATCH","schema registry")
+    matrix=json.loads(artifacts[value["layer4_matrix"]["path"]])
+    if matrix.get("claim_registry_digest")!=value["claim_registry_digest"]:raise ProvanError("SESSION12_HANDOFF_LAYER4_CLAIM_BINDING_MISMATCH","layer4")
+    expected_schema_sets=({"provan.verifier_work_order.v1","provan.verifier_capability_request.v1","provan.verification_result.v1"},{"provan.environment_receipt.v1","provan.command_receipt.v1"})
+    for contract_refs,expected_ids,error in ((value["verifier_contracts"],expected_schema_sets[0],"SESSION12_HANDOFF_VERIFIER_CONTRACT_SET_MISMATCH"),(value["receipt_contracts"],expected_schema_sets[1],"SESSION12_HANDOFF_RECEIPT_CONTRACT_SET_MISMATCH")):
+        schemas=[]
+        try:
+            for ref in contract_refs:
+                schema=json.loads(artifacts[ref["path"]]);jsonschema.Draft202012Validator.check_schema(schema);schemas.append(schema)
+        except (json.JSONDecodeError,jsonschema.SchemaError) as exc:raise ProvanError(error,"invalid schema contract") from exc
+        if {schema.get("$id") for schema in schemas}!=expected_ids or len(schemas)!=len(expected_ids):raise ProvanError(error,"typed schema set")
     if len(value["session12_prerequisites"])<5 or not value["limitations"]:raise ProvanError("SESSION12_HANDOFF_SEMANTIC_COMPLETENESS_MISSING","prerequisites")
     manifest=json.loads(artifacts[value["proof_manifest"]["path"]]);entries=manifest.get("entries")
     if not isinstance(entries,list) or not entries:raise ProvanError("SESSION12_HANDOFF_PROOF_MANIFEST_INVALID","entries")

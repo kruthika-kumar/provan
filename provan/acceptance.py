@@ -22,6 +22,7 @@ from .session11_validators import (
     effective_status, validate_attestation_serialized, validate_closure_requirement_serialized,
     validate_attestation_projection_serialized,
     validate_contract_serialized, validate_freeze_serialized,
+    validate_external_change_receipt_serialized,
     validate_owner_decision_serialized, validate_protected_invariant_serialized,
     validate_reinspection_serialized, validate_seed_disposition_serialized,
     validate_settlement_serialized,
@@ -425,6 +426,7 @@ def reinspect(record_id:str,repo_source:str,later_head:str,external_receipt:dict
         outcome=results.get(ref["id"],{"status":"unable"});status="closed" if outcome["status"]=="supports" else "open" if outcome["status"]=="falsifies" else "disputed" if outcome["status"]=="disputed" else "unable_to_establish";inv_results.append({"protected_invariant_ref":ref,"status":status,"material":True,"reason_code":outcome.get("reason_code","EVIDENCE_UNAVAILABLE")})
     if not items:items=[{"criterion_ref":"NO_MATERIAL_OPEN_REQUIREMENT","closure_requirement_ref":{"id":"not-applicable","sha256":"sha256:"+"0"*64},"status":"not_applicable","material":False,"reason_code":"NO_OPEN_REQUIREMENT"}]
     receipt_ref=None
+    receipt_raw=None
     if external_receipt:
-        _schema("external-change-receipt.v1.json",external_receipt);stored,raw=_store("external-change-receipts",external_receipt["receipt_id"],external_receipt,"external-change-receipt.v1.json");receipt_ref=_ref(stored,raw,"receipt_id")
-    value={"schema_id":"provan.reinspection_record.v1","reinspection_id":str(uuid.uuid4()),"record_id":record_id,"original_attestation_ref":_ref(att,att_raw,"attestation_id"),"original_contract_ref":_ref(contract,contract_raw,"contract_id"),"original_freeze_ref":_ref(original,original_raw,"freeze_id"),"later_freeze_ref":_ref(later,later_raw,"freeze_id"),"external_change_receipt_ref":receipt_ref,"items":items,"protected_invariant_results":inv_results,"overall_status":derive_reinspection_overall(items,inv_results),"created_at":iso(now)};validate_reinspection_serialized(canonical_bytes(value),attestation_raw=att_raw,contract_raw=contract_raw,original_freeze_raw=original_raw,later_freeze_raw=later_raw,settlement_raw=settlement_raw);return _store("reinspections",value["reinspection_id"],value,"reinspection-record.v1.json")[0]
+        _schema("external-change-receipt.v1.json",external_receipt);receipt_raw=canonical_bytes(external_receipt);validate_external_change_receipt_serialized(receipt_raw);stored,receipt_raw=_store("external-change-receipts",external_receipt["receipt_id"],external_receipt,"external-change-receipt.v1.json");receipt_ref=_ref(stored,receipt_raw,"receipt_id")
+    value={"schema_id":"provan.reinspection_record.v1","reinspection_id":str(uuid.uuid4()),"record_id":record_id,"original_attestation_ref":_ref(att,att_raw,"attestation_id"),"original_contract_ref":_ref(contract,contract_raw,"contract_id"),"original_freeze_ref":_ref(original,original_raw,"freeze_id"),"later_freeze_ref":_ref(later,later_raw,"freeze_id"),"external_change_receipt_ref":receipt_ref,"items":items,"protected_invariant_results":inv_results,"overall_status":derive_reinspection_overall(items,inv_results),"created_at":iso(now)};validate_reinspection_serialized(canonical_bytes(value),attestation_raw=att_raw,contract_raw=contract_raw,original_freeze_raw=original_raw,later_freeze_raw=later_raw,settlement_raw=settlement_raw,external_receipt_raw=receipt_raw);return _store("reinspections",value["reinspection_id"],value,"reinspection-record.v1.json")[0]
