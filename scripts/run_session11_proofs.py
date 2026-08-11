@@ -67,8 +67,6 @@ FINAL_EVIDENCE={
  "internal_real_use_binding":"artifacts/session11/real_use/provan_internal_lifecycle.v1.public.json",
  "installed_wheel_binding":"artifacts/session11/real_use/installed_wheel_origin.v1.public.json",
  "package_implementation_binding":"artifacts/session11/implementation_binding.v1.public.json",
- "final_session12_handoff_binding":"artifacts/session11/session12_handoff.v1.public.json",
- "controlled_reinspection_binding":"artifacts/session11/real_use/reinspection_qualification.v1.public.json",
  "generic_absence_binding":"artifacts/session11/generic_absence_receipt.v1.public.json",
 }
 
@@ -90,6 +88,8 @@ def primary_invariant_for(number):return invariants_for(number)[0]
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("--implementation-commit",required=True);p.add_argument("--implementation-tree",required=True);p.add_argument("--wheel-sha256",required=True);a=p.parse_args()
+    authority_path=OUT/"claim_registry.v1.public.json";authority=json.loads(authority_path.read_text(encoding="utf-8"));authority_digest=digest(authority_path.read_bytes())
+    schema_registry=json.loads((OUT/"schema_registry.v1.public.json").read_text(encoding="utf-8"));binding={"schema_id":"provan.session11_implementation_binding.v1","implementation_commit":a.implementation_commit,"implementation_tree":a.implementation_tree,"package_version":"0.4.0","extension_api_major":1,"wheel_sha256":a.wheel_sha256,"schema_registry_digest":schema_registry["registry_digest"],"claim_registry_digest":authority_digest,"maturity":"QUALIFIED_BOUNDED","published":False};write(OUT/"implementation_binding.v1.public.json",binding)
     entries=[];test_rel="tests/test_session11_acceptance.py";validator_rel="provan/session11_validators.py"
     for family,invariant,schema_name,test_spec,errors in INVARIANTS:
         classes=("valid","near-valid","adversarial") if invariant in RUNTIME else ("valid","near-valid","adversarial","schema-invalid","schema-valid-python-invalid")
@@ -110,7 +110,6 @@ def main():
             else:schema_result="PASS:Draft202012 asserted by executed test"
             python_result="PASS" if fixture_class in {"valid","near-valid"} else "NOT_RUN_AFTER_STRUCTURAL_FAILURE" if fixture_class=="schema-invalid" else "FAIL:"+errors[fixture_class]
             entries.append({"proof_id":f"{family}-{invariant.replace('_','-')}-{fixture_class}","family":family,"invariant":invariant,"fixture_class":fixture_class,"fixture_path":test_id,"schema_id":schema_id,"schema_result":schema_result,"python_validator":"provan.session11_validators independent serialized recomputation" if invariant not in RUNTIME else "direct production behavioral invariant with monitored state","python_result":python_result,"production_function":"provan.acceptance and provan.session11_validators" if invariant not in RUNTIME else "claim-specific Session 11 runtime and canonical artifact resolver","test_id":test_id,"artifact_locations":locations,"artifact_hashes":[digest((ROOT/path).read_bytes()) for path in locations],"command":" ".join(command),"exit_code":run.returncode,"transcript_hash":transcript_hash,"sensitivity":"PUBLIC_SAFE"})
-    authority_path=OUT/"claim_registry.v1.public.json";authority=json.loads(authority_path.read_text(encoding="utf-8"));authority_digest=digest(authority_path.read_bytes())
     registry={"schema_id":"provan.session11_proof_registry.v1","implementation_commit":a.implementation_commit,"implementation_tree":a.implementation_tree,"claim_registry_digest":authority_digest,"entries":entries};write(PROOFS/"proof_registry.v1.public.json",registry)
     by_inv={name:[row for row in entries if row["invariant"]==name] for _,name,*_ in INVARIANTS};claims=[];crosswalk=[]
     for invariant,proofs in by_inv.items():crosswalk.append({"major_invariant":invariant,"proof_ids":[row["proof_id"] for row in proofs],"claim_ids":[row["claim_id"] for row in authority["claims"] if primary_invariant_for(int(row["claim_id"].split("-")[1]))==invariant],"supplemental_claim_ids":[row["claim_id"] for row in authority["claims"] if invariant in invariants_for(int(row["claim_id"].split("-")[1])) and primary_invariant_for(int(row["claim_id"].split("-")[1]))!=invariant],"schema_layer":"NOT_APPLICABLE_RUNTIME_BEHAVIOR" if invariant in RUNTIME else "REQUIRED_AND_EXECUTED"})
@@ -119,6 +118,5 @@ def main():
         proofs={fixture:[proof_set.get(fixture,"NOT_APPLICABLE:RUNTIME_BEHAVIORAL_INVARIANT") for proof_set in proof_sets] for fixture in ("valid","near-valid","adversarial","schema-valid-python-invalid","schema-invalid")}
         claims.append({"Claim":f"{row['claim_id']} — {row['normative_claim']}","Implemented in":"provan/acceptance.py; provan/session11_validators.py; provan/schemas; docs/acceptance-lifecycle.md","Positive proof":proofs["valid"],"Near-valid proof":proofs["near-valid"],"Negative proof":proofs["adversarial"],"Python result":proofs.get("schema-valid-python-invalid","NOT_APPLICABLE:RUNTIME_BEHAVIORAL_INVARIANT"),"Schema result":proofs.get("schema-invalid","NOT_APPLICABLE:RUNTIME_BEHAVIORAL_INVARIANT"),"Artifact evidence":"artifacts/session11/proofs/proof_registry.v1.public.json","Reviewer result":"PENDING","Status":"READY_FOR_REVIEW"})
     write(PROOFS/"claim_crosswalk.v1.public.json",{"schema_id":"provan.session11_claim_crosswalk.v1","claim_registry_digest":authority_digest,"entries":crosswalk});write(OUT/"layer4_claim_matrix.v1.public.json",{"schema_id":"provan.session11_layer4_matrix.v1","claim_registry_digest":authority_digest,"claims":claims})
-    schema_registry=json.loads((OUT/"schema_registry.v1.public.json").read_text(encoding="utf-8"));binding={"schema_id":"provan.session11_implementation_binding.v1","implementation_commit":a.implementation_commit,"implementation_tree":a.implementation_tree,"package_version":"0.4.0","extension_api_major":1,"wheel_sha256":a.wheel_sha256,"schema_registry_digest":schema_registry["registry_digest"],"claim_registry_digest":authority_digest,"maturity":"QUALIFIED_BOUNDED","published":False};write(OUT/"implementation_binding.v1.public.json",binding)
     print(f"SESSION11_PROOFS_VALID entries={len(entries)} claims={len(claims)}")
 if __name__=="__main__":main()
