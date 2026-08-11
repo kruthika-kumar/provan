@@ -67,7 +67,7 @@ def resolve_pr_metadata(repository: str, pr: str, base: str, head: str) -> dict[
         number=int(parsed.group(3))
     if number<1: raise ProvanError("PR_METADATA_IDENTITY_MISMATCH","PR number must be positive")
     url=f"https://api.github.com/repos/{match.group(1)}/{match.group(2)}/pulls/{number}"
-    request=urllib.request.Request(url,headers={"Accept":"application/vnd.github+json","User-Agent":"provan-assurance/0.3.0"})
+    request=urllib.request.Request(url,headers={"Accept":"application/vnd.github+json","User-Agent":"provan-assurance/0.4.0"})
     try:
         # An explicit empty proxy map prevents urllib from inheriting proxy
         # endpoints or credentials from the host environment or OS settings.

@@ -50,15 +50,19 @@ def _reject_unsafe_directory(path: Path) -> None:
         raise ProvanError(PROVAN_STATE_CHILD_SYMLINK_FORBIDDEN, "linked or non-directory Provan state component is forbidden")
 
 
-def _validate_relative_json(relative: Path, area: str) -> tuple[str, ...]:
+def _validate_relative_leaf(relative: Path, area: str, allowed_suffixes: frozenset[str]) -> tuple[str, ...]:
     text = str(relative)
     parts = relative.parts
-    if (not text or relative.is_absolute() or relative.suffix.lower() != ".json" or not parts or
+    if (not text or relative.is_absolute() or relative.suffix.lower() not in allowed_suffixes or not parts or
             parts[0] != area or any(part in {"", ".", ".."} for part in parts)):
-        raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE, f"JSON output must remain below {area}")
+        raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE, f"bounded output must remain below {area}")
     if os.name == "nt" and (text.startswith(("\\\\", "\\?\\", "\\.\\")) or ":" in text):
         raise ProvanError(OUTPUT_PATH_OUTSIDE_PROVAN_STATE, "Windows device paths and alternate streams are forbidden")
     return parts
+
+
+def _validate_relative_json(relative: Path, area: str) -> tuple[str, ...]:
+    return _validate_relative_leaf(relative, area, frozenset({".json"}))
 
 
 def _ensure_state_root(root: Path) -> None:
@@ -80,7 +84,7 @@ def _write_all(descriptor: int, data: bytes) -> None:
         written += count
 
 
-def secure_write(relative: Path, data: bytes) -> Path:
+def secure_write(relative: Path, data: bytes, *, allowed_suffixes: frozenset[str] = frozenset({".json"})) -> Path:
     """Create a new JSON state file without following state-child links.
 
     POSIX uses mkdirat/openat through Python's dir_fd support, O_NOFOLLOW, and
@@ -90,7 +94,7 @@ def secure_write(relative: Path, data: bytes) -> Path:
     concurrent reparse swap remains a residual TOCTOU limitation.
     """
     area = relative.parts[0] if relative.parts else ""
-    parts = _validate_relative_json(relative, area)
+    parts = _validate_relative_leaf(relative, area, allowed_suffixes)
     root = state_root()
     _ensure_state_root(root)
     if os.name != "nt" and os.open in os.supports_dir_fd and os.mkdir in os.supports_dir_fd:
@@ -152,10 +156,10 @@ def secure_write(relative: Path, data: bytes) -> Path:
     return leaf
 
 
-def secure_read(relative: Path, *, limit: int = 32 * 1024 * 1024) -> bytes:
+def secure_read(relative: Path, *, limit: int = 32 * 1024 * 1024, allowed_suffixes: frozenset[str] = frozenset({".json"})) -> bytes:
     """Read a bounded Provan-owned JSON leaf without following linked components."""
     area = relative.parts[0] if relative.parts else ""
-    parts = _validate_relative_json(relative, area)
+    parts = _validate_relative_leaf(relative, area, allowed_suffixes)
     root = state_root()
     _ensure_state_root(root)
     if os.name != "nt" and os.open in os.supports_dir_fd:

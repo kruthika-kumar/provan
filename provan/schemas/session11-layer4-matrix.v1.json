@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "provan.session11_layer4_matrix.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "claim_registry_digest", "claims"],
+  "properties": {
+    "schema_id": {"const": "provan.session11_layer4_matrix.v1"},
+    "claim_registry_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "claims": {
+      "type": "array",
+      "minItems": 87,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["Claim", "Implemented in", "Positive proof", "Near-valid proof", "Negative proof", "Python result", "Schema result", "Artifact evidence", "Reviewer result", "Status"],
+        "properties": {
+          "Claim": {"type": "string", "minLength": 1},
+          "Implemented in": {"type": "string", "minLength": 1},
+          "Positive proof": {"type": "string", "minLength": 1},
+          "Near-valid proof": {"type": "string", "minLength": 1},
+          "Negative proof": {"type": "string", "minLength": 1},
+          "Python result": {"type": "string", "minLength": 1},
+          "Schema result": {"type": "string", "minLength": 1},
+          "Artifact evidence": {"type": "string", "minLength": 1},
+          "Reviewer result": {"type": "string", "minLength": 1},
+          "Status": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

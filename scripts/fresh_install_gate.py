@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, hashlib, json, os, shutil, subprocess, sys, tempfile, zipfile
+import argparse, hashlib, json, os, shutil, subprocess, sys, tempfile, tomllib, zipfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -19,9 +19,11 @@ def main()->int:
             isolated_env.pop(inherited,None)
         isolated_env["PYTHONNOUSERSITE"]="1"
         run([sys.executable,"-m","venv",str(root)],isolated_env); py=root/"Scripts/python.exe"; cli=root/"Scripts/provan.exe"
+        runtime_dependencies=tomllib.loads((ROOT/"pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
+        run([str(py),"-m","pip","install",*runtime_dependencies],isolated_env)
         run([str(py),"-m","pip","install","--no-deps",str(a.wheel.resolve())],isolated_env)
         env=dict(isolated_env); env["PROVAN_HOME"]=str(state_parent/".provan")
-        for args in (["--help"],["doctor","--format","json"],["telemetry","status"],["telemetry","schema"],["telemetry","preview"],["telemetry","enable"],["telemetry","preview"],["telemetry","reset-id"],["telemetry","disable"]): run([str(cli),*args],env,root)
+        for args in (["--help"],["doctor","--format","json"],["telemetry","status"],["telemetry","schema"],["telemetry","preview"],["telemetry","enable"],["telemetry","preview"],["telemetry","reset-id"],["telemetry","disable"],["acceptance","--help"],["reinspect","--help"]): run([str(cli),*args],env,root)
         parity="""import os; from provan.telemetry import configure,preview,send; os.environ['PROVAN_TELEMETRY_ENDPOINT']='https://collector.example.test'; configure(True); p=preview(); seen=[]; send(p['envelope_digest'],lambda b,d:seen.append((b,d))); assert seen==[(p['canonical_bytes_utf8'].encode(),p['envelope_digest'])]; print('TRANSPORT_SPY_PARITY_OK')"""
         run([str(py),"-c",parity],env,root)
         remote_env=dict(os.environ); remote_env["GIT_TERMINAL_PROMPT"]="0"
@@ -54,6 +56,7 @@ def main()->int:
             names=z.namelist()
             if any(n.startswith(("shiproom/","demo_patient/","tests/","external_validation/")) for n in names): raise SystemExit("forbidden wheel member")
             if not any(n.endswith("provan/schemas/change-brief.v1.json") for n in names): raise SystemExit("Session 10 schemas absent from wheel")
+            if not any(n.endswith("provan/schemas/acceptance-contract.v1.json") for n in names): raise SystemExit("Session 11 schemas absent from wheel")
         if any((root/"Lib/site-packages"/name).exists() for name in ("shiproom","demo_patient","external_validation")): raise SystemExit("forbidden installed package")
         run([str(py),"-m","pip","uninstall","-y","provan-assurance"],env,cwd=root)
         if (root/"Lib/site-packages/provan").exists(): raise SystemExit("uninstall residue")
