@@ -8,8 +8,6 @@ from datetime import datetime, timezone
 from pathlib import PurePosixPath
 from typing import Any, Callable
 
-import jsonschema
-
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import ProvanError
 
@@ -512,8 +510,13 @@ def validate_session12_handoff_serialized(raw:bytes, artifacts:dict[str,bytes])-
         schemas=[]
         try:
             for ref in contract_refs:
-                schema=json.loads(artifacts[ref["path"]]);jsonschema.Draft202012Validator.check_schema(schema);schemas.append(schema)
-        except (json.JSONDecodeError,jsonschema.SchemaError) as exc:raise ProvanError(error,"invalid schema contract") from exc
+                schema=json.loads(artifacts[ref["path"]])
+                schema_id=schema.get("$id")
+                properties=schema.get("properties")
+                if schema.get("$schema")!="https://json-schema.org/draft/2020-12/schema" or schema.get("type")!="object" or schema.get("additionalProperties") is not False or not isinstance(properties,dict) or properties.get("schema_id")!={"const":schema_id} or not isinstance(schema.get("required"),list) or "schema_id" not in schema["required"]:
+                    raise ValueError("invalid canonical schema contract")
+                schemas.append(schema)
+        except (json.JSONDecodeError,KeyError,TypeError,ValueError) as exc:raise ProvanError(error,"invalid schema contract") from exc
         if {schema.get("$id") for schema in schemas}!=expected_ids or len(schemas)!=len(expected_ids):raise ProvanError(error,"typed schema set")
     if len(value["session12_prerequisites"])<5 or not value["limitations"]:raise ProvanError("SESSION12_HANDOFF_SEMANTIC_COMPLETENESS_MISSING","prerequisites")
     manifest=json.loads(artifacts[value["proof_manifest"]["path"]]);entries=manifest.get("entries")
