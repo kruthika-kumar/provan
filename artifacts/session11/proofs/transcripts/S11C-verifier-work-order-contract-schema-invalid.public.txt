@@ -1,0 +1,5 @@
+COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_proof_support_contract_layers[work-order-schema-invalid]
+EXIT_CODE: 0
+PROOF_SCHEMA_ERROR:'schema_id' is a required property:path=/
+.
+1 passed in 0.15s
