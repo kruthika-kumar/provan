@@ -42,7 +42,7 @@ def validate_session11_capability_inventory(value:dict[str,Any])->dict[str,Any]:
     commands=value.get("commands");exports=value.get("exports");modules=value.get("modules")
     if not all(isinstance(rows,list) and all(isinstance(row,str) for row in rows) for rows in (commands,exports,modules)):
         raise ProvanError("SESSION11_CAPABILITY_INVENTORY_INVALID","inventory")
-    exposed={part.lower().replace("-","_") for row in commands+exports+modules for part in re.split(r"[^A-Za-z0-9_-]+",row) if part}
+    exposed={part.lower().translate({45:95}) for row in commands+exports+modules for part in re.split(r"[^A-Za-z0-9_-]+",row) if part}
     forbidden=sorted(FORBIDDEN_SESSION11_CAPABILITIES & exposed)
     if forbidden:raise ProvanError("SESSION11_FORBIDDEN_CAPABILITY_REACHABLE",",".join(forbidden))
     if value.get("target_access")!="read_only" or value.get("target_execution") is not False or value.get("qualified_verifier") is not False or value.get("challenge_engine") is not False or value.get("remediation") is not False or value.get("enterprise_governance") is not False:
@@ -66,6 +66,10 @@ def _ref_matches(ref: dict[str,Any], value: dict[str,Any], raw: bytes, id_key: s
 def _uuid(value: Any, code: str) -> None:
     try: uuid.UUID(str(value))
     except (ValueError,TypeError,AttributeError) as exc: raise ProvanError(code,str(value)) from exc
+
+
+def _parse_timestamp(value: str) -> datetime:
+    return datetime.fromisoformat(value[:-1]+"+00:00" if value.endswith("Z") else value)
 
 
 def validate_seed_disposition_serialized(raw: bytes) -> dict[str,Any]:
@@ -353,10 +357,10 @@ def validate_owner_decision_serialized(raw: bytes, attestation_raw: bytes) -> di
     if value["decision"]=="override_accept_risk" and not value["accepted_risks"]:raise ProvanError("OWNER_DECISION_ACCEPTED_RISK_REQUIRED",value["decision_id"])
     if value.get("rationale") is not None and (not isinstance(value["rationale"],str) or not value["rationale"].strip() or len(value["rationale"])>4096):raise ProvanError("OWNER_DECISION_RATIONALE_INVALID",value["decision_id"])
     try:
-        created=datetime.fromisoformat(value["created_at"].replace("Z","+00:00"))
+        created=_parse_timestamp(value["created_at"])
         if created.tzinfo is None:raise ValueError
         if value.get("expires_at"):
-            expiry=datetime.fromisoformat(value["expires_at"].replace("Z","+00:00"))
+            expiry=_parse_timestamp(value["expires_at"])
             if expiry.tzinfo is None or expiry<=created:raise ValueError
     except (KeyError,AttributeError,TypeError,ValueError) as exc:raise ProvanError("OWNER_DECISION_TIMESTAMP_INVALID",value["decision_id"]) from exc
     return value
