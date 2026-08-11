@@ -732,6 +732,16 @@ def test_proof_predecessor_preservation(monkeypatch,fixture_class):
         with pytest.raises(SystemExit,match="SESSION10_HISTORICAL_ARTIFACT_CHANGED"):gate.validate_boundaries()
 
 
+def test_session11_schemas_do_not_rebind_session9_registry():
+    root=Path(__file__).parents[1]
+    result=subprocess.run(
+        [os.sys.executable,"scripts/validate_session9.py","--skip-closeout-bindings"],
+        cwd=root,capture_output=True,text=True,encoding="utf-8",
+    )
+    assert result.returncode==0,result.stdout+result.stderr
+    assert '"status": "SESSION9_VALID"' in result.stdout
+
+
 def test_attestation_rejects_fake_evidence_and_policy(patient):
     value=copy.deepcopy(patient["attestation"]);value["evidence_refs"]["source"]=["sha256:"+"f"*64];value["builder_provenance"]["policy_id"]="invented"
     settlement_raw=secure_read(Path("outputs/acceptance/settlements")/f"{value['settlement_ref']['id']}.json")

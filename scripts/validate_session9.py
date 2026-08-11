@@ -285,6 +285,12 @@ def main() -> int:
         "provan.change_brief_manifest.v1","provan.change_brief_public_projection.v1",
         "provan.session10_runtime_invariant_evidence.v1","provan.session10_handoff_finalization.v1","provan.session10_generic_absence_receipt.v1","provan.session10_authentic_comparator.v1",
         "provan.session10_consequential_range_dogfood_ledger.v1","provan.session10_proof_manifest.v1","provan.session10_closeout.v1",
+        "provan.seed_disposition.v1","provan.acceptance_contract.v1","provan.closure_requirement.v1","provan.protected_invariant.v1",
+        "provan.candidate_freeze.v1","provan.verifier_work_order.v1","provan.verifier_capability_request.v1","provan.verification_result.v1",
+        "provan.environment_receipt.v1","provan.command_receipt.v1","provan.evidence_settlement.v1","provan.acceptance_attestation.v1",
+        "provan.owner_decision.v1","provan.external_change_receipt.v1","provan.reinspection_record.v1","provan.session11_proof_registry.v1",
+        "provan.session11_layer4_matrix.v1","provan.session11_proof_manifest.v1","provan.session11_reviewer_receipt.v1",
+        "provan.session11_closeout.v1","provan.session12_handoff.v1",
     }}
     schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(historical_registry.items())]}
     expected=json.dumps(schema_index,sort_keys=True,indent=2)+"\n"; target=artifacts/"schema_registry.public.json"
