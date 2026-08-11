@@ -133,7 +133,12 @@ def validate_proofs(final: bool) -> None:
     for row in claims:
         claim_id = row["Claim"].split(" — ", 1)[0]
         if row["Claim"] != f"{claim_id} — {expected_text[claim_id]}": raise SystemExit("SESSION11_LAYER4_CLAIM_TEXT_CHANGED")
-        if any(row[key] not in entries for key in ("Positive proof", "Near-valid proof", "Negative proof")): raise SystemExit("SESSION11_LAYER4_PROOF_UNRESOLVED")
+        for key,fixture_class in (("Positive proof","valid"),("Near-valid proof","near-valid"),("Negative proof","adversarial")):
+            if any(proof_id not in entries or entries[proof_id]["fixture_class"]!=fixture_class for proof_id in row[key]):raise SystemExit("SESSION11_LAYER4_PROOF_UNRESOLVED")
+        for key,fixture_class in (("Python result","schema-valid-python-invalid"),("Schema result","schema-invalid")):
+            for proof_id in row[key]:
+                if proof_id=="NOT_APPLICABLE:RUNTIME_BEHAVIORAL_INVARIANT":continue
+                if proof_id not in entries or entries[proof_id]["fixture_class"]!=fixture_class:raise SystemExit("SESSION11_LAYER4_LAYER_RESULT_INVALID")
         if final and (row["Reviewer result"] != "ACCEPTED" or row["Status"] != "CLOSED"): raise SystemExit("SESSION11_LAYER4_REVIEW_INCOMPLETE")
     crosswalk=load(base/"proofs/claim_crosswalk.v1.public.json");mapped={}
     for item in crosswalk["entries"]:
@@ -142,9 +147,17 @@ def validate_proofs(final: bool) -> None:
             mapped[claim_id]=item["major_invariant"]
         if any(proof_id not in entries or entries[proof_id]["invariant"]!=item["major_invariant"] for proof_id in item["proof_ids"]):raise SystemExit("SESSION11_CROSSWALK_PROOF_INVARIANT_MISMATCH")
     if set(mapped)!=set(ids):raise SystemExit("SESSION11_CROSSWALK_CLAIM_SET_MISMATCH")
+    supplemental={claim_id:set() for claim_id in ids}
+    for item in crosswalk["entries"]:
+        for claim_id in item.get("supplemental_claim_ids",[]):
+            if claim_id not in supplemental or item["major_invariant"]==mapped[claim_id]:raise SystemExit("SESSION11_CROSSWALK_SUPPLEMENT_INVALID")
+            supplemental[claim_id].add(item["major_invariant"])
     for row in claims:
         claim_id=row["Claim"].split(" — ",1)[0]
-        if any(entries[row[key]]["invariant"]!=mapped[claim_id] for key in ("Positive proof","Near-valid proof","Negative proof")):raise SystemExit("SESSION11_LAYER4_UNRELATED_PROOF")
+        expected_invariants={mapped[claim_id]}|supplemental[claim_id]
+        for key in ("Positive proof","Near-valid proof","Negative proof"):
+            cited={entries[proof_id]["invariant"] for proof_id in row[key]}
+            if cited!=expected_invariants:raise SystemExit("SESSION11_LAYER4_UNRELATED_OR_MISSING_PROOF")
 
 
 def main() -> int:

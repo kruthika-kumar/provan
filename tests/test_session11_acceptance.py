@@ -19,6 +19,7 @@ from provan.leakage import validate_candidate_surfaces
 from provan.session11_validators import (derive_reinspection_overall,
     SEMANTIC_VALIDATORS,
     effective_status, validate_attestation_serialized,
+    validate_attestation_projection_serialized,
     validate_closure_requirement_serialized, validate_contract_serialized, validate_freeze_serialized,
     validate_command_receipt_serialized, validate_environment_receipt_serialized,
     validate_external_change_receipt_serialized, validate_seed_disposition_serialized,
@@ -98,6 +99,25 @@ def test_record_bundle_identity_is_renderer_independent(patient):
     ids=[]
     for fmt in ("json","markdown","html","terminal"):ids.append(render_record(patient["attestation"]["attestation_id"],None,fmt)[0])
     assert len(set(ids))==1
+
+
+def test_attestation_materializes_bound_internal_and_client_safe_projections(patient):
+    att=patient["attestation"];att_raw=canonical_bytes(att)
+    for kind,identifier in att["projection_refs"].items():
+        raw=secure_read(Path("outputs/acceptance/attestation-projections")/f"{identifier}.json")
+        value=validate_attestation_projection_serialized(raw,att_raw,projection_kind=kind)
+        assert value["projection_id"]==identifier
+        assert value["attestation_ref"]["sha256"]==sha256_bytes(att_raw)
+        if kind=="client_safe":
+            assert set(value["payload"])=={"recommendation","effective_status","evidence_counts","limitations"}
+
+
+def test_tampered_attestation_projection_prevents_record_render(patient):
+    identifier=patient["attestation"]["projection_refs"]["client_safe"]
+    path=Path(os.environ["PROVAN_HOME"])/"outputs/acceptance/attestation-projections"/f"{identifier}.json"
+    value=json.loads(path.read_bytes());value["payload"]["recommendation"]="cleared"
+    path.write_bytes(canonical_bytes(value))
+    with pytest.raises(ProvanError):render_record(patient["attestation"]["attestation_id"],None,"json")
 
 
 def test_record_locator_rejects_redirected_authoritative_chain(patient):
@@ -443,11 +463,25 @@ def test_proof_protected_invariant_layers(fixture_class):
 
 @pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
 def test_proof_record_projection_layers(patient,fixture_class):
-    record_id,_=render_record(patient["attestation"]["attestation_id"],None,"json")
     if fixture_class=="valid":
-        assert {render_record(patient["attestation"]["attestation_id"],None,fmt)[0] for fmt in ("json","markdown","html","terminal")}=={record_id}
-    elif fixture_class=="near-valid":assert record_id.startswith("sha256:")
+        closure_id=patient["contract"]["closure_requirement_refs"][0]["id"]
+        decision=decide(patient["attestation"]["attestation_id"],{"decision":"override_accept_risk","rationale":"bounded fixture","accepted_risks":["bounded-risk"],"conditions":["bounded-condition"],"expires_at":"2026-09-01T00:00:00Z","required_reinspection":[closure_id]},"fixture-operator",now=FIXED)
+        rendered={fmt:render_record(patient["attestation"]["attestation_id"],decision["decision_id"],fmt) for fmt in ("json","markdown","html","terminal")}
+        record_ids={item[0] for item in rendered.values()};assert len(record_ids)==1
+        record_id=next(iter(record_ids));root=Path(os.environ["PROVAN_HOME"])/"outputs/acceptance/records"/record_id.removeprefix("sha256:")
+        data=json.loads((root/"record.json").read_bytes())
+        assert data["accepted_risks"]==["bounded-risk"] and data["conditions"]==["bounded-condition"]
+        assert data["decision_expires_at"]=="2026-09-01T00:00:00Z" and data["required_reinspection"]==[closure_id]
+        assert len(data["priority_open_items"])<=3 and data["additional_open_count"]>=0
+        assert all(row.get("closure_requirement_ref",{}).get("id") for row in data["priority_open_items"])
+        assert "topology" not in data and not any(key in data for key in ("quality_score","confidence_score","composite_score"))
+        for fmt,(_,text) in rendered.items():
+            assert record_id in text
+            if fmt in {"markdown","html","terminal"}:assert "bounded-condition" in text and "bounded-risk" in text and closure_id in text
+    elif fixture_class=="near-valid":
+        record_id,_=render_record(patient["attestation"]["attestation_id"],None,"json");assert record_id.startswith("sha256:")
     else:
+        record_id,_=render_record(patient["attestation"]["attestation_id"],None,"json")
         root=Path(os.environ["PROVAN_HOME"])/"outputs/acceptance/records"/record_id.removeprefix("sha256:");(root/"record.markdown").write_text("tampered",encoding="utf-8")
         with pytest.raises(ProvanError):reinspect(record_id,str(patient["repo"]),patient["original"],None,now=FIXED)
 
@@ -475,6 +509,7 @@ def test_proof_session12_handoff_layers(fixture_class):
 
 
 SUPPORT_CONTRACTS={
+    "seed":("seed-disposition.v1.json",validate_seed_disposition_serialized,{"schema_id":"provan.seed_disposition.v1","disposition_id":"00000000-0000-4000-8000-000000000100","preparation_ref":{"id":"preparation","sha256":"sha256:"+"1"*64},"seed_ref":{"id":"seed","sha256":"sha256:"+"2"*64},"case_id":"case","actor":{"actor_label":"fixture","authority_type":"case_operator","authority_scope":"case_intent_and_meaning","identity_assurance":"self_asserted_label"},"items":[{"item_id":"sha256:"+"3"*64,"action":"confirm","actor":{"actor_label":"fixture","authority_type":"case_operator","authority_scope":"case_intent_and_meaning","identity_assurance":"self_asserted_label"},"source_ref":"seed:item","kind":"criterion","original_value":"proposal","edited_value":None,"acted_at":"2026-08-10T12:00:00Z","rationale":"fixture"}],"created_at":"2026-08-10T12:00:00Z"}),
     "work-order":("verifier-work-order.v1.json",validate_verifier_work_order_serialized,{"schema_id":"provan.verifier_work_order.v1","work_order_id":"00000000-0000-4000-8000-000000000101","contract_ref":{"id":"contract","sha256":"sha256:"+"1"*64},"freeze_ref":{"id":"freeze","sha256":"sha256:"+"2"*64},"criterion_refs":["criterion"],"protected_invariant_refs":[],"required_evidence_class":"source_verified","requested_capabilities":["verifier_runtime"],"target_policy":"read_only","network_policy":"none","allowed_tool_classes":[],"prohibited_actions":["target_mutation","target_execution","remediation","deployment"],"environment_requirements":[],"completion_requirements":[{"id":"closure","sha256":"sha256:"+"3"*64}],"remediation_allowed":False}),
     "capability":("verifier-capability-request.v1.json",validate_verifier_capability_request_serialized,{"schema_id":"provan.verifier_capability_request.v1","request_id":"00000000-0000-4000-8000-000000000102","work_order_ref":{"id":"work","sha256":"sha256:"+"4"*64},"capability":"verifier_runtime","state":"unavailable","reason_code":"CAPABILITY_UNAVAILABLE"}),
     "verification":("verification-result.v1.json",validate_verification_result_serialized,{"schema_id":"provan.verification_result.v1","result_id":"00000000-0000-4000-8000-000000000103","work_order_ref":{"id":"work","sha256":"sha256:"+"4"*64},"criterion_ref":"criterion","state":"not_run","evidence_refs":[]}),
@@ -496,6 +531,7 @@ def test_proof_support_contract_layers(contract_kind,fixture_class):
         elif contract_kind=="verification":value["state"]="passed";value["evidence_refs"]=[]
         elif contract_kind=="environment":value["state"]="qualified";value["qualified"]=True
         elif contract_kind=="command":value["state"]="passed";value["executed"]=True
+        elif contract_kind=="seed":value["actor"]["identity_assurance"]="verified_organisation"
         else:value["provenance"]["establishes_closure"]=True
     if fixture_class=="schema-invalid":assert_schema_invalid(value,schema);return
     jsonschema.validate(value,schema)
@@ -514,6 +550,66 @@ def test_proof_semantic_validator_coverage(fixture_class):
         assert set(incomplete)!=required
 
 
+FINAL_BINDINGS={
+    "candidate-freeze":"artifacts/session11/real_use/httpx/candidate_freeze.v1.public.json",
+    "attestation-complete":"artifacts/session11/real_use/httpx/acceptance_attestation.v1.public.json",
+    "record-render":"artifacts/session11/real_use/httpx/record_bundle.v1.public.json",
+    "external-real-use":"artifacts/session11/real_use/httpx_pr3699.acceptance_lifecycle.v1.public.json",
+    "internal-real-use":"artifacts/session11/real_use/provan_internal_lifecycle.v1.public.json",
+    "successor-safety":"artifacts/session11/generic_absence_receipt.v1.public.json",
+    "installed-wheel":"artifacts/session11/real_use/installed_wheel_origin.v1.public.json",
+    "session12-handoff":"artifacts/session11/session12_handoff.v1.public.json",
+    "controlled-reinspection":"artifacts/session11/real_use/reinspection_qualification.v1.public.json",
+    "package-binding":"artifacts/session11/implementation_binding.v1.public.json",
+}
+
+
+def _public_ref_ok(root:Path,ref:dict)->bool:
+    path=root/ref["path"]
+    return path.is_file() and sha256_bytes(path.read_bytes())==ref["sha256"]
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
+@pytest.mark.parametrize("binding_kind",sorted(FINAL_BINDINGS))
+def test_proof_final_artifact_binding(binding_kind,fixture_class):
+    root=Path(__file__).parents[1];value=json.loads((root/FINAL_BINDINGS[binding_kind]).read_text(encoding="utf-8"));candidate=copy.deepcopy(value)
+    if fixture_class=="adversarial":
+        if binding_kind=="candidate-freeze":candidate["workspace_digest"]="sha256:"+"f"*64
+        elif binding_kind=="attestation-complete":candidate["recommendation"]="cleared"
+        elif binding_kind=="record-render":candidate["views"]["json"]["projection_id"]="sha256:"+"f"*64
+        elif binding_kind=="external-real-use":candidate["upstream_owner_authority_obtained"]=True
+        elif binding_kind=="internal-real-use":candidate["organisation_identity_asserted"]=True
+        elif binding_kind=="successor-safety":candidate["violations"]=["invented"]
+        elif binding_kind=="installed-wheel":candidate["checkout_absent_from_sys_path"]=False
+        elif binding_kind=="session12-handoff":candidate["candidate"]["head"]="f"*40
+        elif binding_kind=="controlled-reinspection":candidate["executed_proofs"]=[]
+        else:candidate["wheel_sha256"]="sha256:"+"f"*64
+    valid=True
+    if binding_kind=="candidate-freeze":
+        contract_raw=(root/"artifacts/session11/real_use/httpx/acceptance_contract.v1.public.json").read_bytes()
+        try:validate_freeze_serialized(canonical_bytes(candidate),contract_raw)
+        except ProvanError:valid=False
+    elif binding_kind=="attestation-complete":
+        contract_raw=(root/"artifacts/session11/real_use/httpx/acceptance_contract.v1.public.json").read_bytes();freeze_raw=(root/"artifacts/session11/real_use/httpx/candidate_freeze.v1.public.json").read_bytes();settlement_raw=(root/"artifacts/session11/real_use/httpx/evidence_settlement.v1.public.json").read_bytes()
+        try:validate_attestation_serialized(canonical_bytes(candidate),contract_raw,freeze_raw,settlement_raw,now=lambda:datetime.fromisoformat(candidate["created_at"].replace("Z","+00:00")))
+        except ProvanError:valid=False
+    elif binding_kind=="record-render":
+        record_id=candidate.get("record_id");valid=bool(record_id) and all(row.get("projection_id")==sha256_bytes(canonical_bytes({"record_id":record_id,"format":name,"sha256":row["sha256"]})) for name,row in candidate.get("views",{}).items())
+    elif binding_kind=="external-real-use":
+        valid=candidate.get("case")=="HTTPX_PR_3699_PREDECLARED" and candidate.get("recommendation")=="held" and candidate.get("upstream_owner_authority_obtained") is False and all(_public_ref_ok(root,ref) for ref in candidate.get("artifacts",{}).values())
+    elif binding_kind=="internal-real-use":valid=candidate.get("organisation_identity_asserted") is False and candidate.get("recommendation")=="held" and any(name.startswith("closure_requirement_") for name in candidate.get("artifacts",{})) and all(_public_ref_ok(root,ref) for ref in candidate.get("artifacts",{}).values())
+    elif binding_kind=="successor-safety":valid=candidate.get("result")=="PRIVATE_PLANNING_AUTHORITY_ABSENT" and candidate.get("violations")==[] and set(candidate.get("scopes",[]))=={"history_delta","working_tree_projection","package_wheel","public_proofs","controlled_ci_artifacts"}
+    elif binding_kind=="installed-wheel":valid=candidate.get("site_packages_origin") is True and candidate.get("checkout_absent_from_sys_path") is True and "<bounded" not in candidate.get("command","") and _public_ref_ok(root,candidate["transcript"])
+    elif binding_kind=="controlled-reinspection":valid=bool(candidate.get("executed_proofs")) and candidate.get("execution_capability_added") is False and candidate.get("challenge_capability_added") is False and _public_ref_ok(root,candidate["proof_registry"])
+    elif binding_kind=="package-binding":valid=candidate.get("package_version")=="0.4.0" and candidate.get("published") is False and candidate.get("maturity")=="QUALIFIED_BOUNDED" and candidate.get("wheel_sha256")!="sha256:"+"f"*64
+    else:
+        refs=[candidate["brief"],candidate["preparation"],*candidate["seed_dispositions"],candidate["acceptance_contract"],candidate["candidate_freeze"],*candidate["closure_requirements"],*candidate["verifier_contracts"],*candidate["receipt_contracts"],*candidate["protected_invariants"],candidate["evidence_settlement"],candidate["attestation"],candidate["reinspection"],candidate["layer4_matrix"],candidate["proof_manifest"],*candidate["reviewer_receipts"],candidate["schema_registry"]]
+        manifest=json.loads((root/candidate["proof_manifest"]["path"]).read_text(encoding="utf-8"));refs.extend(manifest["entries"]);artifacts={ref["path"]:(root/ref["path"]).read_bytes() for ref in refs if (root/ref["path"]).is_file()}
+        try:validate_session12_handoff_serialized(canonical_bytes(candidate),artifacts)
+        except ProvanError:valid=False
+    assert valid is (fixture_class!="adversarial")
+
+
 def test_contract_rejects_invented_risk_authority(patient):
     value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":["invented"]}
     closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]}
@@ -525,6 +621,40 @@ def test_freeze_rejects_coordinated_analysis_digest_mutation(patient):
     value=copy.deepcopy(patient["freeze"]);value["workspace_digest"]="sha256:"+"f"*64
     with pytest.raises(ProvanError) as exc:validate_freeze_serialized(canonical_bytes(value),canonical_bytes(patient["contract"]))
     assert exc.value.code=="CANDIDATE_FREEZE_ANALYSIS_DIGEST_MISMATCH"
+
+
+def _target_inventory(repo:Path)->dict[str,str]:
+    return {path.relative_to(repo).as_posix():sha256_bytes(path.read_bytes()) for path in sorted(repo.rglob("*")) if path.is_file()}
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
+def test_proof_candidate_target_immutability(patient,fixture_class):
+    repo=patient["repo"]
+    if fixture_class=="near-valid":(repo/"bounded-untracked.txt").write_text("ignored by immutable candidate\n",encoding="utf-8")
+    if fixture_class=="adversarial":
+        hook=repo/".git/hooks/pre-commit";hook.write_text("#!/bin/sh\necho invoked > ../hook-invoked\n",encoding="utf-8")
+        (repo/".gitattributes").write_text("* diff=hostile\n",encoding="utf-8")
+        git(repo,"config","diff.hostile.command","powershell -NoProfile -Command Set-Content hostile-invoked yes")
+    before=_target_inventory(repo);status_before=git(repo,"status","--porcelain=v2");refs_before=git(repo,"show-ref")
+    freeze_contract(patient["contract"]["contract_id"],str(repo),now=FIXED)
+    assert _target_inventory(repo)==before and git(repo,"status","--porcelain=v2")==status_before and git(repo,"show-ref")==refs_before
+    assert not (repo/"hook-invoked").exists() and not (repo/"hostile-invoked").exists()
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
+def test_proof_predecessor_preservation(monkeypatch,fixture_class):
+    root=Path(__file__).parents[1]
+    if fixture_class=="valid":
+        result=subprocess.run([os.sys.executable,"scripts/validate_session10_successor.py"],cwd=root,capture_output=True,text=True,encoding="utf-8")
+        assert result.returncode==0,result.stdout+result.stderr
+    elif fixture_class=="near-valid":
+        result=subprocess.run([os.sys.executable,"scripts/validate_session9_correction.py","--implementation-only"],cwd=root,capture_output=True,text=True,encoding="utf-8")
+        assert result.returncode==0,result.stdout+result.stderr
+    else:
+        import scripts.validate_session11 as gate
+        original=gate.git
+        monkeypatch.setattr(gate,"git",lambda *args:"artifacts/session10/invented.json" if args[:4]==("diff","--name-only",gate.BASELINE,"--") and args[-1]=="artifacts/session10" else original(*args))
+        with pytest.raises(SystemExit,match="SESSION10_HISTORICAL_ARTIFACT_CHANGED"):gate.validate_boundaries()
 
 
 def test_attestation_rejects_fake_evidence_and_policy(patient):

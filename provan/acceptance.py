@@ -20,6 +20,7 @@ from .session10_validators import validate_acceptance_preparation_serialized, va
 from .session11_validators import (
     DECISIONS, derive_conditional_activation, derive_reinspection_overall,
     effective_status, validate_attestation_serialized, validate_closure_requirement_serialized,
+    validate_attestation_projection_serialized,
     validate_contract_serialized, validate_freeze_serialized,
     validate_owner_decision_serialized, validate_protected_invariant_serialized,
     validate_reinspection_serialized, validate_seed_disposition_serialized,
@@ -78,6 +79,21 @@ def _validate_contract_loaded(contract:dict[str,Any],contract_raw:bytes)->None:
     closures={ref["id"]:_load("closure-requirements",ref["id"],"provan.closure_requirement.v1")[1] for ref in contract["closure_requirement_refs"]}
     invariants={ref["id"]:_load("protected-invariants",ref["id"],"provan.protected_invariant.v1")[1] for ref in contract["protected_invariant_refs"]}
     validate_contract_serialized(contract_raw,closures,invariants)
+
+
+def _store_attestation_projections(attestation:dict[str,Any],attestation_raw:bytes)->None:
+    limitations=["SESSION12_VERIFIER_EXECUTION_UNAVAILABLE","SESSION13_CHALLENGE_EXECUTION_NOT_RUN"]
+    internal={"schema_id":"provan.artifact_projection.v1","sensitivity":"LOCAL_EPHEMERAL","projection_id":attestation["projection_refs"]["internal"],"projection_kind":"internal","attestation_ref":_ref(attestation,attestation_raw,"attestation_id"),"payload":{"subject":attestation["subject"],"recommendation":attestation["recommendation"],"effective_status":attestation["effective_status"],"contract_ref":attestation["contract_ref"],"freeze_ref":attestation["freeze_ref"],"settlement_ref":attestation["settlement_ref"],"limitations":limitations}}
+    client_safe={"schema_id":"provan.artifact_projection.v1","sensitivity":"PUBLIC_SAFE","projection_id":attestation["projection_refs"]["client_safe"],"projection_kind":"client_safe","attestation_ref":_ref(attestation,attestation_raw,"attestation_id"),"payload":{"recommendation":attestation["recommendation"],"effective_status":attestation["effective_status"],"evidence_counts":{key:len(attestation["evidence_refs"][key]) for key in ("source","imported","operator","model","missing")},"limitations":limitations}}
+    for kind,value in (("internal",internal),("client_safe",client_safe)):
+        validate_attestation_projection_serialized(canonical_bytes(value),attestation_raw,projection_kind=kind)
+        _store("attestation-projections",value["projection_id"],value,"artifact-projection.v1.json")
+
+
+def _validate_attestation_projections(attestation:dict[str,Any],attestation_raw:bytes)->None:
+    for kind,projection_id in attestation["projection_refs"].items():
+        _,raw=_load("attestation-projections",projection_id,"provan.artifact_projection.v1")
+        validate_attestation_projection_serialized(raw,attestation_raw,projection_kind=kind)
 
 
 def _resolve_preparation(preparation_id: str) -> tuple[dict[str,Any],bytes,dict[str,Any],bytes]:
@@ -326,7 +342,9 @@ def attest(freeze_id:str,evidence_inputs:list[tuple[str,bytes]],*,now:Callable[[
     eligible_source=sorted({e["evidence_id"] for row in criteria for e in row["eligible_evidence"] if e["evidence_class"]=="source_verified"})
     attestation={"schema_id":"provan.acceptance_attestation.v1","attestation_id":str(uuid.uuid4()),"subject":{"repository_identity":freeze["repository_identity"],"candidate_digest":freeze["candidate_digest"]},"freeze_ref":_ref(freeze,freeze_raw,"freeze_id"),"contract_ref":_ref(contract,contract_raw,"contract_id"),"builder_provenance":contract["provenance"],"verifier_state":{"capability":"unavailable","execution":"not_run","environment":"unqualified","work_order_refs":[w["work_order_id"] for w in work_orders]},"context_provenance":{"brief_ref":contract["brief_ref"]},"promotion_provenance":{"preparation_ref":contract["preparation_ref"]},"protected_invariant_refs":contract["protected_invariant_refs"],"evidence_refs":{"source":eligible_source,"imported":[r["evidence_id"] for r in imported],"operator":[],"model":[],"missing":[r["criterion_ref"] for r in criteria if r["state"]=="not_established"]},"settlement_ref":_ref(settlement,settlement_raw,"settlement_id"),"conditional_activation":freeze["conditional_activation"],"challenge_state":{"requirement":contract["challenge_policy"],"state":"not_run","pack":None,"seed":None,"siblings":"not_run"},"recommendation":recommendation,"owner_placeholders":{"accepted_risk":"not_decided","conditions":"not_decided"},"expires_at":contract.get("expires_at"),"effective_status":settlement["effective_status"],"reinspection_requirements":contract["closure_requirement_refs"],"usage":{"model_calls":0,"execution_calls":0},"provenance":{"package_version":PACKAGE_VERSION,"policy_id":POLICY_ID,"policy_version":POLICY_VERSION},"projection_refs":projection_ids,"created_at":iso(now)}
     validate_attestation_serialized(canonical_bytes(attestation),contract_raw,freeze_raw,settlement_raw,now=now)
-    return _store("attestations",attestation["attestation_id"],attestation,"acceptance-attestation.v1.json")[0]
+    attestation,attestation_raw=_store("attestations",attestation["attestation_id"],attestation,"acceptance-attestation.v1.json")
+    _store_attestation_projections(attestation,attestation_raw)
+    return attestation
 
 
 def decide(attestation_id:str,decision_input:dict[str,Any],actor_label:str,*,now:Callable[[],datetime]=utcnow)->dict[str,Any]:
@@ -341,7 +359,7 @@ def _record_data(att:dict[str,Any],att_raw:bytes,settlement:dict[str,Any],decisi
 def render_record(attestation_id:str,decision_id:str|None,format_name:str,*,now:Callable[[],datetime]=utcnow)->tuple[str,str]:
     att,att_raw=_load("attestations",attestation_id,"provan.acceptance_attestation.v1");settlement,settlement_raw=_load("settlements",att["settlement_ref"]["id"],"provan.evidence_settlement.v1");decision=decision_raw=None
     if decision_id:decision,decision_raw=_load("decisions",decision_id,"provan.owner_decision.v1");validate_owner_decision_serialized(decision_raw,att_raw)
-    contract,contract_raw=_load("contracts",att["contract_ref"]["id"],"provan.acceptance_contract.v1");_validate_contract_loaded(contract,contract_raw);freeze,freeze_raw=_load("freezes",att["freeze_ref"]["id"],"provan.candidate_freeze.v1");validate_freeze_serialized(freeze_raw,contract_raw);validate_settlement_serialized(settlement_raw,contract_raw,freeze_raw,now=lambda:datetime.fromisoformat(settlement["created_at"].replace("Z","+00:00")));validate_attestation_serialized(att_raw,contract_raw,freeze_raw,settlement_raw,now=lambda:datetime.fromisoformat(att["created_at"].replace("Z","+00:00")))
+    contract,contract_raw=_load("contracts",att["contract_ref"]["id"],"provan.acceptance_contract.v1");_validate_contract_loaded(contract,contract_raw);freeze,freeze_raw=_load("freezes",att["freeze_ref"]["id"],"provan.candidate_freeze.v1");validate_freeze_serialized(freeze_raw,contract_raw);validate_settlement_serialized(settlement_raw,contract_raw,freeze_raw,now=lambda:datetime.fromisoformat(settlement["created_at"].replace("Z","+00:00")));validate_attestation_serialized(att_raw,contract_raw,freeze_raw,settlement_raw,now=lambda:datetime.fromisoformat(att["created_at"].replace("Z","+00:00")));_validate_attestation_projections(att,att_raw)
     core={"attestation_sha256":sha256_bytes(att_raw),"decision_sha256":sha256_bytes(decision_raw) if decision_raw else None,"record_contract":"provan.acceptance_record.v1","record_version":1};record_id=sha256_bytes(canonical_bytes(core));data=_record_data(att,att_raw,settlement,decision,decision_raw,record_id,now=now)
     terminal=f"Acceptance Record {record_id}\nRecommendation: {data['recommendation']}\nOwner decision: {data['owner_decision'] or 'not supplied'}\nAccepted risks: {json.dumps(data['accepted_risks'],sort_keys=True)}\nConditions: {json.dumps(data['conditions'],sort_keys=True)}\nDecision expiry: {data['decision_expires_at'] or 'none'}\nRequired Reinspection: {json.dumps(data['required_reinspection'],sort_keys=True)}\nEffective status: {data['effective_status']}\nOpen items: {len([r for r in data['criteria'] if r['state'] not in {'established','not_applicable'}])}"
     markdown=f"# Acceptance Record\n\n- Record: `{record_id}`\n- Recommendation: `{data['recommendation']}`\n- Owner decision: `{data['owner_decision'] or 'not supplied'}`\n- Effective status: `{data['effective_status']}`\n\n## Priority open items\n\n"+"\n".join(f"- `{r['criterion_ref']}` — `{r['state']}`; closure `{r['closure_requirement_ref']['id']}`" for r in data["priority_open_items"])+(f"\n- Plus {data['additional_open_count']} additional open item(s)." if data["additional_open_count"] else "")
@@ -387,7 +405,7 @@ def reinspect(record_id:str,repo_source:str,later_head:str,external_receipt:dict
         validate_owner_decision_serialized(decision_raw,att_raw)
     identity_core={"attestation_sha256":sha256_bytes(att_raw),"decision_sha256":sha256_bytes(decision_raw) if decision_raw else None,"record_contract":"provan.acceptance_record.v1","record_version":1}
     if record_id!=sha256_bytes(canonical_bytes(identity_core)):raise ProvanError("RECORD_ID_BINDING_MISMATCH",record_id)
-    _validate_contract_loaded(contract,contract_raw);validate_freeze_serialized(original_raw,contract_raw);validate_settlement_serialized(settlement_raw,contract_raw,original_raw,now=lambda:datetime.fromisoformat(settlement["created_at"].replace("Z","+00:00")));validate_attestation_serialized(att_raw,contract_raw,original_raw,settlement_raw,now=lambda:datetime.fromisoformat(att["created_at"].replace("Z","+00:00")))
+    _validate_contract_loaded(contract,contract_raw);validate_freeze_serialized(original_raw,contract_raw);validate_settlement_serialized(settlement_raw,contract_raw,original_raw,now=lambda:datetime.fromisoformat(settlement["created_at"].replace("Z","+00:00")));validate_attestation_serialized(att_raw,contract_raw,original_raw,settlement_raw,now=lambda:datetime.fromisoformat(att["created_at"].replace("Z","+00:00")));_validate_attestation_projections(att,att_raw)
     if "://" in repo_source:raise ProvanError("SESSION11_REMOTE_REINSPECTION_REQUIRES_LOCAL_SOURCE",repo_source)
     repo=Path(repo_source).resolve()
     identity_context,_,identity,_=_snapshot_local_target(repo,False)

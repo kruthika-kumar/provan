@@ -363,6 +363,28 @@ def validate_attestation_serialized(raw: bytes, contract_raw: bytes, freeze_raw:
     return value
 
 
+def validate_attestation_projection_serialized(raw: bytes, attestation_raw: bytes, *, projection_kind: str) -> dict[str,Any]:
+    value=_load(raw,"provan.artifact_projection.v1");attestation=_load(attestation_raw,"provan.acceptance_attestation.v1")
+    if projection_kind not in {"internal","client_safe"} or value.get("projection_kind")!=projection_kind:
+        raise ProvanError("ATTESTATION_PROJECTION_KIND_INVALID",projection_kind)
+    projection_id=value.get("projection_id");_uuid(projection_id,"ATTESTATION_PROJECTION_ID_INVALID")
+    if projection_id!=attestation["projection_refs"][projection_kind]:raise ProvanError("ATTESTATION_PROJECTION_ID_MISMATCH",projection_id)
+    expected_ref={"id":attestation["attestation_id"],"sha256":sha256_bytes(attestation_raw)}
+    if value.get("attestation_ref")!=expected_ref:raise ProvanError("ATTESTATION_PROJECTION_BINDING_MISMATCH",projection_id)
+    expected_sensitivity="LOCAL_EPHEMERAL" if projection_kind=="internal" else "PUBLIC_SAFE"
+    if value.get("sensitivity")!=expected_sensitivity:raise ProvanError("ATTESTATION_PROJECTION_SENSITIVITY_INVALID",projection_id)
+    payload=value.get("payload")
+    if not isinstance(payload,dict) or payload.get("recommendation")!=attestation["recommendation"] or payload.get("effective_status")!=attestation["effective_status"]:
+        raise ProvanError("ATTESTATION_PROJECTION_PAYLOAD_INVALID",projection_id)
+    if projection_kind=="internal":
+        expected={"subject":attestation["subject"],"recommendation":attestation["recommendation"],"effective_status":attestation["effective_status"],"contract_ref":attestation["contract_ref"],"freeze_ref":attestation["freeze_ref"],"settlement_ref":attestation["settlement_ref"],"limitations":["SESSION12_VERIFIER_EXECUTION_UNAVAILABLE","SESSION13_CHALLENGE_EXECUTION_NOT_RUN"]}
+        if payload!=expected:raise ProvanError("ATTESTATION_INTERNAL_PROJECTION_MISMATCH",projection_id)
+    else:
+        expected={"recommendation":attestation["recommendation"],"effective_status":attestation["effective_status"],"evidence_counts":{key:len(attestation["evidence_refs"][key]) for key in ("source","imported","operator","model","missing")},"limitations":["SESSION12_VERIFIER_EXECUTION_UNAVAILABLE","SESSION13_CHALLENGE_EXECUTION_NOT_RUN"]}
+        if payload!=expected:raise ProvanError("ATTESTATION_CLIENT_SAFE_PROJECTION_MISMATCH",projection_id)
+    return value
+
+
 def derive_reinspection_overall(items: list[dict[str,Any]], invariants: list[dict[str,Any]]) -> str:
     material=[r for r in items if r.get("material",True)]; inv=[r for r in invariants if r.get("material",True)]
     all_rows=material+inv
