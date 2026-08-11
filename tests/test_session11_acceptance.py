@@ -17,8 +17,13 @@ from provan.change_brief import explain, promote
 from provan.errors import ProvanError
 from provan.leakage import validate_candidate_surfaces
 from provan.session11_validators import (derive_reinspection_overall,
+    SEMANTIC_VALIDATORS,
     effective_status, validate_attestation_serialized,
     validate_closure_requirement_serialized, validate_contract_serialized, validate_freeze_serialized,
+    validate_command_receipt_serialized, validate_environment_receipt_serialized,
+    validate_external_change_receipt_serialized, validate_seed_disposition_serialized,
+    validate_verification_result_serialized, validate_verifier_capability_request_serialized,
+    validate_verifier_work_order_serialized,
     validate_owner_decision_serialized, validate_protected_invariant_serialized,
     validate_reinspection_serialized, validate_session12_handoff_serialized,
     validate_settlement_serialized)
@@ -338,7 +343,7 @@ def test_proof_closure_layers(patient,fixture_class):
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_attestation_layers(patient,fixture_class):
     value=copy.deepcopy(patient["attestation"]);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-attestation.v1.json").read_text(encoding="utf-8"));contract_raw=canonical_bytes(patient["contract"]);freeze_raw=canonical_bytes(patient["freeze"]);settlement_raw=secure_read(Path("outputs/acceptance/settlements")/f"{value['settlement_ref']['id']}.json")
-    if fixture_class=="near-valid":value["builder_provenance"]["bounded_note"]="source-only"
+    if fixture_class=="near-valid":value["created_at"]="2026-08-11T12:00:00+00:00"
     elif fixture_class=="adversarial":value["verifier_state"]["execution"]="executed"
     elif fixture_class=="schema-invalid":del value["subject"]
     elif fixture_class=="schema-valid-python-invalid":value["recommendation"]="cleared"
@@ -449,11 +454,11 @@ def test_proof_record_projection_layers(patient,fixture_class):
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_session12_handoff_layers(fixture_class):
-    names=["contract","closure","freeze","work-order","capability","verification","environment","command","attestation","reinspection","matrix","schema","proof-evidence"]
+    names=["brief","preparation","disposition","contract","closure","freeze","work-order","capability","verification","environment","command","settlement","attestation","reinspection","matrix","schema","proof-evidence"]
     artifacts={f"artifacts/{name}.json":canonical_bytes({"artifact":name}) for name in names};refs={name:{"path":f"artifacts/{name}.json","sha256":sha256_bytes(artifacts[f"artifacts/{name}.json"])} for name in names}
     closure_ref={"id":"closure-1",**refs["closure"]};artifacts["artifacts/contract.json"]=canonical_bytes({"artifact":"contract","closure_requirement_refs":[{"id":"closure-1","sha256":closure_ref["sha256"]}]});refs["contract"]["sha256"]=sha256_bytes(artifacts["artifacts/contract.json"])
     evidence_entries=[refs["proof-evidence"]];artifacts["artifacts/proof-manifest.json"]=canonical_bytes({"entries":evidence_entries,"proof_root":sha256_bytes(canonical_bytes(evidence_entries))});proof_manifest={"path":"artifacts/proof-manifest.json","sha256":sha256_bytes(artifacts["artifacts/proof-manifest.json"])}
-    value={"schema_id":"provan.session12_handoff.v1","candidate":{"repository_identity":"https://github.com/example/repo","mode":"immutable","base":"1"*40,"head":"2"*40,"candidate_digest":"sha256:"+"3"*64},"acceptance_contract":refs["contract"],"candidate_freeze":refs["freeze"],"closure_requirements":[closure_ref],"verifier_contracts":[refs[name] for name in ("work-order","capability","verification")],"receipt_contracts":[refs["environment"],refs["command"]],"evidence_policy":{"target_access":"read_only","execution_available":False,"challenge_available":False},"protected_invariants":[],"attestation":refs["attestation"],"projection_rules":{"internal":"LOCAL_NON_PUBLIC","client_safe":"DETERMINISTICALLY_SANITISED","record_locator":"RESOLVE_CANONICAL_CHAIN_NOT_RENDERED_PROSE"},"reinspection":refs["reinspection"],"limitations":["SESSION12_EXECUTION_NOT_IMPLEMENTED"],"session12_prerequisites":["qualified sandbox","qualified producer","environment authority","command authority","read-only capability"],"layer4_matrix":refs["matrix"],"proof_manifest":proof_manifest,"proof_root":sha256_bytes(canonical_bytes(evidence_entries)),"reviewer_receipts":[],"implementation_binding":{"implementation_commit":"5"*40,"implementation_tree":"6"*40,"package_version":"0.4.0","wheel_sha256":"sha256:"+"7"*64,"schema_registry_digest":"sha256:"+"8"*64,"maturity":"QUALIFIED_BOUNDED","published":False,"extension_api_major":1},"schema_registry":refs["schema"],"claim_registry_digest":"sha256:"+"9"*64}
+    value={"schema_id":"provan.session12_handoff.v1","candidate":{"repository_identity":"https://github.com/example/repo","mode":"immutable","base":"1"*40,"head":"2"*40,"candidate_digest":"sha256:"+"3"*64},"brief":refs["brief"],"preparation":refs["preparation"],"seed_dispositions":[refs["disposition"]],"acceptance_contract":refs["contract"],"candidate_freeze":refs["freeze"],"closure_requirements":[closure_ref],"verifier_contracts":[refs[name] for name in ("work-order","capability","verification")],"receipt_contracts":[refs["environment"],refs["command"]],"evidence_policy":{"target_access":"read_only","execution_available":False,"challenge_available":False},"protected_invariants":[],"evidence_settlement":refs["settlement"],"attestation":refs["attestation"],"projection_rules":{"internal":"LOCAL_NON_PUBLIC","client_safe":"DETERMINISTICALLY_SANITISED","record_locator":"RESOLVE_CANONICAL_CHAIN_NOT_RENDERED_PROSE"},"reinspection":refs["reinspection"],"limitations":["SESSION12_EXECUTION_NOT_IMPLEMENTED"],"session12_prerequisites":["qualified sandbox","qualified producer","environment authority","command authority","read-only capability"],"layer4_matrix":refs["matrix"],"proof_manifest":proof_manifest,"proof_root":sha256_bytes(canonical_bytes(evidence_entries)),"reviewer_receipts":[],"implementation_binding":{"implementation_commit":"5"*40,"implementation_tree":"6"*40,"package_version":"0.4.0","wheel_sha256":"sha256:"+"7"*64,"schema_registry_digest":"sha256:"+"8"*64,"maturity":"QUALIFIED_BOUNDED","published":False,"extension_api_major":1},"schema_registry":refs["schema"],"claim_registry_digest":"sha256:"+"9"*64}
     schema=json.loads((Path(__file__).parents[1]/"provan/schemas/session12-handoff.v1.json").read_text(encoding="utf-8"))
     if fixture_class=="near-valid":value["limitations"].append("CHALLENGE_NOT_IMPLEMENTED")
     elif fixture_class=="adversarial":value["verifier_contracts"][1]=value["verifier_contracts"][0]
@@ -467,3 +472,72 @@ def test_proof_session12_handoff_layers(fixture_class):
             with pytest.raises(ProvanError) as exc:validate_session12_handoff_serialized(canonical_bytes(value),artifacts)
             assert exc.value.code==("SESSION12_HANDOFF_DUPLICATE_ARTIFACT_REF" if fixture_class=="adversarial" else "SESSION12_HANDOFF_PROJECTION_RULES_INVALID")
         else:validate_session12_handoff_serialized(canonical_bytes(value),artifacts)
+
+
+SUPPORT_CONTRACTS={
+    "work-order":("verifier-work-order.v1.json",validate_verifier_work_order_serialized,{"schema_id":"provan.verifier_work_order.v1","work_order_id":"00000000-0000-4000-8000-000000000101","contract_ref":{"id":"contract","sha256":"sha256:"+"1"*64},"freeze_ref":{"id":"freeze","sha256":"sha256:"+"2"*64},"criterion_refs":["criterion"],"protected_invariant_refs":[],"required_evidence_class":"source_verified","requested_capabilities":["verifier_runtime"],"target_policy":"read_only","network_policy":"none","allowed_tool_classes":[],"prohibited_actions":["target_mutation","target_execution","remediation","deployment"],"environment_requirements":[],"completion_requirements":[{"id":"closure","sha256":"sha256:"+"3"*64}],"remediation_allowed":False}),
+    "capability":("verifier-capability-request.v1.json",validate_verifier_capability_request_serialized,{"schema_id":"provan.verifier_capability_request.v1","request_id":"00000000-0000-4000-8000-000000000102","work_order_ref":{"id":"work","sha256":"sha256:"+"4"*64},"capability":"verifier_runtime","state":"unavailable","reason_code":"CAPABILITY_UNAVAILABLE"}),
+    "verification":("verification-result.v1.json",validate_verification_result_serialized,{"schema_id":"provan.verification_result.v1","result_id":"00000000-0000-4000-8000-000000000103","work_order_ref":{"id":"work","sha256":"sha256:"+"4"*64},"criterion_ref":"criterion","state":"not_run","evidence_refs":[]}),
+    "environment":("environment-receipt.v1.json",validate_environment_receipt_serialized,{"schema_id":"provan.environment_receipt.v1","receipt_id":"00000000-0000-4000-8000-000000000104","producer":{},"candidate_ref":{"id":"freeze","sha256":"sha256:"+"2"*64},"state":"not_run","qualified":False,"details":{}}),
+    "command":("command-receipt.v1.json",validate_command_receipt_serialized,{"schema_id":"provan.command_receipt.v1","receipt_id":"00000000-0000-4000-8000-000000000105","producer":{},"candidate_ref":{"id":"freeze","sha256":"sha256:"+"2"*64},"command_class":"future_verifier","state":"not_run","executed":False,"details":{}}),
+    "external":("external-change-receipt.v1.json",validate_external_change_receipt_serialized,{"schema_id":"provan.external_change_receipt.v1","receipt_id":"00000000-0000-4000-8000-000000000106","repository_identity":"https://github.com/example/repo","original_head":"1"*40,"claimed_later_head":"2"*40,"claims":[],"provenance":{"establishes_closure":False}}),
+}
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+@pytest.mark.parametrize("contract_kind",sorted(SUPPORT_CONTRACTS))
+def test_proof_support_contract_layers(contract_kind,fixture_class):
+    schema_name,validator,base=SUPPORT_CONTRACTS[contract_kind];value=copy.deepcopy(base);schema=json.loads((Path(__file__).parents[1]/"provan/schemas"/schema_name).read_text(encoding="utf-8"))
+    if fixture_class=="near-valid":value[next(key for key in value if key.endswith("_id"))]=str(value[next(key for key in value if key.endswith("_id"))])
+    elif fixture_class=="schema-invalid":del value["schema_id"]
+    elif fixture_class in {"adversarial","schema-valid-python-invalid"}:
+        if contract_kind=="work-order":value["prohibited_actions"]=[]
+        elif contract_kind=="capability":value["reason_code"]="INVENTED"
+        elif contract_kind=="verification":value["state"]="passed";value["evidence_refs"]=[]
+        elif contract_kind=="environment":value["state"]="qualified";value["qualified"]=True
+        elif contract_kind=="command":value["state"]="passed";value["executed"]=True
+        else:value["provenance"]["establishes_closure"]=True
+    if fixture_class=="schema-invalid":assert_schema_invalid(value,schema);return
+    jsonschema.validate(value,schema)
+    if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+        with pytest.raises(ProvanError):validator(canonical_bytes(value))
+    else:validator(canonical_bytes(value))
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
+def test_proof_semantic_validator_coverage(fixture_class):
+    required={"provan.seed_disposition.v1","provan.acceptance_contract.v1","provan.closure_requirement.v1","provan.protected_invariant.v1","provan.candidate_freeze.v1","provan.verifier_work_order.v1","provan.verifier_capability_request.v1","provan.verification_result.v1","provan.environment_receipt.v1","provan.command_receipt.v1","provan.evidence_settlement.v1","provan.acceptance_attestation.v1","provan.owner_decision.v1","provan.external_change_receipt.v1","provan.reinspection_record.v1","provan.session12_handoff.v1"}
+    if fixture_class=="valid":assert set(SEMANTIC_VALIDATORS)==required
+    elif fixture_class=="near-valid":assert all(callable(value) for value in SEMANTIC_VALIDATORS.values())
+    else:
+        incomplete=dict(SEMANTIC_VALIDATORS);incomplete.pop("provan.command_receipt.v1")
+        assert set(incomplete)!=required
+
+
+def test_contract_rejects_invented_risk_authority(patient):
+    value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":["invented"]}
+    closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]}
+    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants)
+    assert exc.value.code=="RISK_AUTHORITY_INVALID"
+
+
+def test_freeze_rejects_coordinated_analysis_digest_mutation(patient):
+    value=copy.deepcopy(patient["freeze"]);value["workspace_digest"]="sha256:"+"f"*64
+    with pytest.raises(ProvanError) as exc:validate_freeze_serialized(canonical_bytes(value),canonical_bytes(patient["contract"]))
+    assert exc.value.code=="CANDIDATE_FREEZE_ANALYSIS_DIGEST_MISMATCH"
+
+
+def test_attestation_rejects_fake_evidence_and_policy(patient):
+    value=copy.deepcopy(patient["attestation"]);value["evidence_refs"]["source"]=["sha256:"+"f"*64];value["builder_provenance"]["policy_id"]="invented"
+    settlement_raw=secure_read(Path("outputs/acceptance/settlements")/f"{value['settlement_ref']['id']}.json")
+    with pytest.raises(ProvanError) as exc:validate_attestation_serialized(canonical_bytes(value),canonical_bytes(patient["contract"]),canonical_bytes(patient["freeze"]),settlement_raw,now=FIXED)
+    assert exc.value.code in {"ATTESTATION_BUILDER_PROVENANCE_MISMATCH","ATTESTATION_EVIDENCE_BINDING_MISMATCH"}
+
+
+def test_reinspection_rejects_coordinated_item_and_aggregate_mutation(patient):
+    record_id,_=render_record(patient["attestation"]["attestation_id"],None,"json");repo=patient["repo"]
+    (repo/"patient/public-contract.json").write_text('{"schema_version":1,"capabilities":{"acceptance_record":"available"}}\n',encoding="utf-8");later=commit(repo,"validator later")
+    value=reinspect(record_id,str(repo),later,None,now=FIXED);value["items"][0]["status"]="open";value["overall_status"]="open"
+    later_raw=secure_read(Path("outputs/acceptance/freezes")/f"{value['later_freeze_ref']['id']}.json");settlement_raw=secure_read(Path("outputs/acceptance/settlements")/f"{patient['attestation']['settlement_ref']['id']}.json")
+    with pytest.raises(ProvanError) as exc:validate_reinspection_serialized(canonical_bytes(value),attestation_raw=canonical_bytes(patient["attestation"]),contract_raw=canonical_bytes(patient["contract"]),original_freeze_raw=canonical_bytes(patient["freeze"]),later_freeze_raw=later_raw,settlement_raw=settlement_raw)
+    assert exc.value.code=="REINSPECTION_ITEM_RESULT_MISMATCH"

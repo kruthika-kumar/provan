@@ -15,10 +15,13 @@
       }
     }
   },
-  "required": ["schema_id", "candidate", "acceptance_contract", "candidate_freeze", "closure_requirements", "verifier_contracts", "receipt_contracts", "evidence_policy", "protected_invariants", "attestation", "projection_rules", "reinspection", "limitations", "session12_prerequisites", "layer4_matrix", "proof_manifest", "proof_root", "reviewer_receipts", "implementation_binding", "schema_registry", "claim_registry_digest"],
+  "required": ["schema_id", "candidate", "brief", "preparation", "seed_dispositions", "acceptance_contract", "candidate_freeze", "closure_requirements", "verifier_contracts", "receipt_contracts", "evidence_policy", "protected_invariants", "evidence_settlement", "attestation", "projection_rules", "reinspection", "limitations", "session12_prerequisites", "layer4_matrix", "proof_manifest", "proof_root", "reviewer_receipts", "implementation_binding", "schema_registry", "claim_registry_digest"],
   "properties": {
     "schema_id": {"const": "provan.session12_handoff.v1"},
     "candidate": {"type": "object", "minProperties": 5},
+    "brief": {"$ref": "#/$defs/artifact_ref"},
+    "preparation": {"$ref": "#/$defs/artifact_ref"},
+    "seed_dispositions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact_ref"}},
     "acceptance_contract": {"$ref": "#/$defs/artifact_ref"},
     "candidate_freeze": {"$ref": "#/$defs/artifact_ref"},
     "closure_requirements": {"type": "array", "minItems": 1, "items": {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"required": ["id"]}]}},
@@ -26,6 +29,7 @@
     "receipt_contracts": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/artifact_ref"}},
     "evidence_policy": {"type": "object", "minProperties": 3},
     "protected_invariants": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}},
+    "evidence_settlement": {"$ref": "#/$defs/artifact_ref"},
     "attestation": {"$ref": "#/$defs/artifact_ref"},
     "projection_rules": {
       "type": "object",
