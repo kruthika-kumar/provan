@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_attestation_materializes_bound_internal_and_client_safe_projections
 EXIT_CODE: 0
 .
-1 passed in 4.29s
+1 passed in 3.48s

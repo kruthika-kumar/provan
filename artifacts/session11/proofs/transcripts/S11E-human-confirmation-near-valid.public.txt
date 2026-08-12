@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_proof_closure_layers[near-valid]
 EXIT_CODE: 0
 .
-1 passed in 3.48s
+1 passed in 3.56s
