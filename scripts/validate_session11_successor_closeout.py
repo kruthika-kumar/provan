@@ -37,8 +37,8 @@ def resolve_ref(ref: dict) -> bytes:
 
 
 def validate() -> None:
-    binding = load(BASE / "implementation_binding.v1.public.json")
-    pre = load(BASE / "proofs/pre_review_proof_manifest.v1.public.json")
+    binding = load(SUCCESSOR / "implementation_binding.v1.public.json")
+    pre = load(SUCCESSOR / "pre_review_proof_manifest.v1.public.json")
     jsonschema.validate(pre, load(ROOT / "provan/schemas/session11-proof-manifest.v1.json"))
     require(pre["phase"] == "PRE_REVIEW", "SESSION11_SUCCESSOR_PRE_PHASE_INVALID")
     require(pre["reviewer_outputs_excluded"] is True, "SESSION11_SUCCESSOR_REVIEW_RECURSION")
