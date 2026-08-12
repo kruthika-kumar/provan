@@ -135,7 +135,9 @@ def validate() -> None:
         "artifacts/session11/successor_closeout/reviewer_receipt_b.v1.public.json",
         "artifacts/session11/successor_closeout/layer4_claim_matrix.v1.public.json",
         "artifacts/session11/successor_closeout/supersession_note.v1.public.json",
-        "artifacts/session11/session12_handoff.v1.public.json",
+        "artifacts/session11/successor_closeout/generic_absence_receipt.v1.public.json",
+        "artifacts/session11/successor_closeout/requalification_replay.v1.public.json",
+        "artifacts/session11/successor_closeout/session12_handoff_candidate.v1.public.json",
     }
     require(required_final.issubset({ref["path"] for ref in manifest["entries"]}), "SESSION11_SUCCESSOR_FINAL_REQUIRED_EVIDENCE_MISSING")
     for ref in manifest["entries"]:

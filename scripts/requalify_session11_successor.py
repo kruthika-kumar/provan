@@ -44,12 +44,12 @@ def git_value(format_string: str) -> str:
     return subprocess.run(["git", "show", "-s", f"--format={format_string}", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8", errors="strict").stdout.strip()
 
 
-def run(label: str, command: list[str]) -> dict:
+def run(label: str, command: list[str], *, public_command: list[str] | None = None) -> dict:
     result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="strict")
     transcript = (result.stdout + result.stderr).encode("utf-8")
     if result.returncode:
         raise SystemExit(f"SESSION11_SUCCESSOR_REQUALIFICATION_FAILED:{label}:{result.returncode}")
-    return {"label": label, "command": command, "exit_code": result.returncode, "transcript_sha256": digest(transcript)}
+    return {"label": label, "command": public_command or command, "exit_code": result.returncode, "transcript_sha256": digest(transcript)}
 
 
 def resolve_handoff_artifacts(handoff: dict) -> dict[str, bytes]:
@@ -73,10 +73,10 @@ def main() -> None:
     if unchanged.returncode:
         raise SystemExit("SESSION11_SUCCESSOR_RUNTIME_CHANGED_FROM_QUALIFIED_WHEEL")
     checks = [
-        run("session11_final", [sys.executable, "scripts/validate_session11.py", "--phase", "final"]),
-        run("public_leakage", [sys.executable, "scripts/validate_session9_leakage.py"]),
-        run("authoritative_wheel_fresh_install", [sys.executable, "scripts/fresh_install_gate.py", "--wheel", "dist/provan_assurance-0.4.0-py3-none-any.whl"]),
-        run("successor_and_handoff", [sys.executable, "-m", "pytest", "-q", "tests/test_session11_successor_closeout.py", "tests/test_session11_acceptance.py::test_proof_session12_handoff_layers"]),
+        run("session11_final", [sys.executable, "scripts/validate_session11.py", "--phase", "final"], public_command=["python", "scripts/validate_session11.py", "--phase", "final"]),
+        run("public_leakage", [sys.executable, "scripts/validate_session9_leakage.py"], public_command=["python", "scripts/validate_session9_leakage.py"]),
+        run("authoritative_wheel_fresh_install", [sys.executable, "scripts/fresh_install_gate.py", "--wheel", "dist/provan_assurance-0.4.0-py3-none-any.whl"], public_command=["python", "scripts/fresh_install_gate.py", "--wheel", "dist/provan_assurance-0.4.0-py3-none-any.whl"]),
+        run("successor_and_handoff", [sys.executable, "-m", "pytest", "-q", "tests/test_session11_successor_closeout.py", "tests/test_session11_acceptance.py::test_proof_session12_handoff_layers"], public_command=["python", "-m", "pytest", "-q", "tests/test_session11_successor_closeout.py", "tests/test_session11_acceptance.py::test_proof_session12_handoff_layers"]),
     ]
     absence = {
         "schema_id": "provan.session11_generic_absence_receipt.v1",
@@ -118,6 +118,10 @@ def main() -> None:
         "limitations": ["HISTORICAL_LIFECYCLE_ARTIFACTS_REMAIN_BOUND_TO_ORIGINAL_IMPLEMENTATIONS", "CURRENT_STATUS_DERIVES_FROM_REEXECUTED_GATES_AND_RUNTIME_BYTE_EQUIVALENCE"],
     }
     write("requalification_replay.v1.public.json", replay)
+    final_leakage = run("final_generated_artifact_leakage", [sys.executable, "scripts/validate_session9_leakage.py"], public_command=["python", "scripts/validate_session9_leakage.py"])
+    replay["checks"].append(final_leakage)
+    write("requalification_replay.v1.public.json", replay)
+    subprocess.run([sys.executable, "scripts/validate_session9_leakage.py"], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8", errors="strict")
     print("SESSION11_SUCCESSOR_REQUALIFIED")
 
 

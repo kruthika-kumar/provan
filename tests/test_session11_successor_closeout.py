@@ -75,3 +75,20 @@ def test_successor_validator_rejects_stale_nested_identity_bindings():
     assert "SESSION11_SUCCESSOR_REPLAY_BINDING_MISMATCH" in source
     assert "SESSION11_SUCCESSOR_HANDOFF_BINDING_MISMATCH" in source
     assert "validate_session12_handoff_serialized" in source
+
+
+def test_requalification_public_command_ledger_is_self_scanned_and_path_safe():
+    source = (ROOT / "scripts/requalify_session11_successor.py").read_text(encoding="utf-8")
+    assert 'public_command=["python"' in source
+    assert '"final_generated_artifact_leakage"' in source
+    assert source.count("scripts/validate_session9_leakage.py") >= 3
+
+
+def test_final_evidence_requires_current_successor_requalification_set():
+    source = (ROOT / "scripts/validate_session11_successor_closeout.py").read_text(encoding="utf-8")
+    required = {
+        "artifacts/session11/successor_closeout/generic_absence_receipt.v1.public.json",
+        "artifacts/session11/successor_closeout/requalification_replay.v1.public.json",
+        "artifacts/session11/successor_closeout/session12_handoff_candidate.v1.public.json",
+    }
+    assert all(path in source for path in required)
