@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import jsonschema
@@ -29,9 +30,16 @@ def require(condition: bool, code: str) -> None:
 
 
 def resolve_ref(ref: dict) -> bytes:
-    path = ROOT / ref.get("path", "")
-    require(path.is_file(), "SESSION11_SUCCESSOR_REF_MISSING")
-    raw = path.read_bytes()
+    raw_path = ref.get("path", "")
+    candidate = Path(raw_path)
+    require(raw_path == candidate.as_posix() and not candidate.is_absolute() and ".." not in candidate.parts, "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
+    root = ROOT.resolve(strict=True)
+    path = ROOT / candidate
+    require(path.is_file() and not path.is_symlink(), "SESSION11_SUCCESSOR_REF_MISSING")
+    resolved = path.resolve(strict=True)
+    require(resolved == root or root in resolved.parents, "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
+    require(os.path.isfile(resolved), "SESSION11_SUCCESSOR_REF_TYPE_FORBIDDEN")
+    raw = resolved.read_bytes()
     require(digest(raw) == ref.get("sha256"), "SESSION11_SUCCESSOR_REF_HASH_MISMATCH")
     return raw
 
@@ -39,9 +47,18 @@ def resolve_ref(ref: dict) -> bytes:
 def validate() -> None:
     binding = load(SUCCESSOR / "implementation_binding.v1.public.json")
     pre = load(SUCCESSOR / "pre_review_proof_manifest.v1.public.json")
+    require(binding.get("schema_id") == "provan.session11_implementation_binding.v1", "SESSION11_SUCCESSOR_IMPLEMENTATION_SCHEMA_INVALID")
     jsonschema.validate(pre, load(ROOT / "provan/schemas/session11-proof-manifest.v1.json"))
     require(pre["phase"] == "PRE_REVIEW", "SESSION11_SUCCESSOR_PRE_PHASE_INVALID")
     require(pre["reviewer_outputs_excluded"] is True, "SESSION11_SUCCESSOR_REVIEW_RECURSION")
+    require(binding["implementation_commit"] == pre["implementation_commit"] and binding["implementation_tree"] == pre["implementation_tree"], "SESSION11_SUCCESSOR_IMPLEMENTATION_MISMATCH")
+    require(binding["wheel_sha256"] == pre["wheel_sha256"], "SESSION11_SUCCESSOR_WHEEL_MISMATCH")
+    claim_registry = load(BASE / "claim_registry.v1.public.json")
+    schema_registry = load(BASE / "schema_registry.v1.public.json")
+    require(binding["claim_registry_digest"] == digest((BASE / "claim_registry.v1.public.json").read_bytes()), "SESSION11_SUCCESSOR_CLAIM_REGISTRY_MISMATCH")
+    require(binding["schema_registry_digest"] == schema_registry["registry_digest"], "SESSION11_SUCCESSOR_SCHEMA_REGISTRY_MISMATCH")
+    forbidden_pre = {"reviewer_receipt_a.v1.public.json", "reviewer_receipt_b.v1.public.json", "final_proof_manifest.v1.public.json", "closeout.v1.public.json", "layer4_claim_matrix.v1.public.json", "supersession_note.v1.public.json"}
+    require(not any(Path(ref["path"]).name in forbidden_pre for ref in pre["entries"]), "SESSION11_SUCCESSOR_REVIEW_RECURSION")
     require(pre["proof_root"] == digest(canonical(pre["entries"])), "SESSION11_SUCCESSOR_PRE_ROOT_MISMATCH")
     for ref in pre["entries"]:
         resolve_ref(ref)
@@ -75,6 +92,15 @@ def validate() -> None:
     require(manifest["wheel_sha256"] == pre["wheel_sha256"] and manifest["reviewed_pre_review_root"] == pre["proof_root"], "SESSION11_SUCCESSOR_FINAL_BINDING_MISMATCH")
     forbidden = {"final_proof_manifest.v1.public.json", "closeout.v1.public.json"}
     require(not any(Path(ref["path"]).name in forbidden for ref in manifest["entries"]), "SESSION11_SUCCESSOR_FINAL_RECURSION")
+    required_final = {
+        "artifacts/session11/successor_closeout/implementation_binding.v1.public.json",
+        "artifacts/session11/successor_closeout/pre_review_proof_manifest.v1.public.json",
+        "artifacts/session11/successor_closeout/reviewer_receipt_a.v1.public.json",
+        "artifacts/session11/successor_closeout/reviewer_receipt_b.v1.public.json",
+        "artifacts/session11/successor_closeout/layer4_claim_matrix.v1.public.json",
+        "artifacts/session11/session12_handoff.v1.public.json",
+    }
+    require(required_final.issubset({ref["path"] for ref in manifest["entries"]}), "SESSION11_SUCCESSOR_FINAL_REQUIRED_EVIDENCE_MISSING")
     for ref in manifest["entries"]:
         resolve_ref(ref)
     require(manifest["proof_root"] == digest(canonical(manifest["entries"])), "SESSION11_SUCCESSOR_FINAL_ROOT_MISMATCH")
