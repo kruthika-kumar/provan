@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_superseding_contract_requires_new_freeze
 EXIT_CODE: 0
 .
-1 passed in 4.58s
+1 passed in 4.07s
