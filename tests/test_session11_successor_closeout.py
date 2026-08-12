@@ -59,3 +59,11 @@ def test_successor_reference_rejects_linked_parent(tmp_path, monkeypatch):
     monkeypatch.setattr(MODULE, "ROOT", tmp_path)
     with pytest.raises(SystemExit, match="SESSION11_SUCCESSOR_REF_PATH_UNSAFE"):
         MODULE.resolve_ref({"path": "linked/proof.json", "sha256": MODULE.digest(b"{}")})
+
+
+def test_release_gate_does_not_overwrite_authoritative_wheel():
+    workflow = (ROOT / ".github/workflows/release-gate.yml").read_text(encoding="utf-8")
+    assert "python -m build --outdir candidate-dist" in workflow
+    assert "python -m build\n" not in workflow
+    assert "fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl" in workflow
+    assert "candidate-dist/provan_assurance-0.4.0-py3-none-any.whl" in workflow
