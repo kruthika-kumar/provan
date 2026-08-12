@@ -264,9 +264,11 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         row=value["risk"].get(name,{})
         refs=row.get("provenance_refs")
         if row.get("value") not in allowed_values or row.get("authority") not in {"source_verified","owner_confirmed","unresolved"} or not isinstance(refs,list) or not refs or not set(refs).issubset(allowed_risk_refs): raise ProvanError("RISK_AUTHORITY_INVALID",name)
+        required_kind="risk_tier" if name=="tier" else "reversibility"
+        if row["authority"]=="source_verified":
+            if not any(item.get("kind")==required_kind for item in expected_disposition_items.values()):raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]=="owner_confirmed":
             if not set(refs).issubset({r["id"] for r in value["disposition_refs"]}):raise ProvanError("RISK_AUTHORITY_INVALID",name)
-            required_kind="risk_tier" if name=="tier" else "reversibility"
             if not any(item.get("kind")==required_kind and item.get("action") in {"confirm","edit"} for disposition in resolved_dispositions for item in disposition.get("items",[])):raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]=="unresolved" and row["value"]!="unresolved":raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]!="unresolved" and row["value"]=="unresolved":raise ProvanError("RISK_AUTHORITY_INVALID",name)

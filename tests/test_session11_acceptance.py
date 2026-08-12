@@ -436,6 +436,22 @@ def test_proof_contract_disposition_semantics_layers(patient,fixture_class):
 
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+def test_proof_contract_risk_authority_layers(patient,fixture_class):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
+    if fixture_class=="near-valid":value["risk"]["tier"]["provenance_refs"]=[value["seed_ref"]["id"]]
+    elif fixture_class=="adversarial":value["risk"]["tier"]={"value":"high","authority":"source_verified","provenance_refs":[value["brief_ref"]["id"]]}
+    elif fixture_class=="schema-invalid":del value["risk"]
+    elif fixture_class=="schema-valid-python-invalid":value["risk"]["reversibility"]={"value":"difficult","authority":"owner_confirmed","provenance_refs":[value["disposition_refs"][0]["id"]]}
+    if fixture_class=="schema-invalid":assert_schema_invalid(value,schema)
+    else:
+        jsonschema.validate(value,schema)
+        if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+            assert exc.value.code=="RISK_AUTHORITY_INVALID"
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_freeze_layers(patient,fixture_class):
     value=copy.deepcopy(patient["freeze"]);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/candidate-freeze.v1.json").read_text(encoding="utf-8"));contract_raw=canonical_bytes(patient["contract"])
     if fixture_class=="near-valid":value["limitations"]=["BOUNDED_STATIC_ANALYSIS_NONCOVERAGE"]
