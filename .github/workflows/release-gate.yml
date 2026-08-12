@@ -29,6 +29,7 @@ jobs:
       - run: python scripts/validate_session9_leakage.py
       - run: python scripts/validate_session10_successor.py
       - run: python scripts/validate_session11.py --phase final
+      - run: python scripts/validate_session11_successor_closeout.py
       - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl
       - uses: actions/upload-artifact@v7
         with:
