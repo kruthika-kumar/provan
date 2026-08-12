@@ -7,6 +7,8 @@ from pathlib import Path, PurePosixPath
 
 import jsonschema
 
+from provan.session11_validators import validate_session12_handoff_serialized
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "artifacts/session11"
 SUCCESSOR = BASE / "successor_closeout"
@@ -51,6 +53,15 @@ def resolve_ref(ref: dict) -> bytes:
     return raw
 
 
+def handoff_artifacts(value: dict) -> dict[str, bytes]:
+    refs = [value["brief"], value["preparation"], *value["seed_dispositions"], value["acceptance_contract"], value["candidate_freeze"], *value["closure_requirements"], *value["verifier_contracts"], *value["receipt_contracts"], *value["protected_invariants"], value["evidence_settlement"], value["attestation"], value["reinspection"], value["layer4_matrix"], value["proof_manifest"], *value["reviewer_receipts"], value["schema_registry"], value["claim_registry"], value["implementation_binding_ref"], value["wheel"]]
+    artifacts = {ref["path"]: resolve_ref(ref) for ref in refs}
+    manifest = json.loads(artifacts[value["proof_manifest"]["path"]])
+    for ref in manifest["entries"]:
+        artifacts[ref["path"]] = resolve_ref(ref)
+    return artifacts
+
+
 def validate() -> None:
     binding = load(SUCCESSOR / "implementation_binding.v1.public.json")
     pre = load(SUCCESSOR / "pre_review_proof_manifest.v1.public.json")
@@ -70,6 +81,22 @@ def validate() -> None:
     require(pre["proof_root"] == digest(canonical(pre["entries"])), "SESSION11_SUCCESSOR_PRE_ROOT_MISMATCH")
     for ref in pre["entries"]:
         resolve_ref(ref)
+    expected_current = {
+        "implementation_commit": binding["implementation_commit"],
+        "implementation_tree": binding["implementation_tree"],
+        "wheel_sha256": binding["wheel_sha256"],
+    }
+    absence = load(SUCCESSOR / "generic_absence_receipt.v1.public.json")
+    require({key: absence.get(key) for key in expected_current} == expected_current and absence.get("result") == "PRIVATE_PLANNING_AUTHORITY_ABSENT" and absence.get("violations") == [], "SESSION11_SUCCESSOR_ABSENCE_BINDING_MISMATCH")
+    replay = load(SUCCESSOR / "requalification_replay.v1.public.json")
+    require(replay.get("implementation_binding") == binding and replay.get("historical_inputs_current_by_themselves") is False and replay.get("result") == "REQUALIFIED", "SESSION11_SUCCESSOR_REPLAY_BINDING_MISMATCH")
+    require(replay.get("runtime_equivalence", {}).get("current_runtime_diff_empty") is True and replay.get("checks") and all(row.get("exit_code") == 0 and row.get("transcript_sha256", "").startswith("sha256:") for row in replay["checks"]), "SESSION11_SUCCESSOR_REPLAY_EVIDENCE_INVALID")
+    for ref in replay.get("historical_inputs", []):
+        resolve_ref(ref)
+    handoff = load(SUCCESSOR / "session12_handoff_candidate.v1.public.json")
+    require(handoff.get("implementation_binding") == binding and handoff.get("implementation_binding_ref", {}).get("path") == "artifacts/session11/successor_closeout/implementation_binding.v1.public.json" and handoff.get("wheel", {}).get("sha256") == binding["wheel_sha256"], "SESSION11_SUCCESSOR_HANDOFF_BINDING_MISMATCH")
+    jsonschema.validate(handoff, load(ROOT / "provan/schemas/session12-handoff.v1.json"))
+    validate_session12_handoff_serialized(canonical(handoff), handoff_artifacts(handoff))
 
     receipt_schema = load(ROOT / "provan/schemas/session11-reviewer-receipt.v1.json")
     receipts = []

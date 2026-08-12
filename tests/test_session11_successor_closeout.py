@@ -67,3 +67,11 @@ def test_release_gate_does_not_overwrite_authoritative_wheel():
     assert "python -m build\n" not in workflow
     assert "fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl" in workflow
     assert "candidate-dist/provan_assurance-0.4.0-py3-none-any.whl" in workflow
+
+
+def test_successor_validator_rejects_stale_nested_identity_bindings():
+    source = (ROOT / "scripts/validate_session11_successor_closeout.py").read_text(encoding="utf-8")
+    assert "SESSION11_SUCCESSOR_ABSENCE_BINDING_MISMATCH" in source
+    assert "SESSION11_SUCCESSOR_REPLAY_BINDING_MISMATCH" in source
+    assert "SESSION11_SUCCESSOR_HANDOFF_BINDING_MISMATCH" in source
+    assert "validate_session12_handoff_serialized" in source

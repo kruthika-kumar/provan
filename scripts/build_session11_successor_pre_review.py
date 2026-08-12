@@ -69,6 +69,9 @@ def main() -> None:
         "artifacts/session11/claim_registry.v1.public.json",
         "artifacts/session11/schema_registry.v1.public.json",
         "artifacts/session11/generic_absence_receipt.v1.public.json",
+        "artifacts/session11/successor_closeout/generic_absence_receipt.v1.public.json",
+        "artifacts/session11/successor_closeout/requalification_replay.v1.public.json",
+        "artifacts/session11/successor_closeout/session12_handoff_candidate.v1.public.json",
         "artifacts/session11/successor_closeout/implementation_binding.v1.public.json",
     ]
     entries = [ref(path) for path in paths]
