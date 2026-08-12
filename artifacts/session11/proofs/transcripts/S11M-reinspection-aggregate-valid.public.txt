@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_full_lifecycle_and_exact_reinspection
 EXIT_CODE: 0
 .
-1 passed in 6.47s
+1 passed in 5.94s

@@ -274,6 +274,31 @@ def test_pr_synthetic_merge_metadata_is_not_candidate_history(tmp_path):
     with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
 
 
+def test_normal_github_pr_merge_metadata_is_public_platform_metadata(tmp_path):
+    repo=tmp_path/"repo";repo.mkdir();git(repo,"init");(repo/"a.txt").write_text("base\n");base=commit(repo,"base");git(repo,"checkout","-b","candidate");(repo/"a.txt").write_text("candidate\n");commit(repo,"candidate");git(repo,"checkout","-b","main",base)
+    env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":"12345+fixture-user"+"@"+"users.noreply.github.com","GIT_COMMITTER_NAME":"GitHub","GIT_COMMITTER_EMAIL":"noreply"+"@"+"github.com"}
+    git(repo,"merge","--no-ff","candidate","-m","Merge pull request #5 from fixture-user/candidate",env=env);merge=git(repo,"rev-parse","HEAD")
+    validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
+
+
+def test_github_merge_exception_does_not_hide_authored_or_tree_email(tmp_path):
+    repo=tmp_path/"repo";repo.mkdir();git(repo,"init");(repo/"a.txt").write_text("base\n");base=commit(repo,"base");git(repo,"checkout","-b","candidate")
+    authored_email="private"+"@"+"example.com";env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":authored_email,"GIT_COMMITTER_NAME":"Fixture User","GIT_COMMITTER_EMAIL":authored_email}
+    (repo/"a.txt").write_text("candidate\n");git(repo,"add","-A",env=env);git(repo,"commit","-m","candidate",env=env);authored=git(repo,"rev-parse","HEAD")
+    with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=authored,integration_head=authored)
+    git(repo,"checkout","-b","clean-candidate",base);(repo/"leak.txt").write_text("contact: private"+"@"+"example.com\n");commit(repo,"tree leak");git(repo,"checkout","-b","main",base)
+    merge_env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":"12345+fixture-user"+"@"+"users.noreply.github.com","GIT_COMMITTER_NAME":"GitHub","GIT_COMMITTER_EMAIL":"noreply"+"@"+"github.com"}
+    git(repo,"merge","--no-ff","clean-candidate","-m","Merge pull request #6 from fixture-user/clean-candidate",env=merge_env);merge=git(repo,"rev-parse","HEAD")
+    with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
+
+
+def test_github_noreply_token_does_not_exempt_email_in_actor_name(tmp_path):
+    repo=tmp_path/"repo";repo.mkdir();git(repo,"init");(repo/"a.txt").write_text("base\n");base=commit(repo,"base");git(repo,"checkout","-b","candidate");(repo/"a.txt").write_text("candidate\n");commit(repo,"candidate");git(repo,"checkout","-b","main",base)
+    env={"GIT_AUTHOR_NAME":"private"+"@"+"example.com","GIT_AUTHOR_EMAIL":"12345+fixture-user"+"@"+"users.noreply.github.com","GIT_COMMITTER_NAME":"GitHub","GIT_COMMITTER_EMAIL":"noreply"+"@"+"github.com"}
+    git(repo,"merge","--no-ff","candidate","-m","Merge pull request #7 from fixture-user/candidate",env=env);merge=git(repo,"rev-parse","HEAD")
+    with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
+
+
 def test_superseding_contract_requires_new_freeze(patient):
     terms={"criteria":[patient_criterion()],"challenge_budget":{"class":"not_required","max_instances":0,"max_wall_seconds":0,"max_network_requests":0}}
     successor=new_contract(patient,terms,supersedes=patient["contract"]["contract_id"])
@@ -817,7 +842,11 @@ def test_proof_final_artifact_binding(binding_kind,fixture_class):
             valid=candidate.get("organisation_identity_asserted") is False and candidate.get("recommendation")=="held" and candidate.get("owner_decision")=="hold" and any(name.startswith("closure_requirement_") for name in artifacts) and candidate.get("candidate")==expected and contract["candidate"]==brief["candidate"] and freeze_candidate==expected and decision["decision"]==candidate["owner_decision"] and record["record_id"]==candidate["record_id"] and candidate["implementation_commit"]==brief["candidate"]["head"] and candidate["wheel_sha256"]=="sha256:9f169a72eff8e93af97e039ed11d4a90f47263057c9f8bbc5050a7891c1d4bcd"
     elif binding_kind=="successor-safety":valid=candidate.get("result")=="PRIVATE_PLANNING_AUTHORITY_ABSENT" and candidate.get("violations")==[] and set(candidate.get("scopes",[]))=={"history_delta","working_tree_projection","package_wheel","public_proofs","controlled_ci_artifacts"}
     elif binding_kind=="installed-wheel":valid=candidate.get("site_packages_origin") is True and candidate.get("checkout_absent_from_sys_path") is True and "<bounded" not in candidate.get("command","") and _public_ref_ok(root,candidate["transcript"])
-    elif binding_kind=="controlled-reinspection":valid=bool(candidate.get("executed_proofs")) and candidate.get("execution_capability_added") is False and candidate.get("challenge_capability_added") is False and _public_ref_ok(root,candidate["proof_registry"])
+    elif binding_kind=="controlled-reinspection":
+        valid=bool(candidate.get("executed_proofs")) and candidate.get("execution_capability_added") is False and candidate.get("challenge_capability_added") is False and _public_ref_ok(root,candidate["proof_registry"])
+        if valid:
+            registry=json.loads((root/candidate["proof_registry"]["path"]).read_text(encoding="utf-8"));by_id={row["proof_id"]:row for row in registry["entries"]}
+            valid=all(row.get("proof_id") in by_id and row.get("test_id")==by_id[row["proof_id"]].get("test_id") and row.get("transcript_hash")==by_id[row["proof_id"]].get("transcript_hash") for row in candidate["executed_proofs"])
     elif binding_kind=="package-binding":valid=candidate.get("package_version")=="0.4.0" and candidate.get("published") is False and candidate.get("maturity")=="QUALIFIED_BOUNDED" and candidate.get("wheel_sha256")!="sha256:"+"f"*64
     else:
         refs=[candidate["brief"],candidate["preparation"],*candidate["seed_dispositions"],candidate["acceptance_contract"],candidate["candidate_freeze"],*candidate["closure_requirements"],*candidate["verifier_contracts"],*candidate["receipt_contracts"],*candidate["protected_invariants"],candidate["evidence_settlement"],candidate["attestation"],candidate["reinspection"],candidate["layer4_matrix"],candidate["proof_manifest"],*candidate["reviewer_receipts"],candidate["schema_registry"],candidate["claim_registry"],candidate["implementation_binding_ref"],candidate["wheel"]]

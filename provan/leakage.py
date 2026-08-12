@@ -128,6 +128,19 @@ def _archive_violations(archive_path: Path) -> list[dict]:
     return [{"path":"archive:"+archive_path.name,"error":"ARCHIVE_FORMAT_UNSUPPORTED"}]
 
 
+def _metadata_contains_private_email(metadata: str) -> bool:
+    """Scan all metadata after removing only public GitHub noreply tokens.
+
+    Noreply addresses are public forge identifiers, not private contact data,
+    and therefore require no trust inference from mutable commit shape. Every
+    other field and email remains subject to the ordinary leakage rule.
+    """
+    public_noreply=re.compile(r"(?<![A-Z0-9._%+-])(?:[1-9][0-9]*\+)?[A-Za-z0-9-]+@users\.noreply\.github\.com(?![A-Z0-9.-])",re.I)
+    github_committer=re.compile(r"(?<![A-Z0-9._%+-])noreply@github\.com(?![A-Z0-9.-])",re.I)
+    remainder=github_committer.sub("",public_noreply.sub("",metadata))
+    return PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(remainder) is not None
+
+
 def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None,
                                 *, history_base: str | None = None,
                                 history_head: str | None = None,
@@ -149,7 +162,7 @@ def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = N
     history=subprocess.run(["git","rev-list","--reverse",base+".."+head],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout.splitlines()
     for commit in history:
         metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout
-        if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata):
+        if _metadata_contains_private_email(metadata):
             violations.append({"path":f"commit:{commit}","error":"EMAIL_ADDRESS"})
     commands=[["git","show","--format=","--unified=0",commit] for commit in history]
     if integrated != head:

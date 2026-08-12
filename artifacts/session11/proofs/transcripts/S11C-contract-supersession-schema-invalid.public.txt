@@ -2,4 +2,4 @@ COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_accepta
 EXIT_CODE: 0
 PROOF_SCHEMA_ERROR:'head' is a required property:path=/
 .
-1 passed in 5.17s
+1 passed in 3.87s
