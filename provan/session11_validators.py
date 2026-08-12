@@ -38,6 +38,7 @@ CAPABILITY_REASON_CODES = {
 }
 
 FORBIDDEN_SESSION11_CAPABILITIES={"execute","verify","challenge","remediate","deploy","sandbox","enterprise"}
+CONTRACT_OBLIGATION_FIELDS=("intended_outcome","target_user","journeys","mandatory_criteria","conditional_criteria","non_applicable_criteria","unresolved_questions","protected_invariant_refs","closure_requirement_refs","allowed_evidence_classes","execution_policy","challenge_policy","risk","conditions","expires_at","reinspection_triggers")
 
 
 def _independent_session11_schema_registry_raw() -> bytes:
@@ -115,6 +116,17 @@ def _independent_seed_disposition_items(brief: dict[str,Any], seed: dict[str,Any
         item_id=sha256_bytes(canonical_bytes({"seed":seed_digest,"kind":kind,"source_ref":source_ref,"value":original_value}))
         items.append({"item_id":item_id,"kind":kind,"source_ref":source_ref,"original_value":original_value})
     return items
+
+
+def _independent_contract_obligation_items(contract:dict[str,Any],seed:dict[str,Any])->list[dict[str,Any]]:
+    seed_digest=sha256_bytes(canonical_bytes(seed));snapshot={key:contract[key] for key in CONTRACT_OBLIGATION_FIELDS};proposals=[("contract_obligation","contract:obligation:v1",snapshot)]
+    for key,value in snapshot.items():
+        if isinstance(value,list):proposals.extend((f"contract_{key}",f"contract:{key}:{index}",item) for index,item in enumerate(value))
+        else:proposals.append((f"contract_{key}",f"contract:{key}",value))
+    rows=[]
+    for kind,source_ref,original_value in proposals:
+        item_id=sha256_bytes(canonical_bytes({"seed":seed_digest,"kind":kind,"source_ref":source_ref,"value":original_value}));rows.append({"item_id":item_id,"kind":kind,"source_ref":source_ref,"original_value":original_value})
+    return rows
 
 
 def validate_verifier_work_order_serialized(raw: bytes) -> dict[str,Any]:
@@ -233,21 +245,25 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         raise ProvanError("CONTRACT_SEED_BRIEF_BINDING_MISMATCH",value["contract_id"])
     if preparation.get("brief_id")!=brief.get("brief_id") or preparation.get("case_id")!=brief.get("case_id") or preparation.get("candidate_digest")!=brief.get("candidate",{}).get("candidate_digest"):
         raise ProvanError("CONTRACT_PREPARATION_BRIEF_BINDING_MISMATCH",value["contract_id"])
-    expected_disposition_items={row["item_id"]:row for row in _independent_seed_disposition_items(brief,seed)};resolved_dispositions=[]
+    expected_seed_items={row["item_id"]:row for row in _independent_seed_disposition_items(brief,seed)};expected_obligation_items={row["item_id"]:row for row in _independent_contract_obligation_items(value,seed)};resolved_dispositions=[];seed_dispositions=0;obligation_dispositions=0
     for ref in value["disposition_refs"]:
         disposition_raw=predecessors.get(ref["id"])
         if disposition_raw is None:raise ProvanError("CONTRACT_DISPOSITION_UNRESOLVED",ref["id"])
         disposition=validate_seed_disposition_serialized(disposition_raw)
         if not _ref_matches(ref,disposition,disposition_raw,"disposition_id") or disposition.get("preparation_ref")!=value["preparation_ref"] or disposition.get("seed_ref")!=value["seed_ref"] or disposition.get("case_id")!=value.get("case_id"):
             raise ProvanError("CONTRACT_DISPOSITION_BINDING_MISMATCH",ref["id"])
-        actual_items=disposition.get("items",[])
-        if len(actual_items)!=len(expected_disposition_items) or {row.get("item_id") for row in actual_items}!=set(expected_disposition_items):
+        actual_items=disposition.get("items",[]);actual_ids={row.get("item_id") for row in actual_items}
+        expected_disposition_items=expected_obligation_items if any(str(row.get("source_ref","")).startswith("contract:") for row in actual_items) else expected_seed_items
+        if expected_disposition_items is expected_obligation_items:obligation_dispositions+=1
+        else:seed_dispositions+=1
+        if len(actual_items)!=len(expected_disposition_items) or actual_ids!=set(expected_disposition_items):
             raise ProvanError("CONTRACT_DISPOSITION_SEMANTICS_MISMATCH",ref["id"])
         for row in actual_items:
             expected=expected_disposition_items[row["item_id"]]
             if any(row.get(field)!=expected[field] for field in ("kind","source_ref","original_value")):
                 raise ProvanError("CONTRACT_DISPOSITION_SEMANTICS_MISMATCH",row["item_id"])
         resolved_dispositions.append(disposition)
+    if seed_dispositions!=1 or obligation_dispositions!=1:raise ProvanError("CONTRACT_DISPOSITION_COVERAGE_INVALID",value["contract_id"])
     if value.get("supersedes") is not None and (value["version"]<=1 or not value["supersedes"].get("id") or not SHA.fullmatch(str(value["supersedes"].get("sha256","")))):raise ProvanError("CONTRACT_SUPERSESSION_INVALID",value["contract_id"])
     if value["candidate"].get("mode") != "immutable" or not FULL_COMMIT.fullmatch(str(value["candidate"].get("head",""))): raise ProvanError("CONTRACT_CANDIDATE_NOT_IMMUTABLE",value["contract_id"])
     if value.get("case_id")!=brief.get("case_id") or value.get("candidate")!=brief.get("candidate") or value.get("repository_identity")!=brief.get("candidate",{}).get("repository_identity"):
@@ -266,7 +282,7 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         if row.get("value") not in allowed_values or row.get("authority") not in {"source_verified","owner_confirmed","unresolved"} or not isinstance(refs,list) or not refs or not set(refs).issubset(allowed_risk_refs): raise ProvanError("RISK_AUTHORITY_INVALID",name)
         required_kind="risk_tier" if name=="tier" else "reversibility"
         if row["authority"]=="source_verified":
-            if not any(item.get("kind")==required_kind for item in expected_disposition_items.values()):raise ProvanError("RISK_AUTHORITY_INVALID",name)
+            if not any(item.get("kind")==required_kind for item in expected_seed_items.values()):raise ProvanError("RISK_AUTHORITY_INVALID",name)
         if row["authority"]=="owner_confirmed":
             if not set(refs).issubset({r["id"] for r in value["disposition_refs"]}):raise ProvanError("RISK_AUTHORITY_INVALID",name)
             if not any(item.get("kind")==required_kind and item.get("action") in {"confirm","edit"} for disposition in resolved_dispositions for item in disposition.get("items",[])):raise ProvanError("RISK_AUTHORITY_INVALID",name)

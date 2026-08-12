@@ -12,7 +12,7 @@ import jsonschema
 
 from provan.acceptance import (attest, create_contract, decide, derive_evidence_state,
                                disposition_items, freeze_contract, reinspect, render_record,
-                               _session11_schema_registry_raw)
+                               _contract_obligation_items, _session11_schema_registry_raw)
 from provan.canonical import canonical_bytes, sha256_bytes
 from provan.change_brief import explain, promote
 from provan.cli import _parser
@@ -385,6 +385,15 @@ def contract_authorities(patient,contract):
     return predecessors,_session11_schema_registry_raw()
 
 
+def rebind_contract_obligation(patient, value, predecessors):
+    """Rebind the typed obligation disposition when a test targets a later invariant."""
+    obligation_ref=next(ref for ref in value["disposition_refs"] if any(str(row.get("source_ref","")).startswith("contract:") for row in json.loads(predecessors[ref["id"]])["items"]))
+    disposition=copy.deepcopy(json.loads(predecessors[obligation_ref["id"]]))
+    seed_digest=sha256_bytes(canonical_bytes(patient["brief"]["acceptance_seed"]))
+    disposition["items"]=_contract_obligation_items(value,seed_digest,disposition["actor"],disposition["created_at"])
+    raw=canonical_bytes(disposition);predecessors[obligation_ref["id"]]=raw;obligation_ref["sha256"]=sha256_bytes(raw)
+
+
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
 def test_proof_contract_layers(patient,fixture_class):
     value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
@@ -392,6 +401,7 @@ def test_proof_contract_layers(patient,fixture_class):
     elif fixture_class=="adversarial":value["candidate"]["mode"]="mutable"
     elif fixture_class=="schema-invalid":del value["execution_policy"]
     elif fixture_class=="schema-valid-python-invalid":value["challenge_policy"]["challenge_budget"]["max_instances"]=1
+    if fixture_class in {"near-valid","schema-valid-python-invalid"}:rebind_contract_obligation(patient,value,predecessors)
     if fixture_class=="schema-invalid":
         assert_schema_invalid(value,schema)
     else:
@@ -409,6 +419,7 @@ def test_proof_contract_provenance_layers(patient,fixture_class):
     elif fixture_class=="adversarial":value["brief_ref"]["sha256"]="sha256:"+"f"*64
     elif fixture_class=="schema-invalid":del value["provenance"]
     elif fixture_class=="schema-valid-python-invalid":value["provenance"]["schema_registry_digest"]="sha256:"+"f"*64
+    if fixture_class=="near-valid":rebind_contract_obligation(patient,value,predecessors)
     if fixture_class=="schema-invalid":assert_schema_invalid(value,schema)
     else:
         jsonschema.validate(value,schema)
@@ -442,6 +453,7 @@ def test_proof_contract_risk_authority_layers(patient,fixture_class):
     elif fixture_class=="adversarial":value["risk"]["tier"]={"value":"high","authority":"source_verified","provenance_refs":[value["brief_ref"]["id"]]}
     elif fixture_class=="schema-invalid":del value["risk"]
     elif fixture_class=="schema-valid-python-invalid":value["risk"]["reversibility"]={"value":"difficult","authority":"owner_confirmed","provenance_refs":[value["disposition_refs"][0]["id"]]}
+    if fixture_class!="schema-invalid":rebind_contract_obligation(patient,value,predecessors)
     if fixture_class=="schema-invalid":assert_schema_invalid(value,schema)
     else:
         jsonschema.validate(value,schema)
@@ -449,6 +461,32 @@ def test_proof_contract_risk_authority_layers(patient,fixture_class):
             with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
             assert exc.value.code=="RISK_AUTHORITY_INVALID"
         else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+def test_proof_contract_obligation_binding_layers(patient,fixture_class):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);schema=json.loads((Path(__file__).parents[1]/"provan/schemas/acceptance-contract.v1.json").read_text(encoding="utf-8"))
+    if fixture_class=="near-valid":value["created_at"]="2026-08-10T12:00:01Z"
+    elif fixture_class=="adversarial":value["intended_outcome"]="invented unrelated owner-approved outcome"
+    elif fixture_class=="schema-invalid":del value["intended_outcome"]
+    elif fixture_class=="schema-valid-python-invalid":value["conditions"]=["invented condition"]
+    if fixture_class=="schema-invalid":assert_schema_invalid(value,schema)
+    else:
+        jsonschema.validate(value,schema)
+        if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+            assert exc.value.code=="CONTRACT_DISPOSITION_SEMANTICS_MISMATCH"
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+@pytest.mark.parametrize("field",["target_user","mandatory_criteria","allowed_evidence_classes","execution_policy","challenge_policy","protected_invariant_refs"])
+def test_contract_obligation_surface_mutations_reject(patient,field):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
+    if field=="target_user":value[field]="invented user"
+    elif isinstance(value[field],list):value[field]=value[field]+[{"id":"00000000-0000-4000-8000-000000000001","sha256":"sha256:"+"f"*64}]
+    else:value[field]=dict(value[field]);value[field]["invented"]=True
+    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+    assert exc.value.code in {"CONTRACT_DISPOSITION_SEMANTICS_MISMATCH","CONTRACT_CRITERION_CLOSURE_COVERAGE_INVALID"}
 
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
@@ -746,14 +784,14 @@ def test_proof_final_artifact_binding(binding_kind,fixture_class):
 
 def test_contract_rejects_invented_risk_authority(patient):
     value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":["invented"]}
-    closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]};predecessors,schema_registry_raw=contract_authorities(patient,value)
+    closures={ref["id"]:secure_read(Path("outputs/acceptance/closure-requirements")/f"{ref['id']}.json") for ref in value["closure_requirement_refs"]};invariants={ref["id"]:secure_read(Path("outputs/acceptance/protected-invariants")/f"{ref['id']}.json") for ref in value["protected_invariant_refs"]};predecessors,schema_registry_raw=contract_authorities(patient,value);rebind_contract_obligation(patient,value,predecessors)
     with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
     assert exc.value.code=="RISK_AUTHORITY_INVALID"
 
 
 def test_contract_terms_cannot_silently_create_owner_confirmed_risk(patient):
     value=copy.deepcopy(patient["contract"]);value["risk"]["tier"]={"value":"high","authority":"owner_confirmed","provenance_refs":[value["disposition_refs"][0]["id"]]}
-    closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
+    closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value);rebind_contract_obligation(patient,value,predecessors)
     with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
     assert exc.value.code=="RISK_AUTHORITY_INVALID"
 
