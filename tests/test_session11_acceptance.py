@@ -274,6 +274,24 @@ def test_pr_synthetic_merge_metadata_is_not_candidate_history(tmp_path):
     with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
 
 
+def test_normal_github_pr_merge_metadata_is_public_platform_metadata(tmp_path):
+    repo=tmp_path/"repo";repo.mkdir();git(repo,"init");(repo/"a.txt").write_text("base\n");base=commit(repo,"base");git(repo,"checkout","-b","candidate");(repo/"a.txt").write_text("candidate\n");commit(repo,"candidate");git(repo,"checkout","-b","main",base)
+    env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":"12345+fixture-user"+"@"+"users.noreply.github.com","GIT_COMMITTER_NAME":"GitHub","GIT_COMMITTER_EMAIL":"noreply"+"@"+"github.com"}
+    git(repo,"merge","--no-ff","candidate","-m","Merge pull request #5 from fixture-user/candidate",env=env);merge=git(repo,"rev-parse","HEAD")
+    validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
+
+
+def test_github_merge_exception_does_not_hide_authored_or_tree_email(tmp_path):
+    repo=tmp_path/"repo";repo.mkdir();git(repo,"init");(repo/"a.txt").write_text("base\n");base=commit(repo,"base");git(repo,"checkout","-b","candidate")
+    authored_email="12345+fixture-user"+"@"+"users.noreply.github.com";env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":authored_email,"GIT_COMMITTER_NAME":"Fixture User","GIT_COMMITTER_EMAIL":authored_email}
+    (repo/"a.txt").write_text("candidate\n");git(repo,"add","-A",env=env);git(repo,"commit","-m","candidate",env=env);authored=git(repo,"rev-parse","HEAD")
+    with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=authored,integration_head=authored)
+    git(repo,"checkout","-b","clean-candidate",base);(repo/"leak.txt").write_text("contact: private"+"@"+"example.com\n");commit(repo,"tree leak");git(repo,"checkout","-b","main",base)
+    merge_env={"GIT_AUTHOR_NAME":"Fixture User","GIT_AUTHOR_EMAIL":authored_email,"GIT_COMMITTER_NAME":"GitHub","GIT_COMMITTER_EMAIL":"noreply"+"@"+"github.com"}
+    git(repo,"merge","--no-ff","clean-candidate","-m","Merge pull request #6 from fixture-user/clean-candidate",env=merge_env);merge=git(repo,"rev-parse","HEAD")
+    with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=merge,integration_head=merge)
+
+
 def test_superseding_contract_requires_new_freeze(patient):
     terms={"criteria":[patient_criterion()],"challenge_budget":{"class":"not_required","max_instances":0,"max_wall_seconds":0,"max_network_requests":0}}
     successor=new_contract(patient,terms,supersedes=patient["contract"]["contract_id"])

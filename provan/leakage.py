@@ -128,6 +128,28 @@ def _archive_violations(archive_path: Path) -> list[dict]:
     return [{"path":"archive:"+archive_path.name,"error":"ARCHIVE_FORMAT_UNSUPPORTED"}]
 
 
+def _github_generated_merge_metadata(root: Path, commit: str) -> bool:
+    """Recognize only GitHub's normal pull-request merge metadata.
+
+    This exception is limited to the platform-generated actor fields of a
+    two-parent ``Merge pull request`` commit.  The commit diff and integrated
+    tree remain subject to the ordinary leakage scan, and authored branch
+    commits never receive this exception.
+    """
+    raw=subprocess.run(
+        ["git","show","-s","--format=%P%n%an%n%ae%n%cn%n%ce%n%s",commit],
+        cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True,
+    ).stdout.splitlines()
+    if len(raw) != 6 or len(raw[0].split()) != 2:
+        return False
+    _parents,author_name,author_email,committer_name,committer_email,subject = raw[0],*raw[1:]
+    github_committer="noreply"+"@"+"github.com"
+    github_author=re.fullmatch(r"[1-9][0-9]*\+[A-Za-z0-9-]+@users\.noreply\.github\.com",author_email)
+    merge_subject=re.fullmatch(r"Merge pull request #[1-9][0-9]* from [A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+",subject)
+    return bool(author_name.strip() and github_author and committer_name=="GitHub"
+                and committer_email==github_committer and merge_subject)
+
+
 def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None,
                                 *, history_base: str | None = None,
                                 history_head: str | None = None,
@@ -149,7 +171,7 @@ def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = N
     history=subprocess.run(["git","rev-list","--reverse",base+".."+head],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout.splitlines()
     for commit in history:
         metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout
-        if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata):
+        if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata) and not _github_generated_merge_metadata(root,commit):
             violations.append({"path":f"commit:{commit}","error":"EMAIL_ADDRESS"})
     commands=[["git","show","--format=","--unified=0",commit] for commit in history]
     if integrated != head:
