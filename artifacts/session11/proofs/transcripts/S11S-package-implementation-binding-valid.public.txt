@@ -1,0 +1,4 @@
+COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_proof_final_artifact_binding[package-binding-valid]
+EXIT_CODE: 0
+.
+1 passed in 0.14s
