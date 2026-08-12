@@ -176,6 +176,7 @@ def _closure_from_spec(criterion_id: str,spec: dict[str,Any],invariant_refs:dict
 
 def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label: str,*,supersedes: str|None=None,now:Callable[[],datetime]=utcnow) -> dict[str,Any]:
     if not actor_label or len(actor_label)>128:raise ProvanError("ACTOR_LABEL_INVALID","actor label must contain 1..128 characters")
+    if dispositions.get("contract_action")!="confirm":raise ProvanError("CONTRACT_OBLIGATION_ACTION_REQUIRED","Session 11 requires an explicit confirm action for the complete proposed Contract surface; edit the proposal before confirming")
     preparation,prep_raw,brief,brief_raw=_resolve_preparation(preparation_id);surface=disposition_items(preparation_id);expected={r["item_id"]:r for r in surface["items"]};rows=dispositions.get("items",[])
     if len(rows)!=len(expected) or {r.get("item_id") for r in rows}!=set(expected):raise ProvanError("SEED_DISPOSITIONS_INCOMPLETE","every exact seed item requires one disposition")
     if len({r["item_id"] for r in rows})!=len(rows):raise ProvanError("SEED_DISPOSITION_DUPLICATE",preparation_id)

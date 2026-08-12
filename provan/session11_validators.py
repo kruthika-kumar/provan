@@ -262,6 +262,8 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
             expected=expected_disposition_items[row["item_id"]]
             if any(row.get(field)!=expected[field] for field in ("kind","source_ref","original_value")):
                 raise ProvanError("CONTRACT_DISPOSITION_SEMANTICS_MISMATCH",row["item_id"])
+            if expected_disposition_items is expected_obligation_items and (row.get("action")!="confirm" or row.get("edited_value") is not None):
+                raise ProvanError("CONTRACT_OBLIGATION_ACTION_MISMATCH",row["item_id"])
         resolved_dispositions.append(disposition)
     if seed_dispositions!=1 or obligation_dispositions!=1:raise ProvanError("CONTRACT_DISPOSITION_COVERAGE_INVALID",value["contract_id"])
     if value.get("supersedes") is not None and (value["version"]<=1 or not value["supersedes"].get("id") or not SHA.fullmatch(str(value["supersedes"].get("sha256","")))):raise ProvanError("CONTRACT_SUPERSESSION_INVALID",value["contract_id"])

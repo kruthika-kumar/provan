@@ -47,7 +47,7 @@ def commit(repo:Path,message:str)->str:
 
 def new_contract(patient,terms:dict,*,supersedes:str|None=None):
     surface=disposition_items(patient["preparation"]["preparation_id"]);rows=[{"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm","rationale":"bounded fixture"} for item in surface["items"]]
-    return create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_terms":terms},"fixture-operator",supersedes=supersedes,now=FIXED)
+    return create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_terms":terms,"contract_action":"confirm"},"fixture-operator",supersedes=supersedes,now=FIXED)
 
 
 def patient_criterion(**overrides):
@@ -64,7 +64,7 @@ def patient(tmp_path:Path,monkeypatch):
     prep=promote(brief["brief_id"]);surface=disposition_items(prep["preparation_id"]);rows=[]
     for item in surface["items"]:rows.append({"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm","rationale":"fixture authority"})
     terms={"criteria":[{"criterion_id":"patient.acceptance_record_available.v1","statement":"Acceptance Record capability is available.","class":"mandatory","material":True,"required_evidence_classes":["source_verified"],"challenge_requirement":"not_required","closure_requirement":{"check_mode":"source_only","required_evidence_class":"source_verified","check":{"type":"canonical_field_equals","path":"patient/public-contract.json","json_pointer":"/capabilities/acceptance_record","expected_value":"available"}}}],"risk":{"tier":{"value":"unresolved","authority":"unresolved","provenance_refs":[prep["preparation_id"]]},"reversibility":{"value":"unresolved","authority":"unresolved","provenance_refs":[prep["preparation_id"]]}},"challenge_budget":{"class":"not_required","max_instances":0,"max_wall_seconds":0,"max_network_requests":0}}
-    contract=create_contract(prep["preparation_id"],{"items":rows,"contract_terms":terms},"fixture-operator",now=FIXED);freeze=freeze_contract(contract["contract_id"],str(repo),now=FIXED);att=attest(freeze["freeze_id"],[],now=FIXED)
+    contract=create_contract(prep["preparation_id"],{"items":rows,"contract_terms":terms,"contract_action":"confirm"},"fixture-operator",now=FIXED);freeze=freeze_contract(contract["contract_id"],str(repo),now=FIXED);att=attest(freeze["freeze_id"],[],now=FIXED)
     return {"repo":repo,"base":base,"original":original,"brief":brief,"preparation":prep,"contract":contract,"freeze":freeze,"attestation":att,"home":home}
 
 
@@ -487,6 +487,40 @@ def test_contract_obligation_surface_mutations_reject(patient,field):
     else:value[field]=dict(value[field]);value[field]["invented"]=True
     with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
     assert exc.value.code in {"CONTRACT_DISPOSITION_SEMANTICS_MISMATCH","CONTRACT_CRITERION_CLOSURE_COVERAGE_INVALID"}
+
+
+@pytest.mark.parametrize("action,edited_value",[("reject",None),("unresolved",None),("edit","invented replacement")])
+def test_contract_obligation_action_substitution_rejects(patient,action,edited_value):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
+    obligation_ref=next(ref for ref in value["disposition_refs"] if any(str(row.get("source_ref","")).startswith("contract:") for row in json.loads(predecessors[ref["id"]])["items"]))
+    disposition=copy.deepcopy(json.loads(predecessors[obligation_ref["id"]]));item=next(row for row in disposition["items"] if row["source_ref"]=="contract:intended_outcome")
+    item["action"]=action;item["edited_value"]=edited_value;raw=canonical_bytes(disposition);predecessors[obligation_ref["id"]]=raw;obligation_ref["sha256"]=sha256_bytes(raw)
+    with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+    assert exc.value.code=="CONTRACT_OBLIGATION_ACTION_MISMATCH"
+
+
+@pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
+def test_proof_contract_obligation_action_layers(patient,fixture_class):
+    value=copy.deepcopy(patient["contract"]);closures,invariants=contract_dependencies(value);predecessors,schema_registry_raw=contract_authorities(patient,value)
+    obligation_ref=next(ref for ref in value["disposition_refs"] if any(str(row.get("source_ref","")).startswith("contract:") for row in json.loads(predecessors[ref["id"]])["items"]))
+    disposition=copy.deepcopy(json.loads(predecessors[obligation_ref["id"]]));schema=json.loads((Path(__file__).parents[1]/"provan/schemas/seed-disposition.v1.json").read_text(encoding="utf-8"));item=next(row for row in disposition["items"] if row["source_ref"]=="contract:intended_outcome")
+    if fixture_class=="near-valid":item["rationale"]="alternate bounded rationale"
+    elif fixture_class=="adversarial":item["action"]="reject"
+    elif fixture_class=="schema-invalid":del disposition["items"]
+    elif fixture_class=="schema-valid-python-invalid":item["action"]="edit";item["edited_value"]="invented replacement"
+    if fixture_class=="schema-invalid":assert_schema_invalid(disposition,schema)
+    else:
+        jsonschema.validate(disposition,schema);raw=canonical_bytes(disposition);predecessors[obligation_ref["id"]]=raw;obligation_ref["sha256"]=sha256_bytes(raw)
+        if fixture_class in {"adversarial","schema-valid-python-invalid"}:
+            with pytest.raises(ProvanError) as exc:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+            assert exc.value.code=="CONTRACT_OBLIGATION_ACTION_MISMATCH"
+        else:validate_contract_serialized(canonical_bytes(value),closures,invariants,predecessors=predecessors,schema_registry_raw=schema_registry_raw)
+
+
+def test_contract_creation_requires_explicit_complete_surface_confirmation(patient):
+    surface=disposition_items(patient["preparation"]["preparation_id"]);rows=[{"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm"} for item in surface["items"]]
+    with pytest.raises(ProvanError) as exc:create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_terms":{}},"fixture-operator",now=FIXED)
+    assert exc.value.code=="CONTRACT_OBLIGATION_ACTION_REQUIRED"
 
 
 @pytest.mark.parametrize("fixture_class",PROOF_CLASSES)
