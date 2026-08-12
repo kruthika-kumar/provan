@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import jsonschema
 
@@ -31,8 +31,9 @@ def require(condition: bool, code: str) -> None:
 
 def resolve_ref(ref: dict) -> bytes:
     raw_path = ref.get("path", "")
-    candidate = Path(raw_path)
-    require(raw_path == candidate.as_posix() and not candidate.is_absolute() and ".." not in candidate.parts, "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
+    portable = PurePosixPath(raw_path)
+    candidate = Path(*portable.parts)
+    require(raw_path == portable.as_posix() and not portable.is_absolute() and not portable.drive and ".." not in portable.parts and not (len(raw_path) >= 2 and raw_path[1] == ":"), "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
     root = ROOT.resolve(strict=True)
     path = ROOT / candidate
     require(path.is_file() and not path.is_symlink(), "SESSION11_SUCCESSOR_REF_MISSING")
