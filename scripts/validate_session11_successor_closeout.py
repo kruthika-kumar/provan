@@ -36,6 +36,12 @@ def resolve_ref(ref: dict) -> bytes:
     require(raw_path == portable.as_posix() and not portable.is_absolute() and not portable.drive and ".." not in portable.parts and not (len(raw_path) >= 2 and raw_path[1] == ":"), "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
     root = ROOT.resolve(strict=True)
     path = ROOT / candidate
+    current = ROOT
+    for part in candidate.parts:
+        current = current / part
+        require(current.exists(), "SESSION11_SUCCESSOR_REF_MISSING")
+        stat = os.lstat(current)
+        require(not current.is_symlink() and not bool(getattr(stat, "st_file_attributes", 0) & 0x400), "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
     require(path.is_file() and not path.is_symlink(), "SESSION11_SUCCESSOR_REF_MISSING")
     resolved = path.resolve(strict=True)
     require(resolved == root or root in resolved.parents, "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
@@ -49,6 +55,7 @@ def validate() -> None:
     binding = load(SUCCESSOR / "implementation_binding.v1.public.json")
     pre = load(SUCCESSOR / "pre_review_proof_manifest.v1.public.json")
     require(binding.get("schema_id") == "provan.session11_implementation_binding.v1", "SESSION11_SUCCESSOR_IMPLEMENTATION_SCHEMA_INVALID")
+    require(binding.get("package_version") == "0.4.0" and binding.get("extension_api_major") == 1 and binding.get("maturity") == "QUALIFIED_BOUNDED" and binding.get("published") is False, "SESSION11_SUCCESSOR_IMPLEMENTATION_POLICY_INVALID")
     jsonschema.validate(pre, load(ROOT / "provan/schemas/session11-proof-manifest.v1.json"))
     require(pre["phase"] == "PRE_REVIEW", "SESSION11_SUCCESSOR_PRE_PHASE_INVALID")
     require(pre["reviewer_outputs_excluded"] is True, "SESSION11_SUCCESSOR_REVIEW_RECURSION")
@@ -84,6 +91,7 @@ def validate() -> None:
     matrix = load(SUCCESSOR / "layer4_claim_matrix.v1.public.json")
     jsonschema.validate(matrix, load(ROOT / "provan/schemas/session11-layer4-matrix.v1.json"))
     require([row["Claim"].split(" ", 1)[0] for row in matrix["claims"]] == [f"G11-{n:02d}" for n in range(1, 88)], "SESSION11_SUCCESSOR_MATRIX_CLAIMS_INVALID")
+    require([row["Claim"].split(" — ", 1)[1] for row in matrix["claims"]] == [row["normative_claim"] for row in claim_registry["claims"]], "SESSION11_SUCCESSOR_MATRIX_WORDING_DRIFT")
     require(all(row["Reviewer result"] == "A:ACCEPTED;B:ACCEPTED" and row["Status"] == "CLOSED" for row in matrix["claims"]), "SESSION11_SUCCESSOR_MATRIX_NOT_CLOSED")
 
     manifest = load(SUCCESSOR / "final_proof_manifest.v1.public.json")
@@ -99,6 +107,7 @@ def validate() -> None:
         "artifacts/session11/successor_closeout/reviewer_receipt_a.v1.public.json",
         "artifacts/session11/successor_closeout/reviewer_receipt_b.v1.public.json",
         "artifacts/session11/successor_closeout/layer4_claim_matrix.v1.public.json",
+        "artifacts/session11/successor_closeout/supersession_note.v1.public.json",
         "artifacts/session11/session12_handoff.v1.public.json",
     }
     require(required_final.issubset({ref["path"] for ref in manifest["entries"]}), "SESSION11_SUCCESSOR_FINAL_REQUIRED_EVIDENCE_MISSING")
@@ -117,6 +126,8 @@ def validate() -> None:
     require(note.get("schema_id") == "provan.session11_successor_closeout_note.v1", "SESSION11_SUCCESSOR_NOTE_SCHEMA_INVALID")
     require(note.get("supersedes_for_current_status") == ["artifacts/session11/closeout.v1.public.json", "artifacts/session11/proofs/final_proof_manifest.v1.public.json"], "SESSION11_SUCCESSOR_NOTE_SCOPE_INVALID")
     historical = note.get("historical_proof_preserved", {})
+    required_historical = {"artifacts/session11/closeout.v1.public.json", "artifacts/session11/proofs/final_proof_manifest.v1.public.json"}
+    require(required_historical == {ref.get("path") for ref in historical.get("references", [])}, "SESSION11_SUCCESSOR_HISTORICAL_PROOF_REFS_INVALID")
     for ref in historical.get("references", []):
         resolve_ref(ref)
     require(note.get("session12_implemented") is False and note.get("session13_implemented") is False, "SESSION11_SUCCESSOR_BOUNDARY_INVALID")

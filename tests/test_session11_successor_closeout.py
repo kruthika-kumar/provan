@@ -44,3 +44,18 @@ def test_successor_final_required_evidence_is_explicit():
     source = (ROOT / "scripts/validate_session11_successor_closeout.py").read_text(encoding="utf-8")
     assert "SESSION11_SUCCESSOR_FINAL_REQUIRED_EVIDENCE_MISSING" in source
     assert "layer4_claim_matrix.v1.public.json" in source
+    assert "supersession_note.v1.public.json" in source
+
+
+def test_successor_reference_rejects_linked_parent(tmp_path, monkeypatch):
+    target = tmp_path / "target"
+    target.mkdir()
+    (target / "proof.json").write_text("{}", encoding="utf-8")
+    link = tmp_path / "linked"
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError:
+        pytest.skip("directory link creation is unavailable")
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+    with pytest.raises(SystemExit, match="SESSION11_SUCCESSOR_REF_PATH_UNSAFE"):
+        MODULE.resolve_ref({"path": "linked/proof.json", "sha256": MODULE.digest(b"{}")})
