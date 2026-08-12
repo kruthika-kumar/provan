@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_proof_support_contract_layers[capability-adversarial]
 EXIT_CODE: 0
 .
-1 passed in 0.15s
+1 passed in 0.14s

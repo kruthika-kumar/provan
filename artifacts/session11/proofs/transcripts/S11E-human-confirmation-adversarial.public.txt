@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_human_confirmation_not_satisfied_by_arbitrary_text
 EXIT_CODE: 0
 .
-1 passed in 4.50s
+1 passed in 5.81s

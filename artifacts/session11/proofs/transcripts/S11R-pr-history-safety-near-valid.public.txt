@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_pr_synthetic_merge_metadata_is_not_candidate_history
 EXIT_CODE: 0
 .
-1 passed in 2.58s
+1 passed in 1.65s

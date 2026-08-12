@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_proof_record_projection_layers[near-valid]
 EXIT_CODE: 0
 .
-1 passed in 3.83s
+1 passed in 4.24s

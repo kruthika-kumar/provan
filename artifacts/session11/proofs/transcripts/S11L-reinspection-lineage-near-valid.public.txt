@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_near_fix_and_unrelated_descendant_do_not_close
 EXIT_CODE: 0
 .
-1 passed in 7.18s
+1 passed in 7.85s

@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session11_acceptance.py::test_record_bundle_identity_is_renderer_independent
 EXIT_CODE: 0
 .
-1 passed in 5.50s
+1 passed in 4.93s
