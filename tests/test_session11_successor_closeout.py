@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-from jsonschema import ValidationError
 
 
 ROOT = Path(__file__).parents[1]
@@ -15,14 +14,12 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
 
-def test_successor_validator_rejects_wrong_review_binding(tmp_path, monkeypatch):
-    successor = tmp_path / "successor_closeout"
-    successor.mkdir()
-    receipt = {"reviewed_commit": "f" * 40}
-    (successor / "reviewer_receipt_a.v1.public.json").write_text(json.dumps(receipt), encoding="utf-8")
-    monkeypatch.setattr(MODULE, "SUCCESSOR", successor)
-    with pytest.raises((SystemExit, KeyError, ValidationError)):
-        MODULE.validate()
+def test_successor_reference_hash_fails_closed(tmp_path, monkeypatch):
+    artifact = tmp_path / "artifact.json"
+    artifact.write_text(json.dumps({"value": "current"}), encoding="utf-8")
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+    with pytest.raises(SystemExit, match="SESSION11_SUCCESSOR_REF_HASH_MISMATCH"):
+        MODULE.resolve_ref({"path": "artifact.json", "sha256": "sha256:" + "f" * 64})
 
 
 def test_successor_root_uses_canonical_lf_bytes():
