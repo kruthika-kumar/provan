@@ -72,6 +72,14 @@ def main() -> None:
     unchanged = subprocess.run(["git", "diff", "--quiet", QUALIFIED_RUNTIME, "HEAD", "--", "provan", "pyproject.toml"], cwd=ROOT)
     if unchanged.returncode:
         raise SystemExit("SESSION11_SUCCESSOR_RUNTIME_CHANGED_FROM_QUALIFIED_WHEEL")
+    write("requalification_replay.v1.public.json", {
+        "schema_id": "provan.session11_successor_requalification.v1",
+        "sensitivity": "PUBLIC_SAFE",
+        "implementation_binding": binding,
+        "result": "IN_PROGRESS",
+        "checks": [],
+        "limitations": ["REQUALIFICATION_NOT_YET_COMPLETE"],
+    })
     checks = [
         run("session11_final", [sys.executable, "scripts/validate_session11.py", "--phase", "final"], public_command=["python", "scripts/validate_session11.py", "--phase", "final"]),
         run("public_leakage", [sys.executable, "scripts/validate_session9_leakage.py"], public_command=["python", "scripts/validate_session9_leakage.py"]),

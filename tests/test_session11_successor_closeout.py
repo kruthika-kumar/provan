@@ -82,6 +82,7 @@ def test_requalification_public_command_ledger_is_self_scanned_and_path_safe():
     assert 'public_command=["python"' in source
     assert '"final_generated_artifact_leakage"' in source
     assert source.count("scripts/validate_session9_leakage.py") >= 3
+    assert '"result": "IN_PROGRESS"' in source
 
 
 def test_final_evidence_requires_current_successor_requalification_set():
