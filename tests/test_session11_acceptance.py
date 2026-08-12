@@ -361,6 +361,12 @@ def test_session11_validator_direct_invocation_imports_runtime():
     assert result.returncode==0 and "--phase" in result.stdout
 
 
+def test_release_gate_uses_supported_explicit_session11_phase():
+    workflow=(Path(__file__).parents[1]/".github/workflows/release-gate.yml").read_text(encoding="utf-8")
+    assert "python scripts/validate_session11.py --phase final" in workflow
+    assert "python scripts/validate_session11.py --phase auto" not in workflow
+
+
 PROOF_CLASSES=("valid","near-valid","adversarial","schema-invalid","schema-valid-python-invalid")
 PROOF_RUNTIME_CLASSES=("valid","near-valid","adversarial")
 
