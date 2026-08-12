@@ -126,10 +126,10 @@ def main() -> None:
         "limitations": ["HISTORICAL_LIFECYCLE_ARTIFACTS_REMAIN_BOUND_TO_ORIGINAL_IMPLEMENTATIONS", "CURRENT_STATUS_DERIVES_FROM_REEXECUTED_GATES_AND_RUNTIME_BYTE_EQUIVALENCE"],
     }
     write("requalification_replay.v1.public.json", replay)
-    final_leakage = run("final_generated_artifact_leakage", [sys.executable, "scripts/validate_session9_leakage.py"], public_command=["python", "scripts/validate_session9_leakage.py"])
+    final_leakage = run("final_generated_artifact_leakage", [sys.executable, "scripts/validate_session11.py", "--phase", "final"], public_command=["python", "scripts/validate_session11.py", "--phase", "final"])
     replay["checks"].append(final_leakage)
     write("requalification_replay.v1.public.json", replay)
-    subprocess.run([sys.executable, "scripts/validate_session9_leakage.py"], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8", errors="strict")
+    subprocess.run([sys.executable, "scripts/validate_session11.py", "--phase", "final"], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8", errors="strict")
     print("SESSION11_SUCCESSOR_REQUALIFIED")
 
 

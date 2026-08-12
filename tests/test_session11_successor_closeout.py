@@ -81,7 +81,7 @@ def test_requalification_public_command_ledger_is_self_scanned_and_path_safe():
     source = (ROOT / "scripts/requalify_session11_successor.py").read_text(encoding="utf-8")
     assert 'public_command=["python"' in source
     assert '"final_generated_artifact_leakage"' in source
-    assert source.count("scripts/validate_session9_leakage.py") >= 3
+    assert source.count('scripts/validate_session11.py", "--phase", "final') >= 3
     assert '"result": "IN_PROGRESS"' in source
 
 
