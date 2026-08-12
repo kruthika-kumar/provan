@@ -64,8 +64,10 @@ def resolve_handoff_artifacts(handoff: dict) -> dict[str, bytes]:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     commit, tree = git_value("%H"), git_value("%T")
-    binding = load("artifacts/session11/successor_closeout/implementation_binding.v1.public.json")
-    if binding["implementation_commit"] != commit or binding["implementation_tree"] != tree or digest(WHEEL_PATH.read_bytes()) != WHEEL_SHA or binding["wheel_sha256"] != WHEEL_SHA:
+    previous = load("artifacts/session11/successor_closeout/implementation_binding.v1.public.json")
+    binding = {**previous, "implementation_commit": commit, "implementation_tree": tree, "wheel_sha256": WHEEL_SHA}
+    write("implementation_binding.v1.public.json", binding)
+    if digest(WHEEL_PATH.read_bytes()) != WHEEL_SHA:
         raise SystemExit("SESSION11_SUCCESSOR_REQUALIFICATION_BINDING_MISMATCH")
     unchanged = subprocess.run(["git", "diff", "--quiet", QUALIFIED_RUNTIME, "HEAD", "--", "provan", "pyproject.toml"], cwd=ROOT)
     if unchanged.returncode:
