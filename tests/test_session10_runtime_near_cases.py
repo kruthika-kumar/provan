@@ -133,8 +133,8 @@ def test_near_forbidden_capability_absence(invariant,forbidden):
 
 
 def test_near_wheel_dependency_boundary():
-    text=(ROOT/"pyproject.toml").read_text(encoding="utf-8");assert 'include = ["provan*"]' in text and 'version = "0.3.0"' in text
-    print("NEAR_VALID_OBSERVED:authoritative_wheel_maturity_and_dependency_boundary:UNPUBLISHED_MAIN_PACKAGE_WITH_PROVAN_ONLY_INCLUDE")
+    text=(ROOT/"pyproject.toml").read_text(encoding="utf-8");assert 'include = ["provan*"]' in text and ('version = "0.3.0"' in text or 'version = "0.4.0"' in text)
+    print("NEAR_VALID_OBSERVED:authoritative_wheel_maturity_and_dependency_boundary:UNPUBLISHED_MAIN_SUCCESSOR_PACKAGE_WITH_PROVAN_ONLY_INCLUDE")
 
 
 def test_near_session9_successor_preservation():

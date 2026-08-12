@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import tarfile
@@ -127,14 +128,32 @@ def _archive_violations(archive_path: Path) -> list[dict]:
     return [{"path":"archive:"+archive_path.name,"error":"ARCHIVE_FORMAT_UNSUPPORTED"}]
 
 
-def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None) -> None:
-    base="09c5fbab239a6dcb87eee3697f25aaff2929111f"; violations=[]
-    history=subprocess.run(["git","rev-list","--reverse",base+"..HEAD"],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout.splitlines()
+def validate_candidate_surfaces(root: Path, archive_paths: list[Path] | None = None,
+                                *, history_base: str | None = None,
+                                history_head: str | None = None,
+                                integration_head: str | None = None) -> None:
+    """Validate publishable lineage separately from an ephemeral PR merge.
+
+    GitHub's pull_request checkout may synthesize a merge commit whose actor
+    metadata is not part of the candidate branch.  Explicit event bindings
+    select the real branch lineage for metadata checks while the integrated
+    checkout tree is still scanned below.  Ordinary branch metadata is never
+    exempted.
+    """
+    fallback="09c5fbab239a6dcb87eee3697f25aaff2929111f"
+    base=history_base or os.environ.get("PROVAN_PUBLICATION_BASE") or fallback
+    if not re.fullmatch(r"[0-9a-f]{40}",base) or set(base)=={"0"}: base=fallback
+    head=history_head or os.environ.get("PROVAN_PUBLICATION_HEAD") or "HEAD"
+    integrated=integration_head or os.environ.get("PROVAN_INTEGRATION_HEAD") or "HEAD"
+    violations=[]
+    history=subprocess.run(["git","rev-list","--reverse",base+".."+head],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout.splitlines()
     for commit in history:
         metadata=subprocess.run(["git","show","-s","--format=%an%n%ae%n%cn%n%ce",commit],cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=True).stdout
         if PRIVATE_PATTERNS["EMAIL_ADDRESS"].search(metadata):
             violations.append({"path":f"commit:{commit}","error":"EMAIL_ADDRESS"})
     commands=[["git","show","--format=","--unified=0",commit] for commit in history]
+    if integrated != head:
+        commands.append(["git","diff","--unified=0",base+".."+integrated])
     commands.extend((["git","diff","--unified=0"],["git","diff","--cached","--unified=0"]))
     for command in commands:
         result=subprocess.run(command,cwd=root,text=True,encoding="utf-8",errors="strict",capture_output=True,check=False); current=""

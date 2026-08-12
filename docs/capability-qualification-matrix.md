@@ -15,4 +15,5 @@
 | Repository mutation/remediation | Prohibited | Permanently unreachable from Community runtime |
 | Qualified repository execution | Not configured | `--allow-exec` is rejected |
 | Session 2 comparison/gallery | Incomplete | Not authorized for claims |
-| Package `0.3.0` public release | Unpublished | No PyPI package, tag, or GitHub release |
+| Session 11 Acceptance lifecycle | QUALIFIED_BOUNDED on unreleased main | Contract, freeze, typed settlement, record, and source-only Reinspection; no verifier or challenge execution |
+| Package `0.4.0` public release | Unpublished | No PyPI package, tag, or GitHub release |

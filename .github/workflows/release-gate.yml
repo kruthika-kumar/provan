@@ -9,6 +9,9 @@ jobs:
     runs-on: windows-latest
     env:
       PYTHONPATH: .
+      PROVAN_PUBLICATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      PROVAN_PUBLICATION_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      PROVAN_INTEGRATION_HEAD: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -24,10 +27,11 @@ jobs:
       - run: python scripts/validate_session9.py --skip-closeout-bindings --wheel dist/*.whl --archive dist/*.tar.gz
       - run: python scripts/validate_session9_correction.py
       - run: python scripts/validate_session9_leakage.py
-      - run: python scripts/validate_session10.py --phase auto
-      - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.3.0-py3-none-any.whl
+      - run: python scripts/validate_session10_successor.py
+      - run: python scripts/validate_session11.py --phase final
+      - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl
       - uses: actions/upload-artifact@v7
         with:
-          name: session10-wheel
-          path: dist/provan_assurance-0.3.0-py3-none-any.whl
+          name: session11-wheel
+          path: dist/provan_assurance-0.4.0-py3-none-any.whl
           if-no-files-found: error
