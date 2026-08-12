@@ -2,10 +2,10 @@
   "schema_id": "provan.session11_reviewer_receipt.v1",
   "reviewer_role": "B",
   "reviewer_mode": "fresh_read_only",
-  "reviewed_commit": "9868f2f448f32246bba2088476b760f01fc3c919",
-  "reviewed_tree": "29f78edf8d9dbe248fddd7e7c3db2847ea63edad",
-  "reviewed_pre_review_root": "sha256:af055f6011a57ff8a5c5dac3a24d8cf62ce0cc79d94460fed6b287848847838f",
-  "wheel_sha256": "sha256:8497f486c4e8d2d4a391f70d4e0561bb090a99802e5369e01881352cbb9b0f89",
+  "reviewed_commit": "187de45b1451d05c559d2aad69222916b326b324",
+  "reviewed_tree": "aeb5d94799663093d7f3141352b8d1ab7decc294",
+  "reviewed_pre_review_root": "sha256:9f4f914b12cf09ce478f804040935b6fcdebc57003d3c1a22b56236be81f09a4",
+  "wheel_sha256": "sha256:e250c509d1676ebb9f1ec066059b3eb770a12a3804666c22a1e65bfad6d89d4f",
   "verdict": "GO",
   "open_p0_count": 0,
   "open_p1_count": 0,
@@ -100,12 +100,12 @@
     {"claim_id": "G11-86", "result": "ACCEPTED"},
     {"claim_id": "G11-87", "result": "ACCEPTED"}
   ],
-  "review_started_at": "2026-08-12T14:10:00Z",
-  "review_finished_at": "2026-08-12T14:15:30.1162949Z",
+  "review_started_at": "2026-08-12T16:47:00Z",
+  "review_finished_at": "2026-08-12T16:55:51.570550Z",
   "identity_limitations": [
     "Reviewer B is an OpenAI Codex subagent and cannot establish an independently verifiable human identity, organisational role, or exact model-build identity beyond the runtime-provided role.",
-    "The audit used local read-only repository, commit, wheel, manifest, proof-registry, handoff, workflow, and validator inspection without external credentials or authority over GitHub, upstream maintainers, owner identity, verifier execution, or challenge execution.",
+    "The audit used local read-only repository, exact commit and tree, authoritative wheel, successor manifest, proof registry, semantic handoff, workflow, validators, requalification ledger, focused tests, and content-addressed binding inspection without external credentials or authority over GitHub, upstream maintainers, owner identity, verifier execution, or challenge execution.",
+    "The exact successor runtime and packaging inputs are unchanged from the qualified authoritative-wheel source; historical real-use artifacts remain historical inputs and are explicitly not relabelled as current evidence.",
     "Directory-link creation was unavailable in the local Windows test environment, so the link adversarial test skipped; Reviewer B independently inspected the component-wise lstat, symlink, Windows reparse-attribute, containment, regular-file, and digest checks."
   ]
 }
-
