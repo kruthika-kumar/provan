@@ -1,0 +1,4 @@
+COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session12_closeout.py::test_proof_reviewer_receipt_layers[valid]
+EXIT_CODE: 0
+.
+1 passed in 0.15s

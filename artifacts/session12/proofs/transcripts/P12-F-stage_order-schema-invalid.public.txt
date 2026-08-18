@@ -2,4 +2,4 @@ COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session12_proof_i
 EXIT_CODE: 0
 PROOF_SCHEMA_ERROR:required-property
 .
-1 passed in 0.36s
+1 passed in 0.34s
