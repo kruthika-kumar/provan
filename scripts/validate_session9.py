@@ -300,6 +300,7 @@ def main() -> int:
         "provan.source_authority_ledger.v1","provan.intent_model.v1","provan.goal_obstacle_model.v1","provan.premortem_analysis.v1",
         "provan.contract_candidate.v1","provan.contract_audit.v1","provan.contract_witness_set.v1","provan.contract_revision_record.v1",
         "provan.contract_readiness.v1","provan.verification_pattern.v1","provan.verification_pattern_selection.v1","provan.model_routing_receipt.v1","provan.session_handoff.v2",
+        "provan.session12_reviewer_receipt.v1","provan.session12_closeout.v1",
     }}
     schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(historical_registry.items())]}
     expected=json.dumps(schema_index,sort_keys=True,indent=2)+"\n"; target=artifacts/"schema_registry.public.json"
