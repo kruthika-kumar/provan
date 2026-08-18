@@ -140,6 +140,11 @@ def validate_runtime_reachability() -> None:
         ("session11_validators.py", "effective_status", "replace"),
         ("session11_validators.py", "validate_contract_serialized", "replace"),
         ("session11_validators.py", "validate_session12_handoff_serialized", "replace"),
+        # Session 12 normalizes public proof reference separators with
+        # str.replace before containment and digest checks. These are not
+        # pathlib.Path.replace calls and cannot mutate the inspected target.
+        ("session12_validators.py", "validate_foundry_run_binding_serialized", "replace"),
+        ("session12_validators.py", "validate_pre_review_manifest_serialized", "replace"),
     }
     observed=set()
     for path in (ROOT / "provan").glob("*.py"):
