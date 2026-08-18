@@ -11,6 +11,7 @@ from provan.canonical import canonical_bytes, sha256_bytes
 from provan.errors import ProvanError
 from provan.session12_validators import (
     validate_generic_absence_receipt_serialized,
+    validate_foundry_run_binding_serialized,
     validate_implementation_binding_serialized,
     validate_pre_review_manifest_serialized,
     validate_projection_serialized,
@@ -37,7 +38,8 @@ def _bundle():
     scopes=("history_delta","working_tree","package","proofs_examples","controlled_ci")
     absence={"schema_id":"provan.session10_generic_absence_receipt.v1","sensitivity":"PUBLIC_SAFE","implementation_commit":binding["implementation_commit"],"implementation_tree":binding["implementation_tree"],"wheel_sha256":binding["wheel_sha256"],"checks":[{"scope":scope,"items_inspected":1,"inventory_digest":"sha256:"+str(index)*64,"generic_violation_count":0} for index,scope in enumerate(scopes,1)],"result":"PRIVATE_PLANNING_AUTHORITY_ABSENT","confidential_fingerprint_known":False}
     summary={"schema_id":"provan.session12_validation_summary.v1","implementation_binding":binding,"authoritative_full_gate":"SUCCESS","target_mutation_detected":False,"execution_available":False,"challenge_available":False,"session13_implemented":False,"checks":[{"label":"full","exit_code":0,"transcript_sha256":"sha256:"+"9"*64}]}
-    artifacts={"a.json":canonical_bytes({"a":1}),"wheel.whl":b"wheel","run.json":canonical_bytes({"run":1}),"projection.json":canonical_bytes(projection),"patterns.json":canonical_bytes({"patterns":1}),"schema.json":schema_raw,"claims.json":claim_raw}
+    run_binding={"schema_id":"provan.foundry_run_binding.v1","sensitivity":"PUBLIC_SAFE","implementation_commit":binding["implementation_commit"],"implementation_tree":binding["implementation_tree"],"run_id":projection["run_id"],"run_sha256":"sha256:"+"7"*64,"case_id":projection["case_id"],"candidate":{"candidate_digest":projection["candidate_digest"]},"owner_projection_ref":{"path":"projection.json","sha256":sha256_bytes(canonical_bytes(projection))},"stage_digests":[{"name":f"stage-{i}","sha256":"sha256:"+str(i)*64} for i in range(1,9)],"internal_state":"PRIVATE_LOCAL_STATE_RETAINED","bootstrap_dogfood":True,"execution_available":False,"challenge_available":False,"limitations":["INTERNAL"]}
+    artifacts={"a.json":canonical_bytes({"a":1}),"wheel.whl":b"wheel","run.json":canonical_bytes(run_binding),"projection.json":canonical_bytes(projection),"patterns.json":canonical_bytes({"patterns":1}),"schema.json":schema_raw,"claims.json":claim_raw}
     entries=[{"path":path,"sha256":sha256_bytes(raw)} for path,raw in artifacts.items()]
     manifest={"schema_id":"provan.session11_proof_manifest.v1","phase":"PRE_REVIEW","implementation_commit":binding["implementation_commit"],"implementation_tree":binding["implementation_tree"],"wheel_sha256":binding["wheel_sha256"],"reviewed_pre_review_root":None,"entries":entries,"proof_root":sha256_bytes(canonical_bytes(entries)),"reviewer_outputs_excluded":True}
     proof_registry={"entries":[{"proof_id":"P12-valid"}]};proof_raw=canonical_bytes(proof_registry)

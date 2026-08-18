@@ -117,7 +117,8 @@ def validate_adjudication_projection_serialized(raw: bytes) -> dict[str,Any]:
     if any(not str(item).startswith("sha256:") for item in value.get("authority_bindings",{}).values()):raise ProvanError("SESSION12_ADJUDICATION_BINDING_INVALID","bindings")
     live=value.get("live_evaluation",{});arms=live.get("arms",[])
     if not COMMIT.fullmatch(str(live.get("implementation_commit",""))) or live.get("calls")!=7 or not (0<=live.get("estimated_cost_usd",76)<=live.get("total_session_estimated_cost_usd",76)<=live.get("hard_cap_usd",0)==75):raise ProvanError("SESSION12_LIVE_EVALUATION_BINDING_INVALID","live")
-    if [row.get("arm") for row in arms]!=["A","B","C","D"] or [row.get("label") for row in arms]!=["FRONTIER_PROMPT_BASELINE","FRONTIER_PROMPT_BASELINE","FOUNDRY_STANDARD","FOUNDRY_DEEP"]:raise ProvanError("SESSION12_LIVE_ARM_LABEL_INVALID","arms")
+    if [row.get("arm") for row in arms]!=["A","B","C","D"] or [row.get("label") for row in arms]!=["STRONG_CURRENT_FRONTIER_PROMPT_BASELINE","STRONG_CURRENT_FRONTIER_PROMPT_BASELINE","FOUNDRY_STANDARD","FOUNDRY_DEEP"]:raise ProvanError("SESSION12_LIVE_ARM_LABEL_INVALID","arms")
+    if [row.get("reasoning") for row in arms]!=["high","xhigh","high","xhigh"]:raise ProvanError("SESSION12_LIVE_ARM_REASONING_INVALID","arms")
     if any(row.get("run_eligibility")!="ELIGIBLE" or row.get("contract_readiness")!="READY_WITH_MATERIAL_QUESTIONS" for row in arms[2:]):raise ProvanError("SESSION12_LIVE_FOUNDRY_STATUS_INVALID","arms")
     if live.get("provider",{})!={"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.6-sol","tier_2_reasoning":"high","tier_3_reasoning":"xhigh","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_LIVE_PROVIDER_BINDING_INVALID","provider")
     legacy=value.get("pre_steering_legacy_model_run",{})
@@ -170,8 +171,20 @@ def validate_real_use_qualification_serialized(raw: bytes, binding_raw: bytes, a
     if value.get("evaluation_driven_adjudication_change") is not False or value.get("coding_harness_sanity", {}).get("claim_scope") != "SINGLE_BLIND_SANITY_NOT_HEADLINE_COMPARISON":
         raise ProvanError("SESSION12_REAL_USE_AUTHORITY_INVALID", "qualification")
     if value.get("outcome_bearing_runs_completed"):
-        if not value.get("arms") or any(row.get("label") not in {"FRONTIER_PROMPT_BASELINE", "FOUNDRY_STANDARD", "FOUNDRY_DEEP"} for row in value["arms"]):
+        if not value.get("arms") or any(row.get("label") not in {"STRONG_CURRENT_FRONTIER_PROMPT_BASELINE", "FOUNDRY_STANDARD", "FOUNDRY_DEEP"} for row in value["arms"]):
             raise ProvanError("SESSION12_REAL_USE_ARM_BINDING_INVALID", "arms")
+    return value
+
+
+def validate_foundry_run_binding_serialized(raw: bytes, binding_raw: bytes, projection_raw: bytes) -> dict[str, Any]:
+    value=_load(raw,"provan.foundry_run_binding.v1");binding=json.loads(binding_raw);projection=validate_projection_serialized(projection_raw)
+    if any(value.get(key)!=binding.get(key) for key in ("implementation_commit","implementation_tree")):raise ProvanError("SESSION12_DOGFOOD_IMPLEMENTATION_BINDING_MISMATCH","run")
+    if value.get("run_id")!=projection.get("run_id") or value.get("case_id")!=projection.get("case_id") or value.get("candidate",{}).get("candidate_digest")!=projection.get("candidate_digest"):raise ProvanError("SESSION12_DOGFOOD_CASE_BINDING_MISMATCH","run")
+    projection_ref=value.get("owner_projection_ref",{});projection_path=str(projection_ref.get("path","" )).replace("\\","/")
+    if not projection_path or projection_path.startswith("/") or ".." in projection_path.split("/") or projection_ref.get("sha256")!=sha256_bytes(projection_raw) or value.get("internal_state")!="PRIVATE_LOCAL_STATE_RETAINED" or value.get("bootstrap_dogfood") is not True:raise ProvanError("SESSION12_DOGFOOD_PROJECTION_BINDING_MISMATCH","run")
+    stages=value.get("stage_digests",[])
+    if len(stages)!=len({row.get("name") for row in stages}) or any(not SHA.fullmatch(str(row.get("sha256",""))) for row in stages):raise ProvanError("SESSION12_DOGFOOD_STAGE_BINDING_INVALID","run")
+    if value.get("execution_available") is not False or value.get("challenge_available") is not False:raise ProvanError("SESSION12_DOGFOOD_CAPABILITY_INVALID","run")
     return value
 
 
@@ -202,6 +215,7 @@ def validate_session13_handoff_serialized(raw: bytes, artifacts: dict[str, bytes
         reference = value.get(name, {}); raw_artifact = artifacts.get(reference.get("path"))
         if raw_artifact is None or sha256_bytes(raw_artifact) != reference.get("sha256"):
             raise ProvanError("SESSION13_HANDOFF_ARTIFACT_UNRESOLVED", name)
+    validate_foundry_run_binding_serialized(artifacts[value["foundry_run"]["path"]],binding_raw,artifacts[value["owner_projection"]["path"]])
     if value.get("proof_root") != sha256_bytes(canonical_bytes(registry.get("entries", []))) or len(value.get("session13_prerequisites", [])) < 5 or not value.get("limitations"):
         raise ProvanError("SESSION13_HANDOFF_SEMANTIC_INCOMPLETE", "handoff")
     if value.get("mode_qualification") != {"standard": binding["standard_maturity"], "deep": binding["deep_maturity"]}:

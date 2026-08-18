@@ -291,7 +291,7 @@ def main() -> int:
         "provan.owner_decision.v1","provan.external_change_receipt.v1","provan.reinspection_record.v1","provan.session11_proof_registry.v1",
         "provan.session11_layer4_matrix.v1","provan.session11_proof_manifest.v1","provan.session11_reviewer_receipt.v1",
         "provan.session11_closeout.v1","provan.session12_handoff.v1",
-        "provan.foundry_acceptance_projection.v1","provan.contract_foundry_run.v1","provan.verification_pattern_library.v1","provan.session12_implementation_binding.v1","provan.foundry_real_use_qualification.v1",
+        "provan.foundry_acceptance_projection.v1","provan.contract_foundry_run.v1","provan.foundry_run_binding.v1","provan.verification_pattern_library.v1","provan.session12_implementation_binding.v1","provan.foundry_real_use_qualification.v1",
         "provan.source_authority_ledger.v1","provan.intent_model.v1","provan.goal_obstacle_model.v1","provan.premortem_analysis.v1",
         "provan.contract_candidate.v1","provan.contract_audit.v1","provan.contract_witness_set.v1","provan.contract_revision_record.v1",
         "provan.contract_readiness.v1","provan.verification_pattern.v1","provan.verification_pattern_selection.v1","provan.model_routing_receipt.v1","provan.session_handoff.v2",

@@ -74,8 +74,9 @@ def pre_review(args: argparse.Namespace) -> dict:
     proof_registry = json.loads((PROOFS / "proof_registry.v1.public.json").read_bytes())
     proof_family_root = sha256_bytes(canonical_bytes(proof_registry["entries"]))
     qualification = json.loads((OUT / "real_use/qualification.v1.public.json").read_bytes())
-    run_ref = qualification["final_tree_run"]
-    projection_ref = qualification["owner_projection"]
+    dogfood = next(row for row in qualification["cases"] if row.get("case_id")=="session12-final-dogfood")
+    run_ref = dogfood["run_binding"]
+    projection_ref = dogfood["owner_projection"]
     handoff = {
         "schema_id": "provan.session_handoff.v2", "session": 12,
         "implementation_binding": bound,
@@ -97,6 +98,7 @@ def pre_review(args: argparse.Namespace) -> dict:
         "artifacts/session12/authority/claim_registry.v1.public.json",
         "artifacts/session12/authority/work_order.v1.public.json",
         "artifacts/session12/authority/object_classification.v1.public.json",
+        "artifacts/session12/authority/model_steering_correction.v1.public.json",
         "artifacts/session12/schema_registry.v1.public.json",
         "artifacts/session12/public/verification_pattern_library.v1.public.json",
         "artifacts/session12/public/routing_policy.v1.public.json",
@@ -104,6 +106,8 @@ def pre_review(args: argparse.Namespace) -> dict:
         "artifacts/session12/public/model_egress_allowlist.v1.public.json",
         "artifacts/session12/public/adjudication_projection.v1.public.json",
         "artifacts/session12/real_use/qualification.v1.public.json",
+        "artifacts/session12/real_use/final_dogfood/foundry_run_binding.v1.public.json",
+        "artifacts/session12/real_use/final_dogfood/foundry_acceptance_projection.v1.public.json",
         "artifacts/session12/proofs/generic_absence_receipt.v1.public.json",
         "artifacts/session12/proofs/validation_summary.v1.public.json",
         "artifacts/session12/proofs/proof_registry.v1.public.json",

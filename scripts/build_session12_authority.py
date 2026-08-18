@@ -38,6 +38,7 @@ TOPICS = [
     "pre-steering GPT-5.2 runs preserved as non-qualifying legacy sensitivity evidence",
     "current semantic qualification pinned to GPT-5.6 Sol with role-appropriate reasoning",
     "paired comparator arms use the same current strong model and disclose compute differences",
+    "public-safe final-dogfood run binding resolves the retained internal canonical run without publishing it",
 ]
 
 
@@ -67,6 +68,7 @@ def main() -> int:
             {"object": "session_handoff_v2", "classification": "PUBLIC_CANONICAL", "reason": "the inherited Session 12 handoff cannot bind Foundry run, projection, pattern library, mode qualification, or Session 13 prerequisites"},
             {"object": "session12_implementation_binding", "classification": "PUBLIC_CANONICAL", "reason": "the inherited binding cannot represent separate Standard and Deep Gate 12 maturity alongside the unpublished 0.5.0 package"},
             {"object": "foundry_real_use_qualification", "classification": "PUBLIC_CANONICAL", "reason": "the inherited real-use contract cannot bind multiple Foundry modes, adjudication root, control roles, blind boundaries, and harness-label limitations"},
+            {"object": "foundry_run_binding", "classification": "PUBLIC_CANONICAL", "reason": "the internal run descriptor is intentionally non-public while Session 13 requires an independently resolvable digest/candidate/stage binding"},
             {"object": "pre_review_proof_manifest", "classification": "REUSE_EXISTING", "reason": "the Session 11 non-recursive proof-manifest semantics match without redesign"},
         ],
         "new_public_schema_rule": "EXPLICIT_SEMANTIC_INSUFFICIENCY_REQUIRED",
