@@ -53,7 +53,7 @@ def test_proof_session12_run_layers(tmp_path:Path,monkeypatch:pytest.MonkeyPatch
         elif invariant=="readiness_eligibility":value["contract_readiness"]="READY_FOR_OWNER_CONFIRMATION"
         elif invariant=="stage_order":value["stages"]=list(reversed(value["stages"]))
         elif invariant=="router":value["routing_receipt"]["tier"]=3
-        elif invariant=="provider_binding":value["provider_receipts"]=[{"provider":"openai-responses-primary","origin":"https://example.invalid","model":"gpt-5.2","kind":"configured_provider_unavailable","semantic_qualification":False,"calls":0,"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}]
+        elif invariant=="provider_binding":value["provider_receipts"]=[{"provider":"openai-responses-primary","origin":"https://example.invalid","model":"gpt-5.6-sol","kind":"configured_provider_unavailable","semantic_qualification":False,"calls":0,"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}]
         elif invariant=="spend_cap":value["spend"]["spent"]=76
         elif invariant=="stage_artifacts":_replace_artifact(value,deps,"contract_candidate",lambda row:row.update({"proposed_terms":{"invented":True}}))
         elif invariant=="pattern_selection":_replace_artifact(value,deps,"pattern_selection",lambda row:row.update({"execution_implied":True}))
@@ -85,7 +85,7 @@ def test_proof_session12_public_contract_layers(invariant:str,fixture_class:str)
     if fixture_class=="near-valid":pass
     elif fixture_class=="schema-invalid":del value["schema_id"]
     elif fixture_class in {"adversarial","schema-valid-python-invalid"}:
-        if invariant=="work_order":value["provider_pin"]["model"]="dynamic-model"
+        if invariant=="work_order":value["provider_pin"]["tier_2_model"]="dynamic-model"
         elif invariant=="claim_registry":value["claims"][0]["normative_claim"]="weakened"
         elif invariant=="pattern_library":value["patterns"]=value["patterns"][:-1]
         elif invariant=="adjudication":value["case_summary"]["reserve_cases"]=0

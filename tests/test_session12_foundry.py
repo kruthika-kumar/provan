@@ -61,12 +61,12 @@ def test_provider_identity_is_allowlisted_and_pinned(tmp_path: Path,monkeypatch:
     with pytest.raises(ProvanError,match="FOUNDRY_MODEL_EGRESS_NOT_AUTHORIZED"):foundry(brief_id=brief["brief_id"],source_manifest=_manifest(tmp_path),provider_id="openai-responses-primary")
     tier_zero={"risk":"low","ambiguity":"low","blast_radius":"bounded","reversibility":"easy","oracle":"adequate","actor_autonomy":"low"}
     run,_=foundry(brief_id=brief["brief_id"],source_manifest=_manifest(tmp_path,tier_zero),provider_id="openai-responses-primary")
-    receipt=run["provider_receipts"][0];assert receipt["origin"]=="https://api.openai.com" and receipt["model"]=="gpt-5.2" and receipt["provider_retention"]=="PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED" and receipt["calls"]==0
+    receipt=run["provider_receipts"][0];assert receipt["origin"]=="https://api.openai.com" and receipt["model"]=="gpt-5.6-sol" and receipt["provider_retention"]=="PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED" and receipt["calls"]==0
 
 
 def test_frozen_public_transport_spy_receives_only_envelope_semantics(monkeypatch: pytest.MonkeyPatch):
     content="public fixture intent";digest=sha256_bytes(content.encode("utf-8"));monkeypatch.setitem(FROZEN_PUBLIC_MODEL_EGRESS,"fixture-public",(digest,))
-    provider=ModelProvider("openai-responses-primary","gpt-5.2","pinned-work-order-v1","https://api.openai.com")
+    provider=ModelProvider("openai-responses-primary","gpt-5.6-sol","pinned-work-order-v2","https://api.openai.com","high")
     envelope=build_envelope(case_id="sha256:"+"1"*64,candidate_digest="sha256:"+"2"*64,provider=provider,instructions="Return bounded proposals.",blocks=[{"category":"blind_intent","content":content}])
     requests=[]
     class Response:
@@ -77,12 +77,12 @@ def test_frozen_public_transport_spy_receives_only_envelope_semantics(monkeypatc
     class Opener:
         def open(self,request,timeout):
             requests.append(request)
-            if request.method=="GET":return Response(b'{"id":"gpt-5.2"}')
+            if request.method=="GET":return Response(b'{"id":"gpt-5.6-sol"}')
             result=json.dumps({"model_reviewed_implications":["bounded"],"unresolved":[]},separators=(",",":"));wire=json.dumps({"output":[{"type":"message","content":[{"type":"output_text","text":result}]}],"usage":{"input_tokens":10,"output_tokens":4}},separators=(",",":")).encode();return Response(wire)
     monkeypatch.setattr("urllib.request.build_opener",lambda *args:Opener())
     result,receipt=invoke_frozen_public_openai_responses(provider,envelope,"not-a-real-key",{"case_id":"fixture-public","classification":"PUBLIC_SAFE","operator_confirmed":True})
     assert result=={"model_reviewed_implications":["bounded"],"unresolved":[]} and receipt["calls"]==1
-    body=json.loads(requests[1].data);assert body["store"] is False and body["background"] is False and "previous_response_id" not in body
+    body=json.loads(requests[1].data);assert body["store"] is False and body["background"] is False and body["reasoning"]=={"effort":"high","context":"current_turn"} and "previous_response_id" not in body
     semantic=json.loads(body["input"]);assert semantic=={"instructions":envelope["instructions"],"selected_blocks":envelope["selected_blocks"],"permitted_output_classes":envelope["permitted_output_classes"]}
 
 

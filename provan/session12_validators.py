@@ -42,7 +42,10 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
     if len(receipts)>1:raise ProvanError("FOUNDRY_PROVIDER_RECEIPT_INVALID","multiple providers")
     if receipts:
         receipt=receipts[0];config=PROVIDERS.get(receipt.get("provider"))
-        if config is None or receipt.get("origin")!=config["origin"] or receipt.get("model")!=config["model"] or receipt.get("store_requested")!=config["store_requested"] or receipt.get("provider_retention")!=config["retention"]:raise ProvanError("FOUNDRY_PROVIDER_BINDING_INVALID",str(receipt.get("provider")))
+        expected_model = None if config is None else (config.get("model") or (config["tier_1_model"] if tier==1 else config["tier_2_3_model"]))
+        if config is None or receipt.get("origin")!=config["origin"] or receipt.get("model")!=expected_model or receipt.get("store_requested")!=config["store_requested"] or receipt.get("provider_retention")!=config["retention"]:raise ProvanError("FOUNDRY_PROVIDER_BINDING_INVALID",str(receipt.get("provider")))
+        expected_effort = "xhigh" if value["depth"]=="deep" else ("medium" if tier==1 else "high")
+        if receipt.get("semantic_qualification") is True and any(row.get("model")!=expected_model or row.get("reasoning_effort")!=expected_effort or row.get("reasoning_context")!="current_turn" or row.get("previous_response_id") is not None or row.get("background") is not False for row in receipt.get("usage_receipts",[])):raise ProvanError("FOUNDRY_MODEL_EXECUTION_POLICY_INVALID","stateless reasoning")
         if receipt.get("provider")=="scripted-test" and receipt.get("semantic_qualification") is not False:raise ProvanError("FOUNDRY_SCRIPTED_PROVIDER_QUALIFICATION_FORBIDDEN","scripted-test")
     if value["spend"].get("currency")!="USD" or value["spend"].get("hard_cap")!=75 or value["spend"].get("spent",0)+value["spend"].get("in_flight",0)>75:raise ProvanError("FOUNDRY_SPEND_CAP_INVALID","spend")
     if required_calls and value["run_eligibility"]=="ELIGIBLE" and (not receipts or receipts[0].get("calls")!=required_calls or receipts[0].get("semantic_qualification") is not True):raise ProvanError("FOUNDRY_REQUIRED_ROLE_NOT_QUALIFIED","provider")
@@ -64,8 +67,8 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
             if envelope_raw is None or sha256_bytes(envelope_raw)!=ref.get("sha256"):raise ProvanError("FOUNDRY_MODEL_ENVELOPE_BINDING_MISMATCH",str(ref.get("id")))
             envelope=_load(envelope_raw,"provan.model_input_envelope.v1")
             if envelope.get("envelope_id")!=ref.get("id") or envelope.get("case_id")!=value["case_id"] or envelope.get("candidate_digest")!=value["candidate"]["candidate_digest"]:raise ProvanError("FOUNDRY_MODEL_ENVELOPE_SEMANTICS_INVALID",str(ref.get("id")))
-            config=PROVIDERS.get(envelope.get("provider"));expected_prompt={"foundry-deep-path-a":PUBLIC_PROMPTS["blind_intent"]+"\n\n"+PUBLIC_PROMPTS["contract_candidate"]+"\n\n"+PUBLIC_PROMPTS["output_protocol"],"foundry-deep-path-b":PUBLIC_PROMPTS["blind_intent"]+"\n\n"+PUBLIC_PROMPTS["adversarial_critic"]+"\n\n"+PUBLIC_PROMPTS["output_protocol"]}.get(envelope.get("prompt_id"))
-            if config is None or envelope.get("model")!=config["model"] or expected_prompt is None or envelope.get("instructions")!=expected_prompt or any(row.get("sha256")!=sha256_bytes(str(row.get("content","")).encode("utf-8")) for row in envelope.get("selected_blocks",[])):raise ProvanError("FOUNDRY_MODEL_ENVELOPE_SEMANTICS_INVALID",str(ref.get("id")))
+            config=PROVIDERS.get(envelope.get("provider"));expected_prompt={"foundry-deep-path-a":PUBLIC_PROMPTS["blind_intent"]+"\n\n"+PUBLIC_PROMPTS["contract_candidate"]+"\n\n"+PUBLIC_PROMPTS["output_protocol"],"foundry-deep-path-b":PUBLIC_PROMPTS["blind_intent"]+"\n\n"+PUBLIC_PROMPTS["adversarial_critic"]+"\n\n"+PUBLIC_PROMPTS["output_protocol"]}.get(envelope.get("prompt_id"));expected_model=None if config is None else (config.get("model") or (config["tier_1_model"] if tier==1 else config["tier_2_3_model"]))
+            if config is None or envelope.get("model")!=expected_model or expected_prompt is None or envelope.get("instructions")!=expected_prompt or any(row.get("sha256")!=sha256_bytes(str(row.get("content","")).encode("utf-8")) for row in envelope.get("selected_blocks",[])):raise ProvanError("FOUNDRY_MODEL_ENVELOPE_SEMANTICS_INVALID",str(ref.get("id")))
         for path in value["blind_paths"]:
             if path.get("model_envelope_ref") not in envelope_refs:raise ProvanError("FOUNDRY_MODEL_ENVELOPE_PATH_MISMATCH",path.get("path","?"))
         for name in required:
@@ -113,10 +116,12 @@ def validate_adjudication_projection_serialized(raw: bytes) -> dict[str,Any]:
     if not value.get("independence",{}).get("review_completed_before_outcome_runs") or not value["independence"].get("evaluation_driven_changes_invalidate_comparisons"):raise ProvanError("SESSION12_ADJUDICATION_ORDER_INVALID","independence")
     if any(not str(item).startswith("sha256:") for item in value.get("authority_bindings",{}).values()):raise ProvanError("SESSION12_ADJUDICATION_BINDING_INVALID","bindings")
     live=value.get("live_evaluation",{});arms=live.get("arms",[])
-    if not COMMIT.fullmatch(str(live.get("implementation_commit",""))) or live.get("calls")!=7 or not (0<=live.get("estimated_cost_usd",76)<=live.get("hard_cap_usd",0)==75):raise ProvanError("SESSION12_LIVE_EVALUATION_BINDING_INVALID","live")
+    if not COMMIT.fullmatch(str(live.get("implementation_commit",""))) or live.get("calls")!=7 or not (0<=live.get("estimated_cost_usd",76)<=live.get("total_session_estimated_cost_usd",76)<=live.get("hard_cap_usd",0)==75):raise ProvanError("SESSION12_LIVE_EVALUATION_BINDING_INVALID","live")
     if [row.get("arm") for row in arms]!=["A","B","C","D"] or [row.get("label") for row in arms]!=["FRONTIER_PROMPT_BASELINE","FRONTIER_PROMPT_BASELINE","FOUNDRY_STANDARD","FOUNDRY_DEEP"]:raise ProvanError("SESSION12_LIVE_ARM_LABEL_INVALID","arms")
     if any(row.get("run_eligibility")!="ELIGIBLE" or row.get("contract_readiness")!="READY_WITH_MATERIAL_QUESTIONS" for row in arms[2:]):raise ProvanError("SESSION12_LIVE_FOUNDRY_STATUS_INVALID","arms")
-    if live.get("provider",{})!={"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.2","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_LIVE_PROVIDER_BINDING_INVALID","provider")
+    if live.get("provider",{})!={"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.6-sol","tier_2_reasoning":"high","tier_3_reasoning":"xhigh","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_LIVE_PROVIDER_BINDING_INVALID","provider")
+    legacy=value.get("pre_steering_legacy_model_run",{})
+    if legacy.get("model")!="gpt-5.2" or legacy.get("calls")!=7 or legacy.get("classification")!="PRE_STEERING_LEGACY_MODEL_RUN" or legacy.get("eligible_for_final_semantic_qualification") is not False or legacy.get("eligible_for_headline_arms_comparison") is not False or legacy.get("eligible_as_preserved_sensitivity_development_evidence") is not True:raise ProvanError("SESSION12_LEGACY_MODEL_CLASSIFICATION_INVALID","legacy")
     return value
 
 
@@ -124,8 +129,11 @@ def validate_work_order_serialized(raw:bytes)->dict[str,Any]:
     value=_load(raw,"provan.session12_work_order.v1");boundaries=value.get("boundaries",{});provider=value.get("provider_pin",{})
     if value.get("baseline_commit")!="6c1006c7fe546805aaefd0bc2b47a40317c19c88" or value.get("package_version_expected")!="0.5.0" or value.get("extension_api_major")!=1:raise ProvanError("SESSION12_START_AUTHORITY_INVALID","baseline")
     if boundaries!={"source_only":True,"target_read_only":True,"execution_available":False,"challenge_available":False,"session13_implemented":False,"private_planning_authority":"EXTERNAL_NOT_COPIED"}:raise ProvanError("SESSION12_BOUNDARY_INVALID","boundaries")
-    if provider!={"provider_id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.2","availability_endpoint_use":"VALIDATION_ONLY_NOT_SELECTION","store_requested":False,"retention":"NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_PROVIDER_PIN_INVALID","provider")
-    if value.get("budget")!={"currency":"USD","hard_cap":75} or value.get("qualification")!={"development":"IMPLEMENTED_UNQUALIFIED","gate_only_promotion":True}:raise ProvanError("SESSION12_WORK_ORDER_POLICY_INVALID","policy")
+    expected_provider={"provider_id":"openai-responses-primary","origin":"https://api.openai.com","tier_1_model":"gpt-5.6-luna","tier_1_reasoning":"medium","tier_2_model":"gpt-5.6-sol","tier_2_reasoning":"high","tier_3_model":"gpt-5.6-sol","tier_3_reasoning":"xhigh","availability_endpoint_use":"VALIDATION_ONLY_NOT_SELECTION","store_requested":False,"retention":"NOT_ZERO_OR_ESTABLISHED","stateless":True}
+    if provider!=expected_provider:raise ProvanError("SESSION12_PROVIDER_PIN_INVALID","provider")
+    if value.get("budget")!={"currency":"USD","hard_cap":75,"legacy_spend_counted":True} or value.get("qualification")!={"development":"IMPLEMENTED_UNQUALIFIED","gate_only_promotion":True}:raise ProvanError("SESSION12_WORK_ORDER_POLICY_INVALID","policy")
+    legacy=value.get("legacy_model_policy",{})
+    if legacy!={"model":"gpt-5.2","classification":"PRE_STEERING_LEGACY_MODEL_RUN","eligible_for_final_semantic_qualification":False,"eligible_for_headline_comparison":False,"eligible_as_preserved_sensitivity_development_evidence":True}:raise ProvanError("SESSION12_LEGACY_MODEL_POLICY_INVALID","legacy")
     return value
 
 
@@ -133,7 +141,8 @@ def validate_model_egress_allowlist_serialized(raw:bytes)->dict[str,Any]:
     value=_load(raw,"provan.foundry_model_egress_allowlist.v1")
     expected=[{"case_id":case_id,"selected_source_digests":list(digests)} for case_id,digests in sorted(FROZEN_PUBLIC_MODEL_EGRESS.items())]
     if value.get("cases")!=expected or value.get("arbitrary_manifest_egress") is not False or value.get("operator_confirmation_required") is not True:raise ProvanError("FOUNDRY_MODEL_EGRESS_ALLOWLIST_INVALID","cases")
-    if value.get("provider")!="openai-responses-primary" or value.get("origin")!="https://api.openai.com" or value.get("model")!="gpt-5.2" or value.get("store_requested") is not False or value.get("provider_retention")!="PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED":raise ProvanError("FOUNDRY_MODEL_EGRESS_PROVIDER_INVALID","provider")
+    models=[{"model":"gpt-5.6-luna","eligible_tiers":[1],"reasoning":["medium"]},{"model":"gpt-5.6-sol","eligible_tiers":[2,3],"reasoning":["high","xhigh"]}]
+    if value.get("provider")!="openai-responses-primary" or value.get("origin")!="https://api.openai.com" or value.get("models")!=models or value.get("store_requested") is not False or value.get("provider_retention")!="PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED":raise ProvanError("FOUNDRY_MODEL_EGRESS_PROVIDER_INVALID","provider")
     return value
 
 

@@ -35,6 +35,9 @@ TOPICS = [
     "authoritative isolated wheel", "candidate-build output isolation", "fresh-install site-packages origin", "nonrecursive pre-review root",
     "claim-source and proof binding", "substantive Session 13 handoff", "execution_available false", "challenge_available false",
     "model egress limited to an exact operator-confirmed PUBLIC_SAFE source digest closure",
+    "pre-steering GPT-5.2 runs preserved as non-qualifying legacy sensitivity evidence",
+    "current semantic qualification pinned to GPT-5.6 Sol with role-appropriate reasoning",
+    "paired comparator arms use the same current strong model and disclose compute differences",
 ]
 
 
@@ -68,11 +71,13 @@ def main() -> int:
         ],
         "new_public_schema_rule": "EXPLICIT_SEMANTIC_INSUFFICIENCY_REQUIRED",
     }
-    work_order={"schema_id":"provan.session12_work_order.v1","sensitivity":"PUBLIC_SAFE","status":"APPROVED_FOR_EXECUTION","baseline_commit":"6c1006c7fe546805aaefd0bc2b47a40317c19c88","package_version_expected":"0.5.0","extension_api_major":1,"boundaries":{"source_only":True,"target_read_only":True,"execution_available":False,"challenge_available":False,"session13_implemented":False,"private_planning_authority":"EXTERNAL_NOT_COPIED"},"qualification":{"development":"IMPLEMENTED_UNQUALIFIED","gate_only_promotion":True},"provider_pin":{"provider_id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.2","availability_endpoint_use":"VALIDATION_ONLY_NOT_SELECTION","store_requested":False,"retention":"NOT_ZERO_OR_ESTABLISHED"},"budget":{"currency":"USD","hard_cap":75},"public_case_categories":["low-risk-control","verification-surface-control","consequential-multi-issue","internal-dogfood"],"limitations":["NO_RUNTIME_VERIFICATION","NO_CHALLENGE_EXECUTION","UNPUBLISHED_PACKAGE"]}
+    work_order={"schema_id":"provan.session12_work_order.v1","sensitivity":"PUBLIC_SAFE","status":"APPROVED_FOR_EXECUTION_WITH_MODEL_STEERING","baseline_commit":"6c1006c7fe546805aaefd0bc2b47a40317c19c88","package_version_expected":"0.5.0","extension_api_major":1,"boundaries":{"source_only":True,"target_read_only":True,"execution_available":False,"challenge_available":False,"session13_implemented":False,"private_planning_authority":"EXTERNAL_NOT_COPIED"},"qualification":{"development":"IMPLEMENTED_UNQUALIFIED","gate_only_promotion":True},"provider_pin":{"provider_id":"openai-responses-primary","origin":"https://api.openai.com","tier_1_model":"gpt-5.6-luna","tier_1_reasoning":"medium","tier_2_model":"gpt-5.6-sol","tier_2_reasoning":"high","tier_3_model":"gpt-5.6-sol","tier_3_reasoning":"xhigh","availability_endpoint_use":"VALIDATION_ONLY_NOT_SELECTION","store_requested":False,"retention":"NOT_ZERO_OR_ESTABLISHED","stateless":True},"legacy_model_policy":{"model":"gpt-5.2","classification":"PRE_STEERING_LEGACY_MODEL_RUN","eligible_for_final_semantic_qualification":False,"eligible_for_headline_comparison":False,"eligible_as_preserved_sensitivity_development_evidence":True},"budget":{"currency":"USD","hard_cap":75,"legacy_spend_counted":True},"public_case_categories":["low-risk-control","verification-surface-control","consequential-multi-issue","internal-dogfood"],"limitations":["NO_RUNTIME_VERIFICATION","NO_CHALLENGE_EXECUTION","UNPUBLISHED_PACKAGE","SAME_MODEL_FAMILY_DOES_NOT_ESTABLISH_PROVIDER_INDEPENDENCE"]}
+    steering={"schema_id":"provan.session12_model_steering_correction.v1","sensitivity":"PUBLIC_SAFE","status":"APPLIED_BEFORE_FURTHER_OUTCOME_BEARING_CALLS","legacy":{"model":"gpt-5.2","calls":7,"classification":"PRE_STEERING_LEGACY_MODEL_RUN","eligible_for_final_semantic_qualification":False,"eligible_for_headline_arms_comparison":False,"eligible_as_preserved_sensitivity_development_evidence":True,"exact_private_inputs_outputs_receipts_preserved":True},"affected_obligations":["click-semantic-control","arm-a-frontier-prompt-baseline","arm-b-iterated-frontier-prompt-baseline","foundry-standard","foundry-deep"],"corrected":{"tier_1":{"model":"gpt-5.6-luna","reasoning":"medium","qualification_required_before_use":True},"tier_2":{"model":"gpt-5.6-sol","reasoning":"high"},"tier_3":{"model":"gpt-5.6-sol","reasoning":"xhigh"},"origin":"https://api.openai.com","stateless":True,"previous_response_id":None,"background":False},"limitations":["GPT_5_2_NOT_CURRENT_QUALIFICATION_EVIDENCE","SAME_SOL_MODEL_DOES_NOT_ESTABLISH_PROVIDER_OR_MODEL_FAMILY_INDEPENDENCE","RESPONSES_BASELINES_ARE_NOT_CODING_HARNESS_COMPARISONS"]}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "claim_registry.v1.public.json").write_bytes(canonical(registry))
     (OUT / "object_classification.v1.public.json").write_bytes(canonical(compatibility))
     (OUT / "work_order.v1.public.json").write_bytes(canonical(work_order))
+    (OUT / "model_steering_correction.v1.public.json").write_bytes(canonical(steering))
     print(digest)
     return 0
 

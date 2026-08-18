@@ -21,6 +21,7 @@ class ModelProvider:
     model: str
     version: str
     endpoint: str
+    reasoning_effort: str = "high"
 
 
 _PROVIDERS: dict[str, ModelProvider] = {}
@@ -123,7 +124,9 @@ def invoke_frozen_public_openai_responses(provider: ModelProvider, envelope: dic
         raise ProvanError("MODEL_PIN_NOT_AVAILABLE", provider.model)
     envelope_digest = sha256_bytes(canonical_bytes(envelope))
     semantic_payload = {key: envelope[key] for key in ("instructions", "selected_blocks", "permitted_output_classes")}
-    body = {"model":provider.model,"store":False,"background":False,"max_output_tokens":envelope["limits"]["max_output_tokens"],"input":json.dumps(semantic_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)}
+    if provider.reasoning_effort not in {"medium", "high", "xhigh", "max"}:
+        raise ProvanError("MODEL_REASONING_EFFORT_INVALID", provider.reasoning_effort)
+    body = {"model":provider.model,"store":False,"background":False,"reasoning":{"effort":provider.reasoning_effort,"context":"current_turn"},"max_output_tokens":envelope["limits"]["max_output_tokens"],"input":json.dumps(semantic_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)}
     request = urllib.request.Request(f"{provider.endpoint}/v1/responses",data=canonical_bytes(body),method="POST",headers={**auth,"Content-Type":"application/json","Provan-Envelope-Digest":envelope_digest})
     started=time.perf_counter_ns()
     try:
@@ -136,7 +139,7 @@ def invoke_frozen_public_openai_responses(provider: ModelProvider, envelope: dic
         rows=result[field]
         if not isinstance(rows,list) or len(rows)>128 or any(not isinstance(row,str) for row in rows) or sum(len(row.encode("utf-8")) for row in rows)>65536:raise ProvanError("MODEL_OUTPUT_LIMIT_INVALID",field)
     usage=wire.get("usage") if isinstance(wire.get("usage"),dict) else {}
-    return result,{"mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"envelope_digest":envelope_digest,"calls":1,"latency_ms":(time.perf_counter_ns()-started)/1_000_000,"cost_status":"unavailable","input_tokens":usage.get("input_tokens"),"output_tokens":usage.get("output_tokens"),"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED","previous_response_id":None,"background":False}
+    return result,{"mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"reasoning_effort":provider.reasoning_effort,"reasoning_context":"current_turn","envelope_digest":envelope_digest,"calls":1,"latency_ms":(time.perf_counter_ns()-started)/1_000_000,"cost_status":"unavailable","input_tokens":usage.get("input_tokens"),"output_tokens":usage.get("output_tokens"),"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED","previous_response_id":None,"background":False}
 
 
 def _wire_transport(provider: ModelProvider, semantic_bytes: bytes, envelope_digest: str) -> dict[str, Any]:
