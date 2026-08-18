@@ -155,7 +155,7 @@ def _state_checks() -> tuple[list[dict], list[str]]:
 def run_doctor() -> dict:
     checks = [
         _check("python", "READY" if sys.version_info >= (3, 11) else "BLOCKED", f"Python {sys.version_info.major}.{sys.version_info.minor}"),
-        _check("installed_version", "READY" if __version__ == "0.4.0" else "BLOCKED", __version__),
+        _check("installed_version", "READY" if __version__ == "0.5.0" else "BLOCKED", __version__),
     ]
     try:
         schema_files = list(importlib.resources.files("provan").joinpath("schemas").iterdir())

@@ -16,4 +16,6 @@
 | Qualified repository execution | Not configured | `--allow-exec` is rejected |
 | Session 2 comparison/gallery | Incomplete | Not authorized for claims |
 | Session 11 Acceptance lifecycle | QUALIFIED_BOUNDED on unreleased main | Contract, freeze, typed settlement, record, and source-only Reinspection; no verifier or challenge execution |
-| Package `0.4.0` public release | Unpublished | No PyPI package, tag, or GitHub release |
+| Contract Foundry Standard | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 only may promote to `QUALIFIED_BOUNDED` |
+| Contract Foundry Deep | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 records exact qualified, degraded, or unavailable result independently |
+| Package `0.5.0` public release | Unpublished | No PyPI package, tag, or GitHub release |

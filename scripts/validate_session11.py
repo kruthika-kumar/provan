@@ -77,7 +77,7 @@ def validate_schemas() -> None:
 def validate_boundaries() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     docs = (ROOT / "README.md").read_text(encoding="utf-8") + (ROOT / "docs/acceptance-lifecycle.md").read_text(encoding="utf-8")
-    if 'version = "0.4.0"' not in pyproject or "QUALIFIED_BOUNDED" not in docs or "not available from PyPI" not in docs:
+    if not any(f'version = "{version}"' in pyproject for version in ("0.4.0","0.5.0")) or "QUALIFIED_BOUNDED" not in docs or "not available from PyPI" not in docs:
         raise SystemExit("SESSION11_UNPUBLISHED_VERSION_BOUNDARY_INVALID")
     cli = (ROOT / "provan/cli.py").read_text(encoding="utf-8")
     if "--external-change-receipt-file" not in cli or re.search(r"add_parser\(\s*[\"'](?:verify|challenge|enterprise|remediate|deploy)", cli):
