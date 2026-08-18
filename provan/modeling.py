@@ -130,7 +130,7 @@ def invoke_frozen_public_openai_responses(provider: ModelProvider, envelope: dic
     request = urllib.request.Request(f"{provider.endpoint}/v1/responses",data=canonical_bytes(body),method="POST",headers={**auth,"Content-Type":"application/json","Provan-Envelope-Digest":envelope_digest})
     started=time.perf_counter_ns()
     try:
-        with opener.open(request,timeout=60) as response: raw=response.read(1_048_577)
+        with opener.open(request,timeout=300) as response: raw=response.read(1_048_577)
         wire=json.loads(raw.decode("utf-8"));output_text="".join(part.get("text","") for item in wire.get("output",[]) if item.get("type")=="message" for part in item.get("content",[]) if part.get("type")=="output_text");result=json.loads(output_text)
     except (OSError,urllib.error.URLError,ValueError,UnicodeDecodeError,json.JSONDecodeError,TypeError,AttributeError) as exc:
         raise ProvanError("MODEL_TRANSPORT_FAILED","bounded stateless Responses call failed") from exc
