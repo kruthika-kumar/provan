@@ -1,0 +1,40 @@
+name: Mirror Session 11 closeout receipt
+
+on:
+  workflow_dispatch:
+    inputs:
+      receipt_base64:
+        description: Canonical external receipt bytes encoded as base64
+        required: true
+        type: string
+      expected_sha256:
+        description: Lowercase SHA-256 of the complete receipt file
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decode and verify without logging payload
+        shell: bash
+        env:
+          RECEIPT_BASE64: ${{ inputs.receipt_base64 }}
+          EXPECTED_SHA256: ${{ inputs.expected_sha256 }}
+        run: |
+          set +x
+          test "${#RECEIPT_BASE64}" -le 1048576
+          printf '%s' "$EXPECTED_SHA256" | grep -Eq '^[0-9a-f]{64}$'
+          mkdir receipt
+          printf '%s' "$RECEIPT_BASE64" | base64 --decode > receipt/session11-acceptance-lifecycle.external.v1.json
+          printf '%s  %s\n' "$EXPECTED_SHA256" receipt/session11-acceptance-lifecycle.external.v1.json | sha256sum --check --status
+      - name: Upload exact receipt
+        uses: actions/upload-artifact@v7
+        with:
+          name: session11-acceptance-lifecycle-external-receipt
+          path: receipt/session11-acceptance-lifecycle.external.v1.json
+          if-no-files-found: error
+          retention-days: 30
