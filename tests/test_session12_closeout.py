@@ -19,6 +19,7 @@ from provan.session12_validators import (
     validate_session13_handoff_serialized,
     validate_validation_summary_serialized,
 )
+from scripts.run_session12_authoritative_gate import quarantine_local_test_outputs
 
 ROOT = Path(__file__).parents[1]
 CLASSES = ("valid", "near-valid", "adversarial", "schema-invalid", "schema-valid-python-invalid")
@@ -70,3 +71,15 @@ def test_proof_final_artifact_layers(invariant: str, fixture_class: str):
     if fixture_class in {"adversarial","schema-valid-python-invalid"}:
         with pytest.raises(ProvanError): call()
     else: call()
+
+
+def test_authoritative_gate_quarantines_local_outputs_before_leakage(tmp_path):
+    repo = tmp_path / "repo"; transcripts = tmp_path / "private-transcripts"
+    local = repo / ".shiproom" / "local"; local.mkdir(parents=True)
+    (local / "receipt.json").write_text('{"local_path":"C:/private/user"}', encoding="utf-8")
+    count, public_raw = quarantine_local_test_outputs(repo, transcripts)
+    assert count == 1
+    assert public_raw == b"LOCAL_TEST_BYPRODUCTS_QUARANTINED:1\n"
+    assert list(local.iterdir()) == []
+    quarantined = list((transcripts / "local-byproducts").iterdir())
+    assert len(quarantined) == 1 and (quarantined[0] / "receipt.json").is_file()

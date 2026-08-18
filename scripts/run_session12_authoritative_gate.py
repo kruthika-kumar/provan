@@ -7,11 +7,37 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from uuid import uuid4
 
 ROOT=Path(__file__).parents[1]
 sys.path.insert(0,str(ROOT))
 from provan.canonical import canonical_bytes,sha256_bytes
 from provan.session12_validators import validate_validation_summary_serialized
+
+
+def _linked_or_reparse(path: Path) -> bool:
+    stat = path.lstat()
+    return path.is_symlink() or bool(getattr(stat, "st_file_attributes", 0) & 0x400)
+
+
+def quarantine_local_test_outputs(repo: Path, transcripts: Path) -> tuple[int, bytes]:
+    local = repo / ".shiproom" / "local"
+    local.parent.mkdir(parents=True, exist_ok=True)
+    if not local.exists():
+        local.mkdir()
+        return 0, b"LOCAL_TEST_BYPRODUCTS_QUARANTINED:0\n"
+    if _linked_or_reparse(local) or local.resolve() != local.absolute():
+        raise SystemExit("SESSION12_LOCAL_TEST_OUTPUT_PATH_UNSAFE")
+    files = sum(1 for path in local.rglob("*") if path.is_file())
+    if files:
+        destination_root = transcripts / "local-byproducts"
+        destination_root.mkdir(parents=True, exist_ok=True)
+        destination = destination_root / ("authoritative-gate-" + uuid4().hex)
+        if destination.exists():
+            raise SystemExit("SESSION12_LOCAL_TEST_OUTPUT_DESTINATION_EXISTS")
+        local.replace(destination)
+        local.mkdir()
+    return files, f"LOCAL_TEST_BYPRODUCTS_QUARANTINED:{files}\n".encode("ascii")
 
 
 def main()->int:
@@ -44,6 +70,10 @@ def main()->int:
     if base_collect.returncode!=0 or current_collect.returncode!=0 or not base_nodes or not base_nodes.issubset(current_nodes):raise SystemExit("SESSION12_TEST_NODE_INVENTORY_REGRESSION")
     checks.append({"label":"test_node_inventory","command":["python","-m","pytest","--collect-only","-q"],"exit_code":0,"transcript_sha256":sha256_bytes(collection_raw)})
     for label,command,public_command in commands:
+        if label == "session12_leakage":
+            _, quarantine_raw = quarantine_local_test_outputs(repo, transcripts)
+            (transcripts / "local_test_byproducts_quarantine.txt").write_bytes(quarantine_raw)
+            checks.append({"label":"local_test_byproducts_quarantine","command":["internal","quarantine-local-test-byproducts"],"exit_code":0,"transcript_sha256":sha256_bytes(quarantine_raw)})
         result=subprocess.run(command,cwd=ROOT,capture_output=True,env=env);raw=result.stdout+b"\n--- STDERR ---\n"+result.stderr;(transcripts/(label+".txt")).write_bytes(raw)
         if result.returncode!=0:raise SystemExit("SESSION12_AUTHORITATIVE_GATE_FAILED:"+label)
         checks.append({"label":label,"command":public_command,"exit_code":0,"transcript_sha256":sha256_bytes(raw)})
