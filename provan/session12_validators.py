@@ -152,6 +152,8 @@ def validate_adjudication_projection_serialized(raw: bytes) -> dict[str,Any]:
     if [row.get("arm") for row in arms]!=["A","B","C","D"] or [row.get("label") for row in arms]!=["STRONG_CURRENT_FRONTIER_PROMPT_BASELINE","STRONG_CURRENT_FRONTIER_PROMPT_BASELINE","FOUNDRY_STANDARD","FOUNDRY_DEEP"]:raise ProvanError("SESSION12_LIVE_ARM_LABEL_INVALID","arms")
     if [row.get("reasoning") for row in arms]!=["high","xhigh","high","xhigh"]:raise ProvanError("SESSION12_LIVE_ARM_REASONING_INVALID","arms")
     if any(row.get("run_eligibility")!="ELIGIBLE" or row.get("contract_readiness")!="READY_WITH_MATERIAL_QUESTIONS" for row in arms[2:]):raise ProvanError("SESSION12_LIVE_FOUNDRY_STATUS_INVALID","arms")
+    scoring=live.get("hidden_scoring",{});dimensions=["required_outcomes","acceptable_alternatives","material_ambiguities","non_goals","eligible_oracles","witness_expectations"]
+    if scoring.get("complete_issue_set_scored") is not True or scoring.get("dimensions")!=dimensions or {row.get("arm") for row in scoring.get("arms",[])}!={"A","B","C","D"} or scoring.get("evaluation_driven_adjudication_change") is not False:raise ProvanError("SESSION12_HIDDEN_SCORING_INCOMPLETE","scoring")
     if live.get("provider",{})!={"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.6-sol","tier_2_reasoning":"high","tier_3_reasoning":"xhigh","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_LIVE_PROVIDER_BINDING_INVALID","provider")
     legacy=value.get("pre_steering_legacy_model_run",{})
     if legacy.get("model")!="gpt-5.2" or legacy.get("calls")!=7 or legacy.get("classification")!="PRE_STEERING_LEGACY_MODEL_RUN" or legacy.get("eligible_for_final_semantic_qualification") is not False or legacy.get("eligible_for_headline_arms_comparison") is not False or legacy.get("eligible_as_preserved_sensitivity_development_evidence") is not True:raise ProvanError("SESSION12_LEGACY_MODEL_CLASSIFICATION_INVALID","legacy")
@@ -195,7 +197,7 @@ def validate_implementation_binding_serialized(raw: bytes, schema_registry_raw: 
 
 def validate_real_use_qualification_serialized(raw: bytes, binding_raw: bytes, adjudication_raw: bytes) -> dict[str, Any]:
     value = _load(raw, "provan.foundry_real_use_qualification.v1"); binding = json.loads(binding_raw); adjudication = validate_adjudication_projection_serialized(adjudication_raw)
-    if value.get("implementation_binding") != binding or value.get("adjudication_root") != adjudication["authority_bindings"]["review_root"]:
+    if value.get("implementation_binding") != binding or value.get("adjudication_root") != adjudication["authority_bindings"]["review_root"] or adjudication.get("live_evaluation",{}).get("implementation_commit")!=binding.get("implementation_commit") or adjudication.get("live_evaluation",{}).get("evaluation_policy_version")!=4:
         raise ProvanError("SESSION12_REAL_USE_BINDING_MISMATCH", "qualification")
     cases = value.get("cases", []); expected = {"httpx-pr-3699-control", "click-pr-3721-control", "httpcore-pr-880-consequential", "provan-public-control", "session11-controlled-patient", "session12-final-dogfood"}
     if {row.get("case_id") for row in cases} != expected or any(not row.get("predeclared") for row in cases):
