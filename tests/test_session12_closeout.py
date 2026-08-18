@@ -87,6 +87,13 @@ def test_authoritative_gate_quarantines_local_outputs_before_leakage(tmp_path):
     assert len(quarantined) == 1 and (quarantined[0] / "receipt.json").is_file()
 
 
+def test_authoritative_gate_quarantines_before_session12_implementation():
+    source = (ROOT / "scripts/run_session12_authoritative_gate.py").read_text(encoding="utf-8")
+    quarantine = source.index('if label == "session12_implementation"')
+    execution = source.index("result=subprocess.run(command", quarantine)
+    assert quarantine < execution
+
+
 def test_inherited_session11_successor_schema_boundary_is_byte_preserving():
     result = subprocess.run(
         [sys.executable, "scripts/validate_session11.py", "--phase", "final", "--successor"],

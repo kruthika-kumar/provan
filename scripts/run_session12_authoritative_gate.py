@@ -70,7 +70,7 @@ def main()->int:
     if base_collect.returncode!=0 or current_collect.returncode!=0 or not base_nodes or not base_nodes.issubset(current_nodes):raise SystemExit("SESSION12_TEST_NODE_INVENTORY_REGRESSION")
     checks.append({"label":"test_node_inventory","command":["python","-m","pytest","--collect-only","-q"],"exit_code":0,"transcript_sha256":sha256_bytes(collection_raw)})
     for label,command,public_command in commands:
-        if label == "session12_leakage":
+        if label == "session12_implementation":
             _, quarantine_raw = quarantine_local_test_outputs(repo, transcripts)
             (transcripts / "local_test_byproducts_quarantine.txt").write_bytes(quarantine_raw)
             checks.append({"label":"local_test_byproducts_quarantine","command":["internal","quarantine-local-test-byproducts"],"exit_code":0,"transcript_sha256":sha256_bytes(quarantine_raw)})
