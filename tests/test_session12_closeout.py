@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import jsonschema
@@ -83,3 +85,11 @@ def test_authoritative_gate_quarantines_local_outputs_before_leakage(tmp_path):
     assert list(local.iterdir()) == []
     quarantined = list((transcripts / "local-byproducts").iterdir())
     assert len(quarantined) == 1 and (quarantined[0] / "receipt.json").is_file()
+
+
+def test_inherited_session11_successor_schema_boundary_is_byte_preserving():
+    result = subprocess.run(
+        [sys.executable, "scripts/validate_session11.py", "--phase", "final", "--successor"],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

@@ -53,7 +53,7 @@ def main()->int:
         ("workflow_integrations",[sys.executable,"scripts/run_workflow_integration_evals.py"],["python","scripts/run_workflow_integration_evals.py"]),
         ("session9_correction",[sys.executable,"scripts/validate_session9_correction.py","--implementation-only"],["python","scripts/validate_session9_correction.py","--implementation-only"]),
         ("session10_successor",[sys.executable,"scripts/validate_session10_successor.py"],["python","scripts/validate_session10_successor.py"]),
-        ("session11_final",[sys.executable,"scripts/validate_session11.py","--phase","final"],["python","scripts/validate_session11.py","--phase","final"]),
+        ("session11_final",[sys.executable,"scripts/validate_session11.py","--phase","final","--successor"],["python","scripts/validate_session11.py","--phase","final","--successor"]),
         ("session12_implementation",[sys.executable,"scripts/validate_session12.py","--phase","implementation"],["python","scripts/validate_session12.py","--phase","implementation"]),
         ("session12_leakage",[sys.executable,"scripts/validate_session12_leakage.py"],["python","scripts/validate_session12_leakage.py"]),
         ("authoritative_wheel_fresh_install",[sys.executable,"scripts/fresh_install_gate.py","--wheel",str(wheel)],["python","scripts/fresh_install_gate.py","--wheel","dist/provan_assurance-0.5.0-py3-none-any.whl"]),
