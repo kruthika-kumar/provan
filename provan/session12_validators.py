@@ -7,11 +7,22 @@ from typing import Any
 
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import ProvanError
-from .foundry import PATTERN_FAMILIES, PROVIDERS, PUBLIC_PROMPTS, RUN_STAGES, route
+from .foundry import PATTERN_FAMILIES, PROVIDERS, PUBLIC_PROMPTS, RUN_STAGES
 from .modeling import FROZEN_PUBLIC_MODEL_EGRESS
 
 SHA = re.compile(r"sha256:[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
+
+
+def _independent_route(inputs: dict[str, Any]) -> dict[str, Any]:
+    enums={"risk":{"low","medium","high","unresolved"},"ambiguity":{"low","material","unresolved"},"blast_radius":{"bounded","public_contract","shared","unresolved"},"reversibility":{"easy","bounded","difficult","unresolved"},"oracle":{"adequate","missing","unresolved"},"actor_autonomy":{"low","high","unresolved"}}
+    if set(inputs)!=set(enums) or any(inputs.get(key) not in allowed for key,allowed in enums.items()):raise ProvanError("FOUNDRY_ROUTING_INPUT_INVALID","routing inputs")
+    if any(item=="unresolved" for item in inputs.values()):tier=3
+    elif inputs=={"risk":"low","ambiguity":"low","blast_radius":"bounded","reversibility":"easy","oracle":"adequate","actor_autonomy":"low"}:tier=0
+    elif inputs["risk"]=="high" and (inputs["ambiguity"]=="material" or inputs["oracle"]=="missing" or inputs["reversibility"]=="difficult" or inputs["actor_autonomy"]=="high" or inputs["blast_radius"]=="shared"):tier=3
+    elif inputs["risk"] in {"medium","high"} or inputs["ambiguity"]=="material" or inputs["oracle"]=="missing" or inputs["blast_radius"] in {"public_contract","shared"}:tier=2
+    else:tier=1
+    return {"schema_id":"provan.model_routing_receipt.v1","router_id":"community.foundry-router.v1","inputs":inputs,"tier":tier,"roles":{0:[],1:["semantic_interpreter"],2:["strong_reasoner"],3:["strong_reasoner","independent_critic"]}[tier],"authority":"deterministic_inputs_only"}
 
 
 def _load(raw: bytes, schema_id: str) -> dict[str, Any]:
@@ -34,7 +45,7 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
     if value["owner_projection_ref"] != {"id": projection["projection_id"], "sha256": sha256_bytes(projection_raw)}: raise ProvanError("FOUNDRY_PROJECTION_BINDING_MISMATCH", "projection")
     if value["run_id"] != projection["run_id"] or value["case_id"] != projection["case_id"] or value["candidate"]["candidate_digest"] != projection["candidate_digest"]: raise ProvanError("FOUNDRY_CASE_BINDING_MISMATCH", "case")
     if value["stages"] != RUN_STAGES[value["depth"]]: raise ProvanError("FOUNDRY_STAGE_ORDER_INVALID", value["depth"])
-    if value["routing_receipt"] != route(value["routing_receipt"]["inputs"]): raise ProvanError("FOUNDRY_ROUTING_MISMATCH", "router")
+    if value["routing_receipt"] != _independent_route(value["routing_receipt"]["inputs"]): raise ProvanError("FOUNDRY_ROUTING_MISMATCH", "router")
     if value["run_eligibility"] != projection["run_eligibility"] or value["contract_readiness"] != projection["contract_readiness"]: raise ProvanError("FOUNDRY_STATUS_BINDING_MISMATCH", "status")
     if value["execution_available"] or value["challenge_available"] or value["mode_qualification"] != "IMPLEMENTED_UNQUALIFIED": raise ProvanError("FOUNDRY_CAPABILITY_OR_MATURITY_INVALID", "run")
     tier=value["routing_receipt"]["tier"];required_calls=0 if tier==0 else (2 if value["depth"]=="deep" or tier==3 else 1)
@@ -47,7 +58,17 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
         expected_effort = "xhigh" if value["depth"]=="deep" else ("medium" if tier==1 else "high")
         if receipt.get("semantic_qualification") is True and any(row.get("model")!=expected_model or row.get("reasoning_effort")!=expected_effort or row.get("reasoning_context")!="current_turn" or row.get("previous_response_id") is not None or row.get("background") is not False for row in receipt.get("usage_receipts",[])):raise ProvanError("FOUNDRY_MODEL_EXECUTION_POLICY_INVALID","stateless reasoning")
         if receipt.get("provider")=="scripted-test" and receipt.get("semantic_qualification") is not False:raise ProvanError("FOUNDRY_SCRIPTED_PROVIDER_QUALIFICATION_FORBIDDEN","scripted-test")
-    if value["spend"].get("currency")!="USD" or value["spend"].get("hard_cap")!=75 or value["spend"].get("spent",0)+value["spend"].get("in_flight",0)>75:raise ProvanError("FOUNDRY_SPEND_CAP_INVALID","spend")
+    spend=value["spend"]
+    numeric=[spend.get(key) for key in ("spent","in_flight","minimum_mandatory_remaining","per_call_reservation","reserved")]
+    if spend.get("currency")!="USD" or spend.get("hard_cap")!=75 or any(not isinstance(item,(int,float)) or isinstance(item,bool) or item<0 for item in numeric):raise ProvanError("FOUNDRY_SPEND_CAP_INVALID","spend")
+    reservations=spend.get("pre_call_reservations",[]);running=0
+    if len(reservations)!=len(value.get("blind_paths",[])):raise ProvanError("FOUNDRY_SPEND_RESERVATION_COVERAGE_INVALID","spend")
+    for index,row in enumerate(reservations):
+        projected=spend["spent"]+spend["in_flight"]+running+spend["per_call_reservation"]+spend["minimum_mandatory_remaining"]
+        expected={"call":("A","B")[index],"spent":spend["spent"],"in_flight":spend["in_flight"],"reserved_before":running,"reservation":spend["per_call_reservation"],"minimum_mandatory_remaining":spend["minimum_mandatory_remaining"],"projected_total":projected,"authorized":True}
+        if row!=expected or projected>75:raise ProvanError("FOUNDRY_SPEND_RESERVATION_INVALID",str(index))
+        running+=spend["per_call_reservation"]
+    if spend["reserved"]!=running or spend["spent"]+spend["in_flight"]+running+spend["minimum_mandatory_remaining"]>75:raise ProvanError("FOUNDRY_SPEND_CAP_INVALID","reserved")
     if required_calls and value["run_eligibility"]=="ELIGIBLE" and (not receipts or receipts[0].get("calls")!=required_calls or receipts[0].get("semantic_qualification") is not True):raise ProvanError("FOUNDRY_REQUIRED_ROLE_NOT_QUALIFIED","provider")
     if value["depth"] == "deep":
         paths = value["blind_paths"]
@@ -78,12 +99,23 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
             if artifact.get("schema_id")!=ref["schema_id"] or ref["id"] not in artifact.values() or canonical_bytes(artifact)!=artifact_raw:raise ProvanError("FOUNDRY_STAGE_ARTIFACT_SEMANTICS_INVALID",name)
             loaded[name]=artifact
         candidate=loaded["contract_candidate"];readiness=loaded["readiness"];selection=loaded["pattern_selection"]
+        intent=loaded["intent"];path_digests=[row["contract_output"]["digest"] for row in value["blind_paths"]]
+        expected_method="deterministic_source_only" if not path_digests else ("frozen_dual_path_reconciliation_v1" if len(path_digests)==2 else "single_blind_path")
+        if intent.get("input_path_digests")!=path_digests or intent.get("synthesis_method")!=expected_method:raise ProvanError("FOUNDRY_SYNTHESIS_BINDING_INVALID","intent")
+        expected_model_conditions=[{"statement":text[:1024],"authority":"model_reviewed_proposal","owner_confirmation_required":True} for row in value["blind_paths"] for text in row["contract_output"]["model_reviewed_implications"]][:16]
+        if candidate.get("proposed_terms",{}).get("conditions")!=expected_model_conditions:raise ProvanError("FOUNDRY_MODEL_PROPOSAL_DATAFLOW_INVALID","candidate")
         if candidate["proposed_terms"]!=projection["proposed_contract_terms"] or readiness["contract_candidate_ref"]!=value["stage_artifacts"]["contract_candidate"] or readiness["contract_readiness"]!=value["contract_readiness"] or readiness["run_eligibility"]!=value["run_eligibility"] or readiness["runtime_evidence_established"] is not False:raise ProvanError("FOUNDRY_STAGE_CROSS_BINDING_MISMATCH","candidate/readiness")
         if selection["contract_candidate_ref"]!=value["stage_artifacts"]["contract_candidate"] or selection["execution_implied"] or selection["challenge_implied"]:raise ProvanError("FOUNDRY_PATTERN_SELECTION_BINDING_INVALID","selection")
         revisions=value["stage_artifacts"].get("revisions",[]);cap=2 if value["depth"]=="deep" else 1 if value["depth"]=="standard" else 0
         if len(revisions)>cap:raise ProvanError("FOUNDRY_REVISION_CAP_EXCEEDED",value["depth"])
         audit=loaded["audit"];coverage=audit.get("finding_coverage",{})
         if coverage.get("total")!=len(audit.get("findings",[])) or coverage.get("addressed",0)+coverage.get("preserved_unresolved",0)!=coverage.get("total"):raise ProvanError("FOUNDRY_AUDIT_COVERAGE_INVALID","audit")
+        expected_outputs={"blind_intent":[value["stage_artifacts"]["intent"]["sha256"]],"blind_path_a":path_digests[:1],"blind_path_b":path_digests[1:2],"freeze_blind_paths":[sha256_bytes(canonical_bytes(path_digests))] if path_digests else [],"synthesis":[value["stage_artifacts"]["intent"]["sha256"]],"goal_obstacle":[value["stage_artifacts"]["goal_obstacle"]["sha256"]],"pre_mortem":[value["stage_artifacts"]["pre_mortem"]["sha256"]],"contract_proposal":[value["stage_artifacts"]["contract_candidate"]["sha256"]],"adversarial_audit":[value["stage_artifacts"]["audit"]["sha256"]],"revision":[],"witnesses":[value["stage_artifacts"]["witnesses"]["sha256"]],"mutation_checks":[value["stage_artifacts"]["witnesses"]["sha256"]],"final_audit":[value["stage_artifacts"]["audit"]["sha256"]],"revisions":[],"verification_patterns":[value["stage_artifacts"]["pattern_selection"]["sha256"]],"readiness":[value["stage_artifacts"]["readiness"]["sha256"]]}
+        previous=[value["source_ledger"]["sha256"]];expected_trace=[]
+        for stage_name in value["stages"]:
+            outputs=expected_outputs[stage_name];expected_trace.append({"stage":stage_name,"input_digests":previous,"output_digests":outputs,"status":"EXECUTED" if outputs else "NOT_APPLICABLE"})
+            if outputs:previous=outputs
+        if value.get("stage_execution")!=expected_trace:raise ProvanError("FOUNDRY_STAGE_EXECUTION_BINDING_INVALID","trace")
     return value
 
 
@@ -91,7 +123,7 @@ def validate_pattern_library_serialized(raw: bytes) -> dict[str, Any]:
     value = _load(raw, "provan.verification_pattern_library.v1"); rows = value.get("patterns", [])
     if {row.get("family") for row in rows} != set(PATTERN_FAMILIES) or len(rows) != len(PATTERN_FAMILIES): raise ProvanError("FOUNDRY_PATTERN_LIBRARY_INCOMPLETE", "families")
     required = {"pattern_id", "version", "family", "applicability", "preconditions", "required_oracle", "dimensions", "capability_requirements", "limitations", "false_inference_risks", "cost_class", "research_refs", "publication"}
-    if any(set(row) != required or not row["preconditions"] or not row["required_oracle"] or not row["limitations"] or not row["false_inference_risks"] for row in rows): raise ProvanError("FOUNDRY_PATTERN_CONTRACT_INCOMPLETE", "pattern")
+    if any(set(row) != required or not row["preconditions"] or not row["required_oracle"] or not row["limitations"] or not row["false_inference_risks"] or not row["research_refs"] or any(not isinstance(ref,str) or not ref.startswith("https://") or "methodology inventory" in ref for ref in row["research_refs"]) for row in rows): raise ProvanError("FOUNDRY_PATTERN_CONTRACT_INCOMPLETE", "pattern")
     if value.get("execution_available") or value.get("challenge_available"): raise ProvanError("FOUNDRY_PATTERN_EXECUTION_FALSE_CLAIM", "library")
     return value
 

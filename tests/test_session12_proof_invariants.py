@@ -47,14 +47,31 @@ def _replace_artifact(run:dict,artifacts:dict,name:str,mutate):
 @pytest.mark.parametrize("invariant",RUN_INVARIANTS)
 def test_proof_session12_run_layers(tmp_path:Path,monkeypatch:pytest.MonkeyPatch,invariant:str,fixture_class:str):
     run,projection,artifacts=_run_bundle(tmp_path,monkeypatch,fixture_class=="near-valid");schema=json.loads((ROOT/"provan/schemas/contract-foundry-run.v1.json").read_text(encoding="utf-8"));value=copy.deepcopy(run);deps=dict(artifacts)
-    if fixture_class=="schema-invalid":del value["run_id"]
+    if fixture_class=="near-valid":
+        if invariant=="spend_cap":value["spend"]["spent"]=75
+        elif invariant=="stage_order":assert value["stage_execution"][5]["stage"]=="revision" and value["stage_execution"][5]["status"]=="NOT_APPLICABLE"
+        elif invariant=="router":assert value["routing_receipt"]["tier"]==0 and value["routing_receipt"]["roles"]==[]
+        elif invariant=="provider_binding":assert value["provider_receipts"]==[] and value["routing_receipt"]["tier"]==0
+        elif invariant=="stage_artifacts":assert set(value["stage_artifacts"])-{"revisions"}=={"intent","goal_obstacle","pre_mortem","contract_candidate","audit","witnesses","pattern_selection","readiness"}
+        elif invariant=="pattern_selection":assert value["pattern_selection"]["execution_implied"] is False
+        elif invariant=="audit_coverage":assert json.loads(deps[value["stage_artifacts"]["audit"]["path"]])["finding_coverage"]=={"total":2,"addressed":0,"preserved_unresolved":2}
+        elif invariant=="readiness_eligibility":assert value["contract_readiness"]=="READY_WITH_MATERIAL_QUESTIONS" and value["run_eligibility"]=="ELIGIBLE"
+        elif invariant=="capability_ceiling":assert value["mode_qualification"]=="IMPLEMENTED_UNQUALIFIED"
+        elif invariant=="run_descriptor":value["limitations"].append("NEAR_VALID_ADDITIONAL_LIMITATION")
+    elif fixture_class=="schema-invalid":del value["run_id"]
     elif fixture_class in {"adversarial","schema-valid-python-invalid"}:
         if invariant=="run_descriptor":value["case_id"]="sha256:"+"9"*64
         elif invariant=="readiness_eligibility":value["contract_readiness"]="READY_FOR_OWNER_CONFIRMATION"
-        elif invariant=="stage_order":value["stages"]=list(reversed(value["stages"]))
-        elif invariant=="router":value["routing_receipt"]["tier"]=3
+        elif invariant=="stage_order":
+            if fixture_class=="adversarial":value["stages"]=list(reversed(value["stages"]))
+            else:value["stage_execution"][0]["output_digests"]=["sha256:"+"f"*64]
+        elif invariant=="router":
+            if fixture_class=="adversarial":value["routing_receipt"]["tier"]=3
+            else:value["routing_receipt"]["inputs"]["risk"]="INVALID"
         elif invariant=="provider_binding":value["provider_receipts"]=[{"provider":"openai-responses-primary","origin":"https://example.invalid","model":"gpt-5.6-sol","kind":"configured_provider_unavailable","semantic_qualification":False,"calls":0,"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}]
-        elif invariant=="spend_cap":value["spend"]["spent"]=76
+        elif invariant=="spend_cap":
+            if fixture_class=="adversarial":value["spend"]["spent"]=76
+            else:value["spend"]["reserved"]=1
         elif invariant=="stage_artifacts":_replace_artifact(value,deps,"contract_candidate",lambda row:row.update({"proposed_terms":{"invented":True}}))
         elif invariant=="pattern_selection":_replace_artifact(value,deps,"pattern_selection",lambda row:row.update({"execution_implied":True}))
         elif invariant=="audit_coverage":_replace_artifact(value,deps,"audit",lambda row:row["finding_coverage"].update({"total":99}))
@@ -82,7 +99,15 @@ PUBLIC_CASES={
 @pytest.mark.parametrize("invariant",tuple(PUBLIC_CASES))
 def test_proof_session12_public_contract_layers(invariant:str,fixture_class:str):
     path,validator_name=PUBLIC_CASES[invariant];raw=(ROOT/path).read_bytes();value=json.loads(raw);validator=globals()[validator_name]
-    if fixture_class=="near-valid":pass
+    if fixture_class=="near-valid":
+        if invariant=="work_order":value.setdefault("limitations",[]).append("NEAR_VALID_ADDITIONAL_LIMITATION")
+        elif invariant=="claim_registry":
+            number=len(value["claims"])+1;value["claims"].append({"claim_id":f"G12-{number:02d}","normative_claim":"Documented additive near-valid claim."});value["registry_digest"]=sha256_bytes(canonical_bytes(value["claims"]))
+        elif invariant=="pattern_library":
+            for row in value["patterns"]:row["limitations"].append("NEAR_VALID_ADDITIONAL_LIMITATION")
+        elif invariant=="adjudication":
+            value.setdefault("limitations",[]).append("NEAR_VALID_ADDITIONAL_LIMITATION");core=dict(value);core.pop("projection_digest",None);value["projection_digest"]=sha256_bytes(canonical_bytes(core))
+        elif invariant=="model_egress":value.setdefault("limitations",[]).append("NEAR_VALID_ADDITIONAL_LIMITATION")
     elif fixture_class=="schema-invalid":del value["schema_id"]
     elif fixture_class in {"adversarial","schema-valid-python-invalid"}:
         if invariant=="work_order":value["provider_pin"]["tier_2_model"]="dynamic-model"

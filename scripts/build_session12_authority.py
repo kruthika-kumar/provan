@@ -41,6 +41,11 @@ TOPICS = [
     "public-safe final-dogfood run binding resolves the retained internal canonical run without publishing it",
     "fresh reviewer receipts bind the exact implementation, wheel, pre-review root, every claim disposition, findings, and mode-maturity recommendation",
     "reviewer-backed Gate 12 closeout binds the final proof root, exact mode maturity, capability boundary, and Session 13 handoff decision",
+    "executed Foundry stages bind their serialized inputs and outputs, and frozen semantic path outputs feed synthesis before proposal construction",
+    "every semantic model call is authorized by a deterministic pre-call spend reservation that preserves the hard cap and mandatory remaining work",
+    "the independent serialized-run validator recomputes the versioned risk router without delegating to the production router and rejects malformed inputs",
+    "every verification pattern carries an addressable public research or primary-source reference rather than an unresolved placeholder",
+    "outcome-bearing comparisons bind a post-run hidden scoring artifact to the freshly reviewed current-model adjudication policy without changing frozen adjudication",
 ]
 
 

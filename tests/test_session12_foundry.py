@@ -22,9 +22,10 @@ def _brief(home: Path) -> dict:
     return value
 
 
-def _manifest(tmp_path: Path, routing: dict | None = None) -> Path:
+def _manifest(tmp_path: Path, routing: dict | None = None, spend_control: dict | None = None) -> Path:
     (tmp_path/"intent.md").write_text("Make the public response durable and backward compatible.",encoding="utf-8")
     value={"sources":[{"path":"intent.md","role":"intent"}],"routing_inputs":routing or {"risk":"medium","ambiguity":"material","blast_radius":"public_contract","reversibility":"bounded","oracle":"missing","actor_autonomy":"low"}}
+    if spend_control is not None:value["spend_control"]=spend_control
     path=tmp_path/"sources.json";path.write_text(json.dumps(value),encoding="utf-8");return path
 
 
@@ -51,6 +52,12 @@ def test_deep_scripted_paths_are_isolated_and_nonqualifying(tmp_path: Path,monke
         if name!="revisions":artifacts[ref["path"]]=secure_read(root/ref["path"])
     for ref in run["model_envelope_refs"]:artifacts[ref["path"]]=secure_read(root/ref["path"])
     validate_run_serialized(canonical_bytes(run),projection,artifacts)
+    intent=json.loads(artifacts[run["stage_artifacts"]["intent"]["path"]])
+    candidate=json.loads(artifacts[run["stage_artifacts"]["contract_candidate"]["path"]])
+    assert intent["synthesis_method"]=="frozen_dual_path_reconciliation_v1"
+    assert intent["input_path_digests"]==[row["contract_output"]["digest"] for row in run["blind_paths"]]
+    assert candidate["proposed_terms"]["conditions"] and all(row["authority"]=="model_reviewed_proposal" for row in candidate["proposed_terms"]["conditions"])
+    assert [row["stage"] for row in run["stage_execution"]]==RUN_STAGES["deep"]
     ref=run["model_envelope_refs"][0];bad=dict(artifacts);envelope=json.loads(bad[ref["path"]]);envelope["instructions"]+=" undisclosed";bad[ref["path"]]=canonical_bytes(envelope);tampered=copy.deepcopy(run);tampered_ref=tampered["model_envelope_refs"][0];tampered_ref["sha256"]=sha256_bytes(bad[ref["path"]]);tampered["blind_paths"][0]["model_envelope_ref"]=tampered_ref
     with pytest.raises(ProvanError,match="FOUNDRY_MODEL_ENVELOPE_SEMANTICS_INVALID"):validate_run_serialized(canonical_bytes(tampered),projection,bad)
 
@@ -115,6 +122,17 @@ def test_pattern_library_has_all_families_and_no_execution():
 def test_router_escalates_unresolved_and_model_cannot_downroute():
     inputs={"risk":"unresolved","ambiguity":"low","blast_radius":"bounded","reversibility":"easy","oracle":"adequate","actor_autonomy":"low"}
     assert route(inputs)["tier"]==3
+    with pytest.raises(ProvanError,match="FOUNDRY_ROUTING_INPUT_INVALID"):route({**inputs,"risk":"INVALID"})
+
+
+def test_spend_reservation_is_checked_before_each_semantic_call(tmp_path:Path,monkeypatch:pytest.MonkeyPatch):
+    monkeypatch.setenv("PROVAN_HOME",str(tmp_path/"state"));monkeypatch.setenv("PROVAN_ALLOW_SCRIPTED_PROVIDER","1");brief=_brief(tmp_path)
+    control={"spent":51,"in_flight":0,"minimum_mandatory_remaining":5,"per_call_reservation":10}
+    with pytest.raises(ProvanError,match="FOUNDRY_SPEND_RESERVATION_EXCEEDED"):foundry(brief_id=brief["brief_id"],source_manifest=_manifest(tmp_path,spend_control=control),depth="deep",provider_id="scripted-test")
+    control={"spent":45,"in_flight":0,"minimum_mandatory_remaining":5,"per_call_reservation":10}
+    run,_=foundry(brief_id=brief["brief_id"],source_manifest=_manifest(tmp_path,spend_control=control),depth="deep",provider_id="scripted-test")
+    assert [row["projected_total"] for row in run["spend"]["pre_call_reservations"]]==[60,70]
+    assert run["spend"]["reserved"]==20
 
 
 def test_source_manifest_traversal_is_rejected(tmp_path: Path,monkeypatch: pytest.MonkeyPatch):
