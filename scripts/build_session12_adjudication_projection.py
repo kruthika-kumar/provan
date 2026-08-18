@@ -46,6 +46,20 @@ def main()->int:
             ],
             "limitations":["PRIVATE_CASE_ARTIFACTS_NOT_PROJECTED","NO_LIVE_SEMANTIC_MODEL_EXECUTION"],
         },
+        "live_evaluation":{
+            "implementation_commit":"0efeb9bb3fa698a3dbd14b3f1622ade5d8404f97",
+            "private_ledger_sha256":"sha256:a1230c34677ea977c42fcf44f694240e0993bd6352a266f17438078a92d03282",
+            "provider":{"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.2","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"},
+            "calls":7,"estimated_cost_usd":0.08490475,"hard_cap_usd":75,
+            "arms":[
+                {"arm":"A","label":"FRONTIER_PROMPT_BASELINE","result_sha256":"sha256:2a27c83d774426b437302f37d72620338d9f149301560d5cacb7bc66f626fc65"},
+                {"arm":"B","label":"FRONTIER_PROMPT_BASELINE","result_sha256":"sha256:7988072fbdd211da0e52219c5a36ffa6c02b0b49c0335c94246a559b2b0b308d"},
+                {"arm":"C","label":"FOUNDRY_STANDARD","run_sha256":"sha256:a31b9e313966ac8900bc0541fe80678cf63381f7db1774652ebc7da43fecf73b","run_eligibility":"ELIGIBLE","contract_readiness":"READY_WITH_MATERIAL_QUESTIONS"},
+                {"arm":"D","label":"FOUNDRY_DEEP","run_sha256":"sha256:1bf73e5ef433310d272d9568a1a843975f49acac15381cc66e7c309a2bea6a24","run_eligibility":"ELIGIBLE","contract_readiness":"READY_WITH_MATERIAL_QUESTIONS"},
+            ],
+            "click_control":{"run_sha256":"sha256:36c00e2b5a66d4fd9dda807532829c8707478924ef9322a3b7ed57296fda762f","run_eligibility":"ELIGIBLE","contract_readiness":"READY_WITH_MATERIAL_QUESTIONS"},
+            "limitations":["OUTPUT_CONTENT_PRIVATE","FRONTIER_PROMPT_BASELINES_NOT_CODING_HARNESS","FULL_HARNESS_COMPARISON_SESSION16"],
+        },
         "exclusions":["EXACT_INPUTS_EXCLUDED","HIDDEN_ADJUDICATION_EXCLUDED","ORACLES_EXCLUDED","WITNESSES_EXCLUDED","PRIVATE_PATHS_EXCLUDED"],
     }
     value["projection_digest"]=sha256_bytes(canonical_bytes(value))

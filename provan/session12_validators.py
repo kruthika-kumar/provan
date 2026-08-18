@@ -112,6 +112,11 @@ def validate_adjudication_projection_serialized(raw: bytes) -> dict[str,Any]:
     if summary.get("headline_cases")!=len(cases) or summary.get("reserve_cases")!=2 or {row.get("case_id") for row in cases}!={"httpx-pr-3699-control","click-pr-3721-control","httpcore-pr-880-consequential","provan-public-control","session11-controlled-patient"}:raise ProvanError("SESSION12_ADJUDICATION_CASE_SET_INVALID","cases")
     if not value.get("independence",{}).get("review_completed_before_outcome_runs") or not value["independence"].get("evaluation_driven_changes_invalidate_comparisons"):raise ProvanError("SESSION12_ADJUDICATION_ORDER_INVALID","independence")
     if any(not str(item).startswith("sha256:") for item in value.get("authority_bindings",{}).values()):raise ProvanError("SESSION12_ADJUDICATION_BINDING_INVALID","bindings")
+    live=value.get("live_evaluation",{});arms=live.get("arms",[])
+    if not COMMIT.fullmatch(str(live.get("implementation_commit",""))) or live.get("calls")!=7 or not (0<=live.get("estimated_cost_usd",76)<=live.get("hard_cap_usd",0)==75):raise ProvanError("SESSION12_LIVE_EVALUATION_BINDING_INVALID","live")
+    if [row.get("arm") for row in arms]!=["A","B","C","D"] or [row.get("label") for row in arms]!=["FRONTIER_PROMPT_BASELINE","FRONTIER_PROMPT_BASELINE","FOUNDRY_STANDARD","FOUNDRY_DEEP"]:raise ProvanError("SESSION12_LIVE_ARM_LABEL_INVALID","arms")
+    if any(row.get("run_eligibility")!="ELIGIBLE" or row.get("contract_readiness")!="READY_WITH_MATERIAL_QUESTIONS" for row in arms[2:]):raise ProvanError("SESSION12_LIVE_FOUNDRY_STATUS_INVALID","arms")
+    if live.get("provider",{})!={"id":"openai-responses-primary","origin":"https://api.openai.com","model":"gpt-5.2","store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED"}:raise ProvanError("SESSION12_LIVE_PROVIDER_BINDING_INVALID","provider")
     return value
 
 
