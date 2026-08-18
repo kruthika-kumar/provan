@@ -18,6 +18,8 @@ from provan.session12_validators import (
     validate_pre_review_manifest_serialized,
     validate_projection_serialized,
     validate_real_use_qualification_serialized,
+    validate_reviewer_receipt_serialized,
+    validate_session12_closeout_serialized,
     validate_session13_handoff_serialized,
     validate_validation_summary_serialized,
 )
@@ -100,3 +102,34 @@ def test_inherited_session11_successor_schema_boundary_is_byte_preserving():
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def _reviewer(data, role="A"):
+    return {"schema_id":"provan.session12_reviewer_receipt.v1","sensitivity":"PUBLIC_SAFE","reviewer_role":role,"reviewer_mode":"fresh_read_only","reviewed_commit":data["binding"]["implementation_commit"],"reviewed_tree":data["binding"]["implementation_tree"],"reviewed_pre_review_root":data["manifest"]["proof_root"],"wheel_sha256":data["binding"]["wheel_sha256"],"verdict":"GO","findings":{"P0":0,"P1":0,"P2":0,"items":[]},"claim_dispositions":[{"claim_id":row["claim_id"],"result":"ACCEPTED"} for row in data["claims"]["claims"]],"maturity_recommendation":{"standard":"QUALIFIED_BOUNDED","deep":"DEGRADED","limitations":["SAME_MODEL_FAMILY_INDEPENDENCE_NOT_ESTABLISHED"]},"review_started_at":"2026-08-19T00:00:00Z","review_completed_at":"2026-08-19T00:01:00Z","identity_limitations":["READ_ONLY_CODEX_REVIEWER_WITHOUT_EXTERNAL_ORGANISATIONAL_IDENTITY_ATTESTATION"]}
+
+
+@pytest.mark.parametrize("fixture_class", CLASSES)
+def test_proof_reviewer_receipt_layers(fixture_class: str):
+    data=_bundle();value=_reviewer(data)
+    if fixture_class=="schema-invalid":value.pop("schema_id")
+    elif fixture_class=="adversarial":value["reviewed_pre_review_root"]="sha256:"+"f"*64
+    elif fixture_class=="schema-valid-python-invalid":value["claim_dispositions"]=value["claim_dispositions"][:-1]
+    elif fixture_class=="near-valid":value["findings"]={"P0":0,"P1":0,"P2":1,"items":[{"severity":"P2","summary":"bounded documentation limitation"}]}
+    call=lambda:validate_reviewer_receipt_serialized(canonical_bytes(value),data["binding_raw"],data["claim_raw"],data["manifest"]["proof_root"],"A")
+    if fixture_class in {"schema-invalid","adversarial","schema-valid-python-invalid"}:
+        with pytest.raises(ProvanError):call()
+    else:call()
+
+
+@pytest.mark.parametrize("fixture_class", CLASSES)
+def test_proof_gate12_closeout_layers(fixture_class: str):
+    data=_bundle();reviewers=[_reviewer(data,"A"),_reviewer(data,"B")];entries=[{"path":"reviewer-a.json","sha256":"sha256:"+"a"*64},{"path":"reviewer-b.json","sha256":"sha256:"+"b"*64}]
+    value={"schema_id":"provan.session12_closeout.v1","sensitivity":"PUBLIC_SAFE","status":"CLOSED","implementation_binding":data["binding"],"reviewed_pre_review_root":data["manifest"]["proof_root"],"final_proof_root":sha256_bytes(canonical_bytes(entries)),"reviewer_receipts":entries,"mode_qualification":{"standard":"QUALIFIED_BOUNDED","deep":"DEGRADED"},"execution_available":False,"challenge_available":False,"go_session13":True,"session13_implemented":False,"published":False,"release_created":False,"tag_created":False,"production_changed_after_review":False,"limitations":["SESSION13_NOT_IMPLEMENTED"]}
+    if fixture_class=="schema-invalid":value.pop("schema_id")
+    elif fixture_class=="adversarial":value["execution_available"]=True
+    elif fixture_class=="schema-valid-python-invalid":value["mode_qualification"]["deep"]="QUALIFIED_BOUNDED"
+    elif fixture_class=="near-valid":value["limitations"].append("DEEP_PROVIDER_INDEPENDENCE_NOT_ESTABLISHED")
+    call=lambda:validate_session12_closeout_serialized(canonical_bytes(value),data["binding_raw"],data["manifest"]["proof_root"],entries,reviewers)
+    if fixture_class in {"schema-invalid","adversarial","schema-valid-python-invalid"}:
+        with pytest.raises(ProvanError):call()
+    else:call()

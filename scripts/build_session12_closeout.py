@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 import jsonschema
 
 from provan.canonical import canonical_bytes, sha256_bytes
+from provan.session12_validators import validate_reviewer_receipt_serialized, validate_session12_closeout_serialized
 
 OUT = ROOT / "artifacts/session12"
 PROOFS = OUT / "proofs"
@@ -131,9 +132,61 @@ def pre_review(args: argparse.Namespace) -> dict:
     return manifest
 
 
+def final(args: argparse.Namespace) -> dict:
+    development_binding_raw = (OUT / "implementation_binding.v1.public.json").read_bytes()
+    development_binding = json.loads(development_binding_raw)
+    pre = json.loads((PROOFS / "pre_review_proof_manifest.v1.public.json").read_bytes())
+    if any(development_binding[key] != getattr(args, key) for key in ("implementation_commit", "implementation_tree", "wheel_sha256")):
+        raise SystemExit("SESSION12_FINAL_BINDING_MISMATCH")
+    claim_raw = (OUT / "authority/claim_registry.v1.public.json").read_bytes()
+    receipt_paths = ["artifacts/session12/proofs/reviewer_receipt_a.v1.public.json", "artifacts/session12/proofs/reviewer_receipt_b.v1.public.json"]
+    receipt_values = []
+    for role, path in zip(("A", "B"), receipt_paths):
+        raw = (ROOT / path).read_bytes()
+        receipt_values.append(validate_reviewer_receipt_serialized(raw, development_binding_raw, claim_raw, pre["proof_root"], role))
+    modes = receipt_values[0]["maturity_recommendation"]
+    if any(row["maturity_recommendation"][key] != modes[key] for row in receipt_values[1:] for key in ("standard", "deep")):
+        raise SystemExit("SESSION12_REVIEWER_MATURITY_DISAGREEMENT")
+    gate_binding = dict(development_binding)
+    gate_binding["standard_maturity"] = modes["standard"]
+    gate_binding["deep_maturity"] = modes["deep"]
+    write(OUT / "implementation_binding.gate12.v1.public.json", gate_binding)
+    matrix = json.loads((OUT / "layer4_claim_matrix.v1.public.json").read_bytes())
+    for row in matrix["claims"]:
+        row["Reviewer result"] = "A:ACCEPTED;B:ACCEPTED"
+        row["Status"] = "CLOSED"
+    write(OUT / "layer4_claim_matrix.final.v1.public.json", matrix)
+    handoff = json.loads((OUT / "session_handoff.v2.public.json").read_bytes())
+    handoff["implementation_binding"] = gate_binding
+    handoff["mode_qualification"] = {"standard": modes["standard"], "deep": modes["deep"]}
+    handoff["reviewer_receipts"] = [ref(path) for path in receipt_paths]
+    write(OUT / "session_handoff.final.v2.public.json", handoff)
+    final_paths = [
+        "artifacts/session12/proofs/pre_review_proof_manifest.v1.public.json",
+        "artifacts/session12/implementation_binding.gate12.v1.public.json",
+        "artifacts/session12/layer4_claim_matrix.final.v1.public.json",
+        "artifacts/session12/session_handoff.final.v2.public.json",
+        "artifacts/session12/proofs/generic_absence_receipt.v1.public.json",
+        "artifacts/session12/proofs/validation_summary.v1.public.json",
+        "artifacts/session12/real_use/qualification.v1.public.json",
+        *receipt_paths,
+    ]
+    entries = [ref(path) for path in final_paths]
+    final_root = sha256_bytes(canonical_bytes(entries))
+    manifest = {"schema_id":"provan.session11_proof_manifest.v1","phase":"FINAL","implementation_commit":args.implementation_commit,"implementation_tree":args.implementation_tree,"wheel_sha256":args.wheel_sha256,"reviewed_pre_review_root":pre["proof_root"],"entries":entries,"proof_root":final_root,"reviewer_outputs_excluded":False}
+    jsonschema.validate(manifest, json.loads((ROOT / "provan/schemas/session11-proof-manifest.v1.json").read_bytes()))
+    write(PROOFS / "final_proof_manifest.v1.public.json", manifest)
+    receipt_refs = [ref(path) for path in receipt_paths]
+    closeout = {"schema_id":"provan.session12_closeout.v1","sensitivity":"PUBLIC_SAFE","status":"CLOSED","implementation_binding":gate_binding,"reviewed_pre_review_root":pre["proof_root"],"final_proof_root":final_root,"reviewer_receipts":receipt_refs,"mode_qualification":{"standard":modes["standard"],"deep":modes["deep"]},"execution_available":False,"challenge_available":False,"go_session13":True,"session13_implemented":False,"published":False,"release_created":False,"tag_created":False,"production_changed_after_review":False,"limitations":sorted(set(modes.get("limitations", []) + receipt_values[1]["maturity_recommendation"].get("limitations", []) + ["SESSION13_NOT_IMPLEMENTED","PACKAGE_0_5_0_UNPUBLISHED"]))}
+    validate_session12_closeout_serialized(canonical_bytes(closeout), canonical_bytes(gate_binding), pre["proof_root"], entries, receipt_values)
+    write(OUT / "closeout.v1.public.json", closeout)
+    print(final_root)
+    return closeout
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase", choices=("binding", "pre-review"), required=True)
+    parser.add_argument("--phase", choices=("binding", "pre-review", "final"), required=True)
     parser.add_argument("--implementation-commit", required=True)
     parser.add_argument("--implementation-tree", required=True)
     parser.add_argument("--wheel-sha256", required=True)
@@ -142,7 +195,8 @@ def main() -> int:
     parser.add_argument("--deep-maturity", choices=("IMPLEMENTED_UNQUALIFIED", "QUALIFIED_BOUNDED", "DEGRADED", "UNAVAILABLE"), default="IMPLEMENTED_UNQUALIFIED")
     args = parser.parse_args()
     if args.phase == "binding": binding(args)
-    else: pre_review(args)
+    elif args.phase == "pre-review": pre_review(args)
+    else: final(args)
     return 0
 
 

@@ -245,3 +245,54 @@ def validate_validation_summary_serialized(raw: bytes, binding_raw: bytes) -> di
     if not checks or any(row.get("exit_code") != 0 or not SHA.fullmatch(str(row.get("transcript_sha256", ""))) for row in checks):
         raise ProvanError("SESSION12_VALIDATION_CHECK_INVALID", "summary")
     return value
+
+
+def validate_reviewer_receipt_serialized(raw: bytes, binding_raw: bytes, claim_registry_raw: bytes, pre_review_root: str, reviewer_role: str) -> dict[str, Any]:
+    value = _load(raw, "provan.session12_reviewer_receipt.v1")
+    binding = json.loads(binding_raw)
+    claims = validate_claim_registry_serialized(claim_registry_raw)
+    if value.get("reviewer_role") != reviewer_role or value.get("reviewer_mode") != "fresh_read_only":
+        raise ProvanError("SESSION12_REVIEWER_IDENTITY_MISMATCH", reviewer_role)
+    expected = {
+        "reviewed_commit": binding.get("implementation_commit"),
+        "reviewed_tree": binding.get("implementation_tree"),
+        "wheel_sha256": binding.get("wheel_sha256"),
+        "reviewed_pre_review_root": pre_review_root,
+    }
+    if any(value.get(key) != expected_value for key, expected_value in expected.items()):
+        raise ProvanError("SESSION12_REVIEWER_BINDING_MISMATCH", reviewer_role)
+    dispositions = value.get("claim_dispositions", [])
+    expected_ids = [row["claim_id"] for row in claims["claims"]]
+    if [row.get("claim_id") for row in dispositions] != expected_ids:
+        raise ProvanError("SESSION12_REVIEWER_CLAIM_SET_MISMATCH", reviewer_role)
+    findings = value.get("findings", {})
+    counts = {severity: sum(row.get("severity") == severity for row in findings.get("items", [])) for severity in ("P0", "P1", "P2")}
+    if any(findings.get(severity) != count for severity, count in counts.items()):
+        raise ProvanError("SESSION12_REVIEWER_FINDING_COUNT_MISMATCH", reviewer_role)
+    if value.get("verdict") == "GO" and (findings.get("P0") or findings.get("P1") or any(row.get("result") != "ACCEPTED" for row in dispositions)):
+        raise ProvanError("SESSION12_REVIEWER_FALSE_GO", reviewer_role)
+    if value.get("verdict") == "GO" and value.get("maturity_recommendation", {}).get("standard") != "QUALIFIED_BOUNDED":
+        raise ProvanError("SESSION12_STANDARD_QUALIFICATION_NOT_CLOSED", reviewer_role)
+    return value
+
+
+def validate_session12_closeout_serialized(raw: bytes, binding_raw: bytes, pre_review_root: str, final_entries: list[dict[str, str]], reviewer_values: list[dict[str, Any]]) -> dict[str, Any]:
+    value = _load(raw, "provan.session12_closeout.v1")
+    binding = json.loads(binding_raw)
+    if value.get("implementation_binding") != binding or value.get("reviewed_pre_review_root") != pre_review_root:
+        raise ProvanError("SESSION12_CLOSEOUT_BINDING_MISMATCH", "closeout")
+    if value.get("final_proof_root") != sha256_bytes(canonical_bytes(final_entries)):
+        raise ProvanError("SESSION12_CLOSEOUT_PROOF_ROOT_MISMATCH", "closeout")
+    modes = [row.get("maturity_recommendation", {}) for row in reviewer_values]
+    if len(modes) != 2 or modes[0].get("standard") != modes[1].get("standard") or modes[0].get("deep") != modes[1].get("deep"):
+        raise ProvanError("SESSION12_REVIEWER_MATURITY_DISAGREEMENT", "closeout")
+    expected_modes = {"standard": modes[0]["standard"], "deep": modes[0]["deep"]}
+    if value.get("mode_qualification") != expected_modes:
+        raise ProvanError("SESSION12_CLOSEOUT_MATURITY_MISMATCH", "closeout")
+    if any(row.get("verdict") != "GO" or row.get("findings", {}).get("P0") or row.get("findings", {}).get("P1") for row in reviewer_values):
+        raise ProvanError("SESSION12_CLOSEOUT_REVIEW_NOT_GO", "closeout")
+    if any(value.get(key) is not False for key in ("execution_available", "challenge_available", "session13_implemented", "published", "release_created", "tag_created", "production_changed_after_review")):
+        raise ProvanError("SESSION12_CLOSEOUT_BOUNDARY_INVALID", "closeout")
+    if value.get("go_session13") is not True:
+        raise ProvanError("SESSION12_HANDOFF_NOT_AUTHORIZED", "closeout")
+    return value

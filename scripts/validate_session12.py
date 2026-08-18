@@ -14,6 +14,7 @@ from provan.session12_validators import (validate_adjudication_projection_serial
     validate_claim_registry_serialized,validate_generic_absence_receipt_serialized,
     validate_implementation_binding_serialized,validate_model_egress_allowlist_serialized,validate_pattern_library_serialized,
     validate_pre_review_manifest_serialized,validate_real_use_qualification_serialized,
+    validate_reviewer_receipt_serialized,validate_session12_closeout_serialized,
     validate_session13_handoff_serialized,validate_validation_summary_serialized,
     validate_work_order_serialized)
 
@@ -56,6 +57,17 @@ def main()->int:
         validate_generic_absence_receipt_serialized((ROOT/"artifacts/session12/proofs/generic_absence_receipt.v1.public.json").read_bytes(),binding_raw);validate_validation_summary_serialized((ROOT/"artifacts/session12/proofs/validation_summary.v1.public.json").read_bytes(),binding_raw)
         pre_raw=(ROOT/"artifacts/session12/proofs/pre_review_proof_manifest.v1.public.json").read_bytes();pre=json.loads(pre_raw);artifacts={row["path"]:artifact_bytes(row["path"]) for row in pre["entries"]};validate_pre_review_manifest_serialized(pre_raw,artifacts,binding_raw)
         proof_raw=(ROOT/"artifacts/session12/proofs/proof_registry.v1.public.json").read_bytes();handoff_raw=(ROOT/"artifacts/session12/session_handoff.v2.public.json").read_bytes();handoff=json.loads(handoff_raw);handoff_artifacts={handoff[name]["path"]:artifact_bytes(handoff[name]["path"]) for name in ("wheel","schema_registry","claim_registry","foundry_run","owner_projection","pattern_library")};validate_session13_handoff_serialized(handoff_raw,handoff_artifacts,binding_raw,proof_raw)
+        receipt_paths=[ROOT/"artifacts/session12/proofs/reviewer_receipt_a.v1.public.json",ROOT/"artifacts/session12/proofs/reviewer_receipt_b.v1.public.json"]
+        if any(path.exists() for path in receipt_paths):
+            require(all(path.is_file() for path in receipt_paths),"SESSION12_REVIEWER_RECEIPT_SET_INCOMPLETE")
+            reviewers=[validate_reviewer_receipt_serialized(path.read_bytes(),binding_raw,claim_raw,pre["proof_root"],role) for path,role in zip(receipt_paths,("A","B"))]
+            final_manifest_path=ROOT/"artifacts/session12/proofs/final_proof_manifest.v1.public.json";closeout_path=ROOT/"artifacts/session12/closeout.v1.public.json"
+            if final_manifest_path.exists() or closeout_path.exists():
+                require(final_manifest_path.is_file() and closeout_path.is_file(),"SESSION12_FINAL_ARTIFACT_SET_INCOMPLETE")
+                final_manifest=json.loads(final_manifest_path.read_bytes());final_entries=final_manifest["entries"]
+                require(final_manifest["proof_root"]==sha256_bytes(canonical_bytes(final_entries)),"SESSION12_FINAL_PROOF_ROOT_MISMATCH")
+                gate_binding_raw=(ROOT/"artifacts/session12/implementation_binding.gate12.v1.public.json").read_bytes()
+                validate_session12_closeout_serialized(closeout_path.read_bytes(),gate_binding_raw,pre["proof_root"],final_entries,reviewers)
     result=subprocess.run([sys.executable,"scripts/validate_session12_leakage.py","--tree-only"],cwd=ROOT,capture_output=True,text=True,encoding="utf-8");require(result.returncode==0,"SESSION12_PUBLIC_LEAKAGE_GATE_FAILED")
     print("SESSION12_IMPLEMENTATION_VALID");return 0
 

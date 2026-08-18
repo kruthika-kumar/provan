@@ -45,11 +45,13 @@ INVARIANTS=[
  ("P12-W","frozen_claim_registry",public_nodes("claim_registry"),["artifacts/session12/authority/claim_registry.v1.public.json"]),
  ("P12-X","nonrecursive_review_root",final_nodes("pre-review"),["scripts/build_session12_closeout.py","provan/schemas/session11-proof-manifest.v1.json"]),
  ("P12-Y","session13_handoff",final_nodes("handoff"),["scripts/build_session12_closeout.py","provan/schemas/session-handoff.v2.json"]),
+ ("P12-Z","reviewer_receipt",{kind:f"tests/test_session12_closeout.py::test_proof_reviewer_receipt_layers[{kind}]" for kind in CLASSES},["provan/schemas/session12-reviewer-receipt.v1.json"]),
+ ("P12-AA","gate12_closeout",{kind:f"tests/test_session12_closeout.py::test_proof_gate12_closeout_layers[{kind}]" for kind in CLASSES},["provan/schemas/session12-closeout.v1.json"]),
 ]
 
 
 CLAIMS={
- "authority_and_work_order":list(range(81,85)),"source_boundary":list(range(14,24)),"run_descriptor":[1,3,4,23,24,60],"owner_projection":[2,12,13,55],"readiness_eligibility":[10,11,55,56],"stage_order":[5,6,58],"deep_isolation":[7,8,9],"deterministic_router":list(range(25,31)),"provider_governance":list(range(31,44))+list(range(69,73))+[97,99],"model_envelope_boundary":[35,36,37,38,39,41,97],"spend_control":[43,44,79],"pattern_library":list(range(45,54)),"pattern_selection":[52,53,54],"stage_artifact_binding":[3,57,59,60],"audit_and_witness_coverage":[57,59],"session11_projection":[12,13,84],"frozen_adjudication":list(range(63,69))+[98,99,100],"real_use_and_comparators":list(range(69,80))+[100],"sensitivity_projection":[37,63,68,80,81,82,97],"capability_and_maturity":[11,40,42,53,54,95,96],"package_and_enterprise_boundary":list(range(85,92)),"state_and_target_safety":[14,15,16,21,91],"frozen_claim_registry":[61,62,93],"nonrecursive_review_root":[92,93],"session13_handoff":[94,95,96,101],
+ "authority_and_work_order":list(range(81,85)),"source_boundary":list(range(14,24)),"run_descriptor":[1,3,4,23,24,60],"owner_projection":[2,12,13,55],"readiness_eligibility":[10,11,55,56],"stage_order":[5,6,58],"deep_isolation":[7,8,9],"deterministic_router":list(range(25,31)),"provider_governance":list(range(31,44))+list(range(69,73))+[97,99],"model_envelope_boundary":[35,36,37,38,39,41,97],"spend_control":[43,44,79],"pattern_library":list(range(45,54)),"pattern_selection":[52,53,54],"stage_artifact_binding":[3,57,59,60],"audit_and_witness_coverage":[57,59],"session11_projection":[12,13,84],"frozen_adjudication":list(range(63,69))+[98,99,100],"real_use_and_comparators":list(range(69,80))+[100],"sensitivity_projection":[37,63,68,80,81,82,97],"capability_and_maturity":[11,40,42,53,54,95,96],"package_and_enterprise_boundary":list(range(85,92)),"state_and_target_safety":[14,15,16,21,91],"frozen_claim_registry":[61,62,93],"nonrecursive_review_root":[92,93],"session13_handoff":[94,95,96,101],"reviewer_receipt":[102],"gate12_closeout":[103],
 }
 
 

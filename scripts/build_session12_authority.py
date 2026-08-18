@@ -39,6 +39,8 @@ TOPICS = [
     "current semantic qualification pinned to GPT-5.6 Sol with role-appropriate reasoning",
     "paired comparator arms use the same current strong model and disclose compute differences",
     "public-safe final-dogfood run binding resolves the retained internal canonical run without publishing it",
+    "fresh reviewer receipts bind the exact implementation, wheel, pre-review root, every claim disposition, findings, and mode-maturity recommendation",
+    "reviewer-backed Gate 12 closeout binds the final proof root, exact mode maturity, capability boundary, and Session 13 handoff decision",
 ]
 
 
@@ -70,6 +72,8 @@ def main() -> int:
             {"object": "foundry_real_use_qualification", "classification": "PUBLIC_CANONICAL", "reason": "the inherited real-use contract cannot bind multiple Foundry modes, adjudication root, control roles, blind boundaries, and harness-label limitations"},
             {"object": "foundry_run_binding", "classification": "PUBLIC_CANONICAL", "reason": "the internal run descriptor is intentionally non-public while Session 13 requires an independently resolvable digest/candidate/stage binding"},
             {"object": "pre_review_proof_manifest", "classification": "REUSE_EXISTING", "reason": "the Session 11 non-recursive proof-manifest semantics match without redesign"},
+            {"object": "session12_reviewer_receipt", "classification": "PUBLIC_CANONICAL", "reason": "inherited reviewer receipts hard-code earlier-session claim namespaces and cannot bind G12 dispositions or separate Standard and Deep maturity"},
+            {"object": "session12_closeout", "classification": "PUBLIC_CANONICAL", "reason": "no inherited closeout binds reviewer-backed Standard and Deep Gate 12 maturity with the Session 13 capability boundary"},
         ],
         "new_public_schema_rule": "EXPLICIT_SEMANTIC_INSUFFICIENCY_REQUIRED",
     }
