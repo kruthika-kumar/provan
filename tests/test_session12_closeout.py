@@ -38,6 +38,10 @@ def _bundle():
     binding_raw = canonical_bytes(binding)
     projection = {"schema_id":"provan.foundry_acceptance_projection.v1","projection_id":"11111111-1111-4111-8111-111111111111","sensitivity":"PUBLIC_SAFE","run_id":"22222222-2222-4222-8222-222222222222","brief_ref":{"id":"33333333-3333-4333-8333-333333333333","sha256":"sha256:"+"4"*64},"case_id":"sha256:"+"5"*64,"candidate_digest":"sha256:"+"6"*64,"proposed_contract_terms":{},"contract_readiness":"READY_WITH_MATERIAL_QUESTIONS","run_eligibility":"ELIGIBLE","owner_confirmation_required":True,"creates_authority":False,"execution_available":False,"challenge_available":False,"limitations":["OWNER_CONFIRMATION_REQUIRED"]}
     adjudication = json.loads((ROOT / "artifacts/session12/public/adjudication_projection.v1.public.json").read_bytes())
+    adjudication["live_evaluation"]["implementation_commit"] = binding["implementation_commit"]
+    adjudication["live_evaluation"]["evaluation_policy_version"] = 7
+    adjudication_core = dict(adjudication); adjudication_core.pop("projection_digest", None)
+    adjudication["projection_digest"] = sha256_bytes(canonical_bytes(adjudication_core))
     cases = [{"case_id":case,"predeclared":True} for case in ("httpx-pr-3699-control","click-pr-3721-control","httpcore-pr-880-consequential","provan-public-control","session11-controlled-patient","session12-final-dogfood")]
     qualification = {"schema_id":"provan.foundry_real_use_qualification.v1","sensitivity":"PUBLIC_SAFE","implementation_binding":binding,"adjudication_root":adjudication["authority_bindings"]["review_root"],"cases":cases,"arms":[{"label":"FOUNDRY_STANDARD"}],"coding_harness_sanity":{"claim_scope":"SINGLE_BLIND_SANITY_NOT_HEADLINE_COMPARISON"},"outcome_bearing_runs_completed":True,"evaluation_driven_adjudication_change":False,"raw_measurements":[],"limitations":["DEEP_DEGRADED"]}
     scopes=("history_delta","working_tree","package","proofs_examples","controlled_ci")

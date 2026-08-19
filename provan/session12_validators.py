@@ -202,7 +202,7 @@ def validate_implementation_binding_serialized(raw: bytes, schema_registry_raw: 
 
 def validate_real_use_qualification_serialized(raw: bytes, binding_raw: bytes, adjudication_raw: bytes) -> dict[str, Any]:
     value = _load(raw, "provan.foundry_real_use_qualification.v1"); binding = json.loads(binding_raw); adjudication = validate_adjudication_projection_serialized(adjudication_raw)
-    if value.get("implementation_binding") != binding or value.get("adjudication_root") != adjudication["authority_bindings"]["review_root"] or adjudication.get("live_evaluation",{}).get("implementation_commit")!=binding.get("implementation_commit") or adjudication.get("live_evaluation",{}).get("evaluation_policy_version")!=5:
+    if value.get("implementation_binding") != binding or value.get("adjudication_root") != adjudication["authority_bindings"]["review_root"] or adjudication.get("live_evaluation",{}).get("implementation_commit")!=binding.get("implementation_commit") or adjudication.get("live_evaluation",{}).get("evaluation_policy_version")!=7:
         raise ProvanError("SESSION12_REAL_USE_BINDING_MISMATCH", "qualification")
     cases = value.get("cases", []); expected = {"httpx-pr-3699-control", "click-pr-3721-control", "httpcore-pr-880-consequential", "provan-public-control", "session11-controlled-patient", "session12-final-dogfood"}
     if {row.get("case_id") for row in cases} != expected or any(not row.get("predeclared") for row in cases):
