@@ -64,6 +64,16 @@ def test_deep_scripted_paths_are_isolated_and_nonqualifying(tmp_path: Path,monke
     assert candidate["proposed_terms"]["intended_outcome"] not in [text for row in run["blind_paths"] for text in row["contract_output"]["model_reviewed_implications"]]
     assert candidate["proposed_terms"]["conditions"] and all(row["authority"]=="model_reviewed_proposal" for row in candidate["proposed_terms"]["conditions"])
     assert [row["stage"] for row in run["stage_execution"]]==RUN_STAGES["deep"]
+    trace={row["stage"]:row for row in run["stage_execution"]}
+    source_input=[run["source_ledger"]["sha256"]]
+    path_digests=[row["contract_output"]["digest"] for row in run["blind_paths"]]
+    assert trace["blind_path_a"]["input_digests"]==source_input
+    assert trace["blind_path_b"]["input_digests"]==source_input
+    assert trace["freeze_blind_paths"]["input_digests"]==path_digests
+    assert trace["synthesis"]["input_digests"]==trace["freeze_blind_paths"]["output_digests"]
+    chained=copy.deepcopy(run);chained_trace={row["stage"]:row for row in chained["stage_execution"]}
+    chained_trace["blind_path_b"]["input_digests"]=[path_digests[0]]
+    with pytest.raises(ProvanError,match="FOUNDRY_STAGE_EXECUTION_BINDING_INVALID"):validate_run_serialized(canonical_bytes(chained),projection,artifacts)
     ref=run["model_envelope_refs"][0];bad=dict(artifacts);envelope=json.loads(bad[ref["path"]]);envelope["instructions"]+=" undisclosed";bad[ref["path"]]=canonical_bytes(envelope);tampered=copy.deepcopy(run);tampered_ref=tampered["model_envelope_refs"][0];tampered_ref["sha256"]=sha256_bytes(bad[ref["path"]]);tampered["blind_paths"][0]["model_envelope_ref"]=tampered_ref
     with pytest.raises(ProvanError,match="FOUNDRY_MODEL_ENVELOPE_SEMANTICS_INVALID"):validate_run_serialized(canonical_bytes(tampered),projection,bad)
 

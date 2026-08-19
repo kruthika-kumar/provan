@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 import jsonschema
 
 from provan.canonical import canonical_bytes, sha256_bytes
-from provan.session12_validators import validate_reviewer_receipt_serialized, validate_session12_closeout_serialized
+from provan.session12_validators import validate_generic_absence_receipt_serialized, validate_reviewer_receipt_serialized, validate_session12_closeout_serialized
 
 OUT = ROOT / "artifacts/session12"
 PROOFS = OUT / "proofs"
@@ -72,6 +72,10 @@ def pre_review(args: argparse.Namespace) -> dict:
     bound = json.loads((OUT / "implementation_binding.v1.public.json").read_bytes())
     if any(bound[key] != getattr(args, key) for key in ("implementation_commit", "implementation_tree", "wheel_sha256")):
         raise SystemExit("SESSION12_PRE_REVIEW_BINDING_MISMATCH")
+    validate_generic_absence_receipt_serialized(
+        (PROOFS / "generic_absence_receipt.v1.public.json").read_bytes(),
+        canonical_bytes(bound),
+    )
     proof_registry = json.loads((PROOFS / "proof_registry.v1.public.json").read_bytes())
     proof_family_root = sha256_bytes(canonical_bytes(proof_registry["entries"]))
     qualification = json.loads((OUT / "real_use/qualification.v1.public.json").read_bytes())

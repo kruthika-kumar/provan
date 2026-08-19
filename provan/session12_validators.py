@@ -116,9 +116,13 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
         audit=loaded["audit"];coverage=audit.get("finding_coverage",{})
         if coverage.get("total")!=len(audit.get("findings",[])) or coverage.get("addressed",0)+coverage.get("preserved_unresolved",0)!=coverage.get("total"):raise ProvanError("FOUNDRY_AUDIT_COVERAGE_INVALID","audit")
         expected_outputs={"blind_intent":[value["stage_artifacts"]["intent"]["sha256"]],"blind_path_a":path_digests[:1],"blind_path_b":path_digests[1:2],"freeze_blind_paths":[sha256_bytes(canonical_bytes(path_digests))] if path_digests else [],"synthesis":[value["stage_artifacts"]["intent"]["sha256"]],"goal_obstacle":[value["stage_artifacts"]["goal_obstacle"]["sha256"]],"pre_mortem":[value["stage_artifacts"]["pre_mortem"]["sha256"]],"contract_proposal":[value["stage_artifacts"]["contract_candidate"]["sha256"]],"adversarial_audit":[value["stage_artifacts"]["audit"]["sha256"]],"revision":[],"witnesses":[value["stage_artifacts"]["witnesses"]["sha256"]],"mutation_checks":[value["stage_artifacts"]["witnesses"]["sha256"]],"final_audit":[value["stage_artifacts"]["audit"]["sha256"]],"revisions":[],"verification_patterns":[value["stage_artifacts"]["pattern_selection"]["sha256"]],"readiness":[value["stage_artifacts"]["readiness"]["sha256"]]}
-        previous=[value["source_ledger"]["sha256"]];expected_trace=[]
+        source_inputs=[value["source_ledger"]["sha256"]];previous=source_inputs;expected_trace=[]
         for stage_name in value["stages"]:
-            outputs=expected_outputs[stage_name];expected_trace.append({"stage":stage_name,"input_digests":previous,"output_digests":outputs,"status":"EXECUTED" if outputs else "NOT_APPLICABLE"})
+            outputs=expected_outputs[stage_name]
+            if value["depth"]=="deep" and stage_name in {"blind_path_a","blind_path_b"}:inputs=source_inputs
+            elif value["depth"]=="deep" and stage_name=="freeze_blind_paths":inputs=path_digests
+            else:inputs=previous
+            expected_trace.append({"stage":stage_name,"input_digests":inputs,"output_digests":outputs,"status":"EXECUTED" if outputs else "NOT_APPLICABLE"})
             if outputs:previous=outputs
         if value.get("stage_execution")!=expected_trace:raise ProvanError("FOUNDRY_STAGE_EXECUTION_BINDING_INVALID","trace")
     return value
