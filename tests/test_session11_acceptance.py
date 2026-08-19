@@ -17,6 +17,7 @@ from provan.canonical import canonical_bytes, sha256_bytes
 from provan.change_brief import explain, promote
 from provan.cli import _parser
 from provan.errors import ProvanError
+from provan.foundry import foundry
 from provan.leakage import validate_candidate_surfaces
 from provan.session11_validators import (derive_reinspection_overall,
     SEMANTIC_VALIDATORS,
@@ -74,6 +75,21 @@ def test_full_lifecycle_and_exact_reinspection(patient):
     record_id,text=render_record(att["attestation_id"],decision["decision_id"],"markdown");assert "Recommendation: `held`" in text
     repo=patient["repo"];(repo/"patient"/"public-contract.json").write_text('{"schema_version":1,"capabilities":{"acceptance_record":"available"}}\n',encoding="utf-8");later=commit(repo,"correct fix")
     result=reinspect(record_id,str(repo),later,None,now=FIXED);assert result["overall_status"]=="closed" and result["items"][0]["status"]=="closed"
+
+
+def test_foundry_projection_enters_explicit_owner_disposition(patient,tmp_path):
+    source=tmp_path/"intent.md";source.write_text("The acceptance record must remain available through the documented source contract.",encoding="utf-8");manifest=tmp_path/"sources.json";manifest.write_text(json.dumps({"sources":[{"path":"intent.md","role":"intent"}],"routing_inputs":{"risk":"low","ambiguity":"low","blast_radius":"bounded","reversibility":"easy","oracle":"adequate","actor_autonomy":"low"}}),encoding="utf-8")
+    run,_=foundry(brief_id=patient["brief"]["brief_id"],source_manifest=manifest,no_model=True)
+    surface=disposition_items(patient["preparation"]["preparation_id"],run["owner_projection_ref"]["id"]);assert surface["foundry_contract_terms"]["criteria"][0]["criterion_id"]=="foundry-criterion-1";rows=[{"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm","rationale":"explicit projection review"} for item in surface["items"]]
+    contract=create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_action":"confirm"},"fixture-operator",foundry_projection=run["owner_projection_ref"]["id"],now=FIXED)
+    assert contract["intended_outcome"].startswith("The acceptance record") and contract["mandatory_criteria"][0]["criterion_id"]=="foundry-criterion-1"
+    with pytest.raises(ProvanError,match="FOUNDRY_PROJECTION_TERMS_MISMATCH"):create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_terms":{"criteria":[]},"contract_action":"confirm"},"fixture-operator",foundry_projection=run["owner_projection_ref"]["id"],now=FIXED)
+
+
+def test_foundry_ineligible_projection_cannot_enter_owner_disposition(patient,tmp_path):
+    source=tmp_path/"intent.md";source.write_text("Material public contract change with an unresolved oracle.",encoding="utf-8");manifest=tmp_path/"sources.json";manifest.write_text(json.dumps({"sources":[{"path":"intent.md","role":"intent"}],"routing_inputs":{"risk":"medium","ambiguity":"material","blast_radius":"public_contract","reversibility":"bounded","oracle":"missing","actor_autonomy":"low"}}),encoding="utf-8")
+    run,_=foundry(brief_id=patient["brief"]["brief_id"],source_manifest=manifest,no_model=True);surface=disposition_items(patient["preparation"]["preparation_id"]);rows=[{"item_id":item["item_id"],"action":"unresolved" if item["kind"]=="unresolved_question" else "confirm"} for item in surface["items"]]
+    with pytest.raises(ProvanError,match="FOUNDRY_PROJECTION_NOT_ELIGIBLE"):create_contract(patient["preparation"]["preparation_id"],{"items":rows,"contract_action":"confirm"},"fixture-operator",foundry_projection=run["owner_projection_ref"]["id"],now=FIXED)
 
 
 def test_near_fix_and_unrelated_descendant_do_not_close(patient):
@@ -388,7 +404,7 @@ def test_session11_validator_direct_invocation_imports_runtime():
 
 def test_release_gate_uses_supported_explicit_session11_phase():
     workflow=(Path(__file__).parents[1]/".github/workflows/release-gate.yml").read_text(encoding="utf-8")
-    assert "python scripts/validate_session11.py --phase final" in workflow
+    assert "python scripts/validate_session11.py --phase final --successor" in workflow
     assert "python scripts/validate_session11.py --phase auto" not in workflow
 
 

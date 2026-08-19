@@ -29,7 +29,7 @@ from .session11_validators import (
 )
 from .state import secure_read, secure_write, state_root
 
-PACKAGE_VERSION="0.4.0"
+PACKAGE_VERSION="0.5.0"
 POLICY_ID="community.acceptance.v1"
 POLICY_VERSION="1"
 ANALYSIS_VERSION="session11-source-only-v1"
@@ -49,9 +49,10 @@ def _ref(value: dict[str,Any],raw: bytes,id_key: str) -> dict[str,str]: return {
 
 
 def _session11_schema_registry_raw() -> bytes:
-    rows=[]
+    rows=[];session12_ids={"provan.foundry_acceptance_projection.v1","provan.contract_foundry_run.v1","provan.foundry_run_binding.v1","provan.verification_pattern_library.v1","provan.source_authority_ledger.v1","provan.intent_model.v1","provan.goal_obstacle_model.v1","provan.premortem_analysis.v1","provan.contract_candidate.v1","provan.contract_audit.v1","provan.contract_witness_set.v1","provan.contract_revision_record.v1","provan.contract_readiness.v1","provan.verification_pattern.v1","provan.verification_pattern_selection.v1","provan.model_routing_receipt.v1","provan.session_handoff.v2","provan.session12_implementation_binding.v1","provan.foundry_real_use_qualification.v1","provan.session12_reviewer_receipt.v1","provan.session12_closeout.v1"}
     for path in sorted(Path(__file__).with_name("schemas").glob("*.json"),key=lambda value:value.name):
         raw=path.read_bytes();value=json.loads(raw)
+        if value.get("$id") in session12_ids:continue
         rows.append({"schema_id":value["$id"],"path":f"provan/schemas/{path.name}","sha256":sha256_bytes(raw),"normalized_sha256":sha256_bytes(canonical_bytes(value))})
     return canonical_bytes({"schema_id":"provan.session11_schema_registry.v1","sensitivity":"PUBLIC_SAFE","entries":rows,"registry_digest":sha256_bytes(canonical_bytes(rows))})
 
@@ -146,8 +147,13 @@ def _contract_obligation_items(contract:dict[str,Any],seed_digest:str,actor:dict
     return rows
 
 
-def disposition_items(preparation_id: str) -> dict[str,Any]:
-    preparation,_,brief,_=_resolve_preparation(preparation_id);seed=brief["acceptance_seed"];seed_digest=sha256_bytes(canonical_bytes(seed));items=[]
+def disposition_items(preparation_id: str,foundry_projection: str|None=None) -> dict[str,Any]:
+    preparation,_,brief,brief_raw=_resolve_preparation(preparation_id);seed=brief["acceptance_seed"];seed_digest=sha256_bytes(canonical_bytes(seed));items=[];foundry_terms=None
+    if foundry_projection:
+        from .foundry import load_projection
+        projection,_=load_projection(foundry_projection)
+        if projection["brief_ref"]!={"id":brief["brief_id"],"sha256":sha256_bytes(brief_raw)} or projection["case_id"]!=brief["case_id"] or projection["candidate_digest"]!=brief["candidate"]["candidate_digest"]:raise ProvanError("FOUNDRY_PROJECTION_CASE_MISMATCH",foundry_projection)
+        foundry_terms=projection["proposed_contract_terms"]
     for index,value in enumerate(brief["claims"].get("source_attributed_product_intent",[])):
         items.append({"item_id":_item_id(seed_digest,"intended_outcome",f"brief:intent:{index}",value),"kind":"intended_outcome","source_ref":f"brief:intent:{index}","original_value":value})
     journeys=brief.get("context_request",{}).get("journey_digests",[])
@@ -159,7 +165,9 @@ def disposition_items(preparation_id: str) -> dict[str,Any]:
     for index,value in enumerate(seed.get("unresolved_questions",[])):
         items.append({"item_id":_item_id(seed_digest,"unresolved_question",f"seed:unresolved:{index}",value),"kind":"unresolved_question","source_ref":f"seed:unresolved:{index}","original_value":value})
     if not items:items.append({"item_id":_item_id(seed_digest,"unresolved_question","seed:empty","INTENDED_OUTCOME_UNRESOLVED"),"kind":"unresolved_question","source_ref":"seed:empty","original_value":"INTENDED_OUTCOME_UNRESOLVED"})
-    return {"preparation_id":preparation_id,"case_id":preparation["case_id"],"seed_digest":seed_digest,"items":items}
+    result={"preparation_id":preparation_id,"case_id":preparation["case_id"],"seed_digest":seed_digest,"items":items}
+    if foundry_terms is not None:result["foundry_contract_terms"]=foundry_terms;result["contract_action_required"]="confirm"
+    return result
 
 
 def _closure_from_spec(criterion_id: str,spec: dict[str,Any],invariant_refs:dict[str,dict[str,str]],now: Callable[[],datetime]) -> tuple[dict[str,Any],bytes]:
@@ -174,10 +182,19 @@ def _closure_from_spec(criterion_id: str,spec: dict[str,Any],invariant_refs:dict
     validate_closure_requirement_serialized(canonical_bytes(value));return _store("closure-requirements",value["closure_requirement_id"],value,"closure-requirement.v1.json")
 
 
-def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label: str,*,supersedes: str|None=None,now:Callable[[],datetime]=utcnow) -> dict[str,Any]:
+def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label: str,*,supersedes: str|None=None,foundry_projection: str|None=None,now:Callable[[],datetime]=utcnow) -> dict[str,Any]:
     if not actor_label or len(actor_label)>128:raise ProvanError("ACTOR_LABEL_INVALID","actor label must contain 1..128 characters")
     if dispositions.get("contract_action")!="confirm":raise ProvanError("CONTRACT_OBLIGATION_ACTION_REQUIRED","Session 11 requires an explicit confirm action for the complete proposed Contract surface; edit the proposal before confirming")
-    preparation,prep_raw,brief,brief_raw=_resolve_preparation(preparation_id);surface=disposition_items(preparation_id);expected={r["item_id"]:r for r in surface["items"]};rows=dispositions.get("items",[])
+    preparation,prep_raw,brief,brief_raw=_resolve_preparation(preparation_id)
+    if foundry_projection:
+        from .foundry import load_projection
+        projection,projection_raw=load_projection(foundry_projection)
+        if projection["brief_ref"]!={"id":brief["brief_id"],"sha256":sha256_bytes(brief_raw)} or projection["case_id"]!=brief["case_id"] or projection["candidate_digest"]!=brief["candidate"]["candidate_digest"]:raise ProvanError("FOUNDRY_PROJECTION_CASE_MISMATCH",foundry_projection)
+        if projection["run_eligibility"]!="ELIGIBLE" or projection["contract_readiness"]=="NOT_READY":raise ProvanError("FOUNDRY_PROJECTION_NOT_ELIGIBLE",foundry_projection)
+        supplied=dispositions.get("contract_terms")
+        if supplied is not None and canonical_bytes(supplied)!=canonical_bytes(projection["proposed_contract_terms"]):raise ProvanError("FOUNDRY_PROJECTION_TERMS_MISMATCH",foundry_projection)
+        dispositions=dict(dispositions);dispositions["contract_terms"]=projection["proposed_contract_terms"]
+    surface=disposition_items(preparation_id,foundry_projection);expected={r["item_id"]:r for r in surface["items"]};rows=dispositions.get("items",[])
     if len(rows)!=len(expected) or {r.get("item_id") for r in rows}!=set(expected):raise ProvanError("SEED_DISPOSITIONS_INCOMPLETE","every exact seed item requires one disposition")
     if len({r["item_id"] for r in rows})!=len(rows):raise ProvanError("SEED_DISPOSITION_DUPLICATE",preparation_id)
     timestamp=iso(now);actor={"actor_label":actor_label,"authority_type":"case_operator","authority_scope":"case_intent_and_meaning","identity_assurance":"self_asserted_label"};normalized=[];criteria=[];unresolved=[];intent=[];journeys=[]
@@ -191,10 +208,13 @@ def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label:
         if action in {"confirm","edit"} and source["kind"]=="intended_outcome":intent.append(str(current))
         if action in {"confirm","edit"} and source["kind"]=="journey":journeys.append(current)
         if action in {"confirm","edit"} and source["kind"]=="criterion":
-            spec=row.get("criterion")
+            spec=row.get("criterion",current)
             if not isinstance(spec,dict):raise ProvanError("CONTRACT_CRITERION_INCOMPLETE",row["item_id"])
             criteria.append(spec)
     terms=dispositions.get("contract_terms",{})
+    if foundry_projection:
+        intent=[str(terms.get("intended_outcome") or "INTENDED_OUTCOME_UNRESOLVED")]
+        journeys=list(terms.get("journeys",[]))
     if not intent:intent=[str(terms.get("intended_outcome") or "INTENDED_OUTCOME_UNRESOLVED")];unresolved.append("INTENDED_OUTCOME_UNRESOLVED")
     if not criteria:
         for spec in terms.get("criteria",[]):criteria.append(spec)
@@ -221,6 +241,7 @@ def create_contract(preparation_id: str,dispositions: dict[str,Any],actor_label:
     risk=json.loads(json.dumps(risk))
     for name in ("tier","reversibility"):
         if risk.get(name,{}).get("authority")=="owner_confirmed":risk[name]["provenance_refs"]=[disp["disposition_id"]]
+        elif risk.get(name,{}).get("authority")=="unresolved":risk[name]["provenance_refs"]=[brief["brief_id"]]
     schema_registry_raw=_session11_schema_registry_raw();schema_registry=json.loads(schema_registry_raw)
     contract={"schema_id":"provan.acceptance_contract.v1","contract_id":str(uuid.uuid4()),"version":version,"supersedes":parent,"case_id":brief["case_id"],"preparation_ref":_ref(preparation,prep_raw,"preparation_id"),"seed_ref":_ref(brief["acceptance_seed"],canonical_bytes(brief["acceptance_seed"]),"seed_id"),"brief_ref":_ref(brief,brief_raw,"brief_id"),"candidate":brief["candidate"],"repository_identity":brief["candidate"]["repository_identity"],"disposition_refs":[_ref(disp,disp_raw,"disposition_id")],"intended_outcome":"\n".join(intent),"target_user":terms.get("target_user"),"journeys":journeys,"mandatory_criteria":mandatory,"conditional_criteria":conditional,"non_applicable_criteria":non_applicable,"unresolved_questions":sorted(set(unresolved)),"protected_invariant_refs":[_ref(v,r,"protected_invariant_id") for v,r in invariant_values],"closure_requirement_refs":[_ref(v,r,"closure_requirement_id") for v,r in closure_values],"allowed_evidence_classes":terms.get("allowed_evidence_classes",["source_verified","owner_confirmed","trusted_imported_receipt"]),"execution_policy":{"source_only_allowed":True,"future_verifier_requirements":terms.get("future_verifier_requirements",[]),"network_policy":terms.get("network_policy","none"),"target_access":"read_only","prohibited_actions":["target_mutation","target_execution","remediation","deployment"]},"challenge_policy":{"criteria_requiring_challenge":[r["criterion_id"] for r in mandatory+conditional if r["challenge_requirement"]=="required_future"],"challenge_budget":budget,"prohibited_actions":["challenge_generation","challenge_execution","pack_creation","seed_creation","sibling_creation"]},"risk":risk,"operator_authority":actor,"decision_policy":{"policy_id":"community.owner-decision-compatibility.v1","allowed":{k:sorted(v) for k,v in DECISIONS.items()}},"conditions":terms.get("conditions",[]),"expires_at":terms.get("expires_at"),"reinspection_triggers":terms.get("reinspection_triggers",["candidate_changed","expiry_reached"]),"provenance":{"package_version":PACKAGE_VERSION,"policy_id":POLICY_ID,"policy_version":POLICY_VERSION,"schema_registry_digest":schema_registry["registry_digest"]},"created_at":timestamp}
     seed_digest=sha256_bytes(canonical_bytes(brief["acceptance_seed"]));obligation_disposition={"schema_id":"provan.seed_disposition.v1","disposition_id":str(uuid.uuid4()),"preparation_ref":contract["preparation_ref"],"seed_ref":contract["seed_ref"],"case_id":brief["case_id"],"actor":actor,"items":_contract_obligation_items(contract,seed_digest,actor,timestamp),"created_at":timestamp};validate_seed_disposition_serialized(canonical_bytes(obligation_disposition));obligation_disp,obligation_raw=_store("dispositions",obligation_disposition["disposition_id"],obligation_disposition,"seed-disposition.v1.json");contract["disposition_refs"].append(_ref(obligation_disp,obligation_raw,"disposition_id"))

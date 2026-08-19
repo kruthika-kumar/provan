@@ -42,9 +42,10 @@ CONTRACT_OBLIGATION_FIELDS=("intended_outcome","target_user","journeys","mandato
 
 
 def _independent_session11_schema_registry_raw() -> bytes:
-    entries=[]
+    entries=[];session12_ids={"provan.foundry_acceptance_projection.v1","provan.contract_foundry_run.v1","provan.foundry_run_binding.v1","provan.verification_pattern_library.v1","provan.source_authority_ledger.v1","provan.intent_model.v1","provan.goal_obstacle_model.v1","provan.premortem_analysis.v1","provan.contract_candidate.v1","provan.contract_audit.v1","provan.contract_witness_set.v1","provan.contract_revision_record.v1","provan.contract_readiness.v1","provan.verification_pattern.v1","provan.verification_pattern_selection.v1","provan.model_routing_receipt.v1","provan.session_handoff.v2","provan.session12_implementation_binding.v1","provan.foundry_real_use_qualification.v1","provan.session12_reviewer_receipt.v1","provan.session12_closeout.v1"}
     for path in sorted(Path(__file__).with_name("schemas").glob("*.json"),key=lambda item:item.name):
         raw=path.read_bytes();value=json.loads(raw)
+        if value.get("$id") in session12_ids:continue
         entries.append({"schema_id":value["$id"],"path":f"provan/schemas/{path.name}","sha256":sha256_bytes(raw),"normalized_sha256":sha256_bytes(canonical_bytes(value))})
     return canonical_bytes({"schema_id":"provan.session11_schema_registry.v1","sensitivity":"PUBLIC_SAFE","entries":entries,"registry_digest":sha256_bytes(canonical_bytes(entries))})
 
@@ -298,7 +299,7 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
         raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID",value["contract_id"])
     if schema_registry_raw!=_independent_session11_schema_registry_raw():
         raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID",value["contract_id"])
-    if provenance.get("package_version")!="0.4.0" or provenance.get("policy_id")!="community.acceptance.v1" or provenance.get("policy_version")!="1" or provenance.get("schema_registry_digest")!=registry["registry_digest"]:raise ProvanError("CONTRACT_PROVENANCE_INVALID",value["contract_id"])
+    if provenance.get("package_version") not in {"0.4.0","0.5.0"} or provenance.get("policy_id")!="community.acceptance.v1" or provenance.get("policy_version")!="1" or provenance.get("schema_registry_digest")!=registry["registry_digest"]:raise ProvanError("CONTRACT_PROVENANCE_INVALID",value["contract_id"])
     if value.get("expires_at") is not None:
         try: datetime.fromisoformat(value["expires_at"].replace("Z","+00:00"))
         except (ValueError,TypeError) as exc: raise ProvanError("CONTRACT_EXPIRY_INVALID",value["contract_id"]) from exc
@@ -492,7 +493,8 @@ def validate_attestation_serialized(raw: bytes, contract_raw: bytes, freeze_raw:
     projections=value["projection_refs"]
     _uuid(projections.get("internal"),"ATTESTATION_PROJECTION_ID_INVALID");_uuid(projections.get("client_safe"),"ATTESTATION_PROJECTION_ID_INVALID")
     if projections["internal"]==projections["client_safe"]:raise ProvanError("ATTESTATION_PROJECTION_ID_COLLISION",value["attestation_id"])
-    if value.get("provenance")!={"package_version":"0.4.0","policy_id":"community.acceptance.v1","policy_version":"1"}:raise ProvanError("ATTESTATION_PROVENANCE_INVALID",value["attestation_id"])
+    provenance=value.get("provenance",{})
+    if provenance.get("package_version") not in {"0.4.0","0.5.0"} or {key:value for key,value in provenance.items() if key!="package_version"}!={"policy_id":"community.acceptance.v1","policy_version":"1"}:raise ProvanError("ATTESTATION_PROVENANCE_INVALID",value["attestation_id"])
     return value
 
 

@@ -11,6 +11,7 @@ from .repository import inspect_repository
 from .change_brief import explain, promote, render_brief
 from .acceptance import (attest, create_contract, decide, disposition_items,
                          freeze_contract, reinspect, render_record)
+from .foundry import foundry, pattern_library
 from .safe_input import read_bounded_file
 from .canonical import canonical_bytes
 from .session10_validators import validate_error_serialized
@@ -52,7 +53,9 @@ def _parser() -> argparse.ArgumentParser:
     change.add_argument("--format", choices=["terminal","json","markdown","html"], default="terminal")
     acceptance = sub.add_parser("acceptance"); acceptance_sub=acceptance.add_subparsers(dest="acceptance_command")
     promote_parser=acceptance_sub.add_parser("promote"); promote_parser.add_argument("--brief",required=True)
-    contract=acceptance_sub.add_parser("contract"); contract.add_argument("--preparation",required=True); mode=contract.add_mutually_exclusive_group(required=True); mode.add_argument("--show-items",action="store_true"); mode.add_argument("--dispositions-file",type=Path); contract.add_argument("--actor-label"); contract.add_argument("--supersedes")
+    contract=acceptance_sub.add_parser("contract"); contract.add_argument("--preparation",required=True); contract.add_argument("--foundry-projection"); mode=contract.add_mutually_exclusive_group(required=True); mode.add_argument("--show-items",action="store_true"); mode.add_argument("--dispositions-file",type=Path); contract.add_argument("--actor-label"); contract.add_argument("--supersedes")
+    foundry_parser=acceptance_sub.add_parser("foundry"); foundry_parser.add_argument("--brief",required=True); foundry_parser.add_argument("--source-manifest",type=Path,required=True); foundry_parser.add_argument("--interpretation",choices=["faithful","clarifying","enhanced"],default="faithful"); foundry_parser.add_argument("--depth",choices=["fast","standard","deep"],default="standard"); foundry_model=foundry_parser.add_mutually_exclusive_group(); foundry_model.add_argument("--model-provider"); foundry_model.add_argument("--no-model",action="store_true"); foundry_parser.add_argument("--format",choices=["terminal","json","markdown","html"],default="terminal")
+    patterns=acceptance_sub.add_parser("patterns"); patterns.add_argument("--show"); patterns.add_argument("--format",choices=["json"],default="json")
     freeze=acceptance_sub.add_parser("freeze"); freeze.add_argument("--contract",required=True); freeze.add_argument("--repo",required=True)
     attest_parser=acceptance_sub.add_parser("attest"); attest_parser.add_argument("--freeze",required=True); attest_parser.add_argument("--evidence",type=Path,action="append",default=[])
     decision=acceptance_sub.add_parser("decide"); decision.add_argument("--attestation",required=True); decision.add_argument("--decision-file",type=Path,required=True); decision.add_argument("--actor-label",required=True)
@@ -86,10 +89,19 @@ def main(argv: list[str] | None = None) -> int:
             print(render_brief(value,args.format)); return 0
         elif args.command == "acceptance" and args.acceptance_command == "promote": value=promote(args.brief)
         elif args.command == "acceptance" and args.acceptance_command == "contract":
-            if args.show_items:value=disposition_items(args.preparation)
+            if args.show_items:value=disposition_items(args.preparation,args.foundry_projection)
             else:
                 if not args.actor_label:raise ProvanError("ACTOR_LABEL_REQUIRED","--actor-label is required when creating a contract")
-                value=create_contract(args.preparation,_json_file(args.dispositions_file,1024*1024),args.actor_label,supersedes=args.supersedes)
+                value=create_contract(args.preparation,_json_file(args.dispositions_file,1024*1024),args.actor_label,supersedes=args.supersedes,foundry_projection=args.foundry_projection)
+        elif args.command == "acceptance" and args.acceptance_command == "foundry":
+            value,rendered=foundry(brief_id=args.brief,source_manifest=args.source_manifest,interpretation=args.interpretation,depth=args.depth,provider_id=args.model_provider,no_model=args.no_model,format_name=args.format);print(rendered,end="" if rendered.endswith("\n") else "\n");return 0
+        elif args.command == "acceptance" and args.acceptance_command == "patterns":
+            library=pattern_library()
+            if args.show:
+                matches=[row for row in library["patterns"] if row["pattern_id"]==args.show]
+                if not matches:raise ProvanError("VERIFICATION_PATTERN_NOT_FOUND",args.show)
+                value=matches[0]
+            else:value=library
         elif args.command == "acceptance" and args.acceptance_command == "freeze": value=freeze_contract(args.contract,args.repo)
         elif args.command == "acceptance" and args.acceptance_command == "attest":
             if len(args.evidence)>32:raise ProvanError("EVIDENCE_INPUT_LIMIT_EXCEEDED","at most 32 evidence files are accepted")

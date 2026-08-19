@@ -23,19 +23,32 @@ jobs:
       - run: python -m pytest -q
       - run: python scripts/run_evals.py
       - run: python scripts/run_workflow_integration_evals.py
+      - run: python scripts/quarantine_session12_ci_byproducts.py
       - run: python -m build --outdir candidate-dist
       - run: python scripts/validate_session9.py --skip-closeout-bindings --wheel candidate-dist/*.whl --archive candidate-dist/*.tar.gz
       - run: python scripts/validate_session9_correction.py
       - run: python scripts/validate_session9_leakage.py
       - run: python scripts/validate_session10_successor.py
-      - run: python scripts/validate_session11.py --phase final
+      - run: python scripts/validate_session11.py --phase final --successor
       - run: python scripts/validate_session11_successor_closeout.py
+      - run: python scripts/validate_session12.py --phase final
+      - run: python scripts/validate_session12_leakage.py
       - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl
       - run: python -c "from pathlib import Path; import hashlib; expected='e250c509d1676ebb9f1ec066059b3eb770a12a3804666c22a1e65bfad6d89d4f'; actual=hashlib.sha256(Path('dist/provan_assurance-0.4.0-py3-none-any.whl').read_bytes()).hexdigest(); assert actual==expected, (actual,expected)"
+      - run: python -c "from pathlib import Path; import json,hashlib; binding=json.loads(Path('artifacts/session12/implementation_binding.v1.public.json').read_text(encoding='utf-8')); wheel=Path('dist/provan_assurance-0.5.0-py3-none-any.whl'); assert wheel.is_file(); actual='sha256:'+hashlib.sha256(wheel.read_bytes()).hexdigest(); assert actual==binding['wheel_sha256'],(actual,binding['wheel_sha256'])"
+      - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.5.0-py3-none-any.whl
+      - run: >-
+          python -c "from pathlib import Path; import zipfile;
+          wheels=list(Path('candidate-dist').glob('provan_assurance-0.5.0-*.whl'));
+          assert len(wheels)==1,wheels;
+          assert Path('dist/provan_assurance-0.5.0-py3-none-any.whl').is_file();
+          z=zipfile.ZipFile(wheels[0]);
+          assert any(name.endswith('METADATA') and b'Version: 0.5.0' in z.read(name) for name in z.namelist())"
       - uses: actions/upload-artifact@v7
         with:
-          name: session11-wheel
+          name: session12-wheels
           path: |
             dist/provan_assurance-0.4.0-py3-none-any.whl
-            candidate-dist/provan_assurance-0.4.0-py3-none-any.whl
+            dist/provan_assurance-0.5.0-py3-none-any.whl
+            candidate-dist/provan_assurance-0.5.0-py3-none-any.whl
           if-no-files-found: error

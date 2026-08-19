@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0,str(ROOT))
 from provan.leakage import PRIVATE_PATTERNS
 BASELINE = "1cdc50d05115f8385b14ad1eee62e169fec6436d"
+SESSION12_BASELINE = "6c1006c7fe546805aaefd0bc2b47a40317c19c88"
 SESSION11_SCHEMAS = {
     "acceptance-attestation.v1.json", "acceptance-contract.v1.json", "candidate-freeze.v1.json",
     "closure-requirement.v1.json", "command-receipt.v1.json", "environment-receipt.v1.json",
@@ -57,7 +58,7 @@ def validate_authority() -> None:
         raise SystemExit("SESSION11_CLAIM_AUTHORITY_BINDING_MISMATCH")
 
 
-def validate_schemas() -> None:
+def validate_schemas(successor: bool = False) -> None:
     registry = load(ROOT / "artifacts/session11/schema_registry.v1.public.json")
     rows = registry.get("entries", [])
     if registry.get("registry_digest") != digest(canonical(rows)):
@@ -70,14 +71,21 @@ def validate_schemas() -> None:
         by_path.add(row["path"])
     changed = set(filter(None, git("diff", "--name-only", BASELINE, "--", "provan/schemas").splitlines()))
     expected_changed = {f"provan/schemas/{name}" for name in SESSION11_SCHEMAS}
-    if changed != expected_changed:
+    if not successor and changed != expected_changed:
         raise SystemExit("SESSION11_SCHEMA_HISTORY_BOUNDARY_INVALID")
+    if successor:
+        if not expected_changed.issubset(changed):
+            raise SystemExit("SESSION11_SCHEMA_HISTORY_BOUNDARY_INVALID")
+        for relative in expected_changed:
+            historical = subprocess.run(["git","show",f"{SESSION12_BASELINE}:{relative}"], cwd=ROOT, check=True, capture_output=True).stdout
+            if (ROOT / relative).read_bytes() != historical:
+                raise SystemExit("SESSION11_SUCCESSOR_SCHEMA_CHANGED")
 
 
 def validate_boundaries() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     docs = (ROOT / "README.md").read_text(encoding="utf-8") + (ROOT / "docs/acceptance-lifecycle.md").read_text(encoding="utf-8")
-    if 'version = "0.4.0"' not in pyproject or "QUALIFIED_BOUNDED" not in docs or "not available from PyPI" not in docs:
+    if not any(f'version = "{version}"' in pyproject for version in ("0.4.0","0.5.0")) or "QUALIFIED_BOUNDED" not in docs or "not available from PyPI" not in docs:
         raise SystemExit("SESSION11_UNPUBLISHED_VERSION_BOUNDARY_INVALID")
     cli = (ROOT / "provan/cli.py").read_text(encoding="utf-8")
     if "--external-change-receipt-file" not in cli or re.search(r"add_parser\(\s*[\"'](?:verify|challenge|enterprise|remediate|deploy)", cli):
@@ -104,7 +112,7 @@ def validate_public_artifact_safety() -> None:
             if pattern.search(text):raise SystemExit("SESSION11_PUBLIC_PROOF_"+name+"_LEAK")
 
 
-def validate_proofs(final: bool) -> None:
+def validate_proofs(final: bool, successor: bool = False) -> None:
     base = ROOT / "artifacts/session11"
     registry_path = base / "proofs/proof_registry.v1.public.json"
     matrix_path = base / ("layer4_claim_matrix.final.v1.public.json" if final else "layer4_claim_matrix.v1.public.json")
@@ -122,8 +130,11 @@ def validate_proofs(final: bool) -> None:
             raise SystemExit("SESSION11_PROOF_BINDING_INVALID")
         for location, expected in zip(row["artifact_locations"], row["artifact_hashes"]):
             path = ROOT / location
-            if not path.is_file() or digest(path.read_bytes()) != expected:
-                raise SystemExit("SESSION11_PROOF_ARTIFACT_HASH_MISMATCH")
+            current_matches = path.is_file() and digest(path.read_bytes()) == expected
+            if not current_matches and successor:
+                historical = subprocess.run(["git","show",f"{SESSION12_BASELINE}:{location}"], cwd=ROOT, capture_output=True)
+                current_matches = historical.returncode == 0 and digest(historical.stdout) == expected
+            if not current_matches: raise SystemExit("SESSION11_PROOF_ARTIFACT_HASH_MISMATCH")
     matrix = load(matrix_path);jsonschema.validate(matrix,load(ROOT/"provan/schemas/session11-layer4-matrix.v1.json"));claims = matrix["claims"]; authority = load(base / "claim_registry.v1.public.json")["claims"]
     ids = [row["Claim"].split(" — ", 1)[0] for row in claims]
     expected = [row["claim_id"] for row in authority]
@@ -161,8 +172,8 @@ def validate_proofs(final: bool) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--phase", choices=("implementation", "final"), default="implementation"); args = parser.parse_args()
-    validate_authority(); validate_schemas(); validate_boundaries(); validate_public_artifact_safety(); validate_proofs(args.phase == "final")
+    parser = argparse.ArgumentParser(); parser.add_argument("--phase", choices=("implementation", "final"), default="implementation"); parser.add_argument("--successor", action="store_true"); args = parser.parse_args()
+    validate_authority(); validate_schemas(args.successor); validate_boundaries(); validate_public_artifact_safety(); validate_proofs(args.phase == "final", args.successor)
     print(f"SESSION11_VALID {args.phase.upper()}")
     return 0
 
