@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+import subprocess
 from pathlib import Path, PurePosixPath
 
 import jsonschema
@@ -31,7 +33,7 @@ def require(condition: bool, code: str) -> None:
         raise SystemExit(code)
 
 
-def resolve_ref(ref: dict) -> bytes:
+def resolve_ref(ref: dict, *, historical_commit: str | None = None) -> bytes:
     raw_path = ref.get("path", "")
     portable = PurePosixPath(raw_path)
     candidate = Path(*portable.parts)
@@ -49,8 +51,19 @@ def resolve_ref(ref: dict) -> bytes:
     require(resolved == root or root in resolved.parents, "SESSION11_SUCCESSOR_REF_PATH_UNSAFE")
     require(os.path.isfile(resolved), "SESSION11_SUCCESSOR_REF_TYPE_FORBIDDEN")
     raw = resolved.read_bytes()
-    require(digest(raw) == ref.get("sha256"), "SESSION11_SUCCESSOR_REF_HASH_MISMATCH")
-    return raw
+    if digest(raw) == ref.get("sha256"):
+        return raw
+    if historical_commit is not None:
+        require(bool(re.fullmatch(r"[0-9a-f]{40}", historical_commit)), "SESSION11_SUCCESSOR_HISTORICAL_COMMIT_INVALID")
+        result = subprocess.run(
+            ["git", "show", f"{historical_commit}:{portable.as_posix()}"],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0 and digest(result.stdout) == ref.get("sha256"):
+            return result.stdout
+    raise SystemExit("SESSION11_SUCCESSOR_REF_HASH_MISMATCH")
 
 
 def handoff_artifacts(value: dict) -> dict[str, bytes]:
@@ -80,7 +93,7 @@ def validate() -> None:
     require(not any(Path(ref["path"]).name in forbidden_pre for ref in pre["entries"]), "SESSION11_SUCCESSOR_REVIEW_RECURSION")
     require(pre["proof_root"] == digest(canonical(pre["entries"])), "SESSION11_SUCCESSOR_PRE_ROOT_MISMATCH")
     for ref in pre["entries"]:
-        resolve_ref(ref)
+        resolve_ref(ref, historical_commit=binding["implementation_commit"])
     expected_current = {
         "implementation_commit": binding["implementation_commit"],
         "implementation_tree": binding["implementation_tree"],

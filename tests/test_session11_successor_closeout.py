@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,6 +22,22 @@ def test_successor_reference_hash_fails_closed(tmp_path, monkeypatch):
     monkeypatch.setattr(MODULE, "ROOT", tmp_path)
     with pytest.raises(SystemExit, match="SESSION11_SUCCESSOR_REF_HASH_MISMATCH"):
         MODULE.resolve_ref({"path": "artifact.json", "sha256": "sha256:" + "f" * 64})
+
+
+def test_successor_reference_resolves_frozen_implementation_bytes(tmp_path, monkeypatch):
+    artifact = tmp_path / "artifact.json"
+    artifact.write_text(json.dumps({"value": "descendant"}), encoding="utf-8")
+    frozen = (json.dumps({"value": "frozen"}) + "\n").encode("utf-8")
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        MODULE.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, stdout=frozen, stderr=b""),
+    )
+    assert MODULE.resolve_ref(
+        {"path": "artifact.json", "sha256": MODULE.digest(frozen)},
+        historical_commit="a" * 40,
+    ) == frozen
 
 
 def test_successor_root_uses_canonical_lf_bytes():
@@ -93,3 +111,15 @@ def test_final_evidence_requires_current_successor_requalification_set():
         "artifacts/session11/successor_closeout/session12_handoff_candidate.v1.public.json",
     }
     assert all(path in source for path in required)
+
+
+def test_release_gate_session11_commands_pass_end_to_end():
+    workflow = (ROOT / ".github/workflows/release-gate.yml").read_text(encoding="utf-8")
+    assert "python scripts/validate_session11.py --phase final --successor" in workflow
+    assert "python scripts/validate_session11_successor_closeout.py" in workflow
+    for command in (
+        [sys.executable, "scripts/validate_session11.py", "--phase", "final", "--successor"],
+        [sys.executable, "scripts/validate_session11_successor_closeout.py"],
+    ):
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="strict")
+        assert result.returncode == 0, result.stdout + result.stderr
