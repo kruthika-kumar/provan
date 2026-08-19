@@ -56,6 +56,11 @@ def test_deep_scripted_paths_are_isolated_and_nonqualifying(tmp_path: Path,monke
     candidate=json.loads(artifacts[run["stage_artifacts"]["contract_candidate"]["path"]])
     assert intent["synthesis_method"]=="frozen_dual_path_reconciliation_v1"
     assert intent["input_path_digests"]==[row["contract_output"]["digest"] for row in run["blind_paths"]]
+    assert candidate["intent_ref"]==run["stage_artifacts"]["intent"]
+    assert candidate["goal_obstacle_ref"]==run["stage_artifacts"]["goal_obstacle"]
+    assert candidate["premortem_ref"]==run["stage_artifacts"]["pre_mortem"]
+    assert candidate["derivation_input_digests"]==[run["stage_artifacts"][name]["sha256"] for name in ("intent","goal_obstacle","pre_mortem")]
+    assert candidate["proposed_terms"]["intended_outcome"]==intent["outcomes"][0]
     assert candidate["proposed_terms"]["conditions"] and all(row["authority"]=="model_reviewed_proposal" for row in candidate["proposed_terms"]["conditions"])
     assert [row["stage"] for row in run["stage_execution"]]==RUN_STAGES["deep"]
     ref=run["model_envelope_refs"][0];bad=dict(artifacts);envelope=json.loads(bad[ref["path"]]);envelope["instructions"]+=" undisclosed";bad[ref["path"]]=canonical_bytes(envelope);tampered=copy.deepcopy(run);tampered_ref=tampered["model_envelope_refs"][0];tampered_ref["sha256"]=sha256_bytes(bad[ref["path"]]);tampered["blind_paths"][0]["model_envelope_ref"]=tampered_ref
@@ -112,6 +117,16 @@ def test_run_validator_resolves_all_typed_stage_artifacts(tmp_path: Path,monkeyp
     first=next(iter(artifacts));tampered=dict(artifacts);value=json.loads(tampered[first]);value["limitations"]=["invented"]
     tampered[first]=canonical_bytes(value)
     with pytest.raises(ProvanError,match="FOUNDRY_STAGE_ARTIFACT_BINDING_MISMATCH"):validate_run_serialized(canonical_bytes(run),projection,tampered)
+
+
+def test_run_validator_rejects_post_hoc_proposal_dataflow(tmp_path: Path,monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("PROVAN_HOME",str(tmp_path/"state"));brief=_brief(tmp_path);inputs={"risk":"low","ambiguity":"low","blast_radius":"bounded","reversibility":"easy","oracle":"adequate","actor_autonomy":"low"};run,_=foundry(brief_id=brief["brief_id"],source_manifest=_manifest(tmp_path,inputs),no_model=True)
+    root=Path("outputs/contract-foundry")/run["run_id"]
+    artifacts={ref["path"]:secure_read(root/ref["path"]) for name,ref in run["stage_artifacts"].items() if name!="revisions"}
+    artifacts[run["source_ledger"]["path"]]=secure_read(root/run["source_ledger"]["path"])
+    projection=secure_read(root/"foundry-acceptance-projection.json")
+    bad=copy.deepcopy(run);candidate_ref=bad["stage_artifacts"]["contract_candidate"];candidate=json.loads(artifacts[candidate_ref["path"]]);candidate["goal_obstacle_ref"]={**candidate["goal_obstacle_ref"],"sha256":"sha256:"+"f"*64};raw=canonical_bytes(candidate);candidate_ref["sha256"]=sha256_bytes(raw);tampered=dict(artifacts);tampered[candidate_ref["path"]]=raw
+    with pytest.raises(ProvanError,match="FOUNDRY_PROPOSAL_DATAFLOW_INVALID"):validate_run_serialized(canonical_bytes(bad),projection,tampered)
 
 
 def test_pattern_library_has_all_families_and_no_execution():

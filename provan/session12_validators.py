@@ -99,11 +99,16 @@ def validate_run_serialized(raw: bytes, projection_raw: bytes, stage_artifacts: 
             if artifact.get("schema_id")!=ref["schema_id"] or ref["id"] not in artifact.values() or canonical_bytes(artifact)!=artifact_raw:raise ProvanError("FOUNDRY_STAGE_ARTIFACT_SEMANTICS_INVALID",name)
             loaded[name]=artifact
         candidate=loaded["contract_candidate"];readiness=loaded["readiness"];selection=loaded["pattern_selection"]
-        intent=loaded["intent"];path_digests=[row["contract_output"]["digest"] for row in value["blind_paths"]]
+        intent=loaded["intent"];goal=loaded["goal_obstacle"];premortem=loaded["pre_mortem"];path_digests=[row["contract_output"]["digest"] for row in value["blind_paths"]]
         expected_method="deterministic_source_only" if not path_digests else ("frozen_dual_path_reconciliation_v1" if len(path_digests)==2 else "single_blind_path")
         if intent.get("input_path_digests")!=path_digests or intent.get("synthesis_method")!=expected_method:raise ProvanError("FOUNDRY_SYNTHESIS_BINDING_INVALID","intent")
         expected_model_conditions=[{"statement":text[:1024],"authority":"model_reviewed_proposal","owner_confirmation_required":True} for row in value["blind_paths"] for text in row["contract_output"]["model_reviewed_implications"]][:16]
         if candidate.get("proposed_terms",{}).get("conditions")!=expected_model_conditions:raise ProvanError("FOUNDRY_MODEL_PROPOSAL_DATAFLOW_INVALID","candidate")
+        expected_derivation=[value["stage_artifacts"][name]["sha256"] for name in ("intent","goal_obstacle","pre_mortem")]
+        if goal.get("intent_ref")!=value["stage_artifacts"]["intent"] or goal.get("goals")!=intent.get("outcomes"):raise ProvanError("FOUNDRY_GOAL_DATAFLOW_INVALID","goal")
+        if premortem.get("goal_model_ref")!=value["stage_artifacts"]["goal_obstacle"]:raise ProvanError("FOUNDRY_PREMORTEM_DATAFLOW_INVALID","premortem")
+        if candidate.get("intent_ref")!=value["stage_artifacts"]["intent"] or candidate.get("goal_obstacle_ref")!=value["stage_artifacts"]["goal_obstacle"] or candidate.get("premortem_ref")!=value["stage_artifacts"]["pre_mortem"] or candidate.get("derivation_input_digests")!=expected_derivation:raise ProvanError("FOUNDRY_PROPOSAL_DATAFLOW_INVALID","candidate")
+        if not intent.get("outcomes") or candidate.get("proposed_terms",{}).get("intended_outcome")!=intent["outcomes"][0]:raise ProvanError("FOUNDRY_PROPOSAL_INTENT_MISMATCH","candidate")
         if candidate["proposed_terms"]!=projection["proposed_contract_terms"] or readiness["contract_candidate_ref"]!=value["stage_artifacts"]["contract_candidate"] or readiness["contract_readiness"]!=value["contract_readiness"] or readiness["run_eligibility"]!=value["run_eligibility"] or readiness["runtime_evidence_established"] is not False:raise ProvanError("FOUNDRY_STAGE_CROSS_BINDING_MISMATCH","candidate/readiness")
         if selection["contract_candidate_ref"]!=value["stage_artifacts"]["contract_candidate"] or selection["execution_implied"] or selection["challenge_implied"]:raise ProvanError("FOUNDRY_PATTERN_SELECTION_BINDING_INVALID","selection")
         revisions=value["stage_artifacts"].get("revisions",[]);cap=2 if value["depth"]=="deep" else 1 if value["depth"]=="standard" else 0

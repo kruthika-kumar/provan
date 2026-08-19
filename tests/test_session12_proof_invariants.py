@@ -72,7 +72,7 @@ def test_proof_session12_run_layers(tmp_path:Path,monkeypatch:pytest.MonkeyPatch
         elif invariant=="spend_cap":
             if fixture_class=="adversarial":value["spend"]["spent"]=76
             else:value["spend"]["reserved"]=1
-        elif invariant=="stage_artifacts":_replace_artifact(value,deps,"contract_candidate",lambda row:row.update({"proposed_terms":{"invented":True}}))
+        elif invariant=="stage_artifacts":_replace_artifact(value,deps,"contract_candidate",lambda row:row.update({"goal_obstacle_ref":{**row["goal_obstacle_ref"],"sha256":"sha256:"+"f"*64}}))
         elif invariant=="pattern_selection":_replace_artifact(value,deps,"pattern_selection",lambda row:row.update({"execution_implied":True}))
         elif invariant=="audit_coverage":_replace_artifact(value,deps,"audit",lambda row:row["finding_coverage"].update({"total":99}))
         elif invariant=="capability_ceiling":value["mode_qualification"]="QUALIFIED_BOUNDED"
