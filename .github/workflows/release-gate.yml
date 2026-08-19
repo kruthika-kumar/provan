@@ -28,7 +28,7 @@ jobs:
       - run: python scripts/validate_session9_correction.py
       - run: python scripts/validate_session9_leakage.py
       - run: python scripts/validate_session10_successor.py
-      - run: python scripts/validate_session11.py --phase final
+      - run: python scripts/validate_session11.py --phase final --successor
       - run: python scripts/validate_session11_successor_closeout.py
       - run: python scripts/validate_session12.py --phase final
       - run: python scripts/validate_session12_leakage.py
