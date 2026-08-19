@@ -8,6 +8,7 @@ from pathlib import Path
 
 import jsonschema
 import pytest
+import yaml
 
 from provan.canonical import canonical_bytes, sha256_bytes
 from provan.errors import ProvanError
@@ -114,6 +115,15 @@ def test_adjudication_projection_builder_accepts_explicit_content_addressed_auth
     for option in ("--policy", "--review", "--ledger", "--scoring"):
         assert option in source
     assert 'policy.get("version")!=10' not in source
+
+
+def test_release_gate_workflow_is_yaml_parseable_with_isolated_candidate_build():
+    workflow_path = ROOT / ".github/workflows/release-gate.yml"
+    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test-and-eval"]["steps"]
+    commands = [step.get("run", "") for step in steps]
+    assert any("python -m build --outdir candidate-dist" in command for command in commands)
+    assert any("Version: 0.5.0" in command for command in commands)
 
 
 @pytest.mark.parametrize("metric", [
