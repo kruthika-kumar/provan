@@ -1,4 +1,4 @@
 COMMAND: python -m pytest -q -s -p no:cacheprovider tests/test_session12_proof_invariants.py::test_proof_session12_run_layers[spend_cap-valid]
 EXIT_CODE: 0
 .
-1 passed in 0.37s
+1 passed in 0.35s
