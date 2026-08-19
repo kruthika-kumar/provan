@@ -61,6 +61,7 @@ def test_deep_scripted_paths_are_isolated_and_nonqualifying(tmp_path: Path,monke
     assert candidate["premortem_ref"]==run["stage_artifacts"]["pre_mortem"]
     assert candidate["derivation_input_digests"]==[run["stage_artifacts"][name]["sha256"] for name in ("intent","goal_obstacle","pre_mortem")]
     assert candidate["proposed_terms"]["intended_outcome"]==intent["outcomes"][0]
+    assert candidate["proposed_terms"]["intended_outcome"] not in [text for row in run["blind_paths"] for text in row["contract_output"]["model_reviewed_implications"]]
     assert candidate["proposed_terms"]["conditions"] and all(row["authority"]=="model_reviewed_proposal" for row in candidate["proposed_terms"]["conditions"])
     assert [row["stage"] for row in run["stage_execution"]]==RUN_STAGES["deep"]
     ref=run["model_envelope_refs"][0];bad=dict(artifacts);envelope=json.loads(bad[ref["path"]]);envelope["instructions"]+=" undisclosed";bad[ref["path"]]=canonical_bytes(envelope);tampered=copy.deepcopy(run);tampered_ref=tampered["model_envelope_refs"][0];tampered_ref["sha256"]=sha256_bytes(bad[ref["path"]]);tampered["blind_paths"][0]["model_envelope_ref"]=tampered_ref
