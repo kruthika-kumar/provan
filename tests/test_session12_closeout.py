@@ -142,6 +142,7 @@ def test_ci_quarantine_moves_local_byproducts_outside_repository(tmp_path, monke
     local.mkdir(parents=True)
     (local / "generated.json").write_text('{"local":"path"}\n', encoding="utf-8")
     runner_temp = tmp_path / "runner-temp"
+    runner_temp.mkdir()
     spec = importlib.util.spec_from_file_location(
         "session12_ci_quarantine", ROOT / "scripts/quarantine_session12_ci_byproducts.py"
     )
@@ -152,8 +153,27 @@ def test_ci_quarantine_moves_local_byproducts_outside_repository(tmp_path, monke
     monkeypatch.setenv("RUNNER_TEMP", str(runner_temp))
     assert module.main() == 0
     assert local.is_dir() and not any(local.iterdir())
-    quarantined = list((runner_temp / "provan-session12-ci-quarantine" / "local-byproducts").rglob("generated.json"))
+    quarantined = list(runner_temp.glob("provan-session12-ci-quarantine-*/local-byproducts/**/generated.json"))
     assert len(quarantined) == 1
+
+
+def test_ci_quarantine_rejects_linked_runner_temp(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    (repo / ".shiproom" / "local").mkdir(parents=True)
+    runner_temp = tmp_path / "runner-temp"
+    runner_temp.mkdir()
+    spec = importlib.util.spec_from_file_location(
+        "session12_ci_quarantine_linked", ROOT / "scripts/quarantine_session12_ci_byproducts.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", repo)
+    monkeypatch.setenv("RUNNER_TEMP", str(runner_temp))
+    original = module._linked_or_reparse
+    monkeypatch.setattr(module, "_linked_or_reparse", lambda path: path == runner_temp or original(path))
+    with pytest.raises(SystemExit, match="SESSION12_CI_QUARANTINE_PATH_UNSAFE"):
+        module.main()
 
 
 @pytest.mark.parametrize("metric", [
