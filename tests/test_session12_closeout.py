@@ -40,10 +40,11 @@ def _bundle():
     adjudication = json.loads((ROOT / "artifacts/session12/public/adjudication_projection.v1.public.json").read_bytes())
     adjudication["live_evaluation"]["implementation_commit"] = binding["implementation_commit"]
     adjudication["live_evaluation"]["evaluation_policy_version"] = 999
+    adjudication["live_evaluation"]["total_latency_ms"] = 123.5
     adjudication_core = dict(adjudication); adjudication_core.pop("projection_digest", None)
     adjudication["projection_digest"] = sha256_bytes(canonical_bytes(adjudication_core))
     cases = [{"case_id":case,"predeclared":True} for case in ("httpx-pr-3699-control","click-pr-3721-control","httpcore-pr-880-consequential","provan-public-control","session11-controlled-patient","session12-final-dogfood")]
-    qualification = {"schema_id":"provan.foundry_real_use_qualification.v1","sensitivity":"PUBLIC_SAFE","implementation_binding":binding,"adjudication_root":adjudication["authority_bindings"]["review_root"],"adjudication_projection_sha256":sha256_bytes(canonical_bytes(adjudication)),"cases":cases,"arms":[{"label":"FOUNDRY_STANDARD"}],"coding_harness_sanity":{"claim_scope":"SINGLE_BLIND_SANITY_NOT_HEADLINE_COMPARISON"},"outcome_bearing_runs_completed":True,"evaluation_driven_adjudication_change":False,"raw_measurements":[],"limitations":["DEEP_DEGRADED"]}
+    qualification = {"schema_id":"provan.foundry_real_use_qualification.v1","sensitivity":"PUBLIC_SAFE","implementation_binding":binding,"adjudication_root":adjudication["authority_bindings"]["review_root"],"adjudication_projection_sha256":sha256_bytes(canonical_bytes(adjudication)),"cases":cases,"arms":[{"label":"FOUNDRY_STANDARD"}],"coding_harness_sanity":{"claim_scope":"SINGLE_BLIND_SANITY_NOT_HEADLINE_COMPARISON"},"outcome_bearing_runs_completed":True,"evaluation_driven_adjudication_change":False,"raw_measurements":[{"metric":"current_model_calls","value":adjudication["live_evaluation"]["calls"]},{"metric":"current_model_total_latency_ms","value":adjudication["live_evaluation"]["total_latency_ms"]},{"metric":"current_model_estimated_cost_usd","value":adjudication["live_evaluation"]["estimated_cost_usd"]},{"metric":"total_session_model_estimated_cost_usd","value":adjudication["live_evaluation"]["total_session_estimated_cost_usd"]},{"metric":"final_dogfood_model_calls","value":0}],"limitations":["DEEP_DEGRADED"]}
     scopes=("history_delta","working_tree","package","proofs_examples","controlled_ci")
     absence={"schema_id":"provan.session10_generic_absence_receipt.v1","sensitivity":"PUBLIC_SAFE","implementation_commit":binding["implementation_commit"],"implementation_tree":binding["implementation_tree"],"wheel_sha256":binding["wheel_sha256"],"checks":[{"scope":scope,"items_inspected":1,"inventory_digest":"sha256:"+str(index)*64,"generic_violation_count":0} for index,scope in enumerate(scopes,1)],"result":"PRIVATE_PLANNING_AUTHORITY_ABSENT","confidential_fingerprint_known":False}
     summary={"schema_id":"provan.session12_validation_summary.v1","implementation_binding":binding,"authoritative_full_gate":"SUCCESS","target_mutation_detected":False,"execution_available":False,"challenge_available":False,"session13_implemented":False,"checks":[{"label":"full","exit_code":0,"transcript_sha256":"sha256:"+"9"*64}]}
@@ -105,6 +106,31 @@ def test_real_use_binds_exact_adjudication_projection_without_policy_version_con
     with pytest.raises(ProvanError, match="SESSION12_REAL_USE_BINDING_MISMATCH"):
         validate_real_use_qualification_serialized(
             canonical_bytes(data["qualification"]), data["binding_raw"], canonical_bytes(mutated)
+        )
+
+
+def test_adjudication_projection_builder_accepts_explicit_content_addressed_authority_files():
+    source = (ROOT / "scripts/build_session12_adjudication_projection.py").read_text(encoding="utf-8")
+    for option in ("--policy", "--review", "--ledger", "--scoring"):
+        assert option in source
+    assert 'policy.get("version")!=10' not in source
+
+
+@pytest.mark.parametrize("metric", [
+    "current_model_calls",
+    "current_model_total_latency_ms",
+    "current_model_estimated_cost_usd",
+    "total_session_model_estimated_cost_usd",
+    "final_dogfood_model_calls",
+])
+def test_real_use_recomputes_exact_measurements_from_adjudication(metric: str):
+    data = _bundle()
+    qualification = copy.deepcopy(data["qualification"])
+    row = next(item for item in qualification["raw_measurements"] if item["metric"] == metric)
+    row["value"] += 1
+    with pytest.raises(ProvanError, match="SESSION12_REAL_USE_MEASUREMENT_MISMATCH"):
+        validate_real_use_qualification_serialized(
+            canonical_bytes(qualification), data["binding_raw"], canonical_bytes(data["adjudication"])
         )
 
 

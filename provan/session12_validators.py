@@ -213,6 +213,16 @@ def validate_real_use_qualification_serialized(raw: bytes, binding_raw: bytes, a
         raise ProvanError("SESSION12_REAL_USE_CASE_SET_INVALID", "cases")
     if value.get("evaluation_driven_adjudication_change") is not False or value.get("coding_harness_sanity", {}).get("claim_scope") != "SINGLE_BLIND_SANITY_NOT_HEADLINE_COMPARISON":
         raise ProvanError("SESSION12_REAL_USE_AUTHORITY_INVALID", "qualification")
+    live = adjudication.get("live_evaluation", {})
+    expected_measurements = [
+        {"metric": "current_model_calls", "value": live.get("calls")},
+        {"metric": "current_model_total_latency_ms", "value": live.get("total_latency_ms")},
+        {"metric": "current_model_estimated_cost_usd", "value": live.get("estimated_cost_usd")},
+        {"metric": "total_session_model_estimated_cost_usd", "value": live.get("total_session_estimated_cost_usd")},
+        {"metric": "final_dogfood_model_calls", "value": 0},
+    ]
+    if value.get("raw_measurements") != expected_measurements:
+        raise ProvanError("SESSION12_REAL_USE_MEASUREMENT_MISMATCH", "raw_measurements")
     if value.get("outcome_bearing_runs_completed"):
         if not value.get("arms") or any(row.get("label") not in {"STRONG_CURRENT_FRONTIER_PROMPT_BASELINE", "FOUNDRY_STANDARD", "FOUNDRY_DEEP"} for row in value["arms"]):
             raise ProvanError("SESSION12_REAL_USE_ARM_BINDING_INVALID", "arms")
