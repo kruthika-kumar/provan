@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import json
 import subprocess
 import sys
@@ -124,6 +125,35 @@ def test_release_gate_workflow_is_yaml_parseable_with_isolated_candidate_build()
     commands = [step.get("run", "") for step in steps]
     assert any("python -m build --outdir candidate-dist" in command for command in commands)
     assert any("Version: 0.5.0" in command for command in commands)
+
+
+def test_release_gate_quarantines_local_eval_outputs_before_publication_checks():
+    workflow = (ROOT / ".github/workflows/release-gate.yml").read_text(encoding="utf-8")
+    integration = workflow.index("python scripts/run_workflow_integration_evals.py")
+    quarantine = workflow.index("python scripts/quarantine_session12_ci_byproducts.py")
+    build = workflow.index("python -m build --outdir candidate-dist")
+    validation = workflow.index("python scripts/validate_session12.py --phase final")
+    assert integration < quarantine < build < validation
+
+
+def test_ci_quarantine_moves_local_byproducts_outside_repository(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    local = repo / ".shiproom" / "local"
+    local.mkdir(parents=True)
+    (local / "generated.json").write_text('{"local":"path"}\n', encoding="utf-8")
+    runner_temp = tmp_path / "runner-temp"
+    spec = importlib.util.spec_from_file_location(
+        "session12_ci_quarantine", ROOT / "scripts/quarantine_session12_ci_byproducts.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", repo)
+    monkeypatch.setenv("RUNNER_TEMP", str(runner_temp))
+    assert module.main() == 0
+    assert local.is_dir() and not any(local.iterdir())
+    quarantined = list((runner_temp / "provan-session12-ci-quarantine" / "local-byproducts").rglob("generated.json"))
+    assert len(quarantined) == 1
 
 
 @pytest.mark.parametrize("metric", [

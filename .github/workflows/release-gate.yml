@@ -23,6 +23,7 @@ jobs:
       - run: python -m pytest -q
       - run: python scripts/run_evals.py
       - run: python scripts/run_workflow_integration_evals.py
+      - run: python scripts/quarantine_session12_ci_byproducts.py
       - run: python -m build --outdir candidate-dist
       - run: python scripts/validate_session9.py --skip-closeout-bindings --wheel candidate-dist/*.whl --archive candidate-dist/*.tar.gz
       - run: python scripts/validate_session9_correction.py
