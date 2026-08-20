@@ -75,6 +75,7 @@ def test_release_gate_qualifies_successor_without_overwriting_authoritative_whee
     commands = "\n".join(str(step.get("run", "")) for step in steps)
     assert "validate_session12.py --phase final --successor" in commands
     assert "validate_session12r_pre_review.py" in commands
+    assert "validate_session12r_closeout.py" in commands
     assert "--outdir candidate-dist" in commands
     assert "dist/provan_assurance-0.5.1-py3-none-any.whl" in commands
     assert "e158c090728bb06b5f8e2a1d686719e58ece8b1c023863c7b348f146ce1b4093" in commands

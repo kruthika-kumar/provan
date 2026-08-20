@@ -34,6 +34,7 @@ jobs:
       - run: python scripts/validate_session12.py --phase final --successor
       - run: python scripts/validate_session12r.py
       - run: python scripts/validate_session12r_pre_review.py
+      - run: python scripts/validate_session12r_closeout.py
       - run: python scripts/validate_session12_leakage.py
       - run: python scripts/fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl
       - run: python -c "from pathlib import Path; import hashlib; expected='e250c509d1676ebb9f1ec066059b3eb770a12a3804666c22a1e65bfad6d89d4f'; actual=hashlib.sha256(Path('dist/provan_assurance-0.4.0-py3-none-any.whl').read_bytes()).hexdigest(); assert actual==expected, (actual,expected)"
