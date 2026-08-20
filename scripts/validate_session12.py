@@ -35,6 +35,7 @@ def artifact_bytes(path_text:str)->bytes:
 
 
 def main()->int:
+    successor = "--successor" in sys.argv
     registry_path=ROOT/"artifacts/session12/schema_registry.v1.public.json";require(registry_path.is_file(),"SESSION12_SCHEMA_REGISTRY_MISSING");registry=json.loads(registry_path.read_text(encoding="utf-8"));rows=registry.get("entries",[]);require(registry.get("registry_digest")==sha256_bytes(canonical_bytes(rows)),"SESSION12_SCHEMA_REGISTRY_DIGEST_MISMATCH")
     seen=set()
     for row in rows:
@@ -43,7 +44,8 @@ def main()->int:
     validate_work_order_serialized((ROOT/"artifacts/session12/authority/work_order.v1.public.json").read_bytes())
     validate_pattern_library_serialized((ROOT/"artifacts/session12/public/verification_pattern_library.v1.public.json").read_bytes())
     pyproject=(ROOT/"pyproject.toml").read_text(encoding="utf-8");readme=(ROOT/"README.md").read_text(encoding="utf-8");docs=(ROOT/"docs/contract-foundry.md").read_text(encoding="utf-8")
-    require('version = "0.5.0"' in pyproject and '0.5.0' in readme and 'not available from PyPI' in readme,"SESSION12_VERSION_BOUNDARY_INVALID")
+    expected_version = "0.5.1" if successor else "0.5.0"
+    require(f'version = "{expected_version}"' in pyproject and expected_version in readme and 'not available from PyPI' in readme,"SESSION12_VERSION_BOUNDARY_INVALID")
     require("IMPLEMENTED_UNQUALIFIED" in readme+docs and "execution_available" in docs and "challenge_available" in docs,"SESSION12_MATURITY_BOUNDARY_INVALID")
     cli=(ROOT/"provan/cli.py").read_text(encoding="utf-8");require(all(token in cli for token in ("acceptance_sub.add_parser(\"foundry\")","--source-manifest","--foundry-projection","acceptance_sub.add_parser(\"patterns\")")),"SESSION12_CLI_SURFACE_INCOMPLETE")
     tree=ast.parse((ROOT/"provan/foundry.py").read_text(encoding="utf-8"));forbidden={"subprocess","Popen","system","exec","eval","compile","import_module"};calls={node.func.id if isinstance(node.func,ast.Name) else node.func.attr if isinstance(node.func,ast.Attribute) else "" for node in ast.walk(tree) if isinstance(node,ast.Call)};require(not forbidden&calls,"SESSION12_TARGET_EXECUTION_CAPABILITY_EXPOSED")

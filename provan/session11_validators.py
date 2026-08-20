@@ -50,6 +50,59 @@ def _independent_session11_schema_registry_raw() -> bytes:
     return canonical_bytes({"schema_id":"provan.session11_schema_registry.v1","sensitivity":"PUBLIC_SAFE","entries":entries,"registry_digest":sha256_bytes(canonical_bytes(entries))})
 
 
+_REQUIRED_SESSION11_SCHEMA_IDS = {
+    "provan.acceptance_attestation.v1", "provan.acceptance_contract.v1",
+    "provan.candidate_freeze.v1", "provan.closure_requirement.v1",
+    "provan.command_receipt.v1", "provan.environment_receipt.v1",
+    "provan.evidence_settlement.v1", "provan.external_change_receipt.v1",
+    "provan.owner_decision.v1", "provan.protected_invariant.v1",
+    "provan.reinspection_record.v1", "provan.seed_disposition.v1",
+    "provan.verification_result.v1", "provan.verifier_capability_request.v1",
+    "provan.verifier_work_order.v1",
+}
+
+
+def _validate_bound_session11_schema_registry(raw: bytes) -> dict[str, Any]:
+    """Validate a content-addressed Session 11 registry without rebinding it.
+
+    Additive successor schemas must not invalidate a historical registry.  The
+    registry is therefore checked against every exact file it declares, plus
+    the complete frozen Session 11 contract set, instead of being compared to
+    a freshly globbed registry whose membership can legitimately grow.
+    """
+    registry = _load(raw, "provan.session11_schema_registry.v1")
+    entries = registry.get("entries")
+    if not isinstance(entries, list) or registry.get("registry_digest") != sha256_bytes(canonical_bytes(entries)):
+        raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", "digest")
+    seen_ids: set[str] = set()
+    seen_paths: set[str] = set()
+    schema_root = Path(__file__).with_name("schemas").resolve()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"schema_id", "path", "sha256", "normalized_sha256"}:
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", "entry")
+        schema_id = entry.get("schema_id")
+        rel = entry.get("path")
+        if not isinstance(schema_id, str) or not isinstance(rel, str) or schema_id in seen_ids or rel in seen_paths:
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", "duplicate")
+        pure = PurePosixPath(rel)
+        if pure.is_absolute() or ".." in pure.parts or pure.parts[:2] != ("provan", "schemas") or len(pure.parts) != 3:
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", rel)
+        path = (schema_root / pure.name).resolve()
+        if path.parent != schema_root or not path.is_file() or path.is_symlink():
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", rel)
+        file_raw = path.read_bytes()
+        try:
+            value = json.loads(file_raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", rel) from exc
+        if value.get("$id") != schema_id or entry.get("sha256") != sha256_bytes(file_raw) or entry.get("normalized_sha256") != sha256_bytes(canonical_bytes(value)):
+            raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", rel)
+        seen_ids.add(schema_id); seen_paths.add(rel)
+    if not _REQUIRED_SESSION11_SCHEMA_IDS.issubset(seen_ids):
+        raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID", "required Session 11 contract missing")
+    return registry
+
+
 def validate_session11_capability_inventory(value:dict[str,Any])->dict[str,Any]:
     commands=value.get("commands");exports=value.get("exports");modules=value.get("modules")
     if not all(isinstance(rows,list) and all(isinstance(row,str) for row in rows) for rows in (commands,exports,modules)):
@@ -294,12 +347,8 @@ def validate_contract_serialized(raw: bytes, closures: dict[str,bytes], invarian
     if value.get("operator_authority",{}).get("authority_type")!="case_operator" or value["operator_authority"].get("authority_scope")!="case_intent_and_meaning" or value["operator_authority"].get("identity_assurance")!="self_asserted_label":raise ProvanError("CONTRACT_OPERATOR_AUTHORITY_INVALID",value["contract_id"])
     if value.get("decision_policy")!={"policy_id":"community.owner-decision-compatibility.v1","allowed":{k:sorted(v) for k,v in DECISIONS.items()}}:raise ProvanError("CONTRACT_DECISION_POLICY_INVALID",value["contract_id"])
     provenance=value.get("provenance",{})
-    registry=_load(schema_registry_raw,"provan.session11_schema_registry.v1");entries=registry.get("entries")
-    if not isinstance(entries,list) or registry.get("registry_digest")!=sha256_bytes(canonical_bytes(entries)):
-        raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID",value["contract_id"])
-    if schema_registry_raw!=_independent_session11_schema_registry_raw():
-        raise ProvanError("CONTRACT_SCHEMA_REGISTRY_INVALID",value["contract_id"])
-    if provenance.get("package_version") not in {"0.4.0","0.5.0"} or provenance.get("policy_id")!="community.acceptance.v1" or provenance.get("policy_version")!="1" or provenance.get("schema_registry_digest")!=registry["registry_digest"]:raise ProvanError("CONTRACT_PROVENANCE_INVALID",value["contract_id"])
+    registry=_validate_bound_session11_schema_registry(schema_registry_raw)
+    if provenance.get("package_version") not in {"0.4.0","0.5.0","0.5.1"} or provenance.get("policy_id")!="community.acceptance.v1" or provenance.get("policy_version")!="1" or provenance.get("schema_registry_digest")!=registry["registry_digest"]:raise ProvanError("CONTRACT_PROVENANCE_INVALID",value["contract_id"])
     if value.get("expires_at") is not None:
         try: datetime.fromisoformat(value["expires_at"].replace("Z","+00:00"))
         except (ValueError,TypeError) as exc: raise ProvanError("CONTRACT_EXPIRY_INVALID",value["contract_id"]) from exc
@@ -494,7 +543,7 @@ def validate_attestation_serialized(raw: bytes, contract_raw: bytes, freeze_raw:
     _uuid(projections.get("internal"),"ATTESTATION_PROJECTION_ID_INVALID");_uuid(projections.get("client_safe"),"ATTESTATION_PROJECTION_ID_INVALID")
     if projections["internal"]==projections["client_safe"]:raise ProvanError("ATTESTATION_PROJECTION_ID_COLLISION",value["attestation_id"])
     provenance=value.get("provenance",{})
-    if provenance.get("package_version") not in {"0.4.0","0.5.0"} or {key:value for key,value in provenance.items() if key!="package_version"}!={"policy_id":"community.acceptance.v1","policy_version":"1"}:raise ProvanError("ATTESTATION_PROVENANCE_INVALID",value["attestation_id"])
+    if provenance.get("package_version") not in {"0.4.0","0.5.0","0.5.1"} or {key:value for key,value in provenance.items() if key!="package_version"}!={"policy_id":"community.acceptance.v1","policy_version":"1"}:raise ProvanError("ATTESTATION_PROVENANCE_INVALID",value["attestation_id"])
     return value
 
 

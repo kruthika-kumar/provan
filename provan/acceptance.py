@@ -29,7 +29,7 @@ from .session11_validators import (
 )
 from .state import secure_read, secure_write, state_root
 
-PACKAGE_VERSION="0.5.0"
+PACKAGE_VERSION="0.5.1"
 POLICY_ID="community.acceptance.v1"
 POLICY_VERSION="1"
 ANALYSIS_VERSION="session11-source-only-v1"

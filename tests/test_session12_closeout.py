@@ -124,7 +124,7 @@ def test_release_gate_workflow_is_yaml_parseable_with_isolated_candidate_build()
     steps = workflow["jobs"]["test-and-eval"]["steps"]
     commands = [step.get("run", "") for step in steps]
     assert any("python -m build --outdir candidate-dist" in command for command in commands)
-    assert any("Version: 0.5.0" in command for command in commands)
+    assert any("Version: 0.5.1" in command for command in commands)
 
 
 def test_release_gate_quarantines_local_eval_outputs_before_publication_checks():

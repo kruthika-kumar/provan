@@ -101,11 +101,12 @@ def test_frozen_public_transport_spy_receives_only_envelope_semantics(monkeypatc
         def open(self,request,timeout):
             requests.append(request)
             if request.method=="GET":return Response(b'{"id":"gpt-5.6-sol"}')
-            result=json.dumps({"model_reviewed_implications":["bounded"],"unresolved":[]},separators=(",",":"));wire=json.dumps({"output":[{"type":"message","content":[{"type":"output_text","text":result}]}],"usage":{"input_tokens":10,"output_tokens":4}},separators=(",",":")).encode();return Response(wire)
+            result=json.dumps({"model_reviewed_implications":["bounded"],"unresolved":[]},separators=(",",":"));wire=json.dumps({"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":result}]}],"usage":{"input_tokens":10,"output_tokens":4}},separators=(",",":")).encode();return Response(wire)
     monkeypatch.setattr("urllib.request.build_opener",lambda *args:Opener())
     result,receipt=invoke_frozen_public_openai_responses(provider,envelope,"not-a-real-key",{"case_id":"fixture-public","classification":"PUBLIC_SAFE","operator_confirmed":True})
     assert result=={"model_reviewed_implications":["bounded"],"unresolved":[]} and receipt["calls"]==1
     body=json.loads(requests[1].data);assert body["store"] is False and body["background"] is False and body["reasoning"]=={"effort":"high","context":"current_turn"} and "previous_response_id" not in body
+    assert body["text"]["format"]["type"] == "json_schema" and body["text"]["format"]["strict"] is True
     semantic=json.loads(body["input"]);assert semantic=={"instructions":envelope["instructions"],"selected_blocks":envelope["selected_blocks"],"permitted_output_classes":envelope["permitted_output_classes"]}
 
 

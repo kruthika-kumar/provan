@@ -19,3 +19,5 @@
 | Contract Foundry Standard | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 only may promote to `QUALIFIED_BOUNDED` |
 | Contract Foundry Deep | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 records exact qualified, degraded, or unavailable result independently |
 | Package `0.5.0` public release | Unpublished | No PyPI package, tag, or GitHub release |
+| Contract Foundry semantic successor `0.5.1` | `CLOSED_PARTIAL`; Standard and Deep `IMPLEMENTED_UNQUALIFIED` | Immutable source bundles, statement authority, post-blind mapping, and owner review are implemented; the protected one-shot evaluation failed its coverage-matrix gate before holdout freeze or semantic output, so no qualification was established |
+| Session 13 successor eligibility | `NO` | The protected one-shot gate did not pass; this successor cannot authorize Session 13 |
