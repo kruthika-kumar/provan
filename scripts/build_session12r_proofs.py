@@ -102,11 +102,14 @@ def main() -> int:
         raw = run_test(node); name = hashlib.sha256(node.encode()).hexdigest()[:16] + ".txt"
         (transcripts / name).write_bytes(raw); results[node] = (f"artifacts/session12/successor_closeout/proofs/transcripts/{name}", digest(raw))
     hidden_ref = None
+    hidden_passed = False
     if args.hidden_projection:
         hidden = args.hidden_projection.resolve()
         if not hidden.is_file(): raise SystemExit("SESSION12R_HIDDEN_PROJECTION_MISSING")
         target = OUT / "hidden_qualification_projection.v1.public.json"
-        target.write_bytes(hidden.read_bytes()); hidden_ref = ref(target.relative_to(ROOT).as_posix())
+        hidden_value = json.loads(hidden.read_bytes())
+        target.write_bytes(canonical(hidden_value)); hidden_ref = ref(target.relative_to(ROOT).as_posix())
+        hidden_passed = hidden_value.get("session_12_successor") == "CLOSED" and hidden_value.get("go_session_13") is True
     entries = []
     for key, (name, node, artifacts) in FAMILIES.items():
         transcript_path, transcript_sha = results[node]
@@ -123,9 +126,13 @@ def main() -> int:
     crosswalk = []
     for row in claims["claims"]:
         number = int(row["claim_id"].split("-")[1]); family = CLAIM_FAMILY[number]
-        crosswalk.append({"claim_id": row["claim_id"], "normative_claim": row["normative_claim"], "proof_ids": [entry["proof_id"] for entry in entries if entry["proof_id"].startswith(f"P12R-{family}-")], "source_paths": FAMILIES[family][2], "status": "PENDING_HIDDEN_QUALIFICATION" if number in {56, 59, 70, 71, 75, 76, 77, 79, 80, 81, 88, 89, 90} and not hidden_ref else "EVIDENCED_PRE_REVIEW"})
+        hidden_claim = number in {56, 59, 70, 71, 75, 76, 77, 79, 80, 81, 88, 89, 90}
+        status = "EVIDENCED_PRE_REVIEW"
+        if hidden_claim and not hidden_ref: status = "PENDING_HIDDEN_QUALIFICATION"
+        elif hidden_claim and not hidden_passed: status = "FAILED_MANDATORY_HIDDEN_GATE"
+        crosswalk.append({"claim_id": row["claim_id"], "normative_claim": row["normative_claim"], "proof_ids": [entry["proof_id"] for entry in entries if entry["proof_id"].startswith(f"P12R-{family}-")], "source_paths": FAMILIES[family][2], "status": status})
     (OUT / "claim_crosswalk.v1.public.json").write_bytes(canonical({"schema_id": "provan.session12r_claim_crosswalk.v1", "sensitivity": "PUBLIC_SAFE", "claim_registry_digest": claims["registry_digest"], "rows": crosswalk}))
-    binding = {"schema_id": "provan.session12r_implementation_binding.v1", "sensitivity": "PUBLIC_SAFE", "implementation_commit": IMPLEMENTATION, "implementation_tree": TREE, "package_version": "0.5.1", "wheel_sha256": WHEEL_SHA, "schema_registry_digest": json.loads((ROOT / "artifacts/session12/successor_closeout/public/schema_registry.v1.public.json").read_bytes())["registry_digest"], "claim_registry_digest": claims["registry_digest"], "maturity": "IMPLEMENTED_UNQUALIFIED" if not hidden_ref else "PENDING_REVIEW", "published": False, "execution_available": False, "challenge_available": False}
+    binding = {"schema_id": "provan.session12r_implementation_binding.v1", "sensitivity": "PUBLIC_SAFE", "implementation_commit": IMPLEMENTATION, "implementation_tree": TREE, "package_version": "0.5.1", "wheel_sha256": WHEEL_SHA, "schema_registry_digest": json.loads((ROOT / "artifacts/session12/successor_closeout/public/schema_registry.v1.public.json").read_bytes())["registry_digest"], "claim_registry_digest": claims["registry_digest"], "maturity": "PENDING_REVIEW" if hidden_passed else "IMPLEMENTED_UNQUALIFIED", "published": False, "execution_available": False, "challenge_available": False}
     (OUT / "implementation_binding.v1.public.json").write_bytes(canonical(binding))
     print("SESSION12R_PROOFS_BUILT", len(entries), "hidden", bool(hidden_ref))
     return 0
