@@ -68,6 +68,13 @@ def _store(root: Path, name: str, value: dict[str, Any], schema_file: str, id_ke
     return _ref(value, raw, id_key, f"{name}.json"), raw
 
 
+def _store_internal(root: Path, name: str, value: Any) -> bytes:
+    """Persist an internal canonical stage object for independent resolution."""
+    raw = canonical_bytes(value)
+    secure_write(root / f"{name}.json", raw)
+    return raw
+
+
 def _source_stable_id(case_id: str, role: str, index: int, digest: str) -> str:
     return sha256_bytes(canonical_bytes([case_id, role, index, digest]))
 
@@ -408,13 +415,24 @@ def _audit(candidate: dict[str, Any], intent: dict[str, Any]) -> dict[str, Any]:
     return {"schema_id": "provan.internal.contract_audit.v2", "audit_id": str(uuid.uuid4()), "candidate_digest": sha256_bytes(canonical_bytes(candidate)), "findings": findings, "material_findings": sum(bool(next((x for x in candidate["ambiguities"] if x["item_id"] in row["evidence_refs"]), {"material": True})["material"]) for row in findings), "disposition_coverage": {"total": len(findings), "disposed": len(findings)}, "authority": "advisory"}
 
 
-def _revision(candidate: dict[str, Any], audit: dict[str, Any], cap: int) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _revision(candidate: dict[str, Any], audit: dict[str, Any], cap: int, role_result: dict[str, Any] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     deltas: list[dict[str, Any]] = []
     revised = json.loads(json.dumps(candidate))
     for finding in audit["findings"]:
         if finding["class"] == "material_ambiguity":
             deltas.append({"op": "add", "path": "/limitations/-", "value": f"OWNER_QUESTION:{finding['finding_id']}", "finding_ref": finding["finding_id"]})
             revised["limitations"].append(f"OWNER_QUESTION:{finding['finding_id']}")
+    for kind in ("model_reviewed_implications", "unresolved"):
+        for index, text in enumerate((role_result or {}).get(kind, [])):
+            suggestion = {
+                "suggestion_id": sha256_bytes(canonical_bytes([candidate["candidate_id"], "revision", kind, index, text])),
+                "basis_ref": None,
+                "kind": "owner_question" if kind == "unresolved" else "non_authoritative_enhancement",
+                "statement": text,
+                "authority": "model_proposed_non_authoritative",
+            }
+            deltas.append({"op": "add", "path": "/suggestions/-", "value": suggestion, "finding_ref": None})
+            revised["suggestions"].append(suggestion)
     records = []
     if deltas:
         records.append({"schema_id": "provan.internal.revision_record.v2", "revision_id": str(uuid.uuid4()), "number": 1, "candidate_before": candidate["candidate_id"], "candidate_before_digest": sha256_bytes(canonical_bytes(candidate)), "audit_ref": audit["audit_id"], "field_deltas": deltas, "candidate_after_digest": sha256_bytes(canonical_bytes(revised))})
@@ -610,7 +628,7 @@ def foundry_v2(
         path_digests = [sha256_bytes(canonical_bytes(row)) for row in path_artifacts]
         synthesis = {"schema_id": "provan.internal.deep_synthesis.v1", "synthesis_id": str(uuid.uuid4()), "path_digests": path_digests, "preserved_disagreements": [], "source_ledger_digest": ledger_ref["sha256"], "authority": "proposal_only"}
         if semantic_available:
-            result, receipt = semantic_role("deep_synthesis", {"path_digests": path_digests, "synthesis": synthesis})
+            result, receipt = semantic_role("deep_synthesis", {"path_artifacts": path_artifacts, "path_digests": path_digests, "synthesis": synthesis})
             role_receipts.append(receipt); synthesis["model_role_result"] = result
         intent = build_intent(ledger, "synthesis")
         intent["synthesis_ref"] = {"id": synthesis["synthesis_id"], "sha256": sha256_bytes(canonical_bytes(synthesis))}
@@ -629,32 +647,46 @@ def foundry_v2(
         limitations.append("SCRIPTED_PROVIDER_SEMANTICALLY_UNQUALIFIED")
 
     intent_ref, intent_raw = _store(root, "intent-model", intent, "intent-model.v2.json", "intent_id")
+    deep_paths_raw = _store_internal(root, "deep-paths", path_artifacts)
+    synthesis_raw = _store_internal(root, "deep-synthesis", synthesis)
     goals = _goal_obstacle(intent)
     premortem = _premortem(intent, goals)
     if semantic_available:
         result, receipt = semantic_role("goal_premortem", {"intent": intent, "goals": goals, "premortem": premortem})
         role_receipts.append(receipt); _apply_goal_role_result(goals, premortem, result)
+        premortem["goal_digest"] = sha256_bytes(canonical_bytes(goals))
     candidate = _candidate(case_id, intent, goals, premortem, interpretation, "synthesized" if depth == "deep" else depth)
     if semantic_available:
         result, receipt = semantic_role("contract_proposer", {"intent": intent, "goals": goals, "premortem": premortem, "candidate": candidate})
         role_receipts.append(receipt); _apply_candidate_role_result(candidate, result, "contract_proposer")
-    audit = _audit(candidate, intent)
+    pre_revision_candidate = json.loads(json.dumps(candidate))
+    audit = _audit(pre_revision_candidate, intent)
+    revision_result: dict[str, Any] | None = None
     if semantic_available:
         result, receipt = semantic_role("adversarial_auditor", {"candidate": candidate, "audit": audit})
         role_receipts.append(receipt); _apply_audit_role_result(audit, result)
         result, receipt = semantic_role("revision", {"candidate": candidate, "audit": audit})
-        role_receipts.append(receipt); _apply_candidate_role_result(candidate, result, "revision")
-    revised, revisions = _revision(candidate, audit, 2 if depth == "deep" else 1)
-    secure_write(root / "contract-audit.json", canonical_bytes(audit))
+        role_receipts.append(receipt); revision_result = result
+    revised, revisions = _revision(candidate, audit, 2 if depth == "deep" else 1, revision_result)
+    pre_candidate_raw = _store_internal(root, "contract-candidate-pre-revision", pre_revision_candidate)
+    audit_raw = _store_internal(root, "contract-audit", audit)
     candidate_ref, candidate_raw = _store(root, "contract-candidate", revised, "contract-candidate.v2.json", "candidate_id")
     witnesses = _witnesses(revised)
-    semantic_freeze = {"intent": sha256_bytes(intent_raw), "goal_obstacle": sha256_bytes(canonical_bytes(goals)), "premortem": sha256_bytes(canonical_bytes(premortem)), "candidate": sha256_bytes(canonical_bytes(revised)), "audit": sha256_bytes(canonical_bytes(audit)), "revisions": sha256_bytes(canonical_bytes(revisions)), "witnesses": sha256_bytes(canonical_bytes(witnesses))}
+    goals_raw = _store_internal(root, "goal-obstacle", goals)
+    premortem_raw = _store_internal(root, "premortem", premortem)
+    revisions_raw = _store_internal(root, "revisions", revisions)
+    witnesses_raw = _store_internal(root, "witness-set", witnesses)
+    semantic_freeze = {"intent": sha256_bytes(intent_raw), "goal_obstacle": sha256_bytes(goals_raw), "premortem": sha256_bytes(premortem_raw), "candidate": sha256_bytes(candidate_raw), "audit": sha256_bytes(audit_raw), "revisions": sha256_bytes(revisions_raw), "witnesses": sha256_bytes(witnesses_raw)}
     semantic_freeze_digest = sha256_bytes(canonical_bytes(semantic_freeze))
     mapping = implementation_map(brief, revised, semantic_freeze_digest)
     selection = pattern_selection(revised, library)
     mutation = mutation_analysis(revised, selection)
     readiness, readiness_basis = _readiness(revised, audit, mapping, selection, eligibility)
     if information_boundary == "implementation-informed": readiness = "NOT_READY"
+    mapping_raw = _store_internal(root, "implementation-map", mapping)
+    selection_raw = _store_internal(root, "verification-pattern-selection", selection)
+    mutation_raw = _store_internal(root, "mutation-analysis", mutation)
+    readiness_basis_raw = _store_internal(root, "readiness-basis", readiness_basis)
 
     projected_criteria = [{
         "criterion_id": row["criterion_id"], "statement": row["semantic_obligation"], "class": "mandatory",
@@ -726,5 +758,8 @@ def foundry_v2(
         "measurements": measurements, "budget_policy": {"session_hard_cap_usd": 75, "classification_calls_max": 16, "classification_input_tokens_max": 512000, "classification_output_tokens_max": 64000, "classification_reserved_cost_usd": 2, "total_calls_max": 28 if depth == "deep" else 24, "run_reserved_cost_usd": 7 if depth == "deep" else 5},
         "execution_available": False, "challenge_available": False, "limitations": limitations,
     }
+    # These canonical stage files are intentionally internal. Their stable names
+    # make every digest-bearing run surface independently resolvable.
+    _ = (deep_paths_raw, synthesis_raw, pre_candidate_raw, mapping_raw, selection_raw, mutation_raw, readiness_basis_raw)
     secure_write(root / "contract-foundry-run.json", canonical_bytes(run))
     return run, _render(run, review, format_name, view)

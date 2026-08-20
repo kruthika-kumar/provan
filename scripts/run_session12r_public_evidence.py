@@ -77,10 +77,16 @@ def _validate_private_run(run: dict[str, Any]) -> None:
     artifacts = {
         "source_bundle": bundle_raw, "source_coverage": secure_read(root / "source-coverage.json"),
         "source_ledger": secure_read(root / "source-authority-ledger.json"), "intent": secure_read(root / "intent-model.json"),
-        "candidate": secure_read(root / "contract-candidate.json"), "selection": canonical_bytes(run["pattern_selection"]),
+        "goal_obstacle": secure_read(root / "goal-obstacle.json"), "premortem": secure_read(root / "premortem.json"),
+        "pre_candidate": secure_read(root / "contract-candidate-pre-revision.json"),
+        "candidate": secure_read(root / "contract-candidate.json"), "selection": secure_read(root / "verification-pattern-selection.json"),
         "projection": secure_read(root / "foundry-acceptance-projection.json"),
         "owner_review": secure_read(root / "foundry-owner-review.json"),
         "audit": secure_read(root / "contract-audit.json"),
+        "revisions": secure_read(root / "revisions.json"), "witnesses": secure_read(root / "witness-set.json"),
+        "deep_paths": secure_read(root / "deep-paths.json"), "synthesis": secure_read(root / "deep-synthesis.json"),
+        "mapping": secure_read(root / "implementation-map.json"), "mutation": secure_read(root / "mutation-analysis.json"),
+        "readiness_basis": secure_read(root / "readiness-basis.json"),
         "blobs": blobs,
     }
     brief_raw = secure_read(Path("outputs/change-brief") / run["brief_ref"]["id"] / "change-brief.json")

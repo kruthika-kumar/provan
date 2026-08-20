@@ -55,11 +55,21 @@ def artifact_inputs(run: dict, brief_value: dict) -> tuple[dict, bytes]:
         "source_coverage": secure_read(root / "source-coverage.json"),
         "source_ledger": secure_read(root / "source-authority-ledger.json"),
         "intent": secure_read(root / "intent-model.json"),
+        "goal_obstacle": secure_read(root / "goal-obstacle.json"),
+        "premortem": secure_read(root / "premortem.json"),
+        "pre_candidate": secure_read(root / "contract-candidate-pre-revision.json"),
         "candidate": secure_read(root / "contract-candidate.json"),
-        "selection": canonical_bytes(run["pattern_selection"]),
+        "selection": secure_read(root / "verification-pattern-selection.json"),
         "projection": secure_read(root / "foundry-acceptance-projection.json"),
         "owner_review": secure_read(root / "foundry-owner-review.json"),
         "audit": secure_read(root / "contract-audit.json"),
+        "revisions": secure_read(root / "revisions.json"),
+        "witnesses": secure_read(root / "witness-set.json"),
+        "deep_paths": secure_read(root / "deep-paths.json"),
+        "synthesis": secure_read(root / "deep-synthesis.json"),
+        "mapping": secure_read(root / "implementation-map.json"),
+        "mutation": secure_read(root / "mutation-analysis.json"),
+        "readiness_basis": secure_read(root / "readiness-basis.json"),
         "blobs": blobs,
     }
     return artifacts, canonical_bytes(brief_value)
@@ -143,7 +153,7 @@ def test_independent_validator_rejects_mapping_stage_and_select_all_mutations(tm
     bad = copy.deepcopy(run); bad["stage_execution"][1]["input_digests"] = []
     with pytest.raises(ProvanError, match="SESSION12R_STAGE_DATAFLOW_INVALID"): validate_run_serialized(canonical_bytes(bad), artifacts, brief_raw, pattern_library())
     bad = copy.deepcopy(run); bad["implementation_map"]["criterion_mappings"][0] = {"criterion_id": bad["implementation_map"]["criterion_mappings"][0]["criterion_id"], "status": "supported", "surface_refs": [{"path": "missing", "surface_classes": ["api"]}], "reason_code": "invented"}
-    with pytest.raises(ProvanError, match="SESSION12R_IMPLEMENTATION_MAP_UNSUPPORTED"): validate_run_serialized(canonical_bytes(bad), artifacts, brief_raw, pattern_library())
+    with pytest.raises(ProvanError, match="SESSION12R_RUN_MAPPING_MISMATCH"): validate_run_serialized(canonical_bytes(bad), artifacts, brief_raw, pattern_library())
     candidate = json.loads(artifacts["candidate"]); library = pattern_library(); selection = json.loads(artifacts["selection"]); criterion = candidate["criteria"][0]
     selection["items"] = [{"pattern_ref": {"id": row["pattern_id"], "version": row["version"]}, "criterion_ref": criterion["criterion_id"], "failure_dimension": row["family"], "applicability_basis": criterion["statement_refs"], "oracle_need": criterion["oracle_plan"], "capability_requirement": row["capability_requirements"], "distinct_verification_contribution": row["family"], "limitations": row["limitations"], "status": "owner_confirmation_required"} for row in library["patterns"]]
     with pytest.raises(ProvanError, match="SESSION12R_PATTERN_SELECT_ALL_FORBIDDEN"): validate_pattern_selection_serialized(canonical_bytes(selection), artifacts["candidate"], library)
@@ -158,6 +168,44 @@ def test_owner_review_is_independently_recomputed(tmp_path: Path, monkeypatch: p
     bad["sections"]["Owner decisions"] = []
     with pytest.raises(ProvanError, match="SESSION12R_OWNER_REVIEW_SEMANTICS_INVALID"):
         validate_owner_review_serialized(canonical_bytes(bad), artifacts["projection"], artifacts["candidate"], artifacts["audit"], artifacts["selection"])
+
+
+@pytest.mark.parametrize("artifact", [
+    "goal_obstacle", "premortem", "pre_candidate", "audit", "revisions", "witnesses",
+    "mapping", "selection", "mutation", "readiness_basis", "projection", "owner_review",
+])
+def test_run_rejects_independently_substituted_stage_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, artifact: str):
+    monkeypatch.setenv("PROVAN_HOME", str(tmp_path / "state")); value = brief(tmp_path)
+    run, _ = foundry(brief_id=value["brief_id"], source_manifest=manifest(tmp_path), no_model=True, information_boundary="blind")
+    artifacts, brief_raw = artifact_inputs(run, value)
+    changed = copy.deepcopy(json.loads(artifacts[artifact]))
+    if isinstance(changed, list):
+        changed.append({"schema_id": "provan.internal.revision_record.v2"})
+    elif artifact == "owner_review":
+        changed["owner_review_id"] = "00000000-0000-4000-8000-000000000000"
+    elif artifact == "projection":
+        changed["limitations"].append("INVENTED")
+    elif artifact == "witnesses":
+        changed["witnesses"] = changed["witnesses"][:-1]
+    elif artifact == "audit":
+        changed["findings"][0]["rationale"] = "invented"
+    else:
+        identifier = next(key for key in changed if key.endswith("_id") and key != "schema_id")
+        changed[identifier] = "00000000-0000-4000-8000-000000000000"
+    bad_artifacts = dict(artifacts); bad_artifacts[artifact] = canonical_bytes(changed)
+    with pytest.raises(ProvanError):
+        validate_run_serialized(canonical_bytes(run), bad_artifacts, brief_raw, pattern_library())
+
+
+def test_deep_synthesis_resolves_both_frozen_paths_and_rejects_substitution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("PROVAN_HOME", str(tmp_path / "state")); monkeypatch.setenv("PROVAN_ALLOW_SCRIPTED_PROVIDER", "1"); value = brief(tmp_path)
+    run, _ = foundry(brief_id=value["brief_id"], source_manifest=manifest(tmp_path), depth="deep", provider_id="scripted-test", information_boundary="blind")
+    artifacts, brief_raw = artifact_inputs(run, value)
+    validate_run_serialized(canonical_bytes(run), artifacts, brief_raw, pattern_library())
+    synthesis = json.loads(artifacts["synthesis"]); synthesis["path_digests"] = list(reversed(synthesis["path_digests"]))
+    bad = dict(artifacts); bad["synthesis"] = canonical_bytes(synthesis)
+    with pytest.raises(ProvanError, match="SESSION12R_DEEP_SYNTHESIS_BINDING_INVALID"):
+        validate_run_serialized(canonical_bytes(run), bad, brief_raw, pattern_library())
 
 
 def test_cleanup_creates_digest_bound_tombstone(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
