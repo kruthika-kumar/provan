@@ -145,6 +145,15 @@ def validate_runtime_reachability() -> None:
         # pathlib.Path.replace calls and cannot mutate the inspected target.
         ("session12_validators.py", "validate_foundry_run_binding_serialized", "replace"),
         ("session12_validators.py", "validate_pre_review_manifest_serialized", "replace"),
+        # Session 12R uses str.replace for JSON Pointer decoding and frozen
+        # source-reference normalization. These calls do not receive a Path.
+        ("foundry_semantic.py", "_json_pointer", "replace"),
+        ("foundry_semantic.py", "freeze_source_bundle", "replace"),
+        ("session12r_validators.py", "_pointer", "replace"),
+        # Cleanup deletes only a digest-bound blob already resolved beneath
+        # Provan-owned state after secure_read has revalidated its descriptor.
+        # The inspected repository is never accepted as a cleanup target.
+        ("foundry_semantic.py", "cleanup_source_bundle", "unlink"),
     }
     observed=set()
     for path in (ROOT / "provan").glob("*.py"):
@@ -301,6 +310,11 @@ def main() -> int:
         "provan.contract_candidate.v1","provan.contract_audit.v1","provan.contract_witness_set.v1","provan.contract_revision_record.v1",
         "provan.contract_readiness.v1","provan.verification_pattern.v1","provan.verification_pattern_selection.v1","provan.model_routing_receipt.v1","provan.session_handoff.v2",
         "provan.session12_reviewer_receipt.v1","provan.session12_closeout.v1",
+        # Additive Session 12R schemas are outside the frozen Session 9
+        # registry. Their own successor registry validates their exact bytes.
+        "provan.source_authority_ledger.v2","provan.intent_model.v2","provan.contract_candidate.v2",
+        "provan.verification_pattern_selection.v2","provan.foundry_acceptance_projection.v2",
+        "provan.foundry_owner_review.v1","provan.internal.source_coverage.v1",
     }}
     schema_index={"schema_id":"provan.schema_registry.v1","sensitivity":"PUBLIC_SAFE","hash_policy":"UTF8_LF_NORMALIZED_SHA256","schemas":[{"schema_id":key,"path":str(path.relative_to(ROOT)).replace("\\","/"),"sha256":semantic_sha(path)} for key,(path,_) in sorted(historical_registry.items())]}
     expected=json.dumps(schema_index,sort_keys=True,indent=2)+"\n"; target=artifacts/"schema_registry.public.json"

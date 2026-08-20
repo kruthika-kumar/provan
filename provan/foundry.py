@@ -15,6 +15,7 @@ from .modeling import (FROZEN_PUBLIC_MODEL_EGRESS, ModelProvider,
                        build_envelope, invoke_frozen_public_openai_responses)
 from .safe_input import read_bounded_file
 from .state import secure_read, secure_write
+from .session10_validators import validate_change_brief_serialized
 
 
 PACKAGE_VERSION = "0.5.0"
@@ -71,8 +72,13 @@ PUBLIC_PROMPTS = {
     "contract_candidate": "Propose bounded criteria, evidence classes, source-only checks, future capability requirements, limitations, and owner questions. Do not claim acceptance or verification.",
     "adversarial_critic": "Identify ambiguity, over-specification, missing oracles, false-success risks, and unsafe authority promotion. Return proposals only.",
     "synthesis": "Reconcile two frozen independent paths while preserving disagreements and provenance. Do not invent authority or runtime evidence.",
+    "deep_synthesis": "Reconcile the two frozen blind path results. Preserve source authority, explicit disagreement, ambiguity, non-goals, and valid alternatives. Do not infer implementation or owner authority.",
+    "goal_premortem": "Analyze singular case-specific goals, causal obstacles, and false-success failure narratives from frozen source-bound intent. Propose no implementation fix or mandatory authority.",
+    "contract_proposer": "Compile independently settleable criteria, explicit non-requirements, ambiguities, evidence needs, and oracle needs from frozen upstream artifacts. Keep enhancements non-authoritative.",
+    "adversarial_auditor": "Audit the frozen candidate for omission, over-specification, ambiguity, weak oracles, non-goal leakage, implementation leakage, and compound criteria. Produce advisory findings only.",
+    "revision": "Revise only against the explicit frozen candidate and audit. Preserve a typed disposition for every material finding and do not use hidden conversation state.",
 }
-OUTPUT_PROTOCOL = "Return exactly one JSON object with keys model_reviewed_implications and unresolved; each value must be a bounded array of strings. Return no other keys or prose."
+OUTPUT_PROTOCOL = "Return exactly one JSON object with keys model_reviewed_implications and unresolved. Each value is an array of at most 12 concise strings; each string is at most 320 characters. Preserve material points by consolidation. Return no other keys or prose."
 PUBLIC_PROMPTS["output_protocol"] = OUTPUT_PROTOCOL
 
 
@@ -81,7 +87,7 @@ def _schema(filename: str, value: dict[str, Any]) -> None:
     jsonschema.validate(value, json.loads(path.read_text(encoding="utf-8")))
 
 
-def _load_brief(brief_id: str) -> tuple[dict[str, Any], bytes]:
+def _load_brief(brief_id: str, *, validate_semantics: bool = False) -> tuple[dict[str, Any], bytes]:
     if not re.fullmatch(r"[0-9a-f-]{36}", brief_id):
         raise ProvanError("FOUNDRY_BRIEF_ID_INVALID", "Foundry requires a canonical Change Brief ID")
     relative = Path("outputs/change-brief") / brief_id / "change-brief.json"
@@ -92,6 +98,8 @@ def _load_brief(brief_id: str) -> tuple[dict[str, Any], bytes]:
     value = json.loads(raw)
     if value.get("schema_id") != "provan.change_brief.v1" or value.get("brief_id") != brief_id or canonical_bytes(value) != raw:
         raise ProvanError("FOUNDRY_BRIEF_INVALID", brief_id)
+    if validate_semantics:
+        validate_change_brief_serialized(raw)
     return value, raw
 
 
@@ -197,8 +205,58 @@ def _stage(root: Path, name: str, value: dict[str, Any], schema_file: str, id_ke
     return {"id": value[id_key], "schema_id": value["schema_id"], "path": f"{name}.json", "sha256": sha256_bytes(raw)}, raw
 
 
-def foundry(*, brief_id: str, source_manifest: Path, interpretation: str = "faithful", depth: str = "standard", provider_id: str | None = None, no_model: bool = False, format_name: str = "terminal") -> tuple[dict[str, Any], str]:
-    brief, brief_raw = _load_brief(brief_id); manifest, sources = _contained_sources(source_manifest)
+def _semantic_role_factory(case_id: str, candidate_digest: str, manifest: dict[str, Any], sources: list[dict[str, Any]], provider_id: str | None, no_model: bool, depth: str, run_id: str):
+    if no_model or provider_id is None:
+        return None
+    if provider_id not in PROVIDERS:
+        raise ProvanError("FOUNDRY_PROVIDER_NOT_ALLOWLISTED", provider_id)
+    if provider_id == "scripted-test":
+        if os.environ.get("PROVAN_ALLOW_SCRIPTED_PROVIDER") != "1":
+            return None
+        counter = {"calls": 0}
+        def scripted(role: str, _: dict[str, Any]):
+            counter["calls"] += 1
+            return ({"model_reviewed_implications": [f"scripted semantic role {role}"], "unresolved": ["SCRIPTED_PROVIDER_SEMANTICALLY_UNQUALIFIED"]}, {"provider": provider_id, "model": "deterministic-scripted-v1", "role": role, "calls": 1, "input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "latency_ms": 0, "cost_status": "not_applicable", "cost_usd": 0, "conversation_state": None, "previous_response_id": None, "background": False, "semantic_qualification": False})
+        return scripted
+    configured={item.strip() for item in os.environ.get("PROVAN_MODEL_ALLOWLIST","").split(",") if item.strip()};hosts={item.strip().lower() for item in os.environ.get("PROVAN_MODEL_HOST_ALLOWLIST","").split(",") if item.strip()}
+    if provider_id not in configured or "api.openai.com" not in hosts or not os.environ.get("OPENAI_API_KEY"):
+        return None
+    authorization = _require_model_egress_authorization(manifest, sources)
+    blocks = [{"category": f"frozen_public_{row['role']}", "content": row["content"]} for row in sources if row["role"] in {"intent", "formal_contract"}]
+    calls = {"value": 0}; stage_ceiling = 12 if depth == "deep" else 8; run_reserve = 7.0 if depth == "deep" else 5.0
+    spend = manifest.get("spend_control", {}) if isinstance(manifest.get("spend_control", {}), dict) else {}
+    spent = float(spend.get("spent", 0)); in_flight = float(spend.get("in_flight", 0)); mandatory = float(spend.get("minimum_mandatory_remaining", 0)); per_call = run_reserve / stage_ceiling
+    if any(value < 0 for value in (spent, in_flight, mandatory)):
+        raise ProvanError("FOUNDRY_SPEND_CONTROL_INVALID", "negative value")
+    def live(role: str, role_input: dict[str, Any]):
+        calls["value"] += 1
+        projected_reserve = calls["value"] * per_call
+        if calls["value"] > stage_ceiling or projected_reserve > run_reserve or spent + in_flight + mandatory + projected_reserve > 75:
+            raise ProvanError("FOUNDRY_CALL_LIMIT_EXCEEDED", role)
+        provider = ModelProvider(provider_id, PROVIDERS[provider_id]["tier_2_3_model"], "semantic-successor-v1", PROVIDERS[provider_id]["origin"], "high")
+        instructions = PUBLIC_PROMPTS.get(role, PUBLIC_PROMPTS.get("blind_intent", "")) + "\n\n" + PUBLIC_PROMPTS["contract_candidate"] + "\n\n" + OUTPUT_PROTOCOL
+        role_block = {"category": f"derived_public_{role}_input", "content": canonical_bytes(role_input).decode("utf-8")}
+        envelope = build_envelope(case_id=case_id, candidate_digest=candidate_digest, provider=provider, instructions=instructions, blocks=[*blocks, role_block])
+        envelope["prompt_id"] = f"foundry-semantic-{role}.v1"
+        envelope["limits"]["max_output_tokens"] = 4096
+        envelope_raw = canonical_bytes(envelope)
+        envelope_path = Path("outputs/contract-foundry") / run_id / "model-input-envelopes" / f"call-{calls['value']:02d}-{role}.json"
+        secure_write(envelope_path, envelope_raw)
+        result, usage = invoke_frozen_public_openai_responses(provider, envelope, os.environ["OPENAI_API_KEY"], authorization)
+        usage.update({"role": role, "reasoning_tokens": 0, "conversation_state": None, "semantic_qualification": True, "model_input_envelope_ref": {"path": envelope_path.as_posix(), "sha256": sha256_bytes(envelope_raw)}, "pre_call_reservation": {"spent": spent, "in_flight": in_flight, "minimum_mandatory_remaining": mandatory, "reserved_after": projected_reserve, "run_reserve": run_reserve, "hard_cap": 75, "authorized": True}})
+        return result, usage
+    return live
+
+
+def foundry(*, brief_id: str, source_manifest: Path, interpretation: str = "faithful", depth: str = "standard", provider_id: str | None = None, no_model: bool = False, format_name: str = "terminal", information_boundary: str | None = None, view: str = "full") -> tuple[dict[str, Any], str]:
+    brief, brief_raw = _load_brief(brief_id, validate_semantics=information_boundary is not None); manifest, sources = _contained_sources(source_manifest)
+    if information_boundary is not None:
+        if information_boundary not in {"blind", "implementation-informed"}: raise ProvanError("FOUNDRY_INFORMATION_BOUNDARY_INVALID", information_boundary)
+        if view not in {"full", "owner-review"}: raise ProvanError("FOUNDRY_VIEW_INVALID", view)
+        from .foundry_semantic import foundry_v2
+        semantic_run_id = str(uuid.uuid4())
+        semantic_role = _semantic_role_factory(brief["case_id"], brief["candidate"]["candidate_digest"], manifest, sources, provider_id, no_model, depth, semantic_run_id)
+        return foundry_v2(brief=brief, brief_raw=brief_raw, manifest=manifest, initial_sources=sources, interpretation=interpretation, depth=depth, provider_id=provider_id, no_model=no_model, information_boundary=information_boundary, view=view, format_name=format_name, library=pattern_library(), semantic_role=semantic_role, run_id=semantic_run_id)
     run_id = str(uuid.uuid4()); case_id = brief["case_id"]; root = Path("outputs/contract-foundry") / run_id
     risk_inputs = manifest.get("routing_inputs", {"risk": "unresolved", "ambiguity": "unresolved", "blast_radius": "unresolved", "reversibility": "unresolved", "oracle": "unresolved", "actor_autonomy": "unresolved"})
     routing = route(risk_inputs)
@@ -292,7 +350,8 @@ def load_projection(projection_id: str) -> tuple[dict[str, Any], bytes]:
             except FileNotFoundError: continue
             value = json.loads(raw)
             if value.get("projection_id") == projection_id:
-                _schema("foundry-acceptance-projection.v1.json", value)
+                schema_file = "foundry-acceptance-projection.v2.json" if value.get("schema_id") == "provan.foundry_acceptance_projection.v2" else "foundry-acceptance-projection.v1.json"
+                _schema(schema_file, value)
                 if canonical_bytes(value) != raw: raise ProvanError("FOUNDRY_PROJECTION_CANONICAL_BYTES_INVALID", projection_id)
                 return value, raw
     raise ProvanError("FOUNDRY_PROJECTION_NOT_FOUND", projection_id)

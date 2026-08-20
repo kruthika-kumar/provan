@@ -2,7 +2,7 @@
 
 Provan is a permanently read-only repository assurance tool. It inspects source structure and emits bounded evidence receipts. It does not execute repository code or modify a target repository. It never creates branches, commits, worktrees or pull requests. It cannot deploy software or remediate findings. It cannot certify a release or issue an acceptance verdict.
 
-`provan explain` and the Session 11 Acceptance lifecycle remain `QUALIFIED_BOUNDED` capabilities on unreleased `main`. Contract Foundry is `IMPLEMENTED_UNQUALIFIED` until Gate 12 independently qualifies a mode. Package version `0.5.0` is not available from PyPI and is not a Community release. Session 14 remains the release gate.
+`provan explain` and the Session 11 Acceptance lifecycle remain `QUALIFIED_BOUNDED` capabilities on unreleased `main`. Historical Contract Foundry `0.5.0` remains byte-preserved for its original closeout. The semantic-correction successor is the unpublished package `0.5.1` and remains `IMPLEMENTED_UNQUALIFIED` with `GO_SESSION_13:NO` until its one-shot protected evaluation and successor Gate 12 close. The package is not available from PyPI or as a Community release. Session 14 remains the release gate.
 
 Session 2 is historically closed as `CLOSED_PARTIAL`. Qualification and control-plane evidence survives as bounded historical material; no completed headline comparison, evaluated portfolio, public example gallery, or model-evaluated result is claimed.
 

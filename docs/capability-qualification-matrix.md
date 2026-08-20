@@ -19,3 +19,5 @@
 | Contract Foundry Standard | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 only may promote to `QUALIFIED_BOUNDED` |
 | Contract Foundry Deep | `IMPLEMENTED_UNQUALIFIED` during development | Gate 12 records exact qualified, degraded, or unavailable result independently |
 | Package `0.5.0` public release | Unpublished | No PyPI package, tag, or GitHub release |
+| Contract Foundry semantic successor `0.5.1` | `IMPLEMENTED_UNQUALIFIED`, successor in progress | Immutable source bundles, statement authority, post-blind mapping, and owner review implemented; protected one-shot qualification pending |
+| Session 13 successor eligibility | `NO` | Becomes `YES` only after every G12R semantic, hidden-evaluation, reviewer, CI, publication, and synchronization gate passes |

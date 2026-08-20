@@ -103,12 +103,20 @@ def invoke_frozen_public_openai_responses(provider: ModelProvider, envelope: dic
                                           egress_authorization: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     """Execute one stateless call only for a predeclared frozen public case digest set."""
     case_id = egress_authorization.get("case_id")
-    selected = tuple(row.get("sha256") for row in envelope["selected_blocks"])
+    selected_blocks = envelope["selected_blocks"]
+    derived_blocks = [row for row in selected_blocks if str(row.get("category", "")).startswith("derived_public_")]
+    # Historical v1 envelopes used role names rather than the frozen_public_
+    # prefix. They remain safe because every non-derived block must match the
+    # exact predeclared source digest tuple; only the additive derived class
+    # receives the separate operator authorization below.
+    source_blocks = [row for row in selected_blocks if row not in derived_blocks]
+    selected = tuple(row.get("sha256") for row in source_blocks)
     if any(row.get("sha256") != sha256_bytes(str(row.get("content", "")).encode("utf-8")) for row in envelope["selected_blocks"]):
         raise ProvanError("MODEL_EGRESS_NOT_AUTHORIZED", "selected block digest mismatch")
     if (egress_authorization.get("classification") != "PUBLIC_SAFE" or
             egress_authorization.get("operator_confirmed") is not True or
-            case_id not in FROZEN_PUBLIC_MODEL_EGRESS or selected != FROZEN_PUBLIC_MODEL_EGRESS[case_id]):
+            case_id not in FROZEN_PUBLIC_MODEL_EGRESS or selected != FROZEN_PUBLIC_MODEL_EGRESS[case_id] or
+            (derived_blocks and egress_authorization.get("derived_public_artifacts_authorized") is not True)):
         raise ProvanError("MODEL_EGRESS_NOT_AUTHORIZED", "only the frozen named public case digest sets may leave the machine")
     if provider.endpoint != "https://api.openai.com":
         raise ProvanError("MODEL_PROVIDER_ENDPOINT_INVALID", "OpenAI origin is not pinned")
@@ -126,20 +134,43 @@ def invoke_frozen_public_openai_responses(provider: ModelProvider, envelope: dic
     semantic_payload = {key: envelope[key] for key in ("instructions", "selected_blocks", "permitted_output_classes")}
     if provider.reasoning_effort not in {"medium", "high", "xhigh", "max"}:
         raise ProvanError("MODEL_REASONING_EFFORT_INVALID", provider.reasoning_effort)
-    body = {"model":provider.model,"store":False,"background":False,"reasoning":{"effort":provider.reasoning_effort,"context":"current_turn"},"max_output_tokens":envelope["limits"]["max_output_tokens"],"input":json.dumps(semantic_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)}
+    role_output_schema = {
+        "type": "object",
+        "properties": {
+            "model_reviewed_implications": {"type": "array", "maxItems": 12, "items": {"type": "string", "maxLength": 320}},
+            "unresolved": {"type": "array", "maxItems": 12, "items": {"type": "string", "maxLength": 320}},
+        },
+        "required": ["model_reviewed_implications", "unresolved"],
+        "additionalProperties": False,
+    }
+    body = {"model":provider.model,"store":False,"background":False,"reasoning":{"effort":provider.reasoning_effort,"context":"current_turn"},"max_output_tokens":envelope["limits"]["max_output_tokens"],"text":{"format":{"type":"json_schema","name":"provan_foundry_role_result","strict":True,"schema":role_output_schema}},"input":json.dumps(semantic_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)}
     request = urllib.request.Request(f"{provider.endpoint}/v1/responses",data=canonical_bytes(body),method="POST",headers={**auth,"Content-Type":"application/json","Provan-Envelope-Digest":envelope_digest})
     started=time.perf_counter_ns()
     try:
         with opener.open(request,timeout=300) as response: raw=response.read(1_048_577)
-        wire=json.loads(raw.decode("utf-8"));output_text="".join(part.get("text","") for item in wire.get("output",[]) if item.get("type")=="message" for part in item.get("content",[]) if part.get("type")=="output_text");result=json.loads(output_text)
+        wire=json.loads(raw.decode("utf-8"))
+        if wire.get("status") != "completed":
+            raise ValueError("Responses output was not complete")
+        output_text="".join(part.get("text","") for item in wire.get("output",[]) if item.get("type")=="message" for part in item.get("content",[]) if part.get("type")=="output_text");result=json.loads(output_text)
     except (OSError,urllib.error.URLError,ValueError,UnicodeDecodeError,json.JSONDecodeError,TypeError,AttributeError) as exc:
         raise ProvanError("MODEL_TRANSPORT_FAILED","bounded stateless Responses call failed") from exc
     if len(raw)>1_048_576 or not isinstance(result,dict) or set(result)!={"model_reviewed_implications","unresolved"}:raise ProvanError("MODEL_OUTPUT_AUTHORITY_INVALID","bounded output contract")
     for field in ("model_reviewed_implications","unresolved"):
         rows=result[field]
-        if not isinstance(rows,list) or len(rows)>128 or any(not isinstance(row,str) for row in rows) or sum(len(row.encode("utf-8")) for row in rows)>65536:raise ProvanError("MODEL_OUTPUT_LIMIT_INVALID",field)
+        if not isinstance(rows,list) or len(rows)>12 or any(not isinstance(row,str) or len(row)>320 for row in rows) or sum(len(row.encode("utf-8")) for row in rows)>4096:raise ProvanError("MODEL_OUTPUT_LIMIT_INVALID",field)
     usage=wire.get("usage") if isinstance(wire.get("usage"),dict) else {}
-    return result,{"mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"reasoning_effort":provider.reasoning_effort,"reasoning_context":"current_turn","envelope_digest":envelope_digest,"calls":1,"latency_ms":(time.perf_counter_ns()-started)/1_000_000,"cost_status":"unavailable","input_tokens":usage.get("input_tokens"),"output_tokens":usage.get("output_tokens"),"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED","previous_response_id":None,"background":False}
+    input_tokens = usage.get("input_tokens")
+    output_tokens = usage.get("output_tokens")
+    cached_tokens = (usage.get("input_tokens_details") or {}).get("cached_tokens", 0) if isinstance(usage.get("input_tokens_details") or {}, dict) else 0
+    cost_usd = None
+    cost_status = "unavailable"
+    if isinstance(input_tokens, int) and isinstance(output_tokens, int) and isinstance(cached_tokens, int) and 0 <= cached_tokens <= input_tokens:
+        uncached_tokens = input_tokens - cached_tokens
+        long_multiplier_input = 2.0 if input_tokens > 272_000 else 1.0
+        long_multiplier_output = 1.5 if input_tokens > 272_000 else 1.0
+        cost_usd = round((uncached_tokens * 5.0 * long_multiplier_input + cached_tokens * 0.5 * long_multiplier_input + output_tokens * 30.0 * long_multiplier_output) / 1_000_000, 8)
+        cost_status = "computed_from_provider_usage_at_pinned_rates"
+    return result,{"mode":"EXECUTED","provider":provider.provider_id,"model":provider.model,"reasoning_effort":provider.reasoning_effort,"reasoning_context":"current_turn","envelope_digest":envelope_digest,"calls":1,"latency_ms":(time.perf_counter_ns()-started)/1_000_000,"cost_status":cost_status,"cost_usd":cost_usd,"pricing_policy":"openai-gpt-5.6-sol-public-rates-2026-08-20","input_tokens":input_tokens,"cached_input_tokens":cached_tokens,"output_tokens":output_tokens,"store_requested":False,"provider_retention":"PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED","previous_response_id":None,"background":False}
 
 
 def _wire_transport(provider: ModelProvider, semantic_bytes: bytes, envelope_digest: str) -> dict[str, Any]:
