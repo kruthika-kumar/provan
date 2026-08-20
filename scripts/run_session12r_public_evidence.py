@@ -147,7 +147,7 @@ def main() -> int:
         contents = _load_public_blocks(Path(supplied[case_id]), case_id)
         count = 3 if case_id in {"click-pr-3721-control", "httpcore-pr-880-consequential"} else 1
         for index in range(1, count + 1):
-            checkpoint = Path("outputs/session12r-public-evidence-v3") / f"{case_id}-standard-{index}.json"
+            checkpoint = Path("outputs/session12r-public-evidence-v4") / f"{case_id}-standard-{index}.json"
             try:
                 completed = json.loads(secure_read(checkpoint))
                 public, semantic = _refresh_public_from_private_run(completed["public"]), completed["semantic"]
@@ -157,7 +157,7 @@ def main() -> int:
                 secure_write(checkpoint, canonical_bytes({"public": public, "semantic": semantic, "reserved_cost_usd": 5}))
             reserved += 5; runs.append(public); stability.setdefault(case_id, []).append(semantic)
         if case_id == "httpcore-pr-880-consequential":
-            checkpoint = Path("outputs/session12r-public-evidence-v3") / f"{case_id}-deep-1.json"
+            checkpoint = Path("outputs/session12r-public-evidence-v4") / f"{case_id}-deep-1.json"
             try:
                 completed = json.loads(secure_read(checkpoint)); public = _refresh_public_from_private_run(completed["public"])
             except FileNotFoundError:
