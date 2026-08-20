@@ -41,3 +41,17 @@ def test_claim_wording_and_proof_substitution_fail_closed(monkeypatch: pytest.Mo
         (tmp_path / name).write_bytes((crosswalk_path.parent / name).read_bytes())
     with pytest.raises(SystemExit, match="SESSION12R_CROSSWALK_WORDING_DRIFT"):
         validator.main()
+
+
+def test_pre_review_root_rejects_recursive_final_outputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    validator = _validator()
+    source = validator.OUT
+    for name in ("proof_registry.v1.public.json", "implementation_binding.v1.public.json", "claim_crosswalk.v1.public.json"):
+        (tmp_path / name).write_bytes((source / name).read_bytes())
+    final = tmp_path / "final_proof_manifest.v1.public.json"; final.write_text("{}\n", encoding="utf-8")
+    row = {"path": final.relative_to(ROOT).as_posix() if final.is_relative_to(ROOT) else "artifacts/session12/successor_closeout/proofs/final_proof_manifest.v1.public.json", "bytes": 3, "sha256": "sha256:" + "0" * 64}
+    manifest = {"implementation_commit": validator.IMPLEMENTATION, "implementation_tree": validator.TREE, "wheel_sha256": validator.WHEEL_SHA, "entries": [row], "root": "sha256:" + "0" * 64}
+    (tmp_path / "pre_review_proof_manifest.v1.public.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(validator, "OUT", tmp_path)
+    with pytest.raises(SystemExit, match="SESSION12R_PRE_ROOT_RECURSIVE_OUTPUT"):
+        validator.main()

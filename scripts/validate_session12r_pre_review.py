@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import jsonschema
+
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts/session12/successor_closeout/proofs"
@@ -61,7 +63,25 @@ def main() -> int:
     binding = json.loads((OUT / "implementation_binding.v1.public.json").read_bytes())
     require(binding.get("implementation_commit") == IMPLEMENTATION and binding.get("implementation_tree") == TREE and binding.get("wheel_sha256") == WHEEL_SHA and binding.get("package_version") == "0.5.1" and binding.get("published") is False, "SESSION12R_IMPLEMENTATION_BINDING_INVALID")
     require(binding.get("execution_available") is False and binding.get("challenge_available") is False, "SESSION12R_CAPABILITY_BOUNDARY_INVALID")
-    print("SESSION12R_PRE_REVIEW_PROOFS_VALID", len(entries), len(rows))
+    manifest_path = OUT / "pre_review_proof_manifest.v1.public.json"
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_bytes())
+        require(manifest.get("implementation_commit") == IMPLEMENTATION and manifest.get("implementation_tree") == TREE and manifest.get("wheel_sha256") == WHEEL_SHA, "SESSION12R_PRE_ROOT_BINDING_MISMATCH")
+        manifest_entries = manifest.get("entries"); require(isinstance(manifest_entries, list) and manifest_entries, "SESSION12R_PRE_ROOT_ENTRIES_INVALID")
+        forbidden = {"reviewer_receipt_a.v1.public.json", "reviewer_receipt_b.v1.public.json", "final_proof_manifest.v1.public.json", "layer4_claim_matrix.final.v1.public.json", "closeout.v1.public.json", "supersession_finalization.v1.public.json"}
+        require(not any(Path(str(row.get("path"))).name in forbidden for row in manifest_entries), "SESSION12R_PRE_ROOT_RECURSIVE_OUTPUT")
+        for row in manifest_entries: safe_ref(row)
+        require(manifest.get("root") == digest(canonical(manifest_entries)), "SESSION12R_PRE_ROOT_MISMATCH")
+        handoff_row = next((row for row in manifest_entries if Path(str(row.get("path"))).name == "session13_handoff_candidate.v2.public.json"), None)
+        require(isinstance(handoff_row, dict), "SESSION12R_HANDOFF_NOT_BOUND")
+        handoff = json.loads(safe_ref(handoff_row)); jsonschema.validate(handoff, json.loads((ROOT / "provan/schemas/session-handoff.v2.json").read_bytes()))
+        non_handoff = [row for row in manifest_entries if row is not handoff_row]
+        require(handoff.get("proof_root") == digest(canonical(non_handoff)), "SESSION12R_HANDOFF_EVIDENCE_ROOT_MISMATCH")
+        require(handoff.get("implementation_binding", {}).get("implementation_commit") == IMPLEMENTATION and handoff.get("implementation_binding", {}).get("implementation_tree") == TREE and handoff.get("wheel", {}).get("sha256") == WHEEL_SHA, "SESSION12R_HANDOFF_IMPLEMENTATION_BINDING_MISMATCH")
+        hidden_row = next((row for row in manifest_entries if Path(str(row.get("path"))).name == "hidden_qualification_projection.v1.public.json"), None)
+        require(isinstance(hidden_row, dict), "SESSION12R_HIDDEN_PROJECTION_NOT_BOUND")
+        hidden = json.loads(safe_ref(hidden_row)); require(hidden.get("raw_holdout_content_included") is False and hidden.get("sensitivity") == "PUBLIC_SAFE", "SESSION12R_HIDDEN_PROJECTION_UNSAFE")
+    print("SESSION12R_PRE_REVIEW_PROOFS_VALID", len(entries), len(rows), "manifest", manifest_path.exists())
     return 0
 
 
