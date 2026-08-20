@@ -51,6 +51,22 @@ def _load(raw: bytes, schema_id: str) -> dict[str, Any]:
     return value
 
 
+def validate_model_egress_allowlist_serialized(raw: bytes) -> dict[str, Any]:
+    value = _load(raw, "provan.session12r_model_egress_allowlist.v1")
+    expected = [
+        {"case_id": case_id, "source_digests": list(digests)}
+        for case_id, digests in sorted(FROZEN_PUBLIC_MODEL_EGRESS.items())
+    ]
+    if (value.get("sensitivity") != "PUBLIC_SAFE" or
+            value.get("classification") != "PUBLIC_SAFE" or
+            value.get("operator_authorization_required") is not True or
+            value.get("derived_public_artifacts_require_separate_authorization") is not True or
+            value.get("raw_private_inputs_public") is not False or
+            value.get("cases") != expected):
+        raise ProvanError("SESSION12R_MODEL_EGRESS_ALLOWLIST_INVALID", "cases")
+    return value
+
+
 def _ref(ref: Any, expected_id: str, raw: bytes, code: str) -> None:
     if not isinstance(ref, dict) or ref.get("id") != expected_id or ref.get("sha256") != _digest(raw):
         raise ProvanError(code, expected_id)

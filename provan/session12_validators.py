@@ -8,7 +8,7 @@ from typing import Any
 from .canonical import canonical_bytes, sha256_bytes
 from .errors import ProvanError
 from .foundry import PATTERN_FAMILIES, PROVIDERS, PUBLIC_PROMPTS, RUN_STAGES
-from .modeling import FROZEN_PUBLIC_MODEL_EGRESS
+from .modeling import HISTORICAL_FROZEN_PUBLIC_MODEL_EGRESS
 
 SHA = re.compile(r"sha256:[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
@@ -183,7 +183,7 @@ def validate_work_order_serialized(raw:bytes)->dict[str,Any]:
 
 def validate_model_egress_allowlist_serialized(raw:bytes)->dict[str,Any]:
     value=_load(raw,"provan.foundry_model_egress_allowlist.v1")
-    expected=[{"case_id":case_id,"selected_source_digests":list(digests)} for case_id,digests in sorted(FROZEN_PUBLIC_MODEL_EGRESS.items())]
+    expected=[{"case_id":case_id,"selected_source_digests":list(digests)} for case_id,digests in sorted(HISTORICAL_FROZEN_PUBLIC_MODEL_EGRESS.items())]
     if value.get("cases")!=expected or value.get("arbitrary_manifest_egress") is not False or value.get("operator_confirmation_required") is not True:raise ProvanError("FOUNDRY_MODEL_EGRESS_ALLOWLIST_INVALID","cases")
     models=[{"model":"gpt-5.6-luna","eligible_tiers":[1],"reasoning":["medium"]},{"model":"gpt-5.6-sol","eligible_tiers":[2,3],"reasoning":["high","xhigh"]}]
     if value.get("provider")!="openai-responses-primary" or value.get("origin")!="https://api.openai.com" or value.get("models")!=models or value.get("store_requested") is not False or value.get("provider_retention")!="PROVIDER_RETENTION_NOT_ZERO_OR_ESTABLISHED":raise ProvanError("FOUNDRY_MODEL_EGRESS_PROVIDER_INVALID","provider")

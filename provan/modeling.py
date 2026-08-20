@@ -26,7 +26,7 @@ class ModelProvider:
 
 _PROVIDERS: dict[str, ModelProvider] = {}
 
-FROZEN_PUBLIC_MODEL_EGRESS: dict[str, tuple[str, ...]] = {
+HISTORICAL_FROZEN_PUBLIC_MODEL_EGRESS: dict[str, tuple[str, ...]] = {
     "httpx-pr-3699-control": ("sha256:035e61942c06e5f1876761ee1dae1137dbf6eab1d6a5e7b6de5057594bdf8c0d",),
     "click-pr-3721-control": ("sha256:770ee6899ef381630d4dad60b2761a513aa8fad4425bc209de897a37008ad2a0",),
     "httpcore-pr-880-consequential": (
@@ -35,6 +35,10 @@ FROZEN_PUBLIC_MODEL_EGRESS: dict[str, tuple[str, ...]] = {
         "sha256:0f649274796b2bbf3cd9549891965d8c86bb8a36749ec5b364ae560f4af19f27",
         "sha256:0b51599184bc1a4ea8ee93322cf6520a97f617bca7a88c1ae9267bad83171c58",
     ),
+}
+
+FROZEN_PUBLIC_MODEL_EGRESS: dict[str, tuple[str, ...]] = {
+    **HISTORICAL_FROZEN_PUBLIC_MODEL_EGRESS,
     "session12r-final-provan-dogfood": ("sha256:affc3d793bf7ac3ea48956924da41cc4885db171de83be740871327fc2a65687",),
 }
 

@@ -10,7 +10,8 @@ from provan.canonical import canonical_bytes, sha256_bytes
 from provan.errors import ProvanError
 from provan.foundry_evaluation import adjudicate, arm_b, hidden_qualification, opaque_outputs
 from provan.modeling import FROZEN_PUBLIC_MODEL_EGRESS, ModelProvider, build_envelope, invoke_frozen_public_openai_responses
-from provan.session12r_validators import validate_public_semantic_evidence_serialized
+from provan.session12_validators import validate_model_egress_allowlist_serialized as validate_historical_model_egress_allowlist_serialized
+from provan.session12r_validators import validate_model_egress_allowlist_serialized, validate_public_semantic_evidence_serialized
 
 
 def test_arm_b_is_three_genuine_stateless_calls():
@@ -30,6 +31,18 @@ def test_public_semantic_evidence_recomputes_measurements_and_rejects_stale_cost
     bad = json.loads(raw); bad["runs"][0]["role_receipts"][0]["cost_usd"] += 0.01
     with pytest.raises(ProvanError, match="SESSION12R_PUBLIC_ROLE_COST_MISMATCH"):
         validate_public_semantic_evidence_serialized(canonical_bytes(bad))
+
+
+def test_historical_and_successor_model_egress_sets_are_exact_and_distinct():
+    root = Path(__file__).parents[1]
+    historical = (root / "artifacts/session12/public/model_egress_allowlist.v1.public.json").read_bytes()
+    successor = (root / "artifacts/session12/successor_closeout/public/model_egress_allowlist.v1.public.json").read_bytes()
+    validate_historical_model_egress_allowlist_serialized(historical)
+    validate_model_egress_allowlist_serialized(successor)
+    mixed = json.loads(successor)
+    mixed["cases"][-1]["source_digests"] = ["sha256:" + "f" * 64]
+    with pytest.raises(ProvanError, match="SESSION12R_MODEL_EGRESS_ALLOWLIST_INVALID"):
+        validate_model_egress_allowlist_serialized(canonical_bytes(mixed))
 
 
 def test_adjudicators_are_blind_and_disagreement_fails():
