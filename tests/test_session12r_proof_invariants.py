@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,3 +56,16 @@ def test_pre_review_root_rejects_recursive_final_outputs(monkeypatch: pytest.Mon
     monkeypatch.setattr(validator, "OUT", tmp_path)
     with pytest.raises(SystemExit, match="SESSION12R_PRE_ROOT_RECURSIVE_OUTPUT"):
         validator.main()
+
+
+def test_release_gate_qualifies_successor_without_overwriting_authoritative_wheel():
+    path = ROOT / ".github/workflows/release-gate.yml"
+    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test-and-eval"]["steps"]
+    commands = "\n".join(str(step.get("run", "")) for step in steps)
+    assert "validate_session12.py --phase final --successor" in commands
+    assert "validate_session12r_pre_review.py" in commands
+    assert "--outdir candidate-dist" in commands
+    assert "dist/provan_assurance-0.5.1-py3-none-any.whl" in commands
+    assert "e158c090728bb06b5f8e2a1d686719e58ece8b1c023863c7b348f146ce1b4093" in commands
+    assert "candidate-dist/provan_assurance-0.5.0" not in commands
