@@ -645,6 +645,7 @@ def foundry_v2(
         result, receipt = semantic_role("revision", {"candidate": candidate, "audit": audit})
         role_receipts.append(receipt); _apply_candidate_role_result(candidate, result, "revision")
     revised, revisions = _revision(candidate, audit, 2 if depth == "deep" else 1)
+    secure_write(root / "contract-audit.json", canonical_bytes(audit))
     candidate_ref, candidate_raw = _store(root, "contract-candidate", revised, "contract-candidate.v2.json", "candidate_id")
     witnesses = _witnesses(revised)
     semantic_freeze = {"intent": sha256_bytes(intent_raw), "goal_obstacle": sha256_bytes(canonical_bytes(goals)), "premortem": sha256_bytes(canonical_bytes(premortem)), "candidate": sha256_bytes(canonical_bytes(revised)), "audit": sha256_bytes(canonical_bytes(audit)), "revisions": sha256_bytes(canonical_bytes(revisions)), "witnesses": sha256_bytes(canonical_bytes(witnesses))}

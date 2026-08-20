@@ -13,7 +13,7 @@ from provan.errors import ProvanError
 from provan.foundry import foundry, pattern_library
 from provan.change_brief import explain
 from provan.foundry_semantic import cleanup_source_bundle, create_source_authority_amendment, pattern_selection, verify_live_source_continuity
-from provan.session12r_validators import hard_qualification, semantic_stability, validate_pattern_selection_serialized, validate_run_serialized, validate_source_coverage_serialized
+from provan.session12r_validators import hard_qualification, semantic_stability, validate_owner_review_serialized, validate_pattern_selection_serialized, validate_run_serialized, validate_source_coverage_serialized
 from provan.state import secure_read, secure_write
 
 
@@ -58,6 +58,8 @@ def artifact_inputs(run: dict, brief_value: dict) -> tuple[dict, bytes]:
         "candidate": secure_read(root / "contract-candidate.json"),
         "selection": canonical_bytes(run["pattern_selection"]),
         "projection": secure_read(root / "foundry-acceptance-projection.json"),
+        "owner_review": secure_read(root / "foundry-owner-review.json"),
+        "audit": secure_read(root / "contract-audit.json"),
         "blobs": blobs,
     }
     return artifacts, canonical_bytes(brief_value)
@@ -145,6 +147,17 @@ def test_independent_validator_rejects_mapping_stage_and_select_all_mutations(tm
     candidate = json.loads(artifacts["candidate"]); library = pattern_library(); selection = json.loads(artifacts["selection"]); criterion = candidate["criteria"][0]
     selection["items"] = [{"pattern_ref": {"id": row["pattern_id"], "version": row["version"]}, "criterion_ref": criterion["criterion_id"], "failure_dimension": row["family"], "applicability_basis": criterion["statement_refs"], "oracle_need": criterion["oracle_plan"], "capability_requirement": row["capability_requirements"], "distinct_verification_contribution": row["family"], "limitations": row["limitations"], "status": "owner_confirmation_required"} for row in library["patterns"]]
     with pytest.raises(ProvanError, match="SESSION12R_PATTERN_SELECT_ALL_FORBIDDEN"): validate_pattern_selection_serialized(canonical_bytes(selection), artifacts["candidate"], library)
+
+
+def test_owner_review_is_independently_recomputed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("PROVAN_HOME", str(tmp_path / "state")); value = brief(tmp_path)
+    run, _ = foundry(brief_id=value["brief_id"], source_manifest=manifest(tmp_path), no_model=True, information_boundary="blind", view="owner-review")
+    artifacts, _ = artifact_inputs(run, value)
+    validate_owner_review_serialized(artifacts["owner_review"], artifacts["projection"], artifacts["candidate"], artifacts["audit"], artifacts["selection"])
+    bad = json.loads(artifacts["owner_review"])
+    bad["sections"]["Owner decisions"] = []
+    with pytest.raises(ProvanError, match="SESSION12R_OWNER_REVIEW_SEMANTICS_INVALID"):
+        validate_owner_review_serialized(canonical_bytes(bad), artifacts["projection"], artifacts["candidate"], artifacts["audit"], artifacts["selection"])
 
 
 def test_cleanup_creates_digest_bound_tombstone(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

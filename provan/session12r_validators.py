@@ -252,6 +252,83 @@ def validate_projection_serialized(raw: bytes, candidate_raw: bytes, audit_diges
     return value
 
 
+def validate_owner_review_serialized(
+    raw: bytes,
+    projection_raw: bytes,
+    candidate_raw: bytes,
+    audit_raw: bytes,
+    selection_raw: bytes,
+) -> dict[str, Any]:
+    value = _load(raw, "provan.foundry_owner_review.v1")
+    projection = _load(projection_raw, "provan.foundry_acceptance_projection.v2")
+    candidate = _load(candidate_raw, "provan.contract_candidate.v2")
+    audit = _load(audit_raw, "provan.internal.contract_audit.v2")
+    selection = _load(selection_raw, "provan.verification_pattern_selection.v2")
+    section_order = [
+        "Sources require",
+        "Provan inferred",
+        "Audit changed",
+        "Intentionally non-mandatory",
+        "Ambiguities",
+        "Patterns & evidence",
+        "Owner decisions",
+    ]
+    expected_sections = {
+        "Sources require": [
+            {"criterion_ref": row["criterion_id"], "authority": row["authority"]}
+            for row in candidate["criteria"]
+            if row["settlement_class"] == "proposed_mandatory"
+        ],
+        "Provan inferred": candidate["suggestions"],
+        "Audit changed": [
+            {"finding_ref": row["finding_id"], "disposition": row["disposition"]}
+            for row in audit["findings"]
+            if row["disposition"] == "accepted_and_revised"
+        ],
+        "Intentionally non-mandatory": [
+            *candidate["non_requirements"],
+            *candidate["suggestions"],
+        ],
+        "Ambiguities": candidate["ambiguities"],
+        "Patterns & evidence": [
+            {
+                "criterion_ref": row["criterion_ref"],
+                "pattern_ref": row["pattern_ref"],
+                "oracle_need": row["oracle_need"],
+                "capability_requirement": row["capability_requirement"],
+            }
+            for row in selection["items"]
+        ],
+        "Owner decisions": [
+            {
+                "criterion_ref": row["criterion_id"],
+                "required_action": "confirm_reject_edit_or_unresolved",
+            }
+            for row in candidate["criteria"]
+        ],
+    }
+    expected_sensitivity = {
+        "PUBLIC_SAFE": "PUBLIC_SAFE",
+        "CLIENT_SAFE": "CLIENT_SAFE",
+        "LOCAL_NON_PUBLIC": "LOCAL_NON_PUBLIC",
+    }.get(projection.get("sensitivity"), "LOCAL_NON_PUBLIC")
+    if value.get("projection_ref") != {
+        "id": projection["projection_id"],
+        "sha256": _digest(projection_raw),
+    }:
+        raise ProvanError("SESSION12R_OWNER_REVIEW_PROJECTION_MISMATCH", value.get("owner_review_id", ""))
+    if value.get("section_order") != section_order or value.get("sections") != expected_sections:
+        raise ProvanError("SESSION12R_OWNER_REVIEW_SEMANTICS_INVALID", value.get("owner_review_id", ""))
+    if (
+        value.get("sensitivity") != expected_sensitivity
+        or value.get("creates_authority") is not False
+        or value.get("execution_available") is not False
+        or value.get("challenge_available") is not False
+    ):
+        raise ProvanError("SESSION12R_OWNER_REVIEW_AUTHORITY_INVALID", value.get("owner_review_id", ""))
+    return value
+
+
 def validate_run_serialized(raw: bytes, artifacts: dict[str, bytes], brief_raw: bytes, library: dict[str, Any]) -> dict[str, Any]:
     value = _load(raw, "provan.internal.contract_foundry_run.v2"); brief = _load(brief_raw, "provan.change_brief.v1")
     if value.get("package_version") != "0.5.1" or value.get("policy_version") != "community.contract-foundry.semantic-successor.v1" or value.get("scorer_version") != "community.contract-foundry.semantic-scorer.v1": raise ProvanError("SESSION12R_RUN_VERSION_INVALID", value["run_id"])
@@ -267,12 +344,15 @@ def validate_run_serialized(raw: bytes, artifacts: dict[str, bytes], brief_raw: 
         else: expected_inputs = previous
         if row.get("input_digests") != expected_inputs or row.get("status") != ("EXECUTED" if row.get("output_digests") else "NOT_APPLICABLE"): raise ProvanError("SESSION12R_STAGE_DATAFLOW_INVALID", stage)
         if row.get("output_digests"): previous = row["output_digests"]
-    bundle_raw = artifacts["source_bundle"]; coverage_raw = artifacts["source_coverage"]; ledger_raw = artifacts["source_ledger"]; intent_raw = artifacts["intent"]; candidate_raw = artifacts["candidate"]; selection_raw = artifacts["selection"]; projection_raw = artifacts["projection"]
+    bundle_raw = artifacts["source_bundle"]; coverage_raw = artifacts["source_coverage"]; ledger_raw = artifacts["source_ledger"]; intent_raw = artifacts["intent"]; candidate_raw = artifacts["candidate"]; selection_raw = artifacts["selection"]; projection_raw = artifacts["projection"]; owner_review_raw = artifacts["owner_review"]; audit_raw = artifacts["audit"]
     bundle = validate_source_bundle_serialized(bundle_raw, artifacts["blobs"]); coverage = validate_source_coverage_serialized(coverage_raw, bundle_raw, artifacts["blobs"]); ledger = validate_source_ledger_serialized(ledger_raw, bundle_raw, coverage_raw); intent = validate_intent_serialized(intent_raw, ledger_raw); candidate = validate_candidate_serialized(candidate_raw, intent_raw); selection = validate_pattern_selection_serialized(selection_raw, candidate_raw, library)
     _ref(value.get("source_bundle_ref"), bundle["bundle_id"], bundle_raw, "SESSION12R_RUN_BUNDLE_MISMATCH"); _ref(value.get("source_coverage_ref"), coverage["coverage_id"], coverage_raw, "SESSION12R_RUN_COVERAGE_MISMATCH"); _ref(value.get("source_ledger_ref"), ledger["ledger_id"], ledger_raw, "SESSION12R_RUN_LEDGER_MISMATCH")
     semantic_freeze_digest = _digest(_canonical(value.get("semantic_artifacts")))
     validate_mapping(value.get("implementation_map", {}), candidate, brief, semantic_freeze_digest)
     validate_projection_serialized(projection_raw, candidate_raw, value["semantic_artifacts"]["audit"], value["semantic_artifacts"]["witnesses"], selection_raw)
+    if _digest(audit_raw) != value["semantic_artifacts"]["audit"]:
+        raise ProvanError("SESSION12R_RUN_AUDIT_MISMATCH", value["run_id"])
+    validate_owner_review_serialized(owner_review_raw, projection_raw, candidate_raw, audit_raw, selection_raw)
     if value.get("information_boundary") == "implementation-informed" and value.get("contract_readiness") != "NOT_READY": raise ProvanError("SESSION12R_NONBLIND_READINESS_INVALID", value["run_id"])
     if value.get("implementation_map", {}).get("mutable_explanatory_only") and value.get("contract_readiness") != "NOT_READY": raise ProvanError("SESSION12R_MUTABLE_READINESS_INVALID", value["run_id"])
     if value.get("execution_available") is not False or value.get("challenge_available") is not False or value.get("mode_qualification") != "IMPLEMENTED_UNQUALIFIED": raise ProvanError("SESSION12R_RUN_CAPABILITY_INVALID", value["run_id"])
