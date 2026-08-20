@@ -35,6 +35,7 @@ FROZEN_PUBLIC_MODEL_EGRESS: dict[str, tuple[str, ...]] = {
         "sha256:0f649274796b2bbf3cd9549891965d8c86bb8a36749ec5b364ae560f4af19f27",
         "sha256:0b51599184bc1a4ea8ee93322cf6520a97f617bca7a88c1ae9267bad83171c58",
     ),
+    "session12r-final-provan-dogfood": ("sha256:affc3d793bf7ac3ea48956924da41cc4885db171de83be740871327fc2a65687",),
 }
 
 
