@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 import jsonschema
@@ -26,15 +27,23 @@ def require(value: bool, code: str) -> None:
     if not value: raise SystemExit(code)
 
 
-def safe_ref(row: dict[str, object]) -> bytes:
+def safe_ref(row: dict[str, object], *, allow_implementation_fallback: bool = False) -> bytes:
     path = row.get("path"); require(isinstance(path, str) and path == Path(path).as_posix() and not Path(path).is_absolute() and ".." not in Path(path).parts, "SESSION12R_PROOF_REF_PATH_UNSAFE")
     current = ROOT
     for part in Path(path).parts:
         current = current / part
         require(current.exists() and not current.is_symlink(), "SESSION12R_PROOF_REF_LINK_OR_MISSING")
     require(current.is_file() and current.resolve().is_relative_to(ROOT.resolve()), "SESSION12R_PROOF_REF_NOT_REGULAR_CONTAINED")
-    raw = current.read_bytes(); require(row.get("bytes") == len(raw) and row.get("sha256") == digest(raw), "SESSION12R_PROOF_REF_HASH_MISMATCH")
-    return raw
+    raw = current.read_bytes()
+    if row.get("bytes") == len(raw) and row.get("sha256") == digest(raw):
+        return raw
+    if allow_implementation_fallback:
+        result = subprocess.run(["git", "show", f"{IMPLEMENTATION}:{path}"], cwd=ROOT, capture_output=True, check=False)
+        historical = result.stdout
+        if result.returncode == 0 and row.get("bytes") == len(historical) and row.get("sha256") == digest(historical):
+            return historical
+    require(False, "SESSION12R_PROOF_REF_HASH_MISMATCH")
+    raise AssertionError("unreachable")
 
 
 def main() -> int:
@@ -48,7 +57,7 @@ def main() -> int:
     for entry in entries:
         require(entry.get("independent_recomputation") is True and entry.get("sensitivity") == "PUBLIC_SAFE", "SESSION12R_PROOF_SEMANTIC_BINDING_INVALID")
         refs = entry.get("artifact_locations"); require(isinstance(refs, list) and len(refs) >= 2, "SESSION12R_PROOF_ARTIFACTS_INCOMPLETE")
-        for row in refs: safe_ref(row)
+        for row in refs: safe_ref(row, allow_implementation_fallback=True)
         transcript = next((row for row in refs if str(row.get("path", "")).startswith("artifacts/session12/successor_closeout/proofs/transcripts/")), None)
         require(isinstance(transcript, dict) and entry.get("transcript_sha256") == transcript.get("sha256"), "SESSION12R_PROOF_TRANSCRIPT_MISMATCH")
     claims = json.loads((ROOT / "artifacts/session12/successor_closeout/authority/claim_registry.v1.public.json").read_bytes())

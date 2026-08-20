@@ -30,6 +30,16 @@ def test_proof_ref_rejects_traversal_and_hash_mismatch():
         validator.safe_ref({"path": path, "bytes": len(raw), "sha256": "sha256:" + "0" * 64})
 
 
+def test_reviewed_proof_ref_can_resolve_exact_implementation_bytes_after_publication_doc_update():
+    validator = _validator()
+    path = "docs/contract-foundry.md"
+    result = __import__("subprocess").run(["git", "show", f"{validator.IMPLEMENTATION}:{path}"], cwd=ROOT, capture_output=True, check=True)
+    row = {"path": path, "bytes": len(result.stdout), "sha256": validator.digest(result.stdout)}
+    assert validator.safe_ref(row, allow_implementation_fallback=True) == result.stdout
+    with pytest.raises(SystemExit, match="SESSION12R_PROOF_REF_HASH_MISMATCH"):
+        validator.safe_ref(row)
+
+
 def test_claim_wording_and_proof_substitution_fail_closed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     validator = _validator()
     crosswalk_path = validator.OUT / "claim_crosswalk.v1.public.json"

@@ -85,7 +85,10 @@ def main() -> int:
     require("execution_available\": False" in semantic_source and "challenge_available\": False" in semantic_source and "previous_response_id\": None" in semantic_source, "SESSION12R_CAPABILITY_OR_STATELESS_BOUNDARY_INVALID")
     require("percentile" not in semantic_source.lower() and "p50" not in semantic_source.lower(), "SESSION12R_UNSUPPORTED_PERCENTILE_CLAIM")
     status = json.loads((ROOT / "artifacts/session12/successor_closeout/authority/operational_status.v1.public.json").read_bytes())
-    require(status.get("go_session_13") is False and status.get("session_12_successor") == "IN_PROGRESS", "SESSION12R_PRE_CLOSEOUT_STATUS_INVALID")
+    require(status.get("go_session_13") is False and status.get("session_12_successor") in {"IN_PROGRESS", "CLOSED_PARTIAL"}, "SESSION12R_PRE_CLOSEOUT_STATUS_INVALID")
+    if status.get("session_12_successor") == "CLOSED_PARTIAL":
+        hidden = json.loads((ROOT / "artifacts/session12/successor_closeout/proofs/hidden_qualification_projection.v1.public.json").read_bytes())
+        require(hidden.get("session_12_successor") == "CLOSED_PARTIAL" and hidden.get("go_session_13") is False and hidden.get("failure_code") == "HIDDEN_HOLDOUT_COVERAGE_MATRIX_INCOMPLETE", "SESSION12R_PARTIAL_STATUS_BINDING_INVALID")
     public_evidence = ROOT / "artifacts/session12/successor_closeout/public/real_use/public_semantic_evidence.v1.public.json"
     require(public_evidence.is_file(), "SESSION12R_PUBLIC_SEMANTIC_EVIDENCE_MISSING")
     validate_public_semantic_evidence_serialized(public_evidence.read_bytes())
