@@ -78,7 +78,10 @@ def _validate_private_run(run: dict[str, Any]) -> None:
         "source_bundle": bundle_raw, "source_coverage": secure_read(root / "source-coverage.json"),
         "source_ledger": secure_read(root / "source-authority-ledger.json"), "intent": secure_read(root / "intent-model.json"),
         "candidate": secure_read(root / "contract-candidate.json"), "selection": canonical_bytes(run["pattern_selection"]),
-        "projection": secure_read(root / "foundry-acceptance-projection.json"), "blobs": blobs,
+        "projection": secure_read(root / "foundry-acceptance-projection.json"),
+        "owner_review": secure_read(root / "foundry-owner-review.json"),
+        "audit": secure_read(root / "contract-audit.json"),
+        "blobs": blobs,
     }
     brief_raw = secure_read(Path("outputs/change-brief") / run["brief_ref"]["id"] / "change-brief.json")
     validate_run_serialized(canonical_bytes(run), artifacts, brief_raw, pattern_library())
@@ -138,7 +141,7 @@ def main() -> int:
         contents = _load_public_blocks(Path(supplied[case_id]), case_id)
         count = 3 if case_id in {"click-pr-3721-control", "httpcore-pr-880-consequential"} else 1
         for index in range(1, count + 1):
-            checkpoint = Path("outputs/session12r-public-evidence-v2") / f"{case_id}-standard-{index}.json"
+            checkpoint = Path("outputs/session12r-public-evidence-v3") / f"{case_id}-standard-{index}.json"
             try:
                 completed = json.loads(secure_read(checkpoint))
                 public, semantic = _refresh_public_from_private_run(completed["public"]), completed["semantic"]
@@ -148,7 +151,7 @@ def main() -> int:
                 secure_write(checkpoint, canonical_bytes({"public": public, "semantic": semantic, "reserved_cost_usd": 5}))
             reserved += 5; runs.append(public); stability.setdefault(case_id, []).append(semantic)
         if case_id == "httpcore-pr-880-consequential":
-            checkpoint = Path("outputs/session12r-public-evidence-v2") / f"{case_id}-deep-1.json"
+            checkpoint = Path("outputs/session12r-public-evidence-v3") / f"{case_id}-deep-1.json"
             try:
                 completed = json.loads(secure_read(checkpoint)); public = _refresh_public_from_private_run(completed["public"])
             except FileNotFoundError:
