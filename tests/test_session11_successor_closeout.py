@@ -84,7 +84,7 @@ def test_release_gate_does_not_overwrite_authoritative_wheel():
     assert "python -m build --outdir candidate-dist" in workflow
     assert "python -m build\n" not in workflow
     assert "fresh_install_gate.py --wheel dist/provan_assurance-0.4.0-py3-none-any.whl" in workflow
-    assert "candidate-dist/provan_assurance-0.5.0-py3-none-any.whl" in workflow
+    assert "candidate-dist/provan_assurance-0.5.1-py3-none-any.whl" in workflow
 
 
 def test_successor_validator_rejects_stale_nested_identity_bindings():
