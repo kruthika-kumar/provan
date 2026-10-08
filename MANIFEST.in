@@ -1,2 +1,6 @@
-prune tests
+include README.md CONTRIBUTING.md LICENSE pyproject.toml
+recursive-include docs *.md
+recursive-include scripts *.py
+recursive-include tests *.py *.json
+recursive-include provan/schemas *.json
 global-exclude __pycache__ *.py[cod]

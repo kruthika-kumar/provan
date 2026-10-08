@@ -18,4 +18,6 @@ provan explain --repo https://github.com/kruthika-kumar/provan --base 22a73b13ee
 
 Telemetry is disabled by default and no collector is deployed. See [Telemetry](docs/telemetry.md) before opting in.
 
+For a local, credential-free installed example, run `python scripts/demo_read_only.py`. It verifies that inspection leaves the example repository unchanged. Set `PROVAN_HOME` outside any Git repository when using your own checkout. Historical engineering and evaluation material is preserved separately; see the [repository map](docs/repository-map.md) and [contribution guide](CONTRIBUTING.md).
+
 Current documentation: [Change Brief v1](docs/change-brief.md), [Acceptance Lifecycle v1](docs/acceptance-lifecycle.md), [quick start](docs/quickstart.md), [product boundary](docs/product-boundary.md), [capability matrix](docs/capability-qualification-matrix.md), and [history](docs/history.md).

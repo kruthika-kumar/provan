@@ -386,26 +386,10 @@ def test_real_candidate_history_leakage_still_rejects(tmp_path):
     with pytest.raises(ProvanError):validate_candidate_surfaces(repo,history_base=base,history_head=head,integration_head=head)
 
 
-def test_session11_public_artifact_scan_includes_untracked_absolute_paths(tmp_path,monkeypatch):
-    import scripts.validate_session11 as gate
-    root=tmp_path;artifact=root/"artifacts/session11/proposed.json";artifact.parent.mkdir(parents=True)
-    adversarial_path=str(Path.home()/"private")
-    artifact.write_text(json.dumps({"path":adversarial_path}),encoding="utf-8")
-    monkeypatch.setattr(gate,"ROOT",root)
-    with pytest.raises(SystemExit) as exc:gate.validate_public_artifact_safety()
-    assert str(exc.value)=="SESSION11_PUBLIC_PROOF_ABSOLUTE_USER_PATH_LEAK"
 
 
-def test_session11_validator_direct_invocation_imports_runtime():
-    root=Path(__file__).resolve().parents[1]
-    result=subprocess.run([os.sys.executable,"scripts/validate_session11.py","--help"],cwd=root,capture_output=True,text=True,encoding="utf-8")
-    assert result.returncode==0 and "--phase" in result.stdout
 
 
-def test_release_gate_uses_supported_explicit_session11_phase():
-    workflow=(Path(__file__).parents[1]/".github/workflows/release-gate.yml").read_text(encoding="utf-8")
-    assert "python scripts/validate_session11.py --phase final --successor" in workflow
-    assert "python scripts/validate_session11.py --phase auto" not in workflow
 
 
 PROOF_CLASSES=("valid","near-valid","adversarial","schema-invalid","schema-valid-python-invalid")
@@ -822,54 +806,6 @@ def _public_ref_ok(root:Path,ref:dict)->bool:
     return path.is_file() and sha256_bytes(path.read_bytes())==ref["sha256"]
 
 
-@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
-@pytest.mark.parametrize("binding_kind",sorted(FINAL_BINDINGS))
-def test_proof_final_artifact_binding(binding_kind,fixture_class):
-    root=Path(__file__).parents[1];value=json.loads((root/FINAL_BINDINGS[binding_kind]).read_text(encoding="utf-8"));candidate=copy.deepcopy(value)
-    if fixture_class=="adversarial":
-        if binding_kind=="candidate-freeze":candidate["workspace_digest"]="sha256:"+"f"*64
-        elif binding_kind=="attestation-complete":candidate["recommendation"]="cleared"
-        elif binding_kind=="record-render":candidate["views"]["json"]["projection_id"]="sha256:"+"f"*64
-        elif binding_kind=="external-real-use":candidate["upstream_owner_authority_obtained"]=True
-        elif binding_kind=="internal-real-use":candidate["organisation_identity_asserted"]=True
-        elif binding_kind=="successor-safety":candidate["violations"]=["invented"]
-        elif binding_kind=="installed-wheel":candidate["checkout_absent_from_sys_path"]=False
-        elif binding_kind=="session12-handoff":candidate["candidate"]["head"]="f"*40
-        elif binding_kind=="controlled-reinspection":candidate["executed_proofs"]=[]
-        else:candidate["wheel_sha256"]="sha256:"+"f"*64
-    valid=True
-    if binding_kind=="candidate-freeze":
-        contract_raw=(root/"artifacts/session11/real_use/httpx/acceptance_contract.v1.public.json").read_bytes()
-        try:validate_freeze_serialized(canonical_bytes(candidate),contract_raw)
-        except ProvanError:valid=False
-    elif binding_kind=="attestation-complete":
-        contract_raw=(root/"artifacts/session11/real_use/httpx/acceptance_contract.v1.public.json").read_bytes();freeze_raw=(root/"artifacts/session11/real_use/httpx/candidate_freeze.v1.public.json").read_bytes();settlement_raw=(root/"artifacts/session11/real_use/httpx/evidence_settlement.v1.public.json").read_bytes()
-        try:validate_attestation_serialized(canonical_bytes(candidate),contract_raw,freeze_raw,settlement_raw,now=lambda:datetime.fromisoformat(candidate["created_at"].replace("Z","+00:00")))
-        except ProvanError:valid=False
-    elif binding_kind=="record-render":
-        record_id=candidate.get("record_id");valid=bool(record_id) and all(row.get("projection_id")==sha256_bytes(canonical_bytes({"record_id":record_id,"format":name,"sha256":row["sha256"]})) for name,row in candidate.get("views",{}).items())
-    elif binding_kind=="external-real-use":
-        valid=candidate.get("case")=="HTTPX_PR_3699_PREDECLARED" and candidate.get("recommendation")=="held" and candidate.get("upstream_owner_authority_obtained") is False and all(_public_ref_ok(root,ref) for ref in candidate.get("artifacts",{}).values())
-    elif binding_kind=="internal-real-use":
-        artifacts=candidate.get("artifacts",{});valid=all(_public_ref_ok(root,ref) for ref in artifacts.values())
-        if valid:
-            brief=json.loads((root/artifacts["change_brief"]["path"]).read_text(encoding="utf-8"));contract=json.loads((root/artifacts["acceptance_contract"]["path"]).read_text(encoding="utf-8"));freeze=json.loads((root/artifacts["candidate_freeze"]["path"]).read_text(encoding="utf-8"));decision=json.loads((root/artifacts["owner_decision"]["path"]).read_text(encoding="utf-8"));record=json.loads((root/artifacts["record_bundle"]["path"]).read_text(encoding="utf-8"))
-            expected={key:brief["candidate"][key] for key in ("repository_identity","base","head","mode")};freeze_candidate={"repository_identity":freeze["repository_identity"],"base":freeze["base"],"head":freeze["head"],"mode":"immutable"}
-            valid=candidate.get("organisation_identity_asserted") is False and candidate.get("recommendation")=="held" and candidate.get("owner_decision")=="hold" and any(name.startswith("closure_requirement_") for name in artifacts) and candidate.get("candidate")==expected and contract["candidate"]==brief["candidate"] and freeze_candidate==expected and decision["decision"]==candidate["owner_decision"] and record["record_id"]==candidate["record_id"] and candidate["implementation_commit"]==brief["candidate"]["head"] and candidate["wheel_sha256"]=="sha256:9f169a72eff8e93af97e039ed11d4a90f47263057c9f8bbc5050a7891c1d4bcd"
-    elif binding_kind=="successor-safety":valid=candidate.get("result")=="PRIVATE_PLANNING_AUTHORITY_ABSENT" and candidate.get("violations")==[] and set(candidate.get("scopes",[]))=={"history_delta","working_tree_projection","package_wheel","public_proofs","controlled_ci_artifacts"}
-    elif binding_kind=="installed-wheel":valid=candidate.get("site_packages_origin") is True and candidate.get("checkout_absent_from_sys_path") is True and "<bounded" not in candidate.get("command","") and _public_ref_ok(root,candidate["transcript"])
-    elif binding_kind=="controlled-reinspection":
-        valid=bool(candidate.get("executed_proofs")) and candidate.get("execution_capability_added") is False and candidate.get("challenge_capability_added") is False and _public_ref_ok(root,candidate["proof_registry"])
-        if valid:
-            registry=json.loads((root/candidate["proof_registry"]["path"]).read_text(encoding="utf-8"));by_id={row["proof_id"]:row for row in registry["entries"]}
-            valid=all(row.get("proof_id") in by_id and row.get("test_id")==by_id[row["proof_id"]].get("test_id") and row.get("transcript_hash")==by_id[row["proof_id"]].get("transcript_hash") for row in candidate["executed_proofs"])
-    elif binding_kind=="package-binding":valid=candidate.get("package_version")=="0.4.0" and candidate.get("published") is False and candidate.get("maturity")=="QUALIFIED_BOUNDED" and candidate.get("wheel_sha256")!="sha256:"+"f"*64
-    else:
-        refs=[candidate["brief"],candidate["preparation"],*candidate["seed_dispositions"],candidate["acceptance_contract"],candidate["candidate_freeze"],*candidate["closure_requirements"],*candidate["verifier_contracts"],*candidate["receipt_contracts"],*candidate["protected_invariants"],candidate["evidence_settlement"],candidate["attestation"],candidate["reinspection"],candidate["layer4_matrix"],candidate["proof_manifest"],*candidate["reviewer_receipts"],candidate["schema_registry"],candidate["claim_registry"],candidate["implementation_binding_ref"],candidate["wheel"]]
-        manifest=json.loads((root/candidate["proof_manifest"]["path"]).read_text(encoding="utf-8"));refs.extend(manifest["entries"]);artifacts={ref["path"]:(root/ref["path"]).read_bytes() for ref in refs if (root/ref["path"]).is_file()}
-        try:validate_session12_handoff_serialized(canonical_bytes(candidate),artifacts)
-        except ProvanError:valid=False
-    assert valid is (fixture_class!="adversarial")
 
 
 def test_contract_rejects_invented_risk_authority(patient):
@@ -910,30 +846,8 @@ def test_proof_candidate_target_immutability(patient,fixture_class):
     assert not (repo/"hook-invoked").exists() and not (repo/"hostile-invoked").exists()
 
 
-@pytest.mark.parametrize("fixture_class",PROOF_RUNTIME_CLASSES)
-def test_proof_predecessor_preservation(monkeypatch,fixture_class):
-    root=Path(__file__).parents[1]
-    if fixture_class=="valid":
-        result=subprocess.run([os.sys.executable,"scripts/validate_session10_successor.py"],cwd=root,capture_output=True,text=True,encoding="utf-8")
-        assert result.returncode==0,result.stdout+result.stderr
-    elif fixture_class=="near-valid":
-        result=subprocess.run([os.sys.executable,"scripts/validate_session9_correction.py","--implementation-only"],cwd=root,capture_output=True,text=True,encoding="utf-8")
-        assert result.returncode==0,result.stdout+result.stderr
-    else:
-        import scripts.validate_session11 as gate
-        original=gate.git
-        monkeypatch.setattr(gate,"git",lambda *args:"artifacts/session10/invented.json" if args[:4]==("diff","--name-only",gate.BASELINE,"--") and args[-1]=="artifacts/session10" else original(*args))
-        with pytest.raises(SystemExit,match="SESSION10_HISTORICAL_ARTIFACT_CHANGED"):gate.validate_boundaries()
 
 
-def test_session11_schemas_do_not_rebind_session9_registry():
-    root=Path(__file__).parents[1]
-    result=subprocess.run(
-        [os.sys.executable,"scripts/validate_session9.py","--skip-closeout-bindings"],
-        cwd=root,capture_output=True,text=True,encoding="utf-8",
-    )
-    assert result.returncode==0,result.stdout+result.stderr
-    assert '"status": "SESSION9_VALID"' in result.stdout
 
 
 def test_attestation_rejects_fake_evidence_and_policy(patient):

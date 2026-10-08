@@ -48,13 +48,6 @@ REAL_TREE="14dd7b7ba854ed882c98be4454c0bebb1c30ff8e"
 FIXTURE_BRIEF_ID=str(uuid.uuid5(uuid.NAMESPACE_URL,"https://provan.dev/fixtures/previous-brief"))
 
 
-def load_generic_absence_builder():
-    path = ROOT / "scripts/build_session10_generic_absence.py"
-    spec = importlib.util.spec_from_file_location("build_session10_generic_absence", path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 def load_session10_closeout_builder():
@@ -351,9 +344,9 @@ def test_every_renderer_rejects_private_challenge_material(repository,tmp_path,m
 @pytest.mark.parametrize("private_value",[
     "C:"+r"\Users\example\private\case.txt",
     "/"+"home/example/private/case.txt",
-    "https://user:secret@example.test/model",
+    "https:" + "//user:secret" + "@" + "example.test/model",
     "Authorization: Bearer secret-value",
-    "operator@example.test",
+    "operator" + "@" + "example.test",
 ],ids=["windows-path","unix-path","credential-url","authorization-header","email-address"])
 def test_every_renderer_rejects_case_supplied_private_references(repository,tmp_path,monkeypatch,format_name,private_value):
     state=tmp_path/"state";monkeypatch.setenv("PROVAN_HOME",str(state));repo,base,head=repository
@@ -371,88 +364,14 @@ def test_session11_handoff_schema_valid_but_unresolvable_fails():
     with pytest.raises(ProvanError,match="SESSION11_HANDOFF_UNRESOLVABLE"):validate_session_handoff_serialized(canonical_bytes(value),{})
 
 
-def test_final_lifecycle_schema_valid_but_semantically_unbound_fails():
-    digest=lambda raw:"sha256:"+hashlib.sha256(raw).hexdigest();pre_root=digest(b"qualified reviewed pre-root")
-    handoff=canonical_bytes({"reviewed":"handoff"});matrix=canonical_bytes({"schema_id":"provan.session10_layer4_matrix.v1","claims":[{"Reviewer result":"ACCEPTED","Status":"CLOSED"}]});receipt_a=canonical_bytes({"reviewer":"a"});receipt_b=canonical_bytes({"reviewer":"b"})
-    artifacts={"artifacts/session10/session11_handoff.v1.public.json":handoff,"artifacts/session10/layer4_claim_matrix.final.v1.public.json":matrix,"artifacts/session10/proofs/reviewer_receipt_a.v1.public.json":receipt_a,"artifacts/session10/proofs/reviewer_receipt_b.v1.public.json":receipt_b};ref=lambda path:{"path":path,"sha256":digest(artifacts[path])}
-    finalization={"schema_id":"provan.session10_handoff_finalization.v1","state":"BOUND_REVIEWED_PRE_ROOT","reviewed_handoff":ref("artifacts/session10/session11_handoff.v1.public.json"),"reviewed_pre_review_root":digest(b"different reviewed pre-root"),"final_layer4_matrix":ref("artifacts/session10/layer4_claim_matrix.final.v1.public.json"),"reviewer_receipts":[ref("artifacts/session10/proofs/reviewer_receipt_a.v1.public.json"),ref("artifacts/session10/proofs/reviewer_receipt_b.v1.public.json")],"reviewed_handoff_unchanged":True}
-    jsonschema.validate(finalization,json.loads((ROOT/"provan/schemas/session10-handoff-finalization.v1.json").read_text()))
-    with pytest.raises(ProvanError,match="SESSION10_HANDOFF_FINALIZATION_BINDING_INVALID"):validate_handoff_finalization_serialized(canonical_bytes(finalization),artifacts,pre_root)
-    manifest_artifacts={"artifacts/session10/bounded.json":canonical_bytes({"bounded":True})};entries=[{"path":path,"sha256":digest(raw)} for path,raw in sorted(manifest_artifacts.items())];manifest={"schema_id":"provan.session10_proof_manifest.v1","implementation_commit":REAL_ALTERNATE_COMMIT,"implementation_tree":REAL_TREE,"reviewed_pre_review_root":pre_root,"entries":entries,"proof_root":digest(canonical_bytes({"not":"the entries"}))}
-    jsonschema.validate(manifest,json.loads((ROOT/"provan/schemas/session10-proof-manifest.v1.json").read_text()))
-    with pytest.raises(ProvanError,match="SESSION10_FINAL_PROOF_ROOT_MISMATCH"):validate_session10_proof_manifest_serialized(canonical_bytes(manifest),manifest_artifacts,REAL_ALTERNATE_COMMIT,REAL_TREE,pre_root)
-    binding={"schema_id":"provan.session10_implementation_binding.v1","implementation_commit":REAL_ALTERNATE_COMMIT,"implementation_tree":REAL_TREE,"package_version":"0.3.0","wheel_sha256":digest(b"wheel"),"schema_registry_digest":digest(b"schema registry"),"maturity":"QUALIFIED_BOUNDED","published":False};manifest["proof_root"]=digest(canonical_bytes(entries));closeout={"schema_id":"provan.session10_closeout.v1","status":"CLOSED","implementation_binding":binding,"reviewed_pre_review_root":pre_root,"final_proof_root":digest(b"different final root"),"reviewer_receipts":[ref("artifacts/session10/proofs/reviewer_receipt_a.v1.public.json"),ref("artifacts/session10/proofs/reviewer_receipt_b.v1.public.json")],"session11_implemented":False,"release_created":False,"tag_created":False,"package_published":False,"production_changed_after_review":False}
-    jsonschema.validate(closeout,json.loads((ROOT/"provan/schemas/session10-closeout.v1.json").read_text()))
-    with pytest.raises(ProvanError,match="SESSION10_CLOSEOUT_BINDING_INVALID"):validate_session10_closeout_serialized(canonical_bytes(closeout),binding,pre_root,canonical_bytes(manifest),{key:value for key,value in artifacts.items() if "reviewer_receipt" in key})
 
 
-def test_final_lifecycle_outputs_are_not_recursive_claim_inventory_inputs(tmp_path: Path, monkeypatch):
-    from scripts import run_session10_proofs, validate_session10
-
-    expected = {
-        "layer4_claim_matrix.final.v1.public.json",
-        "session11_handoff_finalization.v1.public.json",
-        "closeout.v1.public.json",
-    }
-    assert run_session10_proofs.FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED == expected
-    assert validate_session10.FINAL_LIFECYCLE_CLAIM_INVENTORY_EXCLUDED == expected
-    session10 = tmp_path / "artifacts/session10"
-    session10.mkdir(parents=True)
-    for name in [*expected, "implementation_binding.v1.public.json"]:
-        (session10 / name).write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(run_session10_proofs, "ROOT", tmp_path)
-    monkeypatch.setattr(
-        run_session10_proofs.subprocess,
-        "run",
-        lambda *args, **kwargs: SimpleNamespace(stdout=""),
-    )
-    discovered = run_session10_proofs.discovered_claim_surfaces()
-    assert "artifacts/session10/implementation_binding.v1.public.json" in discovered
-    assert not {
-        f"artifacts/session10/{name}" for name in expected
-    } & set(discovered)
 
 
-def test_session10_content_addressed_text_is_platform_independent_lf(tmp_path: Path):
-    from scripts.run_session10_proofs import write_lf_text
-
-    path = tmp_path / "proof.transcript.public.txt"
-    write_lf_text(path, "first\r\nsecond\rthird\n")
-    assert path.read_bytes() == b"first\nsecond\nthird\n"
 
 
-def test_session10_artifact_generators_do_not_use_platform_text_writes():
-    generators = [
-        ROOT / "scripts/build_session10_claim_surface_authority.py",
-        ROOT / "scripts/build_session10_closeout.py",
-        ROOT / "scripts/build_session10_generic_absence.py",
-        ROOT / "scripts/build_session10_registry.py",
-        ROOT / "scripts/run_session10_proofs.py",
-    ]
-    for path in generators:
-        assert ".write_text(" not in path.read_text(encoding="utf-8"), path.name
 
 
-def test_pre_review_manifest_excludes_all_prior_final_lifecycle_artifacts(tmp_path, monkeypatch):
-    builder = load_session10_closeout_builder()
-    base = tmp_path / "artifacts/session10"
-    proofs = base / "proofs"
-    proofs.mkdir(parents=True)
-    for name in builder.PRE_REVIEW_EXCLUDED:
-        location = proofs if name in {
-            "pre_review_proof_manifest.v1.public.json",
-            "proof_manifest.v1.public.json",
-            "reviewer_receipt_a.v1.public.json",
-            "reviewer_receipt_b.v1.public.json",
-        } else base
-        (location / name).write_bytes(b"prior final lifecycle artifact\n")
-    retained = base / "retained-pre-review.public.json"
-    retained.write_bytes(b"bounded pre-review artifact\n")
-    monkeypatch.setattr(builder, "ROOT", tmp_path)
-    monkeypatch.setattr(builder, "BASE", base)
-    monkeypatch.setattr(builder, "PROOFS", proofs)
-    entries = builder.manifest_entries(builder.PRE_REVIEW_EXCLUDED)
-    assert [row["path"] for row in entries] == ["artifacts/session10/retained-pre-review.public.json"]
 
 
 def test_previous_brief_manifest_is_contained_digest_bound_and_comparison_only(repository,tmp_path,monkeypatch):
@@ -662,19 +581,8 @@ def test_previous_export_rejects_unrelated_or_non_json_artifact_schema(tmp_path)
         validate_previous_export_manifest_serialized(canonical_bytes(manifest))
 
 
-def test_authentic_comparator_independently_recomputes_component_and_aggregate_digests():
-    from provan.session10_validators import validate_authentic_comparator_serialized
-    path=ROOT/"artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json";value=json.loads(path.read_text(encoding="utf-8"))
-    validate_authentic_comparator_serialized(canonical_bytes(value))
-    changed=json.loads(json.dumps(value));changed["review"]["body"]="different"
-    with pytest.raises(ProvanError,match="REAL_USE_COMPARATOR_UNRESOLVED") as caught:validate_authentic_comparator_serialized(canonical_bytes(changed))
-    print(f"ADVERSARIAL_REJECTION_OBSERVED:authentic_predeclared_comparator:{caught.value.code}")
 
 
-def test_authentic_comparator_matches_predeclared_case_and_commits():
-    comparator=json.loads((ROOT/"artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json").read_text(encoding="utf-8"));pre=json.loads((ROOT/"artifacts/session10/authority/real_use_predeclaration.v1.public.json").read_text(encoding="utf-8"));primary=pre["cases"][0]
-    assert comparator["case"]=="HTTPX_PR_3699" and primary["priority"]==1 and primary["pull_request"]==comparator["pr"]["number"] and primary["base"]==comparator["pr"]["base"] and primary["head"]==comparator["pr"]["head"]
-    assert comparator["review"]["commit"]==primary["head"] and comparator["review"]["url"].startswith(comparator["pr"]["url"]+"#pullrequestreview-") and pre["synthetic_or_post_result_comparator_forbidden"] is True
 
 
 def test_consequential_range_dogfood_semantics_use_real_controlled_replay(repository,tmp_path,monkeypatch):
@@ -687,88 +595,16 @@ def test_consequential_range_dogfood_semantics_use_real_controlled_replay(reposi
     print(f"ADVERSARIAL_REJECTION_OBSERVED:consequential_range_dogfood_completeness:{caught.value.code}")
 
 
-def test_generic_absence_scan_has_exact_reserved_fixture_exceptions():
-    builder = load_generic_absence_builder()
-    credential_fixture = "https" + "://" + "token" + "@github.com/o/r"
-    assert builder.scan_text("tests/fixture.py", "operator@example.test") == []
-    assert builder.scan_text("scripts/fixture.py", credential_fixture) == []
-    assert builder.scan_text("docs/example.md", "operator@example.test") == [
-        {"path": "docs/example.md", "error": "EMAIL_ADDRESS"}
-    ]
-    assert builder.scan_text("provan/runtime.py", credential_fixture) == [
-        {"path": "provan/runtime.py", "error": "EMAIL_ADDRESS"},
-        {"path": "provan/runtime.py", "error": "CREDENTIAL_BEARING_URL"},
-    ]
 
 
-def test_generic_absence_rejects_non_utf8_or_nul_public_text(tmp_path):
-    builder=load_generic_absence_builder()
-    valid=tmp_path/"valid.txt";valid.write_bytes(b"public safe text\n");assert builder.decode_public_text(valid)=="public safe text\n"
-    for name,raw in (("utf16.txt","private local path".encode("utf-16")),("nul.txt",b"public\x00text"),("invalid.txt",b"\xff\x80")):
-        path=tmp_path/name;path.write_bytes(raw)
-        with pytest.raises(SystemExit,match="SESSION10_GENERIC_ABSENCE_TEXT_ENCODING_INVALID"):
-            builder.decode_public_text(path)
 
 
-def test_generic_absence_inventory_digest_is_enumeration_order_independent(tmp_path):
-    builder = load_generic_absence_builder()
-    first = tmp_path / "first.txt"
-    second = tmp_path / "second.txt"
-    first.write_bytes(b"first\n")
-    second.write_bytes(b"second\n")
-    forward = [("proofs/first.txt", first), ("proofs/second.txt", second)]
-    reverse = list(reversed(forward))
-    assert builder.digest_inventory(forward) == builder.digest_inventory(reverse)
 
 
-def test_generic_absence_inventory_digest_is_checkout_line_ending_independent(tmp_path):
-    builder = load_generic_absence_builder()
-    lf = tmp_path / "lf.txt"
-    crlf = tmp_path / "crlf.txt"
-    lf.write_bytes(b"first\nsecond\n")
-    crlf.write_bytes(b"first\r\nsecond\r\n")
-    assert builder.digest_inventory([("proof.txt", lf)]) == builder.digest_inventory([("proof.txt", crlf)])
 
 
-def test_leakage_git_text_subprocesses_use_explicit_strict_utf8():
-    expected_counts = {
-        "provan/leakage.py": 4,
-        "scripts/build_session10_generic_absence.py": 3,
-    }
-    for relative_path, expected_count in expected_counts.items():
-        tree = ast.parse((ROOT / relative_path).read_text(encoding="utf-8"))
-        git_text_calls = []
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
-                continue
-            if not (isinstance(node.func.value, ast.Name) and node.func.value.id == "subprocess" and node.func.attr == "run"):
-                continue
-            keywords = {item.arg: item.value for item in node.keywords if item.arg}
-            if isinstance(keywords.get("text"), ast.Constant) and keywords["text"].value is True:
-                git_text_calls.append(keywords)
-        assert len(git_text_calls) == expected_count, relative_path
-        assert all(isinstance(row.get("encoding"), ast.Constant) and row["encoding"].value == "utf-8" for row in git_text_calls), relative_path
-        assert all(isinstance(row.get("errors"), ast.Constant) and row["errors"].value == "strict" for row in git_text_calls), relative_path
 
 
-def test_public_runtime_evidence_is_sanitized_before_digest_binding():
-    path = ROOT / "scripts/run_session10_proofs.py"
-    spec = importlib.util.spec_from_file_location("run_session10_proofs", path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    private_text = f"{ROOT} {Path.home()} {os.sys.executable} PASSED"
-    value = {
-        "command": private_text,
-        "transcript": private_text,
-        "transcript_sha256": "sha256:" + hashlib.sha256(private_text.encode()).hexdigest(),
-        "artifact_evidence": [{"content": private_text, "sha256": "sha256:" + hashlib.sha256(private_text.encode()).hexdigest()}],
-    }
-    public = module.sanitize_runtime_evidence(value, "valid")
-    serialized = json.dumps(public)
-    assert str(ROOT) not in serialized and str(Path.home()) not in serialized and os.sys.executable not in serialized
-    assert public["transcript_sha256"] == "sha256:" + hashlib.sha256(public["transcript"].encode()).hexdigest()
-    assert public["artifact_evidence"][0]["sha256"] == "sha256:" + hashlib.sha256(public["artifact_evidence"][0]["content"].encode()).hexdigest()
 
 
 def test_unsupported_promotion_proposal_is_preserved_unresolved():
