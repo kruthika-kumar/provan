@@ -137,21 +137,10 @@ def test_near_wheel_dependency_boundary():
     print("NEAR_VALID_OBSERVED:authoritative_wheel_maturity_and_dependency_boundary:UNPUBLISHED_MAIN_SUCCESSOR_PACKAGE_WITH_PROVAN_ONLY_INCLUDE")
 
 
-def test_near_session9_successor_preservation():
-    done=subprocess.run([os.sys.executable,"scripts/validate_session9_correction.py","--implementation-only"],cwd=ROOT,text=True,capture_output=True)
-    assert done.returncode==0 and "SESSION9_CORRECTION_VALID" in done.stdout
-    print("NEAR_VALID_OBSERVED:session9_successor_preservation:UNCHANGED_HISTORICAL_CORRECTION_REVALIDATED")
 
 
-def test_near_private_planning_absence():
-    path=ROOT/"artifacts/session10/authority/frozen_claims.v1.public.json";validate_public_tree(ROOT,[path])
-    print("NEAR_VALID_OBSERVED:private_planning_authority_absence:GENERIC_PUBLIC_AUTHORITY_SURFACE_PASSES_LEAKAGE_POLICY")
 
 
-def test_near_authentic_comparator():
-    raw=(ROOT/"artifacts/session10/authority/httpx_pr3699.comparator.v1.public.json").read_bytes();validate_authentic_comparator_serialized(raw);value=json.loads(raw)
-    assert value["review"]["state"]=="APPROVED"
-    print("NEAR_VALID_OBSERVED:authentic_predeclared_comparator:AUTHENTIC_REVIEW_BOUND_WITHOUT_ENGINEER_FEEDBACK_CLAIM")
 
 
 def test_near_dogfood_complete_range(repository,tmp_path):

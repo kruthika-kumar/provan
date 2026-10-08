@@ -1,1 +1,0 @@
-"""Packaged remediation schema resources."""

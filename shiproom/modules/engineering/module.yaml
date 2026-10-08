@@ -1,6 +1,0 @@
-module_id: engineering
-name: Engineering / QA
-version: 0.1.0
-allowed_tools: [terminal, file]
-requires_independent_closure: true
-

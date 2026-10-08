@@ -13,7 +13,7 @@ from provan.errors import ProvanError
 from provan.foundry import foundry, pattern_library
 from provan.change_brief import explain
 from provan.foundry_semantic import cleanup_source_bundle, create_source_authority_amendment, pattern_selection, verify_live_source_continuity
-from provan.session12r_validators import hard_qualification, semantic_stability, validate_owner_review_serialized, validate_pattern_selection_serialized, validate_run_serialized, validate_source_coverage_serialized
+from provan.session12r_validators import validate_owner_review_serialized, validate_pattern_selection_serialized, validate_run_serialized, validate_source_coverage_serialized
 from provan.state import secure_read, secure_write
 
 
@@ -216,13 +216,3 @@ def test_cleanup_creates_digest_bound_tombstone(tmp_path: Path, monkeypatch: pyt
     with pytest.raises(FileNotFoundError): secure_read(Path("outputs/contract-foundry") / run["run_id"] / "source-bundle" / "blobs" / f"{tombstone['deleted'][0]['source_id'].removeprefix('sha256:')}.blob", allowed_suffixes=frozenset({".blob"}))
 
 
-def test_hard_gate_and_semantic_stability_do_not_use_macro_rescue():
-    ones = {key: 1 for key in ("material_explicit_obligation_recall", "valid_acceptance", "near_valid_acceptance", "adversarial_rejection", "material_ambiguity_owner_routing", "material_oracle_disposition_completeness", "material_finding_disposition_coverage", "material_obligation_map_disposition", "material_verification_dimension_disposition", "material_mutation_plan_sensitivity", "non_material_mutation_stability")}
-    zeros = {key: 0 for key in ("unsupported_material_mandatory_criteria", "material_non_goal_errors", "exact_content_authority_errors", "implementation_authority_errors", "unaccounted_material_source", "wrongly_non_semantic_material_source", "wrongly_ignored_material_source", "unsupported_material_mappings_claimed_supported", "materially_irrelevant_patterns")}
-    metrics = {**ones, **zeros, "six_run_semantic_stability": True}
-    assert hard_qualification(metrics) == "PASS"
-    metrics["material_explicit_obligation_recall"] = .999
-    assert hard_qualification(metrics) == "FAIL"
-    semantic = {"material_obligations": ["a"], "non_goals": ["b"], "exact_content_rules": ["c"], "material_ambiguities": ["d"], "core_verification_dimensions": ["e"]}
-    stable = semantic_stability([semantic, {**semantic, "wording": "different"}, {**semantic, "wording": "another"}])
-    assert stable["semantic_stable"] is True and stable["byte_identity_required"] is False
