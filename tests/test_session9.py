@@ -373,7 +373,10 @@ def test_leakage_rejects_absolute_user_path_inside_source_archive(tmp_path):
     with tarfile.open(archive_path,"w:gz") as archive:
         member=tarfile.TarInfo("candidate/proof.txt"); member.size=len(payload)
         archive.addfile(member,io.BytesIO(payload))
-    with pytest.raises(ProvanError) as raised: validate_candidate_surfaces(ROOT,[archive_path])
+    # Archive-content rejection does not depend on historical checkout depth.
+    current = _git(ROOT, "rev-parse", "HEAD")
+    with pytest.raises(ProvanError) as raised:
+        validate_candidate_surfaces(ROOT,[archive_path],history_base=current,history_head=current)
     assert raised.value.code == "COMMUNITY_PRIVATE_LEAKAGE"
 
 

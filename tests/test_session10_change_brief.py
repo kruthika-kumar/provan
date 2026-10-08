@@ -226,6 +226,7 @@ def test_safe_reader_symlink_detection_without_platform_privilege(tmp_path,monke
         info=real_lstat(path)
         if Path(path)==target:return SimpleNamespace(st_mode=stat.S_IFLNK)
         return info
+    monkeypatch.setattr(safe_input_module,"os",SimpleNamespace(**{**vars(os),"name":"nt"}))
     monkeypatch.setattr(Path,"lstat",marked)
     with pytest.raises(ProvanError,match="INPUT_FILE_PATH_UNSAFE") as caught:read_bounded_file(target,limit=64)
     print(f"ADVERSARIAL_REJECTION_OBSERVED:literal_file_disambiguation_and_safe_reader:{caught.value.code}")
