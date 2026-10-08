@@ -214,7 +214,8 @@ def test_safe_reader_reparse_detection_is_deterministic(tmp_path,monkeypatch):
         info=real_lstat(path)
         if Path(path)==target:return SimpleNamespace(st_mode=info.st_mode,st_file_attributes=stat.FILE_ATTRIBUTE_REPARSE_POINT)
         return info
-    monkeypatch.setattr(safe_input_module.os,"name","nt")
+    # Model Windows metadata locally without changing pathlib's host OS.
+    monkeypatch.setattr(safe_input_module,"os",SimpleNamespace(**{**vars(os),"name":"nt"}))
     monkeypatch.setattr(Path,"lstat",marked)
     with pytest.raises(ProvanError,match="INPUT_FILE_PATH_UNSAFE"):read_bounded_file(target,limit=64)
 
@@ -232,6 +233,8 @@ def test_safe_reader_symlink_detection_without_platform_privilege(tmp_path,monke
 
 def test_safe_reader_revalidates_parent_components_after_open(tmp_path,monkeypatch):
     target=tmp_path/"parent"/"target.txt";target.parent.mkdir();target.write_text("bounded",encoding="utf-8")
+    # This test targets the Windows component-snapshot implementation.
+    monkeypatch.setattr(safe_input_module,"os",SimpleNamespace(**{**vars(os),"name":"nt"}))
     real_snapshot=safe_input_module._path_snapshot;calls=0
     def swapped(path):
         nonlocal calls

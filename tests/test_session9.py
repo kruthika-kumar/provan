@@ -7,6 +7,7 @@ import os
 import stat
 import subprocess
 import tarfile
+from types import SimpleNamespace
 from pathlib import Path
 
 import jsonschema
@@ -158,7 +159,7 @@ def test_private_scratch_cleanup_retries_transient_windows_handle(tmp_path, monk
             raise PermissionError("simulated transient Windows child handle")
         return real_rmtree(path, **kwargs)
 
-    monkeypatch.setattr(repository_module.os, "name", "nt")
+    monkeypatch.setattr(repository_module, "os", SimpleNamespace(**{**vars(os), "name": "nt"}))
     monkeypatch.setattr(repository_module.tempfile, "mkdtemp", lambda **_: str(scratch))
     monkeypatch.setattr(repository_module.shutil, "rmtree", transient_rmtree)
     monkeypatch.setattr(repository_module.time, "sleep", lambda _: None)
